@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ece6dc;
+  --foreground: #162033;
+  --surface-panel: rgba(248, 245, 239, 0.88);
+  --surface-panel-strong: rgba(255, 252, 246, 0.96);
+  --surface-border: rgba(56, 72, 91, 0.14);
+  --text-primary: #172033;
+  --text-secondary: #5f6b7e;
+  --accent: #0f766e;
+  --accent-strong: #0b5c57;
+}
+
+html {
+  height: 100%;
+  color-scheme: light;
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(240, 144, 74, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 52%),
+    var(--background);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-title {
+  font-family: "Bahnschrift", "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.18);
+}
+
+#__next {
+  width: 100%;
+  min-height: 100%;
+}
+
+@import "leaflet/dist/leaflet.css";
+@import "leaflet-draw/dist/leaflet.draw.css";
+
+.zone-tooltip {
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
+}

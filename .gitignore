@@ -1,0 +1,89 @@
+# Claude Code worktrees (internal tool dirs — never push)
+.claude/worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Output files
+output/
+*.stl
+*.3mf
+
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Environment
+.env
+.env.local
+.env*.local
+.env.production
+frontend/.env.production
+
+# Firebase credentials — НІКОЛИ не комітити
+serviceAccountKey.json
+**/serviceAccountKey.json
+secrets/
+
+# PM2 logs
+/var/log/3dmap/
+
+# Temp output (локальний розробка)
+backend/output/
+/tmp/3dmap_output/
+
+# Debug artifacts — генеровані, не потрібні в repo
+backend/debug/generated/
+backend/debug/runs/
+backend/debug/stage_snapshots/
+backend/debug/temp/
+backend/debug/*.png
+backend/debug/*.geojson
+
+# OSM / Terrain cache — великі файли, відновлюються автоматично
+backend/cache/
+cache/
+
+# External tools (PrusaSlicer тощо) — занадто великі для repo
+tools/external/
+
+# PM2 logs
+frontend/frontend-dev.*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Tools — занадто великі, не потрібні на сервері
+tools/external/
+tools/__pycache__/
+
+# Claude internal
+.claude/
