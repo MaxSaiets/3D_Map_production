@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from shapely.geometry import Polygon, mapping
+from shapely.geometry import Polygon, box, mapping
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
@@ -292,6 +292,50 @@ def _apply_mask_difference(
     if clipped is None or getattr(clipped, "is_empty", True):
         return None
     return clipped
+
+
+def _bounds_overlap(
+    a: BaseGeometry | None,
+    b: BaseGeometry | None,
+    *,
+    padding_m: float = 0.0,
+) -> bool:
+    if a is None or b is None or getattr(a, "is_empty", True) or getattr(b, "is_empty", True):
+        return False
+    try:
+        ax0, ay0, ax1, ay1 = a.bounds
+        bx0, by0, bx1, by1 = b.bounds
+        pad = max(0.0, float(padding_m))
+        return not (
+            ax1 + pad < bx0
+            or bx1 + pad < ax0
+            or ay1 + pad < by0
+            or by1 + pad < ay0
+        )
+    except Exception:
+        return True
+
+
+def _clip_conflict_to_building_window(
+    conflict: BaseGeometry | None,
+    building: BaseGeometry | None,
+    *,
+    padding_m: float,
+) -> BaseGeometry | None:
+    if conflict is None or building is None or getattr(conflict, "is_empty", True) or getattr(building, "is_empty", True):
+        return None
+    if not _bounds_overlap(conflict, building, padding_m=padding_m):
+        return None
+    try:
+        minx, miny, maxx, maxy = building.bounds
+        pad = max(0.0, float(padding_m))
+        window = box(minx - pad, miny - pad, maxx + pad, maxy + pad)
+        clipped = conflict.intersection(window)
+        if clipped is None or getattr(clipped, "is_empty", True):
+            return None
+        return clipped
+    except Exception:
+        return conflict
 
 
 def _polygon_min_dimension(poly: Polygon | None) -> float:
@@ -811,10 +855,17 @@ def _resolve_building_road_conflicts(
     for idx, building in enumerate(building_parts):
         if building is None or building.is_empty:
             continue
-        building_conflict = final_conflict
+        building_conflict = _clip_conflict_to_building_window(
+            final_conflict,
+            building,
+            padding_m=max(float(groove_clearance_m) * 2.0, 1.0),
+        )
+        if building_conflict is None or getattr(building_conflict, "is_empty", True):
+            kept_buildings.append(building)
+            continue
         edge_clip_exclusion = _build_large_building_edge_clip_exclusion(
             building=building,
-            conflict=final_conflict,
+            conflict=building_conflict,
             roads_geom=roads_geom,
             groove_clearance_m=float(groove_clearance_m),
             large_building_min_dim_m=40.0,
