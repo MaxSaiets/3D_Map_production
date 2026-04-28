@@ -19,6 +19,8 @@ module.exports = {
         KEEP_LOCAL_FILES: 'false',
         // Кеш OSMnx та тайлів висот
         TERRARIUM_CACHE_DIR: '/opt/3dmap/backend/cache/terrarium',
+        // Force groove booleans through Blender on production.
+        BOOLEAN_BACKEND: 'blender',
         // Env файл читається через python-dotenv з .env у cwd
       },
       // Автоматичний перезапуск при крашу
