@@ -28,6 +28,7 @@ apt-get install -y -qq \
   libgdal-dev gdal-bin \
   libspatialindex-dev \
   libgeos-dev \
+  blender \
   htop
 
 # ─── 2. Node.js 20 ───────────────────────────────────────────
