@@ -443,6 +443,37 @@ export function ControlPanel({
     west: 30.2,
   };
 
+  const getSelectedZonesBounds = (zones: any[]) => {
+    const lats: number[] = [];
+    const lons: number[] = [];
+
+    zones.forEach((zone) => {
+      const coordinates = zone?.geometry?.coordinates;
+      if (!Array.isArray(coordinates)) return;
+      coordinates.forEach((ring: any[]) => {
+        if (!Array.isArray(ring)) return;
+        ring.forEach((coord) => {
+          if (!Array.isArray(coord) || coord.length < 2) return;
+          const lon = Number(coord[0]);
+          const lat = Number(coord[1]);
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            lats.push(lat);
+            lons.push(lon);
+          }
+        });
+      });
+    });
+
+    if (lats.length === 0 || lons.length === 0) return null;
+
+    return {
+      north: Math.max(...lats),
+      south: Math.min(...lats),
+      east: Math.max(...lons),
+      west: Math.min(...lons),
+    };
+  };
+
   const handleGenerateZones = async () => {
     if (selectedZones.length === 0) {
       setError("Виберіть хоча б одну зону");
@@ -466,9 +497,9 @@ export function ControlPanel({
         return aid.localeCompare(bid);
       });
 
-      let requestBounds = kyivBounds;
+      let requestBounds = getSelectedZonesBounds(zonesSorted) || kyivBounds;
       if (availableCities && selectedCityKey && availableCities[selectedCityKey]) {
-        requestBounds = availableCities[selectedCityKey].bounds;
+        requestBounds = getSelectedZonesBounds(zonesSorted) || availableCities[selectedCityKey].bounds;
       }
 
       const request = {

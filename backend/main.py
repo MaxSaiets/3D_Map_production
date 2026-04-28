@@ -1029,11 +1029,36 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     # С– С–РґРµР°Р»СЊРЅРѕ РїС–РґС…РѕРґСЏС‚СЊ РѕРґРЅР° РґРѕ РѕРґРЅРѕС—
     print(f"[INFO] Р’РёР·РЅР°С‡РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ РґР»СЏ РІСЃС–С”С— СЃС–С‚РєРё ({len(request.zones)} Р·РѕРЅ)...")
     
+    selected_grid_bbox = None
+    all_lons = []
+    all_lats = []
+    for zone in request.zones:
+        geometry = zone.get('geometry', {})
+        if geometry.get('type') != 'Polygon':
+            continue
+        coordinates = geometry.get('coordinates', [])
+        if not coordinates or len(coordinates) == 0:
+            continue
+        all_coords = [coord for ring in coordinates for coord in ring]
+        zone_lons = [coord[0] for coord in all_coords]
+        zone_lats = [coord[1] for coord in all_coords]
+        all_lons.extend(zone_lons)
+        all_lats.extend(zone_lats)
+    if len(all_lons) == 0 or len(all_lats) == 0:
+        raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё РєРѕРѕСЂРґРёРЅР°С‚Рё Р·РѕРЅ")
+    selected_grid_bbox = {
+        'north': max(all_lats),
+        'south': min(all_lats),
+        'east': max(all_lons),
+        'west': min(all_lons)
+    }
+
     grid_bbox = None
-    # 1) Prefer explicit city bbox (stable across later zone additions)
+    # 1) Use explicit city bbox only for larger batches. For small interactive
+    # selections, a full-city DEM scan blocks the request before a task id is returned.
     try:
         if request.north is not None and request.south is not None and request.east is not None and request.west is not None:
-            if float(request.north) > float(request.south) and float(request.east) > float(request.west):
+            if len(request.zones) > 3 and float(request.north) > float(request.south) and float(request.east) > float(request.west):
                 grid_bbox = {
                     "north": float(request.north),
                     "south": float(request.south),
@@ -1043,30 +1068,9 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     except Exception:
         grid_bbox = None
 
-    # 2) Fallback: compute bbox from selected zones (old behavior)
+    # 2) Fallback: compute bbox from selected zones (fast interactive behavior)
     if grid_bbox is None:
-        all_lons = []
-        all_lats = []
-        for zone in request.zones:
-            geometry = zone.get('geometry', {})
-            if geometry.get('type') != 'Polygon':
-                continue
-            coordinates = geometry.get('coordinates', [])
-            if not coordinates or len(coordinates) == 0:
-                continue
-            all_coords = [coord for ring in coordinates for coord in ring]
-            zone_lons = [coord[0] for coord in all_coords]
-            zone_lats = [coord[1] for coord in all_coords]
-            all_lons.extend(zone_lons)
-            all_lats.extend(zone_lats)
-        if len(all_lons) == 0 or len(all_lats) == 0:
-            raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё РєРѕРѕСЂРґРёРЅР°С‚Рё Р·РѕРЅ")
-        grid_bbox = {
-            'north': max(all_lats),
-            'south': min(all_lats),
-            'east': max(all_lons),
-            'west': min(all_lons)
-        }
+        grid_bbox = selected_grid_bbox
     
     # Р’РёР·РЅР°С‡Р°С”РјРѕ С†РµРЅС‚СЂ РІСЃС–С”С— СЃС–С‚РєРё
     grid_center_lat = (grid_bbox['north'] + grid_bbox['south']) / 2.0
