@@ -68,6 +68,7 @@ jobs:
             echo "=== [3/5] Frontend build ==="
             cd /opt/3dmap/frontend
             npm ci --prefer-offline
+            rm -rf .next
             npm run build
 
             echo "=== [4/5] Restart services ==="

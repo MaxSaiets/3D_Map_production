@@ -78,6 +78,7 @@ echo ""
 echo "[6/8] Building Next.js frontend..."
 cd "$APP_DIR/frontend"
 npm ci
+rm -rf .next
 npm run build
 
 # ─── 7. Директорії та права ──────────────────────────────────
