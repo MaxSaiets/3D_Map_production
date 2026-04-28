@@ -10,7 +10,8 @@ module.exports = {
       cwd: '/opt/3dmap/backend',
       interpreter: '/opt/3dmap/backend/venv/bin/python',
       script: '/opt/3dmap/backend/venv/bin/uvicorn',
-      args: 'main:app --host 127.0.0.1 --port 8000 --workers 2',
+      // Tasks are tracked in process memory, so status polling must hit the same process.
+      args: 'main:app --host 127.0.0.1 --port 8000 --workers 1',
       env: {
         NODE_ENV: 'production',
         // Шлях до тимчасових файлів (видаляються після завантаження у Firebase)
