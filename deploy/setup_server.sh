@@ -23,7 +23,7 @@ echo "[1/8] Installing system packages..."
 apt-get update -qq
 apt-get install -y -qq \
   git curl wget build-essential \
-  python3.11 python3.11-venv python3.11-dev python3-pip \
+  python3 python3-venv python3-dev python3-pip \
   nginx certbot python3-certbot-nginx \
   libgdal-dev gdal-bin \
   libspatialindex-dev \
@@ -61,7 +61,7 @@ echo "[5/8] Setting up Python backend..."
 cd "$APP_DIR/backend"
 
 if [ ! -d "venv" ]; then
-  python3.11 -m venv venv
+  python3 -m venv venv
 fi
 source venv/bin/activate
 
