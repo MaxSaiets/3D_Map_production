@@ -197,20 +197,22 @@ def process_water_layer(
     if not getattr(request, "include_water", True):
         return WaterLayerResult(mesh=None, cutting_polygons=None)
 
-    if water_polygons_override is None and (gdf_water is None or gdf_water.empty):
-        return WaterLayerResult(mesh=None, cutting_polygons=None)
-
-    task.update_status("processing", 60, "Generating water surface...")
-    if water_polygons_override is not None and not getattr(water_polygons_override, "is_empty", True):
+    if water_polygons_override is not None:
+        if getattr(water_polygons_override, "is_empty", True):
+            return WaterLayerResult(mesh=None, cutting_polygons=None)
         # Canonical override polygons already include fit + fragment filtering
         # in the canonical 2D stage. Running _filter_water_fragments here again
         # drops small pieces that canonical chose to keep and breaks the
         # canonical 2D -> 3D handoff parity check (symdiff drift).
+        task.update_status("processing", 60, "Generating water surface...")
         try:
             water_cut_polygons = water_polygons_override.buffer(0)
         except Exception:
             water_cut_polygons = water_polygons_override
     else:
+        if gdf_water is None or gdf_water.empty:
+            return WaterLayerResult(mesh=None, cutting_polygons=None)
+        task.update_status("processing", 60, "Generating water surface...")
         water_cut_polygons = _prepare_water_polygons(
             gdf_water,
             road_polygons=road_polygons,
