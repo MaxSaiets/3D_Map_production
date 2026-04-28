@@ -59,7 +59,7 @@ export default function Home() {
   const [showHexGrid, setShowHexGrid] = useState(false);
   const [selectedZones, setSelectedZones] = useState<any[]>([]);
   const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
-  const [hexSizeM, setHexSizeM] = useState(300.0);
+  const [hexSizeM, setHexSizeM] = useState(1000.0);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
 

@@ -266,7 +266,7 @@ export function ControlPanel({
   const [internalShowHexGrid, setInternalShowHexGrid] = useState(false);
   const [internalSelectedZones, setInternalSelectedZones] = useState<any[]>([]);
   const [internalGridType, setInternalGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
-  const [internalHexSizeM, setInternalHexSizeM] = useState(300.0);
+  const [internalHexSizeM, setInternalHexSizeM] = useState(1000.0);
   const pollingInFlightRef = useRef(false);
   const [openPanels, setOpenPanels] = useState<Record<AdvancedPanel, boolean>>({
     roads: false,

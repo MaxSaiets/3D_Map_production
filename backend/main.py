@@ -830,6 +830,7 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
     """
     import hashlib
     import json
+    import math
     
     try:
         # РЎС‚РІРѕСЂСЋС”РјРѕ С…РµС€ РїР°СЂР°РјРµС‚СЂС–РІ РґР»СЏ С–РґРµРЅС‚РёС„С–РєР°С†С–С— СЃС–С‚РєРё
@@ -866,6 +867,36 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
         )
         bbox_meters = bbox_utm[:4]  # (minx, miny, maxx, maxy)
         to_wgs84 = bbox_utm[6]  # Р¤СѓРЅРєС†С–СЏ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— UTM -> WGS84 (С–РЅРґРµРєСЃ 6)
+        minx, miny, maxx, maxy = bbox_meters
+
+        max_grid_cells = 1500
+        if grid_type == 'square':
+            estimated_cells = (math.ceil((maxx - minx) / request.hex_size_m) + 1) * (
+                math.ceil((maxy - miny) / request.hex_size_m) + 1
+            )
+        elif grid_type == 'circle':
+            diameter_m = request.hex_size_m
+            estimated_cells = (math.ceil((maxx - minx) / diameter_m) + 1) * (
+                math.ceil((maxy - miny) / diameter_m) + 1
+            )
+        else:
+            hex_width = math.sqrt(3) * request.hex_size_m
+            hex_height = 1.5 * request.hex_size_m
+            estimated_cells = (math.ceil((maxx - minx) / hex_width) + 2) * (
+                math.ceil((maxy - miny) / hex_height) + 2
+            )
+
+        if estimated_cells > max_grid_cells:
+            suggested_size = math.ceil(
+                request.hex_size_m * math.sqrt(estimated_cells / max_grid_cells) / 100
+            ) * 100
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Сітка занадто щільна для цієї області: приблизно {estimated_cells} клітинок. "
+                    f"Збільште розмір клітинки до ~{suggested_size} м або виберіть меншу область."
+                ),
+            )
         
         # Р“РµРЅРµСЂСѓС”РјРѕ СЃС–С‚РєСѓ (С€РµСЃС‚РёРєСѓС‚РЅРёРєРё, РєРІР°РґСЂР°С‚Рё Р°Р±Рѕ РєСЂСѓРіРё)
         if grid_type == 'square':
