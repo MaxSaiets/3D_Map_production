@@ -960,6 +960,8 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ Р·Р±РµСЂРµРіС‚Рё СЃС–С‚РєСѓ РІ РєРµС€: {e}")
         
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
