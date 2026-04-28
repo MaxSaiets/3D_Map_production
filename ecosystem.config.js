@@ -30,8 +30,8 @@ module.exports = {
       error_file: '/var/log/3dmap/backend.err.log',
       merge_logs: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      // Обмеження памʼяті — при перевищенні перезапуститься
-      max_memory_restart: '1500M',
+      // 3D generation has short memory spikes during terrain solidification/booleans.
+      max_memory_restart: '3200M',
     },
 
     // ─── Frontend (Next.js) ────────────────────────────────

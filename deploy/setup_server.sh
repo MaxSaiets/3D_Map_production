@@ -39,9 +39,16 @@ if ! command -v node &>/dev/null || [[ $(node -v) != v20* ]]; then
 fi
 echo "Node: $(node -v) | npm: $(npm -v)"
 
-# ─── 3. PM2 ──────────────────────────────────────────────────
+# ─── 3. Swap + PM2 ───────────────────────────────────────────
 echo ""
-echo "[3/8] Installing PM2..."
+echo "[3/8] Configuring swap and installing PM2..."
+if ! swapon --show | grep -q '/swapfile'; then
+  fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+fi
+grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 npm install -g pm2
 
 # ─── 4. Клонування репозиторію ───────────────────────────────
