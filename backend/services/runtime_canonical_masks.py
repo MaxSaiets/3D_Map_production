@@ -272,18 +272,27 @@ def _apply_mask_difference(
         return geometry
     if exclusion is None or getattr(exclusion, "is_empty", True):
         return geometry
+    if not _bounds_overlap(geometry, exclusion):
+        return geometry
     lhs = geometry
     rhs = exclusion
     try:
-        lhs = geometry.buffer(0)
+        if not bool(getattr(geometry, "is_valid", True)):
+            lhs = geometry.buffer(0)
     except Exception:
-        pass
+        lhs = geometry
     try:
-        rhs = exclusion.buffer(0)
+        if not bool(getattr(exclusion, "is_valid", True)):
+            rhs = exclusion.buffer(0)
     except Exception:
-        pass
+        rhs = exclusion
     try:
-        clipped = lhs.difference(rhs).buffer(0)
+        clipped = lhs.difference(rhs)
+        try:
+            if clipped is not None and not bool(getattr(clipped, "is_valid", True)):
+                clipped = clipped.buffer(0)
+        except Exception:
+            pass
     except Exception:
         try:
             clipped = unary_union([lhs]).buffer(0).difference(unary_union([rhs]).buffer(0)).buffer(0)
