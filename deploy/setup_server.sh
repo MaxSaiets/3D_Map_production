@@ -77,6 +77,7 @@ deactivate
 echo ""
 echo "[6/8] Building Next.js frontend..."
 cd "$APP_DIR/frontend"
+pm2 stop 3dmap-frontend >/dev/null 2>&1 || true
 npm ci
 rm -rf .next
 npm run build
@@ -92,7 +93,7 @@ mkdir -p "$APP_DIR/backend/cache/osm"
 echo ""
 echo "[8/8] Starting services with PM2..."
 cd "$APP_DIR"
-pm2 start ecosystem.config.js
+pm2 startOrRestart ecosystem.config.js
 pm2 save
 pm2 startup systemd -u root --hp /root | tail -1 | bash || true
 

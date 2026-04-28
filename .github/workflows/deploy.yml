@@ -67,6 +67,7 @@ jobs:
 
             echo "=== [3/5] Frontend build ==="
             cd /opt/3dmap/frontend
+            pm2 stop 3dmap-frontend || true
             npm ci --prefer-offline
             rm -rf .next
             npm run build
