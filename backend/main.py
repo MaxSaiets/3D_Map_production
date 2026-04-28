@@ -361,6 +361,11 @@ async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 @app.post("/api/generate", response_model=GenerationResponse)
 async def generate_model(request: GenerationRequest, background_tasks: BackgroundTasks):
     """
