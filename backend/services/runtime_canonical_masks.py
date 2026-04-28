@@ -749,8 +749,15 @@ def _resolve_building_road_conflicts(
     for idx, building in enumerate(building_parts):
         if building is None or building.is_empty:
             continue
+        local_roads = _clip_conflict_to_building_window(
+            roads_geom,
+            building,
+            padding_m=max(float(groove_clearance_m) * 2.0, 1.0),
+        )
+        if local_roads is None or getattr(local_roads, "is_empty", True):
+            continue
         try:
-            road_overlap = building.intersection(roads_geom)
+            road_overlap = building.intersection(local_roads)
         except Exception:
             road_overlap = None
         if road_overlap is None or getattr(road_overlap, "is_empty", True):
@@ -761,14 +768,20 @@ def _resolve_building_road_conflicts(
         if before_area <= 0.0:
             continue
 
-        clipped_building = _apply_mask_difference(building, raw_conflict)
-        after_area = float(getattr(clipped_building, "area", 0.0) or 0.0) if clipped_building is not None else 0.0
-        survival_ratio = (after_area / before_area) if before_area > 0.0 else 0.0
         road_overlap_area = float(getattr(road_overlap, "area", 0.0) or 0.0)
         road_overlap_ratio = (road_overlap_area / before_area) if before_area > 0.0 else 0.0
 
         if before_area < float(min_preserve_area_m2) or min_dim < float(min_preserve_dim_m):
             continue
+
+        local_raw_conflict = _clip_conflict_to_building_window(
+            raw_conflict,
+            building,
+            padding_m=max(float(groove_clearance_m) * 2.0, 1.0),
+        )
+        clipped_building = _apply_mask_difference(building, local_raw_conflict)
+        after_area = float(getattr(clipped_building, "area", 0.0) or 0.0) if clipped_building is not None else 0.0
+        survival_ratio = (after_area / before_area) if before_area > 0.0 else 0.0
 
         semantic_cross = _semantic_centerline_crosses_building(
             building,
