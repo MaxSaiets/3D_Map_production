@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 import trimesh
 from geopandas import GeoDataFrame
+from shapely.geometry import GeometryCollection
 from shapely.geometry.base import BaseGeometry
 
 from services.boolean_backends import BooleanBackend
@@ -255,6 +256,12 @@ def process_detail_layers(
     support_exclusion_mask = canonical_masks.support_exclusion_mask
     building_exclusion_mask = canonical_masks.building_exclusion_mask
 
+    canonical_water_for_detail = None
+    if canonical_mask_bundle is not None:
+        canonical_water_for_detail = getattr(canonical_mask_bundle, "water_final", None)
+        if canonical_water_for_detail is None:
+            canonical_water_for_detail = GeometryCollection()
+
     stage_start = time.perf_counter()
     building_layer = process_building_layer(
         task=task,
@@ -287,9 +294,7 @@ def process_detail_layers(
         building_polygons=building_union_local,
         coordinates_already_local=True,
         zone_prefix=zone_prefix,
-        water_polygons_override=(
-            getattr(canonical_mask_bundle, "water_final", None) if canonical_mask_bundle is not None else None
-        ),
+        water_polygons_override=canonical_water_for_detail,
         fit_clearance_mm=float(shared_inlay_fit_clearance_mm),
     )
     _log_stage("water", stage_start)
@@ -349,8 +354,8 @@ def process_detail_layers(
                     else (parks_result.processed_polygons if parks_result is not None else None)
                 ),
                 water_polygons=(
-                    getattr(canonical_mask_bundle, "water_final", None)
-                    if canonical_mask_bundle is not None and getattr(canonical_mask_bundle, "water_final", None) is not None
+                    canonical_water_for_detail
+                    if canonical_mask_bundle is not None
                     else water_cut_polygons
                 ),
                 building_polygons=building_union_local,
