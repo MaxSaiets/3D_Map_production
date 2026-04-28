@@ -349,8 +349,17 @@ export function ControlPanel({
           setGenerating(false);
           setError(single.message);
         }
-      } catch (pollError) {
+      } catch (pollError: any) {
         console.error("Помилка перевірки статусу:", pollError);
+        if (pollError?.response?.status === 404) {
+          setGenerating(false);
+          setTaskGroup(null, []);
+          setActiveTaskId(null);
+          setTaskStatuses({});
+          setDownloadUrl(null);
+          updateProgress(0, "");
+          setError("Попередню задачу не знайдено на сервері. Можна запускати нову генерацію.");
+        }
       } finally {
         pollingInFlightRef.current = false;
       }
@@ -360,7 +369,18 @@ export function ControlPanel({
       clearInterval(interval);
       pollingInFlightRef.current = false;
     };
-  }, [taskGroupId, isGenerating, updateProgress, setGenerating, setDownloadUrl, activeTaskId, taskIds, setTaskStatuses]);
+  }, [
+    taskGroupId,
+    isGenerating,
+    updateProgress,
+    setGenerating,
+    setDownloadUrl,
+    activeTaskId,
+    taskIds,
+    setTaskStatuses,
+    setTaskGroup,
+    setActiveTaskId,
+  ]);
 
   const handleGenerate = async () => {
     if (!selectedArea) {
