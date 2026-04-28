@@ -78,7 +78,7 @@ echo ""
 echo "[6/8] Building Next.js frontend..."
 cd "$APP_DIR/frontend"
 pm2 stop 3dmap-frontend >/dev/null 2>&1 || true
-npm ci
+npm ci --prefer-online
 rm -rf .next
 npm run build
 
