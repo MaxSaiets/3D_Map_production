@@ -34,7 +34,7 @@ npm run build
 
 # ── 4. Перезапуск ────────────────────────────────────────────
 echo "[deploy] Restarting services..."
-pm2 restart 3dmap-backend 3dmap-frontend --update-env
+pm2 startOrRestart ecosystem.config.js --update-env
 pm2 save
 
 # ── 5. Health check ──────────────────────────────────────────
