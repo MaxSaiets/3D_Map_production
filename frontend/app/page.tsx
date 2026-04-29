@@ -176,6 +176,7 @@ export default function Home() {
     export_format: "3mf",
     model_size_mm: modelSizeMm,
     is_ams_mode: false,
+    context_padding_m: 80,
     preview_include_base: layers.terrain,
     preview_include_roads: layers.roads,
     preview_include_buildings: layers.buildings,

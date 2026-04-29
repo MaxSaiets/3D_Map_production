@@ -29,6 +29,7 @@ export interface GenerationRequest {
   preview_include_buildings?: boolean;
   preview_include_water?: boolean;
   preview_include_parks?: boolean;
+  context_padding_m?: number;
 }
 
 export interface PreviewRequest {

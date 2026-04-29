@@ -459,7 +459,7 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
             "flatten_roads_on_terrain": False,
             "export_format": "3mf",
             "model_size_mm": float(order.get("model_size_mm") or 180.0),
-            "context_padding_m": 400.0,
+            "context_padding_m": 80.0,
             "terrain_only": False,
             "include_parks": bool(layers.get("parks", True)),
             "parks_height_mm": 0.6,
@@ -477,6 +477,7 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
         request.setdefault(key, value)
     request.setdefault("model_size_mm", float(order.get("model_size_mm") or 180.0))
     request.setdefault("hex_size_m", float(order.get("hex_size_m") or 650.0))
+    request.setdefault("context_padding_m", 80.0)
     return request
 
 
