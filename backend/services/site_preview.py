@@ -17,12 +17,20 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform as transform_geometry
 from shapely.ops import unary_union
 
+from services.building_geometry_pipeline import prepare_building_geometry
 from services.building_processor import get_building_height
-from services.canonical_2d_pipeline import prepare_canonical_2d_stage
+from services.canonical_2d_pipeline import _expand_building_mask_for_roads, _subtract_masks
 from services.data_fetch_pipeline import fetch_generation_data
+from services.detail_layer_pipeline import _build_canonical_road_masks
+from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, prepare_green_areas_for_processing
+from services.geometry_preclip_pipeline import prepare_preclipped_geometry
 from services.global_center import GlobalCenter
+from services.green_processor import process_green_areas
+from services.printer_profile import get_printer_profile_for_request
 from services.processing_results import SourceDataResult, ZonePreparationResult
+from services.road_geometry_pipeline import prepare_road_geometry
 from services.road_processor import normalize_drivable_highway_tag
+from services.water_layer_pipeline import _prepare_water_polygons
 from services.zone_context_pipeline import build_zone_context
 from services.zone_geometry_pipeline import prepare_zone_geometry
 
@@ -465,6 +473,128 @@ def _canonical_building_collection(
     )
 
 
+def _build_preview_canonical_masks(
+    *,
+    request_ns: SimpleNamespace,
+    source: SourceDataResult,
+    zone: ZonePreparationResult,
+    global_center: GlobalCenter,
+    zone_prefix: str,
+) -> SimpleNamespace:
+    """Build the same canonical 2D source masks as full generation, without print/export audit.
+
+    Full generation continues from these masks into runtime printability audits,
+    grooves, terrain booleans, Blender/mesh export, and slicer checks. Preview
+    deliberately stops here so it stays interactive while still showing the same
+    road/building/water/park partition logic.
+    """
+    printer_profile = get_printer_profile_for_request(request_ns)
+    building_geometry = prepare_building_geometry(
+        gdf_buildings=source.gdf_buildings,
+        global_center=global_center,
+        zone_prefix=zone_prefix,
+    )
+    building_exclusion_for_roads = _expand_building_mask_for_roads(
+        building_geometry.building_union_local,
+        scale_factor=zone.scale_factor,
+        clearance_mm=max(float(printer_profile.groove_side_clearance_mm), 0.25),
+    )
+    preclip_result = prepare_preclipped_geometry(
+        gdf_buildings_local=building_geometry.gdf_buildings_local,
+        building_geometries_for_flatten=building_geometry.building_geometries_for_flatten,
+        gdf_water=source.gdf_water,
+        global_center=global_center,
+        zone_polygon_local=zone.zone_polygon_local,
+        zone_prefix=zone_prefix,
+    )
+    road_gap_fill_mm_effective = 1.0
+    road_geometry = prepare_road_geometry(
+        G_roads=source.G_roads,
+        scale_factor=zone.scale_factor,
+        road_width_multiplier_effective=zone.road_width_multiplier_effective,
+        min_printable_gap_mm=float(road_gap_fill_mm_effective),
+        tiny_feature_threshold_mm=0.5,
+        road_gap_fill_threshold_mm=float(road_gap_fill_mm_effective),
+        enforce_printable_min_width=True,
+        min_gap_fill_floor_mm=0.5,
+        global_center=global_center,
+        zone_polygon_local=zone.zone_polygon_local,
+        zone_prefix=zone_prefix,
+    )
+    road_insert_source = road_geometry.merged_roads_geom_local
+    if road_insert_source is None or getattr(road_insert_source, "is_empty", True):
+        road_insert_source = road_geometry.merged_roads_geom_local_raw
+
+    canonical_road_masks = _build_canonical_road_masks(
+        road_insert_source=road_insert_source,
+        building_union_local=building_geometry.building_union_local,
+        scale_factor=zone.scale_factor,
+        groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
+        tiny_feature_threshold_mm=0.5,
+        road_gap_fill_threshold_mm=float(road_gap_fill_mm_effective),
+        zone_polygon_local=zone.zone_polygon_local,
+        zone_prefix=zone_prefix,
+    )
+    road_insert = canonical_road_masks.road_insert_mask
+    road_groove = canonical_road_masks.road_groove_mask or road_insert
+    water_polygons = _prepare_water_polygons(
+        preclip_result.gdf_water_local,
+        road_polygons=road_groove,
+        building_polygons=building_exclusion_for_roads,
+        scale_factor=zone.scale_factor,
+        fit_clearance_mm=float(printer_profile.groove_side_clearance_mm) * 0.5,
+    )
+    prepared_green = prepare_green_areas_for_processing(
+        source.gdf_green,
+        global_center=global_center,
+        zone_polygon_local=zone.zone_polygon_local,
+    )
+    parks_result = process_green_areas(
+        prepared_green,
+        height_m=0.01,
+        embed_m=0.0,
+        terrain_provider=None,
+        global_center=global_center,
+        scale_factor=float(zone.scale_factor),
+        zone_polygon_local=zone.zone_polygon_local,
+        min_feature_mm=float(max(float(printer_profile.min_printable_feature_mm), float(MIN_LAND_WIDTH_MODEL_MM))),
+        fit_clearance_mm=float(printer_profile.groove_side_clearance_mm) * 0.5,
+        road_polygons=road_groove,
+        water_polygons=water_polygons,
+        building_polygons=building_exclusion_for_roads,
+        return_result=True,
+    )
+    parks_final = _subtract_masks(
+        parks_result.processed_polygons if parks_result is not None else None,
+        road_insert,
+        road_groove,
+        water_polygons,
+        building_exclusion_for_roads,
+    )
+    water_final = _subtract_masks(
+        water_polygons,
+        road_insert,
+        road_groove,
+        parks_final,
+        building_exclusion_for_roads,
+    )
+    buildings_final = _subtract_masks(
+        building_geometry.building_union_local,
+        road_groove,
+    )
+    return SimpleNamespace(
+        zone_polygon=zone.zone_polygon_local,
+        roads_final=road_insert,
+        road_groove_mask=road_groove,
+        parks_final=parks_final,
+        water_final=water_final,
+        buildings_footprints=buildings_final,
+        building_geometry=building_geometry,
+        road_geometry=road_geometry,
+        preclip_result=preclip_result,
+    )
+
+
 def _build_canonical_preview(
     *,
     preview_id: str,
@@ -524,25 +654,22 @@ def _build_canonical_preview(
         G_roads=source_data.G_roads,
         gdf_green=source_data.gdf_green,
     )
-    canonical_stage = prepare_canonical_2d_stage(
-        task_id=preview_id,
-        request=request_ns,
+    bundle = _build_preview_canonical_masks(
+        request_ns=request_ns,
         source=source,
         zone=zone,
         global_center=global_center,
-        debug_generated_dir=PREVIEW_CANONICAL_DIR,
         zone_prefix="[preview] ",
     )
-    bundle = canonical_stage.canonical_mask_bundle
     model_logic = {
         **model_logic,
         "scale_factor_mm_per_m": float(zone.scale_factor),
         "model_width_mm": float(zone.bbox_meters[2] - zone.bbox_meters[0]) * float(zone.scale_factor),
         "model_height_mm": float(zone.bbox_meters[3] - zone.bbox_meters[1]) * float(zone.scale_factor),
-        "preview_source": "canonical_2d",
-        "canonical_bundle_dir": str(bundle.source_dir),
+        "preview_source": "canonical_2d_light",
+        "canonical_note": "same source masks as full generation, before heavy print audit and mesh export",
     }
-    building_geometry = getattr(canonical_stage, "building_geometry", None)
+    building_geometry = getattr(bundle, "building_geometry", None)
     gdf_buildings_local = getattr(building_geometry, "gdf_buildings_local", None)
 
     result = {
