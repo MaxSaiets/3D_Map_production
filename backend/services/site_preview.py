@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import hashlib
 import json
 import math
@@ -20,9 +21,10 @@ from shapely.ops import unary_union
 from services.building_geometry_pipeline import prepare_building_geometry
 from services.building_processor import get_building_height
 from services.canonical_2d_pipeline import _expand_building_mask_for_roads, _subtract_masks
-from services.data_fetch_pipeline import fetch_generation_data
 from services.detail_layer_pipeline import _build_canonical_road_masks
 from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, prepare_green_areas_for_processing
+from services.data_loader import fetch_city_data
+from services.extras_loader import fetch_extras
 from services.geometry_preclip_pipeline import prepare_preclipped_geometry
 from services.global_center import GlobalCenter
 from services.green_processor import process_green_areas
@@ -595,6 +597,82 @@ def _build_preview_canonical_masks(
     )
 
 
+def _fetch_preview_source_data(
+    *,
+    request_ns: SimpleNamespace,
+    global_center: GlobalCenter,
+    zone_prefix: str,
+) -> SourceDataResult:
+    print(
+        f"[DEBUG] {zone_prefix} Loading preview source data: "
+        f"north={request_ns.north}, south={request_ns.south}, east={request_ns.east}, west={request_ns.west}"
+    )
+    # Full generation uses a very generous road context. Preview keeps the same
+    # canonical mask processors but narrows the data context so a browser request
+    # does not spend minutes parsing roads far outside the selected area.
+    road_context_deg = 0.002
+    osm_padding_deg = 0.001
+
+    def get_city_data():
+        return fetch_city_data(
+            float(request_ns.north) + road_context_deg,
+            float(request_ns.south) - road_context_deg,
+            float(request_ns.east) + road_context_deg,
+            float(request_ns.west) - road_context_deg,
+            padding=osm_padding_deg,
+            target_crs=global_center.utm_crs if global_center else None,
+        )
+
+    def get_extras():
+        return fetch_extras(
+            float(request_ns.north),
+            float(request_ns.south),
+            float(request_ns.east),
+            float(request_ns.west),
+            target_crs=global_center.utm_crs if global_center else None,
+        )
+
+    gdf_buildings = gpd.GeoDataFrame()
+    gdf_water = gpd.GeoDataFrame()
+    gdf_green = gpd.GeoDataFrame()
+    G_roads = None
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            future_city = executor.submit(get_city_data)
+            future_extras = executor.submit(get_extras)
+            gdf_buildings, gdf_water, G_roads = future_city.result(timeout=45)
+            gdf_green = future_extras.result(timeout=45)
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix} Preview parallel fetch failed: {exc}")
+        try:
+            gdf_buildings, gdf_water, G_roads = get_city_data()
+        except Exception as city_exc:
+            print(f"[WARN] {zone_prefix} Preview city fetch failed: {city_exc}")
+        try:
+            gdf_green = get_extras()
+        except Exception as extras_exc:
+            print(f"[WARN] {zone_prefix} Preview extras fetch failed: {extras_exc}")
+
+    road_count = 0
+    if G_roads is not None:
+        if hasattr(G_roads, "edges"):
+            road_count = len(G_roads.edges)
+        elif hasattr(G_roads, "__len__"):
+            road_count = len(G_roads)
+    print(
+        f"[DEBUG] {zone_prefix} Preview source loaded: "
+        f"{len(gdf_buildings) if gdf_buildings is not None and not gdf_buildings.empty else 0} buildings, "
+        f"{len(gdf_water) if gdf_water is not None and not gdf_water.empty else 0} water, "
+        f"{road_count} roads"
+    )
+    return SourceDataResult(
+        gdf_buildings=gdf_buildings,
+        gdf_water=gdf_water,
+        G_roads=G_roads,
+        gdf_green=gdf_green,
+    )
+
+
 def _build_canonical_preview(
     *,
     preview_id: str,
@@ -642,17 +720,10 @@ def _build_canonical_preview(
         road_width_multiplier_effective=float(request_ns.road_width_multiplier),
         stl_extra_embed_m=0.0,
     )
-    source_data = fetch_generation_data(
-        request=request_ns,
+    source = _fetch_preview_source_data(
+        request_ns=request_ns,
         global_center=global_center,
-        task=_PreviewTask(),
         zone_prefix="[preview] ",
-    )
-    source = SourceDataResult(
-        gdf_buildings=source_data.gdf_buildings,
-        gdf_water=source_data.gdf_water,
-        G_roads=source_data.G_roads,
-        gdf_green=source_data.gdf_green,
     )
     bundle = _build_preview_canonical_masks(
         request_ns=request_ns,
@@ -712,9 +783,9 @@ def _build_canonical_preview(
         },
         "metrics": {
             "buildings": int(len(gdf_buildings_local)) if gdf_buildings_local is not None and not gdf_buildings_local.empty else 0,
-            "roads": int(len(source_data.G_roads.edges)) if hasattr(source_data.G_roads, "edges") else int(len(source_data.G_roads)) if source_data.G_roads is not None and hasattr(source_data.G_roads, "__len__") else 0,
-            "water": int(len(source_data.gdf_water)) if source_data.gdf_water is not None and not source_data.gdf_water.empty else 0,
-            "parks": int(len(source_data.gdf_green)) if source_data.gdf_green is not None and not source_data.gdf_green.empty else 0,
+            "roads": int(len(source.G_roads.edges)) if hasattr(source.G_roads, "edges") else int(len(source.G_roads)) if source.G_roads is not None and hasattr(source.G_roads, "__len__") else 0,
+            "water": int(len(source.gdf_water)) if source.gdf_water is not None and not source.gdf_water.empty else 0,
+            "parks": int(len(source.gdf_green)) if source.gdf_green is not None and not source.gdf_green.empty else 0,
             "elapsed_ms": int((time.perf_counter() - started) * 1000),
         },
     }
@@ -791,7 +862,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 10,
+        "v": 11,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
