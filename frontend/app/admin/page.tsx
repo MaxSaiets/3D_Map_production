@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, Search } from "lucide-react";
+import { CheckCircle2, Clipboard, Loader2, Play, Search } from "lucide-react";
 import { api } from "@/lib/api";
 
 const STATUSES: Record<string, string> = {
@@ -18,6 +18,8 @@ export default function AdminPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [startingGeneration, setStartingGeneration] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [error, setError] = useState<string | null>(null);
 
   const loadOrders = async (nextToken = token) => {
@@ -47,6 +49,35 @@ export default function AdminPage() {
     return haystack.includes(query.toLowerCase());
   });
   const selected = filtered.find((order) => order.id === selectedId) ?? filtered[0];
+  const selectedRecipe = selected?.generation_request ?? {};
+  const selectedLayers = selected?.layers ?? {};
+  const selectedZones = selected?.selected_zones ?? [];
+  const selectedBounds = selected?.bounds ?? {};
+
+  const copyRecipe = async () => {
+    if (!selected) return;
+    await navigator.clipboard.writeText(JSON.stringify(selectedRecipe, null, 2));
+    setCopyState("copied");
+    window.setTimeout(() => setCopyState("idle"), 1400);
+  };
+
+  const startGeneration = async () => {
+    if (!selected) return;
+    setStartingGeneration(true);
+    setError(null);
+    try {
+      const result = await api.startOrderGeneration(selected.id, token || undefined);
+      setOrders((current) => current.map((order) => (
+        order.id === selected.id
+          ? { ...order, status: "in_progress", generation_task_id: result.task_id, generation_status: result.status, generation_all_task_ids: result.all_task_ids ?? [] }
+          : order
+      )));
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || "Не вдалося запустити Blender");
+    } finally {
+      setStartingGeneration(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#f3efe7] p-4 text-[#1f2420] lg:p-6">
@@ -145,6 +176,25 @@ export default function AdminPage() {
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#8a8173]">Заявка</p>
                   <h2 className="mt-1 font-serif text-3xl">{selected.name || "Без імені"}</h2>
                   <p className="mt-2 text-sm text-[#71695e]">{selected.contact}</p>
+                  <div className="mt-4 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={startGeneration}
+                      disabled={startingGeneration}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-[6px] bg-[#1f5b49] px-4 text-sm font-semibold text-white disabled:opacity-60"
+                    >
+                      {startingGeneration ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
+                      Запустити Blender
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyRecipe}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[#dfd7c8] bg-[#fffaf1] px-4 text-sm font-semibold"
+                    >
+                      <Clipboard size={15} />
+                      {copyState === "copied" ? "JSON скопійовано" : "Скопіювати recipe JSON"}
+                    </button>
+                  </div>
                 </div>
                 <div className="rounded-[8px] border border-[#dfd7c8] p-4">
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#8a8173]">Деталі</p>
@@ -152,10 +202,13 @@ export default function AdminPage() {
                     {[
                       ["Місто", selected.city],
                       ["Preview", selected.preview_id || "—"],
+                      ["Режим ділянки", selected.area_mode || "rect"],
+                      ["Зон", selectedZones.length ? `${selectedZones.length}` : "—"],
                       ["Розмір", `${Number(selected.model_size_mm || 0) / 10} см`],
                       ["Матеріал", selected.material],
-                      ["Шари", Object.entries(selected.layers || {}).filter(([, v]) => v).map(([k]) => k).join(", ")],
+                      ["Шари", Object.entries(selectedLayers).filter(([, v]) => v).map(([k]) => k).join(", ")],
                       ["Ціна", selected.price_uah ? `${selected.price_uah} ₴` : "—"],
+                      ["Blender task", selected.generation_task_id || "—"],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between gap-4 py-2">
                         <span className="text-[#8a8173]">{label}</span>
@@ -163,6 +216,26 @@ export default function AdminPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+                <div className="rounded-[8px] border border-[#dfd7c8] p-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#8a8173]">Параметри для локальної генерації</p>
+                  <div className="mt-3 divide-y divide-[#e4dccd] text-sm">
+                    {[
+                      ["Bounds", `${Number(selectedBounds.south).toFixed(5)}..${Number(selectedBounds.north).toFixed(5)}, ${Number(selectedBounds.west).toFixed(5)}..${Number(selectedBounds.east).toFixed(5)}`],
+                      ["Road width", selectedRecipe.road_width_multiplier],
+                      ["Building min / mult", `${selectedRecipe.building_min_height} м / x${selectedRecipe.building_height_multiplier}`],
+                      ["Terrain", selectedRecipe.terrain_enabled ? `${selectedRecipe.terrain_resolution} · z${selectedRecipe.terrain_z_scale}` : "вимкнено"],
+                      ["Export", selectedRecipe.export_format || "3mf"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex justify-between gap-4 py-2">
+                        <span className="text-[#8a8173]">{label}</span>
+                        <span className="max-w-[230px] text-right font-medium">{String(value || "—")}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <pre className="mt-3 max-h-[220px] overflow-auto rounded-[6px] bg-[#1f2420] p-3 text-[11px] leading-5 text-[#fffaf1]">
+                    {JSON.stringify(selectedRecipe, null, 2)}
+                  </pre>
                 </div>
                 <div className="rounded-[8px] border border-[#dfd7c8] bg-[#f7f2e8] p-4">
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#8a8173]">Коментар</p>

@@ -13,6 +13,7 @@ import osmnx as ox
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon, box, mapping, shape
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import unary_union
 
 from services.road_processor import normalize_drivable_highway_tag
 
@@ -154,13 +155,14 @@ def _numeric_width(value: Any) -> Optional[float]:
     return None
 
 
-def _road_buffer_radius_m(row: Any) -> float:
+def _road_buffer_radius_m(row: Any, road_width_multiplier: float = 0.8) -> float:
     highway = normalize_drivable_highway_tag(row.get("highway"))
     fallback = ROAD_WIDTH_MAP_M.get(highway or "", 1.6)
     explicit = _numeric_width(row.get("width"))
     width = explicit if explicit is not None else fallback
     if explicit is not None:
         width = min(max(explicit, 0.8), max(fallback * 1.15, fallback + 0.35))
+    width *= max(0.1, min(float(road_width_multiplier or 0.8), 5.0))
     return max(width / 2.0, 0.35)
 
 
@@ -168,6 +170,7 @@ def _build_preview_road_mask(
     roads: gpd.GeoDataFrame,
     bounds: dict[str, float],
     polygon_geojson: Optional[dict[str, Any]],
+    road_width_multiplier: float,
 ) -> gpd.GeoDataFrame:
     clipped = _clip_to_selection(roads, bounds, polygon_geojson)
     if clipped.empty:
@@ -182,7 +185,7 @@ def _build_preview_road_mask(
             if geom is None or geom.is_empty:
                 continue
             if isinstance(geom, (LineString, MultiLineString)):
-                mask = geom.buffer(_road_buffer_radius_m(row), cap_style=2, join_style=1, resolution=3)
+                mask = geom.buffer(_road_buffer_radius_m(row, road_width_multiplier), cap_style=2, join_style=1, resolution=3)
             elif isinstance(geom, (Polygon, MultiPolygon)):
                 mask = geom.buffer(0)
             else:
@@ -199,21 +202,49 @@ def _build_preview_road_mask(
         return clipped
 
 
-def _height_from_row(row: Any) -> float:
+def _subtract_buildings_from_roads(roads: gpd.GeoDataFrame, buildings: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    if roads is None or roads.empty or buildings is None or buildings.empty:
+        return roads
+    try:
+        road_proj = roads.to_crs("EPSG:3857")
+        building_proj = buildings.to_crs("EPSG:3857")
+        building_union = unary_union([geom for geom in building_proj.geometry if geom is not None and not geom.is_empty])
+        if building_union.is_empty:
+            return roads
+        road_proj["geometry"] = road_proj.geometry.apply(lambda geom: geom.difference(building_union) if geom is not None else geom)
+        road_proj = road_proj[road_proj.geometry.notna() & ~road_proj.geometry.is_empty].copy()
+        road_proj = road_proj.explode(index_parts=False, ignore_index=True)
+        road_proj = road_proj[road_proj.geometry.geom_type.isin(["Polygon", "MultiPolygon"])].copy()
+        return road_proj.to_crs("EPSG:4326")
+    except Exception:
+        return roads
+
+
+def _height_from_row(row: Any, building_min_height: float = 5.0, building_height_multiplier: float = 1.8) -> float:
     raw = row.get("height")
     levels = row.get("building:levels")
+    min_height = max(1.0, float(building_min_height or 5.0))
+    multiplier = max(0.1, float(building_height_multiplier or 1.8))
     height = _numeric_width(raw)
     if height is not None:
-        return max(3.0, min(height, 80.0))
+        return max(min_height, min(height * multiplier, 120.0))
     try:
         if levels is not None and not (isinstance(levels, float) and math.isnan(levels)):
-            return max(3.0, min(float(levels) * 3.0, 60.0))
+            return max(min_height, min(float(levels) * 3.0 * multiplier, 100.0))
     except Exception:
         pass
-    return 8.0
+    return min_height
 
 
-def _feature_collection(gdf: gpd.GeoDataFrame, limit: int, simplify: float, layer: str) -> dict[str, Any]:
+def _feature_collection(
+    gdf: gpd.GeoDataFrame,
+    limit: int,
+    simplify: float,
+    layer: str,
+    *,
+    building_min_height: float = 5.0,
+    building_height_multiplier: float = 1.8,
+) -> dict[str, Any]:
     features = []
     if gdf is None or gdf.empty:
         return {"type": "FeatureCollection", "features": []}
@@ -226,7 +257,7 @@ def _feature_collection(gdf: gpd.GeoDataFrame, limit: int, simplify: float, laye
                 geom = geom.simplify(simplify, preserve_topology=True)
             props = {"layer": layer}
             if layer == "buildings":
-                props["height_m"] = _height_from_row(row)
+                props["height_m"] = _height_from_row(row, building_min_height, building_height_multiplier)
             if row.get("name") is not None:
                 props["name"] = str(row.get("name"))[:80]
             features.append({"type": "Feature", "properties": props, "geometry": mapping(geom)})
@@ -244,12 +275,26 @@ def build_fast_preview(
     include_buildings: bool = True,
     include_water: bool = True,
     include_parks: bool = True,
+    road_width_multiplier: float = 0.8,
+    building_min_height: float = 5.0,
+    building_height_multiplier: float = 1.8,
+    model_size_mm: float = 180.0,
+    terrain_z_scale: float = 0.5,
+    terrain_resolution: int = 180,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     payload = {
-        "v": 7,
+        "v": 8,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
+        "model_logic": {
+            "road_width_multiplier": road_width_multiplier,
+            "building_min_height": building_min_height,
+            "building_height_multiplier": building_height_multiplier,
+            "model_size_mm": model_size_mm,
+            "terrain_z_scale": terrain_z_scale,
+            "terrain_resolution": terrain_resolution,
+        },
         "layers": {
             "terrain": include_terrain,
             "roads": include_roads,
@@ -287,7 +332,9 @@ def build_fast_preview(
         polygon_geojson,
     )
     raw_roads = _filter_by_tag(all_features, "highway") if include_roads else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    roads = _build_preview_road_mask(raw_roads, bounds, polygon_geojson) if include_roads else raw_roads
+    roads = _build_preview_road_mask(raw_roads, bounds, polygon_geojson, road_width_multiplier) if include_roads else raw_roads
+    if include_roads and include_buildings:
+        roads = _clip_to_selection(_subtract_buildings_from_roads(roads, buildings), bounds, polygon_geojson)
     water = _clip_to_selection(
         _merge_frames(_filter_by_tag(all_features, "natural", "water"), _filter_by_tag(all_features, "waterway")) if include_water else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326"),
         bounds,
@@ -313,9 +360,17 @@ def build_fast_preview(
         "bounds": bounds,
         "center": center,
         "selection": mapping(selection),
+        "model_logic": payload["model_logic"],
         "layers": {
             "terrain": {"enabled": include_terrain},
-            "buildings": _feature_collection(buildings, MAX_FEATURES["buildings"], 0.00001, "buildings"),
+            "buildings": _feature_collection(
+                buildings,
+                MAX_FEATURES["buildings"],
+                0.00001,
+                "buildings",
+                building_min_height=building_min_height,
+                building_height_multiplier=building_height_multiplier,
+            ),
             "roads": _feature_collection(roads, MAX_FEATURES["roads"], 0.000004, "roads"),
             "water": _feature_collection(water, MAX_FEATURES["water"], 0.00001, "water"),
             "parks": _feature_collection(parks, MAX_FEATURES["parks"], 0.00001, "parks"),

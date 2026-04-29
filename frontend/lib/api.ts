@@ -42,6 +42,12 @@ export interface PreviewRequest {
   include_buildings?: boolean;
   include_water?: boolean;
   include_parks?: boolean;
+  road_width_multiplier?: number;
+  building_min_height?: number;
+  building_height_multiplier?: number;
+  model_size_mm?: number;
+  terrain_z_scale?: number;
+  terrain_resolution?: number;
 }
 
 export interface FastPreviewResponse {
@@ -64,6 +70,7 @@ export interface FastPreviewResponse {
     parks: number;
     elapsed_ms: number;
   };
+  model_logic?: Record<string, any>;
 }
 
 export interface SiteOrderRequest {
@@ -78,11 +85,20 @@ export interface SiteOrderRequest {
   layers: Record<string, boolean>;
   price_uah?: number;
   comment?: string;
+  area_mode?: string;
+  selected_zones?: any[];
+  grid_type?: string;
+  hex_size_m?: number;
+  preview_metrics?: Record<string, any>;
+  model_logic?: Record<string, any>;
+  generation_request?: GenerationRequest;
 }
 
 export interface GenerationResponse {
   task_id: string;
   status: string;
+  message?: string;
+  all_task_ids?: string[];
 }
 
 export interface TaskStatus {
@@ -141,6 +157,16 @@ export const api = {
   async getAdminOrders(token?: string): Promise<{ orders: any[] }> {
     const params = token ? `?token=${encodeURIComponent(token)}` : "";
     const response = await axios.get(`${API_BASE_URL}/api/admin/orders${params}`);
+    return response.data;
+  },
+
+  async startOrderGeneration(orderId: string, token?: string): Promise<GenerationResponse> {
+    const params = token ? `?token=${encodeURIComponent(token)}` : "";
+    const response = await axios.post<GenerationResponse>(
+      `${API_BASE_URL}/api/admin/orders/${encodeURIComponent(orderId)}/generate${params}`,
+      {},
+      { timeout: 30000 }
+    );
     return response.data;
   },
 

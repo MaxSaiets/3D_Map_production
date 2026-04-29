@@ -15,7 +15,7 @@ load_dotenv()
 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, Tuple
+from typing import Any, Optional, List, Tuple
 import os
 import json
 import uuid
@@ -372,6 +372,12 @@ class PreviewRequest(BaseModel):
     include_buildings: bool = True
     include_water: bool = True
     include_parks: bool = True
+    road_width_multiplier: float = 0.8
+    building_min_height: float = 5.0
+    building_height_multiplier: float = 1.8
+    model_size_mm: float = 180.0
+    terrain_z_scale: float = 0.5
+    terrain_resolution: int = 180
 
 
 class SiteOrderRequest(BaseModel):
@@ -386,6 +392,92 @@ class SiteOrderRequest(BaseModel):
     layers: dict = Field(default_factory=dict)
     price_uah: Optional[int] = None
     comment: str = ""
+    area_mode: str = "rect"
+    selected_zones: List[dict] = Field(default_factory=list)
+    grid_type: str = "rect"
+    hex_size_m: float = 650.0
+    preview_metrics: dict = Field(default_factory=dict)
+    model_logic: dict = Field(default_factory=dict)
+    generation_request: Optional[dict] = None
+
+
+def _order_path(order_id: str) -> Path:
+    safe_id = "".join(ch for ch in order_id if ch.isalnum() or ch in {"-", "_"})
+    return ORDERS_DIR / f"{safe_id}.json"
+
+
+def _read_order(order_id: str) -> dict[str, Any]:
+    path = _order_path(order_id)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Заявку не знайдено")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Не вдалося прочитати заявку: {exc}")
+
+
+def _write_order(order: dict[str, Any]) -> None:
+    _order_path(str(order["id"])).write_text(json.dumps(order, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _bounds_from_order(order: dict[str, Any]) -> dict[str, float]:
+    bounds = order.get("bounds") or {}
+    return {
+        "north": float(bounds.get("north")),
+        "south": float(bounds.get("south")),
+        "east": float(bounds.get("east")),
+        "west": float(bounds.get("west")),
+    }
+
+
+def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(order.get("generation_request"), dict):
+        request = dict(order["generation_request"])
+    else:
+        bounds = _bounds_from_order(order)
+        layers = order.get("layers") or {}
+        request = {
+            **bounds,
+            "road_width_multiplier": 0.8,
+            "road_height_mm": 0.5,
+            "road_embed_mm": 0.3,
+            "building_min_height": 5.0,
+            "building_height_multiplier": 1.8,
+            "building_foundation_mm": 0.6,
+            "building_embed_mm": 0.2,
+            "building_max_foundation_mm": 5.0,
+            "water_depth": 1.2,
+            "terrain_enabled": bool(layers.get("terrain", True)),
+            "terrain_z_scale": 0.5,
+            "terrain_base_thickness_mm": 0.3,
+            "terrain_resolution": 180,
+            "terrarium_zoom": 15,
+            "terrain_subdivide": False,
+            "terrain_subdivide_levels": 1,
+            "terrain_smoothing_sigma": 2.0,
+            "flatten_buildings_on_terrain": True,
+            "flatten_roads_on_terrain": False,
+            "export_format": "3mf",
+            "model_size_mm": float(order.get("model_size_mm") or 180.0),
+            "context_padding_m": 400.0,
+            "terrain_only": False,
+            "include_parks": bool(layers.get("parks", True)),
+            "parks_height_mm": 0.6,
+            "parks_embed_mm": 1.0,
+            "preview_include_base": bool(layers.get("terrain", True)),
+            "preview_include_roads": bool(layers.get("roads", True)),
+            "preview_include_buildings": bool(layers.get("buildings", True)),
+            "preview_include_water": bool(layers.get("water", True)),
+            "preview_include_parks": bool(layers.get("parks", True)),
+            "hex_size_m": float(order.get("hex_size_m") or 650.0),
+            "is_ams_mode": False,
+        }
+    bounds = _bounds_from_order(order)
+    for key, value in bounds.items():
+        request.setdefault(key, value)
+    request.setdefault("model_size_mm", float(order.get("model_size_mm") or 180.0))
+    request.setdefault("hex_size_m", float(order.get("hex_size_m") or 650.0))
+    return request
 
 
 @app.get("/")
@@ -421,6 +513,12 @@ async def create_fast_preview(request: PreviewRequest):
         include_buildings=request.include_buildings,
         include_water=request.include_water,
         include_parks=request.include_parks,
+        road_width_multiplier=request.road_width_multiplier,
+        building_min_height=request.building_min_height,
+        building_height_multiplier=request.building_height_multiplier,
+        model_size_mm=request.model_size_mm,
+        terrain_z_scale=request.terrain_z_scale,
+        terrain_resolution=request.terrain_resolution,
     )
 
 
@@ -428,6 +526,7 @@ async def create_fast_preview(request: PreviewRequest):
 async def create_site_order(request: SiteOrderRequest):
     order_id = f"R-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
     payload = request.model_dump()
+    payload["generation_request"] = _synthesize_generation_request(payload)
     payload.update(
         {
             "id": order_id,
@@ -435,7 +534,7 @@ async def create_site_order(request: SiteOrderRequest):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
     )
-    (ORDERS_DIR / f"{order_id}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_order(payload)
     return {"ok": True, "order_id": order_id}
 
 
@@ -451,6 +550,42 @@ async def list_site_orders(token: Optional[str] = Query(default=None)):
         except Exception:
             continue
     return {"orders": orders}
+
+
+@app.post("/api/admin/orders/{order_id}/generate", response_model=GenerationResponse)
+async def start_order_generation(order_id: str, background_tasks: BackgroundTasks, token: Optional[str] = Query(default=None)):
+    expected = os.getenv("ADMIN_API_TOKEN")
+    if expected and token != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    order = _read_order(order_id)
+    request_payload = _synthesize_generation_request(order)
+    selected_zones = order.get("selected_zones") or []
+
+    try:
+        if selected_zones:
+            zone_request_payload = dict(request_payload)
+            zone_request_payload["zones"] = selected_zones
+            zone_request_payload["hex_size_m"] = float(order.get("hex_size_m") or request_payload.get("hex_size_m") or 650.0)
+            response = await generate_zones_endpoint(ZoneGenerationRequest(**zone_request_payload), background_tasks)
+        else:
+            response = await generate_model(GenerationRequest(**request_payload), background_tasks)
+
+        order["generation_request"] = request_payload
+        order["generation_task_id"] = response.task_id
+        order["generation_all_task_ids"] = response.all_task_ids or []
+        order["generation_status"] = response.status
+        order["status"] = "in_progress"
+        order["generated_at"] = datetime.now(timezone.utc).isoformat()
+        _write_order(order)
+        return response
+    except HTTPException:
+        raise
+    except Exception as exc:
+        order["generation_status"] = "failed_to_start"
+        order["generation_error"] = str(exc)
+        _write_order(order)
+        raise HTTPException(status_code=500, detail=f"Не вдалося запустити Blender: {exc}")
 
 
 @app.post("/api/generate", response_model=GenerationResponse)

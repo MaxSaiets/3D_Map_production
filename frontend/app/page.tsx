@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { FastPreview3D } from "@/components/FastPreview3D";
 import type { MapSelection } from "@/components/MapSelector";
-import { api, type FastPreviewResponse } from "@/lib/api";
+import { api, type FastPreviewResponse, type GenerationRequest } from "@/lib/api";
 
 const MapSelector = dynamic(
   () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
@@ -157,6 +157,31 @@ export default function Home() {
   }, [areaMode, selectedZones, selection]);
   const activeLayers = Object.values(layers).filter(Boolean).length;
   const price = 690 + Math.round(modelSizeMm * 4.2) + activeLayers * 120 + Math.round(areaKm2(activeBounds) * 80);
+  const buildGenerationRequest = useCallback((): GenerationRequest => ({
+    ...activeBounds,
+    road_width_multiplier: 0.8,
+    road_height_mm: 0.5,
+    road_embed_mm: 0.3,
+    building_min_height: 5.0,
+    building_height_multiplier: 1.8,
+    building_foundation_mm: 0.6,
+    building_embed_mm: 0.2,
+    water_depth: 1.2,
+    terrain_enabled: layers.terrain,
+    terrain_z_scale: 0.5,
+    terrain_base_thickness_mm: 0.3,
+    terrain_resolution: 180,
+    terrarium_zoom: 15,
+    flatten_buildings_on_terrain: true,
+    export_format: "3mf",
+    model_size_mm: modelSizeMm,
+    is_ams_mode: false,
+    preview_include_base: layers.terrain,
+    preview_include_roads: layers.roads,
+    preview_include_buildings: layers.buildings,
+    preview_include_water: layers.water,
+    preview_include_parks: layers.parks,
+  }), [activeBounds, layers, modelSizeMm]);
 
   useEffect(() => {
     setSelection({
@@ -188,6 +213,12 @@ export default function Home() {
         include_buildings: layers.buildings,
         include_water: layers.water,
         include_parks: layers.parks,
+        road_width_multiplier: buildGenerationRequest().road_width_multiplier,
+        building_min_height: buildGenerationRequest().building_min_height,
+        building_height_multiplier: buildGenerationRequest().building_height_multiplier,
+        model_size_mm: modelSizeMm,
+        terrain_z_scale: buildGenerationRequest().terrain_z_scale,
+        terrain_resolution: buildGenerationRequest().terrain_resolution,
       });
       setPreview(data);
     } catch (error: any) {
@@ -195,7 +226,7 @@ export default function Home() {
     } finally {
       setPreviewLoading(false);
     }
-  }, [activeBounds, activePolygon, layers]);
+  }, [activeBounds, activePolygon, buildGenerationRequest, layers, modelSizeMm]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -211,6 +242,7 @@ export default function Home() {
     }
     setOrderState("sending");
     try {
+      const generationRequest = buildGenerationRequest();
       await api.createSiteOrder({
         name,
         contact,
@@ -223,6 +255,13 @@ export default function Home() {
         layers,
         price_uah: price,
         comment,
+        area_mode: areaMode,
+        selected_zones: selectedZones,
+        grid_type: areaMode === "hex" ? "hexagonal" : areaMode === "grid" ? "square" : areaMode,
+        hex_size_m: areaMode === "hex" ? 650 : 800,
+        preview_metrics: preview?.metrics ?? {},
+        model_logic: preview?.model_logic ?? {},
+        generation_request: generationRequest,
       });
       setOrderState("sent");
     } catch {
