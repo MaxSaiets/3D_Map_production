@@ -418,6 +418,22 @@ def _geometry_feature_collection(
     return {"type": "FeatureCollection", "features": features}
 
 
+def _clip_mask_to_zone(geometry: BaseGeometry | None, zone_polygon: BaseGeometry | None) -> BaseGeometry | None:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return None
+    if zone_polygon is None or getattr(zone_polygon, "is_empty", True):
+        return geometry
+    try:
+        clipped = geometry.intersection(zone_polygon)
+        if clipped is None or getattr(clipped, "is_empty", True):
+            return None
+        if "Polygon" in str(getattr(clipped, "geom_type", "")):
+            return clipped.buffer(0)
+        return clipped
+    except Exception:
+        return geometry
+
+
 def _canonical_building_collection(
     *,
     gdf_buildings_local: Optional[gpd.GeoDataFrame],
@@ -566,6 +582,7 @@ def _build_preview_canonical_masks(
         building_polygons=building_exclusion_for_roads,
         return_result=True,
     )
+    zone_polygon = zone.zone_polygon_local
     parks_final = _subtract_masks(
         parks_result.processed_polygons if parks_result is not None else None,
         road_insert,
@@ -585,12 +602,12 @@ def _build_preview_canonical_masks(
         road_groove,
     )
     return SimpleNamespace(
-        zone_polygon=zone.zone_polygon_local,
-        roads_final=road_insert,
-        road_groove_mask=road_groove,
-        parks_final=parks_final,
-        water_final=water_final,
-        buildings_footprints=buildings_final,
+        zone_polygon=zone_polygon,
+        roads_final=_clip_mask_to_zone(road_insert, zone_polygon),
+        road_groove_mask=_clip_mask_to_zone(road_groove, zone_polygon),
+        parks_final=_clip_mask_to_zone(parks_final, zone_polygon),
+        water_final=_clip_mask_to_zone(water_final, zone_polygon),
+        buildings_footprints=_clip_mask_to_zone(buildings_final, zone_polygon),
         building_geometry=building_geometry,
         road_geometry=road_geometry,
         preclip_result=preclip_result,
@@ -712,8 +729,11 @@ def _build_canonical_preview(
         reference_xy_m=zone_geometry.reference_xy_m,
         zone_prefix="[preview] ",
     )
+    zone_polygon_local = zone_geometry.zone_polygon_local
+    if zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True):
+        zone_polygon_local = box(*zone_context.bbox_meters)
     zone = ZonePreparationResult(
-        zone_polygon_local=zone_geometry.zone_polygon_local,
+        zone_polygon_local=zone_polygon_local,
         reference_xy_m=zone_geometry.reference_xy_m,
         bbox_meters=zone_context.bbox_meters,
         scale_factor=float(zone_context.scale_factor),
@@ -862,7 +882,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 11,
+        "v": 12,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
