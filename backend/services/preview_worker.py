@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
 import sys
 import time
 from pathlib import Path
 
 from services.site_preview import PREVIEW_JOBS_DIR, build_preview_cache_from_worker_payload
+
+
+class PreviewWorkerTimeout(TimeoutError):
+    pass
+
+
+def _install_timeout_guard() -> None:
+    timeout_seconds = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "600"))
+    if timeout_seconds <= 0 or not hasattr(signal, "SIGALRM"):
+        return
+
+    def _handle_timeout(_signum, _frame):
+        raise PreviewWorkerTimeout(f"Preview worker exceeded {timeout_seconds}s")
+
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.alarm(timeout_seconds)
 
 
 def main() -> int:
@@ -23,7 +41,10 @@ def main() -> int:
         encoding="utf-8",
     )
     try:
+        _install_timeout_guard()
         result = build_preview_cache_from_worker_payload(payload)
+        if hasattr(signal, "SIGALRM"):
+            signal.alarm(0)
         status_file.write_text(
             json.dumps(
                 {

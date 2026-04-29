@@ -231,7 +231,9 @@ export function FastPreview3D({
   onReset?: () => void;
 }) {
   const processing = preview?.preview_status === "processing";
-  const ready = Boolean(preview && !processing && !loading && !error);
+  const failed = preview?.preview_status === "failed";
+  const ready = Boolean(preview && !processing && !failed && !loading && !error);
+  const previewMessage = String(preview?.model_logic?.preview_message || "");
 
   return (
     <div className="relative h-full min-h-[300px] w-full overflow-hidden bg-[#fbf8ef]">
@@ -240,12 +242,12 @@ export function FastPreview3D({
           <div className="max-w-[260px] text-center">
             <div className="mx-auto mb-4 h-20 w-28 rounded-[8px] border border-[#ddd4c4] bg-[#f0eadf] shadow-inner" />
             <div className="font-serif text-xl text-[#1f2420]">
-              {loading || processing ? "Готуємо точне preview" : error ? "Preview не вдалося створити" : "Виділіть ділянку на мапі"}
+              {loading || processing ? "Готуємо точне preview" : error || failed ? "Preview не вдалося створити" : "Виділіть ділянку на мапі"}
             </div>
             <p className="mt-2 text-xs leading-5 text-[#777064]">
               {loading || processing
-                ? "Рахуємо ті самі canonical-маски, які використовує повна 3D-генерація. Перший запуск може тривати довше, потім результат береться з кешу."
-                : error || "Після вибору району тут зʼявиться проста модель з дорогами, будівлями, водою і парками."}
+                ? previewMessage || "Рахуємо ті самі canonical-маски, які використовує повна 3D-генерація. Перший запуск може тривати довше, потім результат береться з кешу."
+                : error || previewMessage || "Після вибору району тут зʼявиться проста модель з дорогами, будівлями, водою і парками."}
             </p>
           </div>
         </div>

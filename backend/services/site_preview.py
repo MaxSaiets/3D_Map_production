@@ -46,6 +46,9 @@ PREVIEW_CANONICAL_DIR = PREVIEW_CACHE_DIR / "canonical"
 PREVIEW_CANONICAL_DIR.mkdir(parents=True, exist_ok=True)
 PREVIEW_JOBS_DIR = PREVIEW_CACHE_DIR / "jobs"
 PREVIEW_JOBS_DIR.mkdir(parents=True, exist_ok=True)
+PREVIEW_WORKER_TIMEOUT_SECONDS = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "600"))
+PREVIEW_MAX_ACTIVE_WORKERS = int(os.getenv("PREVIEW_MAX_ACTIVE_WORKERS", "1"))
+PREVIEW_FAILED_RETRY_DELAY_SECONDS = int(os.getenv("PREVIEW_FAILED_RETRY_DELAY_SECONDS", "90"))
 
 MAX_FEATURES = {
     "buildings": 220,
@@ -839,27 +842,68 @@ def _pending_preview_response(
     }
 
 
+def _read_preview_job_status(preview_id: str) -> dict[str, Any] | None:
+    status_file = PREVIEW_JOBS_DIR / f"{preview_id}.status.json"
+    try:
+        if status_file.exists():
+            return json.loads(status_file.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return None
+
+
+def _active_preview_worker_count(now: float) -> int:
+    active = 0
+    for status_file in PREVIEW_JOBS_DIR.glob("*.status.json"):
+        try:
+            status = json.loads(status_file.read_text(encoding="utf-8"))
+            if status.get("status") != "running":
+                continue
+            started_at = float(status.get("started_at", now))
+            if now - started_at < PREVIEW_WORKER_TIMEOUT_SECONDS:
+                active += 1
+        except Exception:
+            continue
+    return active
+
+
 def _start_preview_worker_if_needed(
     *,
     preview_id: str,
     worker_payload: dict[str, Any],
-) -> None:
+) -> dict[str, Any]:
     status_file = PREVIEW_JOBS_DIR / f"{preview_id}.status.json"
     input_file = PREVIEW_JOBS_DIR / f"{preview_id}.input.json"
     now = time.time()
     try:
         if status_file.exists():
             status = json.loads(status_file.read_text(encoding="utf-8"))
-            if status.get("status") == "running" and now - float(status.get("started_at", now)) < 900:
-                return
+            state = status.get("status")
+            started_at = float(status.get("started_at", now))
+            finished_at = float(status.get("finished_at", now))
+            if state == "running" and now - started_at < PREVIEW_WORKER_TIMEOUT_SECONDS:
+                return status
+            if state == "queued" and _active_preview_worker_count(now) >= PREVIEW_MAX_ACTIVE_WORKERS:
+                return status
+            if state == "failed" and now - finished_at < PREVIEW_FAILED_RETRY_DELAY_SECONDS:
+                return status
     except Exception:
         pass
 
+    if _active_preview_worker_count(now) >= PREVIEW_MAX_ACTIVE_WORKERS:
+        queued_status = {
+            "status": "queued",
+            "queued_at": now,
+            "preview_id": preview_id,
+            "message": "Інше точне preview ще рахується. Цей запит запуститься автоматично.",
+        }
+        input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
+        status_file.write_text(json.dumps(queued_status, ensure_ascii=False), encoding="utf-8")
+        return queued_status
+
     input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
-    status_file.write_text(
-        json.dumps({"status": "running", "started_at": now, "preview_id": preview_id}, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    running_status = {"status": "running", "started_at": now, "preview_id": preview_id}
+    status_file.write_text(json.dumps(running_status, ensure_ascii=False), encoding="utf-8")
     backend_root = Path(__file__).resolve().parents[1]
     subprocess.Popen(
         [sys.executable, "-m", "services.preview_worker", str(input_file)],
@@ -868,6 +912,7 @@ def _start_preview_worker_if_needed(
         stderr=subprocess.DEVNULL,
         close_fds=(os.name != "nt"),
     )
+    return running_status
 
 
 def build_preview_cache_from_worker_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -960,7 +1005,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 13,
+        "v": 14,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
@@ -996,12 +1041,24 @@ def build_fast_preview(
         "request": dict(vars(request_ns)),
         "cache_file": str(cache_file),
     }
-    _start_preview_worker_if_needed(preview_id=preview_id, worker_payload=worker_payload)
+    job_status = _start_preview_worker_if_needed(preview_id=preview_id, worker_payload=worker_payload)
+    state = str(job_status.get("status", "processing"))
+    if state == "failed":
+        return _pending_preview_response(
+            preview_id=preview_id,
+            bounds=bounds,
+            polygon_geojson=polygon_geojson,
+            model_logic=model_logic,
+            status="failed",
+            message=str(job_status.get("error") or "Точне preview не вдалося підготувати. Спробуйте меншу ділянку або інший район."),
+        )
     return _pending_preview_response(
         preview_id=preview_id,
         bounds=bounds,
         polygon_geojson=polygon_geojson,
         model_logic=model_logic,
+        status="processing",
+        message=str(job_status.get("message") or "Точне preview готується з тієї ж pipeline-логіки, що й 3D-модель."),
     )
 
     selection = _selection_geometry(bounds, polygon_geojson)

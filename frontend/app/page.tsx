@@ -226,6 +226,8 @@ export default function Home() {
         window.setTimeout(() => {
           reloadPreview();
         }, 5000);
+      } else if (data.preview_status === "failed") {
+        setPreviewError(String(data.model_logic?.preview_message || "Preview не вдалося створити"));
       }
     } catch (error: any) {
       setPreviewError(error?.response?.data?.detail || error?.message || "Помилка preview");
@@ -517,8 +519,8 @@ export default function Home() {
                   <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#8a8173]">Preview</p>
                   <h2 className="font-serif text-xl">Як виглядатиме модель</h2>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${previewLoading ? "bg-[#efe6d8] text-[#8a5a40]" : previewError ? "bg-[#f3ded8] text-[#8a3b2f]" : "bg-[#dde9df] text-[#1f5b49]"}`}>
-                  {previewLoading ? "оновлення" : previewError ? "помилка" : "готово"}
+                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${previewLoading || preview?.preview_status === "processing" ? "bg-[#efe6d8] text-[#8a5a40]" : previewError || preview?.preview_status === "failed" ? "bg-[#f3ded8] text-[#8a3b2f]" : "bg-[#dde9df] text-[#1f5b49]"}`}>
+                  {previewLoading || preview?.preview_status === "processing" ? "рахується" : previewError || preview?.preview_status === "failed" ? "помилка" : "готово"}
                 </span>
               </div>
               <div className="h-[360px]">
