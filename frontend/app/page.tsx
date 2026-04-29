@@ -318,9 +318,20 @@ export default function Home() {
           <div className="hidden items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-[#746c60] sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#1f5b49]" />
             Виготовлення 3 дні
-            <a href="/account" className="rounded-[6px] bg-[#1f2420] px-3 py-2 text-white normal-case tracking-normal">
-              {user ? "Мій кабінет" : "Увійти"}
-            </a>
+            {user ? (
+              <a href="/account" className="rounded-[6px] bg-[#1f2420] px-3 py-2 text-white normal-case tracking-normal">
+                Мій кабінет
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void signIn()}
+                disabled={authLoading}
+                className="rounded-[6px] bg-[#1f2420] px-3 py-2 text-white normal-case tracking-normal disabled:opacity-60"
+              >
+                Увійти
+              </button>
+            )}
           </div>
         </header>
 
