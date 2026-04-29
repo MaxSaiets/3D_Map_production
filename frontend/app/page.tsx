@@ -222,6 +222,11 @@ export default function Home() {
         include_parks: generationRequest.preview_include_parks,
       });
       setPreview(data);
+      if (data.preview_status === "processing") {
+        window.setTimeout(() => {
+          reloadPreview();
+        }, 5000);
+      }
     } catch (error: any) {
       setPreviewError(error?.response?.data?.detail || error?.message || "Помилка preview");
     } finally {

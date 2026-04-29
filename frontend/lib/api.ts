@@ -61,6 +61,7 @@ export interface PreviewRequest {
 
 export interface FastPreviewResponse {
   preview_id: string;
+  preview_status?: "processing" | "ready" | "failed";
   cached: boolean;
   bounds: { north: number; south: number; east: number; west: number };
   center: { lat: number; lng: number };

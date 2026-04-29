@@ -5,6 +5,8 @@ import hashlib
 import json
 import math
 import os
+import subprocess
+import sys
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -42,6 +44,8 @@ PREVIEW_CACHE_DIR = Path(os.getenv("PREVIEW_CACHE_DIR", "cache/site_previews"))
 PREVIEW_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 PREVIEW_CANONICAL_DIR = PREVIEW_CACHE_DIR / "canonical"
 PREVIEW_CANONICAL_DIR.mkdir(parents=True, exist_ok=True)
+PREVIEW_JOBS_DIR = PREVIEW_CACHE_DIR / "jobs"
+PREVIEW_JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FEATURES = {
     "buildings": 220,
@@ -71,6 +75,10 @@ ROAD_WIDTH_MAP_M = {
 def _cache_key(payload: dict[str, Any]) -> str:
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def _empty_collection() -> dict[str, Any]:
+    return {"type": "FeatureCollection", "features": []}
 
 
 def _bbox_from_bounds(bounds: dict[str, float]) -> Polygon:
@@ -795,6 +803,93 @@ def _build_canonical_preview(
     return result
 
 
+def _pending_preview_response(
+    *,
+    preview_id: str,
+    bounds: dict[str, float],
+    polygon_geojson: Optional[dict[str, Any]],
+    model_logic: dict[str, Any],
+    status: str = "processing",
+    message: str = "Точне preview готується з тієї ж pipeline-логіки, що й 3D-модель.",
+) -> dict[str, Any]:
+    center = {
+        "lat": (float(bounds["north"]) + float(bounds["south"])) / 2.0,
+        "lng": (float(bounds["east"]) + float(bounds["west"])) / 2.0,
+    }
+    return {
+        "preview_id": preview_id,
+        "preview_status": status,
+        "cached": False,
+        "bounds": bounds,
+        "center": center,
+        "selection": mapping(_selection_geometry(bounds, polygon_geojson)),
+        "model_logic": {
+            **model_logic,
+            "preview_source": "full_generation_pipeline_canonical_2d_pending",
+            "preview_message": message,
+        },
+        "layers": {
+            "terrain": {"enabled": True},
+            "buildings": _empty_collection(),
+            "roads": _empty_collection(),
+            "water": _empty_collection(),
+            "parks": _empty_collection(),
+        },
+        "metrics": {"buildings": 0, "roads": 0, "water": 0, "parks": 0, "elapsed_ms": 0},
+    }
+
+
+def _start_preview_worker_if_needed(
+    *,
+    preview_id: str,
+    worker_payload: dict[str, Any],
+) -> None:
+    status_file = PREVIEW_JOBS_DIR / f"{preview_id}.status.json"
+    input_file = PREVIEW_JOBS_DIR / f"{preview_id}.input.json"
+    now = time.time()
+    try:
+        if status_file.exists():
+            status = json.loads(status_file.read_text(encoding="utf-8"))
+            if status.get("status") == "running" and now - float(status.get("started_at", now)) < 900:
+                return
+    except Exception:
+        pass
+
+    input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
+    status_file.write_text(
+        json.dumps({"status": "running", "started_at": now, "preview_id": preview_id}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    backend_root = Path(__file__).resolve().parents[1]
+    subprocess.Popen(
+        [sys.executable, "-m", "services.preview_worker", str(input_file)],
+        cwd=str(backend_root),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        close_fds=(os.name != "nt"),
+    )
+
+
+def build_preview_cache_from_worker_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    result = _build_canonical_preview(
+        preview_id=str(payload["preview_id"]),
+        bounds=payload["bounds"],
+        polygon_geojson=payload.get("polygon_geojson"),
+        include_terrain=bool(payload.get("include_terrain", True)),
+        include_roads=bool(payload.get("include_roads", True)),
+        include_buildings=bool(payload.get("include_buildings", True)),
+        include_water=bool(payload.get("include_water", True)),
+        include_parks=bool(payload.get("include_parks", True)),
+        model_logic=payload["model_logic"],
+        request_ns=SimpleNamespace(**payload["request"]),
+        started=time.perf_counter(),
+    )
+    result["preview_status"] = "ready"
+    cache_file = Path(payload["cache_file"])
+    cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    return result
+
+
 def build_fast_preview(
     *,
     bounds: dict[str, float],
@@ -883,29 +978,31 @@ def build_fast_preview(
         try:
             cached = json.loads(cache_file.read_text(encoding="utf-8"))
             cached["cached"] = True
+            cached["preview_status"] = "ready"
             return cached
         except Exception:
             pass
 
-    try:
-        result = _build_canonical_preview(
-            preview_id=preview_id,
-            bounds=bounds,
-            polygon_geojson=polygon_geojson,
-            include_terrain=include_terrain,
-            include_roads=include_roads,
-            include_buildings=include_buildings,
-            include_water=include_water,
-            include_parks=include_parks,
-            model_logic=model_logic,
-            request_ns=request_ns,
-            started=started,
-        )
-        cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
-        return result
-    except Exception as exc:
-        print(f"[ERROR] Full-pipeline canonical preview failed: {exc}")
-        raise
+    worker_payload = {
+        "preview_id": preview_id,
+        "bounds": bounds,
+        "polygon_geojson": polygon_geojson,
+        "include_terrain": include_terrain,
+        "include_roads": include_roads,
+        "include_buildings": include_buildings,
+        "include_water": include_water,
+        "include_parks": include_parks,
+        "model_logic": model_logic,
+        "request": dict(vars(request_ns)),
+        "cache_file": str(cache_file),
+    }
+    _start_preview_worker_if_needed(preview_id=preview_id, worker_payload=worker_payload)
+    return _pending_preview_response(
+        preview_id=preview_id,
+        bounds=bounds,
+        polygon_geojson=polygon_geojson,
+        model_logic=model_logic,
+    )
 
     selection = _selection_geometry(bounds, polygon_geojson)
     all_features = _features_from_bbox(
