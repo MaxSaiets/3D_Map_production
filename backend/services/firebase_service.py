@@ -1,6 +1,6 @@
 
 import firebase_admin
-from firebase_admin import credentials, storage
+from firebase_admin import auth, credentials, storage
 import os
 import datetime
 import time
@@ -13,38 +13,62 @@ class FirebaseService:
     _bucket = None
 
     @classmethod
+    def _load_credentials(cls):
+        cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "serviceAccountKey.json")
+        cred_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+        if cred_json:
+            import json
+            print("[INFO] Loading Firebase credentials from environment variable...")
+            return credentials.Certificate(json.loads(cred_json))
+        if os.path.exists(cred_path):
+            print(f"[INFO] Loading Firebase credentials from file: {cred_path}")
+            return credentials.Certificate(cred_path)
+        print(f"[WARN] Firebase credentials not found (checked env var and {cred_path}). Firebase admin disabled.")
+        return None
+
+    @classmethod
+    def ensure_app(cls) -> bool:
+        try:
+            if not firebase_admin._apps:
+                cred = cls._load_credentials()
+                if cred is None:
+                    return False
+                options = {}
+                bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET")
+                if bucket_name:
+                    options["storageBucket"] = bucket_name
+                firebase_admin.initialize_app(cred, options)
+            return True
+        except Exception as e:
+            print(f"[ERROR] Failed to initialize Firebase admin app: {e}")
+            return False
+
+    @classmethod
+    def verify_id_token(cls, id_token: str) -> Optional[dict]:
+        if not id_token:
+            return None
+        if not cls.ensure_app():
+            return None
+        try:
+            return auth.verify_id_token(id_token, check_revoked=False)
+        except Exception as e:
+            print(f"[WARN] Firebase token verification failed: {e}")
+            return None
+
+    @classmethod
     def initialize(cls):
         if cls._initialized:
             return
 
-        cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "serviceAccountKey.json")
-        cred_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
         bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET")
-
         if not bucket_name:
+            cls.ensure_app()
             print("[WARN] FIREBASE_STORAGE_BUCKET not set. Firebase upload disabled.")
             return
-        
-        try:
-            cred = None
-            if cred_json:
-                import json
-                print("[INFO] Loading Firebase credentials from environment variable...")
-                cred_info = json.loads(cred_json)
-                cred = credentials.Certificate(cred_info)
-            elif os.path.exists(cred_path):
-                 print(f"[INFO] Loading Firebase credentials from file: {cred_path}")
-                 cred = credentials.Certificate(cred_path)
-            else:
-                 print(f"[WARN] Firebase credentials not found (checked env var and {cred_path}). Upload disabled.")
-                 return
 
-            # Check if likely already initialized
-            if not firebase_admin._apps:
-                firebase_admin.initialize_app(cred, {
-                    'storageBucket': bucket_name
-                })
-            
+        try:
+            if not cls.ensure_app():
+                return
             cls._bucket = storage.bucket()
             cls._initialized = True
             print(f"[INFO] Firebase initialized with bucket: {bucket_name}")

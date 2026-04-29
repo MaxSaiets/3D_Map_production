@@ -102,6 +102,74 @@ export interface GenerationResponse {
   all_task_ids?: string[];
 }
 
+export interface AccountUsage {
+  free_limit: number;
+  used: number;
+  completed: number;
+  remaining: number;
+}
+
+export interface AccountModel {
+  id: string;
+  task_id: string;
+  title: string;
+  city: string;
+  status: string;
+  progress: number;
+  message?: string;
+  created_at: string;
+  updated_at?: string;
+  finished_at?: string;
+  model_size_mm?: number;
+  material?: string;
+  layers?: Record<string, boolean>;
+  bounds?: { north: number; south: number; east: number; west: number };
+  preview_snapshot?: FastPreviewResponse | null;
+  download_url?: string | null;
+  download_url_3mf?: string | null;
+  download_url_stl?: string | null;
+  preview_3mf?: string | null;
+  firebase_url?: string | null;
+  error?: string | null;
+}
+
+export interface AccountResponse {
+  profile: {
+    uid: string;
+    email?: string;
+    name?: string;
+    picture?: string;
+    plan?: string;
+  };
+  usage: AccountUsage;
+  recent_models?: AccountModel[];
+  models?: AccountModel[];
+}
+
+export interface AccountGenerateRequest {
+  title: string;
+  city: string;
+  preview_id?: string;
+  preview_snapshot?: FastPreviewResponse | null;
+  bounds: { north: number; south: number; east: number; west: number };
+  polygon_geojson?: any;
+  model_size_mm: number;
+  material: string;
+  layers: Record<string, boolean>;
+  generation_request: GenerationRequest;
+}
+
+let authTokenProvider: (() => Promise<string | null>) | null = null;
+
+export function setApiAuthTokenProvider(provider: (() => Promise<string | null>) | null) {
+  authTokenProvider = provider;
+}
+
+async function authHeaders() {
+  const token = authTokenProvider ? await authTokenProvider() : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export interface TaskStatus {
   task_id: string;
   status: string;
@@ -175,6 +243,32 @@ export const api = {
     const response = await axios.post<GenerationResponse>(
       `${API_BASE_URL}/api/generate`,
       request
+    );
+    return response.data;
+  },
+
+  async getAccount(): Promise<AccountResponse> {
+    const response = await axios.get<AccountResponse>(`${API_BASE_URL}/api/account/me`, {
+      headers: await authHeaders(),
+    });
+    return response.data;
+  },
+
+  async getAccountModels(): Promise<AccountResponse> {
+    const response = await axios.get<AccountResponse>(`${API_BASE_URL}/api/account/models`, {
+      headers: await authHeaders(),
+    });
+    return response.data;
+  },
+
+  async startAccountGeneration(request: AccountGenerateRequest): Promise<GenerationResponse> {
+    const response = await axios.post<GenerationResponse>(
+      `${API_BASE_URL}/api/account/models/generate`,
+      request,
+      {
+        headers: await authHeaders(),
+        timeout: 30000,
+      }
     );
     return response.data;
   },

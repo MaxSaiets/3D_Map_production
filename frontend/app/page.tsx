@@ -8,6 +8,7 @@ import {
   Grid2X2,
   Hexagon,
   Layers3,
+  LogIn,
   Loader2,
   MapPinned,
   PenLine,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { FastPreview3D } from "@/components/FastPreview3D";
 import type { MapSelection } from "@/components/MapSelector";
+import { useAuth } from "@/components/AuthProvider";
 import { api, type FastPreviewResponse, type GenerationRequest } from "@/lib/api";
 
 const MapSelector = dynamic(
@@ -111,6 +113,7 @@ function money(value: number) {
 }
 
 export default function Home() {
+  const { user, loading: authLoading, configured: authConfigured, signIn } = useAuth();
   const [cityKey, setCityKey] = useState<keyof typeof CITIES>("Kyiv");
   const [areaMode, setAreaMode] = useState<AreaMode>("rect");
   const [selection, setSelection] = useState<MapSelection | null>({
@@ -143,6 +146,7 @@ export default function Home() {
   const [contact, setContact] = useState("");
   const [comment, setComment] = useState("");
   const [orderState, setOrderState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [accountGenerationState, setAccountGenerationState] = useState<"idle" | "sending" | "sent" | "limit" | "error">("idle");
 
   const city = CITIES[cityKey];
   const activeBounds = useMemo(() => {
@@ -270,6 +274,32 @@ export default function Home() {
     }
   };
 
+  const startFullModelInAccount = async () => {
+    if (!user) {
+      await signIn();
+      return;
+    }
+    setAccountGenerationState("sending");
+    try {
+      const generationRequest = buildGenerationRequest();
+      await api.startAccountGeneration({
+        title: `${city.label} · ${modelSizeMm / 10} см`,
+        city: city.label,
+        preview_id: preview?.preview_id,
+        preview_snapshot: preview,
+        bounds: activeBounds,
+        polygon_geojson: activePolygon,
+        model_size_mm: modelSizeMm,
+        material,
+        layers,
+        generation_request: generationRequest,
+      });
+      setAccountGenerationState("sent");
+    } catch (error: any) {
+      setAccountGenerationState(error?.response?.status === 402 ? "limit" : "error");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f3efe7] text-[#1f2420]">
       <div className="mx-auto max-w-[1640px] border-x border-[#dfd7c8] bg-[#f7f2e8] shadow-[0_22px_80px_rgba(38,33,24,0.08)]">
@@ -285,12 +315,16 @@ export default function Home() {
               <a className="border-b border-[#1f2420] pb-1 text-[#1f2420]" href="#constructor">Конструктор</a>
               <a href="#how">Як це працює</a>
               <a href="#order">Ціна</a>
+              <a href="/account">Кабінет</a>
               <a href="/admin">Адмінка</a>
             </nav>
           </div>
           <div className="hidden items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-[#746c60] sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#1f5b49]" />
             Виготовлення 3 дні
+            <a href="/account" className="rounded-[6px] bg-[#1f2420] px-3 py-2 text-white normal-case tracking-normal">
+              {user ? "Мій кабінет" : "Увійти"}
+            </a>
           </div>
         </header>
 
@@ -527,7 +561,22 @@ export default function Home() {
                 {orderState === "sent" ? "Заявку надіслано" : "Отримати preview і ціну"}
                 {orderState === "idle" && <ArrowRight size={16} />}
               </button>
+              <button
+                type="button"
+                onClick={startFullModelInAccount}
+                disabled={accountGenerationState === "sending" || (!authConfigured && !user) || authLoading}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-white/15 bg-white/8 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {accountGenerationState === "sending" ? <Loader2 size={16} className="animate-spin" /> : user ? <Layers3 size={16} /> : <LogIn size={16} />}
+                {accountGenerationState === "sent"
+                  ? "Повна модель додана в кабінет"
+                  : user
+                    ? "Створити повну модель у кабінеті"
+                    : "Увійти й отримати 10 генерацій"}
+              </button>
               {orderState === "error" && <p className="mt-2 text-xs text-[#f3b5a9]">Додайте контакт або спробуйте ще раз.</p>}
+              {accountGenerationState === "limit" && <p className="mt-2 text-xs text-[#f3b5a9]">Ліміт 10 генерацій вичерпано. Напишіть нам для продовження.</p>}
+              {accountGenerationState === "error" && <p className="mt-2 text-xs text-[#f3b5a9]">Не вдалося запустити повну генерацію. Перевірте кабінет або спробуйте ще раз.</p>}
             </div>
           </aside>
         </section>

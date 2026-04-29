@@ -1,5 +1,5 @@
 ﻿import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -101,6 +101,9 @@ OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 ORDERS_DIR = Path(os.getenv("ORDERS_DIR", "orders")).resolve()
 ORDERS_DIR.mkdir(parents=True, exist_ok=True)
+USER_DATA_DIR = Path(os.getenv("USER_DATA_DIR", "user_data")).resolve()
+USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+FREE_FULL_GENERATION_LIMIT = int(os.getenv("FREE_FULL_GENERATION_LIMIT", "10"))
 
 CANONICAL_CONTROL_BUNDLE_DIR = (Path("debug") / "generated" / "final_3d_input_masks_parks_fit_v006").resolve()
 CONTROL_ZONE_ID = "hex_43_38"
@@ -401,6 +404,163 @@ class SiteOrderRequest(BaseModel):
     generation_request: Optional[dict] = None
 
 
+class AccountGenerateRequest(BaseModel):
+    title: str = "3D-мапа"
+    city: str = "Київ"
+    preview_id: Optional[str] = None
+    preview_snapshot: Optional[dict] = None
+    bounds: dict
+    polygon_geojson: Optional[dict] = None
+    model_size_mm: float = 180.0
+    material: str = "white"
+    layers: dict = Field(default_factory=dict)
+    generation_request: dict
+
+
+def _safe_uid(uid: str) -> str:
+    return "".join(ch for ch in uid if ch.isalnum() or ch in {"-", "_"})[:128]
+
+
+def _user_dir(uid: str) -> Path:
+    path = USER_DATA_DIR / _safe_uid(uid)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _profile_path(uid: str) -> Path:
+    return _user_dir(uid) / "profile.json"
+
+
+def _models_dir(uid: str) -> Path:
+    path = _user_dir(uid) / "models"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _model_path(uid: str, model_id: str) -> Path:
+    safe_id = "".join(ch for ch in model_id if ch.isalnum() or ch in {"-", "_"})
+    return _models_dir(uid) / f"{safe_id}.json"
+
+
+def _read_json(path: Path, default: Any) -> Any:
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return default
+
+
+def _write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _current_user_from_token(authorization: Optional[str] = Header(default=None)) -> dict[str, Any]:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Потрібен вхід через Google")
+    decoded = FirebaseService.verify_id_token(authorization.split(" ", 1)[1].strip())
+    if not decoded:
+        raise HTTPException(status_code=401, detail="Firebase token недійсний або Firebase не налаштований")
+    uid = str(decoded.get("uid") or decoded.get("sub") or "")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Firebase token без uid")
+    return {
+        "uid": uid,
+        "email": decoded.get("email") or "",
+        "name": decoded.get("name") or decoded.get("email") or "Користувач",
+        "picture": decoded.get("picture") or "",
+    }
+
+
+def _ensure_user_profile(user: dict[str, Any]) -> dict[str, Any]:
+    path = _profile_path(user["uid"])
+    profile = _read_json(path, {})
+    now = datetime.now(timezone.utc).isoformat()
+    if not profile:
+        profile = {
+            "uid": user["uid"],
+            "email": user.get("email", ""),
+            "name": user.get("name", ""),
+            "picture": user.get("picture", ""),
+            "role": "customer",
+            "plan": "free",
+            "created_at": now,
+        }
+    profile.update({
+        "email": user.get("email", profile.get("email", "")),
+        "name": user.get("name", profile.get("name", "")),
+        "picture": user.get("picture", profile.get("picture", "")),
+        "last_login_at": now,
+    })
+    _write_json(path, profile)
+    return profile
+
+
+def _task_output_payload(task: GenerationTask) -> dict[str, Any]:
+    output_files = getattr(task, "output_files", {}) or {}
+
+    def to_static_url(path_str):
+        if not path_str:
+            return None
+        return f"/files/{Path(path_str).name}"
+
+    return {
+        "download_url": to_static_url(task.output_file) if task.output_file else to_static_url(output_files.get("3mf") or output_files.get("stl")),
+        "download_url_3mf": to_static_url(output_files.get("3mf")),
+        "download_url_stl": to_static_url(output_files.get("stl")),
+        "preview_3mf": to_static_url(output_files.get("preview_3mf")),
+        "preview_parts": {
+            "base": to_static_url(output_files.get("base_3mf")),
+            "roads": to_static_url(output_files.get("roads_3mf")),
+            "buildings": to_static_url(output_files.get("buildings_3mf")),
+            "water": to_static_url(output_files.get("water_3mf")),
+            "parks": to_static_url(output_files.get("parks_3mf")),
+        },
+        "firebase_url": getattr(task, "firebase_url", None),
+        "firebase_outputs": getattr(task, "firebase_outputs", {}) or {},
+    }
+
+
+def _sync_user_model(uid: str, model: dict[str, Any]) -> dict[str, Any]:
+    task_id = model.get("task_id")
+    if task_id and task_id in tasks:
+        task = tasks[task_id]
+        model.update({
+            "status": task.status,
+            "progress": task.progress,
+            "message": task.message,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            **_task_output_payload(task),
+        })
+        if task.status in {"completed", "failed"} and not model.get("finished_at"):
+            model["finished_at"] = datetime.now(timezone.utc).isoformat()
+            if task.error:
+                model["error"] = task.error
+        _write_json(_model_path(uid, model["id"]), model)
+    return model
+
+
+def _list_user_models(uid: str) -> list[dict[str, Any]]:
+    models = []
+    for path in sorted(_models_dir(uid).glob("*.json"), reverse=True):
+        model = _read_json(path, None)
+        if isinstance(model, dict):
+            models.append(_sync_user_model(uid, model))
+    return sorted(models, key=lambda item: item.get("created_at", ""), reverse=True)
+
+
+def _usage_from_models(models: list[dict[str, Any]]) -> dict[str, int]:
+    used = sum(1 for item in models if item.get("status") in {"processing", "pending", "completed"})
+    completed = sum(1 for item in models if item.get("status") == "completed")
+    return {
+        "free_limit": FREE_FULL_GENERATION_LIMIT,
+        "used": used,
+        "completed": completed,
+        "remaining": max(0, FREE_FULL_GENERATION_LIMIT - used),
+    }
+
+
 def _order_path(order_id: str) -> Path:
     safe_id = "".join(ch for ch in order_id if ch.isalnum() or ch in {"-", "_"})
     return ORDERS_DIR / f"{safe_id}.json"
@@ -587,6 +747,87 @@ async def start_order_generation(order_id: str, background_tasks: BackgroundTask
         order["generation_error"] = str(exc)
         _write_order(order)
         raise HTTPException(status_code=500, detail=f"Не вдалося запустити Blender: {exc}")
+
+
+@app.get("/api/account/me")
+async def get_account_me(user: dict[str, Any] = Depends(_current_user_from_token)):
+    profile = _ensure_user_profile(user)
+    models = _list_user_models(user["uid"])
+    return {
+        "profile": profile,
+        "usage": _usage_from_models(models),
+        "recent_models": models[:6],
+    }
+
+
+@app.get("/api/account/models")
+async def get_account_models(user: dict[str, Any] = Depends(_current_user_from_token)):
+    profile = _ensure_user_profile(user)
+    models = _list_user_models(user["uid"])
+    return {
+        "profile": profile,
+        "usage": _usage_from_models(models),
+        "models": models,
+    }
+
+
+@app.post("/api/account/models/generate", response_model=GenerationResponse)
+async def start_account_model_generation(
+    request: AccountGenerateRequest,
+    background_tasks: BackgroundTasks,
+    user: dict[str, Any] = Depends(_current_user_from_token),
+):
+    profile = _ensure_user_profile(user)
+    models = _list_user_models(user["uid"])
+    usage = _usage_from_models(models)
+    if usage["remaining"] <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail="Безкоштовний ліміт 10 повних генерацій вичерпано. Напишіть нам або оформіть оплату.",
+        )
+
+    try:
+        generation_payload = dict(request.generation_request)
+        bounds = request.bounds or {}
+        for key in ("north", "south", "east", "west"):
+            generation_payload.setdefault(key, bounds.get(key))
+        generation_payload.setdefault("model_size_mm", request.model_size_mm)
+        generation_payload.setdefault("context_padding_m", 80.0)
+        generation_payload.setdefault("export_format", "3mf")
+        generation_request = GenerationRequest(**generation_payload)
+
+        task_id = str(uuid.uuid4())
+        task = GenerationTask(task_id=task_id, request=generation_request, status="processing", progress=0, message="У черзі генерації")
+        tasks[task_id] = task
+
+        model_id = f"M-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        model = {
+            "id": model_id,
+            "uid": user["uid"],
+            "task_id": task_id,
+            "title": request.title or f"3D-мапа {request.city}",
+            "city": request.city,
+            "preview_id": request.preview_id,
+            "preview_snapshot": request.preview_snapshot,
+            "bounds": request.bounds,
+            "polygon_geojson": request.polygon_geojson,
+            "model_size_mm": request.model_size_mm,
+            "material": request.material,
+            "layers": request.layers,
+            "generation_request": generation_payload,
+            "status": "processing",
+            "progress": 0,
+            "message": "Генерацію поставлено в чергу",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        _write_json(_model_path(user["uid"], model_id), model)
+        background_tasks.add_task(generate_account_model_task, user["uid"], model_id, task_id, generation_request)
+        return GenerationResponse(task_id=task_id, status="processing", message=f"Модель {model_id} створюється")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Не вдалося створити модель в кабінеті: {exc}")
 
 
 @app.post("/api/generate", response_model=GenerationResponse)
@@ -1649,6 +1890,46 @@ def generate_model_task(
         # IMPORTANT: don't re-raise from background task, otherwise Starlette logs it as ASGI error
         # and it can interrupt other tasks. The failure is already recorded in task state.
         return
+
+
+def generate_account_model_task(
+    uid: str,
+    model_id: str,
+    task_id: str,
+    request: GenerationRequest,
+) -> None:
+    model_path = _model_path(uid, model_id)
+    model = _read_json(model_path, {})
+    try:
+        model.update({
+            "status": "processing",
+            "message": "Повна модель створюється",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        })
+        _write_json(model_path, model)
+        generate_model_task(task_id, request)
+    finally:
+        task = tasks.get(task_id)
+        model = _read_json(model_path, model)
+        if task is not None:
+            model.update({
+                "status": task.status,
+                "progress": task.progress,
+                "message": task.message,
+                "error": task.error,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                **_task_output_payload(task),
+            })
+            if task.status in {"completed", "failed"}:
+                model["finished_at"] = datetime.now(timezone.utc).isoformat()
+        else:
+            model.update({
+                "status": "failed",
+                "message": "Backend перезапустився під час генерації",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            })
+        _write_json(model_path, model)
 
 
 if __name__ == "__main__":

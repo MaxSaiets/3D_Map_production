@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "3D Map Workspace",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
