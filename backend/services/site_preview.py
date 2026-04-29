@@ -25,6 +25,7 @@ from services.detail_layer_pipeline import _build_canonical_road_masks
 from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, prepare_green_areas_for_processing
 from services.data_loader import fetch_city_data
 from services.extras_loader import fetch_extras
+from services.full_generation_pipeline import run_canonical_preview_pipeline
 from services.geometry_preclip_pipeline import prepare_preclipped_geometry
 from services.global_center import GlobalCenter
 from services.green_processor import process_green_areas
@@ -713,54 +714,36 @@ def _build_canonical_preview(
     center_lat = (float(bounds["north"]) + float(bounds["south"])) / 2.0
     center_lon = (float(bounds["east"]) + float(bounds["west"])) / 2.0
     global_center = GlobalCenter(center_lat, center_lon)
-    zone_geometry = prepare_zone_geometry(
-        global_center=global_center,
-        grid_bbox_latlon=latlon_bbox,
-        zone_row=None,
-        zone_col=None,
-        hex_size_m=None,
-        zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
-        zone_prefix="[preview] ",
-    )
-    zone_context = build_zone_context(
+    pipeline_result = run_canonical_preview_pipeline(
+        task=_PreviewTask(),
         request=request_ns,
+        task_id=preview_id,
+        output_dir=PREVIEW_CACHE_DIR,
         global_center=global_center,
-        zone_polygon_local=zone_geometry.zone_polygon_local,
-        reference_xy_m=zone_geometry.reference_xy_m,
+        zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
+        grid_bbox_latlon=latlon_bbox,
         zone_prefix="[preview] ",
     )
-    zone_polygon_local = zone_geometry.zone_polygon_local
-    if zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True):
-        zone_polygon_local = box(*zone_context.bbox_meters)
-    zone = ZonePreparationResult(
-        zone_polygon_local=zone_polygon_local,
-        reference_xy_m=zone_geometry.reference_xy_m,
-        bbox_meters=zone_context.bbox_meters,
-        scale_factor=float(zone_context.scale_factor),
-        road_width_multiplier_effective=float(request_ns.road_width_multiplier),
-        stl_extra_embed_m=0.0,
-    )
-    source = _fetch_preview_source_data(
-        request_ns=request_ns,
-        global_center=global_center,
-        zone_prefix="[preview] ",
-    )
-    bundle = _build_preview_canonical_masks(
-        request_ns=request_ns,
-        source=source,
-        zone=zone,
-        global_center=global_center,
-        zone_prefix="[preview] ",
-    )
+    zone = pipeline_result.zone
+    source = pipeline_result.source
+    bundle = pipeline_result.canonical_mask_bundle
+    display_zone = zone.zone_polygon_local
+    if display_zone is None or getattr(display_zone, "is_empty", True):
+        display_zone = box(*zone.bbox_meters)
+    roads_final = _clip_mask_to_zone(getattr(bundle, "roads_final", None), display_zone)
+    parks_final = _clip_mask_to_zone(getattr(bundle, "parks_final", None), display_zone)
+    water_final = _clip_mask_to_zone(getattr(bundle, "water_final", None), display_zone)
+    buildings_footprints = _clip_mask_to_zone(getattr(bundle, "buildings_footprints", None), display_zone)
     model_logic = {
         **model_logic,
         "scale_factor_mm_per_m": float(zone.scale_factor),
         "model_width_mm": float(zone.bbox_meters[2] - zone.bbox_meters[0]) * float(zone.scale_factor),
         "model_height_mm": float(zone.bbox_meters[3] - zone.bbox_meters[1]) * float(zone.scale_factor),
-        "preview_source": "canonical_2d_light",
-        "canonical_note": "same source masks as full generation, before heavy print audit and mesh export",
+        "preview_source": "full_generation_pipeline_canonical_2d",
+        "canonical_note": "same canonical 2D handoff consumed by the full 3D pipeline; displayed before terrain booleans, Blender and export",
+        "canonical_elapsed_ms": int(float(pipeline_result.elapsed_seconds) * 1000),
     }
-    building_geometry = getattr(bundle, "building_geometry", None)
+    building_geometry = getattr(pipeline_result.canonical_2d_stage, "building_geometry", None)
     gdf_buildings_local = getattr(building_geometry, "gdf_buildings_local", None)
 
     result = {
@@ -768,34 +751,34 @@ def _build_canonical_preview(
         "cached": False,
         "bounds": bounds,
         "center": {"lat": center_lat, "lng": center_lon},
-        "selection": mapping(transform_geometry(_local_to_wgs84_transformer(global_center), bundle.zone_polygon))
-        if bundle.zone_polygon is not None and not getattr(bundle.zone_polygon, "is_empty", True)
+        "selection": mapping(transform_geometry(_local_to_wgs84_transformer(global_center), display_zone))
+        if display_zone is not None and not getattr(display_zone, "is_empty", True)
         else mapping(_selection_geometry(bounds, polygon_geojson)),
         "model_logic": model_logic,
         "layers": {
             "terrain": {"enabled": include_terrain},
             "buildings": _canonical_building_collection(
                 gdf_buildings_local=gdf_buildings_local if include_buildings else None,
-                building_mask=bundle.buildings_footprints if include_buildings else None,
+                building_mask=buildings_footprints if include_buildings else None,
                 global_center=global_center,
                 scale_factor_mm_per_m=float(zone.scale_factor),
                 height_scale_factor=float(getattr(request_ns, "buildings_height_scale", 1.0) or 1.0),
                 limit=MAX_FEATURES["buildings"],
             ),
             "roads": _geometry_feature_collection(
-                bundle.roads_final if include_roads else None,
+                roads_final if include_roads else None,
                 limit=MAX_FEATURES["roads"],
                 layer="roads",
                 global_center=global_center,
             ),
             "water": _geometry_feature_collection(
-                bundle.water_final if include_water else None,
+                water_final if include_water else None,
                 limit=MAX_FEATURES["water"],
                 layer="water",
                 global_center=global_center,
             ),
             "parks": _geometry_feature_collection(
-                bundle.parks_final if include_parks else None,
+                parks_final if include_parks else None,
                 limit=MAX_FEATURES["parks"],
                 layer="parks",
                 global_center=global_center,
@@ -882,7 +865,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 12,
+        "v": 13,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
@@ -921,7 +904,8 @@ def build_fast_preview(
         cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
         return result
     except Exception as exc:
-        print(f"[WARN] Fast preview canonical_2d mode failed, falling back to lightweight OSM preview: {exc}")
+        print(f"[ERROR] Full-pipeline canonical preview failed: {exc}")
+        raise
 
     selection = _selection_geometry(bounds, polygon_geojson)
     all_features = _features_from_bbox(

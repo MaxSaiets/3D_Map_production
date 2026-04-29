@@ -51,6 +51,15 @@ class FullGenerationPipelineResult:
     terrain_only_result: Optional[TerrainOnlyPipelineResult] = None
 
 
+@dataclass
+class CanonicalPreviewPipelineResult:
+    zone: ZonePreparationResult
+    source: SourceDataResult
+    canonical_2d_stage: Any
+    canonical_mask_bundle: Any
+    elapsed_seconds: float
+
+
 def _geometry_area(geom: Any) -> float:
     if geom is None or getattr(geom, "is_empty", True):
         return 0.0
@@ -455,6 +464,63 @@ def _validate_source_stage(
             f"[WARN] {zone_prefix}Source data is sparse after API fetch; continuing in sparse-zone mode "
             f"(roads={road_count}, buildings={building_count}, water={water_count}, green={green_count})"
         )
+
+
+def run_canonical_preview_pipeline(
+    *,
+    task: Any,
+    request: Any,
+    task_id: str,
+    output_dir: Path,
+    global_center: Any,
+    zone_polygon_coords: Optional[list],
+    grid_bbox_latlon: Any,
+    zone_row: Any = None,
+    zone_col: Any = None,
+    hex_size_m: Any = None,
+    zone_prefix: str = "[preview] ",
+) -> CanonicalPreviewPipelineResult:
+    """Run the real generation pipeline until the canonical 2D handoff.
+
+    This is the latest point before terrain booleans, Blender/mesh construction,
+    export, and slicer validation become expensive. The returned canonical masks
+    are exactly the geometry source consumed by the 3D stages in
+    `run_full_generation_pipeline`.
+    """
+    pipeline_start = time.perf_counter()
+    zone = _prepare_zone_stage(
+        request=request,
+        global_center=global_center,
+        zone_polygon_coords=zone_polygon_coords,
+        grid_bbox_latlon=grid_bbox_latlon,
+        zone_row=zone_row,
+        zone_col=zone_col,
+        hex_size_m=hex_size_m,
+        zone_prefix=zone_prefix,
+    )
+    source = _fetch_source_stage(
+        task=task,
+        request=request,
+        global_center=global_center,
+        zone_prefix=zone_prefix,
+    )
+    _validate_source_stage(source=source, zone_prefix=zone_prefix)
+    canonical_2d_stage = prepare_canonical_2d_stage(
+        task_id=task_id,
+        request=request,
+        source=source,
+        zone=zone,
+        global_center=global_center,
+        debug_generated_dir=(output_dir.parent / "debug" / "generated"),
+        zone_prefix=zone_prefix,
+    )
+    return CanonicalPreviewPipelineResult(
+        zone=zone,
+        source=source,
+        canonical_2d_stage=canonical_2d_stage,
+        canonical_mask_bundle=canonical_2d_stage.canonical_mask_bundle,
+        elapsed_seconds=time.perf_counter() - pipeline_start,
+    )
 
 
 def _run_terrain_stage(
