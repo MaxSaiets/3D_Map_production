@@ -19,7 +19,7 @@ if (typeof window !== "undefined") {
 function DrawControl() {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
-  const { setSelectedArea } = useGenerationStore();
+  const { setSelectedArea, setSelectedShapeGeoJson } = useGenerationStore();
 
   useEffect(() => {
     if (!map) return;
@@ -67,6 +67,7 @@ function DrawControl() {
       if ("getBounds" in (layer as any) && typeof (layer as any).getBounds === "function") {
         const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
         setSelectedArea(bounds);
+        setSelectedShapeGeoJson((layer as any).toGeoJSON?.()?.geometry ?? null);
       } else {
         // На випадок неочікуваних layer типів
         console.warn("Draw created layer does not support getBounds:", layer);
@@ -80,12 +81,14 @@ function DrawControl() {
         if ("getBounds" in layer) {
           const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
           setSelectedArea(bounds);
+          setSelectedShapeGeoJson((layer as any).toGeoJSON?.()?.geometry ?? null);
         }
       }
     };
 
     const handleDrawDeleted = () => {
       setSelectedArea(null);
+      setSelectedShapeGeoJson(null);
     };
 
     map.on(L.Draw.Event.CREATED, handleDrawCreated);
@@ -98,7 +101,7 @@ function DrawControl() {
       map.off(L.Draw.Event.DELETED, handleDrawDeleted);
       map.removeControl(drawControl);
     };
-  }, [map, setSelectedArea]);
+  }, [map, setSelectedArea, setSelectedShapeGeoJson]);
 
   return null;
 }

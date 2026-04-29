@@ -45,7 +45,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: '3000',
-        NEXT_PUBLIC_API_URL: 'http://127.0.0.1:8000',
+        // Browser calls same-origin /api; nginx proxies it to backend.
+        NEXT_PUBLIC_API_URL: '',
       },
       autorestart: true,
       max_restarts: 10,

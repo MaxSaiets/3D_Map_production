@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import { LatLngBounds } from "leaflet";
 
+import type { FastPreviewResponse } from "@/lib/api";
 import type { TaskStatus } from "@/lib/api";
 
 interface GenerationState {
   selectedArea: LatLngBounds | null;
+  selectedShapeGeoJson: any | null;
+  fastPreview: FastPreviewResponse | null;
   isGenerating: boolean;
   // Для single: taskGroupId === activeTaskId
   // Для batch: taskGroupId === "batch_<uuid>", activeTaskId === один з taskIds
@@ -52,6 +55,8 @@ interface GenerationState {
 
   // Actions
   setSelectedArea: (area: LatLngBounds | null) => void;
+  setSelectedShapeGeoJson: (shape: any | null) => void;
+  setFastPreview: (preview: FastPreviewResponse | null) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[]) => void;
   setActiveTaskId: (taskId: string | null) => void;
@@ -92,6 +97,8 @@ interface GenerationState {
 
 const initialState = {
   selectedArea: null,
+  selectedShapeGeoJson: null,
+  fastPreview: null,
   isGenerating: false,
   taskGroupId: null,
   taskIds: [] as string[],
@@ -139,6 +146,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   ...initialState,
 
   setSelectedArea: (area) => set({ selectedArea: area }),
+  setSelectedShapeGeoJson: (selectedShapeGeoJson) => set({ selectedShapeGeoJson }),
+  setFastPreview: (fastPreview) => set({ fastPreview }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds) =>
     set((s) => {
@@ -191,4 +200,3 @@ export const useGenerationStore = create<GenerationState>((set) => ({
 
   reset: () => set(initialState),
 }));
-

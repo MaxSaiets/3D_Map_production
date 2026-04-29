@@ -1,5 +1,5 @@
 ﻿import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -15,7 +15,7 @@ load_dotenv()
 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, Tuple
+from typing import Any, Optional, List, Tuple
 import os
 import uuid
 from pathlib import Path
@@ -64,6 +64,7 @@ from services.firebase_service import FirebaseService
 from services.global_center import set_global_center, get_global_center, GlobalCenter
 from services.hexagonal_grid import generate_hexagonal_grid, hexagons_to_geojson, validate_hexagonal_grid, calculate_grid_center_from_geojson
 from services.elevation_sync import calculate_global_elevation_reference, calculate_optimal_base_thickness
+from services.site_preview import PreviewBounds, build_fast_preview, create_order_record, list_order_records
 from shapely.geometry import box
 from shapely.geometry.base import BaseGeometry
 
@@ -356,9 +357,109 @@ class GenerationResponse(BaseModel):
     all_task_ids: Optional[List[str]] = None  # Р”Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
 
 
+class FastPreviewRequest(BaseModel):
+    north: float
+    south: float
+    east: float
+    west: float
+    polygon_geojson: Optional[dict[str, Any]] = None
+    include_terrain: bool = True
+
+
+class FastPreviewResponse(BaseModel):
+    preview_id: str
+    created_at: str
+    mode: str
+    bounds: dict[str, float]
+    center: dict[str, float]
+    polygon: Optional[dict[str, Any]] = None
+    layers: dict[str, Any]
+    terrain: dict[str, Any]
+    metrics: dict[str, Any]
+
+
+class SiteOrderRequest(BaseModel):
+    preview_id: Optional[str] = None
+    customer_name: str = Field(min_length=1, max_length=120)
+    contact: str = Field(min_length=3, max_length=180)
+    message: Optional[str] = Field(default=None, max_length=1000)
+    city: Optional[str] = Field(default=None, max_length=120)
+    bounds: dict[str, Any]
+    polygon_geojson: Optional[dict[str, Any]] = None
+    selected_zones: Optional[list[dict[str, Any]]] = None
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
+class SiteOrderResponse(BaseModel):
+    id: str
+    status: str
+    created_at: str
+
+
 @app.get("/")
 async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
+
+
+async def _notify_admin_order(order: dict[str, Any]) -> None:
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
+    if not token or not chat_id:
+        return
+    text = (
+        "Нова заявка 3dMAP\n"
+        f"ID: {order.get('id')}\n"
+        f"Ім'я: {order.get('customer_name')}\n"
+        f"Контакт: {order.get('contact')}\n"
+        f"Місто: {order.get('city') or '-'}\n"
+        f"Preview: {order.get('preview_id') or '-'}"
+    )
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat_id, "text": text},
+            )
+    except Exception as exc:
+        print(f"[WARN] Telegram order notification failed: {exc}")
+
+
+@app.post("/api/preview", response_model=FastPreviewResponse)
+async def generate_fast_preview(request: FastPreviewRequest):
+    """Create a fast browser preview payload without printable booleans, grooves, Blender, or 3MF export."""
+    try:
+        return build_fast_preview(
+            bounds=PreviewBounds(
+                north=request.north,
+                south=request.south,
+                east=request.east,
+                west=request.west,
+            ),
+            polygon_geojson=request.polygon_geojson,
+            include_terrain=request.include_terrain,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        print(f"[ERROR] Fast preview failed: {exc}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Fast preview failed")
+
+
+@app.post("/api/orders", response_model=SiteOrderResponse)
+async def create_site_order(request: SiteOrderRequest, background_tasks: BackgroundTasks):
+    record = create_order_record(request.model_dump())
+    background_tasks.add_task(_notify_admin_order, record)
+    return SiteOrderResponse(id=record["id"], status=record["status"], created_at=record["created_at"])
+
+
+@app.get("/api/admin/orders")
+async def get_site_orders(x_admin_token: Optional[str] = Header(default=None)):
+    expected = os.getenv("ADMIN_API_TOKEN")
+    if expected and x_admin_token != expected:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+    return {"orders": list_order_records()}
 
 
 @app.get("/health")
