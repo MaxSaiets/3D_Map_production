@@ -210,20 +210,16 @@ export default function Home() {
     setPreviewLoading(true);
     setPreviewError(null);
     try {
+      const generationRequest = buildGenerationRequest();
       const data = await api.createFastPreview({
         ...activeBounds,
         polygon_geojson: activePolygon,
-        include_terrain: layers.terrain,
-        include_roads: layers.roads,
-        include_buildings: layers.buildings,
-        include_water: layers.water,
-        include_parks: layers.parks,
-        road_width_multiplier: buildGenerationRequest().road_width_multiplier,
-        building_min_height: buildGenerationRequest().building_min_height,
-        building_height_multiplier: buildGenerationRequest().building_height_multiplier,
-        model_size_mm: modelSizeMm,
-        terrain_z_scale: buildGenerationRequest().terrain_z_scale,
-        terrain_resolution: buildGenerationRequest().terrain_resolution,
+        generation_request: generationRequest,
+        include_terrain: generationRequest.preview_include_base,
+        include_roads: generationRequest.preview_include_roads,
+        include_buildings: generationRequest.preview_include_buildings,
+        include_water: generationRequest.preview_include_water,
+        include_parks: generationRequest.preview_include_parks,
       });
       setPreview(data);
     } catch (error: any) {

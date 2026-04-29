@@ -111,7 +111,7 @@ function BuildingBlock({
         const shape = shapeFromPolygon(coords, center, scale);
         if (!shape) return null;
         const geom = new THREE.ExtrudeGeometry(shape, {
-          depth: Math.max(0.45, Math.min(height * 0.055, 4.5)),
+          depth: Math.max(0.08, height),
           bevelEnabled: false,
           curveSegments: 1,
         });
@@ -151,9 +151,18 @@ function PreviewScene({
     80,
     Math.abs(projectPoint(preview.center.lng, preview.bounds.north, preview.center).z - projectPoint(preview.center.lng, preview.bounds.south, preview.center).z),
   );
-  const scale = 16 / Math.max(widthM, heightM);
+  const modelLogic = preview.model_logic ?? {};
+  const modelSizeMm = Number(modelLogic.model_size_mm || 180);
+  const visualScale = 16 / Math.max(modelSizeMm, 1);
+  const scaleFactorMmPerM = Number(modelLogic.scale_factor_mm_per_m || modelSizeMm / Math.max(widthM, heightM));
+  const scale = scaleFactorMmPerM * visualScale;
   const plateW = widthM * scale;
   const plateH = heightM * scale;
+  const mmToScene = (value: number, fallback: number) => Math.max(0.01, Number.isFinite(value) ? value * visualScale : fallback);
+  const baseThickness = mmToScene(Number(modelLogic.terrain_base_thickness_mm), 0.5);
+  const roadY = mmToScene(Number(modelLogic.road_height_mm), 0.08);
+  const parkY = mmToScene(Number(modelLogic.parks_height_mm), 0.06);
+  const waterY = -mmToScene(Number(modelLogic.water_depth), 0.08);
 
   const buildingFeatures = preview.layers.buildings?.features ?? [];
   const roadFeatures = preview.layers.roads?.features ?? [];
@@ -169,25 +178,25 @@ function PreviewScene({
 
       <group rotation={[0, -0.15, 0]}>
         {visibleLayers.terrain && (
-          <mesh position={[0, -0.25, 0]} receiveShadow castShadow>
-            <boxGeometry args={[plateW, 0.5, plateH]} />
+          <mesh position={[0, -baseThickness / 2, 0]} receiveShadow castShadow>
+            <boxGeometry args={[plateW, baseThickness, plateH]} />
             <meshStandardMaterial color={palette.plate} roughness={0.92} />
           </mesh>
         )}
 
         {visibleLayers.water &&
           waterFeatures.map((feature: any, index: number) => (
-            <PlanarPolygon key={`water-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={0.03} color={palette.water} />
+            <PlanarPolygon key={`water-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={waterY} color={palette.water} />
           ))}
 
         {visibleLayers.parks &&
           parkFeatures.map((feature: any, index: number) => (
-            <PlanarPolygon key={`park-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={0.06} color={palette.park} />
+            <PlanarPolygon key={`park-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={parkY} color={palette.park} />
           ))}
 
         {visibleLayers.roads &&
           roadFeatures.map((feature: any, index: number) => (
-            <PlanarPolygon key={`road-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={0.09} color={palette.road} />
+            <PlanarPolygon key={`road-${index}`} geometry={feature.geometry} center={preview.center} scale={scale} y={roadY} color={palette.road} />
           ))}
 
         {visibleLayers.buildings &&
@@ -197,7 +206,7 @@ function PreviewScene({
               geometry={feature.geometry}
               center={preview.center}
               scale={scale}
-              height={feature.properties?.height_m ?? 8}
+              height={mmToScene(Number(feature.properties?.height_mm), 0.8)}
               color={palette.building}
             />
           ))}

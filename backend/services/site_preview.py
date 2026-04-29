@@ -244,6 +244,7 @@ def _feature_collection(
     *,
     building_min_height: float = 5.0,
     building_height_multiplier: float = 1.8,
+    scale_factor_mm_per_m: float = 1.0,
 ) -> dict[str, Any]:
     features = []
     if gdf is None or gdf.empty:
@@ -257,7 +258,9 @@ def _feature_collection(
                 geom = geom.simplify(simplify, preserve_topology=True)
             props = {"layer": layer}
             if layer == "buildings":
-                props["height_m"] = _height_from_row(row, building_min_height, building_height_multiplier)
+                height_m = _height_from_row(row, building_min_height, building_height_multiplier)
+                props["height_m"] = height_m
+                props["height_mm"] = max(0.4, min(height_m * scale_factor_mm_per_m, 45.0))
             if row.get("name") is not None:
                 props["name"] = str(row.get("name"))[:80]
             features.append({"type": "Feature", "properties": props, "geometry": mapping(geom)})
@@ -281,20 +284,49 @@ def build_fast_preview(
     model_size_mm: float = 180.0,
     terrain_z_scale: float = 0.5,
     terrain_resolution: int = 180,
+    road_height_mm: float = 0.5,
+    road_embed_mm: float = 0.3,
+    building_foundation_mm: float = 0.6,
+    building_embed_mm: float = 0.2,
+    water_depth: float = 1.2,
+    parks_height_mm: float = 0.6,
+    parks_embed_mm: float = 1.0,
 ) -> dict[str, Any]:
     started = time.perf_counter()
+    center = {
+        "lat": (float(bounds["north"]) + float(bounds["south"])) / 2,
+        "lng": (float(bounds["east"]) + float(bounds["west"])) / 2,
+    }
+    meters_per_deg_lat = 111_320.0
+    meters_per_deg_lng = 111_320.0 * math.cos((center["lat"] * math.pi) / 180.0)
+    width_m = max(1.0, abs(float(bounds["east"]) - float(bounds["west"])) * meters_per_deg_lng)
+    height_m = max(1.0, abs(float(bounds["north"]) - float(bounds["south"])) * meters_per_deg_lat)
+    scale_factor_mm_per_m = float(model_size_mm or 180.0) / max(width_m, height_m)
+    terrain_base_thickness_mm = max(0.3, float(road_embed_mm or 0.3), float(water_depth or 1.2), float(parks_embed_mm or 1.0)) + 0.5
+    model_logic = {
+        "road_width_multiplier": road_width_multiplier,
+        "road_height_mm": road_height_mm,
+        "road_embed_mm": road_embed_mm,
+        "building_min_height": building_min_height,
+        "building_height_multiplier": building_height_multiplier,
+        "building_foundation_mm": building_foundation_mm,
+        "building_embed_mm": building_embed_mm,
+        "water_depth": water_depth,
+        "parks_height_mm": parks_height_mm,
+        "parks_embed_mm": parks_embed_mm,
+        "model_size_mm": model_size_mm,
+        "terrain_z_scale": terrain_z_scale,
+        "terrain_resolution": terrain_resolution,
+        "scale_factor_mm_per_m": scale_factor_mm_per_m,
+        "model_width_mm": width_m * scale_factor_mm_per_m,
+        "model_height_mm": height_m * scale_factor_mm_per_m,
+        "terrain_base_thickness_mm": terrain_base_thickness_mm,
+    }
     payload = {
-        "v": 8,
+        "v": 9,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
-        "model_logic": {
-            "road_width_multiplier": road_width_multiplier,
-            "building_min_height": building_min_height,
-            "building_height_multiplier": building_height_multiplier,
-            "model_size_mm": model_size_mm,
-            "terrain_z_scale": terrain_z_scale,
-            "terrain_resolution": terrain_resolution,
-        },
+        "model_logic": model_logic,
         "layers": {
             "terrain": include_terrain,
             "roads": include_roads,
@@ -350,10 +382,6 @@ def build_fast_preview(
         polygon_geojson,
     )
 
-    center = {
-        "lat": (float(bounds["north"]) + float(bounds["south"])) / 2,
-        "lng": (float(bounds["east"]) + float(bounds["west"])) / 2,
-    }
     result = {
         "preview_id": preview_id,
         "cached": False,
@@ -370,6 +398,7 @@ def build_fast_preview(
                 "buildings",
                 building_min_height=building_min_height,
                 building_height_multiplier=building_height_multiplier,
+                scale_factor_mm_per_m=scale_factor_mm_per_m,
             ),
             "roads": _feature_collection(roads, MAX_FEATURES["roads"], 0.000004, "roads"),
             "water": _feature_collection(water, MAX_FEATURES["water"], 0.00001, "water"),

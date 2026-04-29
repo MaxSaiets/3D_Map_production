@@ -49,6 +49,14 @@ export interface PreviewRequest {
   model_size_mm?: number;
   terrain_z_scale?: number;
   terrain_resolution?: number;
+  road_height_mm?: number;
+  road_embed_mm?: number;
+  building_foundation_mm?: number;
+  building_embed_mm?: number;
+  water_depth?: number;
+  parks_height_mm?: number;
+  parks_embed_mm?: number;
+  generation_request?: GenerationRequest;
 }
 
 export interface FastPreviewResponse {

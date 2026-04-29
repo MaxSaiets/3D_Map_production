@@ -381,6 +381,14 @@ class PreviewRequest(BaseModel):
     model_size_mm: float = 180.0
     terrain_z_scale: float = 0.5
     terrain_resolution: int = 180
+    road_height_mm: float = 0.5
+    road_embed_mm: float = 0.3
+    building_foundation_mm: float = 0.6
+    building_embed_mm: float = 0.2
+    water_depth: float = 1.2
+    parks_height_mm: float = 0.6
+    parks_embed_mm: float = 1.0
+    generation_request: Optional[dict] = None
 
 
 class SiteOrderRequest(BaseModel):
@@ -661,6 +669,8 @@ async def create_fast_preview(request: PreviewRequest):
     if lat_span * lng_span > 0.00025:
         raise HTTPException(status_code=400, detail="Ділянка завелика для швидкого preview. Зменшіть рамку або розбийте її на зони.")
 
+    recipe = request.generation_request or {}
+
     return build_fast_preview(
         bounds={
             "north": request.north,
@@ -669,17 +679,24 @@ async def create_fast_preview(request: PreviewRequest):
             "west": request.west,
         },
         polygon_geojson=request.polygon_geojson,
-        include_terrain=request.include_terrain,
-        include_roads=request.include_roads,
-        include_buildings=request.include_buildings,
-        include_water=request.include_water,
-        include_parks=request.include_parks,
-        road_width_multiplier=request.road_width_multiplier,
-        building_min_height=request.building_min_height,
-        building_height_multiplier=request.building_height_multiplier,
-        model_size_mm=request.model_size_mm,
-        terrain_z_scale=request.terrain_z_scale,
-        terrain_resolution=request.terrain_resolution,
+        include_terrain=bool(recipe.get("preview_include_base", request.include_terrain)),
+        include_roads=bool(recipe.get("preview_include_roads", request.include_roads)),
+        include_buildings=bool(recipe.get("preview_include_buildings", request.include_buildings)),
+        include_water=bool(recipe.get("preview_include_water", request.include_water)),
+        include_parks=bool(recipe.get("preview_include_parks", request.include_parks)),
+        road_width_multiplier=float(recipe.get("road_width_multiplier", request.road_width_multiplier)),
+        building_min_height=float(recipe.get("building_min_height", request.building_min_height)),
+        building_height_multiplier=float(recipe.get("building_height_multiplier", request.building_height_multiplier)),
+        model_size_mm=float(recipe.get("model_size_mm", request.model_size_mm)),
+        terrain_z_scale=float(recipe.get("terrain_z_scale", request.terrain_z_scale)),
+        terrain_resolution=int(recipe.get("terrain_resolution", request.terrain_resolution)),
+        road_height_mm=float(recipe.get("road_height_mm", request.road_height_mm)),
+        road_embed_mm=float(recipe.get("road_embed_mm", request.road_embed_mm)),
+        building_foundation_mm=float(recipe.get("building_foundation_mm", request.building_foundation_mm)),
+        building_embed_mm=float(recipe.get("building_embed_mm", request.building_embed_mm)),
+        water_depth=float(recipe.get("water_depth", request.water_depth)),
+        parks_height_mm=float(recipe.get("parks_height_mm", request.parks_height_mm)),
+        parks_embed_mm=float(recipe.get("parks_embed_mm", request.parks_embed_mm)),
     )
 
 
