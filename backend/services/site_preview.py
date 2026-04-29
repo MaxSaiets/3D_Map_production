@@ -6,6 +6,7 @@ import math
 import os
 import time
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Optional
 
 import geopandas as gpd
@@ -13,13 +14,23 @@ import osmnx as ox
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon, box, mapping, shape
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import transform as transform_geometry
 from shapely.ops import unary_union
 
+from services.building_processor import get_building_height
+from services.canonical_2d_pipeline import prepare_canonical_2d_stage
+from services.data_fetch_pipeline import fetch_generation_data
+from services.global_center import GlobalCenter
+from services.processing_results import SourceDataResult, ZonePreparationResult
 from services.road_processor import normalize_drivable_highway_tag
+from services.zone_context_pipeline import build_zone_context
+from services.zone_geometry_pipeline import prepare_zone_geometry
 
 
 PREVIEW_CACHE_DIR = Path(os.getenv("PREVIEW_CACHE_DIR", "cache/site_previews"))
 PREVIEW_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+PREVIEW_CANONICAL_DIR = PREVIEW_CACHE_DIR / "canonical"
+PREVIEW_CANONICAL_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FEATURES = {
     "buildings": 220,
@@ -269,6 +280,320 @@ def _feature_collection(
     return {"type": "FeatureCollection", "features": features}
 
 
+class _PreviewTask:
+    def update_status(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+
+def _request_namespace(
+    *,
+    bounds: dict[str, float],
+    road_width_multiplier: float,
+    building_min_height: float,
+    building_height_multiplier: float,
+    model_size_mm: float,
+    terrain_z_scale: float,
+    terrain_resolution: int,
+    road_height_mm: float,
+    road_embed_mm: float,
+    building_foundation_mm: float,
+    building_embed_mm: float,
+    water_depth: float,
+    parks_height_mm: float,
+    parks_embed_mm: float,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        north=float(bounds["north"]),
+        south=float(bounds["south"]),
+        east=float(bounds["east"]),
+        west=float(bounds["west"]),
+        road_width_multiplier=float(road_width_multiplier),
+        road_height_mm=float(road_height_mm),
+        road_embed_mm=float(road_embed_mm),
+        building_min_height=float(building_min_height),
+        building_height_multiplier=float(building_height_multiplier),
+        # The full 3D building layer reads these names. Keep them aligned so
+        # preview and generated model use the same recipe values.
+        buildings_height_scale=float(building_height_multiplier),
+        building_foundation_mm=float(building_foundation_mm),
+        building_embed_mm=float(building_embed_mm),
+        buildings_embed_mm=float(building_embed_mm),
+        water_depth=float(water_depth),
+        include_parks=True,
+        parks_height_mm=float(parks_height_mm),
+        parks_embed_mm=float(parks_embed_mm),
+        terrain_enabled=True,
+        terrain_z_scale=float(terrain_z_scale),
+        terrain_base_thickness_mm=0.3,
+        terrain_resolution=int(terrain_resolution),
+        terrain_subdivide=True,
+        terrain_subdivide_levels=1,
+        terrarium_zoom=15,
+        terrain_smoothing_sigma=2.0,
+        flatten_buildings_on_terrain=True,
+        flatten_roads_on_terrain=False,
+        export_format="3mf",
+        model_size_mm=float(model_size_mm),
+        preview_include_base=True,
+        preview_include_roads=True,
+        preview_include_buildings=True,
+        preview_include_water=True,
+        preview_include_parks=True,
+        context_padding_m=80.0,
+        terrain_only=False,
+        elevation_ref_m=None,
+        baseline_offset_m=0.0,
+        preserve_global_xy=False,
+        grid_step_m=None,
+        hex_size_m=300.0,
+        is_ams_mode=False,
+        include_buildings=True,
+        canonical_mask_bundle_dir=None,
+        auto_canonicalize_masks=True,
+    )
+
+
+def _zone_polygon_coords_from_geojson(polygon_geojson: Optional[dict[str, Any]]) -> Optional[list]:
+    if not polygon_geojson:
+        return None
+    try:
+        geom = shape(polygon_geojson)
+        if geom is None or geom.is_empty:
+            return None
+        if geom.geom_type == "Polygon":
+            return [[float(x), float(y)] for x, y in list(geom.exterior.coords)]
+        if geom.geom_type == "MultiPolygon":
+            largest = max(list(geom.geoms), key=lambda part: float(part.area))
+            return [[float(x), float(y)] for x, y in list(largest.exterior.coords)]
+    except Exception:
+        return None
+    return None
+
+
+def _local_to_wgs84_transformer(global_center: GlobalCenter):
+    def _convert(x: float, y: float, z: Optional[float] = None):
+        x_utm, y_utm = global_center.from_local(float(x), float(y))
+        lon, lat = global_center.to_wgs84(x_utm, y_utm)
+        if z is None:
+            return lon, lat
+        return lon, lat, z
+
+    return _convert
+
+
+def _geometry_feature_collection(
+    geometry: BaseGeometry | None,
+    *,
+    limit: int,
+    layer: str,
+    global_center: GlobalCenter,
+    props: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return {"type": "FeatureCollection", "features": []}
+    features = []
+    converter = _local_to_wgs84_transformer(global_center)
+    parts = [geometry] if getattr(geometry, "geom_type", "") == "Polygon" else list(getattr(geometry, "geoms", []))
+    for geom in parts[:limit]:
+        if geom is None or getattr(geom, "is_empty", True):
+            continue
+        try:
+            wgs84_geom = transform_geometry(converter, geom)
+            feature_props = {"layer": layer}
+            if props:
+                feature_props.update(props)
+            features.append({"type": "Feature", "properties": feature_props, "geometry": mapping(wgs84_geom)})
+        except Exception:
+            continue
+    return {"type": "FeatureCollection", "features": features}
+
+
+def _canonical_building_collection(
+    *,
+    gdf_buildings_local: Optional[gpd.GeoDataFrame],
+    building_mask: BaseGeometry | None,
+    global_center: GlobalCenter,
+    scale_factor_mm_per_m: float,
+    height_scale_factor: float,
+    limit: int,
+) -> dict[str, Any]:
+    if gdf_buildings_local is None or gdf_buildings_local.empty:
+        return _geometry_feature_collection(
+            building_mask,
+            limit=limit,
+            layer="buildings",
+            global_center=global_center,
+            props={"height_m": 4.0, "height_mm": max(0.4, 4.0 * scale_factor_mm_per_m)},
+        )
+
+    converter = _local_to_wgs84_transformer(global_center)
+    features = []
+    min_height_m = (1.0 / scale_factor_mm_per_m) if scale_factor_mm_per_m > 0 else 2.0
+    mask = building_mask
+    for _, row in gdf_buildings_local.head(limit * 3).iterrows():
+        if len(features) >= limit:
+            break
+        geom = row.geometry
+        if geom is None or geom.is_empty:
+            continue
+        try:
+            if mask is not None and not getattr(mask, "is_empty", True):
+                geom = geom.intersection(mask)
+            if geom is None or geom.is_empty:
+                continue
+            height_m = get_building_height(row, min_height_m) * float(height_scale_factor)
+            props = {
+                "layer": "buildings",
+                "height_m": float(height_m),
+                "height_mm": max(0.4, min(float(height_m) * scale_factor_mm_per_m, 45.0)),
+            }
+            if row.get("name") is not None:
+                props["name"] = str(row.get("name"))[:80]
+            wgs84_geom = transform_geometry(converter, geom)
+            features.append({"type": "Feature", "properties": props, "geometry": mapping(wgs84_geom)})
+        except Exception:
+            continue
+
+    if features:
+        return {"type": "FeatureCollection", "features": features}
+    return _geometry_feature_collection(
+        building_mask,
+        limit=limit,
+        layer="buildings",
+        global_center=global_center,
+        props={"height_m": 4.0, "height_mm": max(0.4, 4.0 * scale_factor_mm_per_m)},
+    )
+
+
+def _build_canonical_preview(
+    *,
+    preview_id: str,
+    bounds: dict[str, float],
+    polygon_geojson: Optional[dict[str, Any]],
+    include_terrain: bool,
+    include_roads: bool,
+    include_buildings: bool,
+    include_water: bool,
+    include_parks: bool,
+    model_logic: dict[str, Any],
+    request_ns: SimpleNamespace,
+    started: float,
+) -> dict[str, Any]:
+    latlon_bbox = (
+        float(bounds["north"]),
+        float(bounds["south"]),
+        float(bounds["east"]),
+        float(bounds["west"]),
+    )
+    center_lat = (float(bounds["north"]) + float(bounds["south"])) / 2.0
+    center_lon = (float(bounds["east"]) + float(bounds["west"])) / 2.0
+    global_center = GlobalCenter(center_lat, center_lon)
+    zone_geometry = prepare_zone_geometry(
+        global_center=global_center,
+        grid_bbox_latlon=latlon_bbox,
+        zone_row=None,
+        zone_col=None,
+        hex_size_m=None,
+        zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
+        zone_prefix="[preview] ",
+    )
+    zone_context = build_zone_context(
+        request=request_ns,
+        global_center=global_center,
+        zone_polygon_local=zone_geometry.zone_polygon_local,
+        reference_xy_m=zone_geometry.reference_xy_m,
+        zone_prefix="[preview] ",
+    )
+    zone = ZonePreparationResult(
+        zone_polygon_local=zone_geometry.zone_polygon_local,
+        reference_xy_m=zone_geometry.reference_xy_m,
+        bbox_meters=zone_context.bbox_meters,
+        scale_factor=float(zone_context.scale_factor),
+        road_width_multiplier_effective=float(request_ns.road_width_multiplier),
+        stl_extra_embed_m=0.0,
+    )
+    source_data = fetch_generation_data(
+        request=request_ns,
+        global_center=global_center,
+        task=_PreviewTask(),
+        zone_prefix="[preview] ",
+    )
+    source = SourceDataResult(
+        gdf_buildings=source_data.gdf_buildings,
+        gdf_water=source_data.gdf_water,
+        G_roads=source_data.G_roads,
+        gdf_green=source_data.gdf_green,
+    )
+    canonical_stage = prepare_canonical_2d_stage(
+        task_id=preview_id,
+        request=request_ns,
+        source=source,
+        zone=zone,
+        global_center=global_center,
+        debug_generated_dir=PREVIEW_CANONICAL_DIR,
+        zone_prefix="[preview] ",
+    )
+    bundle = canonical_stage.canonical_mask_bundle
+    model_logic = {
+        **model_logic,
+        "scale_factor_mm_per_m": float(zone.scale_factor),
+        "model_width_mm": float(zone.bbox_meters[2] - zone.bbox_meters[0]) * float(zone.scale_factor),
+        "model_height_mm": float(zone.bbox_meters[3] - zone.bbox_meters[1]) * float(zone.scale_factor),
+        "preview_source": "canonical_2d",
+        "canonical_bundle_dir": str(bundle.source_dir),
+    }
+    building_geometry = getattr(canonical_stage, "building_geometry", None)
+    gdf_buildings_local = getattr(building_geometry, "gdf_buildings_local", None)
+
+    result = {
+        "preview_id": preview_id,
+        "cached": False,
+        "bounds": bounds,
+        "center": {"lat": center_lat, "lng": center_lon},
+        "selection": mapping(transform_geometry(_local_to_wgs84_transformer(global_center), bundle.zone_polygon))
+        if bundle.zone_polygon is not None and not getattr(bundle.zone_polygon, "is_empty", True)
+        else mapping(_selection_geometry(bounds, polygon_geojson)),
+        "model_logic": model_logic,
+        "layers": {
+            "terrain": {"enabled": include_terrain},
+            "buildings": _canonical_building_collection(
+                gdf_buildings_local=gdf_buildings_local if include_buildings else None,
+                building_mask=bundle.buildings_footprints if include_buildings else None,
+                global_center=global_center,
+                scale_factor_mm_per_m=float(zone.scale_factor),
+                height_scale_factor=float(getattr(request_ns, "buildings_height_scale", 1.0) or 1.0),
+                limit=MAX_FEATURES["buildings"],
+            ),
+            "roads": _geometry_feature_collection(
+                bundle.roads_final if include_roads else None,
+                limit=MAX_FEATURES["roads"],
+                layer="roads",
+                global_center=global_center,
+            ),
+            "water": _geometry_feature_collection(
+                bundle.water_final if include_water else None,
+                limit=MAX_FEATURES["water"],
+                layer="water",
+                global_center=global_center,
+            ),
+            "parks": _geometry_feature_collection(
+                bundle.parks_final if include_parks else None,
+                limit=MAX_FEATURES["parks"],
+                layer="parks",
+                global_center=global_center,
+            ),
+        },
+        "metrics": {
+            "buildings": int(len(gdf_buildings_local)) if gdf_buildings_local is not None and not gdf_buildings_local.empty else 0,
+            "roads": int(len(source_data.G_roads.edges)) if hasattr(source_data.G_roads, "edges") else int(len(source_data.G_roads)) if source_data.G_roads is not None and hasattr(source_data.G_roads, "__len__") else 0,
+            "water": int(len(source_data.gdf_water)) if source_data.gdf_water is not None and not source_data.gdf_water.empty else 0,
+            "parks": int(len(source_data.gdf_green)) if source_data.gdf_green is not None and not source_data.gdf_green.empty else 0,
+            "elapsed_ms": int((time.perf_counter() - started) * 1000),
+        },
+    }
+    return result
+
+
 def build_fast_preview(
     *,
     bounds: dict[str, float],
@@ -322,8 +647,24 @@ def build_fast_preview(
         "model_height_mm": height_m * scale_factor_mm_per_m,
         "terrain_base_thickness_mm": terrain_base_thickness_mm,
     }
+    request_ns = _request_namespace(
+        bounds=bounds,
+        road_width_multiplier=road_width_multiplier,
+        building_min_height=building_min_height,
+        building_height_multiplier=building_height_multiplier,
+        model_size_mm=model_size_mm,
+        terrain_z_scale=terrain_z_scale,
+        terrain_resolution=terrain_resolution,
+        road_height_mm=road_height_mm,
+        road_embed_mm=road_embed_mm,
+        building_foundation_mm=building_foundation_mm,
+        building_embed_mm=building_embed_mm,
+        water_depth=water_depth,
+        parks_height_mm=parks_height_mm,
+        parks_embed_mm=parks_embed_mm,
+    )
     payload = {
-        "v": 9,
+        "v": 10,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
@@ -344,6 +685,25 @@ def build_fast_preview(
             return cached
         except Exception:
             pass
+
+    try:
+        result = _build_canonical_preview(
+            preview_id=preview_id,
+            bounds=bounds,
+            polygon_geojson=polygon_geojson,
+            include_terrain=include_terrain,
+            include_roads=include_roads,
+            include_buildings=include_buildings,
+            include_water=include_water,
+            include_parks=include_parks,
+            model_logic=model_logic,
+            request_ns=request_ns,
+            started=started,
+        )
+        cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+        return result
+    except Exception as exc:
+        print(f"[WARN] Fast preview canonical_2d mode failed, falling back to lightweight OSM preview: {exc}")
 
     selection = _selection_geometry(bounds, polygon_geojson)
     all_features = _features_from_bbox(
@@ -388,7 +748,7 @@ def build_fast_preview(
         "bounds": bounds,
         "center": center,
         "selection": mapping(selection),
-        "model_logic": payload["model_logic"],
+        "model_logic": {**payload["model_logic"], "preview_source": "legacy_osm_fallback"},
         "layers": {
             "terrain": {"enabled": include_terrain},
             "buildings": _feature_collection(
