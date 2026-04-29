@@ -54,6 +54,8 @@ backend/debug/*.geojson
 # OSM / Terrain cache — великі файли, відновлюються автоматично
 backend/cache/
 cache/
+backend/orders/
+orders/
 
 # External tools (PrusaSlicer тощо) — занадто великі для repo
 tools/external/

@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: #ece6dc;
-  --foreground: #162033;
-  --surface-panel: rgba(248, 245, 239, 0.88);
-  --surface-panel-strong: rgba(255, 252, 246, 0.96);
-  --surface-border: rgba(56, 72, 91, 0.14);
-  --text-primary: #172033;
-  --text-secondary: #5f6b7e;
-  --accent: #0f766e;
-  --accent-strong: #0b5c57;
+  --background: #f3efe7;
+  --foreground: #1f2420;
+  --surface-panel: #fffaf1;
+  --surface-panel-strong: #fffdf7;
+  --surface-border: #dfd7c8;
+  --text-primary: #1f2420;
+  --text-secondary: #71695e;
+  --accent: #1f5b49;
+  --accent-strong: #173d32;
 }
 
 html {
@@ -27,11 +27,11 @@ body {
   overflow-x: hidden;
   color: var(--foreground);
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 32%),
-    radial-gradient(circle at top right, rgba(240, 144, 74, 0.12), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 52%),
+    linear-gradient(rgba(31, 36, 32, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 36, 32, 0.035) 1px, transparent 1px),
     var(--background);
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background-size: 96px 96px;
+  font-family: "Geist", "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -46,7 +46,16 @@ textarea {
 }
 
 .font-title {
-  font-family: "Bahnschrift", "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.font-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+.font-mono {
+  font-family: "Consolas", "SFMono-Regular", ui-monospace, monospace;
 }
 
 input[type="range"] {
@@ -69,4 +78,13 @@ input[type="range"] {
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
+}
+
+.leaflet-container {
+  background: #eee8dd;
+  font-family: "Geist", "Segoe UI", Arial, sans-serif;
+}
+
+.leaflet-touch .leaflet-bar a {
+  color: #1f2420;
 }

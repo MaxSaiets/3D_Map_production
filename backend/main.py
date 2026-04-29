@@ -17,8 +17,10 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List, Tuple
 import os
+import json
 import uuid
 from pathlib import Path
+from datetime import datetime, timezone
 import trimesh
 import httpx
 import numpy as np
@@ -58,6 +60,7 @@ ox.settings.log_console = False # Reduce noise
 
 from services.full_generation_pipeline import run_full_generation_pipeline
 from services.generation_runtime_context import prepare_generation_runtime_context
+from services.site_preview import build_fast_preview
 
 from services.generation_task import GenerationTask
 from services.firebase_service import FirebaseService
@@ -96,6 +99,8 @@ import tempfile
 # Р¦Рµ РІРёСЂС–С€СѓС” РїСЂРѕР±Р»РµРјСѓ Р·РЅРёРєРЅРµРЅРЅСЏ С„Р°Р№Р»С–РІ Сѓ С‚РёРјС‡Р°СЃРѕРІРёС… РїР°РїРєР°С…
 OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+ORDERS_DIR = Path(os.getenv("ORDERS_DIR", "orders")).resolve()
+ORDERS_DIR.mkdir(parents=True, exist_ok=True)
 
 CANONICAL_CONTROL_BUNDLE_DIR = (Path("debug") / "generated" / "final_3d_input_masks_parks_fit_v006").resolve()
 CONTROL_ZONE_ID = "hex_43_38"
@@ -356,6 +361,33 @@ class GenerationResponse(BaseModel):
     all_task_ids: Optional[List[str]] = None  # Р”Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
 
 
+class PreviewRequest(BaseModel):
+    north: float
+    south: float
+    east: float
+    west: float
+    polygon_geojson: Optional[dict] = None
+    include_terrain: bool = True
+    include_roads: bool = True
+    include_buildings: bool = True
+    include_water: bool = True
+    include_parks: bool = True
+
+
+class SiteOrderRequest(BaseModel):
+    name: str = ""
+    contact: str = ""
+    city: str = "Київ"
+    bounds: dict
+    polygon_geojson: Optional[dict] = None
+    preview_id: Optional[str] = None
+    model_size_mm: float = 180.0
+    material: str = "white"
+    layers: dict = Field(default_factory=dict)
+    price_uah: Optional[int] = None
+    comment: str = ""
+
+
 @app.get("/")
 async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
@@ -364,6 +396,61 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.post("/api/preview")
+async def create_fast_preview(request: PreviewRequest):
+    if request.north <= request.south or request.east <= request.west:
+        raise HTTPException(status_code=400, detail="Некоректні межі ділянки")
+
+    lat_span = abs(request.north - request.south)
+    lng_span = abs(request.east - request.west)
+    if lat_span * lng_span > 0.00025:
+        raise HTTPException(status_code=400, detail="Ділянка завелика для швидкого preview. Зменшіть рамку або розбийте її на зони.")
+
+    return build_fast_preview(
+        bounds={
+            "north": request.north,
+            "south": request.south,
+            "east": request.east,
+            "west": request.west,
+        },
+        polygon_geojson=request.polygon_geojson,
+        include_terrain=request.include_terrain,
+        include_roads=request.include_roads,
+        include_buildings=request.include_buildings,
+        include_water=request.include_water,
+        include_parks=request.include_parks,
+    )
+
+
+@app.post("/api/orders")
+async def create_site_order(request: SiteOrderRequest):
+    order_id = f"R-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
+    payload = request.model_dump()
+    payload.update(
+        {
+            "id": order_id,
+            "status": "new",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+    (ORDERS_DIR / f"{order_id}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"ok": True, "order_id": order_id}
+
+
+@app.get("/api/admin/orders")
+async def list_site_orders(token: Optional[str] = Query(default=None)):
+    expected = os.getenv("ADMIN_API_TOKEN")
+    if expected and token != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    orders = []
+    for path in sorted(ORDERS_DIR.glob("*.json"), reverse=True):
+        try:
+            orders.append(json.loads(path.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+    return {"orders": orders}
 
 
 @app.post("/api/generate", response_model=GenerationResponse)

@@ -16,7 +16,27 @@ if (typeof window !== "undefined") {
   });
 }
 
-function DrawControl() {
+export interface MapSelection {
+  bounds: { north: number; south: number; east: number; west: number };
+  polygonGeoJson?: any;
+}
+
+function boundsToPlain(bounds: L.LatLngBounds): MapSelection["bounds"] {
+  return {
+    north: bounds.getNorth(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    west: bounds.getWest(),
+  };
+}
+
+function DrawControl({
+  initialBounds,
+  onSelectionChange,
+}: {
+  initialBounds?: MapSelection["bounds"];
+  onSelectionChange?: (selection: MapSelection | null) => void;
+}) {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
   const { setSelectedArea } = useGenerationStore();
@@ -26,25 +46,50 @@ function DrawControl() {
 
     map.addLayer(drawnItemsRef.current);
 
+    if (initialBounds && drawnItemsRef.current.getLayers().length === 0) {
+      const bounds = L.latLngBounds(
+        [initialBounds.south, initialBounds.west],
+        [initialBounds.north, initialBounds.east],
+      );
+      const rectangle = L.rectangle(bounds, {
+        color: "#c96745",
+        weight: 1.5,
+        dashArray: "6 4",
+        fillColor: "#c96745",
+        fillOpacity: 0.08,
+      });
+      drawnItemsRef.current.addLayer(rectangle);
+      setSelectedArea(bounds);
+      onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson: rectangle.toGeoJSON().geometry });
+      map.fitBounds(bounds.pad(0.45));
+    }
+
     const drawControl = new L.Control.Draw({
-      position: "topright",
+      position: "topleft",
       draw: {
         rectangle: {
           shapeOptions: {
-            color: "#3388ff",
-            weight: 2,
+            color: "#c96745",
+            weight: 1.5,
+            dashArray: "6 4",
+            fillColor: "#c96745",
+            fillOpacity: 0.08,
           },
         },
         polygon: {
           shapeOptions: {
-            color: "#3388ff",
-            weight: 2,
+            color: "#c96745",
+            weight: 1.5,
+            fillColor: "#c96745",
+            fillOpacity: 0.08,
           },
         },
         circle: {
           shapeOptions: {
-            color: "#3388ff",
-            weight: 2,
+            color: "#c96745",
+            weight: 1.5,
+            fillColor: "#c96745",
+            fillOpacity: 0.08,
           },
         },
         marker: false,
@@ -61,12 +106,15 @@ function DrawControl() {
 
     const handleDrawCreated = (e: any) => {
       const layer = e.layer;
+      drawnItemsRef.current.clearLayers();
       drawnItemsRef.current.addLayer(layer);
 
       // Отримуємо bounds обраної області
       if ("getBounds" in (layer as any) && typeof (layer as any).getBounds === "function") {
         const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
         setSelectedArea(bounds);
+        const polygonGeoJson = "toGeoJSON" in layer ? layer.toGeoJSON().geometry : undefined;
+        onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson });
       } else {
         // На випадок неочікуваних layer типів
         console.warn("Draw created layer does not support getBounds:", layer);
@@ -80,12 +128,15 @@ function DrawControl() {
         if ("getBounds" in layer) {
           const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
           setSelectedArea(bounds);
+          const polygonGeoJson = "toGeoJSON" in layer ? (layer as any).toGeoJSON().geometry : undefined;
+          onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson });
         }
       }
     };
 
     const handleDrawDeleted = () => {
       setSelectedArea(null);
+      onSelectionChange?.(null);
     };
 
     map.on(L.Draw.Event.CREATED, handleDrawCreated);
@@ -98,7 +149,7 @@ function DrawControl() {
       map.off(L.Draw.Event.DELETED, handleDrawDeleted);
       map.removeControl(drawControl);
     };
-  }, [map, setSelectedArea]);
+  }, [map, setSelectedArea, initialBounds, onSelectionChange]);
 
   return null;
 }
@@ -114,11 +165,13 @@ function MapViewUpdater({ center }: { center: [number, number] }) {
 
 interface MapSelectorProps {
   center?: [number, number];
+  initialBounds?: MapSelection["bounds"];
+  onSelectionChange?: (selection: MapSelection | null) => void;
 }
 
-export function MapSelector({ center = [50.4501, 30.5234] }: MapSelectorProps) {
+export function MapSelector({ center = [50.4501, 30.5234], initialBounds, onSelectionChange }: MapSelectorProps) {
   return (
-    <div className="w-full h-full" style={{ minHeight: '100%' }}>
+    <div className="h-full w-full" style={{ minHeight: "100%" }}>
       <MapContainer
         center={center} // Initial center
         zoom={13}
@@ -129,7 +182,7 @@ export function MapSelector({ center = [50.4501, 30.5234] }: MapSelectorProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <DrawControl />
+        <DrawControl initialBounds={initialBounds} onSelectionChange={onSelectionChange} />
         <MapViewUpdater center={center} />
       </MapContainer>
     </div>

@@ -31,6 +31,55 @@ export interface GenerationRequest {
   preview_include_parks?: boolean;
 }
 
+export interface PreviewRequest {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  polygon_geojson?: any;
+  include_terrain?: boolean;
+  include_roads?: boolean;
+  include_buildings?: boolean;
+  include_water?: boolean;
+  include_parks?: boolean;
+}
+
+export interface FastPreviewResponse {
+  preview_id: string;
+  cached: boolean;
+  bounds: { north: number; south: number; east: number; west: number };
+  center: { lat: number; lng: number };
+  selection?: any;
+  layers: {
+    terrain: { enabled: boolean };
+    roads: any;
+    buildings: any;
+    water: any;
+    parks: any;
+  };
+  metrics: {
+    buildings: number;
+    roads: number;
+    water: number;
+    parks: number;
+    elapsed_ms: number;
+  };
+}
+
+export interface SiteOrderRequest {
+  name: string;
+  contact: string;
+  city: string;
+  bounds: { north: number; south: number; east: number; west: number };
+  polygon_geojson?: any;
+  preview_id?: string;
+  model_size_mm: number;
+  material: string;
+  layers: Record<string, boolean>;
+  price_uah?: number;
+  comment?: string;
+}
+
 export interface GenerationResponse {
   task_id: string;
   status: string;
@@ -75,6 +124,26 @@ export interface BatchTaskStatusResponse {
 export type StatusResponse = TaskStatus | BatchTaskStatusResponse;
 
 export const api = {
+  async createFastPreview(request: PreviewRequest): Promise<FastPreviewResponse> {
+    const response = await axios.post<FastPreviewResponse>(`${API_BASE_URL}/api/preview`, request, {
+      timeout: 45000,
+    });
+    return response.data;
+  },
+
+  async createSiteOrder(request: SiteOrderRequest): Promise<{ ok: boolean; order_id: string }> {
+    const response = await axios.post(`${API_BASE_URL}/api/orders`, request, {
+      timeout: 30000,
+    });
+    return response.data;
+  },
+
+  async getAdminOrders(token?: string): Promise<{ orders: any[] }> {
+    const params = token ? `?token=${encodeURIComponent(token)}` : "";
+    const response = await axios.get(`${API_BASE_URL}/api/admin/orders${params}`);
+    return response.data;
+  },
+
   async generateModel(request: GenerationRequest): Promise<GenerationResponse> {
     const response = await axios.post<GenerationResponse>(
       `${API_BASE_URL}/api/generate`,
