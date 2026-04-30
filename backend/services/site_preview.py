@@ -641,21 +641,85 @@ def _fetch_preview_source_data(
         f"[DEBUG] {zone_prefix} Loading preview source data: "
         f"north={request_ns.north}, south={request_ns.south}, east={request_ns.east}, west={request_ns.west}"
     )
-    # Full generation uses a very generous road context. Preview keeps the same
-    # canonical mask processors but narrows the data context so a browser request
-    # does not spend minutes parsing roads far outside the selected area.
-    road_context_deg = 0.002
-    osm_padding_deg = 0.001
+    # Full generation uses a topological OSMnx graph and a generous road context.
+    # For browser preview we still run the same canonical geometry processors, but
+    # feed them clipped OSM feature lines so Overpass cannot hold the request for
+    # minutes before the user sees a model.
+    context_deg = 0.0008
+    preview_bbox = (
+        float(request_ns.west) - context_deg,
+        float(request_ns.south) - context_deg,
+        float(request_ns.east) + context_deg,
+        float(request_ns.north) + context_deg,
+    )
+    target_bbox = box(
+        float(request_ns.west),
+        float(request_ns.south),
+        float(request_ns.east),
+        float(request_ns.north),
+    )
 
-    def get_city_data():
-        return fetch_city_data(
-            float(request_ns.north) + road_context_deg,
-            float(request_ns.south) - road_context_deg,
-            float(request_ns.east) + road_context_deg,
-            float(request_ns.west) - road_context_deg,
-            padding=osm_padding_deg,
-            target_crs=global_center.utm_crs if global_center else None,
+    def fetch_features(label: str, tags: dict[str, Any]) -> gpd.GeoDataFrame:
+        original_timeout = int(getattr(ox.settings, "timeout", 180) or 180)
+        try:
+            ox.settings.timeout = min(original_timeout, 25)
+            try:
+                gdf = ox.features_from_bbox(bbox=preview_bbox, tags=tags)
+            except TypeError:
+                gdf = ox.features_from_bbox(
+                    preview_bbox[0],
+                    preview_bbox[1],
+                    preview_bbox[2],
+                    preview_bbox[3],
+                    tags=tags,
+                )
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix} Preview {label} fetch failed: {exc}")
+            return gpd.GeoDataFrame()
+        finally:
+            ox.settings.timeout = original_timeout
+
+        if gdf is None or gdf.empty:
+            return gpd.GeoDataFrame()
+        gdf = gdf[gdf.geometry.notna()].copy()
+        if gdf.empty:
+            return gpd.GeoDataFrame()
+        try:
+            gdf = gdf[gdf.geometry.intersects(target_bbox)].copy()
+        except Exception:
+            pass
+        print(f"[DEBUG] {zone_prefix} Preview {label} features: {len(gdf)}")
+        return gdf
+
+    def get_buildings():
+        return fetch_features("buildings", {"building": True})
+
+    def get_water():
+        return fetch_features(
+            "water",
+            {
+                "natural": "water",
+                "water": True,
+                "waterway": "riverbank",
+                "landuse": "reservoir",
+            },
         )
+
+    def get_roads():
+        roads = fetch_features("roads", {"highway": True})
+        if roads is None or roads.empty:
+            return gpd.GeoDataFrame()
+        try:
+            roads = roads[
+                roads.geometry.geom_type.isin(["LineString", "MultiLineString"])
+            ].copy()
+        except Exception:
+            pass
+        if "highway" in roads.columns:
+            roads["_normalized_highway"] = roads["highway"].apply(normalize_drivable_highway_tag)
+            roads = roads[roads["_normalized_highway"].notna()].copy()
+        print(f"[DEBUG] {zone_prefix} Preview road centerlines kept: {len(roads)}")
+        return roads
 
     def get_extras():
         return fetch_extras(
@@ -670,22 +734,34 @@ def _fetch_preview_source_data(
     gdf_water = gpd.GeoDataFrame()
     gdf_green = gpd.GeoDataFrame()
     G_roads = None
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            future_city = executor.submit(get_city_data)
-            future_extras = executor.submit(get_extras)
-            gdf_buildings, gdf_water, G_roads = future_city.result(timeout=45)
-            gdf_green = future_extras.result(timeout=45)
-    except Exception as exc:
-        print(f"[WARN] {zone_prefix} Preview parallel fetch failed: {exc}")
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+    futures = {
+        executor.submit(get_buildings): "buildings",
+        executor.submit(get_water): "water",
+        executor.submit(get_roads): "roads",
+        executor.submit(get_extras): "parks",
+    }
+    done, pending = concurrent.futures.wait(futures, timeout=32)
+    for future in done:
+        label = futures[future]
         try:
-            gdf_buildings, gdf_water, G_roads = get_city_data()
-        except Exception as city_exc:
-            print(f"[WARN] {zone_prefix} Preview city fetch failed: {city_exc}")
-        try:
-            gdf_green = get_extras()
-        except Exception as extras_exc:
-            print(f"[WARN] {zone_prefix} Preview extras fetch failed: {extras_exc}")
+            value = future.result()
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix} Preview {label} result failed: {exc}")
+            continue
+        if label == "buildings":
+            gdf_buildings = value
+        elif label == "water":
+            gdf_water = value
+        elif label == "roads":
+            G_roads = value
+        elif label == "parks":
+            gdf_green = value
+    for future in pending:
+        label = futures[future]
+        future.cancel()
+        print(f"[WARN] {zone_prefix} Preview {label} fetch timed out; continuing without this layer")
+    executor.shutdown(wait=False, cancel_futures=True)
 
     road_count = 0
     if G_roads is not None:
