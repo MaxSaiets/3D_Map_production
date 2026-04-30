@@ -75,7 +75,19 @@ export interface FastPreviewResponse {
   center: { lat: number; lng: number };
   selection?: any;
   layers: {
-    terrain: { enabled: boolean };
+    terrain: {
+      enabled: boolean;
+      source?: string;
+      heightfield?: {
+        x: number[];
+        y: number[];
+        z: number[][];
+        z_min_m?: number;
+        z_max_m?: number;
+        mesh_vertices?: number;
+        mesh_faces?: number;
+      } | null;
+    };
     roads: any;
     buildings: any;
     water: any;

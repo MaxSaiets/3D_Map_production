@@ -37,6 +37,8 @@ from services.printer_profile import get_printer_profile_for_request
 from services.processing_results import SourceDataResult, ZonePreparationResult
 from services.road_geometry_pipeline import prepare_road_geometry
 from services.road_processor import normalize_drivable_highway_tag
+from services.terrain_generator import create_terrain_mesh
+from services.terrain_pipeline_utils import resolve_generation_source_crs
 from services.water_layer_pipeline import _prepare_water_polygons
 from services.zone_context_pipeline import build_zone_context
 from services.zone_geometry_pipeline import prepare_zone_geometry
@@ -790,6 +792,113 @@ def _fetch_preview_source_data(
     )
 
 
+def _terrain_heightfield_layer(
+    *,
+    request_ns: SimpleNamespace,
+    latlon_bbox: tuple[float, float, float, float],
+    source: SourceDataResult,
+    zone: ZonePreparationResult,
+    global_center: GlobalCenter,
+    building_geometries_for_flatten: Any,
+    road_groove_mask: Optional[BaseGeometry],
+    zone_prefix: str,
+) -> dict[str, Any]:
+    if not bool(getattr(request_ns, "terrain_enabled", True)):
+        return {"enabled": False}
+
+    try:
+        source_crs = resolve_generation_source_crs(
+            gdf_buildings=source.gdf_buildings,
+            G_roads=source.G_roads,
+            global_center=global_center,
+            allow_global_center_fallback=True,
+            zone_prefix=zone_prefix,
+        )
+        scale_factor = float(zone.scale_factor or 0.0)
+        base_thickness = (
+            float(getattr(request_ns, "terrain_base_thickness_mm", 2.0) or 2.0) / scale_factor
+            if scale_factor > 0
+            else 5.0
+        )
+        preview_resolution = int(
+            max(
+                24,
+                min(
+                    56,
+                    float(getattr(request_ns, "preview_terrain_resolution", 42) or 42),
+                    float(getattr(request_ns, "terrain_resolution", 180) or 180),
+                ),
+            )
+        )
+        terrain_mesh, terrain_provider = create_terrain_mesh(
+            zone.bbox_meters,
+            z_scale=float(getattr(request_ns, "terrain_z_scale", 0.5) or 0.5),
+            resolution=preview_resolution,
+            latlon_bbox=latlon_bbox,
+            source_crs=source_crs,
+            terrarium_zoom=int(getattr(request_ns, "terrarium_zoom", 15) or 15),
+            elevation_ref_m=getattr(request_ns, "elevation_ref_m", None),
+            baseline_offset_m=float(getattr(request_ns, "baseline_offset_m", 0.0) or 0.0),
+            base_thickness=base_thickness,
+            flatten_buildings=bool(getattr(request_ns, "flatten_buildings_on_terrain", True)),
+            building_geometries=building_geometries_for_flatten,
+            flatten_roads=False,
+            road_geometries=road_groove_mask,
+            smoothing_sigma=float(getattr(request_ns, "terrain_smoothing_sigma", 0.0) or 0.0),
+            water_geometries=None,
+            water_depth_m=0.0,
+            global_center=global_center,
+            bbox_is_local=True,
+            subdivide=False,
+            subdivide_levels=0,
+            zone_polygon=zone.zone_polygon_local,
+            grid_step_m=None,
+            road_polygons_for_cutting=None,
+        )
+        if terrain_provider is None:
+            return {"enabled": True, "heightfield": None, "source": "terrain_provider_unavailable"}
+
+        z_grid = getattr(terrain_provider, "z_grid", None)
+        x_axis = getattr(terrain_provider, "x_axis", None)
+        y_axis = getattr(terrain_provider, "y_axis", None)
+        if z_grid is None or x_axis is None or y_axis is None:
+            return {"enabled": True, "heightfield": None, "source": "terrain_grid_unavailable"}
+
+        def rounded_list(values: Any, digits: int = 3) -> list[float]:
+            return [round(float(v), digits) for v in list(values)]
+
+        z_values = [
+            [round(float(v), 3) for v in row]
+            for row in getattr(z_grid, "tolist", lambda: z_grid)()
+        ]
+        mesh_vertices = 0
+        mesh_faces = 0
+        if terrain_mesh is not None:
+            try:
+                mesh_vertices = int(len(terrain_mesh.vertices))
+                mesh_faces = int(len(terrain_mesh.faces))
+            except Exception:
+                mesh_vertices = 0
+                mesh_faces = 0
+
+        return {
+            "enabled": True,
+            "heightfield": {
+                "x": rounded_list(x_axis),
+                "y": rounded_list(y_axis),
+                "z": z_values,
+                "z_min_m": round(float(getattr(terrain_provider, "min_z", 0.0)), 4),
+                "z_max_m": round(float(getattr(terrain_provider, "max_z", 0.0)), 4),
+                "mesh_vertices": mesh_vertices,
+                "mesh_faces": mesh_faces,
+            },
+            "source": "create_terrain_mesh_provider_preview",
+        }
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix} Preview terrain heightfield failed: {exc}")
+        return {"enabled": True, "heightfield": None, "source": "terrain_preview_failed", "error": str(exc)}
+
+
 def _build_canonical_preview(
     *,
     preview_id: str,
@@ -856,6 +965,16 @@ def _build_canonical_preview(
     }
     building_geometry = getattr(bundle, "building_geometry", None)
     gdf_buildings_local = getattr(building_geometry, "gdf_buildings_local", None)
+    terrain_layer = _terrain_heightfield_layer(
+        request_ns=request_ns,
+        latlon_bbox=latlon_bbox,
+        source=source,
+        zone=zone,
+        global_center=global_center,
+        building_geometries_for_flatten=getattr(building_geometry, "building_geometries_for_flatten", None),
+        road_groove_mask=getattr(bundle, "road_groove_mask", None),
+        zone_prefix="[preview] ",
+    ) if include_terrain else {"enabled": False}
 
     result = {
         "preview_id": preview_id,
@@ -867,7 +986,7 @@ def _build_canonical_preview(
         else mapping(_selection_geometry(bounds, polygon_geojson)),
         "model_logic": model_logic,
         "layers": {
-            "terrain": {"enabled": include_terrain},
+            "terrain": terrain_layer,
             "buildings": _canonical_building_collection(
                 gdf_buildings_local=gdf_buildings_local if include_buildings else None,
                 building_mask=buildings_footprints if include_buildings else None,

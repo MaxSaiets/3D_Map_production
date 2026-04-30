@@ -132,13 +132,51 @@ function TerrainSurface({
   height,
   color,
   relief,
+  scale,
+  heightfield,
 }: {
   width: number;
   height: number;
   color: string;
   relief: number;
+  scale: number;
+  heightfield?: FastPreviewResponse["layers"]["terrain"]["heightfield"];
 }) {
   const geometry = useMemo(() => {
+    if (heightfield?.x?.length && heightfield?.y?.length && Array.isArray(heightfield.z)) {
+      const xs = heightfield.x.map(Number);
+      const ys = heightfield.y.map(Number);
+      const rows = ys.length;
+      const cols = xs.length;
+      if (rows >= 2 && cols >= 2 && heightfield.z.length >= rows) {
+        const positions: number[] = [];
+        const indices: number[] = [];
+        for (let row = 0; row < rows; row += 1) {
+          const zRow = heightfield.z[row] ?? [];
+          for (let col = 0; col < cols; col += 1) {
+            const x = xs[col] * scale;
+            const y = Math.max(0, Number(zRow[col] ?? 0)) * scale * 1.15;
+            const z = -ys[row] * scale;
+            positions.push(x, y, z);
+          }
+        }
+        for (let row = 0; row < rows - 1; row += 1) {
+          for (let col = 0; col < cols - 1; col += 1) {
+            const a = row * cols + col;
+            const b = (row + 1) * cols + col;
+            const c = row * cols + col + 1;
+            const d = (row + 1) * cols + col + 1;
+            indices.push(a, b, c, c, b, d);
+          }
+        }
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+        geom.setIndex(indices);
+        geom.computeVertexNormals();
+        return geom;
+      }
+    }
+
     const segments = 26;
     const geom = new THREE.PlaneGeometry(width, height, segments, segments);
     geom.rotateX(-Math.PI / 2);
@@ -157,7 +195,7 @@ function TerrainSurface({
     }
     geom.computeVertexNormals();
     return geom;
-  }, [width, height, relief]);
+  }, [width, height, relief, scale, heightfield]);
 
   return (
     <mesh geometry={geometry} receiveShadow castShadow>
@@ -235,8 +273,13 @@ function PreviewScene({
   const mmToScene = (value: number, fallback: number) => Math.max(0.01, Number.isFinite(value) ? value * visualScale : fallback);
   const baseThickness = mmToScene(Number(modelLogic.terrain_base_thickness_mm), 0.5);
   const relief = Math.max(0.14, Math.min(0.9, Number(modelLogic.terrain_z_scale || 0.5) * 0.55));
-  const roadY = relief + mmToScene(Number(modelLogic.road_height_mm), 0.08);
-  const parkY = relief + mmToScene(Number(modelLogic.parks_height_mm), 0.06);
+  const terrainHeightfield = preview.layers.terrain?.heightfield ?? null;
+  const terrainTopY = Math.max(
+    relief,
+    Number(terrainHeightfield?.z_max_m ?? 0) * scale * 1.15,
+  );
+  const roadY = terrainTopY + mmToScene(Number(modelLogic.road_height_mm), 0.08);
+  const parkY = terrainTopY + mmToScene(Number(modelLogic.parks_height_mm), 0.06);
   const waterY = relief * 0.35;
 
   const buildingFeatures = preview.layers.buildings?.features ?? [];
@@ -259,7 +302,14 @@ function PreviewScene({
               <boxGeometry args={[plateW, baseThickness, plateH]} />
               <meshStandardMaterial color="#8d7b55" roughness={0.9} />
             </mesh>
-            <TerrainSurface width={plateW} height={plateH} color={palette.plate} relief={relief} />
+            <TerrainSurface
+              width={plateW}
+              height={plateH}
+              color={palette.plate}
+              relief={relief}
+              scale={scale}
+              heightfield={terrainHeightfield}
+            />
           </>
         )}
 
@@ -285,7 +335,7 @@ function PreviewScene({
               geometry={feature.geometry}
               center={preview.center}
               scale={scale}
-              height={mmToScene(Number(feature.properties?.height_mm), 0.8) + relief * 0.5}
+              height={mmToScene(Number(feature.properties?.height_mm), 0.8) + terrainTopY * 0.5}
               color={palette.building}
             />
           ))}
