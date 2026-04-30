@@ -683,6 +683,7 @@ def run_full_generation_pipeline(
     min_printable_gap_mm: float = 1.0,
     groove_clearance_mm: float = 0.15,
     require_groove_success: bool = True,
+    require_print_acceptance: bool = True,
 ) -> FullGenerationPipelineResult:
     pipeline_start = time.perf_counter()
     stage_snapshot_collector = None
@@ -953,41 +954,44 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix}Failed to finalize stage snapshots: {exc}")
 
-    stage_start = time.perf_counter()
-    printer_profile = get_printer_profile_for_request(request)
-    parts_for_print = _collect_print_part_paths(task, export_result)
-    expected_parts = {
-        "base": terrain_mesh is not None,
-        "roads": road_mesh is not None,
-        "parks": parks_mesh is not None,
-        "water": water_mesh is not None,
-        "buildings": bool(building_meshes),
-    }
-    print_acceptance_path = write_export_print_acceptance_report(
-        task_id=task_id,
-        output_dir=output_dir,
-        parts_for_print=parts_for_print,
-        expected_parts=expected_parts,
-        printer_profile=printer_profile,
-        require_slicer_validation=True,
-        fail_on_slicer_warnings=True,
-        rotate_x_deg=0,
-    )
-    task.set_output("print_acceptance", str(print_acceptance_path.resolve()))
-    print_acceptance_report = json.loads(print_acceptance_path.read_text(encoding="utf-8"))
-    if print_acceptance_report.get("status") != "pass":
-        print_acceptance_report, parts_for_print, expected_parts = _attempt_print_recovery(
+    if require_print_acceptance:
+        stage_start = time.perf_counter()
+        printer_profile = get_printer_profile_for_request(request)
+        parts_for_print = _collect_print_part_paths(task, export_result)
+        expected_parts = {
+            "base": terrain_mesh is not None,
+            "roads": road_mesh is not None,
+            "parks": parks_mesh is not None,
+            "water": water_mesh is not None,
+            "buildings": bool(building_meshes),
+        }
+        print_acceptance_path = write_export_print_acceptance_report(
             task_id=task_id,
             output_dir=output_dir,
-            task=task,
             parts_for_print=parts_for_print,
             expected_parts=expected_parts,
             printer_profile=printer_profile,
-            initial_report=print_acceptance_report,
+            require_slicer_validation=True,
+            fail_on_slicer_warnings=True,
+            rotate_x_deg=0,
         )
-    if print_acceptance_report.get("status") != "pass":
-        raise RuntimeError(summarize_export_print_failures(print_acceptance_report))
-    _log_stage("print_acceptance", stage_start)
+        task.set_output("print_acceptance", str(print_acceptance_path.resolve()))
+        print_acceptance_report = json.loads(print_acceptance_path.read_text(encoding="utf-8"))
+        if print_acceptance_report.get("status") != "pass":
+            print_acceptance_report, parts_for_print, expected_parts = _attempt_print_recovery(
+                task_id=task_id,
+                output_dir=output_dir,
+                task=task,
+                parts_for_print=parts_for_print,
+                expected_parts=expected_parts,
+                printer_profile=printer_profile,
+                initial_report=print_acceptance_report,
+            )
+        if print_acceptance_report.get("status") != "pass":
+            raise RuntimeError(summarize_export_print_failures(print_acceptance_report))
+        _log_stage("print_acceptance", stage_start)
+    else:
+        print(f"[INFO] {zone_prefix}Print acceptance skipped for this run")
 
     stage_start = time.perf_counter()
     try:
