@@ -30,18 +30,44 @@ def clip_generated_meshes(
     preclipped_to_zone: bool,
     clip_tolerance: float = 0.1,
 ) -> MeshClipPipelineResult:
+    # ── Terrain ───────────────────────────────────────────────────────────────
+    # Clip terrain to zone polygon when available, otherwise to bbox.
+    # terrain_generator already clips internally, but this handles edge cases
+    # where terrain extends slightly beyond zone due to grid snapping.
     if terrain_mesh is not None:
-        if zone_polygon_coords is None:
+        if zone_polygon_coords is not None:
+            clipped_terrain = clip_mesh_to_polygon(
+                terrain_mesh,
+                zone_polygon_coords,
+                global_center=global_center,
+                tolerance=clip_tolerance,
+            )
+            if clipped_terrain is not None and len(clipped_terrain.vertices) > 0:
+                terrain_mesh = clipped_terrain
+            else:
+                print("[WARN] Terrain mesh became empty after polygon clipping; keeping the original mesh")
+        else:
             clipped_terrain = clip_mesh_to_bbox(terrain_mesh, bbox_meters, tolerance=clip_tolerance)
             if clipped_terrain is not None and len(clipped_terrain.vertices) > 0:
                 terrain_mesh = clipped_terrain
             else:
-                print("[WARN] Terrain mesh became empty after clipping; keeping the original mesh")
+                print("[WARN] Terrain mesh became empty after bbox clipping; keeping the original mesh")
 
-    # Roads are already clipped on the canonical 2D polygon stage.
-    # Re-clipping the final mesh with face/plane slicing can introduce diagonal artifacts
-    # on tile borders that should be straight 90-degree cuts.
+    # ── Roads ─────────────────────────────────────────────────────────────────
+    # Always clip roads to bbox. Roads are pre-clipped to zone polygon during
+    # canonical 2D geometry stage, but the final 3D mesh can extend slightly
+    # beyond bbox due to road width buffering near zone borders.
+    # Bbox clipping uses axis-aligned plane cuts — no diagonal artifacts.
+    # Without this clip, unbound roads dominate combined export bounds and
+    # cause everything else to appear tiny (scale distortion bug).
+    if road_mesh is not None:
+        clipped_roads = clip_mesh_to_bbox(road_mesh, bbox_meters, tolerance=clip_tolerance)
+        if clipped_roads is not None and len(clipped_roads.vertices) > 0 and len(clipped_roads.faces) > 0:
+            road_mesh = clipped_roads
+        else:
+            print("[WARN] Road mesh became empty after bbox clipping; keeping the original road mesh")
 
+    # ── Buildings ─────────────────────────────────────────────────────────────
     if building_meshes is not None and not preclipped_to_zone:
         clipped_buildings = []
         for building_mesh in building_meshes:
@@ -60,6 +86,7 @@ def clip_generated_meshes(
                 clipped_buildings.append(clipped)
         building_meshes = clipped_buildings if clipped_buildings else None
 
+    # ── Water ─────────────────────────────────────────────────────────────────
     if water_mesh is not None and not preclipped_to_zone:
         if zone_polygon_coords is not None:
             clipped_water = clip_mesh_to_polygon(
@@ -76,13 +103,23 @@ def clip_generated_meshes(
         else:
             water_mesh = None
 
+    # ── Parks ─────────────────────────────────────────────────────────────────
+    # Fix: previously parks were only clipped when zone_polygon_coords was None
+    # (inverted condition). Now clip to zone polygon when available, else bbox.
     if parks_mesh is not None:
-        if zone_polygon_coords is None:
+        if zone_polygon_coords is not None:
+            clipped_parks = clip_mesh_to_polygon(
+                parks_mesh,
+                zone_polygon_coords,
+                global_center=global_center,
+                tolerance=clip_tolerance,
+            )
+        else:
             clipped_parks = clip_mesh_to_bbox(parks_mesh, bbox_meters, tolerance=clip_tolerance)
-            if clipped_parks is not None and len(clipped_parks.vertices) > 0 and len(clipped_parks.faces) > 0:
-                parks_mesh = clipped_parks
-            else:
-                parks_mesh = None
+        if clipped_parks is not None and len(clipped_parks.vertices) > 0 and len(clipped_parks.faces) > 0:
+            parks_mesh = clipped_parks
+        else:
+            parks_mesh = None
 
     return MeshClipPipelineResult(
         terrain_mesh=terrain_mesh,

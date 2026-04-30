@@ -1188,7 +1188,6 @@ def _build_full_pipeline_preview(
     request_ns.skip_road_hole_audit = True
     request_ns.skip_layer_overlap_audit = True
     request_ns.skip_canonical_printability_audit = True
-    request_ns.preview_road_grooves_only = True
 
     task = GenerationTask(task_id=preview_id, request=request_ns)
     runtime_context = prepare_generation_runtime_context(
@@ -1216,7 +1215,7 @@ def _build_full_pipeline_preview(
         zone_prefix="[preview-full] ",
         require_groove_success=False,
         require_print_acceptance=False,
-        apply_grooves=True,
+        apply_grooves=False,
     )
     output_files = getattr(task, "output_files", {}) or {}
     primary_url = _static_file_url(str(workflow_result.output_file_abs))
@@ -1355,7 +1354,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 20,
+        "v": 21,
         "mode": "full_generation_pipeline_with_grooves_preview",
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
