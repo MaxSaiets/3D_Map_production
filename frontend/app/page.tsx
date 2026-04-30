@@ -42,7 +42,7 @@ const CITIES = {
   Kyiv: {
     label: "Київ",
     center: [50.4501, 30.5234] as [number, number],
-    bounds: { north: 50.454, south: 50.448, east: 30.529, west: 30.519 },
+    bounds: { north: 50.627232, south: 50.178116, east: 30.830663, west: 30.164347 },
   },
   Lviv: {
     label: "Львів",
@@ -115,7 +115,7 @@ function money(value: number) {
 export default function Home() {
   const { user, loading: authLoading, configured: authConfigured, signIn } = useAuth();
   const [cityKey, setCityKey] = useState<keyof typeof CITIES>("Kyiv");
-  const [areaMode, setAreaMode] = useState<AreaMode>("rect");
+  const [areaMode, setAreaMode] = useState<AreaMode>("hex");
   const [selection, setSelection] = useState<MapSelection | null>({
     bounds: CITIES.Kyiv.bounds,
     polygonGeoJson: {
@@ -147,6 +147,7 @@ export default function Home() {
   const [comment, setComment] = useState("");
   const [orderState, setOrderState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [accountGenerationState, setAccountGenerationState] = useState<"idle" | "sending" | "sent" | "limit" | "error">("idle");
+  const [confirmGenerationOpen, setConfirmGenerationOpen] = useState(false);
 
   const city = CITIES[cityKey];
   const activeBounds = useMemo(() => {
@@ -207,6 +208,12 @@ export default function Home() {
 
   const reloadPreview = useCallback(async () => {
     if (!activeBounds) return;
+    if ((areaMode === "grid" || areaMode === "hex") && selectedZones.length !== 1) {
+      setPreview(null);
+      setPreviewLoading(false);
+      setPreviewError(null);
+      return;
+    }
     setPreviewLoading(true);
     setPreviewError(null);
     try {
@@ -234,7 +241,7 @@ export default function Home() {
     } finally {
       setPreviewLoading(false);
     }
-  }, [activeBounds, activePolygon, buildGenerationRequest, layers, modelSizeMm]);
+  }, [activeBounds, activePolygon, areaMode, buildGenerationRequest, selectedZones.length]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -266,7 +273,7 @@ export default function Home() {
         area_mode: areaMode,
         selected_zones: selectedZones,
         grid_type: areaMode === "hex" ? "hexagonal" : areaMode === "grid" ? "square" : areaMode,
-        hex_size_m: areaMode === "hex" ? 650 : 800,
+        hex_size_m: areaMode === "hex" ? 1000 : 800,
         preview_metrics: preview?.metrics ?? {},
         model_logic: preview?.model_logic ?? {},
         generation_request: generationRequest,
@@ -277,11 +284,20 @@ export default function Home() {
     }
   };
 
-  const startFullModelInAccount = async () => {
+  const confirmFullModelInAccount = async () => {
     if (!user) {
       await signIn();
       return;
     }
+    if ((areaMode === "grid" || areaMode === "hex") && selectedZones.length !== 1) {
+      alert("Оберіть одну гексагональну зону перед запуском повної генерації.");
+      return;
+    }
+    setConfirmGenerationOpen(true);
+  };
+
+  const startFullModelInAccount = async () => {
+    setConfirmGenerationOpen(false);
     setAccountGenerationState("sending");
     try {
       const generationRequest = buildGenerationRequest();
@@ -494,7 +510,7 @@ export default function Home() {
                     bounds={city.bounds}
                     onZonesSelected={setSelectedZones}
                     gridType={areaMode === "hex" ? "hexagonal" : "square"}
-                    hexSizeM={areaMode === "hex" ? 650 : 800}
+                    hexSizeM={areaMode === "hex" ? 1000 : 800}
                   />
                 ) : (
                   <MapSelector
@@ -577,7 +593,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={startFullModelInAccount}
+                onClick={confirmFullModelInAccount}
                 disabled={accountGenerationState === "sending" || (!authConfigured && !user) || authLoading}
                 className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-white/15 bg-white/8 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
               >
@@ -594,6 +610,40 @@ export default function Home() {
             </div>
           </aside>
         </section>
+
+        {confirmGenerationOpen && (
+          <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/35 px-4">
+            <div className="w-full max-w-[460px] rounded-[10px] border border-[#dfd7c8] bg-[#fffaf1] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.22)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#8a8173]">Підтвердження</p>
+              <h2 className="mt-2 font-serif text-3xl">Запустити повну генерацію?</h2>
+              <p className="mt-3 text-sm leading-6 text-[#71695e]">
+                Це створює справжню 3D-модель у вашому кабінеті і використовує одну з 10 безкоштовних генерацій. Процес може тривати довго.
+              </p>
+              <div className="mt-5 rounded-[8px] bg-[#f1eadf] p-4 text-sm">
+                <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Місто</span><b>{city.label}</b></div>
+                <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Режим</span><b>{areaMode === "hex" ? "Гексагони" : areaMode === "grid" ? "Сітка зон" : "Ділянка"}</b></div>
+                <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Зон</span><b>{selectedZones.length || 1}</b></div>
+                <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Розмір</span><b>{modelSizeMm / 10} см</b></div>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmGenerationOpen(false)}
+                  className="rounded-[6px] border border-[#dfd7c8] bg-[#fffaf1] px-4 py-3 text-sm font-semibold text-[#1f2420]"
+                >
+                  Скасувати
+                </button>
+                <button
+                  type="button"
+                  onClick={startFullModelInAccount}
+                  className="rounded-[6px] bg-[#1f5b49] px-4 py-3 text-sm font-semibold text-white"
+                >
+                  Так, створити
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section id="how" className="border-t border-[#dfd7c8] bg-[#eee8dd] px-5 py-10 lg:px-9">
           <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#8a8173]">Три кроки</p>
