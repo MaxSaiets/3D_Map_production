@@ -538,6 +538,10 @@ def prepare_canonical_2d_stage(
     zone_prefix: str = "",
 ) -> Canonical2DStageResult:
     printer_profile = get_printer_profile_for_request(request)
+    mask_report_kwargs = {
+        "min_feature_mm": float(printer_profile.min_printable_feature_mm),
+        "check_road_holes": not bool(getattr(request, "skip_road_hole_audit", False)),
+    }
 
     canonical_mask_bundle_dir = getattr(request, "canonical_mask_bundle_dir", None)
     # By default we prioritize runtime canonicalization from current zone data.
@@ -617,7 +621,7 @@ def prepare_canonical_2d_stage(
                 write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
                 sanitized_report = build_mask_printability_report(
                     sanitized_bundle.source_dir,
-                    min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                    **mask_report_kwargs,
                 )
                 if _has_blocking_mask_failures(sanitized_report):
                     healed_bundle = _attempt_runtime_overlap_self_heal(
@@ -635,7 +639,7 @@ def prepare_canonical_2d_stage(
                         write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
                         sanitized_report = build_mask_printability_report(
                             sanitized_bundle.source_dir,
-                            min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                            **mask_report_kwargs,
                         )
                 if _has_blocking_mask_failures(sanitized_report):
                     failing_overlaps = [str(name) for name in (sanitized_report.get("failing_overlaps") or [])]
@@ -654,7 +658,7 @@ def prepare_canonical_2d_stage(
                             write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
                             sanitized_report = build_mask_printability_report(
                                 sanitized_bundle.source_dir,
-                                min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                                **mask_report_kwargs,
                             )
                 if _has_blocking_mask_failures(sanitized_report):
                     if _is_road_only_debt(sanitized_report):
@@ -916,7 +920,7 @@ def prepare_canonical_2d_stage(
     write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
     audit_report = build_mask_printability_report(
         runtime_bundle.source_dir,
-        min_feature_mm=float(printer_profile.min_printable_feature_mm),
+        **mask_report_kwargs,
     )
     if _has_blocking_mask_failures(audit_report):
         healed_bundle = _attempt_runtime_overlap_self_heal(
@@ -934,7 +938,7 @@ def prepare_canonical_2d_stage(
             write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
             audit_report = build_mask_printability_report(
                 runtime_bundle.source_dir,
-                min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                **mask_report_kwargs,
             )
         if _has_blocking_mask_failures(audit_report):
             failing_overlaps = [str(name) for name in (audit_report.get("failing_overlaps") or [])]
@@ -953,7 +957,7 @@ def prepare_canonical_2d_stage(
                     write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
                     audit_report = build_mask_printability_report(
                         runtime_bundle.source_dir,
-                        min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                        **mask_report_kwargs,
                     )
     if audit_report.get("failing_road_holes"):
         summary = summarize_mask_printability_failures(audit_report)

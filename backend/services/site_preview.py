@@ -1185,6 +1185,7 @@ def _build_full_pipeline_preview(
     request_ns.include_parks = bool(include_parks)
     request_ns.terrain_enabled = bool(include_terrain)
     request_ns.export_format = "3mf"
+    request_ns.skip_road_hole_audit = True
 
     task = GenerationTask(task_id=preview_id, request=request_ns)
     runtime_context = prepare_generation_runtime_context(

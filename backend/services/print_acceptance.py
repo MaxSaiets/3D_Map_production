@@ -213,6 +213,7 @@ def build_mask_printability_report(
     *,
     min_feature_mm: float,
     scale_factor_override: float | None = None,
+    check_road_holes: bool = True,
 ) -> dict[str, Any]:
     threshold_m, scale_factor = _resolve_world_threshold_m(
         bundle_dir,
@@ -238,16 +239,22 @@ def build_mask_printability_report(
         for name, geom in geometries.items()
         if name != "zone_polygon"
     }
-    road_holes = {
-        "roads_final_orphan_holes": _orphan_hole_count(
-            geometries["roads_final"],
-            backing_mask=geometries["buildings_footprints"],
-        ),
-        "road_groove_orphan_holes": _orphan_hole_count(
-            geometries["road_groove_mask"],
-            backing_mask=geometries["buildings_footprints"],
-        ),
-    }
+    if check_road_holes:
+        road_holes = {
+            "roads_final_orphan_holes": _orphan_hole_count(
+                geometries["roads_final"],
+                backing_mask=geometries["buildings_footprints"],
+            ),
+            "road_groove_orphan_holes": _orphan_hole_count(
+                geometries["road_groove_mask"],
+                backing_mask=geometries["buildings_footprints"],
+            ),
+        }
+    else:
+        road_holes = {
+            "roads_final_orphan_holes": 0,
+            "road_groove_orphan_holes": 0,
+        }
     overlaps = {
         "roads_vs_buildings": _overlap_area(geometries["roads_final"], geometries["buildings_footprints"]),
         "road_groove_vs_buildings": _overlap_area(geometries["road_groove_mask"], geometries["buildings_footprints"]),
@@ -283,6 +290,7 @@ def build_mask_printability_report(
         "threshold_mm": float(min_feature_mm),
         "threshold_m": threshold_m,
         "scale_factor": scale_factor,
+        "road_hole_audit_skipped": not bool(check_road_holes),
         "overlap_failure_threshold_m2": overlap_failure_threshold_m2,
         "status": "pass" if not failing_layers and not failing_overlaps and not failing_road_holes else "fail",
         "layers": layers,
