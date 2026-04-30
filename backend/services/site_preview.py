@@ -1127,7 +1127,8 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 17,
+        "v": 18,
+        "mode": "canonical_fast_3d_preview",
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
@@ -1150,38 +1151,27 @@ def build_fast_preview(
         except Exception:
             pass
 
-    worker_payload = {
-        "preview_id": preview_id,
-        "bounds": bounds,
-        "polygon_geojson": polygon_geojson,
-        "include_terrain": include_terrain,
-        "include_roads": include_roads,
-        "include_buildings": include_buildings,
-        "include_water": include_water,
-        "include_parks": include_parks,
-        "model_logic": model_logic,
-        "request": dict(vars(request_ns)),
-        "cache_file": str(cache_file),
-    }
-    job_status = _start_preview_worker_if_needed(preview_id=preview_id, worker_payload=worker_payload)
-    state = str(job_status.get("status", "processing"))
-    if state == "failed":
-        return _pending_preview_response(
-            preview_id=preview_id,
-            bounds=bounds,
-            polygon_geojson=polygon_geojson,
-            model_logic=model_logic,
-            status="failed",
-            message=str(job_status.get("error") or "Точне preview не вдалося підготувати. Спробуйте меншу ділянку або інший район."),
-        )
-    return _pending_preview_response(
+    result = _build_canonical_preview(
         preview_id=preview_id,
         bounds=bounds,
         polygon_geojson=polygon_geojson,
+        include_terrain=include_terrain,
+        include_roads=include_roads,
+        include_buildings=include_buildings,
+        include_water=include_water,
+        include_parks=include_parks,
         model_logic=model_logic,
-        status="processing",
-        message=str(job_status.get("message") or "Запущено повну 3D pipeline: рельєф, дороги, будівлі та export до етапу вирізання пазів. Це вже не окрема preview-логіка."),
+        request_ns=request_ns,
+        started=started,
     )
+    result["preview_status"] = "ready"
+    result["model_logic"] = {
+        **result.get("model_logic", {}),
+        "preview_source": "canonical_fast_3d_preview",
+        "canonical_note": "fast preview uses the same canonical masks as full 3D generation, but renders a lightweight browser model before groove/paz cutting and before STL/3MF export",
+    }
+    cache_file.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    return result
 
     selection = _selection_geometry(bounds, polygon_geojson)
     all_features = _features_from_bbox(
