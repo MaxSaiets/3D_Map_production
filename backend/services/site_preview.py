@@ -823,6 +823,8 @@ def _build_canonical_preview(
         hex_size_m=getattr(request_ns, "hex_size_m", 300.0),
         zone_prefix="[preview] ",
     )
+    if zone.zone_polygon_local is None:
+        zone.zone_polygon_local = box(*zone.bbox_meters)
     source_started = time.perf_counter()
     source = _fetch_preview_source_data(
         request_ns=request_ns,
