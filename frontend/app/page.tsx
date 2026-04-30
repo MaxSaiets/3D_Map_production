@@ -89,6 +89,8 @@ const MATERIALS: Array<{ key: MaterialKey; label: string; color: string; hint: s
   { key: "terracotta", label: "Теракот", color: "#d8ad89", hint: "Теплий" },
 ];
 
+const HEX_SIZE_OPTIONS = [300, 500, 800, 1000] as const;
+
 function zoneBounds(zones: any[]) {
   const coords: Array<[number, number]> = [];
   zones.forEach((zone) => {
@@ -116,6 +118,7 @@ export default function Home() {
   const { user, loading: authLoading, configured: authConfigured, signIn } = useAuth();
   const [cityKey, setCityKey] = useState<keyof typeof CITIES>("Kyiv");
   const [areaMode, setAreaMode] = useState<AreaMode>("hex");
+  const [hexSizeM, setHexSizeM] = useState<number>(300);
   const [selection, setSelection] = useState<MapSelection | null>({
     bounds: CITIES.Kyiv.bounds,
     polygonGeoJson: {
@@ -181,13 +184,14 @@ export default function Home() {
     export_format: "3mf",
     model_size_mm: modelSizeMm,
     is_ams_mode: false,
+    hex_size_m: areaMode === "hex" ? hexSizeM : 800,
     context_padding_m: 80,
     preview_include_base: layers.terrain,
     preview_include_roads: layers.roads,
     preview_include_buildings: layers.buildings,
     preview_include_water: layers.water,
     preview_include_parks: layers.parks,
-  }), [activeBounds, layers, modelSizeMm]);
+  }), [activeBounds, areaMode, hexSizeM, layers, modelSizeMm]);
 
   useEffect(() => {
     setSelection({
@@ -273,7 +277,7 @@ export default function Home() {
         area_mode: areaMode,
         selected_zones: selectedZones,
         grid_type: areaMode === "hex" ? "hexagonal" : areaMode === "grid" ? "square" : areaMode,
-        hex_size_m: areaMode === "hex" ? 1000 : 800,
+        hex_size_m: areaMode === "hex" ? hexSizeM : 800,
         preview_metrics: preview?.metrics ?? {},
         model_logic: preview?.model_logic ?? {},
         generation_request: generationRequest,
@@ -294,6 +298,13 @@ export default function Home() {
       return;
     }
     setConfirmGenerationOpen(true);
+  };
+
+  const updateHexSize = (size: number) => {
+    setHexSizeM(size);
+    setSelectedZones([]);
+    setPreview(null);
+    setPreviewError(null);
   };
 
   const startFullModelInAccount = async () => {
@@ -427,6 +438,29 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              {areaMode === "hex" && (
+                <div className="mt-4 rounded-[8px] border border-[#dfd7c8] bg-[#f7f2e8] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-[#1f2420]">Розмір гексагона</span>
+                    <span className="rounded-full bg-[#dde9df] px-2 py-1 text-[11px] font-semibold text-[#1f5b49]">{hexSizeM} м</span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {HEX_SIZE_OPTIONS.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => updateHexSize(size)}
+                        className={`rounded-[7px] border px-2 py-2 text-xs font-semibold transition ${hexSizeM === size ? "border-[#1f5b49] bg-[#dde9df] text-[#173d32]" : "border-[#dfd7c8] bg-[#fffaf1] text-[#71695e] hover:bg-[#efe7da]"}`}
+                      >
+                        {size} м
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] leading-4 text-[#7a7466]">
+                    300 м - детальна стандартна сітка. Для всього міста вона завантажується з кешу.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="rounded-[10px] border border-[#dfd7c8] bg-[#fffaf1] p-5">
@@ -506,11 +540,11 @@ export default function Home() {
               <div className="h-full overflow-hidden rounded-[8px] border border-[#dfd7c8]">
                 {areaMode === "grid" || areaMode === "hex" ? (
                   <HexagonalGrid
-                    key={`${cityKey}-${areaMode}`}
+                    key={`${cityKey}-${areaMode}-${areaMode === "hex" ? hexSizeM : 800}`}
                     bounds={city.bounds}
                     onZonesSelected={setSelectedZones}
                     gridType={areaMode === "hex" ? "hexagonal" : "square"}
-                    hexSizeM={areaMode === "hex" ? 1000 : 800}
+                    hexSizeM={areaMode === "hex" ? hexSizeM : 800}
                   />
                 ) : (
                   <MapSelector
@@ -622,6 +656,7 @@ export default function Home() {
               <div className="mt-5 rounded-[8px] bg-[#f1eadf] p-4 text-sm">
                 <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Місто</span><b>{city.label}</b></div>
                 <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Режим</span><b>{areaMode === "hex" ? "Гексагони" : areaMode === "grid" ? "Сітка зон" : "Ділянка"}</b></div>
+                {areaMode === "hex" && <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Гексагон</span><b>{hexSizeM} м</b></div>}
                 <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Зон</span><b>{selectedZones.length || 1}</b></div>
                 <div className="flex justify-between gap-4 py-1"><span className="text-[#8a8173]">Розмір</span><b>{modelSizeMm / 10} см</b></div>
               </div>

@@ -637,14 +637,14 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
             "preview_include_buildings": bool(layers.get("buildings", True)),
             "preview_include_water": bool(layers.get("water", True)),
             "preview_include_parks": bool(layers.get("parks", True)),
-            "hex_size_m": float(order.get("hex_size_m") or 650.0),
+            "hex_size_m": float(order.get("hex_size_m") or 300.0),
             "is_ams_mode": False,
         }
     bounds = _bounds_from_order(order)
     for key, value in bounds.items():
         request.setdefault(key, value)
     request.setdefault("model_size_mm", float(order.get("model_size_mm") or 180.0))
-    request.setdefault("hex_size_m", float(order.get("hex_size_m") or 650.0))
+    request.setdefault("hex_size_m", float(order.get("hex_size_m") or 300.0))
     request.setdefault("context_padding_m", 80.0)
     return request
 
@@ -744,7 +744,7 @@ async def start_order_generation(order_id: str, background_tasks: BackgroundTask
         if selected_zones:
             zone_request_payload = dict(request_payload)
             zone_request_payload["zones"] = selected_zones
-            zone_request_payload["hex_size_m"] = float(order.get("hex_size_m") or request_payload.get("hex_size_m") or 650.0)
+            zone_request_payload["hex_size_m"] = float(order.get("hex_size_m") or request_payload.get("hex_size_m") or 300.0)
             response = await generate_zones_endpoint(ZoneGenerationRequest(**zone_request_payload), background_tasks)
         else:
             response = await generate_model(GenerationRequest(**request_payload), background_tasks)

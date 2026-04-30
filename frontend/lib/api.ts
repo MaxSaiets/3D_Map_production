@@ -24,6 +24,7 @@ export interface GenerationRequest {
   export_format: "stl" | "3mf";
   model_size_mm: number;
   is_ams_mode: boolean;
+  hex_size_m?: number;
   preview_include_base?: boolean;
   preview_include_roads?: boolean;
   preview_include_buildings?: boolean;

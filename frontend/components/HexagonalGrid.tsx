@@ -69,7 +69,7 @@ export default function HexagonalGrid({
   bounds,
   onZonesSelected,
   gridType: externalGridType = "hexagonal",
-  hexSizeM: externalHexSizeM = 1000.0,
+  hexSizeM: externalHexSizeM = 300.0,
 }: HexagonalGridProps) {
   const normalizeId = (id: any): string => String(id ?? "");
   const [hexGrid, setHexGrid] = useState<any>(null);
@@ -108,7 +108,7 @@ export default function HexagonalGrid({
   // Використовуємо зовнішні значення якщо передані, інакше внутрішні
   const [internalGridType, setInternalGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
   const gridType = externalGridType || internalGridType;
-  const hexSizeM = externalHexSizeM || 1000.0;
+  const hexSizeM = externalHexSizeM || 300.0;
 
   const generateGrid = async () => {
     if (isLoading) return; // Запобігаємо подвійній генерації
