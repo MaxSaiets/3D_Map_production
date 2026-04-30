@@ -420,8 +420,8 @@ export function FastPreview3D({
             </div>
             <p className="mt-2 text-xs leading-5 text-[#777064]">
               {loading || processing
-                ? previewMessage || "Готуємо швидке preview з тих самих canonical шарів, що й повна 3D-модель, без STL/3MF export і без вирізання пазів."
-                : error || previewMessage || "Після вибору району тут зʼявиться легка 3D-модель з рельєфом, дорогами, будівлями, водою і парками."}
+                ? previewMessage || "Генеруємо повну 3D-модель тим самим pipeline, що й основна генерація: рельєф, шари, пази та export. Це може зайняти кілька хвилин."
+                : error || previewMessage || "Після вибору району тут зʼявиться повна 3D-модель з рельєфом, дорогами, будівлями, водою, парками і пазами."}
             </p>
           </div>
         </div>
