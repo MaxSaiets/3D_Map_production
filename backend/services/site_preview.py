@@ -27,7 +27,7 @@ from services.detail_layer_pipeline import _build_canonical_road_masks
 from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, prepare_green_areas_for_processing
 from services.data_loader import fetch_city_data
 from services.extras_loader import fetch_extras
-from services.full_generation_pipeline import run_canonical_preview_pipeline, run_full_generation_pipeline
+from services.full_generation_pipeline import _prepare_zone_stage, run_canonical_preview_pipeline, run_full_generation_pipeline
 from services.generation_runtime_context import prepare_generation_runtime_context
 from services.generation_task import GenerationTask
 from services.geometry_preclip_pipeline import prepare_preclipped_geometry
@@ -730,19 +730,26 @@ def _build_canonical_preview(
     center_lat = (float(bounds["north"]) + float(bounds["south"])) / 2.0
     center_lon = (float(bounds["east"]) + float(bounds["west"])) / 2.0
     global_center = GlobalCenter(center_lat, center_lon)
-    pipeline_result = run_canonical_preview_pipeline(
-        task=_PreviewTask(),
+    zone = _prepare_zone_stage(
         request=request_ns,
-        task_id=preview_id,
-        output_dir=PREVIEW_CACHE_DIR,
         global_center=global_center,
         zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
         grid_bbox_latlon=latlon_bbox,
         zone_prefix="[preview] ",
     )
-    zone = pipeline_result.zone
-    source = pipeline_result.source
-    bundle = pipeline_result.canonical_mask_bundle
+    source_started = time.perf_counter()
+    source = _fetch_preview_source_data(
+        request_ns=request_ns,
+        global_center=global_center,
+        zone_prefix="[preview] ",
+    )
+    bundle = _build_preview_canonical_masks(
+        request_ns=request_ns,
+        source=source,
+        zone=zone,
+        global_center=global_center,
+        zone_prefix="[preview] ",
+    )
     display_zone = zone.zone_polygon_local
     if display_zone is None or getattr(display_zone, "is_empty", True):
         display_zone = box(*zone.bbox_meters)
@@ -755,11 +762,11 @@ def _build_canonical_preview(
         "scale_factor_mm_per_m": float(zone.scale_factor),
         "model_width_mm": float(zone.bbox_meters[2] - zone.bbox_meters[0]) * float(zone.scale_factor),
         "model_height_mm": float(zone.bbox_meters[3] - zone.bbox_meters[1]) * float(zone.scale_factor),
-        "preview_source": "full_generation_pipeline_canonical_2d",
-        "canonical_note": "same canonical 2D handoff consumed by the full 3D pipeline; displayed before terrain booleans, Blender and export",
-        "canonical_elapsed_ms": int(float(pipeline_result.elapsed_seconds) * 1000),
+        "preview_source": "canonical_fast_3d_preview",
+        "canonical_note": "same canonical mask processors as full 3D generation with preview-scoped OSM fetch; displayed before terrain booleans, Blender and export",
+        "canonical_elapsed_ms": int((time.perf_counter() - source_started) * 1000),
     }
-    building_geometry = getattr(pipeline_result.canonical_2d_stage, "building_geometry", None)
+    building_geometry = getattr(bundle, "building_geometry", None)
     gdf_buildings_local = getattr(building_geometry, "gdf_buildings_local", None)
 
     result = {
