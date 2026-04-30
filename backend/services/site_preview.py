@@ -1188,6 +1188,7 @@ def _build_full_pipeline_preview(
     request_ns.skip_road_hole_audit = True
     request_ns.skip_layer_overlap_audit = True
     request_ns.skip_canonical_printability_audit = True
+    request_ns.preview_road_grooves_only = True
 
     task = GenerationTask(task_id=preview_id, request=request_ns)
     runtime_context = prepare_generation_runtime_context(

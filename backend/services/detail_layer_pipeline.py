@@ -336,8 +336,10 @@ def process_detail_layers(
         and scale_factor
         and scale_factor > 0
     )
+    road_grooves_only = bool(getattr(request, "preview_road_grooves_only", False))
     has_park_grooves = (
         apply_grooves
+        and not road_grooves_only
         and not request.is_ams_mode
         and terrain_mesh is not None
         and parks_mesh is not None
@@ -346,6 +348,7 @@ def process_detail_layers(
     )
     has_water_grooves = (
         apply_grooves
+        and not road_grooves_only
         and not request.is_ams_mode
         and terrain_mesh is not None
         and water_mesh is not None
@@ -362,19 +365,27 @@ def process_detail_layers(
             groove_result = cut_inlay_grooves(
                 terrain_mesh=terrain_mesh,
                 road_mesh=road_mesh,
-                parks_mesh=parks_mesh,
-                water_mesh=water_mesh,
+                parks_mesh=None if road_grooves_only else parks_mesh,
+                water_mesh=None if road_grooves_only else water_mesh,
                 road_cut_mask=canonical_road_groove_mask or road_cut_mask,
                 merged_roads_geom_local=road_insert_exclusion_polygons or road_cut_source,
                 parks_polygons=(
+                    None
+                    if road_grooves_only
+                    else (
                     getattr(canonical_mask_bundle, "parks_final", None)
                     if canonical_mask_bundle is not None and getattr(canonical_mask_bundle, "parks_final", None) is not None
                     else (parks_result.processed_polygons if parks_result is not None else None)
+                    )
                 ),
                 water_polygons=(
+                    None
+                    if road_grooves_only
+                    else (
                     canonical_water_for_detail
                     if canonical_mask_bundle is not None
                     else water_cut_polygons
+                    )
                 ),
                 building_polygons=building_union_local,
                 scale_factor=float(scale_factor),
@@ -387,15 +398,21 @@ def process_detail_layers(
                 zone_polygon_local=zone_polygon_local,
                 min_printable_mm=max(float(MIN_LAND_WIDTH_MODEL_MM), tiny_feature_threshold_mm),
                 parks_groove_override=(
-                    getattr(canonical_mask_bundle, "parks_groove_mask", None) if canonical_mask_bundle is not None else None
+                    None
+                    if road_grooves_only
+                    else (getattr(canonical_mask_bundle, "parks_groove_mask", None) if canonical_mask_bundle is not None else None)
                 ),
                 water_groove_override=(
+                    None
+                    if road_grooves_only
+                    else (
                     (
                         getattr(canonical_mask_bundle, "water_groove_mask", None)
                         or getattr(canonical_mask_bundle, "water_final", None)
                     )
                     if canonical_mask_bundle is not None
                     else None
+                    )
                 ),
                 use_exact_masks=canonical_mask_bundle is not None,
             )
