@@ -1134,15 +1134,25 @@ def _start_preview_worker_if_needed(
 
     input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
     backend_root = Path(__file__).resolve().parents[1]
-    process = subprocess.Popen(
-        [sys.executable, "-m", "services.preview_worker", str(input_file)],
-        cwd=str(backend_root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        close_fds=(os.name != "nt"),
-        start_new_session=(os.name != "nt"),
-    )
-    running_status = {"status": "running", "started_at": now, "preview_id": preview_id, "pid": process.pid}
+    stdout_file = PREVIEW_JOBS_DIR / f"{preview_id}.worker.out.log"
+    stderr_file = PREVIEW_JOBS_DIR / f"{preview_id}.worker.err.log"
+    with stdout_file.open("ab") as stdout_handle, stderr_file.open("ab") as stderr_handle:
+        process = subprocess.Popen(
+            [sys.executable, "-m", "services.preview_worker", str(input_file)],
+            cwd=str(backend_root),
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+            close_fds=(os.name != "nt"),
+            start_new_session=(os.name != "nt"),
+        )
+    running_status = {
+        "status": "running",
+        "started_at": now,
+        "preview_id": preview_id,
+        "pid": process.pid,
+        "stdout_log": str(stdout_file),
+        "stderr_log": str(stderr_file),
+    }
     status_file.write_text(json.dumps(running_status, ensure_ascii=False), encoding="utf-8")
     return running_status
 
