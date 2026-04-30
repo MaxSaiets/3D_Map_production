@@ -3,7 +3,7 @@
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { RotateCcw } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Component, ReactNode, Suspense, useMemo } from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import type { FastPreviewResponse } from "@/lib/api";
@@ -17,6 +17,40 @@ const MATERIALS: Record<string, { plate: string; building: string; road: string;
   green: { plate: "#dfe8df", building: "#f0f2ec", road: "#59645e", water: "#b9ceca", park: "#90aa88" },
   terracotta: { plate: "#ead9c6", building: "#f6ecde", road: "#8d5b40", water: "#c5d0ca", park: "#abb799" },
 };
+
+class PreviewCanvasErrorBoundary extends Component<
+  { resetKey: string; children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidUpdate(prevProps: { resetKey: string }) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#fbf8ef]">
+          <div className="max-w-[280px] text-center">
+            <div className="font-serif text-xl text-[#1f2420]">Preview файл ще недоступний</div>
+            <p className="mt-2 text-xs leading-5 text-[#777064]">
+              Модель згенерована, але браузер не зміг завантажити STL. Натисніть “Камера” або оновіть preview за кілька секунд.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function projectPoint(lng: number, lat: number, center: { lat: number; lng: number }) {
   const metersPerDegLat = 111_320;
@@ -300,43 +334,47 @@ export function FastPreview3D({
       )}
 
       {ready && preview && fullPipelineModelUrl && (
-        <Canvas shadows dpr={[1, 2]} camera={{ position: [20, 17, 20], fov: 30, near: 0.1, far: 180 }}>
-          <Suspense fallback={null}>
-            <PerspectiveCamera makeDefault position={[20, 17, 20]} fov={30} />
-            <OrbitControls
-              makeDefault
-              enableDamping
-              dampingFactor={0.09}
-              minDistance={8}
-              maxDistance={60}
-              maxPolarAngle={Math.PI * 0.5}
-              minPolarAngle={Math.PI * 0.12}
-              enablePan={false}
-              target={[0, 0.6, 0]}
-            />
-            <FullPipelinePreviewScene url={fullPipelineModelUrl} material={material} />
-          </Suspense>
-        </Canvas>
+        <PreviewCanvasErrorBoundary resetKey={`${fullPipelineModelUrl}:${material}`}>
+          <Canvas shadows dpr={[1, 2]} camera={{ position: [20, 17, 20], fov: 30, near: 0.1, far: 180 }}>
+            <Suspense fallback={null}>
+              <PerspectiveCamera makeDefault position={[20, 17, 20]} fov={30} />
+              <OrbitControls
+                makeDefault
+                enableDamping
+                dampingFactor={0.09}
+                minDistance={8}
+                maxDistance={60}
+                maxPolarAngle={Math.PI * 0.5}
+                minPolarAngle={Math.PI * 0.12}
+                enablePan={false}
+                target={[0, 0.6, 0]}
+              />
+              <FullPipelinePreviewScene url={fullPipelineModelUrl} material={material} />
+            </Suspense>
+          </Canvas>
+        </PreviewCanvasErrorBoundary>
       )}
 
       {ready && preview && !fullPipelineModelUrl && (
-        <Canvas shadows dpr={[1, 2]} camera={{ position: [34, 30, 34], fov: 28, near: 0.1, far: 180 }}>
-          <Suspense fallback={null}>
-            <PerspectiveCamera makeDefault position={[34, 30, 34]} fov={28} />
-            <OrbitControls
-              makeDefault
-              enableDamping
-              dampingFactor={0.09}
-              minDistance={14}
-              maxDistance={72}
-              maxPolarAngle={Math.PI * 0.48}
-              minPolarAngle={Math.PI * 0.16}
-              enablePan={false}
-              target={[0, 0.2, 0]}
-            />
-            <PreviewScene preview={preview} visibleLayers={visibleLayers} material={material} />
-          </Suspense>
-        </Canvas>
+        <PreviewCanvasErrorBoundary resetKey={`geojson:${preview.preview_id}:${material}`}>
+          <Canvas shadows dpr={[1, 2]} camera={{ position: [34, 30, 34], fov: 28, near: 0.1, far: 180 }}>
+            <Suspense fallback={null}>
+              <PerspectiveCamera makeDefault position={[34, 30, 34]} fov={28} />
+              <OrbitControls
+                makeDefault
+                enableDamping
+                dampingFactor={0.09}
+                minDistance={14}
+                maxDistance={72}
+                maxPolarAngle={Math.PI * 0.48}
+                minPolarAngle={Math.PI * 0.16}
+                enablePan={false}
+                target={[0, 0.2, 0]}
+              />
+              <PreviewScene preview={preview} visibleLayers={visibleLayers} material={material} />
+            </Suspense>
+          </Canvas>
+        </PreviewCanvasErrorBoundary>
       )}
 
       <button
