@@ -916,8 +916,6 @@ def _start_preview_worker_if_needed(
             "preview_id": preview_id,
             "message": "Інше точне preview ще рахується. Цей запит запуститься автоматично.",
         }
-        input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
-        status_file.write_text(json.dumps(queued_status, ensure_ascii=False), encoding="utf-8")
         return queued_status
 
     input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
