@@ -63,6 +63,13 @@ export interface FastPreviewResponse {
   preview_id: string;
   preview_status?: "processing" | "ready" | "failed";
   cached: boolean;
+  model_file_url?: string | null;
+  preview_stl?: string | null;
+  preview_3mf?: string | null;
+  download_url?: string | null;
+  download_url_3mf?: string | null;
+  download_url_stl?: string | null;
+  task_outputs?: Record<string, string | null>;
   bounds: { north: number; south: number; east: number; west: number };
   center: { lat: number; lng: number };
   selection?: any;

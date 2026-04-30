@@ -27,7 +27,9 @@ from services.detail_layer_pipeline import _build_canonical_road_masks
 from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, prepare_green_areas_for_processing
 from services.data_loader import fetch_city_data
 from services.extras_loader import fetch_extras
-from services.full_generation_pipeline import run_canonical_preview_pipeline
+from services.full_generation_pipeline import run_canonical_preview_pipeline, run_full_generation_pipeline
+from services.generation_runtime_context import prepare_generation_runtime_context
+from services.generation_task import GenerationTask
 from services.geometry_preclip_pipeline import prepare_preclipped_geometry
 from services.global_center import GlobalCenter
 from services.green_processor import process_green_areas
@@ -46,7 +48,9 @@ PREVIEW_CANONICAL_DIR = PREVIEW_CACHE_DIR / "canonical"
 PREVIEW_CANONICAL_DIR.mkdir(parents=True, exist_ok=True)
 PREVIEW_JOBS_DIR = PREVIEW_CACHE_DIR / "jobs"
 PREVIEW_JOBS_DIR.mkdir(parents=True, exist_ok=True)
-PREVIEW_WORKER_TIMEOUT_SECONDS = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "600"))
+PREVIEW_OUTPUT_DIR = Path(os.getenv("PREVIEW_OUTPUT_DIR", "output")).resolve()
+PREVIEW_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+PREVIEW_WORKER_TIMEOUT_SECONDS = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "1800"))
 PREVIEW_MAX_ACTIVE_WORKERS = int(os.getenv("PREVIEW_MAX_ACTIVE_WORKERS", "1"))
 PREVIEW_FAILED_RETRY_DELAY_SECONDS = int(os.getenv("PREVIEW_FAILED_RETRY_DELAY_SECONDS", "90"))
 
@@ -339,6 +343,7 @@ def _request_namespace(
         buildings_height_scale=float(building_height_multiplier),
         building_foundation_mm=float(building_foundation_mm),
         building_embed_mm=float(building_embed_mm),
+        building_max_foundation_mm=2.5,
         buildings_embed_mm=float(building_embed_mm),
         water_depth=float(water_depth),
         include_parks=True,
@@ -828,7 +833,7 @@ def _pending_preview_response(
         "selection": mapping(_selection_geometry(bounds, polygon_geojson)),
         "model_logic": {
             **model_logic,
-            "preview_source": "full_generation_pipeline_canonical_2d_pending",
+            "preview_source": "full_generation_pipeline_pending",
             "preview_message": message,
         },
         "layers": {
@@ -915,8 +920,109 @@ def _start_preview_worker_if_needed(
     return running_status
 
 
+def _static_file_url(path_str: str | None) -> str | None:
+    if not path_str:
+        return None
+    return f"/files/{Path(path_str).name}"
+
+
+def _build_full_pipeline_preview(
+    *,
+    preview_id: str,
+    bounds: dict[str, float],
+    polygon_geojson: Optional[dict[str, Any]],
+    include_terrain: bool,
+    include_roads: bool,
+    include_buildings: bool,
+    include_water: bool,
+    include_parks: bool,
+    model_logic: dict[str, Any],
+    request_ns: SimpleNamespace,
+    started: float,
+) -> dict[str, Any]:
+    request_ns.preview_include_base = bool(include_terrain)
+    request_ns.preview_include_roads = bool(include_roads)
+    request_ns.preview_include_buildings = bool(include_buildings)
+    request_ns.preview_include_water = bool(include_water)
+    request_ns.preview_include_parks = bool(include_parks)
+    request_ns.include_parks = bool(include_parks)
+    request_ns.terrain_enabled = bool(include_terrain)
+    request_ns.export_format = "3mf"
+
+    task = GenerationTask(task_id=preview_id, request=request_ns)
+    runtime_context = prepare_generation_runtime_context(
+        request=request_ns,
+        zone_prefix="[preview-full] ",
+    )
+    latlon_bbox = (
+        float(bounds["north"]),
+        float(bounds["south"]),
+        float(bounds["east"]),
+        float(bounds["west"]),
+    )
+    workflow_result = run_full_generation_pipeline(
+        task=task,
+        request=request_ns,
+        task_id=preview_id,
+        output_dir=PREVIEW_OUTPUT_DIR,
+        global_center=runtime_context.global_center,
+        latlon_bbox=runtime_context.latlon_bbox,
+        zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
+        grid_bbox_latlon=latlon_bbox,
+        zone_row=None,
+        zone_col=None,
+        hex_size_m=getattr(request_ns, "hex_size_m", 300.0),
+        zone_prefix="[preview-full] ",
+    )
+    output_files = getattr(task, "output_files", {}) or {}
+    primary_url = _static_file_url(str(workflow_result.output_file_abs))
+    stl_url = _static_file_url(output_files.get("stl"))
+    preview_3mf_url = _static_file_url(output_files.get("preview_3mf"))
+    result = {
+        "preview_id": preview_id,
+        "preview_status": "ready",
+        "cached": False,
+        "bounds": bounds,
+        "center": {
+            "lat": (float(bounds["north"]) + float(bounds["south"])) / 2.0,
+            "lng": (float(bounds["east"]) + float(bounds["west"])) / 2.0,
+        },
+        "selection": mapping(_selection_geometry(bounds, polygon_geojson)),
+        "model_file_url": stl_url or primary_url,
+        "preview_stl": stl_url,
+        "preview_3mf": preview_3mf_url,
+        "download_url": primary_url,
+        "download_url_3mf": _static_file_url(output_files.get("3mf")) or primary_url,
+        "download_url_stl": stl_url,
+        "task_outputs": {key: _static_file_url(value) for key, value in output_files.items()},
+        "model_logic": {
+            **model_logic,
+            "preview_source": "run_full_generation_pipeline",
+            "canonical_note": "preview was generated by the same full 3D pipeline as production model generation",
+            "pipeline_task_id": preview_id,
+            "pipeline_elapsed_ms": int((time.perf_counter() - started) * 1000),
+            "task_message": task.message,
+        },
+        "layers": {
+            "terrain": {"enabled": include_terrain},
+            "buildings": _empty_collection(),
+            "roads": _empty_collection(),
+            "water": _empty_collection(),
+            "parks": _empty_collection(),
+        },
+        "metrics": {
+            "buildings": 0,
+            "roads": 0,
+            "water": 0,
+            "parks": 0,
+            "elapsed_ms": int((time.perf_counter() - started) * 1000),
+        },
+    }
+    return result
+
+
 def build_preview_cache_from_worker_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    result = _build_canonical_preview(
+    result = _build_full_pipeline_preview(
         preview_id=str(payload["preview_id"]),
         bounds=payload["bounds"],
         polygon_geojson=payload.get("polygon_geojson"),
@@ -1005,7 +1111,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 14,
+        "v": 15,
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
         "model_logic": model_logic,
@@ -1058,7 +1164,7 @@ def build_fast_preview(
         polygon_geojson=polygon_geojson,
         model_logic=model_logic,
         status="processing",
-        message=str(job_status.get("message") or "Точне preview готується з тієї ж pipeline-логіки, що й 3D-модель."),
+        message=str(job_status.get("message") or "Запущено повну 3D pipeline: рельєф, дороги, будівлі, пази, boolean, export. Це вже не спрощена preview-логіка."),
     )
 
     selection = _selection_geometry(bounds, polygon_geojson)

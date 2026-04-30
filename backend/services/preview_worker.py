@@ -15,7 +15,7 @@ class PreviewWorkerTimeout(TimeoutError):
 
 
 def _install_timeout_guard() -> None:
-    timeout_seconds = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "600"))
+    timeout_seconds = int(os.getenv("PREVIEW_WORKER_TIMEOUT_SECONDS", "1800"))
     if timeout_seconds <= 0 or not hasattr(signal, "SIGALRM"):
         return
 

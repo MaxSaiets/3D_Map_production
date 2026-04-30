@@ -1,10 +1,11 @@
 "use client";
 
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { RotateCcw } from "lucide-react";
 import { Suspense, useMemo } from "react";
 import * as THREE from "three";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import type { FastPreviewResponse } from "@/lib/api";
 
 type LayerKey = "terrain" | "roads" | "buildings" | "water" | "parks";
@@ -215,6 +216,50 @@ function PreviewScene({
   );
 }
 
+function FullPipelineStlModel({ url, material }: { url: string; material: string }) {
+  const sourceGeometry = useLoader(STLLoader, url);
+  const palette = MATERIALS[material] ?? MATERIALS.white;
+  const geometry = useMemo(() => {
+    const geom = sourceGeometry.clone();
+    geom.rotateX(-Math.PI / 2);
+    geom.computeBoundingBox();
+    const box = geom.boundingBox;
+    if (box) {
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      box.getCenter(center);
+      box.getSize(size);
+      geom.translate(-center.x, -box.min.y, -center.z);
+      const maxSide = Math.max(size.x, size.z, 1);
+      const scale = 16 / maxSide;
+      geom.scale(scale, scale, scale);
+    }
+    geom.computeVertexNormals();
+    geom.computeBoundingSphere();
+    return geom;
+  }, [sourceGeometry]);
+
+  return (
+    <mesh geometry={geometry} castShadow receiveShadow>
+      <meshStandardMaterial color={palette.building} roughness={0.74} metalness={0.02} />
+    </mesh>
+  );
+}
+
+function FullPipelinePreviewScene({ url, material }: { url: string; material: string }) {
+  return (
+    <>
+      <ambientLight intensity={0.72} />
+      <hemisphereLight args={["#ffffff", "#c6bfae", 0.58]} />
+      <directionalLight position={[16, 22, 14]} intensity={1.08} castShadow />
+      <directionalLight position={[-14, 10, -10]} intensity={0.28} />
+      <group rotation={[0, -0.2, 0]}>
+        <FullPipelineStlModel url={url} material={material} />
+      </group>
+    </>
+  );
+}
+
 export function FastPreview3D({
   preview,
   loading,
@@ -234,6 +279,7 @@ export function FastPreview3D({
   const failed = preview?.preview_status === "failed";
   const ready = Boolean(preview && !processing && !failed && !loading && !error);
   const previewMessage = String(preview?.model_logic?.preview_message || "");
+  const fullPipelineModelUrl = preview?.model_file_url || preview?.preview_stl || null;
 
   return (
     <div className="relative h-full min-h-[300px] w-full overflow-hidden bg-[#fbf8ef]">
@@ -246,14 +292,34 @@ export function FastPreview3D({
             </div>
             <p className="mt-2 text-xs leading-5 text-[#777064]">
               {loading || processing
-                ? previewMessage || "Рахуємо ті самі canonical-маски, які використовує повна 3D-генерація. Перший запуск може тривати довше, потім результат береться з кешу."
+                ? previewMessage || "Запущено повну 3D pipeline: рельєф, дороги, будівлі, пази, boolean і export. Перший запуск може тривати довше, потім результат береться з кешу."
                 : error || previewMessage || "Після вибору району тут зʼявиться проста модель з дорогами, будівлями, водою і парками."}
             </p>
           </div>
         </div>
       )}
 
-      {ready && preview && (
+      {ready && preview && fullPipelineModelUrl && (
+        <Canvas shadows dpr={[1, 2]} camera={{ position: [20, 17, 20], fov: 30, near: 0.1, far: 180 }}>
+          <Suspense fallback={null}>
+            <PerspectiveCamera makeDefault position={[20, 17, 20]} fov={30} />
+            <OrbitControls
+              makeDefault
+              enableDamping
+              dampingFactor={0.09}
+              minDistance={8}
+              maxDistance={60}
+              maxPolarAngle={Math.PI * 0.5}
+              minPolarAngle={Math.PI * 0.12}
+              enablePan={false}
+              target={[0, 0.6, 0]}
+            />
+            <FullPipelinePreviewScene url={fullPipelineModelUrl} material={material} />
+          </Suspense>
+        </Canvas>
+      )}
+
+      {ready && preview && !fullPipelineModelUrl && (
         <Canvas shadows dpr={[1, 2]} camera={{ position: [34, 30, 34], fov: 28, near: 0.1, far: 180 }}>
           <Suspense fallback={null}>
             <PerspectiveCamera makeDefault position={[34, 30, 34]} fov={28} />
