@@ -735,6 +735,9 @@ def _build_canonical_preview(
         global_center=global_center,
         zone_polygon_coords=_zone_polygon_coords_from_geojson(polygon_geojson),
         grid_bbox_latlon=latlon_bbox,
+        zone_row=None,
+        zone_col=None,
+        hex_size_m=getattr(request_ns, "hex_size_m", 300.0),
         zone_prefix="[preview] ",
     )
     source_started = time.perf_counter()
