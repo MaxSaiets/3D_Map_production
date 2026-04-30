@@ -40,7 +40,8 @@ module.exports = {
     {
       name: '3dmap-frontend',
       cwd: '/opt/3dmap/frontend',
-      script: 'node_modules/.bin/next',
+      interpreter: 'node',
+      script: 'node_modules/next/dist/bin/next',
       args: 'start --port 3000',
       env: {
         NODE_ENV: 'production',

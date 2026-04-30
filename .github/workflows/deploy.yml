@@ -67,13 +67,16 @@ jobs:
 
             echo "=== [3/5] Frontend build ==="
             cd /opt/3dmap/frontend
-            pm2 stop 3dmap-frontend || true
             npm ci --prefer-online
             rm -rf .next
             npm run build
 
-            echo "=== [4/5] Restart services ==="
-            pm2 restart 3dmap-backend 3dmap-frontend --update-env
+            echo "=== [4/5] Reload nginx and restart services ==="
+            cd /opt/3dmap
+            cp deploy/nginx.conf /etc/nginx/sites-available/3dmap
+            nginx -t
+            systemctl reload nginx
+            pm2 startOrRestart ecosystem.config.js --update-env
 
             echo "=== [5/5] Save PM2 state ==="
             pm2 save
