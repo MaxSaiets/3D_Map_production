@@ -214,6 +214,7 @@ def build_mask_printability_report(
     min_feature_mm: float,
     scale_factor_override: float | None = None,
     check_road_holes: bool = True,
+    check_layer_overlaps: bool = True,
 ) -> dict[str, Any]:
     threshold_m, scale_factor = _resolve_world_threshold_m(
         bundle_dir,
@@ -255,21 +256,39 @@ def build_mask_printability_report(
             "roads_final_orphan_holes": 0,
             "road_groove_orphan_holes": 0,
         }
-    overlaps = {
-        "roads_vs_buildings": _overlap_area(geometries["roads_final"], geometries["buildings_footprints"]),
-        "road_groove_vs_buildings": _overlap_area(geometries["road_groove_mask"], geometries["buildings_footprints"]),
-        "parks_vs_roads": _overlap_area(geometries["parks_final"], geometries["roads_final"]),
-        "parks_vs_road_groove": _overlap_area(geometries["parks_final"], geometries["road_groove_mask"]),
-        "parks_vs_buildings": _overlap_area(geometries["parks_final"], geometries["buildings_footprints"]),
-        "parks_groove_vs_roads": _overlap_area(geometries["parks_groove_mask"], geometries["roads_final"]),
-        "parks_groove_vs_road_groove": _overlap_area(geometries["parks_groove_mask"], geometries["road_groove_mask"]),
-        "parks_groove_vs_buildings": _overlap_area(geometries["parks_groove_mask"], geometries["buildings_footprints"]),
-        "parks_groove_vs_water": _overlap_area(geometries["parks_groove_mask"], geometries["water_final"]),
-        "water_vs_roads": _overlap_area(geometries["water_final"], geometries["roads_final"]),
-        "water_groove_vs_roads": _overlap_area(geometries["water_groove_mask"], geometries["roads_final"]),
-        "water_groove_vs_road_groove": _overlap_area(geometries["water_groove_mask"], geometries["road_groove_mask"]),
-        "water_groove_vs_buildings": _overlap_area(geometries["water_groove_mask"], geometries["buildings_footprints"]),
-    }
+    overlap_keys = [
+        "roads_vs_buildings",
+        "road_groove_vs_buildings",
+        "parks_vs_roads",
+        "parks_vs_road_groove",
+        "parks_vs_buildings",
+        "parks_groove_vs_roads",
+        "parks_groove_vs_road_groove",
+        "parks_groove_vs_buildings",
+        "parks_groove_vs_water",
+        "water_vs_roads",
+        "water_groove_vs_roads",
+        "water_groove_vs_road_groove",
+        "water_groove_vs_buildings",
+    ]
+    if check_layer_overlaps:
+        overlaps = {
+            "roads_vs_buildings": _overlap_area(geometries["roads_final"], geometries["buildings_footprints"]),
+            "road_groove_vs_buildings": _overlap_area(geometries["road_groove_mask"], geometries["buildings_footprints"]),
+            "parks_vs_roads": _overlap_area(geometries["parks_final"], geometries["roads_final"]),
+            "parks_vs_road_groove": _overlap_area(geometries["parks_final"], geometries["road_groove_mask"]),
+            "parks_vs_buildings": _overlap_area(geometries["parks_final"], geometries["buildings_footprints"]),
+            "parks_groove_vs_roads": _overlap_area(geometries["parks_groove_mask"], geometries["roads_final"]),
+            "parks_groove_vs_road_groove": _overlap_area(geometries["parks_groove_mask"], geometries["road_groove_mask"]),
+            "parks_groove_vs_buildings": _overlap_area(geometries["parks_groove_mask"], geometries["buildings_footprints"]),
+            "parks_groove_vs_water": _overlap_area(geometries["parks_groove_mask"], geometries["water_final"]),
+            "water_vs_roads": _overlap_area(geometries["water_final"], geometries["roads_final"]),
+            "water_groove_vs_roads": _overlap_area(geometries["water_groove_mask"], geometries["roads_final"]),
+            "water_groove_vs_road_groove": _overlap_area(geometries["water_groove_mask"], geometries["road_groove_mask"]),
+            "water_groove_vs_buildings": _overlap_area(geometries["water_groove_mask"], geometries["buildings_footprints"]),
+        }
+    else:
+        overlaps = {key: 0.0 for key in overlap_keys}
 
     failing_layers = [
         name
@@ -291,6 +310,7 @@ def build_mask_printability_report(
         "threshold_m": threshold_m,
         "scale_factor": scale_factor,
         "road_hole_audit_skipped": not bool(check_road_holes),
+        "layer_overlap_audit_skipped": not bool(check_layer_overlaps),
         "overlap_failure_threshold_m2": overlap_failure_threshold_m2,
         "status": "pass" if not failing_layers and not failing_overlaps and not failing_road_holes else "fail",
         "layers": layers,
@@ -307,11 +327,15 @@ def write_mask_printability_report(
     *,
     printer_profile: PrinterProfile,
     scale_factor_override: float | None = None,
+    check_road_holes: bool = True,
+    check_layer_overlaps: bool = True,
 ) -> Path:
     report = build_mask_printability_report(
         bundle_dir,
         min_feature_mm=float(printer_profile.min_printable_feature_mm),
         scale_factor_override=scale_factor_override,
+        check_road_holes=check_road_holes,
+        check_layer_overlaps=check_layer_overlaps,
     )
     out_path = bundle_dir / "printability_audit.json"
     out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

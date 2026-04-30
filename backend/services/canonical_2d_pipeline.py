@@ -541,6 +541,10 @@ def prepare_canonical_2d_stage(
     mask_report_kwargs = {
         "min_feature_mm": float(printer_profile.min_printable_feature_mm),
         "check_road_holes": not bool(getattr(request, "skip_road_hole_audit", False)),
+        "check_layer_overlaps": not bool(getattr(request, "skip_layer_overlap_audit", False)),
+    }
+    write_report_kwargs = {
+        key: value for key, value in mask_report_kwargs.items() if key != "min_feature_mm"
     }
 
     canonical_mask_bundle_dir = getattr(request, "canonical_mask_bundle_dir", None)
@@ -618,7 +622,7 @@ def prepare_canonical_2d_stage(
                     roads_semantic_preview=getattr(bundle, "roads_semantic_preview", None),
                     groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
                 )
-                write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
+                write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
                 sanitized_report = build_mask_printability_report(
                     sanitized_bundle.source_dir,
                     **mask_report_kwargs,
@@ -636,7 +640,7 @@ def prepare_canonical_2d_stage(
                     )
                     if healed_bundle is not None:
                         sanitized_bundle = healed_bundle
-                        write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
+                        write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
                         sanitized_report = build_mask_printability_report(
                             sanitized_bundle.source_dir,
                             **mask_report_kwargs,
@@ -655,7 +659,7 @@ def prepare_canonical_2d_stage(
                         )
                         if dropped_water_bundle is not None:
                             sanitized_bundle = dropped_water_bundle
-                            write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
+                            write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
                             sanitized_report = build_mask_printability_report(
                                 sanitized_bundle.source_dir,
                                 **mask_report_kwargs,
@@ -917,7 +921,7 @@ def prepare_canonical_2d_stage(
         roads_semantic_preview=getattr(road_geometry, "semantic_centerlines_local", None),
         groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
     )
-    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
+    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
     audit_report = build_mask_printability_report(
         runtime_bundle.source_dir,
         **mask_report_kwargs,
@@ -935,7 +939,7 @@ def prepare_canonical_2d_stage(
         )
         if healed_bundle is not None:
             runtime_bundle = healed_bundle
-            write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
+            write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
             audit_report = build_mask_printability_report(
                 runtime_bundle.source_dir,
                 **mask_report_kwargs,
@@ -954,7 +958,7 @@ def prepare_canonical_2d_stage(
                 )
                 if dropped_water_bundle is not None:
                     runtime_bundle = dropped_water_bundle
-                    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
+                    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
                     audit_report = build_mask_printability_report(
                         runtime_bundle.source_dir,
                         **mask_report_kwargs,
