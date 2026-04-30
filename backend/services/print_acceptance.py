@@ -9,6 +9,7 @@ import trimesh
 from shapely.geometry import Polygon, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
+from shapely.prepared import prep
 
 from services.printer_profile import PrinterProfile
 
@@ -112,6 +113,12 @@ def _orphan_hole_count(
     backing_mask: BaseGeometry | None,
 ) -> int:
     count = 0
+    prepared_backing = None
+    if backing_mask is not None and not getattr(backing_mask, "is_empty", True):
+        try:
+            prepared_backing = prep(backing_mask)
+        except Exception:
+            prepared_backing = None
     for poly in _iter_polygons(geometry):
         for ring in poly.interiors:
             try:
@@ -120,6 +127,13 @@ def _orphan_hole_count(
                 continue
             if hole.is_empty:
                 continue
+            if prepared_backing is not None:
+                try:
+                    if not prepared_backing.intersects(hole):
+                        count += 1
+                    continue
+                except Exception:
+                    pass
             try:
                 overlap_area = float(getattr(hole.intersection(backing_mask), "area", 0.0) or 0.0) if backing_mask is not None else 0.0
             except Exception:

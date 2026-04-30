@@ -63,7 +63,7 @@ def main() -> int:
             encoding="utf-8",
         )
         return 0
-    except Exception as exc:
+    except BaseException as exc:
         status_file.write_text(
             json.dumps(
                 {
