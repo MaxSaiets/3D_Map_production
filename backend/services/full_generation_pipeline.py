@@ -329,6 +329,7 @@ def _validate_groove_stage(
     detail_layers: Any,
     task: Any,
     zone_prefix: str,
+    require_success: bool = True,
 ) -> None:
     groove_result = getattr(detail_layers, "groove_result", None)
     if groove_result is None:
@@ -349,6 +350,9 @@ def _validate_groove_stage(
     if bool(getattr(groove_result, "rejected", False)):
         reason = getattr(groove_result, "rejection_reason", None) or getattr(groove_result, "failure_reason", None) or "unknown_rejection"
         message = f"Groove stage failed: unsafe groove cut was rejected ({reason})"
+        if not require_success:
+            print(f"[WARN] {zone_prefix}{message}; continuing because groove success is optional for this run")
+            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
@@ -359,6 +363,9 @@ def _validate_groove_stage(
             f"Groove stage failed: canonical groove masks existed but no groove cut was applied "
             f"({reason})"
         )
+        if not require_success:
+            print(f"[WARN] {zone_prefix}{message}; continuing because groove success is optional for this run")
+            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
@@ -675,6 +682,7 @@ def run_full_generation_pipeline(
     zone_prefix: str = "",
     min_printable_gap_mm: float = 1.0,
     groove_clearance_mm: float = 0.15,
+    require_groove_success: bool = True,
 ) -> FullGenerationPipelineResult:
     pipeline_start = time.perf_counter()
     stage_snapshot_collector = None
@@ -824,7 +832,12 @@ def run_full_generation_pipeline(
         detail_layers=detail_layers,
         zone_prefix=zone_prefix,
     )
-    _validate_groove_stage(detail_layers=detail_layers, task=task, zone_prefix=zone_prefix)
+    _validate_groove_stage(
+        detail_layers=detail_layers,
+        task=task,
+        zone_prefix=zone_prefix,
+        require_success=require_groove_success,
+    )
 
     terrain_mesh = detail_layers.terrain_mesh
     road_mesh = detail_layers.road_mesh

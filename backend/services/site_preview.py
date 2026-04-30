@@ -986,6 +986,7 @@ def _build_full_pipeline_preview(
         zone_col=None,
         hex_size_m=getattr(request_ns, "hex_size_m", 300.0),
         zone_prefix="[preview-full] ",
+        require_groove_success=False,
     )
     output_files = getattr(task, "output_files", {}) or {}
     primary_url = _static_file_url(str(workflow_result.output_file_abs))
