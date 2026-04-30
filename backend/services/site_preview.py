@@ -857,12 +857,25 @@ def _read_preview_job_status(preview_id: str) -> dict[str, Any] | None:
     return None
 
 
+def _pid_is_running(pid: Any) -> bool:
+    try:
+        pid_int = int(pid)
+        if pid_int <= 0:
+            return False
+        os.kill(pid_int, 0)
+        return True
+    except Exception:
+        return False
+
+
 def _active_preview_worker_count(now: float) -> int:
     active = 0
     for status_file in PREVIEW_JOBS_DIR.glob("*.status.json"):
         try:
             status = json.loads(status_file.read_text(encoding="utf-8"))
             if status.get("status") != "running":
+                continue
+            if not _pid_is_running(status.get("pid")):
                 continue
             started_at = float(status.get("started_at", now))
             if now - started_at < PREVIEW_WORKER_TIMEOUT_SECONDS:
@@ -887,7 +900,8 @@ def _start_preview_worker_if_needed(
             started_at = float(status.get("started_at", now))
             finished_at = float(status.get("finished_at", now))
             if state == "running" and now - started_at < PREVIEW_WORKER_TIMEOUT_SECONDS:
-                return status
+                if _pid_is_running(status.get("pid")):
+                    return status
             if state == "queued" and _active_preview_worker_count(now) >= PREVIEW_MAX_ACTIVE_WORKERS:
                 return status
             if state == "failed" and now - finished_at < PREVIEW_FAILED_RETRY_DELAY_SECONDS:
@@ -907,16 +921,17 @@ def _start_preview_worker_if_needed(
         return queued_status
 
     input_file.write_text(json.dumps(worker_payload, ensure_ascii=False), encoding="utf-8")
-    running_status = {"status": "running", "started_at": now, "preview_id": preview_id}
-    status_file.write_text(json.dumps(running_status, ensure_ascii=False), encoding="utf-8")
     backend_root = Path(__file__).resolve().parents[1]
-    subprocess.Popen(
+    process = subprocess.Popen(
         [sys.executable, "-m", "services.preview_worker", str(input_file)],
         cwd=str(backend_root),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=(os.name != "nt"),
+        start_new_session=(os.name != "nt"),
     )
+    running_status = {"status": "running", "started_at": now, "preview_id": preview_id, "pid": process.pid}
+    status_file.write_text(json.dumps(running_status, ensure_ascii=False), encoding="utf-8")
     return running_status
 
 

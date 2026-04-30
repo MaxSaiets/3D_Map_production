@@ -37,7 +37,7 @@ def main() -> int:
     status_file = PREVIEW_JOBS_DIR / f"{preview_id}.status.json"
     started = time.time()
     status_file.write_text(
-        json.dumps({"status": "running", "started_at": started, "preview_id": preview_id}, ensure_ascii=False),
+        json.dumps({"status": "running", "started_at": started, "preview_id": preview_id, "pid": os.getpid()}, ensure_ascii=False),
         encoding="utf-8",
     )
     try:
