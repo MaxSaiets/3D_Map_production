@@ -228,7 +228,7 @@ export type StatusResponse = TaskStatus | BatchTaskStatusResponse;
 export const api = {
   async createFastPreview(request: PreviewRequest): Promise<FastPreviewResponse> {
     const response = await axios.post<FastPreviewResponse>(`${API_BASE_URL}/api/preview`, request, {
-      timeout: 45000,
+      timeout: 120000,
     });
     return response.data;
   },

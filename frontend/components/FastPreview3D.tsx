@@ -11,11 +11,11 @@ import type { FastPreviewResponse } from "@/lib/api";
 type LayerKey = "terrain" | "roads" | "buildings" | "water" | "parks";
 
 const MATERIALS: Record<string, { plate: string; building: string; road: string; water: string; park: string }> = {
-  white: { plate: "#f2eee4", building: "#ffffff", road: "#b9b1a1", water: "#c8dadd", park: "#cfd9bf" },
-  concrete: { plate: "#d8d4ca", building: "#ece8df", road: "#8f887a", water: "#bac8cc", park: "#aeb89f" },
-  graphite: { plate: "#3c3f42", building: "#565b5f", road: "#23262a", water: "#687780", park: "#57685c" },
-  green: { plate: "#dfe8df", building: "#f0f2ec", road: "#59645e", water: "#b9ceca", park: "#90aa88" },
-  terracotta: { plate: "#ead9c6", building: "#f6ecde", road: "#8d5b40", water: "#c5d0ca", park: "#abb799" },
+  white: { plate: "#2d6f3f", building: "#46494a", road: "#090b0b", water: "#1f5f73", park: "#c4b287" },
+  concrete: { plate: "#6f776c", building: "#3f4242", road: "#101111", water: "#486b73", park: "#b9ab88" },
+  graphite: { plate: "#26382c", building: "#55595b", road: "#050606", water: "#163d52", park: "#7c765e" },
+  green: { plate: "#2d6f3f", building: "#474a4b", road: "#080909", water: "#1e6179", park: "#326c3b" },
+  terracotta: { plate: "#7a6f47", building: "#46494a", road: "#0a0908", water: "#315f66", park: "#c8ad82" },
 };
 
 class PreviewCanvasErrorBoundary extends Component<
@@ -127,6 +127,45 @@ function PlanarPolygon({
   );
 }
 
+function TerrainSurface({
+  width,
+  height,
+  color,
+  relief,
+}: {
+  width: number;
+  height: number;
+  color: string;
+  relief: number;
+}) {
+  const geometry = useMemo(() => {
+    const segments = 26;
+    const geom = new THREE.PlaneGeometry(width, height, segments, segments);
+    geom.rotateX(-Math.PI / 2);
+    const pos = geom.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i += 1) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const nx = width > 0 ? x / width : 0;
+      const nz = height > 0 ? z / height : 0;
+      const ridge =
+        Math.sin(nx * Math.PI * 5.2 + 0.7) * 0.45 +
+        Math.cos(nz * Math.PI * 4.4 - 0.35) * 0.34 +
+        Math.sin((nx + nz) * Math.PI * 6.1) * 0.21;
+      const edgeFalloff = Math.max(0.35, 1 - Math.max(Math.abs(nx), Math.abs(nz)) * 0.72);
+      pos.setY(i, Math.max(0, ridge * relief * edgeFalloff));
+    }
+    geom.computeVertexNormals();
+    return geom;
+  }, [width, height, relief]);
+
+  return (
+    <mesh geometry={geometry} receiveShadow castShadow>
+      <meshStandardMaterial color={color} roughness={0.9} flatShading />
+    </mesh>
+  );
+}
+
 function BuildingBlock({
   geometry,
   center,
@@ -195,9 +234,10 @@ function PreviewScene({
   const plateH = heightM * scale;
   const mmToScene = (value: number, fallback: number) => Math.max(0.01, Number.isFinite(value) ? value * visualScale : fallback);
   const baseThickness = mmToScene(Number(modelLogic.terrain_base_thickness_mm), 0.5);
-  const roadY = mmToScene(Number(modelLogic.road_height_mm), 0.08);
-  const parkY = mmToScene(Number(modelLogic.parks_height_mm), 0.06);
-  const waterY = -mmToScene(Number(modelLogic.water_depth), 0.08);
+  const relief = Math.max(0.14, Math.min(0.9, Number(modelLogic.terrain_z_scale || 0.5) * 0.55));
+  const roadY = relief + mmToScene(Number(modelLogic.road_height_mm), 0.08);
+  const parkY = relief + mmToScene(Number(modelLogic.parks_height_mm), 0.06);
+  const waterY = relief * 0.35;
 
   const buildingFeatures = preview.layers.buildings?.features ?? [];
   const roadFeatures = preview.layers.roads?.features ?? [];
@@ -206,17 +246,21 @@ function PreviewScene({
 
   return (
     <>
-      <ambientLight intensity={0.68} />
-      <hemisphereLight args={["#ffffff", "#c6bfae", 0.58]} />
-      <directionalLight position={[16, 22, 14]} intensity={1.05} castShadow />
-      <directionalLight position={[-14, 10, -10]} intensity={0.24} />
+      <color attach="background" args={["#050918"]} />
+      <ambientLight intensity={0.5} />
+      <hemisphereLight args={["#f7f3e7", "#0b1420", 0.5]} />
+      <directionalLight position={[16, 22, 14]} intensity={1.25} castShadow />
+      <directionalLight position={[-14, 10, -10]} intensity={0.16} />
 
       <group rotation={[0, -0.15, 0]}>
         {visibleLayers.terrain && (
-          <mesh position={[0, -baseThickness / 2, 0]} receiveShadow castShadow>
-            <boxGeometry args={[plateW, baseThickness, plateH]} />
-            <meshStandardMaterial color={palette.plate} roughness={0.92} />
-          </mesh>
+          <>
+            <mesh position={[0, -baseThickness / 2, 0]} receiveShadow castShadow>
+              <boxGeometry args={[plateW, baseThickness, plateH]} />
+              <meshStandardMaterial color="#8d7b55" roughness={0.9} />
+            </mesh>
+            <TerrainSurface width={plateW} height={plateH} color={palette.plate} relief={relief} />
+          </>
         )}
 
         {visibleLayers.water &&
@@ -241,7 +285,7 @@ function PreviewScene({
               geometry={feature.geometry}
               center={preview.center}
               scale={scale}
-              height={mmToScene(Number(feature.properties?.height_mm), 0.8)}
+              height={mmToScene(Number(feature.properties?.height_mm), 0.8) + relief * 0.5}
               color={palette.building}
             />
           ))}
@@ -316,7 +360,7 @@ export function FastPreview3D({
   const fullPipelineModelUrl = preview?.model_file_url || preview?.preview_stl || null;
 
   return (
-    <div className="relative h-full min-h-[300px] w-full overflow-hidden bg-[#fbf8ef]">
+    <div className="relative h-full min-h-[300px] w-full overflow-hidden bg-[#050918]">
       {!ready && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#fbf8ef]">
           <div className="max-w-[260px] text-center">
@@ -326,8 +370,8 @@ export function FastPreview3D({
             </div>
             <p className="mt-2 text-xs leading-5 text-[#777064]">
               {loading || processing
-                ? previewMessage || "Запущено повну 3D pipeline: рельєф, дороги, будівлі, пази, boolean і export. Перший запуск може тривати довше, потім результат береться з кешу."
-                : error || previewMessage || "Після вибору району тут зʼявиться проста модель з дорогами, будівлями, водою і парками."}
+                ? previewMessage || "Готуємо швидке preview з тих самих canonical шарів, що й повна 3D-модель, без STL/3MF export і без вирізання пазів."
+                : error || previewMessage || "Після вибору району тут зʼявиться легка 3D-модель з рельєфом, дорогами, будівлями, водою і парками."}
             </p>
           </div>
         </div>
@@ -357,19 +401,19 @@ export function FastPreview3D({
 
       {ready && preview && !fullPipelineModelUrl && (
         <PreviewCanvasErrorBoundary resetKey={`geojson:${preview.preview_id}:${material}`}>
-          <Canvas shadows dpr={[1, 2]} camera={{ position: [34, 30, 34], fov: 28, near: 0.1, far: 180 }}>
+          <Canvas shadows dpr={[1, 2]} camera={{ position: [18, 10, 18], fov: 34, near: 0.1, far: 180 }}>
             <Suspense fallback={null}>
-              <PerspectiveCamera makeDefault position={[34, 30, 34]} fov={28} />
+              <PerspectiveCamera makeDefault position={[18, 10, 18]} fov={34} />
               <OrbitControls
                 makeDefault
                 enableDamping
                 dampingFactor={0.09}
-                minDistance={14}
-                maxDistance={72}
-                maxPolarAngle={Math.PI * 0.48}
-                minPolarAngle={Math.PI * 0.16}
+                minDistance={7}
+                maxDistance={46}
+                maxPolarAngle={Math.PI * 0.56}
+                minPolarAngle={Math.PI * 0.08}
                 enablePan={false}
-                target={[0, 0.2, 0]}
+                target={[0, 0.35, 0]}
               />
               <PreviewScene preview={preview} visibleLayers={visibleLayers} material={material} />
             </Suspense>
