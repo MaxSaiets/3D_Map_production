@@ -456,6 +456,26 @@ export function ControlPanel({
     }
   };
 
+  const handleDownloadFormat = async (fmt: "3mf" | "stl") => {
+    if (!activeTaskId) return;
+    try {
+      const fbUrl = taskStatuses[activeTaskId]?.firebase_url;
+      const isFormatMatch = fbUrl && fbUrl.toLowerCase().split("?")[0].endsWith(`.${fmt}`);
+      const blob = fbUrl && isFormatMatch ? await api.downloadFile(fbUrl) : await api.downloadModel(activeTaskId, fmt);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `model_${activeTaskId.slice(0, 8)}.${fmt}`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (downloadError) {
+      console.error("[Download Error]", downloadError);
+      setError("Помилка завантаження файлу");
+    }
+  };
+
   const kyivBounds = {
     north: 50.6,
     south: 50.2,
@@ -927,14 +947,24 @@ export function ControlPanel({
           )}
 
           {downloadUrl && (
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
-            >
-              <Download className="h-4 w-4" />
-              Завантажити модель
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleDownloadFormat("3mf")}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
+              >
+                <Download className="h-4 w-4" />
+                3MF
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDownloadFormat("stl")}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-slate-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(71,85,105,0.22)] transition hover:bg-slate-500"
+              >
+                <Download className="h-4 w-4" />
+                STL
+              </button>
+            </div>
           )}
 
           {error && (
