@@ -546,6 +546,7 @@ def prepare_canonical_2d_stage(
     write_report_kwargs = {
         key: value for key, value in mask_report_kwargs.items() if key != "min_feature_mm"
     }
+    skip_runtime_printability_audit = bool(getattr(request, "skip_canonical_printability_audit", False))
 
     canonical_mask_bundle_dir = getattr(request, "canonical_mask_bundle_dir", None)
     # By default we prioritize runtime canonicalization from current zone data.
@@ -921,48 +922,67 @@ def prepare_canonical_2d_stage(
         roads_semantic_preview=getattr(road_geometry, "semantic_centerlines_local", None),
         groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
     )
-    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
-    audit_report = build_mask_printability_report(
-        runtime_bundle.source_dir,
-        **mask_report_kwargs,
-    )
-    if _has_blocking_mask_failures(audit_report):
-        healed_bundle = _attempt_runtime_overlap_self_heal(
-            task_id=task_id,
-            debug_generated_dir=debug_generated_dir,
-            zone_polygon_local=zone.zone_polygon_local,
-            scale_factor=zone.scale_factor,
-            groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
-            runtime_bundle=runtime_bundle,
-            failing_overlaps=list(audit_report.get("failing_overlaps") or []),
-            zone_prefix=zone_prefix,
-        )
-        if healed_bundle is not None:
-            runtime_bundle = healed_bundle
-            write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
-            audit_report = build_mask_printability_report(
-                runtime_bundle.source_dir,
-                **mask_report_kwargs,
+    if skip_runtime_printability_audit:
+        audit_report = {
+            "bundle_dir": str(runtime_bundle.source_dir.resolve()),
+            "status": "pass",
+            "skipped": True,
+            "reason": "canonical printability audit skipped for full-pipeline preview",
+            "failing_layers": [],
+            "failing_overlaps": [],
+            "failing_road_holes": [],
+        }
+        try:
+            (runtime_bundle.source_dir / "printability_audit.json").write_text(
+                json.dumps(audit_report, ensure_ascii=False, indent=2),
+                encoding="utf-8",
             )
+        except Exception:
+            pass
+        print(f"[INFO] {zone_prefix}Canonical 2D printability audit skipped for preview")
+    else:
+        write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
+        audit_report = build_mask_printability_report(
+            runtime_bundle.source_dir,
+            **mask_report_kwargs,
+        )
         if _has_blocking_mask_failures(audit_report):
-            failing_overlaps = [str(name) for name in (audit_report.get("failing_overlaps") or [])]
-            if failing_overlaps and all(name.startswith("water") for name in failing_overlaps):
-                dropped_water_bundle = _attempt_drop_water_overlap_fallback(
-                    task_id=task_id,
-                    debug_generated_dir=debug_generated_dir,
-                    zone_polygon_local=zone.zone_polygon_local,
-                    scale_factor=zone.scale_factor,
-                    groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
-                    runtime_bundle=runtime_bundle,
-                    zone_prefix=zone_prefix,
+            healed_bundle = _attempt_runtime_overlap_self_heal(
+                task_id=task_id,
+                debug_generated_dir=debug_generated_dir,
+                zone_polygon_local=zone.zone_polygon_local,
+                scale_factor=zone.scale_factor,
+                groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
+                runtime_bundle=runtime_bundle,
+                failing_overlaps=list(audit_report.get("failing_overlaps") or []),
+                zone_prefix=zone_prefix,
+            )
+            if healed_bundle is not None:
+                runtime_bundle = healed_bundle
+                write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
+                audit_report = build_mask_printability_report(
+                    runtime_bundle.source_dir,
+                    **mask_report_kwargs,
                 )
-                if dropped_water_bundle is not None:
-                    runtime_bundle = dropped_water_bundle
-                    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
-                    audit_report = build_mask_printability_report(
-                        runtime_bundle.source_dir,
-                        **mask_report_kwargs,
+            if _has_blocking_mask_failures(audit_report):
+                failing_overlaps = [str(name) for name in (audit_report.get("failing_overlaps") or [])]
+                if failing_overlaps and all(name.startswith("water") for name in failing_overlaps):
+                    dropped_water_bundle = _attempt_drop_water_overlap_fallback(
+                        task_id=task_id,
+                        debug_generated_dir=debug_generated_dir,
+                        zone_polygon_local=zone.zone_polygon_local,
+                        scale_factor=zone.scale_factor,
+                        groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
+                        runtime_bundle=runtime_bundle,
+                        zone_prefix=zone_prefix,
                     )
+                    if dropped_water_bundle is not None:
+                        runtime_bundle = dropped_water_bundle
+                        write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile, **write_report_kwargs)
+                        audit_report = build_mask_printability_report(
+                            runtime_bundle.source_dir,
+                            **mask_report_kwargs,
+                        )
     if audit_report.get("failing_road_holes"):
         summary = summarize_mask_printability_failures(audit_report)
         print(
