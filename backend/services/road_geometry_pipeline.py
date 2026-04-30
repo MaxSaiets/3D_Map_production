@@ -204,7 +204,12 @@ def prepare_road_geometry(
                             )
                     except Exception as exc:
                         print(f"[WARN] {zone_prefix} road gap-fill failed: {exc}")
-        elif G_roads is not None and len(G_roads.edges) > 0:
+        elif (
+            G_roads is not None
+            and not isinstance(G_roads, GeoDataFrame)
+            and hasattr(G_roads, "edges")
+            and len(G_roads.edges) > 0
+        ):
             merged_roads_geom = build_road_polygons(
                 G_roads,
                 width_multiplier=float(road_width_multiplier_effective),

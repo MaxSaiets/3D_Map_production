@@ -688,6 +688,13 @@ def _fetch_preview_source_data(
             gdf = gdf[gdf.geometry.intersects(target_bbox)].copy()
         except Exception:
             pass
+        try:
+            if global_center is not None and getattr(global_center, "utm_crs", None) is not None:
+                if gdf.crs is None:
+                    gdf = gdf.set_crs("EPSG:4326", allow_override=True)
+                gdf = gdf.to_crs(global_center.utm_crs)
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix} Preview {label} projection skipped: {exc}")
         print(f"[DEBUG] {zone_prefix} Preview {label} features: {len(gdf)}")
         return gdf
 
