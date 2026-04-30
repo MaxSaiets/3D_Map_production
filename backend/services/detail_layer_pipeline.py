@@ -177,6 +177,7 @@ def process_detail_layers(
     water_depth_m: float,
     gdf_green: Optional[GeoDataFrame],
     groove_clearance_mm: float,
+    apply_grooves: bool = True,
     boolean_backend: Optional[BooleanBackend] = None,
     zone_prefix: str = "",
     canonical_mask_bundle: Optional[CanonicalMaskBundle] = None,
@@ -328,16 +329,33 @@ def process_detail_layers(
     parks_result = park_layer.parks_result
 
     has_road_grooves = (
-        not request.is_ams_mode and terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
+        apply_grooves
+        and not request.is_ams_mode
+        and terrain_mesh is not None
+        and road_mesh is not None
+        and scale_factor
+        and scale_factor > 0
     )
     has_park_grooves = (
-        not request.is_ams_mode and terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
+        apply_grooves
+        and not request.is_ams_mode
+        and terrain_mesh is not None
+        and parks_mesh is not None
+        and scale_factor
+        and scale_factor > 0
     )
     has_water_grooves = (
-        not request.is_ams_mode and terrain_mesh is not None and water_mesh is not None and scale_factor and scale_factor > 0
+        apply_grooves
+        and not request.is_ams_mode
+        and terrain_mesh is not None
+        and water_mesh is not None
+        and scale_factor
+        and scale_factor > 0
     )
 
     groove_result = None
+    if not apply_grooves:
+        print(f"[INFO] {zone_prefix} Groove cutting skipped: preview exports the real pipeline mesh before groove booleans")
     if has_road_grooves or has_park_grooves or has_water_grooves:
         try:
             stage_start = time.perf_counter()

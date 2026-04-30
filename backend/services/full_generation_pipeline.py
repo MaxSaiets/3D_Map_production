@@ -684,6 +684,7 @@ def run_full_generation_pipeline(
     groove_clearance_mm: float = 0.15,
     require_groove_success: bool = True,
     require_print_acceptance: bool = True,
+    apply_grooves: bool = True,
 ) -> FullGenerationPipelineResult:
     pipeline_start = time.perf_counter()
     stage_snapshot_collector = None
@@ -818,6 +819,7 @@ def run_full_generation_pipeline(
         water_depth_m=terrain_stage.water_depth_m,
         gdf_green=source.gdf_green,
         groove_clearance_mm=groove_clearance_mm,
+        apply_grooves=apply_grooves,
         zone_prefix=zone_prefix,
         canonical_mask_bundle=canonical_mask_bundle,
     )
@@ -833,12 +835,15 @@ def run_full_generation_pipeline(
         detail_layers=detail_layers,
         zone_prefix=zone_prefix,
     )
-    _validate_groove_stage(
-        detail_layers=detail_layers,
-        task=task,
-        zone_prefix=zone_prefix,
-        require_success=require_groove_success,
-    )
+    if apply_grooves:
+        _validate_groove_stage(
+            detail_layers=detail_layers,
+            task=task,
+            zone_prefix=zone_prefix,
+            require_success=require_groove_success,
+        )
+    else:
+        print(f"[INFO] {zone_prefix}Groove validation skipped because grooves were not applied")
 
     terrain_mesh = detail_layers.terrain_mesh
     road_mesh = detail_layers.road_mesh
