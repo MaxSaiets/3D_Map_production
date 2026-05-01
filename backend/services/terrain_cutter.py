@@ -57,7 +57,7 @@ def _run_blender_boolean(
 
     terrain_path = os.path.abspath(os.path.join(temp_dir, "terrain.obj"))
     cutter_path = os.path.abspath(os.path.join(temp_dir, "cutter.obj"))
-    result_path = os.path.abspath(os.path.join(temp_dir, "result.stl"))
+    result_path = os.path.abspath(os.path.join(temp_dir, "result.obj"))
     script_path = os.path.abspath(os.path.join(temp_dir, "boolean.py"))
 
     try:
@@ -133,9 +133,9 @@ bpy.ops.object.select_all(action='DESELECT')
 terrain.select_set(True)
 bpy.context.view_layer.objects.active = terrain
 try:
-    bpy.ops.wm.stl_export(filepath=r"{result_path}", export_selected_objects=True)
-except:
-    bpy.ops.export_mesh.stl(filepath=r"{result_path}", use_selection=True)
+    bpy.ops.wm.obj_export(filepath=r"{result_path}", export_selected_objects=True)
+except Exception:
+    bpy.ops.export_scene.obj(filepath=r"{result_path}", use_selection=True)
 
 print("BOOLEAN_SUCCESS")
 """
@@ -168,7 +168,7 @@ print("BOOLEAN_SUCCESS")
 
         # Завантажуємо результат
         if os.path.exists(result_path):
-            result_mesh = trimesh.load(result_path, file_type="stl", force="mesh")
+            result_mesh = trimesh.load(result_path, file_type="obj", force="mesh")
 
             if isinstance(result_mesh, trimesh.Scene):
                 geoms = list(result_mesh.geometry.values())

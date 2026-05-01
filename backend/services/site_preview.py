@@ -1356,7 +1356,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 24,
+        "v": 25,
         "mode": "strict_full_generation_pipeline_preview",
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
