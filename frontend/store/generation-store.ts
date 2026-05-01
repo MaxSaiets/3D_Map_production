@@ -115,11 +115,11 @@ const initialState = {
   buildingEmbedMm: 0.2,
   waterDepth: 2.0,
   terrainEnabled: true,
-  terrainZScale: 1.0,
-  // Тонка “підложка” під рельєф (мм на фінальній моделі)
-  terrainBaseThicknessMm: 0.3,
+  terrainZScale: 3.0,
+  // Підложка має відповідати production-рецепту, щоб preview і фінальна модель збігались.
+  terrainBaseThicknessMm: 1.7,
   // Вища деталізація рельєфу -> менші трикутники, більше “реальності”
-  terrainResolution: 180,
+  terrainResolution: 350,
   terrariumZoom: 15,
   exportFormat: "3mf" as const,
   modelSizeMm: 80.0, // 80мм = 8см за замовчуванням
