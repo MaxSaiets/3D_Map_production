@@ -306,7 +306,7 @@ class GenerationRequest(BaseModel):
     parks_embed_mm: float = Field(default=1.0, ge=0.0, le=2.0)
     water_depth: float = 1.2  # РјРј РІ Р·РµРјР»С– (РїРѕРІРµСЂС…РЅСЏ РІРѕРґРё 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ)
     terrain_enabled: bool = True
-    terrain_z_scale: float = 3.0  # Р—Р±С–Р»СЊС€РµРЅРѕ РґР»СЏ РєСЂР°С‰РѕС— РІРёРґРёРјРѕСЃС‚С– СЂРµР»СЊС”С„Сѓ
+    terrain_z_scale: float = 0.5  # РџРѕРјС–СЂРЅРёР№ СЂРµР»СЊС”С„ РґР»СЏ 8СЃРј РјРѕРґРµР»С–
     # РўРѕРЅРєР° РѕСЃРЅРѕРІР° РґР»СЏ РґСЂСѓРєСѓ: Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 1РјРј (РєРѕСЂРёСЃС‚СѓРІР°С‡ РјРѕР¶Рµ Р·РјС–РЅРёС‚Рё).
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
     # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
@@ -378,8 +378,8 @@ class PreviewRequest(BaseModel):
     road_width_multiplier: float = 0.8
     building_min_height: float = 5.0
     building_height_multiplier: float = 1.8
-    model_size_mm: float = 180.0
-    terrain_z_scale: float = 3.0
+    model_size_mm: float = 80.0
+    terrain_z_scale: float = 0.5
     terrain_resolution: int = 350
     road_height_mm: float = 0.5
     road_embed_mm: float = 0.3
@@ -398,7 +398,7 @@ class SiteOrderRequest(BaseModel):
     bounds: dict
     polygon_geojson: Optional[dict] = None
     preview_id: Optional[str] = None
-    model_size_mm: float = 180.0
+    model_size_mm: float = 80.0
     material: str = "white"
     layers: dict = Field(default_factory=dict)
     price_uah: Optional[int] = None
@@ -419,7 +419,7 @@ class AccountGenerateRequest(BaseModel):
     preview_snapshot: Optional[dict] = None
     bounds: dict
     polygon_geojson: Optional[dict] = None
-    model_size_mm: float = 180.0
+    model_size_mm: float = 80.0
     material: str = "white"
     layers: dict = Field(default_factory=dict)
     generation_request: dict
@@ -616,18 +616,18 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
             "building_max_foundation_mm": 5.0,
             "water_depth": 1.2,
             "terrain_enabled": bool(layers.get("terrain", True)),
-            "terrain_z_scale": 3.0,
+            "terrain_z_scale": 0.5,
             "terrain_base_thickness_mm": 0.3,
             "terrain_resolution": 350,
             "terrarium_zoom": 15,
             "terrain_subdivide": True,
             "terrain_subdivide_levels": 1,
             "terrain_smoothing_sigma": 2.0,
-            "flatten_buildings_on_terrain": True,
+            "flatten_buildings_on_terrain": False,
             "flatten_roads_on_terrain": False,
             "export_format": "3mf",
-            "model_size_mm": float(order.get("model_size_mm") or 180.0),
-            "context_padding_m": 80.0,
+            "model_size_mm": float(order.get("model_size_mm") or 80.0),
+            "context_padding_m": 400.0,
             "terrain_only": False,
             "include_parks": bool(layers.get("parks", True)),
             "parks_height_mm": 0.6,
@@ -643,9 +643,9 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
     bounds = _bounds_from_order(order)
     for key, value in bounds.items():
         request.setdefault(key, value)
-    request.setdefault("model_size_mm", float(order.get("model_size_mm") or 180.0))
+    request.setdefault("model_size_mm", float(order.get("model_size_mm") or 80.0))
     request.setdefault("hex_size_m", float(order.get("hex_size_m") or 300.0))
-    request.setdefault("context_padding_m", 80.0)
+    request.setdefault("context_padding_m", 400.0)
     return request
 
 
@@ -809,7 +809,7 @@ async def start_account_model_generation(
         for key in ("north", "south", "east", "west"):
             generation_payload.setdefault(key, bounds.get(key))
         generation_payload.setdefault("model_size_mm", request.model_size_mm)
-        generation_payload.setdefault("context_padding_m", 80.0)
+        generation_payload.setdefault("context_padding_m", 400.0)
         generation_payload.setdefault("export_format", "3mf")
         generation_request = GenerationRequest(**generation_payload)
 
@@ -1476,14 +1476,14 @@ class ZoneGenerationRequest(BaseModel):
     building_max_foundation_mm: float = Field(default=5.0, ge=0.0, le=20.0)
     water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ
     terrain_enabled: bool = True
-    terrain_z_scale: float = Field(default=3.0, ge=0.1, le=10.0)
+    terrain_z_scale: float = Field(default=0.5, ge=0.1, le=10.0)
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)
     terrain_resolution: int = Field(default=350, ge=50, le=500)
     terrarium_zoom: int = Field(default=15, ge=10, le=18)
     terrain_smoothing_sigma: Optional[float] = Field(default=None, ge=0.0, le=5.0)
     terrain_subdivide: bool = True
     terrain_subdivide_levels: int = Field(default=1, ge=1, le=3)
-    flatten_buildings_on_terrain: bool = True
+    flatten_buildings_on_terrain: bool = False
     flatten_roads_on_terrain: bool = False
     export_format: str = Field(default="3mf", pattern="^(stl|3mf)$")
     context_padding_m: float = Field(default=400.0, ge=0.0, le=5000.0)

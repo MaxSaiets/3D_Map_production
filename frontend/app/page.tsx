@@ -134,7 +134,7 @@ export default function Home() {
     },
   });
   const [selectedZones, setSelectedZones] = useState<any[]>([]);
-  const [modelSizeMm, setModelSizeMm] = useState(180);
+  const [modelSizeMm, setModelSizeMm] = useState(80);
   const [material, setMaterial] = useState<MaterialKey>("white");
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     terrain: true,
@@ -177,7 +177,7 @@ export default function Home() {
     building_embed_mm: 0.2,
     water_depth: 1.2,
     terrain_enabled: layers.terrain,
-    terrain_z_scale: 3.0,
+    terrain_z_scale: 0.5,
     terrain_base_thickness_mm: 1.7,
     terrain_resolution: 350,
     terrarium_zoom: 15,
@@ -468,7 +468,7 @@ export default function Home() {
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#8a8173]">Крок 3</p>
               <h2 className="mt-1 font-serif text-2xl">Розмір моделі</h2>
               <div className="mt-4 grid grid-cols-3 gap-2">
-                {[120, 180, 240].map((size) => (
+                {[80, 120, 180].map((size) => (
                   <button
                     key={size}
                     type="button"
@@ -476,7 +476,7 @@ export default function Home() {
                     className={`rounded-[7px] border px-3 py-3 text-center ${modelSizeMm === size ? "border-[#1f5b49] bg-[#dde9df]" : "border-[#dfd7c8] bg-[#f1eadf]"}`}
                   >
                     <div className="font-serif text-xl">{size / 10}см</div>
-                    <div className="text-[10px] text-[#8a8173]">{size === 180 ? "подар." : size === 240 ? "прем." : "настіл."}</div>
+                    <div className="text-[10px] text-[#8a8173]">{size === 80 ? "ориг." : size === 120 ? "настіл." : "подар."}</div>
                   </button>
                 ))}
               </div>

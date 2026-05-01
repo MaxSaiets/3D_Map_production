@@ -1297,8 +1297,8 @@ def build_fast_preview(
     road_width_multiplier: float = 0.8,
     building_min_height: float = 5.0,
     building_height_multiplier: float = 1.8,
-    model_size_mm: float = 180.0,
-    terrain_z_scale: float = 3.0,
+    model_size_mm: float = 80.0,
+    terrain_z_scale: float = 0.5,
     terrain_resolution: int = 350,
     road_height_mm: float = 0.5,
     road_embed_mm: float = 0.3,
@@ -1317,7 +1317,7 @@ def build_fast_preview(
     meters_per_deg_lng = 111_320.0 * math.cos((center["lat"] * math.pi) / 180.0)
     width_m = max(1.0, abs(float(bounds["east"]) - float(bounds["west"])) * meters_per_deg_lng)
     height_m = max(1.0, abs(float(bounds["north"]) - float(bounds["south"])) * meters_per_deg_lat)
-    scale_factor_mm_per_m = float(model_size_mm or 180.0) / max(width_m, height_m)
+    scale_factor_mm_per_m = float(model_size_mm or 80.0) / max(width_m, height_m)
     terrain_base_thickness_mm = max(0.3, float(road_embed_mm or 0.3), float(water_depth or 1.2), float(parks_embed_mm or 1.0)) + 0.5
     model_logic = {
         "road_width_multiplier": road_width_multiplier,
@@ -1356,7 +1356,7 @@ def build_fast_preview(
         parks_embed_mm=parks_embed_mm,
     )
     payload = {
-        "v": 26,
+        "v": 27,
         "mode": "strict_full_generation_pipeline_preview",
         "bounds": bounds,
         "polygon_geojson": polygon_geojson,
