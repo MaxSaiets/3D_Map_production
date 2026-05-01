@@ -579,9 +579,9 @@ export default function Home() {
               </div>
               {preview?.preview_status === "ready" && (preview?.preview_3mf || preview?.model_file_url) && (
                 <div className="flex gap-2 border-t border-[#dfd7c8] p-3">
-                  {(preview.preview_3mf || preview.download_url_3mf) && (
+                  {(preview.preview_3mf ?? preview.download_url_3mf) && (
                     <a
-                      href={preview.preview_3mf || preview.download_url_3mf}
+                      href={(preview.preview_3mf ?? preview.download_url_3mf) ?? undefined}
                       download
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
                     >
@@ -589,9 +589,9 @@ export default function Home() {
                       3MF
                     </a>
                   )}
-                  {(preview.preview_stl || preview.download_url_stl || preview.model_file_url) && (
+                  {(preview.preview_stl ?? preview.download_url_stl ?? preview.model_file_url) && (
                     <a
-                      href={preview.preview_stl || preview.download_url_stl || preview.model_file_url}
+                      href={(preview.preview_stl ?? preview.download_url_stl ?? preview.model_file_url) ?? undefined}
                       download
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-500"
                     >
