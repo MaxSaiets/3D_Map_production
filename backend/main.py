@@ -379,8 +379,8 @@ class PreviewRequest(BaseModel):
     building_min_height: float = 5.0
     building_height_multiplier: float = 1.8
     model_size_mm: float = 180.0
-    terrain_z_scale: float = 0.5
-    terrain_resolution: int = 180
+    terrain_z_scale: float = 3.0
+    terrain_resolution: int = 350
     road_height_mm: float = 0.5
     road_embed_mm: float = 0.3
     building_foundation_mm: float = 0.6
@@ -616,11 +616,11 @@ def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
             "building_max_foundation_mm": 5.0,
             "water_depth": 1.2,
             "terrain_enabled": bool(layers.get("terrain", True)),
-            "terrain_z_scale": 0.5,
+            "terrain_z_scale": 3.0,
             "terrain_base_thickness_mm": 0.3,
-            "terrain_resolution": 180,
+            "terrain_resolution": 350,
             "terrarium_zoom": 15,
-            "terrain_subdivide": False,
+            "terrain_subdivide": True,
             "terrain_subdivide_levels": 1,
             "terrain_smoothing_sigma": 2.0,
             "flatten_buildings_on_terrain": True,
