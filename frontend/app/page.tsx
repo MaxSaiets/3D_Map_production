@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Check,
+  Download,
   Grid2X2,
   Hexagon,
   Layers3,
@@ -576,6 +577,30 @@ export default function Home() {
               <div className="h-[360px]">
                 <FastPreview3D preview={preview} loading={previewLoading} error={previewError} visibleLayers={layers} material={material} onReset={reloadPreview} />
               </div>
+              {preview?.preview_status === "ready" && (preview?.preview_3mf || preview?.model_file_url) && (
+                <div className="flex gap-2 border-t border-[#dfd7c8] p-3">
+                  {(preview.preview_3mf || preview.download_url_3mf) && (
+                    <a
+                      href={preview.preview_3mf || preview.download_url_3mf}
+                      download
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+                    >
+                      <Download className="h-4 w-4" />
+                      3MF
+                    </a>
+                  )}
+                  {(preview.preview_stl || preview.download_url_stl || preview.model_file_url) && (
+                    <a
+                      href={preview.preview_stl || preview.download_url_stl || preview.model_file_url}
+                      download
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-500"
+                    >
+                      <Download className="h-4 w-4" />
+                      STL
+                    </a>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-2 border-t border-[#dfd7c8] p-3">
                 {LAYER_META.filter((item) => layers[item.key]).map((item) => (
                   <span key={item.key} className="rounded-full border border-[#1f5b49] bg-[#e8f0e9] px-3 py-1 text-xs text-[#1f5b49]">✓ {item.label}</span>

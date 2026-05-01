@@ -1476,12 +1476,12 @@ class ZoneGenerationRequest(BaseModel):
     building_max_foundation_mm: float = Field(default=5.0, ge=0.0, le=20.0)
     water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ
     terrain_enabled: bool = True
-    terrain_z_scale: float = Field(default=0.5, ge=0.1, le=10.0)
-    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РџС–РґР»РѕР¶РєР° 0.3РјРј Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј
-    terrain_resolution: int = Field(default=180, ge=50, le=500)
+    terrain_z_scale: float = Field(default=3.0, ge=0.1, le=10.0)
+    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)
+    terrain_resolution: int = Field(default=350, ge=50, le=500)
     terrarium_zoom: int = Field(default=15, ge=10, le=18)
     terrain_smoothing_sigma: Optional[float] = Field(default=None, ge=0.0, le=5.0)
-    terrain_subdivide: bool = False
+    terrain_subdivide: bool = True
     terrain_subdivide_levels: int = Field(default=1, ge=1, le=3)
     flatten_buildings_on_terrain: bool = True
     flatten_roads_on_terrain: bool = False
