@@ -252,5 +252,29 @@ export const api = {
     );
     return response.data;
   },
+
+  async getAdminOrders(token?: string): Promise<{ orders: any[] }> {
+    const params: Record<string, string> = {};
+    if (token) params["token"] = token;
+    const response = await axios.get<{ orders: any[] }>(
+      `${API_BASE_URL}/api/admin/orders`,
+      { params }
+    );
+    return response.data;
+  },
+
+  async startOrderGeneration(
+    orderId: string,
+    token?: string
+  ): Promise<{ task_id: string; status: string }> {
+    const params: Record<string, string> = {};
+    if (token) params["token"] = token;
+    const response = await axios.post<{ task_id: string; status: string }>(
+      `${API_BASE_URL}/api/admin/orders/${orderId}/generate`,
+      {},
+      { params }
+    );
+    return response.data;
+  },
 };
 
