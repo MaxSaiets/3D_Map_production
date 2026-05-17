@@ -24,6 +24,8 @@ export type KeychainDesignerConfig = {
   labelYMm: number;
   labelBandMm: number;
   labelAngleDeg: number;
+  rimWidthMm: number;
+  rimHeightMm: number;
 };
 
 export type KeychainTemplate = {
@@ -40,15 +42,20 @@ type DragSession = {
   initial: KeychainDesignerConfig;
 };
 
+const MIN_MAP_WIDTH_MM = 28;
+const MIN_MAP_HEIGHT_MM = 18;
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
 function fitAfterBodyResize(next: KeychainDesignerConfig) {
-  next.mapXMm = clamp(next.mapXMm, 0, Math.max(0, next.bodyWidthMm - 8));
-  next.mapYMm = clamp(next.mapYMm, 0, Math.max(0, next.bodyHeightMm - 8));
-  next.mapWidthMm = clamp(next.mapWidthMm, 8, Math.max(8, next.bodyWidthMm - next.mapXMm));
-  next.mapHeightMm = clamp(next.mapHeightMm, 8, Math.max(8, next.bodyHeightMm - next.mapYMm));
+  const minMapWidthMm = Math.min(MIN_MAP_WIDTH_MM, next.bodyWidthMm);
+  const minMapHeightMm = Math.min(MIN_MAP_HEIGHT_MM, next.bodyHeightMm);
+  next.mapXMm = clamp(next.mapXMm, 0, Math.max(0, next.bodyWidthMm - minMapWidthMm));
+  next.mapYMm = clamp(next.mapYMm, 0, Math.max(0, next.bodyHeightMm - minMapHeightMm));
+  next.mapWidthMm = clamp(next.mapWidthMm, minMapWidthMm, Math.max(minMapWidthMm, next.bodyWidthMm - next.mapXMm));
+  next.mapHeightMm = clamp(next.mapHeightMm, minMapHeightMm, Math.max(minMapHeightMm, next.bodyHeightMm - next.mapYMm));
   next.labelXMm = clamp(next.labelXMm, 4, Math.max(4, next.bodyWidthMm - 4));
   next.labelYMm = clamp(next.labelYMm, 4, Math.max(4, next.bodyHeightMm - 4));
   return next;
@@ -73,6 +80,8 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   labelYMm: 43.2,
   labelBandMm: 9.5,
   labelAngleDeg: 0,
+  rimWidthMm: 1.2,
+  rimHeightMm: 0.45,
 };
 
 export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
@@ -227,6 +236,14 @@ function TemplateMiniature({ design, label, active }: { design: KeychainDesigner
       </defs>
       <LoopPreview value={design} />
       <path d={bodyPath(design)} fill="#a6926b" stroke={active ? "#5eead4" : "rgba(255,255,255,0.35)"} strokeWidth={active ? 0.75 : 0.35} />
+      {design.rimWidthMm > 0 && (
+        <path
+          d={bodyPath(design)}
+          fill="none"
+          stroke="rgba(68,55,32,0.34)"
+          strokeWidth={Math.min(design.rimWidthMm * 1.6, 5)}
+        />
+      )}
       <g clipPath={`url(#${clipId})`}>
         <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#b7ab8e" />
         <path d={`M ${design.mapXMm + design.mapWidthMm * 0.18} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.34} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
@@ -354,8 +371,8 @@ export function KeychainDesigner({
       next.mapXMm = clamp(session.initial.mapXMm + dx, 0, next.bodyWidthMm - next.mapWidthMm);
       next.mapYMm = clamp(session.initial.mapYMm + dy, 0, next.bodyHeightMm - next.mapHeightMm);
     } else if (session.target === "map-resize") {
-      next.mapWidthMm = clamp(session.initial.mapWidthMm + dx, 8, next.bodyWidthMm - next.mapXMm);
-      next.mapHeightMm = clamp(session.initial.mapHeightMm + dy, 8, next.bodyHeightMm - next.mapYMm);
+      next.mapWidthMm = clamp(session.initial.mapWidthMm + dx, Math.min(MIN_MAP_WIDTH_MM, next.bodyWidthMm), next.bodyWidthMm - next.mapXMm);
+      next.mapHeightMm = clamp(session.initial.mapHeightMm + dy, Math.min(MIN_MAP_HEIGHT_MM, next.bodyHeightMm), next.bodyHeightMm - next.mapYMm);
     } else if (session.target === "loop") {
       next.loopXMm = clamp(session.initial.loopXMm + dx, -24, next.bodyWidthMm + 24);
       next.loopYMm = clamp(session.initial.loopYMm + dy, -26, next.bodyHeightMm + 20);
@@ -414,6 +431,7 @@ export function KeychainDesigner({
         ref={svgRef}
         data-testid="keychain-designer-svg"
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+        preserveAspectRatio="xMidYMin meet"
         className="h-full min-h-[320px] w-full touch-none select-none"
         onPointerMove={updateFromPointer}
         onPointerUp={(event) => {
@@ -452,6 +470,15 @@ export function KeychainDesigner({
         <rect x={view.x} y={view.y} width={view.w} height={view.h} fill="url(#keychainGrid)" />
         <LoopPreview value={value} />
         <path d={bodyPath(value)} fill="#a6926b" stroke="rgba(255,255,255,0.42)" strokeWidth={0.35} />
+        {value.rimWidthMm > 0 && (
+          <path
+            d={bodyPath(value)}
+            fill="none"
+            stroke="rgba(68,55,32,0.32)"
+            strokeWidth={Math.min(value.rimWidthMm * 1.6, 5)}
+            pointerEvents="none"
+          />
+        )}
 
         <g clipPath="url(#keychainMapClip)" opacity={0.96}>
           <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#b7ab8e" />
@@ -549,12 +576,14 @@ export function KeychainDesigner({
         />
         <rect
           data-testid="map-resize-handle"
-          x={value.mapXMm + value.mapWidthMm - 3.6}
-          y={value.mapYMm + value.mapHeightMm - 3.6}
-          width={7.2}
-          height={7.2}
-          rx={1}
+          x={value.mapXMm + value.mapWidthMm - 5}
+          y={value.mapYMm + value.mapHeightMm - 5}
+          width={10}
+          height={10}
+          rx={1.7}
           fill="#f8fafc"
+          stroke="#14b8a6"
+          strokeWidth={0.45}
           className="cursor-nwse-resize"
           onPointerDown={(event) => beginDrag(event, "map-resize")}
         />

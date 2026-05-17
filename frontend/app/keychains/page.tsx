@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
 import {
@@ -42,6 +42,15 @@ export default function KeychainsPage() {
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const { selectedArea, downloadUrl, isGenerating, progress, status } = useGenerationStore();
   const currentCity = CITIES[currentCityKey];
+  const keychainCrop = useMemo(
+    () => ({
+      aspectRatio: design.mapWidthMm / Math.max(design.mapHeightMm, 1),
+      maxMetersPerMm: 7.5,
+      mapWidthMm: design.mapWidthMm,
+      mapHeightMm: design.mapHeightMm,
+    }),
+    [design.mapHeightMm, design.mapWidthMm],
+  );
   const statusLabel = isGenerating
     ? `${progress}% • ${status || "Генерація"}`
     : downloadUrl
@@ -53,7 +62,7 @@ export default function KeychainsPage() {
   return (
     <div className="min-h-[100dvh] bg-transparent">
       <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-6 pt-3 sm:px-4 lg:px-6">
-        <header className="sticky top-0 z-30 rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.9)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:static lg:px-6">
+        <header className="rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.9)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
@@ -63,7 +72,7 @@ export default function KeychainsPage() {
                 <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
                   Майстерня брелків з мапою
                 </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-[15px]">
+                <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:block sm:text-[15px]">
                   Пласка багатоколірна пластина з посиленою петлею, чистою смугою під напис і контрольованою висотою будинків.
                 </p>
               </div>
@@ -114,7 +123,7 @@ export default function KeychainsPage() {
           </aside>
 
           <section className="order-1 grid min-h-0 gap-3 lg:order-2 lg:grid-rows-[minmax(430px,1fr),minmax(280px,0.72fr)]">
-            <div className="flex min-h-[520px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-0">
+            <div className="order-2 flex min-h-[520px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-1 lg:min-h-0">
               <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -148,7 +157,7 @@ export default function KeychainsPage() {
               </div>
             </div>
 
-            <div className="flex min-h-[360px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-0">
+            <div className="order-1 flex min-h-[430px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:min-h-0">
               <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -156,16 +165,20 @@ export default function KeychainsPage() {
                     Map Crop
                   </p>
                   <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                    Виберіть фрагмент для брелка
+                    Поставте форму брелка на карту
                   </h2>
                   <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    Для брелків краще працюють компактні райони з читабельними дорогами і невеликою кількістю дуже високих будівель.
+                    Бірюзова рамка повторює пропорції області карти з превю і не дає вибрати crop, який дрібніший за 0.4 мм у друці.
                   </p>
                 </div>
               </div>
               <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
                 <div className="h-full overflow-hidden rounded-[24px]">
-                  <MapSelector center={currentCity.center} />
+                  <MapSelector
+                    key={`${currentCityKey}-${Math.round(design.mapWidthMm)}-${Math.round(design.mapHeightMm)}`}
+                    center={currentCity.center}
+                    keychainCrop={keychainCrop}
+                  />
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, KeyRound, Loader2, Play, Type } from "lucide-react";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
@@ -86,19 +86,36 @@ function ChoiceButton({
 function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
   const bodyWidthMm = Math.min(140, Math.max(36, next.bodyWidthMm));
   const bodyHeightMm = Math.min(96, Math.max(26, next.bodyHeightMm));
-  const mapXMm = Math.min(Math.max(next.mapXMm, 0), Math.max(bodyWidthMm - 8, 0));
-  const mapYMm = Math.min(Math.max(next.mapYMm, 0), Math.max(bodyHeightMm - 8, 0));
+  const minMapWidthMm = Math.min(28, bodyWidthMm);
+  const minMapHeightMm = Math.min(18, bodyHeightMm);
+  const mapXMm = Math.min(Math.max(next.mapXMm, 0), Math.max(bodyWidthMm - minMapWidthMm, 0));
+  const mapYMm = Math.min(Math.max(next.mapYMm, 0), Math.max(bodyHeightMm - minMapHeightMm, 0));
   return {
     ...next,
     bodyWidthMm,
     bodyHeightMm,
     mapXMm,
     mapYMm,
-    mapWidthMm: Math.min(Math.max(next.mapWidthMm, 8), Math.max(bodyWidthMm - mapXMm, 8)),
-    mapHeightMm: Math.min(Math.max(next.mapHeightMm, 8), Math.max(bodyHeightMm - mapYMm, 8)),
+    mapWidthMm: Math.min(Math.max(next.mapWidthMm, minMapWidthMm), Math.max(bodyWidthMm - mapXMm, minMapWidthMm)),
+    mapHeightMm: Math.min(Math.max(next.mapHeightMm, minMapHeightMm), Math.max(bodyHeightMm - mapYMm, minMapHeightMm)),
     labelXMm: Math.min(Math.max(next.labelXMm, 4), Math.max(bodyWidthMm - 4, 4)),
     labelYMm: Math.min(Math.max(next.labelYMm, 4), Math.max(bodyHeightMm - 4, 4)),
     loopInnerMm: Math.min(Math.max(next.loopInnerMm, 1.6), Math.max(next.loopOuterMm - 1.4, 1.6)),
+    rimWidthMm: Math.min(Math.max(next.rimWidthMm, 0), 6),
+    rimHeightMm: Math.min(Math.max(next.rimHeightMm, 0), 3),
+  };
+}
+
+function selectedAreaMeters(selectedArea: ReturnType<typeof useGenerationStore.getState>["selectedArea"]) {
+  if (!selectedArea) return null;
+  const north = selectedArea.getNorth();
+  const south = selectedArea.getSouth();
+  const east = selectedArea.getEast();
+  const west = selectedArea.getWest();
+  const latMid = ((north + south) / 2) * (Math.PI / 180);
+  return {
+    widthM: Math.abs(east - west) * 111_320 * Math.max(Math.cos(latMid), 0.2),
+    heightM: Math.abs(north - south) * 111_320,
   };
 }
 
@@ -135,10 +152,22 @@ export function KeychainControlPanel({
   const [baseThicknessMm, setBaseThicknessMm] = useState(2.0);
   const [roadLayerMm, setRoadLayerMm] = useState(0.44);
   const [parkLayerMm, setParkLayerMm] = useState(0.34);
-  const [waterLayerMm, setWaterLayerMm] = useState(0.22);
+  const [waterLayerMm, setWaterLayerMm] = useState(0.28);
   const [buildingMaxMm, setBuildingMaxMm] = useState(2.2);
   const [textHeightMm, setTextHeightMm] = useState(3.8);
   const pollingInFlightRef = useRef(false);
+  const printScale = useMemo(() => {
+    const size = selectedAreaMeters(selectedArea);
+    if (!size) return null;
+    const metersPerMm = Math.max(size.widthM / Math.max(design.mapWidthMm, 1), size.heightM / Math.max(design.mapHeightMm, 1));
+    const minPrintableWorldM = metersPerMm * 0.4;
+    return {
+      ...size,
+      metersPerMm,
+      minPrintableWorldM,
+      tooLarge: metersPerMm > 8,
+    };
+  }, [selectedArea, design.mapWidthMm, design.mapHeightMm]);
 
   const updateDesign = (patch: Partial<KeychainDesignerConfig>) => {
     onDesignChange(fitDesign({ ...design, ...patch }));
@@ -177,7 +206,7 @@ export function KeychainControlPanel({
       } finally {
         pollingInFlightRef.current = false;
       }
-    }, 1800);
+    }, 3500);
 
     return () => {
       window.clearInterval(interval);
@@ -188,6 +217,10 @@ export function KeychainControlPanel({
   const handleGenerate = async () => {
     if (!selectedArea) {
       setError("Спочатку позначте ділянку на мапі");
+      return;
+    }
+    if (printScale?.tooLarge) {
+      setError("Зона завелика для брелка: зменшіть crop на мапі або збільшіть область карти на брелку. Мінімальна друкована деталь має бути від 0.4 мм.");
       return;
     }
 
@@ -242,6 +275,8 @@ export function KeychainControlPanel({
         keychain_label_band_height_mm: design.labelBandMm,
         keychain_label_raise_mm: 0.45,
         keychain_label_text_height_mm: textHeightMm,
+        keychain_rim_width_mm: design.rimWidthMm,
+        keychain_rim_height_mm: design.rimHeightMm,
         flat_water_layer_mm: waterLayerMm,
         flat_roads_layer_mm: roadLayerMm,
         flat_parks_layer_mm: parkLayerMm,
@@ -280,7 +315,7 @@ export function KeychainControlPanel({
     }
   };
 
-  const canGenerate = Boolean(selectedArea) && !isGenerating;
+  const canGenerate = Boolean(selectedArea) && !isGenerating && !printScale?.tooLarge;
   const currentStatus = isGenerating ? `${progress}% • ${status || "Генерація брелка"}` : downloadUrl ? "3MF готовий" : "Готово";
 
   return (
@@ -301,8 +336,22 @@ export function KeychainControlPanel({
             <Metric label="Стан" value={currentStatus} />
             <Metric label="Розмір" value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
             <Metric label="Карта" value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} мм`} />
+            <Metric
+              label="Масштаб"
+              value={printScale ? `${printScale.metersPerMm.toFixed(1)} м/мм` : "немає crop"}
+            />
             <Metric label="Вушко" value={`${design.loopStyle} • ${Math.round(design.loopAngleDeg)}°`} />
           </div>
+          {printScale && (
+            <div className={`mt-3 rounded-[18px] border px-3 py-2 text-xs leading-5 ${
+              printScale.tooLarge
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] text-[var(--accent-strong)]"
+            }`}>
+              Мінімальна деталь 0.4 мм зараз дорівнює ~{printScale.minPrintableWorldM.toFixed(1)} м у реальності.
+              {printScale.tooLarge ? " Crop завеликий: дрібні дороги, вода й текст у слайсері розсипляться." : " Масштаб придатний для FDM."}
+            </div>
+          )}
         </section>
 
         <section className="rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5">
@@ -346,6 +395,8 @@ export function KeychainControlPanel({
             <SliderField label="Отвір під кільце" valueLabel={`${design.loopInnerMm.toFixed(1)} мм`} min={2.0} max={6.5} step={0.1} value={design.loopInnerMm} onChange={(value) => updateDesign({ loopInnerMm: Math.min(value, design.loopOuterMm - 1.4) })} />
             <SliderField label="Заокруглення кутів" valueLabel={`${design.cornerRadiusMm.toFixed(1)} мм`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
             <SliderField label="Смуга під напис" valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={5} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
+            <SliderField label="Ширина бокової грані" valueLabel={`${design.rimWidthMm.toFixed(1)} мм`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
+            <SliderField label="Висота бокової грані" valueLabel={`${design.rimHeightMm.toFixed(2)} мм`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
           </div>
         </section>
 
@@ -401,8 +452,8 @@ export function KeychainControlPanel({
         <section className="rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5">
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Зона карти і напис</h3>
           <div className="mt-4 space-y-3">
-            <SliderField label="Ширина зони карти" valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={8} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
-            <SliderField label="Висота зони карти" valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={8} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
+            <SliderField label="Ширина зони карти" valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
+            <SliderField label="Висота зони карти" valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Поворот тексту</div>
               <div className="grid grid-cols-4 gap-2">
@@ -417,9 +468,9 @@ export function KeychainControlPanel({
         <section className="rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5">
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Шари карти</h3>
           <div className="mt-4 space-y-3">
-            <SliderField label="Дороги" valueLabel={`${roadLayerMm.toFixed(2)} мм`} min={0.25} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
+            <SliderField label="Дороги" valueLabel={`${roadLayerMm.toFixed(2)} мм`} min={0.4} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
             <SliderField label="Парки" valueLabel={`${parkLayerMm.toFixed(2)} мм`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
-            <SliderField label="Вода" valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.12} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
+            <SliderField label="Вода" valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
             <SliderField label="Максимум будівель" valueLabel={`${buildingMaxMm.toFixed(1)} мм`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
             <SliderField label="Висота тексту" valueLabel={`${textHeightMm.toFixed(1)} мм`} min={2.4} max={7.5} step={0.1} value={textHeightMm} onChange={setTextHeightMm} />
           </div>

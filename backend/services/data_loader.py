@@ -346,7 +346,8 @@ def fetch_city_data(
     east: float,
     west: float,
     padding: float = 0.002,  # Буфер для коректної обробки країв (~200 метрів)
-    target_crs: Optional[str] = None  # Цільова система координат (UTM zone)
+    target_crs: Optional[str] = None,  # Цільова система координат (UTM zone)
+    include_building_parts: bool = True,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, object]:
     """
     Завантажує дані OSM для вказаної області з буферизацією для коректної обробки країв
@@ -516,16 +517,19 @@ def fetch_city_data(
                 return gdf_base
 
             gdf_b = _run_overpass_with_retries("buildings", _load_buildings_once)
-            try:
-                def _load_building_parts_once():
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", DeprecationWarning)
-                        try:
-                            return ox.features_from_bbox(bbox=padded_bbox, tags=tags_building_parts)
-                        except TypeError:
-                            return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_building_parts)
-                gdf_p = _run_overpass_with_retries("building_parts", _load_building_parts_once)
-            except Exception:
+            if include_building_parts:
+                try:
+                    def _load_building_parts_once():
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", DeprecationWarning)
+                            try:
+                                return ox.features_from_bbox(bbox=padded_bbox, tags=tags_building_parts)
+                            except TypeError:
+                                return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_building_parts)
+                    gdf_p = _run_overpass_with_retries("building_parts", _load_building_parts_once)
+                except Exception:
+                    gdf_p = gpd.GeoDataFrame()
+            else:
                 gdf_p = gpd.GeoDataFrame()
             
             # Фільтрація невалідних геометрій

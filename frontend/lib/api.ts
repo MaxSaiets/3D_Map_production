@@ -162,6 +162,8 @@ export interface GenerationRequest {
   keychain_label_band_height_mm?: number;
   keychain_label_raise_mm?: number;
   keychain_label_text_height_mm?: number;
+  keychain_rim_width_mm?: number;
+  keychain_rim_height_mm?: number;
   // Fast preview (~30s): skip Blender grooves + manifold cleanup, terrain 80x80
   preview_mode?: boolean;
   preview_include_base?: boolean;

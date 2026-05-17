@@ -26,6 +26,8 @@ LAYER_COLORS = {
     "parks": [100, 150, 100, 255],
 }
 
+MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
+
 
 _FONT_5X7 = {
     "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
@@ -352,6 +354,105 @@ def build_flat_zone_base_mesh(
     )
 
 
+def _geometry_min_dimension(poly: Polygon) -> float:
+    try:
+        minx, miny, maxx, maxy = poly.bounds
+        return float(min(maxx - minx, maxy - miny))
+    except Exception:
+        return 0.0
+
+
+def _drop_subprintable_fragments(
+    geometry: Optional[BaseGeometry],
+    *,
+    min_feature_m: float,
+    min_area_m2: float,
+) -> Optional[BaseGeometry]:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return None
+    kept: list[Polygon] = []
+    for poly in _iter_polygons(geometry):
+        try:
+            if float(poly.area) < float(min_area_m2):
+                continue
+            if min_feature_m > 0 and _geometry_min_dimension(poly) < float(min_feature_m):
+                continue
+            kept.append(poly)
+        except Exception:
+            continue
+    if not kept:
+        return None
+    try:
+        return unary_union(kept).buffer(0)
+    except Exception:
+        return kept[0]
+
+
+def _sanitize_layer_mask(
+    geometry: Optional[BaseGeometry],
+    *,
+    min_feature_m: float,
+    min_area_m2: float,
+    label: str,
+) -> Optional[BaseGeometry]:
+    geometry = _clean_polygonal_geometry(geometry)
+    if geometry is None:
+        return None
+    try:
+        # Opening removes spikes and one-line fragments below the real nozzle
+        # floor. Keep the radius conservative; printable masks were already
+        # canonicalized before this stage.
+        radius = max(float(min_feature_m) * 0.5, 0.0)
+        if radius > 0:
+            opened = geometry.buffer(-radius, join_style=1).buffer(radius, join_style=1)
+            if opened is not None and not getattr(opened, "is_empty", True):
+                geometry = opened.buffer(0)
+    except Exception:
+        pass
+    cleaned = _drop_subprintable_fragments(
+        geometry,
+        min_feature_m=min_feature_m,
+        min_area_m2=min_area_m2,
+    )
+    if cleaned is None and geometry is not None and not getattr(geometry, "is_empty", True):
+        print(f"[KEYCHAIN] {label} collapsed under 0.4mm print filter")
+    return cleaned
+
+
+def _mask_union_from_geometries(geometries: Any) -> Optional[BaseGeometry]:
+    if geometries is None:
+        return None
+    try:
+        parts = [geom for geom in geometries if geom is not None and not getattr(geom, "is_empty", True)]
+    except Exception:
+        return None
+    if not parts:
+        return None
+    try:
+        return unary_union(parts).buffer(0)
+    except Exception:
+        return parts[0]
+
+
+def _subtract_geometry(geometry: Optional[BaseGeometry], *masks: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return None
+    result = geometry
+    for mask in masks:
+        if mask is None or getattr(mask, "is_empty", True):
+            continue
+        try:
+            result = result.difference(mask).buffer(0)
+        except Exception:
+            try:
+                result = result.buffer(0).difference(mask.buffer(0)).buffer(0)
+            except Exception:
+                continue
+        if result is None or getattr(result, "is_empty", True):
+            return None
+    return result
+
+
 def _rounded_rect(minx: float, miny: float, maxx: float, maxy: float, radius_m: float) -> Polygon:
     radius_m = max(0.0, min(float(radius_m), float(maxx - minx) / 2.0, float(maxy - miny) / 2.0))
     if radius_m <= 0:
@@ -489,7 +590,10 @@ def build_keychain_layout(
     body_h_mm = max(float(body_height_mm or (body_w_mm * source_h / max(source_w, 1e-6))), 18.0)
     map_w_mm = max(float(map_width_mm or body_w_mm), 4.0)
     map_h_mm = max(float(map_height_mm or max(body_h_mm - label_band_height_mm, 4.0)), 4.0)
-    layout_scale_m_per_mm = max(source_w / map_w_mm, source_h / map_h_mm)
+    # Use the real map slot width as the XY scale. The selected bbox is later
+    # stretched into the slot so the generated map occupies the same rectangle
+    # the user edited in the keychain preview.
+    layout_scale_m_per_mm = source_w / map_w_mm
     export_scale = 1.0 / layout_scale_m_per_mm
 
     body_minx = 0.0
@@ -536,6 +640,14 @@ def build_keychain_layout(
         base = base.buffer(0)
     except Exception:
         pass
+    try:
+        base_bounds = base.bounds
+        export_size_mm = max(
+            float(base_bounds[2] - base_bounds[0]),
+            float(base_bounds[3] - base_bounds[1]),
+        ) * float(export_scale)
+    except Exception:
+        export_size_mm = max(body_w_mm, body_h_mm)
 
     label_center_x = float(label_center_x_mm if label_center_x_mm is not None else body_w_mm / 2.0) * layout_scale_m_per_mm
     label_center_y = body_maxy - float(label_center_y_mm if label_center_y_mm is not None else (body_h_mm - label_band_height_mm / 2.0)) * layout_scale_m_per_mm
@@ -562,6 +674,7 @@ def build_keychain_layout(
         "body_reference_xy_m": (body_maxx - body_minx, body_maxy - body_miny),
         "map_target_bounds": (map_minx, map_miny, map_maxx, map_maxy),
         "layout_scale_m_per_mm": layout_scale_m_per_mm,
+        "export_size_mm": export_size_mm,
     }
 
 
@@ -606,6 +719,37 @@ def _fit_geometry_into_bounds(
         return geometry
 
 
+def _stretch_geometry_into_bounds(
+    geometry: Optional[BaseGeometry],
+    *,
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+) -> Optional[BaseGeometry]:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return geometry
+    src_minx, src_miny, src_maxx, src_maxy = source_bounds
+    dst_minx, dst_miny, dst_maxx, dst_maxy = target_bounds
+    src_w = max(float(src_maxx - src_minx), 1e-9)
+    src_h = max(float(src_maxy - src_miny), 1e-9)
+    dst_w = max(float(dst_maxx - dst_minx), 1e-9)
+    dst_h = max(float(dst_maxy - dst_miny), 1e-9)
+    try:
+        transformed = affinity.scale(
+            geometry,
+            xfact=dst_w / src_w,
+            yfact=dst_h / src_h,
+            origin=(src_minx, src_miny),
+        )
+        transformed = affinity.translate(
+            transformed,
+            xoff=dst_minx - src_minx,
+            yoff=dst_miny - src_miny,
+        )
+        return transformed.buffer(0)
+    except Exception:
+        return geometry
+
+
 def _fit_gdf_into_bounds(
     gdf: Optional[GeoDataFrame],
     *,
@@ -617,6 +761,22 @@ def _fit_gdf_into_bounds(
     fitted = gdf.copy()
     fitted.geometry = [
         _fit_geometry_into_bounds(geom, source_bounds=source_bounds, target_bounds=target_bounds)
+        for geom in fitted.geometry
+    ]
+    return fitted
+
+
+def _stretch_gdf_into_bounds(
+    gdf: Optional[GeoDataFrame],
+    *,
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+) -> Optional[GeoDataFrame]:
+    if gdf is None or gdf.empty:
+        return gdf
+    fitted = gdf.copy()
+    fitted.geometry = [
+        _stretch_geometry_into_bounds(geom, source_bounds=source_bounds, target_bounds=target_bounds)
         for geom in fitted.geometry
     ]
     return fitted
@@ -659,22 +819,35 @@ def build_keychain_label_mesh(
     text_height_m: float,
     color: list[int],
     angle_deg: float = 0.0,
+    min_stroke_m: float = 0.0,
 ) -> Optional[trimesh.Trimesh]:
     label = _normalize_label_text(text)
     if not label or thickness_m <= 0 or text_height_m <= 0:
         return None
     band_minx, band_miny, band_maxx, band_maxy = label_band_geometry.bounds
     max_width = max((band_maxx - band_minx) * 0.86, 1e-6)
-    cell = text_height_m / 7.0
+    cell = max(float(text_height_m) / 7.0, float(min_stroke_m or 0.0))
     char_units = [6 if ch != " " else 3 for ch in label]
     raw_width = max(sum(char_units) - 1, 1) * cell
     if raw_width > max_width:
-        cell *= max_width / raw_width
+        max_units = max_width / max(cell, 1e-9)
+        used = 0
+        kept = []
+        for ch, units in zip(label, char_units):
+            next_used = used + (units if not kept else units)
+            if next_used > max_units:
+                break
+            kept.append(ch)
+            used += units
+        label = "".join(kept).strip()
+        if not label:
+            return None
+        char_units = [6 if ch != " " else 3 for ch in label]
     raw_width = max(sum(char_units) - 1, 1) * cell
     start_x = (band_minx + band_maxx - raw_width) / 2.0
     start_y = band_miny + max((band_maxy - band_miny) - 7.0 * cell, 0.0) / 2.0
 
-    glyph_meshes: list[trimesh.Trimesh] = []
+    glyph_pixels: list[Polygon] = []
     cursor_x = start_x
     for ch in label:
         glyph = _FONT_5X7.get(ch, _FONT_5X7[" "])
@@ -684,23 +857,23 @@ def build_keychain_label_mesh(
                     continue
                 x0 = cursor_x + col_idx * cell
                 y0 = start_y + (6 - row_idx) * cell
-                pixel = box(x0, y0, x0 + cell * 0.82, y0 + cell * 0.82)
-                mesh = build_flat_layer_mesh_from_mask(
-                    pixel,
-                    bottom_z_m=bottom_z_m,
-                    thickness_m=thickness_m,
-                    color=color,
-                    min_area_m2=1e-12,
-                )
-                if mesh is not None:
-                    glyph_meshes.append(mesh)
+                glyph_pixels.append(box(x0, y0, x0 + cell, y0 + cell))
         cursor_x += (6 if ch != " " else 3) * cell
-    if not glyph_meshes:
+    if not glyph_pixels:
         return None
     try:
-        combined = trimesh.util.concatenate(glyph_meshes)
+        text_geometry = unary_union(glyph_pixels).buffer(0)
     except Exception:
-        combined = glyph_meshes[0]
+        text_geometry = glyph_pixels[0]
+    combined = build_flat_layer_mesh_from_mask(
+        text_geometry.intersection(label_band_geometry),
+        bottom_z_m=bottom_z_m,
+        thickness_m=thickness_m,
+        color=color,
+        min_area_m2=1e-12,
+    )
+    if combined is None:
+        return None
     if angle_deg:
         try:
             cx = (band_minx + band_maxx) * 0.5
@@ -714,6 +887,31 @@ def build_keychain_label_mesh(
         except Exception:
             pass
     return _with_color(combined, color)
+
+
+def build_keychain_rim_mesh(
+    *,
+    base_geometry: BaseGeometry,
+    bottom_z_m: float,
+    width_m: float,
+    height_m: float,
+) -> Optional[trimesh.Trimesh]:
+    if width_m <= 0 or height_m <= 0 or base_geometry is None or getattr(base_geometry, "is_empty", True):
+        return None
+    try:
+        inner = base_geometry.buffer(-float(width_m), join_style=1)
+        if inner is None or getattr(inner, "is_empty", True):
+            return None
+        rim = base_geometry.difference(inner).buffer(0)
+    except Exception:
+        return None
+    return build_flat_layer_mesh_from_mask(
+        rim,
+        bottom_z_m=bottom_z_m,
+        thickness_m=height_m,
+        color=LAYER_COLORS["base"],
+        min_area_m2=max(width_m * width_m * 0.25, 1e-10),
+    )
 
 
 def _clamp_mesh_height(mesh: trimesh.Trimesh, *, min_height_m: float, max_height_m: float) -> trimesh.Trimesh:
@@ -821,10 +1019,16 @@ def run_flat_plate_pipeline(
     roads_layer_mm = max(float(getattr(request, "flat_roads_layer_mm", 0.42) or 0.42), 0.0)
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)
     keychain_mode = bool(getattr(request, "keychain_mode", False))
+    if keychain_mode:
+        water_layer_mm = max(water_layer_mm, 0.24)
+        roads_layer_mm = max(roads_layer_mm, 0.40)
+        parks_layer_mm = max(parks_layer_mm, 0.32)
 
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
+    source_bounds: Optional[tuple[float, float, float, float]] = None
+    target_bounds: Optional[tuple[float, float, float, float]] = None
     if keychain_mode:
         keychain_layout = build_keychain_layout(
             bbox_meters=zone.bbox_meters,
@@ -850,51 +1054,13 @@ def run_flat_plate_pipeline(
         )
         content_area = keychain_layout["content_area"]
         export_scale_factor = 1.0 / max(float(keychain_layout["layout_scale_m_per_mm"]), 1e-9)
+        try:
+            request.model_size_mm = max(float(keychain_layout.get("export_size_mm") or 0.0), 1.0)
+        except Exception:
+            pass
         base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
         source_bounds = tuple(float(v) for v in keychain_layout["source_bbox"].bounds)
         target_bounds = tuple(float(v) for v in keychain_layout["map_target_bounds"])
-
-    terrain_mesh = build_flat_zone_base_mesh(
-        keychain_layout["base"] if keychain_layout else zone.zone_polygon_local,
-        bbox_meters=zone.bbox_meters,
-        thickness_m=base_top_m,
-    )
-
-    bundle = canonical_2d_stage.canonical_mask_bundle
-    min_area_m2 = max((_model_mm_to_world_m(0.15, scale_factor) ** 2), 1e-6)
-    water_mesh = build_flat_layer_mesh_from_mask(
-        _clip_geometry(
-            _fit_geometry_into_bounds(getattr(bundle, "water_final", None), source_bounds=source_bounds, target_bounds=target_bounds)
-            if keychain_layout else getattr(bundle, "water_final", None),
-            content_area,
-        ),
-        bottom_z_m=base_top_m,
-        thickness_m=_model_mm_to_world_m(water_layer_mm, export_scale_factor),
-        color=LAYER_COLORS["water"],
-        min_area_m2=min_area_m2,
-    )
-    road_mesh = build_flat_layer_mesh_from_mask(
-        _clip_geometry(
-            _fit_geometry_into_bounds(getattr(bundle, "roads_final", None), source_bounds=source_bounds, target_bounds=target_bounds)
-            if keychain_layout else getattr(bundle, "roads_final", None),
-            content_area,
-        ),
-        bottom_z_m=base_top_m,
-        thickness_m=_model_mm_to_world_m(roads_layer_mm, export_scale_factor),
-        color=LAYER_COLORS["roads"],
-        min_area_m2=min_area_m2,
-    )
-    parks_mesh = build_flat_layer_mesh_from_mask(
-        _clip_geometry(
-            _fit_geometry_into_bounds(getattr(bundle, "parks_final", None), source_bounds=source_bounds, target_bounds=target_bounds)
-            if keychain_layout else getattr(bundle, "parks_final", None),
-            content_area,
-        ),
-        bottom_z_m=base_top_m,
-        thickness_m=_model_mm_to_world_m(parks_layer_mm, export_scale_factor),
-        color=LAYER_COLORS["parks"],
-        min_area_m2=min_area_m2,
-    )
 
     preclip_result = getattr(canonical_2d_stage, "preclip_result", None)
     gdf_buildings_local = getattr(preclip_result, "gdf_buildings_local", None)
@@ -921,8 +1087,114 @@ def run_flat_plate_pipeline(
             print(f"[FLAT PLATE] Building preclip fallback failed: {exc}")
             gdf_buildings_local = None
 
+    terrain_mesh = build_flat_zone_base_mesh(
+        keychain_layout["base"] if keychain_layout else zone.zone_polygon_local,
+        bbox_meters=zone.bbox_meters,
+        thickness_m=base_top_m,
+    )
+    if keychain_layout is not None and terrain_mesh is not None:
+        rim_width_mm = float(getattr(request, "keychain_rim_width_mm", 0.0) or 0.0)
+        rim_height_mm = float(getattr(request, "keychain_rim_height_mm", 0.0) or 0.0)
+        rim_mesh = build_keychain_rim_mesh(
+            base_geometry=keychain_layout["base"],
+            bottom_z_m=base_top_m,
+            width_m=_model_mm_to_world_m(rim_width_mm, export_scale_factor),
+            height_m=_model_mm_to_world_m(rim_height_mm, export_scale_factor),
+        )
+        if rim_mesh is not None:
+            try:
+                terrain_mesh = trimesh.util.concatenate([terrain_mesh, rim_mesh])
+                _with_color(terrain_mesh, LAYER_COLORS["base"])
+            except Exception:
+                pass
+
+    bundle = canonical_2d_stage.canonical_mask_bundle
+    min_feature_m = _model_mm_to_world_m(
+        MIN_KEYCHAIN_PRINT_FEATURE_MM if keychain_mode else 0.2,
+        export_scale_factor if keychain_mode else scale_factor,
+    )
+    min_area_m2 = max((min_feature_m ** 2) * 0.5, 1e-9)
+
+    if keychain_layout and source_bounds and target_bounds:
+        def _xform(geometry: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
+            return _stretch_geometry_into_bounds(
+                geometry,
+                source_bounds=source_bounds,
+                target_bounds=target_bounds,
+            )
+
+        building_mask = _clip_geometry(_xform(getattr(bundle, "buildings_footprints", None)), content_area)
+        road_mask = _clip_geometry(_xform(getattr(bundle, "roads_final", None)), content_area)
+        parks_mask = _clip_geometry(_xform(getattr(bundle, "parks_final", None)), content_area)
+        water_source = getattr(bundle, "water_final", None)
+        raw_water_source = None
+        try:
+            gdf_water_local = getattr(preclip_result, "gdf_water_local", None)
+            if gdf_water_local is not None and not gdf_water_local.empty:
+                raw_water_source = _mask_union_from_geometries(gdf_water_local.geometry.values)
+        except Exception:
+            raw_water_source = None
+        if water_source is None or getattr(water_source, "is_empty", True):
+            if raw_water_source is not None and not getattr(raw_water_source, "is_empty", True):
+                print("[KEYCHAIN] Canonical water was empty; using raw clipped water as flat layer source")
+                water_source = raw_water_source
+        water_mask = _clip_geometry(_xform(water_source), content_area)
+
+        road_mask = _sanitize_layer_mask(
+            _subtract_geometry(road_mask, building_mask),
+            min_feature_m=min_feature_m,
+            min_area_m2=min_area_m2,
+            label="roads",
+        )
+        water_mask = _sanitize_layer_mask(
+            _subtract_geometry(water_mask, road_mask, building_mask),
+            min_feature_m=min_feature_m,
+            min_area_m2=min_area_m2,
+            label="water",
+        )
+        if (water_mask is None or getattr(water_mask, "is_empty", True)) and raw_water_source is not None and not getattr(raw_water_source, "is_empty", True):
+            print("[KEYCHAIN] Canonical water collapsed after layer precedence; retrying with raw clipped water")
+            water_mask = _sanitize_layer_mask(
+                _subtract_geometry(_clip_geometry(_xform(raw_water_source), content_area), road_mask, building_mask),
+                min_feature_m=min_feature_m,
+                min_area_m2=min_area_m2,
+                label="raw water",
+            )
+        parks_mask = _sanitize_layer_mask(
+            _subtract_geometry(parks_mask, road_mask, water_mask, building_mask),
+            min_feature_m=min_feature_m,
+            min_area_m2=min_area_m2,
+            label="parks",
+        )
+    else:
+        road_mask = getattr(bundle, "roads_final", None)
+        water_mask = getattr(bundle, "water_final", None)
+        parks_mask = getattr(bundle, "parks_final", None)
+
+    water_mesh = build_flat_layer_mesh_from_mask(
+        _clip_geometry(water_mask, content_area),
+        bottom_z_m=base_top_m,
+        thickness_m=_model_mm_to_world_m(water_layer_mm, export_scale_factor),
+        color=LAYER_COLORS["water"],
+        min_area_m2=min_area_m2,
+    )
+    road_mesh = build_flat_layer_mesh_from_mask(
+        _clip_geometry(road_mask, content_area),
+        bottom_z_m=base_top_m,
+        thickness_m=_model_mm_to_world_m(roads_layer_mm, export_scale_factor),
+        color=LAYER_COLORS["roads"],
+        min_area_m2=min_area_m2,
+    )
+    parks_mesh = build_flat_layer_mesh_from_mask(
+        _clip_geometry(parks_mask, content_area),
+        bottom_z_m=base_top_m,
+        thickness_m=_model_mm_to_world_m(parks_layer_mm, export_scale_factor),
+        color=LAYER_COLORS["parks"],
+        min_area_m2=min_area_m2,
+    )
+
     if keychain_mode:
-        gdf_buildings_local = _fit_gdf_into_bounds(
+        gdf_buildings_local = _stretch_gdf_into_bounds(
             gdf_buildings_local,
             source_bounds=source_bounds,
             target_bounds=target_bounds,
@@ -946,6 +1218,7 @@ def run_flat_plate_pipeline(
             text_height_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8), export_scale_factor),
             color=LAYER_COLORS["buildings"],
             angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
+            min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
         )
         if label_mesh is not None:
             building_meshes.append(label_mesh)

@@ -432,6 +432,8 @@ class GenerationRequest(BaseModel):
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
     keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     keychain_label_text_height_mm: float = Field(default=3.8, ge=1.0, le=12.0)
+    keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
+    keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -449,6 +451,29 @@ async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
 
 
+def _validate_keychain_print_scale(request: GenerationRequest) -> None:
+    if not (bool(getattr(request, "flat_plate_mode", False)) and bool(getattr(request, "keychain_mode", False))):
+        return
+    map_w_mm = max(float(getattr(request, "keychain_map_width_mm", 0.0) or 0.0), 1.0)
+    map_h_mm = max(float(getattr(request, "keychain_map_height_mm", 0.0) or 0.0), 1.0)
+    lat_mid = (float(request.north) + float(request.south)) * 0.5
+    width_m = abs(float(request.east) - float(request.west)) * 111_320.0 * max(float(np.cos(np.deg2rad(lat_mid))), 0.2)
+    height_m = abs(float(request.north) - float(request.south)) * 111_320.0
+    meters_per_mm = max(width_m / map_w_mm, height_m / map_h_mm)
+    # Above this, 6m streets fall below roughly 0.75mm and small buildings
+    # collapse into noise even after canonical cleanup. Frontend prevents it;
+    # this guard keeps direct API requests from producing slicer garbage.
+    if meters_per_mm > 8.0:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Обрана зона завелика для брелка: "
+                f"{meters_per_mm:.1f} м/мм. Зменшіть ділянку або збільшіть вікно карти "
+                "до масштабу не більше 8 м/мм."
+            ),
+        )
+
+
 @app.post("/api/generate", response_model=GenerationResponse)
 async def generate_model(request: GenerationRequest, background_tasks: BackgroundTasks):
     """
@@ -456,6 +481,7 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
+        _validate_keychain_print_scale(request)
         
         # Calculate grid_step_m if not provided (for Single Mode consistency)
         if request.grid_step_m is None:
@@ -475,6 +501,8 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
         
         print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С–")
         return GenerationResponse(task_id=task_id, status="processing", message="Р—Р°РґР°С‡Р° СЃС‚РІРѕСЂРµРЅР°")
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[ERROR] РџРѕРјРёР»РєР° СЃС‚РІРѕСЂРµРЅРЅСЏ Р·Р°РґР°С‡С–: {e}")
         import traceback
@@ -1154,6 +1182,8 @@ class ZoneGenerationRequest(BaseModel):
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
     keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     keychain_label_text_height_mm: float = Field(default=3.8, ge=1.0, le=12.0)
+    keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
+    keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -1459,6 +1489,8 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             keychain_label_band_height_mm=float(getattr(request, "keychain_label_band_height_mm", 9.0)),
             keychain_label_raise_mm=float(getattr(request, "keychain_label_raise_mm", 0.45)),
             keychain_label_text_height_mm=float(getattr(request, "keychain_label_text_height_mm", 3.8)),
+            keychain_rim_width_mm=float(getattr(request, "keychain_rim_width_mm", 1.2)),
+            keychain_rim_height_mm=float(getattr(request, "keychain_rim_height_mm", 0.45)),
         )
         
         # Р“РµРЅРµСЂСѓС”РјРѕ РјРѕРґРµР»СЊ РґР»СЏ Р·РѕРЅРё

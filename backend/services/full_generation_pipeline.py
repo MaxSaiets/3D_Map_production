@@ -7,7 +7,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
+
 import trimesh
+from shapely.geometry import box
+
 from services.canonical_2d_pipeline import prepare_canonical_2d_stage
 from services.bridge_water_pipeline import prepare_bridge_water_geometries
 from services.building_supports import union_mesh_collection
@@ -405,9 +408,18 @@ def _prepare_zone_stage(
         reference_xy_m=zone_geometry.reference_xy_m,
         zone_prefix=zone_prefix,
     )
+    zone_polygon_local = zone_geometry.zone_polygon_local
+    if zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True):
+        try:
+            minx, miny, maxx, maxy = zone_context.bbox_meters
+            zone_polygon_local = box(float(minx), float(miny), float(maxx), float(maxy))
+            print(f"[DEBUG] {zone_prefix} Built local bbox zone polygon for single-area generation")
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix} Failed to build bbox zone polygon: {exc}")
+            zone_polygon_local = zone_geometry.zone_polygon_local
     scale_factor = zone_context.scale_factor
     return ZonePreparationResult(
-        zone_polygon_local=zone_geometry.zone_polygon_local,
+        zone_polygon_local=zone_polygon_local,
         reference_xy_m=zone_geometry.reference_xy_m,
         bbox_meters=zone_context.bbox_meters,
         scale_factor=scale_factor,

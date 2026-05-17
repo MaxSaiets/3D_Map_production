@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
@@ -16,27 +16,7 @@ if (typeof window !== "undefined") {
   });
 }
 
-export interface MapSelection {
-  bounds: { north: number; south: number; east: number; west: number };
-  polygonGeoJson?: any;
-}
-
-function boundsToPlain(bounds: L.LatLngBounds): MapSelection["bounds"] {
-  return {
-    north: bounds.getNorth(),
-    south: bounds.getSouth(),
-    east: bounds.getEast(),
-    west: bounds.getWest(),
-  };
-}
-
-function DrawControl({
-  initialBounds,
-  onSelectionChange,
-}: {
-  initialBounds?: MapSelection["bounds"];
-  onSelectionChange?: (selection: MapSelection | null) => void;
-}) {
+function DrawControl() {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
   const { setSelectedArea } = useGenerationStore();
@@ -46,50 +26,25 @@ function DrawControl({
 
     map.addLayer(drawnItemsRef.current);
 
-    if (initialBounds && drawnItemsRef.current.getLayers().length === 0) {
-      const bounds = L.latLngBounds(
-        [initialBounds.south, initialBounds.west],
-        [initialBounds.north, initialBounds.east],
-      );
-      const rectangle = L.rectangle(bounds, {
-        color: "#c96745",
-        weight: 1.5,
-        dashArray: "6 4",
-        fillColor: "#c96745",
-        fillOpacity: 0.08,
-      });
-      drawnItemsRef.current.addLayer(rectangle);
-      setSelectedArea(bounds);
-      onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson: rectangle.toGeoJSON().geometry });
-      map.fitBounds(bounds.pad(0.45));
-    }
-
     const drawControl = new L.Control.Draw({
-      position: "topleft",
+      position: "topright",
       draw: {
         rectangle: {
           shapeOptions: {
-            color: "#c96745",
-            weight: 1.5,
-            dashArray: "6 4",
-            fillColor: "#c96745",
-            fillOpacity: 0.08,
+            color: "#3388ff",
+            weight: 2,
           },
         },
         polygon: {
           shapeOptions: {
-            color: "#c96745",
-            weight: 1.5,
-            fillColor: "#c96745",
-            fillOpacity: 0.08,
+            color: "#3388ff",
+            weight: 2,
           },
         },
         circle: {
           shapeOptions: {
-            color: "#c96745",
-            weight: 1.5,
-            fillColor: "#c96745",
-            fillOpacity: 0.08,
+            color: "#3388ff",
+            weight: 2,
           },
         },
         marker: false,
@@ -106,15 +61,12 @@ function DrawControl({
 
     const handleDrawCreated = (e: any) => {
       const layer = e.layer;
-      drawnItemsRef.current.clearLayers();
       drawnItemsRef.current.addLayer(layer);
 
       // Отримуємо bounds обраної області
       if ("getBounds" in (layer as any) && typeof (layer as any).getBounds === "function") {
         const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
         setSelectedArea(bounds);
-        const polygonGeoJson = "toGeoJSON" in layer ? layer.toGeoJSON().geometry : undefined;
-        onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson });
       } else {
         // На випадок неочікуваних layer типів
         console.warn("Draw created layer does not support getBounds:", layer);
@@ -128,15 +80,12 @@ function DrawControl({
         if ("getBounds" in layer) {
           const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
           setSelectedArea(bounds);
-          const polygonGeoJson = "toGeoJSON" in layer ? (layer as any).toGeoJSON().geometry : undefined;
-          onSelectionChange?.({ bounds: boundsToPlain(bounds), polygonGeoJson });
         }
       }
     };
 
     const handleDrawDeleted = () => {
       setSelectedArea(null);
-      onSelectionChange?.(null);
     };
 
     map.on(L.Draw.Event.CREATED, handleDrawCreated);
@@ -149,7 +98,189 @@ function DrawControl({
       map.off(L.Draw.Event.DELETED, handleDrawDeleted);
       map.removeControl(drawControl);
     };
-  }, [map, setSelectedArea, initialBounds, onSelectionChange]);
+  }, [map, setSelectedArea]);
+
+  return null;
+}
+
+type KeychainCropSpec = {
+  aspectRatio: number;
+  maxMetersPerMm: number;
+  mapWidthMm: number;
+  mapHeightMm: number;
+};
+
+function metersPerDegreeLng(lat: number) {
+  return 111_320 * Math.max(Math.cos((lat * Math.PI) / 180), 0.18);
+}
+
+function boundsFromCenterMeters(center: L.LatLng, widthM: number, heightM: number) {
+  const halfLat = (heightM / 2) / 111_320;
+  const halfLng = (widthM / 2) / metersPerDegreeLng(center.lat);
+  return L.latLngBounds(
+    [center.lat - halfLat, center.lng - halfLng],
+    [center.lat + halfLat, center.lng + halfLng],
+  );
+}
+
+function boundsSizeMeters(bounds: L.LatLngBounds) {
+  const center = bounds.getCenter();
+  return {
+    widthM: Math.abs(bounds.getEast() - bounds.getWest()) * metersPerDegreeLng(center.lat),
+    heightM: Math.abs(bounds.getNorth() - bounds.getSouth()) * 111_320,
+  };
+}
+
+function safeCropMeters(spec: KeychainCropSpec) {
+  const aspect = Math.max(spec.aspectRatio, 0.2);
+  const safeByWidth = spec.mapWidthMm * spec.maxMetersPerMm;
+  const safeByHeight = spec.mapHeightMm * spec.maxMetersPerMm * aspect;
+  const widthM = Math.min(safeByWidth, safeByHeight);
+  return {
+    widthM,
+    heightM: widthM / aspect,
+  };
+}
+
+function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
+  const map = useMap();
+  const { selectedArea, setSelectedArea } = useGenerationStore();
+  const initialSelectedAreaRef = useRef(selectedArea);
+  const rectangleRef = useRef<L.Rectangle | null>(null);
+  const resizeHandleRef = useRef<L.Marker | null>(null);
+  const labelRef = useRef<L.Marker | null>(null);
+  const dragStateRef = useRef<{
+    startPoint: L.Point;
+    startCenter: L.LatLng;
+    widthM: number;
+    heightM: number;
+  } | null>(null);
+
+  const safeSize = useMemo(() => safeCropMeters(spec), [spec]);
+  const northCenter = (bounds: L.LatLngBounds) => L.latLng(bounds.getNorth(), bounds.getCenter().lng);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const initialSelectedArea = initialSelectedAreaRef.current;
+    const existingCenter = initialSelectedArea?.getCenter() ?? map.getCenter();
+    const existingSize = initialSelectedArea ? boundsSizeMeters(initialSelectedArea) : safeSize;
+    const aspect = Math.max(spec.aspectRatio, 0.2);
+    const unclampedWidth = Math.min(existingSize.widthM || safeSize.widthM, safeSize.widthM);
+    const widthM = Math.max(Math.min(unclampedWidth, safeSize.widthM), Math.min(safeSize.widthM, 80));
+    const heightM = Math.min(widthM / aspect, safeSize.heightM);
+    const initialBounds = boundsFromCenterMeters(existingCenter, widthM, heightM);
+
+    const rectangle = L.rectangle(initialBounds, {
+      color: "#14b8a6",
+      weight: 2,
+      fillColor: "#14b8a6",
+      fillOpacity: 0.14,
+      dashArray: "8 6",
+      interactive: true,
+    }).addTo(map);
+    rectangleRef.current = rectangle;
+    setSelectedArea(initialBounds);
+
+    const handleIcon = L.divIcon({
+      className: "",
+      html: '<div style="width:30px;height:30px;border-radius:10px;background:#14b8a6;border:3px solid white;box-shadow:0 10px 24px rgba(15,23,42,.25);"></div>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+    const labelIcon = L.divIcon({
+      className: "",
+      html: '<div style="padding:6px 9px;border-radius:999px;background:rgba(5,10,24,.82);border:1px solid rgba(255,255,255,.3);color:white;font:700 11px/1.1 system-ui;white-space:nowrap;">зона брелка</div>',
+      iconSize: [94, 28],
+      iconAnchor: [47, 36],
+    });
+
+    const handle = L.marker(initialBounds.getSouthEast(), {
+      icon: handleIcon,
+      draggable: true,
+      zIndexOffset: 800,
+    }).addTo(map);
+    resizeHandleRef.current = handle;
+
+    const label = L.marker(northCenter(initialBounds), {
+      icon: labelIcon,
+      interactive: false,
+      zIndexOffset: 700,
+    }).addTo(map);
+    labelRef.current = label;
+
+    const syncDecorations = (bounds: L.LatLngBounds) => {
+      resizeHandleRef.current?.setLatLng(bounds.getSouthEast());
+      labelRef.current?.setLatLng(northCenter(bounds));
+    };
+
+    const updateBounds = (bounds: L.LatLngBounds) => {
+      rectangle.setBounds(bounds);
+      syncDecorations(bounds);
+      setSelectedArea(bounds);
+    };
+
+    const handleRectangleDown = (event: L.LeafletMouseEvent) => {
+      const bounds = rectangle.getBounds();
+      const size = boundsSizeMeters(bounds);
+      dragStateRef.current = {
+        startPoint: map.latLngToContainerPoint(event.latlng),
+        startCenter: bounds.getCenter(),
+        widthM: size.widthM,
+        heightM: size.heightM,
+      };
+      map.dragging.disable();
+      L.DomEvent.stop(event);
+    };
+
+    const handleMove = (event: L.LeafletMouseEvent) => {
+      const state = dragStateRef.current;
+      if (!state) return;
+      const point = map.latLngToContainerPoint(event.latlng);
+      const startCenterPoint = map.latLngToContainerPoint(state.startCenter);
+      const nextCenter = map.containerPointToLatLng([
+        startCenterPoint.x + point.x - state.startPoint.x,
+        startCenterPoint.y + point.y - state.startPoint.y,
+      ]);
+      updateBounds(boundsFromCenterMeters(nextCenter, state.widthM, state.heightM));
+    };
+
+    const handleEnd = () => {
+      if (!dragStateRef.current) return;
+      dragStateRef.current = null;
+      map.dragging.enable();
+    };
+
+    const handleResize = () => {
+      const current = rectangle.getBounds();
+      const center = current.getCenter();
+      const corner = handle.getLatLng();
+      const dxM = Math.abs(corner.lng - center.lng) * metersPerDegreeLng(center.lat) * 2;
+      const widthM = Math.min(Math.max(dxM, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
+    };
+
+    rectangle.on("mousedown", handleRectangleDown);
+    rectangle.on("touchstart", handleRectangleDown as any);
+    map.on("mousemove", handleMove);
+    map.on("touchmove", handleMove as any);
+    map.on("mouseup", handleEnd);
+    map.on("touchend", handleEnd);
+    handle.on("drag", handleResize);
+
+    return () => {
+      rectangle.off("mousedown", handleRectangleDown);
+      rectangle.off("touchstart", handleRectangleDown as any);
+      map.off("mousemove", handleMove);
+      map.off("touchmove", handleMove as any);
+      map.off("mouseup", handleEnd);
+      map.off("touchend", handleEnd);
+      handle.off("drag", handleResize);
+      rectangle.remove();
+      handle.remove();
+      label.remove();
+    };
+  }, [map, safeSize, setSelectedArea, spec.aspectRatio]);
 
   return null;
 }
@@ -165,13 +296,12 @@ function MapViewUpdater({ center }: { center: [number, number] }) {
 
 interface MapSelectorProps {
   center?: [number, number];
-  initialBounds?: MapSelection["bounds"];
-  onSelectionChange?: (selection: MapSelection | null) => void;
+  keychainCrop?: KeychainCropSpec;
 }
 
-export function MapSelector({ center = [50.4501, 30.5234], initialBounds, onSelectionChange }: MapSelectorProps) {
+export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSelectorProps) {
   return (
-    <div className="h-full w-full" style={{ minHeight: "100%" }}>
+    <div className="w-full h-full" style={{ minHeight: '100%' }}>
       <MapContainer
         center={center} // Initial center
         zoom={13}
@@ -182,7 +312,7 @@ export function MapSelector({ center = [50.4501, 30.5234], initialBounds, onSele
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <DrawControl initialBounds={initialBounds} onSelectionChange={onSelectionChange} />
+        {keychainCrop ? <KeychainCropOverlay spec={keychainCrop} /> : <DrawControl />}
         <MapViewUpdater center={center} />
       </MapContainer>
     </div>
