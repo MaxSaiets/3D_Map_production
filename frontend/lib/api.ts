@@ -60,6 +60,38 @@ export interface AccountResponse {
   };
 }
 
+// ── Fast preview types ────────────────────────────────────────────────────────
+export interface FastPreviewResponse {
+  layers: {
+    terrain?: {
+      heightfield?: {
+        x: number[];
+        y: number[];
+        z: number[][];
+      };
+    };
+    buildings?: {
+      features?: any[];
+    };
+    roads?: {
+      features?: any[];
+    };
+    water?: {
+      features?: any[];
+    };
+    parks?: {
+      features?: any[];
+    };
+  };
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  material?: string;
+}
+
 export interface GenerationRequest {
   north: number;
   south: number;
