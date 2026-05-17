@@ -63,23 +63,23 @@ export interface AccountResponse {
 // ── Fast preview types ────────────────────────────────────────────────────────
 export interface FastPreviewResponse {
   layers: {
-    terrain?: {
+    terrain: {
       heightfield?: {
         x: number[];
         y: number[];
         z: number[][];
       };
     };
-    buildings?: {
+    buildings: {
       features?: any[];
     };
-    roads?: {
+    roads: {
       features?: any[];
     };
-    water?: {
+    water: {
       features?: any[];
     };
-    parks?: {
+    parks: {
       features?: any[];
     };
   };
