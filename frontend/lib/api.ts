@@ -266,7 +266,7 @@ export const api = {
   async startOrderGeneration(
     orderId: string,
     token?: string
-  ): Promise<{ task_id: string; status: string }> {
+  ): Promise<{ task_id: string; status: string; all_task_ids?: string[] }> {
     const params: Record<string, string> = {};
     if (token) params["token"] = token;
     const response = await axios.post<{ task_id: string; status: string }>(
