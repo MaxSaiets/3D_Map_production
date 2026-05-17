@@ -10,7 +10,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-# Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ Р·РјС–РЅРЅС– СЃРµСЂРµРґРѕРІРёС‰Р° Р· .env С„Р°Р№Р»Сѓ
+# Р—Р°РІР°РЅС‚Р°Р¶СѓС"РјРѕ Р·РјС–РЅРЅС– СЃРµСЂРµРґРѕРІРёС‰Р° Р· .env С„Р°Р№Р»Сѓ
 load_dotenv()
 
 from fastapi.responses import FileResponse
@@ -69,9 +69,9 @@ from shapely.geometry.base import BaseGeometry
 
 app = FastAPI(title="3D Map Generator API", version="1.0.0")
 
-# Р—Р°Р·РѕСЂ РїР°Р·Сѓ РїРѕ Р‘РћРљРђРҐ (XY): 0.15РјРј Р· РєРѕР¶РЅРѕРіРѕ Р±РѕРєСѓ вЂ” РґР»СЏ РІСЃС‚Р°РІРєРё РґРѕСЂРѕРіРё РїС–СЃР»СЏ РґСЂСѓРєСѓ
+# Р—Р°Р·РѕСЂ РїР°Р·Сѓ РїРѕ Р'РћРљРђРҐ (XY): 0.15РјРј Р· РєРѕР¶РЅРѕРіРѕ Р±РѕРєСѓ вЂ" РґР»СЏ РІСЃС‚Р°РІРєРё РґРѕСЂРѕРіРё РїС–СЃР»СЏ РґСЂСѓРєСѓ
 GROOVE_CLEARANCE_MM = 0.15
-# РњС–РЅС–РјР°Р»СЊРЅР° С€РёСЂРёРЅР° РїСЂРѕРјС–Р¶РєСѓ (РјРј) вЂ” СЏРєС‰Рѕ РјРµРЅС€Рµ, РѕР±'С”РґРЅСѓС”РјРѕ Р· РґРѕСЂРѕРіРѕСЋ (РЅРµРїСЂС–РЅС‚Р°Р±РµР»СЊРЅРёР№ СЂРµР»СЊС”С„)
+# РњС–РЅС–РјР°Р»СЊРЅР° С€РёСЂРёРЅР° РїСЂРѕРјС–Р¶РєСѓ (РјРј) вЂ" СЏРєС‰Рѕ РјРµРЅС€Рµ, РѕР±'С"РґРЅСѓС"РјРѕ Р· РґРѕСЂРѕРіРѕСЋ (РЅРµРїСЂС–РЅС‚Р°Р±РµР»СЊРЅРёР№ СЂРµР»СЊС"С„)
 MIN_PRINTABLE_GAP_MM = 0.6  # Проміжки <0.6мм об'єднуються з дорогами, щоб не лишати непринтабельні щілини
 
 
@@ -92,8 +92,8 @@ multiple_tasks_map: dict[str, list[str]] = {}
 
 import tempfile
 
-# Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ Р»РѕРєР°Р»СЊРЅСѓ РґРёСЂРµРєС‚РѕСЂС–СЋ output РґР»СЏ СЃС‚Р°Р±С–Р»СЊРЅРѕСЃС‚С–
-# Р¦Рµ РІРёСЂС–С€СѓС” РїСЂРѕР±Р»РµРјСѓ Р·РЅРёРєРЅРµРЅРЅСЏ С„Р°Р№Р»С–РІ Сѓ С‚РёРјС‡Р°СЃРѕРІРёС… РїР°РїРєР°С…
+# Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ Р»РѕРєР°Р»СЊРЅСѓ РґРёСЂРµРєС‚РѕСЂС–СЋ output РґР»СЏ СЃС‚Р°Р±С–Р»СЊРЅРѕСЃС‚С–
+# Р¦Рµ РІРёСЂС–С€СѓС" РїСЂРѕР±Р»РµРјСѓ Р·РЅРёРєРЅРµРЅРЅСЏ С„Р°Р№Р»С–РІ Сѓ С‚РёРјС‡Р°СЃРѕРІРёС… РїР°РїРєР°С…
 OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -257,7 +257,7 @@ app.mount("/files", StaticFiles(directory=OUTPUT_DIR), name="files")
 
 
 async def _ttl_cleanup_loop():
-    “””Кожні 30 хвилин видаляє задачі старші 2 годин з пам’яті.”””
+    """Кожні 30 хвилин видаляє задачі старші 2 годин з пам'яті."""
     import asyncio
     while True:
         await asyncio.sleep(1800)  # 30 хвилин
@@ -265,12 +265,12 @@ async def _ttl_cleanup_loop():
         for tid in stale_keys:
             tasks.pop(tid, None)
         if stale_keys:
-            print(f”[TTL] Видалено {len(stale_keys)} застарілих задач: {stale_keys[:5]}”)
+            print(f"[TTL] Видалено {len(stale_keys)} застарілих задач: {stale_keys[:5]}")
 
 
-@app.on_event(“startup”)
+@app.on_event("startup")
 async def startup_event():
-    “””Відновлюємо стан задач на основі файлів у директорії output та перевіряємо Firebase”””
+    """Відновлюємо стан задач на основі файлів у директорії output та перевіряємо Firebase"""
     import asyncio
     asyncio.create_task(_ttl_cleanup_loop())
     
@@ -288,11 +288,11 @@ async def startup_event():
         print("   and serviceAccountKey.json exists in backend folder.")
     print("="*60 + "\n")
 
-    print("[INFO] Р’С–РґРЅРѕРІР»РµРЅРЅСЏ СЃРїРёСЃРєСѓ Р·Р°РґР°С‡ Р· РґРёСЃРєР°...")
+    print("[INFO] Р'С–РґРЅРѕРІР»РµРЅРЅСЏ СЃРїРёСЃРєСѓ Р·Р°РґР°С‡ Р· РґРёСЃРєР°...")
     if not OUTPUT_DIR.exists():
         return
     
-    # РЁСѓРєР°С”РјРѕ РІСЃС– STL/3MF С„Р°Р№Р»Рё
+    # РЁСѓРєР°С"РјРѕ РІСЃС– STL/3MF С„Р°Р№Р»Рё
     for file_path in OUTPUT_DIR.glob("*"):
         if file_path.suffix.lower() not in [".stl", ".3mf"]:
             continue
@@ -338,7 +338,7 @@ async def startup_event():
             if not task.output_file:
                 task.output_file = str(file_path)
     
-    print(f"[INFO] Р’С–РґРЅРѕРІР»РµРЅРѕ {len(tasks)} Р·Р°РґР°С‡.")
+    print(f"[INFO] Р'С–РґРЅРѕРІР»РµРЅРѕ {len(tasks)} Р·Р°РґР°С‡.")
 
 
 class GenerationRequest(BaseModel):
@@ -354,40 +354,40 @@ class GenerationRequest(BaseModel):
     # Print-aware РїР°СЂР°РјРµС‚СЂРё (РІ РњР†Р›Р†РњР•РўР РђРҐ РЅР° С„С–РЅР°Р»СЊРЅС–Р№ РјРѕРґРµР»С–)
     road_height_mm: float = Field(default=0.5, ge=0.2, le=5.0)
     road_embed_mm: float = Field(default=0.3, ge=0.0, le=2.0)
-    # road_clearance_mm РІРёРґР°Р»РµРЅРѕ вЂ” Р·Р°РІР¶РґРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”С‚СЊСЃСЏ GROOVE_CLEARANCE_MM = 0.15
+    # road_clearance_mm РІРёРґР°Р»РµРЅРѕ вЂ" Р·Р°РІР¶РґРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓС"С‚СЊСЃСЏ GROOVE_CLEARANCE_MM = 0.15
     building_min_height: float = 2.0
     building_height_multiplier: float = 1.0
     building_foundation_mm: float = Field(default=0.6, ge=0.1, le=5.0)
     building_embed_mm: float = Field(default=0.2, ge=0.0, le=2.0)
-    # РњР°РєСЃРёРјР°Р»СЊРЅР° РіР»РёР±РёРЅР° С„СѓРЅРґР°РјРµРЅС‚Сѓ (РјРј РќРђ Р¤Р†РќРђР›Р¬РќР†Р™ РњРћР”Р•Р›Р†).
+    # РњР°РєСЃРёРјР°Р»СЊРЅР° РіР»РёР±РёРЅР° С„СѓРЅРґР°РјРµРЅС‚Сѓ (РјРј РќРђ Р¤Р†РќРђР›Р¬РќР†Р™ РњРћР"Р•Р›Р†).
     # Р¦Рµ "Р·Р°РїРѕР±С–Р¶РЅРёРє" РґР»СЏ РєСЂСѓС‚РёС… СЃС…РёР»С–РІ/С€СѓРјРЅРѕРіРѕ DEM: С‰РѕР± Р±СѓРґС–РІР»С– РЅРµ Р№С€Р»Рё РЅР°РґС‚Рѕ РіР»РёР±РѕРєРѕ РїС–Рґ Р·РµРјР»СЋ.
     building_max_foundation_mm: float = Field(default=2.5, ge=0.2, le=10.0)
     # Extra detail layers
     include_parks: bool = True
     parks_height_mm: float = Field(default=0.6, ge=0.1, le=5.0)
     parks_embed_mm: float = Field(default=1.0, ge=0.0, le=2.0)
-    water_depth: float = 1.2  # РјРј РІ Р·РµРјР»С– (РїРѕРІРµСЂС…РЅСЏ РІРѕРґРё 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ)
+    water_depth: float = 1.2  # РјРј РІ Р·РµРјР»С– (РїРѕРІРµСЂС…РЅСЏ РІРѕРґРё 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС"С„Сѓ)
     terrain_enabled: bool = True
-    terrain_z_scale: float = 3.0  # Р—Р±С–Р»СЊС€РµРЅРѕ РґР»СЏ РєСЂР°С‰РѕС— РІРёРґРёРјРѕСЃС‚С– СЂРµР»СЊС”С„Сѓ
+    terrain_z_scale: float = 3.0  # Р—Р±С–Р»СЊС€РµРЅРѕ РґР»СЏ РєСЂР°С‰РѕС— РІРёРґРёРјРѕСЃС‚С– СЂРµР»СЊС"С„Сѓ
     # РўРѕРЅРєР° РѕСЃРЅРѕРІР° РґР»СЏ РґСЂСѓРєСѓ: Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 1РјРј (РєРѕСЂРёСЃС‚СѓРІР°С‡ РјРѕР¶Рµ Р·РјС–РЅРёС‚Рё).
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
-    # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
-    # - terrain_resolution: РєС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РїРѕ РѕСЃС– (mesh РґРµС‚Р°Р»СЊ). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, РїРѕРІС–Р»СЊРЅС–С€Рµ.
-    terrain_resolution: int = Field(default=350, ge=80, le=600)  # Р’РёСЃРѕРєР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ РґР»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РїР»Р°РІРЅРѕРіРѕ СЂРµР»СЊС”С„Сѓ
-    # Subdivision: РґРѕРґР°С‚РєРѕРІР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ mesh РїС–СЃР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ (РґР»СЏ С‰Рµ РїР»Р°РІРЅС–С€РѕРіРѕ СЂРµР»СЊС”С„Сѓ)
+    # Р"РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС"С„Сѓ
+    # - terrain_resolution: РєС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РїРѕ РѕСЃС– (mesh РґРµС‚Р°Р»СЊ). Р'РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, РїРѕРІС–Р»СЊРЅС–С€Рµ.
+    terrain_resolution: int = Field(default=350, ge=80, le=600)  # Р'РёСЃРѕРєР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ РґР»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РїР»Р°РІРЅРѕРіРѕ СЂРµР»СЊС"С„Сѓ
+    # Subdivision: РґРѕРґР°С‚РєРѕРІР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ mesh РїС–СЃР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ (РґР»СЏ С‰Рµ РїР»Р°РІРЅС–С€РѕРіРѕ СЂРµР»СЊС"С„Сѓ)
     terrain_subdivide: bool = Field(default=True, description="Р—Р°СЃС‚РѕСЃСѓРІР°С‚Рё subdivision РґР»СЏ РїР»Р°РІРЅС–С€РѕРіРѕ mesh")
     terrain_subdivide_levels: int = Field(default=1, ge=0, le=2, description="Р С–РІРЅС– subdivision (0-2, Р±С–Р»СЊС€Рµ = РїР»Р°РІРЅС–С€Рµ Р°Р»Рµ РїРѕРІС–Р»СЊРЅС–С€Рµ)")
-    # - terrarium_zoom: Р·СѓРј DEM tiles (Terrarium). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, Р°Р»Рµ Р±С–Р»СЊС€Рµ С‚Р°Р№Р»С–РІ.
+    # - terrarium_zoom: Р·СѓРј DEM tiles (Terrarium). Р'РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, Р°Р»Рµ Р±С–Р»СЊС€Рµ С‚Р°Р№Р»С–РІ.
     terrarium_zoom: int = Field(default=15, ge=10, le=16)
-    # Р—РіР»Р°РґР¶СѓРІР°РЅРЅСЏ СЂРµР»СЊС”С„Сѓ (sigma РІ РєР»С–С‚РёРЅРєР°С… heightfield). 0 = Р±РµР· Р·РіР»Р°РґР¶СѓРІР°РЅРЅСЏ.
-    # Р”РѕРїРѕРјР°РіР°С” РїСЂРёР±СЂР°С‚Рё "РіСЂСѓР±С– РіСЂР°РЅС–/С€СѓРј" РЅР° DEM, РѕСЃРѕР±Р»РёРІРѕ РїСЂРё РІРёСЃРѕРєРѕРјСѓ zoom.
-    terrain_smoothing_sigma: float = Field(default=2.0, ge=0.0, le=5.0)  # РћРїС‚РёРјР°Р»СЊРЅРµ Р·РіР»Р°РґР¶СѓРІР°РЅРЅСЏ РґР»СЏ С–РґРµР°Р»СЊРЅРѕРіРѕ СЂРµР»СЊС”С„Сѓ
-    # Terrain-first СЃС‚Р°Р±С–Р»С–Р·Р°С†С–СЏ: РІРёРјРєРЅРµРЅРѕ Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј, С‰РѕР± Р·Р±РµСЂРµРіС‚Рё РїСЂРёСЂРѕРґРёР№ СЂРµР»СЊС”С„.
-    # Р‘СѓРґС–РІР»С– РјР°СЋС‚СЊ РІР»Р°СЃРЅС– С„СѓРЅРґР°РјРµРЅС‚Рё (building_foundation_mm), С‚РѕРјСѓ РІРёСЂС–РІРЅСЋРІР°РЅРЅСЏ Р·РµРјР»С– РЅРµ С” РєСЂРёС‚РёС‡РЅРёРј.
+    # Р—РіР»Р°РґР¶СѓРІР°РЅРЅСЏ СЂРµР»СЊС"С„Сѓ (sigma РІ РєР»С–С‚РёРЅРєР°С… heightfield). 0 = Р±РµР· Р·РіР»Р°РґР¶СѓРІР°РЅРЅСЏ.
+    # Р"РѕРїРѕРјР°РіР°С" РїСЂРёР±СЂР°С‚Рё "РіСЂСѓР±С– РіСЂР°РЅС–/С€СѓРј" РЅР° DEM, РѕСЃРѕР±Р»РёРІРѕ РїСЂРё РІРёСЃРѕРєРѕРјСѓ zoom.
+    terrain_smoothing_sigma: float = Field(default=2.0, ge=0.0, le=5.0)  # РћРїС‚РёРјР°Р»СЊРЅРµ Р·РіР»Р°РґР¶СѓРІР°РЅРЅСЏ РґР»СЏ С–РґРµР°Р»СЊРЅРѕРіРѕ СЂРµР»СЊС"С„Сѓ
+    # Terrain-first СЃС‚Р°Р±С–Р»С–Р·Р°С†С–СЏ: РІРёРјРєРЅРµРЅРѕ Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј, С‰РѕР± Р·Р±РµСЂРµРіС‚Рё РїСЂРёСЂРѕРґРёР№ СЂРµР»СЊС"С„.
+    # Р'СѓРґС–РІР»С– РјР°СЋС‚СЊ РІР»Р°СЃРЅС– С„СѓРЅРґР°РјРµРЅС‚Рё (building_foundation_mm), С‚РѕРјСѓ РІРёСЂС–РІРЅСЋРІР°РЅРЅСЏ Р·РµРјР»С– РЅРµ С" РєСЂРёС‚РёС‡РЅРёРј.
     flatten_buildings_on_terrain: bool = False
     # Terrain-first СЃС‚Р°Р±С–Р»С–Р·Р°С†С–СЏ РґР»СЏ РґРѕСЂС–Рі: РІРёРјРєРЅРµРЅРѕ Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј,
-    # РѕСЃРєС–Р»СЊРєРё РґР»СЏ РіСѓСЃС‚РѕС— РјРµСЂРµР¶С– РґРѕСЂС–Рі С†Рµ СЃС‚РІРѕСЂСЋС” С€С‚СѓС‡РЅС– "РїР»Р°С‚Рѕ" (С‡РµСЂРµР· Р·Р»РёС‚С‚СЏ РіРµРѕРјРµС‚СЂС–Р№),
-    # С‰Рѕ РїСЃСѓС” СЂРµР»СЊС”С„ РЅР° РїР°РіРѕСЂР±Р°С…. Р”РѕСЂРѕРіРё С– С‚Р°Рє РіР°СЂРЅРѕ Р»СЏРіР°СЋС‚СЊ РїРѕ СЃРїР»Р°Р№РЅР°С….
+    # РѕСЃРєС–Р»СЊРєРё РґР»СЏ РіСѓСЃС‚РѕС— РјРµСЂРµР¶С– РґРѕСЂС–Рі С†Рµ СЃС‚РІРѕСЂСЋС" С€С‚СѓС‡РЅС– "РїР»Р°С‚Рѕ" (С‡РµСЂРµР· Р·Р»РёС‚С‚СЏ РіРµРѕРјРµС‚СЂС–Р№),
+    # С‰Рѕ РїСЃСѓС" СЂРµР»СЊС"С„ РЅР° РїР°РіРѕСЂР±Р°С…. Р"РѕСЂРѕРіРё С– С‚Р°Рє РіР°СЂРЅРѕ Р»СЏРіР°СЋС‚СЊ РїРѕ СЃРїР»Р°Р№РЅР°С….
     flatten_roads_on_terrain: bool = False
     # Fast preview mode (~30s): skip Blender groove cutting + manifold cleanup,
     # downscale terrain to 60x60. Includes ALL layers (terrain/roads/buildings/
@@ -395,8 +395,8 @@ class GenerationRequest(BaseModel):
     preview_mode: bool = False
     export_format: str = "3mf"  # "stl" Р°Р±Рѕ "3mf"
     model_size_mm: float = 80.0  # Р РѕР·РјС–СЂ РјРѕРґРµР»С– РІ РјС–Р»С–РјРµС‚СЂР°С… (Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 80РјРј = 8СЃРј)
-    # РљРѕРЅС‚РµРєСЃС‚ РЅР°РІРєРѕР»Рѕ Р·РѕРЅРё (РІ РјРµС‚СЂР°С…): Р·Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ OSM/Extras Р· Р±С–Р»СЊС€РёРј bbox,
-    # Р°Р»Рµ С„С–РЅР°Р»СЊРЅС– РјРµС€С– РІСЃРµ РѕРґРЅРѕ РѕР±СЂС–Р·Р°С”РјРѕ РїРѕ РїРѕР»С–РіРѕРЅСѓ Р·РѕРЅРё.
+    # РљРѕРЅС‚РµРєСЃС‚ РЅР°РІРєРѕР»Рѕ Р·РѕРЅРё (РІ РјРµС‚СЂР°С…): Р·Р°РІР°РЅС‚Р°Р¶СѓС"РјРѕ OSM/Extras Р· Р±С–Р»СЊС€РёРј bbox,
+    # Р°Р»Рµ С„С–РЅР°Р»СЊРЅС– РјРµС€С– РІСЃРµ РѕРґРЅРѕ РѕР±СЂС–Р·Р°С"РјРѕ РїРѕ РїРѕР»С–РіРѕРЅСѓ Р·РѕРЅРё.
     # РџР°СЂР°РјРµС‚СЂРё РґР»СЏ РїСЂРµРІ'СЋ (РјРѕР¶Р»РёРІС–СЃС‚СЊ РІРёРєР»СЋС‡Р°С‚Рё/РІРєР»СЋС‡Р°С‚Рё РєРѕРјРїРѕРЅРµРЅС‚Рё)
     preview_include_base: bool = True
     preview_include_roads: bool = True
@@ -405,10 +405,10 @@ class GenerationRequest(BaseModel):
     preview_include_parks: bool = True
     # Р¦Рµ РїРѕС‚СЂС–Р±РЅРѕ, С‰РѕР± РєРѕСЂРµРєС‚РЅРѕ РІРёР·РЅР°С‡Р°С‚Рё РјРѕСЃС‚Рё/РїРµСЂРµС‚РёРЅРё Р±С–Р»СЏ РєСЂР°СЋ Р·РѕРЅРё.
     context_padding_m: float = Field(default=400.0, ge=0.0, le=5000.0)
-    # РўРµСЃС‚СѓРІР°РЅРЅСЏ: РіРµРЅРµСЂСѓРІР°С‚Рё С‚С–Р»СЊРєРё СЂРµР»СЊС”С„ Р±РµР· Р±СѓРґС–РІРµР»СЊ/РґРѕСЂС–Рі/РІРѕРґРё (Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј False - РїРѕРІРЅР° РјРѕРґРµР»СЊ)
+    # РўРµСЃС‚СѓРІР°РЅРЅСЏ: РіРµРЅРµСЂСѓРІР°С‚Рё С‚С–Р»СЊРєРё СЂРµР»СЊС"С„ Р±РµР· Р±СѓРґС–РІРµР»СЊ/РґРѕСЂС–Рі/РІРѕРґРё (Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј False - РїРѕРІРЅР° РјРѕРґРµР»СЊ)
     terrain_only: bool = False  # РўРµСЃС‚РѕРІРёР№ СЂРµР¶РёРј РІРёРјРєРЅРµРЅРѕ Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј
     # РЎРёРЅС…СЂРѕРЅС–Р·Р°С†С–СЏ РІРёСЃРѕС‚ РјС–Р¶ Р·РѕРЅР°РјРё (РґР»СЏ РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅРѕС— СЃС–С‚РєРё)
-    elevation_ref_m: Optional[float] = None  # Р“Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° (РјРµС‚СЂРё РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)
+    elevation_ref_m: Optional[float] = None  # Р"Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° (РјРµС‚СЂРё РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)
     baseline_offset_m: float = 0.0  # Р—РјС–С‰РµРЅРЅСЏ baseline (РјРµС‚СЂРё)
     # Preserve global XY coordinates (do NOT center per tile) for perfect stitching across zones/sessions.
     preserve_global_xy: bool = False
@@ -453,11 +453,11 @@ class GenerationRequest(BaseModel):
 
 
 class GenerationResponse(BaseModel):
-    """Р’С–РґРїРѕРІС–РґСЊ Р· ID Р·Р°РґР°С‡С–"""
+    """Р'С–РґРїРѕРІС–РґСЊ Р· ID Р·Р°РґР°С‡С–"""
     task_id: str
     status: str
     message: Optional[str] = None
-    all_task_ids: Optional[List[str]] = None  # Р”Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
+    all_task_ids: Optional[List[str]] = None  # Р"Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
 
 
 @app.get("/")
@@ -491,7 +491,7 @@ def _validate_keychain_print_scale(request: GenerationRequest) -> None:
 @app.post("/api/generate", response_model=GenerationResponse)
 async def generate_model(request: GenerationRequest, background_tasks: BackgroundTasks):
     """
-    РЎС‚РІРѕСЂСЋС” Р·Р°РґР°С‡Сѓ РіРµРЅРµСЂР°С†С–С— 3D РјРѕРґРµР»С–
+    РЎС‚РІРѕСЂСЋС" Р·Р°РґР°С‡Сѓ РіРµРЅРµСЂР°С†С–С— 3D РјРѕРґРµР»С–
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
@@ -510,7 +510,7 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
         task = GenerationTask(task_id=task_id, request=request)
         tasks[task_id] = task
         
-        # Р—Р°РїСѓСЃРєР°С”РјРѕ РіРµРЅРµСЂР°С†С–СЋ РІ С„РѕРЅС–
+        # Р—Р°РїСѓСЃРєР°С"РјРѕ РіРµРЅРµСЂР°С†С–СЋ РІ С„РѕРЅС–
         background_tasks.add_task(generate_model_task, task_id, request)
         
         print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С–")
@@ -527,15 +527,15 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
 @app.get("/api/status/{task_id}")
 async def get_status(task_id: str):
     """
-    РћС‚СЂРёРјСѓС” СЃС‚Р°С‚СѓСЃ Р·Р°РґР°С‡С– РіРµРЅРµСЂР°С†С–С— Р°Р±Рѕ РјРЅРѕР¶РёРЅРЅРёС… Р·Р°РґР°С‡
+    РћС‚СЂРёРјСѓС" СЃС‚Р°С‚СѓСЃ Р·Р°РґР°С‡С– РіРµРЅРµСЂР°С†С–С— Р°Р±Рѕ РјРЅРѕР¶РёРЅРЅРёС… Р·Р°РґР°С‡
     """
-    # РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё С†Рµ batch Р·Р°РїРёС‚ РЅР° РјРЅРѕР¶РёРЅРЅС– Р·Р°РґР°С‡С– (С„РѕСЂРјР°С‚: batch_<uuid>)
+    # РџРµСЂРµРІС–СЂСЏС"РјРѕ, С‡Рё С†Рµ batch Р·Р°РїРёС‚ РЅР° РјРЅРѕР¶РёРЅРЅС– Р·Р°РґР°С‡С– (С„РѕСЂРјР°С‚: batch_<uuid>)
     if task_id.startswith("batch_"):
         all_task_ids_list = multiple_tasks_map.get(task_id)
         if not all_task_ids_list:
             raise HTTPException(status_code=404, detail="Multiple tasks not found")
         
-        # РџРѕРІРµСЂС‚Р°С”РјРѕ СЃС‚Р°С‚СѓСЃ РІСЃС–С… Р·Р°РґР°С‡
+        # РџРѕРІРµСЂС‚Р°С"РјРѕ СЃС‚Р°С‚СѓСЃ РІСЃС–С… Р·Р°РґР°С‡
         tasks_status = []
         for tid in all_task_ids_list:
             if tid in tasks:
@@ -655,7 +655,7 @@ async def download_model(
     part: Optional[str] = Query(default=None, description="Optional preview part: base|roads|buildings|water"),
 ):
     """
-    Р—Р°РІР°РЅС‚Р°Р¶СѓС” Р·РіРµРЅРµСЂРѕРІР°РЅРёР№ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
+    Р—Р°РІР°РЅС‚Р°Р¶СѓС" Р·РіРµРЅРµСЂРѕРІР°РЅРёР№ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
     """
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -692,7 +692,7 @@ async def download_model(
 
         raise HTTPException(status_code=404, detail="Local preview file not found")
     
-    # 1. Р’РёР·РЅР°С‡Р°С”РјРѕ РєР»СЋС‡ РїРѕС‚СЂС–Р±РЅРѕРіРѕ С„Р°Р№Р»Сѓ РІ Firebase
+    # 1. Р'РёР·РЅР°С‡Р°С"РјРѕ РєР»СЋС‡ РїРѕС‚СЂС–Р±РЅРѕРіРѕ С„Р°Р№Р»Сѓ РІ Firebase
     target_key = None
     if format or part:
         fmt = (format or "stl").lower().strip(".")
@@ -709,7 +709,7 @@ async def download_model(
         else:
              target_key = "3mf" # Fallback
 
-    # 2. РЁСѓРєР°С”РјРѕ С„Р°Р№Р» РІ Firebase
+    # 2. РЁСѓРєР°С"РјРѕ С„Р°Р№Р» РІ Firebase
     print(f"[INFO] Looking for file in Firebase: key={target_key}")
     firebase_url = getattr(task, "firebase_outputs", {}).get(target_key)
     
@@ -720,7 +720,7 @@ async def download_model(
          if not requested_fmt or not firebase_ext or firebase_ext == requested_fmt:
              firebase_url = task.firebase_url
 
-    # Fallback: СЏРєС‰Рѕ РїРѕС‚СЂС–Р±РЅР° С‡Р°СЃС‚РёРЅР° (base_3mf, roads_3mf С‚РѕС‰Рѕ) РІС–РґСЃСѓС‚РЅСЏ вЂ” РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РѕСЃРЅРѕРІРЅРёР№ 3MF
+    # Fallback: СЏРєС‰Рѕ РїРѕС‚СЂС–Р±РЅР° С‡Р°СЃС‚РёРЅР° (base_3mf, roads_3mf С‚РѕС‰Рѕ) РІС–РґСЃСѓС‚РЅСЏ вЂ" РІРёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РѕСЃРЅРѕРІРЅРёР№ 3MF
     # (РѕРєСЂРµРјС– С‡Р°СЃС‚РёРЅРё РЅРµ Р·Р°РІР°РЅС‚Р°Р¶СѓСЋС‚СЊСЃСЏ, 3MF РјС–СЃС‚РёС‚СЊ СѓСЃС– РєРѕРјРїРѕРЅРµРЅС‚Рё РІ РѕРґРЅРѕРјСѓ С„Р°Р№Р»С–)
     if not firebase_url and part and fmt == "3mf":
         valid_parts = {"base", "roads", "buildings", "water", "parks", "green"}
@@ -773,35 +773,35 @@ async def download_model(
         print(f"[WARN] File not found in Firebase or locally: key={target_key}")
         raise HTTPException(status_code=404, detail=f"File not found: {target_key}")
 
-    # 3. Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
+    # 3. Р—Р°РІР°РЅС‚Р°Р¶СѓС"РјРѕ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
     print(f"[INFO] Proxying file from Firebase: {firebase_url}")
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.get(firebase_url)
             response.raise_for_status()
             
-            # Р’РёР·РЅР°С‡Р°С”РјРѕ media type Р· URL Р°Р±Рѕ Р· Content-Type Р·Р°РіРѕР»РѕРІРєР°
-            # Р’Р°Р¶Р»РёРІРѕ: РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РїСЂР°РІРёР»СЊРЅС– MIME С‚РёРїРё РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ С„Р°Р№Р»С–РІ
+            # Р'РёР·РЅР°С‡Р°С"РјРѕ media type Р· URL Р°Р±Рѕ Р· Content-Type Р·Р°РіРѕР»РѕРІРєР°
+            # Р'Р°Р¶Р»РёРІРѕ: РІРёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РїСЂР°РІРёР»СЊРЅС– MIME С‚РёРїРё РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ С„Р°Р№Р»С–РІ
             if firebase_url.endswith(".3mf"):
                 content_type = "model/3mf"
             elif firebase_url.endswith(".stl"):
-                # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ application/octet-stream РґР»СЏ STL, С‰РѕР± Р±СЂР°СѓР·РµСЂ Р·Р°РІР¶РґРё Р·Р°РІР°РЅС‚Р°Р¶СѓРІР°РІ С„Р°Р№Р»
+                # Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ application/octet-stream РґР»СЏ STL, С‰РѕР± Р±СЂР°СѓР·РµСЂ Р·Р°РІР¶РґРё Р·Р°РІР°РЅС‚Р°Р¶СѓРІР°РІ С„Р°Р№Р»
                 content_type = "application/octet-stream"
             else:
-                # РЎРїСЂРѕР±СѓС”РјРѕ РѕС‚СЂРёРјР°С‚Рё Р· Р·Р°РіРѕР»РѕРІРєС–РІ Firebase, С–РЅР°РєС€Рµ application/octet-stream
+                # РЎРїСЂРѕР±СѓС"РјРѕ РѕС‚СЂРёРјР°С‚Рё Р· Р·Р°РіРѕР»РѕРІРєС–РІ Firebase, С–РЅР°РєС€Рµ application/octet-stream
                 content_type = response.headers.get("Content-Type", "application/octet-stream")
             
-            # Р’РёР·РЅР°С‡Р°С”РјРѕ С–Рј'СЏ С„Р°Р№Р»Сѓ Р· URL
+            # Р'РёР·РЅР°С‡Р°С"РјРѕ С–Рј'СЏ С„Р°Р№Р»Сѓ Р· URL
             filename = Path(firebase_url).name or f"model.{target_key}"
             
-            # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РїСЂРѕСЃС‚РёР№ С„РѕСЂРјР°С‚ Content-Disposition РґР»СЏ РєСЂР°С‰РѕС— СЃСѓРјС–СЃРЅРѕСЃС‚С– Р· Р±СЂР°СѓР·РµСЂР°РјРё
+            # Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РїСЂРѕСЃС‚РёР№ С„РѕСЂРјР°С‚ Content-Disposition РґР»СЏ РєСЂР°С‰РѕС— СЃСѓРјС–СЃРЅРѕСЃС‚С– Р· Р±СЂР°СѓР·РµСЂР°РјРё
             content_disposition = f'attachment; filename="{filename}"'
             
             print(f"[DEBUG] Proxying Firebase file: {filename}, Size: {len(response.content)} bytes")
             print(f"[DEBUG] Content-Disposition: {content_disposition}")
             print(f"[DEBUG] Content-Type: {content_type}")
             
-            # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ Response Р· РїСЂР°РІРёР»СЊРЅРёРјРё Р·Р°РіРѕР»РѕРІРєР°РјРё РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ С„Р°Р№Р»Сѓ
+            # Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ Response Р· РїСЂР°РІРёР»СЊРЅРёРјРё Р·Р°РіРѕР»РѕРІРєР°РјРё РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ С„Р°Р№Р»Сѓ
             from fastapi.responses import Response
             
             return Response(
@@ -829,23 +829,23 @@ async def download_model(
 
 @app.post("/api/merge-zones")
 async def merge_zones_endpoint(
-    task_ids: List[str] = Query(..., description="РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ"),
+    task_ids: List[str] = Query(..., description="РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С"РґРЅР°РЅРЅСЏ"),
     format: str = Query(default="3mf", description="Р¤РѕСЂРјР°С‚ РІРёС…С–РґРЅРѕРіРѕ С„Р°Р№Р»Сѓ (stl Р°Р±Рѕ 3mf)")
 ):
     """
-    РћР±'С”РґРЅСѓС” РєС–Р»СЊРєР° Р·РѕРЅ РІ РѕРґРёРЅ С„Р°Р№Р» РґР»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ СЂР°Р·РѕРј.
+    РћР±'С"РґРЅСѓС" РєС–Р»СЊРєР° Р·РѕРЅ РІ РѕРґРёРЅ С„Р°Р№Р» РґР»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ СЂР°Р·РѕРј.
     
     Args:
-        task_ids: РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ
+        task_ids: РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С"РґРЅР°РЅРЅСЏ
         format: Р¤РѕСЂРјР°С‚ РІРёС…С–РґРЅРѕРіРѕ С„Р°Р№Р»Сѓ (stl Р°Р±Рѕ 3mf)
     
     Returns:
-        РћР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р» РјРѕРґРµР»С–
+        РћР±'С"РґРЅР°РЅРёР№ С„Р°Р№Р» РјРѕРґРµР»С–
     """
     if not task_ids or len(task_ids) == 0:
-        raise HTTPException(status_code=400, detail="РќРµ РІРєР°Р·Р°РЅРѕ task_ids РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ")
+        raise HTTPException(status_code=400, detail="РќРµ РІРєР°Р·Р°РЅРѕ task_ids РґР»СЏ РѕР±'С"РґРЅР°РЅРЅСЏ")
     
-    # РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё РІСЃС– Р·Р°РґР°С‡С– Р·Р°РІРµСЂС€РµРЅС–
+    # РџРµСЂРµРІС–СЂСЏС"РјРѕ, С‡Рё РІСЃС– Р·Р°РґР°С‡С– Р·Р°РІРµСЂС€РµРЅС–
     completed_tasks = []
     for tid in task_ids:
         if tid not in tasks:
@@ -855,12 +855,12 @@ async def merge_zones_endpoint(
             raise HTTPException(status_code=400, detail=f"Task {tid} not completed yet")
         completed_tasks.append(task)
     
-    # Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ РІСЃС– РјРµС€С–
+    # Р—Р°РІР°РЅС‚Р°Р¶СѓС"РјРѕ РІСЃС– РјРµС€С–
     all_meshes = []
     
     for task in completed_tasks:
         try:
-            # Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ STL С„Р°Р№Р» (РІС–РЅ РјС–СЃС‚РёС‚СЊ РѕР±'С”РґРЅР°РЅСѓ РјРѕРґРµР»СЊ)
+            # Р—Р°РІР°РЅС‚Р°Р¶СѓС"РјРѕ STL С„Р°Р№Р» (РІС–РЅ РјС–СЃС‚РёС‚СЊ РѕР±'С"РґРЅР°РЅСѓ РјРѕРґРµР»СЊ)
             stl_file = task.output_file
             if stl_file and stl_file.endswith('.stl'):
                 mesh = trimesh.load(stl_file)
@@ -873,16 +873,16 @@ async def merge_zones_endpoint(
     if not all_meshes:
         raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё Р¶РѕРґРЅРѕРіРѕ РјРµС€Сѓ")
     
-    # РћР±'С”РґРЅСѓС”РјРѕ РІСЃС– РјРµС€С–
+    # РћР±'С"РґРЅСѓС"РјРѕ РІСЃС– РјРµС€С–
     try:
         merged_mesh = trimesh.util.concatenate(all_meshes)
         if merged_mesh is None:
-            raise HTTPException(status_code=500, detail="РќРµ РІРґР°Р»РѕСЃСЏ РѕР±'С”РґРЅР°С‚Рё РјРµС€С–")
+            raise HTTPException(status_code=500, detail="РќРµ РІРґР°Р»РѕСЃСЏ РѕР±'С"РґРЅР°С‚Рё РјРµС€С–")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° РѕР±'С”РґРЅР°РЅРЅСЏ РјРµС€С–РІ: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° РѕР±'С"РґРЅР°РЅРЅСЏ РјРµС€С–РІ: {str(e)}")
     
-    # Р—Р±РµСЂС–РіР°С”РјРѕ РѕР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р»
-    # Р—Р±РµСЂС–РіР°С”РјРѕ РѕР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р»
+    # Р—Р±РµСЂС–РіР°С"РјРѕ РѕР±'С"РґРЅР°РЅРёР№ С„Р°Р№Р»
+    # Р—Р±РµСЂС–РіР°С"РјРѕ РѕР±'С"РґРЅР°РЅРёР№ С„Р°Р№Р»
     merged_id = f"merged_{uuid.uuid4()}"
     if format.lower() == "3mf":
         output_file = OUTPUT_DIR / f"{merged_id}.3mf"
@@ -901,10 +901,10 @@ async def merge_zones_endpoint(
 @app.get("/api/test-model")
 async def get_test_model():
     """
-    РџРѕРІРµСЂС‚Р°С” С‚РµСЃС‚РѕРІСѓ РјРѕРґРµР»СЊ С†РµРЅС‚СЂСѓ РљРёС”РІР° (1РєРј x 1РєРј)
-    РЎРїРѕС‡Р°С‚РєСѓ РЅР°РјР°РіР°С”С‚СЊСЃСЏ РїРѕРІРµСЂРЅСѓС‚Рё STL (РЅР°РґС–Р№РЅС–С€Рµ), РїРѕС‚С–Рј 3MF
+    РџРѕРІРµСЂС‚Р°С" С‚РµСЃС‚РѕРІСѓ РјРѕРґРµР»СЊ С†РµРЅС‚СЂСѓ РљРёС"РІР° (1РєРј x 1РєРј)
+    РЎРїРѕС‡Р°С‚РєСѓ РЅР°РјР°РіР°С"С‚СЊСЃСЏ РїРѕРІРµСЂРЅСѓС‚Рё STL (РЅР°РґС–Р№РЅС–С€Рµ), РїРѕС‚С–Рј 3MF
     """
-    # РЎРїРѕС‡Р°С‚РєСѓ РїРµСЂРµРІС–СЂСЏС”РјРѕ STL (РЅР°РґС–Р№РЅС–С€Рµ РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ)
+    # РЎРїРѕС‡Р°С‚РєСѓ РїРµСЂРµРІС–СЂСЏС"РјРѕ STL (РЅР°РґС–Р№РЅС–С€Рµ РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ)
     test_model_stl = OUTPUT_DIR / "test_model_kyiv.stl"
     if test_model_stl.exists():
         return FileResponse(
@@ -913,7 +913,7 @@ async def get_test_model():
             filename="test_model_kyiv.stl"
         )
     
-    # РЇРєС‰Рѕ STL РЅРµРјР°С”, РїРµСЂРµРІС–СЂСЏС”РјРѕ 3MF
+    # РЇРєС‰Рѕ STL РЅРµРјР°С", РїРµСЂРµРІС–СЂСЏС"РјРѕ 3MF
     test_model_3mf = OUTPUT_DIR / "test_model_kyiv.3mf"
     if test_model_3mf.exists():
         return FileResponse(
@@ -957,12 +957,12 @@ async def get_test_model_part(part_name: str):
 @app.post("/api/global-center")
 async def set_global_center_endpoint(center_lat: float = Query(...), center_lon: float = Query(...), utm_zone: Optional[int] = Query(None)):
     """
-    Р’СЃС‚Р°РЅРѕРІР»СЋС” РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРІР°РґСЂР°С‚С–РІ
+    Р'СЃС‚Р°РЅРѕРІР»СЋС" РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРІР°РґСЂР°С‚С–РІ
     
     Args:
         center_lat: РЁРёСЂРѕС‚Р° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ (WGS84)
-        center_lon: Р”РѕРІРіРѕС‚Р° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ (WGS84)
-        utm_zone: UTM Р·РѕРЅР° (РѕРїС†С–РѕРЅР°Р»СЊРЅРѕ, РІРёР·РЅР°С‡Р°С”С‚СЊСЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ СЏРєС‰Рѕ РЅРµ РІРєР°Р·Р°РЅРѕ)
+        center_lon: Р"РѕРІРіРѕС‚Р° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ (WGS84)
+        utm_zone: UTM Р·РѕРЅР° (РѕРїС†С–РѕРЅР°Р»СЊРЅРѕ, РІРёР·РЅР°С‡Р°С"С‚СЊСЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ СЏРєС‰Рѕ РЅРµ РІРєР°Р·Р°РЅРѕ)
     
     Returns:
         Р†РЅС„РѕСЂРјР°С†С–СЏ РїСЂРѕ РІСЃС‚Р°РЅРѕРІР»РµРЅРёР№ С†РµРЅС‚СЂ
@@ -979,7 +979,7 @@ async def set_global_center_endpoint(center_lat: float = Query(...), center_lon:
                 "utm_x": center_x_utm,
                 "utm_y": center_y_utm,
             },
-            "message": f"Р“Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ: ({center_lat:.6f}, {center_lon:.6f})"
+            "message": f"Р"Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ: ({center_lat:.6f}, {center_lon:.6f})"
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"РџРѕРјРёР»РєР° РІСЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ: {str(e)}")
@@ -988,7 +988,7 @@ async def set_global_center_endpoint(center_lat: float = Query(...), center_lon:
 @app.get("/api/global-center")
 async def get_global_center_endpoint():
     """
-    РћС‚СЂРёРјСѓС” РїРѕС‚РѕС‡РЅРёР№ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё
+    РћС‚СЂРёРјСѓС" РїРѕС‚РѕС‡РЅРёР№ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё
     
     Returns:
         Р†РЅС„РѕСЂРјР°С†С–СЏ РїСЂРѕ РїРѕС‚РѕС‡РЅРёР№ С†РµРЅС‚СЂ Р°Р±Рѕ null СЏРєС‰Рѕ РЅРµ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ
@@ -1021,7 +1021,7 @@ class HexagonalGridRequest(BaseModel):
 
 
 class HexagonalGridResponse(BaseModel):
-    """Р’С–РґРїРѕРІС–РґСЊ Р· РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅРѕСЋ СЃС–С‚РєРѕСЋ"""
+    """Р'С–РґРїРѕРІС–РґСЊ Р· РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅРѕСЋ СЃС–С‚РєРѕСЋ"""
     geojson: dict
     hex_count: int
     is_valid: bool
@@ -1032,7 +1032,7 @@ class HexagonalGridResponse(BaseModel):
 @app.post("/api/hexagonal-grid", response_model=HexagonalGridResponse)
 async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
     """
-    Р“РµРЅРµСЂСѓС” РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅСѓ СЃС–С‚РєСѓ РґР»СЏ Р·Р°РґР°РЅРѕС— РѕР±Р»Р°СЃС‚С–.
+    Р"РµРЅРµСЂСѓС" РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅСѓ СЃС–С‚РєСѓ РґР»СЏ Р·Р°РґР°РЅРѕС— РѕР±Р»Р°СЃС‚С–.
     РЁРµСЃС‚РёРєСѓС‚РЅРёРєРё РјР°СЋС‚СЊ СЂРѕР·РјС–СЂ hex_size_m (Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 0.5 РєРј).
     РљР•РЁРЈР„ СЃС–С‚РєСѓ РїС–СЃР»СЏ РїРµСЂС€РѕС— РіРµРЅРµСЂР°С†С–С— РґР»СЏ С€РІРёРґС€РѕРіРѕ РґРѕСЃС‚СѓРїСѓ.
     """
@@ -1040,7 +1040,7 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
     import json
     
     try:
-        # РЎС‚РІРѕСЂСЋС”РјРѕ С…РµС€ РїР°СЂР°РјРµС‚СЂС–РІ РґР»СЏ С–РґРµРЅС‚РёС„С–РєР°С†С–С— СЃС–С‚РєРё
+        # РЎС‚РІРѕСЂСЋС"РјРѕ С…РµС€ РїР°СЂР°РјРµС‚СЂС–РІ РґР»СЏ С–РґРµРЅС‚РёС„С–РєР°С†С–С— СЃС–С‚РєРё
         grid_type = request.grid_type.lower() if hasattr(request, 'grid_type') else 'hexagonal'
         grid_cache_version = "v2"
         cache_key = f"{grid_cache_version}_{request.north:.6f}_{request.south:.6f}_{request.east:.6f}_{request.west:.6f}_{request.hex_size_m:.1f}_{grid_type}"
@@ -1051,23 +1051,23 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_file = cache_dir / f"grid_{cache_hash}.json"
         
-        # РџРµСЂРµРІС–СЂСЏС”РјРѕ С‡Рё С” Р·Р±РµСЂРµР¶РµРЅР° СЃС–С‚РєР°
+        # РџРµСЂРµРІС–СЂСЏС"РјРѕ С‡Рё С" Р·Р±РµСЂРµР¶РµРЅР° СЃС–С‚РєР°
         if cache_file.exists():
             try:
                 with open(cache_file, 'r', encoding='utf-8') as f:
                     cached_data = json.load(f)
-                    print(f"[INFO] Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”С‚СЊСЃСЏ Р·Р±РµСЂРµР¶РµРЅР° СЃС–С‚РєР° Р· РєРµС€Сѓ: {cache_file.name}")
+                    print(f"[INFO] Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"С‚СЊСЃСЏ Р·Р±РµСЂРµР¶РµРЅР° СЃС–С‚РєР° Р· РєРµС€Сѓ: {cache_file.name}")
                     return HexagonalGridResponse(**cached_data)
             except Exception as e:
-                print(f"[WARN] РџРѕРјРёР»РєР° С‡РёС‚Р°РЅРЅСЏ РєРµС€Сѓ СЃС–С‚РєРё: {e}, РіРµРЅРµСЂСѓС”РјРѕ РЅРѕРІСѓ")
+                print(f"[WARN] РџРѕРјРёР»РєР° С‡РёС‚Р°РЅРЅСЏ РєРµС€Сѓ СЃС–С‚РєРё: {e}, РіРµРЅРµСЂСѓС"РјРѕ РЅРѕРІСѓ")
         
-        print(f"[INFO] Р“РµРЅРµСЂР°С†С–СЏ РЅРѕРІРѕС— СЃС–С‚РєРё: north={request.north}, south={request.south}, east={request.east}, west={request.west}, hex_size_m={request.hex_size_m}")
+        print(f"[INFO] Р"РµРЅРµСЂР°С†С–СЏ РЅРѕРІРѕС— СЃС–С‚РєРё: north={request.north}, south={request.south}, east={request.east}, west={request.west}, hex_size_m={request.hex_size_m}")
         
         # РџРµСЂРµРІС–СЂРєР° РІР°Р»С–РґРЅРѕСЃС‚С– РєРѕРѕСЂРґРёРЅР°С‚
         if request.north <= request.south or request.east <= request.west:
             raise ValueError(f"РќРµРІС–СЂРЅС– РєРѕРѕСЂРґРёРЅР°С‚Рё: north={request.north} <= south={request.south} Р°Р±Рѕ east={request.east} <= west={request.west}")
         
-        # РљРѕРЅРІРµСЂС‚СѓС”РјРѕ lat/lon bbox РІ UTM РґР»СЏ РіРµРЅРµСЂР°С†С–С— СЃС–С‚РєРё
+        # РљРѕРЅРІРµСЂС‚СѓС"РјРѕ lat/lon bbox РІ UTM РґР»СЏ РіРµРЅРµСЂР°С†С–С— СЃС–С‚РєРё
         from services.crs_utils import bbox_latlon_to_utm
         bbox_utm = bbox_latlon_to_utm(
             request.north, request.south, request.east, request.west
@@ -1075,7 +1075,7 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
         bbox_meters = bbox_utm[:4]  # (minx, miny, maxx, maxy)
         to_wgs84 = bbox_utm[6]  # Р¤СѓРЅРєС†С–СЏ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— UTM -> WGS84 (С–РЅРґРµРєСЃ 6)
         
-        # Р“РµРЅРµСЂСѓС”РјРѕ СЃС–С‚РєСѓ (С€РµСЃС‚РёРєСѓС‚РЅРёРєРё, РєРІР°РґСЂР°С‚Рё Р°Р±Рѕ РєСЂСѓРіРё)
+        # Р"РµРЅРµСЂСѓС"РјРѕ СЃС–С‚РєСѓ (С€РµСЃС‚РёРєСѓС‚РЅРёРєРё, РєРІР°РґСЂР°С‚Рё Р°Р±Рѕ РєСЂСѓРіРё)
         if grid_type == 'square':
             from services.hexagonal_grid import generate_square_grid
             cells = generate_square_grid(bbox_meters, square_size_m=request.hex_size_m)
@@ -1090,10 +1090,10 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             cells = generate_hexagonal_grid(bbox_meters, hex_size_m=request.hex_size_m)
             print(f"[INFO] Р—РіРµРЅРµСЂРѕРІР°РЅРѕ {len(cells)} С€РµСЃС‚РёРєСѓС‚РЅРёРєС–РІ")
         
-        # РљРѕРЅРІРµСЂС‚СѓС”РјРѕ РІ GeoJSON Р· РєРѕРЅРІРµСЂС‚Р°С†С–С”СЋ РєРѕРѕСЂРґРёРЅР°С‚ UTM -> WGS84
+        # РљРѕРЅРІРµСЂС‚СѓС"РјРѕ РІ GeoJSON Р· РєРѕРЅРІРµСЂС‚Р°С†С–С"СЋ РєРѕРѕСЂРґРёРЅР°С‚ UTM -> WGS84
         geojson = hexagons_to_geojson(cells, to_wgs84=to_wgs84)
         
-        # Р’Р°Р»С–РґСѓС”РјРѕ СЃС–С‚РєСѓ (С‚С–Р»СЊРєРё РґР»СЏ С€РµСЃС‚РёРєСѓС‚РЅРёРєС–РІ; square С– circle Р·Р°РІР¶РґРё РІР°Р»С–РґРЅС–)
+        # Р'Р°Р»С–РґСѓС"РјРѕ СЃС–С‚РєСѓ (С‚С–Р»СЊРєРё РґР»СЏ С€РµСЃС‚РёРєСѓС‚РЅРёРєС–РІ; square С– circle Р·Р°РІР¶РґРё РІР°Р»С–РґРЅС–)
         is_valid = True
         errors = []
         if grid_type == 'hexagonal':
@@ -1101,7 +1101,7 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             if errors:
                 print(f"[WARN] РџРѕРјРёР»РєРё РІР°Р»С–РґР°С†С–С— СЃС–С‚РєРё: {errors}")
         
-        # РћР±С‡РёСЃР»СЋС”РјРѕ С†РµРЅС‚СЂ СЃС–С‚РєРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРѕРѕСЂРґРёРЅР°С‚
+        # РћР±С‡РёСЃР»СЋС"РјРѕ С†РµРЅС‚СЂ СЃС–С‚РєРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРѕРѕСЂРґРёРЅР°С‚
         grid_center = None
         try:
             center_lat, center_lon = calculate_grid_center_from_geojson(geojson, to_wgs84=to_wgs84)
@@ -1121,7 +1121,7 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             grid_center=grid_center
         )
         
-        # Р—Р±РµСЂС–РіР°С”РјРѕ СЃС–С‚РєСѓ РІ РєРµС€
+        # Р—Р±РµСЂС–РіР°С"РјРѕ СЃС–С‚РєСѓ РІ РєРµС€
         try:
             cache_data = {
                 "geojson": response.geojson,
@@ -1158,7 +1158,7 @@ class ZoneGenerationRequest(BaseModel):
     south: Optional[float] = None
     east: Optional[float] = None
     west: Optional[float] = None
-    # Р’СЃС– С–РЅС€С– РїР°СЂР°РјРµС‚СЂРё СЏРє Сѓ GenerationRequest
+    # Р'СЃС– С–РЅС€С– РїР°СЂР°РјРµС‚СЂРё СЏРє Сѓ GenerationRequest
     model_size_mm: float = Field(default=80.0, ge=10.0, le=500.0)
     road_width_multiplier: float = Field(default=0.8, ge=0.1, le=5.0)
     road_height_mm: float = Field(default=0.5, ge=0.1, le=10.0)
@@ -1168,7 +1168,7 @@ class ZoneGenerationRequest(BaseModel):
     building_foundation_mm: float = Field(default=0.6, ge=0.0, le=10.0)
     building_embed_mm: float = Field(default=0.2, ge=0.0, le=5.0)
     building_max_foundation_mm: float = Field(default=5.0, ge=0.0, le=20.0)
-    water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ
+    water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС"С„Сѓ
     terrain_enabled: bool = True
     terrain_z_scale: float = Field(default=0.5, ge=0.1, le=10.0)
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РџС–РґР»РѕР¶РєР° 0.3РјРј Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј
@@ -1230,11 +1230,11 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     if not request.zones or len(request.zones) == 0:
         raise HTTPException(status_code=400, detail="РќРµ РІРёР±СЂР°РЅРѕ Р¶РѕРґРЅРѕС— Р·РѕРЅРё")
     
-    # РљР РРўРР§РќРћ: Р’РёР·РЅР°С‡Р°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ Р’РЎР†Р„Р‡ СЃС–С‚РєРё.
+    # РљР РРўРР§РќРћ: Р'РёР·РЅР°С‡Р°С"РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ Р'РЎР†Р„Р‡ СЃС–С‚РєРё.
     # If client provides city bbox, use it for a stable reference; otherwise fallback to selected zones bbox.
-    # Р¦Рµ Р·Р°Р±РµР·РїРµС‡СѓС”, С‰Рѕ РІСЃС– Р·РѕРЅРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓСЋС‚СЊ РѕРґРЅСѓ С‚РѕС‡РєСѓ РІС–РґР»С–РєСѓ (0,0)
+    # Р¦Рµ Р·Р°Р±РµР·РїРµС‡СѓС", С‰Рѕ РІСЃС– Р·РѕРЅРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓСЋС‚СЊ РѕРґРЅСѓ С‚РѕС‡РєСѓ РІС–РґР»С–РєСѓ (0,0)
     # С– С–РґРµР°Р»СЊРЅРѕ РїС–РґС…РѕРґСЏС‚СЊ РѕРґРЅР° РґРѕ РѕРґРЅРѕС—
-    print(f"[INFO] Р’РёР·РЅР°С‡РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ РґР»СЏ РІСЃС–С”С— СЃС–С‚РєРё ({len(request.zones)} Р·РѕРЅ)...")
+    print(f"[INFO] Р'РёР·РЅР°С‡РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ РґР»СЏ РІСЃС–С"С— СЃС–С‚РєРё ({len(request.zones)} Р·РѕРЅ)...")
     
     grid_bbox = None
     # 1) Prefer explicit city bbox (stable across later zone additions)
@@ -1275,12 +1275,12 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             'west': min(all_lons)
         }
     
-    # Р’РёР·РЅР°С‡Р°С”РјРѕ С†РµРЅС‚СЂ РІСЃС–С”С— СЃС–С‚РєРё
+    # Р'РёР·РЅР°С‡Р°С"РјРѕ С†РµРЅС‚СЂ РІСЃС–С"С— СЃС–С‚РєРё
     grid_center_lat = (grid_bbox['north'] + grid_bbox['south']) / 2.0
     grid_center_lon = (grid_bbox['east'] + grid_bbox['west']) / 2.0
     
-    print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ СЃС–С‚РєРё: lat={grid_center_lat:.6f}, lon={grid_center_lon:.6f}")
-    print(f"[INFO] Bbox РІСЃС–С”С— СЃС–С‚РєРё: north={grid_bbox['north']:.6f}, south={grid_bbox['south']:.6f}, east={grid_bbox['east']:.6f}, west={grid_bbox['west']:.6f}")
+    print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ СЃС–С‚РєРё: lat={grid_center_lat:.6f}, lon={grid_center_lon:.6f}")
+    print(f"[INFO] Bbox РІСЃС–С"С— СЃС–С‚РєРё: north={grid_bbox['north']:.6f}, south={grid_bbox['south']:.6f}, east={grid_bbox['east']:.6f}, west={grid_bbox['west']:.6f}")
     
     # Cache global city reference so future "add more zones" uses the same values.
     grid_bbox_latlon = (grid_bbox['north'], grid_bbox['south'], grid_bbox['east'], grid_bbox['west'])
@@ -1296,7 +1296,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     if city_cache_file.exists():
         try:
             cached = json.loads(city_cache_file.read_text(encoding="utf-8"))
-            print(f"[INFO] Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РєРµС€ РјС–СЃС‚Р°: {city_cache_file.name}")
+            print(f"[INFO] Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РєРµС€ РјС–СЃС‚Р°: {city_cache_file.name}")
         except Exception:
             cached = None
 
@@ -1308,7 +1308,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             global_center = set_global_center(grid_center_lat, grid_center_lon)
     else:
         global_center = set_global_center(grid_center_lat, grid_center_lon)
-    print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ: lat={global_center.center_lat:.6f}, lon={global_center.center_lon:.6f}, UTM zone={global_center.utm_zone}")
+    print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ: lat={global_center.center_lat:.6f}, lon={global_center.center_lon:.6f}, UTM zone={global_center.utm_zone}")
 
     # CRITICAL: store global DEM bbox so all zones sample elevations from the same tile set (and it is stable across sessions)
     try:
@@ -1317,12 +1317,12 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     except Exception:
         pass
     
-    # РљР РРўРР§РќРћ: РћР±С‡РёСЃР»СЋС”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m РґР»СЏ РІСЃС–С”С— СЃС–С‚РєРё
-    # Р¦Рµ Р·Р°Р±РµР·РїРµС‡СѓС”, С‰Рѕ РІСЃС– Р·РѕРЅРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓСЋС‚СЊ РѕРґРЅСѓ Р±Р°Р·РѕРІСѓ РІРёСЃРѕС‚Сѓ РґР»СЏ РЅРѕСЂРјР°Р»С–Р·Р°С†С–С—
+    # РљР РРўРР§РќРћ: РћР±С‡РёСЃР»СЋС"РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m РґР»СЏ РІСЃС–С"С— СЃС–С‚РєРё
+    # Р¦Рµ Р·Р°Р±РµР·РїРµС‡СѓС", С‰Рѕ РІСЃС– Р·РѕРЅРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓСЋС‚СЊ РѕРґРЅСѓ Р±Р°Р·РѕРІСѓ РІРёСЃРѕС‚Сѓ РґР»СЏ РЅРѕСЂРјР°Р»С–Р·Р°С†С–С—
     # С– С–РґРµР°Р»СЊРЅРѕ СЃС‚РёРєСѓСЋС‚СЊСЃСЏ РѕРґРЅР° Р· РѕРґРЅРѕСЋ
     print(f"[INFO] РћР±С‡РёСЃР»РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ elevation_ref РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РІРёСЃРѕС‚ РјС–Р¶ Р·РѕРЅР°РјРё...")
     
-    # Р’РёР·РЅР°С‡Р°С”РјРѕ source_crs РґР»СЏ РѕР±С‡РёСЃР»РµРЅРЅСЏ elevation_ref
+    # Р'РёР·РЅР°С‡Р°С"РјРѕ source_crs РґР»СЏ РѕР±С‡РёСЃР»РµРЅРЅСЏ elevation_ref
     source_crs = None
     try:
         from services.crs_utils import bbox_latlon_to_utm
@@ -1331,7 +1331,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     except Exception as e:
         print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё source_crs РґР»СЏ elevation_ref: {e}")
     
-    # РћР±С‡РёСЃР»СЋС”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m С‚Р° baseline_offset_m
+    # РћР±С‡РёСЃР»СЋС"РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m С‚Р° baseline_offset_m
     # Guard against corrupted/invalid cached refs (we've seen Terrarium outlier pixels produce huge negative mins).
     cached_elev = None
     if cached and isinstance(cached, dict):
@@ -1348,8 +1348,8 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     if cached_elev is not None:
         global_elevation_ref_m = float(cached.get("elevation_ref_m"))
         global_baseline_offset_m = float(cached.get("baseline_offset_m") or 0.0)
-        print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m (РєРµС€): {global_elevation_ref_m:.2f}Рј")
-        print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m (РєРµС€): {global_baseline_offset_m:.3f}Рј")
+        print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m (РєРµС€): {global_elevation_ref_m:.2f}Рј")
+        print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m (РєРµС€): {global_baseline_offset_m:.3f}Рј")
     else:
         # Pass explicit bbox if available to ensure stability
         explicit_grid_bbox_tuple = None
@@ -1367,17 +1367,17 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             terrarium_zoom=request.terrarium_zoom if hasattr(request, 'terrarium_zoom') else 15,
             z_scale=float(request.terrain_z_scale),
             sample_points_per_zone=25,  # РљС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РґР»СЏ СЃРµРјРїР»С–РЅРіСѓ РІ РєРѕР¶РЅС–Р№ Р·РѕРЅС–
-            global_center=global_center,  # Р’РђР–Р›РР’Рћ: РїРµСЂРµРґР°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— РєРѕРѕСЂРґРёРЅР°С‚
-            explicit_bbox=explicit_grid_bbox_tuple  # РљР РРўРР§РќРћ: Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ СЃС‚Р°Р±С–Р»СЊРЅРёР№ BBOX РјС–СЃС‚Р°
+            global_center=global_center,  # Р'РђР–Р›РР'Рћ: РїРµСЂРµРґР°С"РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— РєРѕРѕСЂРґРёРЅР°С‚
+            explicit_bbox=explicit_grid_bbox_tuple  # РљР РРўРР§РќРћ: Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ СЃС‚Р°Р±С–Р»СЊРЅРёР№ BBOX РјС–СЃС‚Р°
         )
     
     if global_elevation_ref_m is not None:
-        print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m: {global_elevation_ref_m:.2f}Рј (РІРёСЃРѕС‚Р° РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)")
-        print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m: {global_baseline_offset_m:.3f}Рј")
+        print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m: {global_elevation_ref_m:.2f}Рј (РІРёСЃРѕС‚Р° РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)")
+        print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m: {global_baseline_offset_m:.3f}Рј")
     else:
         print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ РѕР±С‡РёСЃР»РёС‚Рё РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m, РєРѕР¶РЅР° Р·РѕРЅР° РІРёРєРѕСЂРёСЃС‚РѕРІСѓРІР°С‚РёРјРµ Р»РѕРєР°Р»СЊРЅСѓ РЅРѕСЂРјР°Р»С–Р·Р°С†С–СЋ")
     
-    # РћР±С‡РёСЃР»СЋС”РјРѕ РѕРїС‚РёРјР°Р»СЊРЅСѓ С‚РѕРІС‰РёРЅСѓ РїС–РґР»РѕР¶РєРё РґР»СЏ РІСЃС–С… Р·РѕРЅ
+    # РћР±С‡РёСЃР»СЋС"РјРѕ РѕРїС‚РёРјР°Р»СЊРЅСѓ С‚РѕРІС‰РёРЅСѓ РїС–РґР»РѕР¶РєРё РґР»СЏ РІСЃС–С… Р·РѕРЅ
     # CRITICAL: base thickness must be stable across "add more zones", BUT ALSO must be thick enough to hold all grooves!
     # If a park embeds 1.0mm, the base MUST be more than 1.0mm, otherwise the boolean cut will punch a hole through the bottom floor!
     requested_base_thickness_mm = float(request.terrain_base_thickness_mm)
@@ -1407,34 +1407,34 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     except Exception:
         pass
     
-    # 3. РћР±С‡РёСЃР»СЋС”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ РєСЂРѕРє СЃС–С‚РєРё (Grid Step) РґР»СЏ С–РґРµР°Р»СЊРЅРѕРіРѕ СЃС‚РёРєСѓРІР°РЅРЅСЏ
-    # Р—Р°РјС–СЃС‚СЊ "resolution" (СЏРєРёР№ РґР°С” СЂС–Р·РЅРёР№ РєСЂРѕРє РґР»СЏ СЂС–Р·РЅРёС… bbox), РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ С„С–РєСЃРѕРІР°РЅРёР№ РєСЂРѕРє РІ РјРµС‚СЂР°С….
-    # Р‘Р°Р·СѓС”РјРѕСЃСЊ РЅР° СЃРµСЂРµРґРЅСЊРѕРјСѓ СЂРѕР·РјС–СЂС– Р·РѕРЅРё (РЅР°РїСЂРёРєР»Р°Рґ, 400Рј) С– Р±Р°Р¶Р°РЅС–Р№ СЂРµР·РѕР»СЋС†С–С—.
-    # Р¦Рµ РіР°СЂР°РЅС‚СѓС”, С‰Рѕ vertices РІСЃС–С… Р·РѕРЅ Р»РµР¶Р°С‚РёРјСѓС‚СЊ РЅР° РѕРґРЅС–Р№ РіР»РѕР±Р°Р»СЊРЅС–Р№ СЃС–С‚С†С–.
+    # 3. РћР±С‡РёСЃР»СЋС"РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ РєСЂРѕРє СЃС–С‚РєРё (Grid Step) РґР»СЏ С–РґРµР°Р»СЊРЅРѕРіРѕ СЃС‚РёРєСѓРІР°РЅРЅСЏ
+    # Р—Р°РјС–СЃС‚СЊ "resolution" (СЏРєРёР№ РґР°С" СЂС–Р·РЅРёР№ РєСЂРѕРє РґР»СЏ СЂС–Р·РЅРёС… bbox), РІРёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ С„С–РєСЃРѕРІР°РЅРёР№ РєСЂРѕРє РІ РјРµС‚СЂР°С….
+    # Р'Р°Р·СѓС"РјРѕСЃСЊ РЅР° СЃРµСЂРµРґРЅСЊРѕРјСѓ СЂРѕР·РјС–СЂС– Р·РѕРЅРё (РЅР°РїСЂРёРєР»Р°Рґ, 400Рј) С– Р±Р°Р¶Р°РЅС–Р№ СЂРµР·РѕР»СЋС†С–С—.
+    # Р¦Рµ РіР°СЂР°РЅС‚СѓС", С‰Рѕ vertices РІСЃС–С… Р·РѕРЅ Р»РµР¶Р°С‚РёРјСѓС‚СЊ РЅР° РѕРґРЅС–Р№ РіР»РѕР±Р°Р»СЊРЅС–Р№ СЃС–С‚С†С–.
     target_res = float(request.terrain_resolution) if request.terrain_resolution else 150.0
     
     # РћРџРўРРњР†Р—РђР¦Р†РЇ: РђРґР°РїС‚РёРІРЅРёР№ grid_step_m РґР»СЏ РєСЂР°С‰РѕС— РїСЂРѕРґСѓРєС‚РёРІРЅРѕСЃС‚С–
-    # Р”Р»СЏ РјРµРЅС€РёС… Р·РѕРЅ РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ Р±С–Р»СЊС€РёР№ РєСЂРѕРє (РјРµРЅС€Р° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ)
-    base_size = float(getattr(request, "hex_size_m", 300.0))  # Р‘Р°Р·РѕРІРёР№ СЂРѕР·РјС–СЂ Р·РѕРЅРё
+    # Р"Р»СЏ РјРµРЅС€РёС… Р·РѕРЅ РІРёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ Р±С–Р»СЊС€РёР№ РєСЂРѕРє (РјРµРЅС€Р° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ)
+    base_size = float(getattr(request, "hex_size_m", 300.0))  # Р'Р°Р·РѕРІРёР№ СЂРѕР·РјС–СЂ Р·РѕРЅРё
     base_grid_step = base_size / target_res
     
-    # РЇРєС‰Рѕ resolution РІРёСЃРѕРєРёР№ (>150), Р·Р±С–Р»СЊС€СѓС”РјРѕ РєСЂРѕРє РґР»СЏ РѕРїС‚РёРјС–Р·Р°С†С–С—
-    # Р¦Рµ Р·РјРµРЅС€СѓС” РєС–Р»СЊРєС–СЃС‚СЊ РІРµСЂС€РёРЅ Р±РµР· РІС‚СЂР°С‚Рё СЏРєРѕСЃС‚С– РґР»СЏ Р±С–Р»СЊС€РѕСЃС‚С– РІРёРїР°РґРєС–РІ
+    # РЇРєС‰Рѕ resolution РІРёСЃРѕРєРёР№ (>150), Р·Р±С–Р»СЊС€СѓС"РјРѕ РєСЂРѕРє РґР»СЏ РѕРїС‚РёРјС–Р·Р°С†С–С—
+    # Р¦Рµ Р·РјРµРЅС€СѓС" РєС–Р»СЊРєС–СЃС‚СЊ РІРµСЂС€РёРЅ Р±РµР· РІС‚СЂР°С‚Рё СЏРєРѕСЃС‚С– РґР»СЏ Р±С–Р»СЊС€РѕСЃС‚С– РІРёРїР°РґРєС–РІ
     if target_res > 150:
-        # Р”Р»СЏ РІРёСЃРѕРєРѕС— СЂРµР·РѕР»СЋС†С–С—: Р·Р±С–Р»СЊС€СѓС”РјРѕ РєСЂРѕРє РЅР° 25% РґР»СЏ РѕРїС‚РёРјС–Р·Р°С†С–С—
+        # Р"Р»СЏ РІРёСЃРѕРєРѕС— СЂРµР·РѕР»СЋС†С–С—: Р·Р±С–Р»СЊС€СѓС"РјРѕ РєСЂРѕРє РЅР° 25% РґР»СЏ РѕРїС‚РёРјС–Р·Р°С†С–С—
         base_grid_step *= 1.25
         print(f"[INFO] OPTIMIZATION: Increased grid_step for resolution={target_res} (performance mode)")
     
     global_grid_step_m = base_grid_step
-    # РћРєСЂСѓРіР»СЏС”РјРѕ РґРѕ СЂРѕР·СѓРјРЅРѕРіРѕ Р·РЅР°С‡РµРЅРЅСЏ (РЅР°РїСЂРёРєР»Р°Рґ, 0.5, 1.0, 2.0, 2.5, 3.0)
+    # РћРєСЂСѓРіР»СЏС"РјРѕ РґРѕ СЂРѕР·СѓРјРЅРѕРіРѕ Р·РЅР°С‡РµРЅРЅСЏ (РЅР°РїСЂРёРєР»Р°Рґ, 0.5, 1.0, 2.0, 2.5, 3.0)
     global_grid_step_m = round(global_grid_step_m * 2) / 2.0
     if global_grid_step_m < 0.5: global_grid_step_m = 0.5
-    print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ РєСЂРѕРє СЃС–С‚РєРё (grid_step_m): {global_grid_step_m}Рј (РґР»СЏ resolution={target_res})")
+    print(f"[INFO] Р"Р»РѕР±Р°Р»СЊРЅРёР№ РєСЂРѕРє СЃС–С‚РєРё (grid_step_m): {global_grid_step_m}Рј (РґР»СЏ resolution={target_res})")
 
     task_ids = []
     for zone_idx, zone in enumerate(request.zones):
         # ... (rest of loop)
-        # РћС‚СЂРёРјСѓС”РјРѕ bbox Р· Р·РѕРЅРё
+        # РћС‚СЂРёРјСѓС"РјРѕ bbox Р· Р·РѕРЅРё
         geometry = zone.get('geometry', {})
         if geometry.get('type') != 'Polygon':
             continue
@@ -1455,8 +1455,8 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             'west': min(lons)
         }
         
-        # РЎС‚РІРѕСЂСЋС”РјРѕ GenerationRequest РґР»СЏ С†С–С”С— Р·РѕРЅРё
-        # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РґРµС„РѕР»С‚РЅРµ Р·РЅР°С‡РµРЅРЅСЏ РґР»СЏ terrain_smoothing_sigma СЏРєС‰Рѕ None
+        # РЎС‚РІРѕСЂСЋС"РјРѕ GenerationRequest РґР»СЏ С†С–С"С— Р·РѕРЅРё
+        # Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РґРµС„РѕР»С‚РЅРµ Р·РЅР°С‡РµРЅРЅСЏ РґР»СЏ terrain_smoothing_sigma СЏРєС‰Рѕ None
         terrain_smoothing_sigma = request.terrain_smoothing_sigma if request.terrain_smoothing_sigma is not None else 2.0
         
         zone_request = GenerationRequest(
@@ -1476,7 +1476,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             water_depth=request.water_depth,
             terrain_enabled=request.terrain_enabled,
             terrain_z_scale=request.terrain_z_scale,
-            terrain_base_thickness_mm=final_base_thickness_mm,  # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РѕРїС‚РёРјР°Р»СЊРЅСѓ С‚РѕРІС‰РёРЅСѓ
+            terrain_base_thickness_mm=final_base_thickness_mm,  # Р'РёРєРѕСЂРёСЃС‚РѕРІСѓС"РјРѕ РѕРїС‚РёРјР°Р»СЊРЅСѓ С‚РѕРІС‰РёРЅСѓ
             terrain_resolution=request.terrain_resolution,
             terrarium_zoom=request.terrarium_zoom,
             terrain_smoothing_sigma=terrain_smoothing_sigma,
@@ -1492,9 +1492,9 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             parks_height_mm=request.parks_height_mm,
             parks_embed_mm=request.parks_embed_mm,
             # include_pois is not in GenerationRequest anymore or hidden
-            # РљР РРўРР§РќРћ: РџРµСЂРµРґР°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅС– РїР°СЂР°РјРµС‚СЂРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РІРёСЃРѕС‚
-            elevation_ref_m=global_elevation_ref_m,  # Р“Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° РґР»СЏ РІСЃС–С… Р·РѕРЅ
-            baseline_offset_m=global_baseline_offset_m,  # Р“Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
+            # РљР РРўРР§РќРћ: РџРµСЂРµРґР°С"РјРѕ РіР»РѕР±Р°Р»СЊРЅС– РїР°СЂР°РјРµС‚СЂРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РІРёСЃРѕС‚
+            elevation_ref_m=global_elevation_ref_m,  # Р"Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° РґР»СЏ РІСЃС–С… Р·РѕРЅ
+            baseline_offset_m=global_baseline_offset_m,  # Р"Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
             preserve_global_xy=True,  # IMPORTANT: export in a shared coordinate frame for stitching
             grid_step_m=global_grid_step_m,  # GLOBAL GRID FIX
             is_ams_mode=request.is_ams_mode and not bool(getattr(request, "flat_plate_mode", False)),
@@ -1529,7 +1529,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             keychain_rim_height_mm=float(getattr(request, "keychain_rim_height_mm", 0.45)),
         )
         
-        # Р“РµРЅРµСЂСѓС”РјРѕ РјРѕРґРµР»СЊ РґР»СЏ Р·РѕРЅРё
+        # Р"РµРЅРµСЂСѓС"РјРѕ РјРѕРґРµР»СЊ РґР»СЏ Р·РѕРЅРё
         task_id = str(uuid.uuid4())
         zone_id_str = zone.get('id', f'zone_{zone_idx}')
         props = zone.get("properties") or {}
@@ -1538,20 +1538,20 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
         task = GenerationTask(task_id=task_id, request=zone_request)
         tasks[task_id] = task
         
-        # Р—Р±РµСЂС–РіР°С”РјРѕ С„РѕСЂРјСѓ Р·РѕРЅРё (РїРѕР»С–РіРѕРЅ) РґР»СЏ РѕР±СЂС–Р·Р°РЅРЅСЏ РјРµС€С–РІ
+        # Р—Р±РµСЂС–РіР°С"РјРѕ С„РѕСЂРјСѓ Р·РѕРЅРё (РїРѕР»С–РіРѕРЅ) РґР»СЏ РѕР±СЂС–Р·Р°РЅРЅСЏ РјРµС€С–РІ
         zone_polygon_coords = coordinates[0] if coordinates and len(coordinates) > 0 else None  # Р—РѕРІРЅС–С€РЅС–Р№ ring РїРѕР»С–РіРѕРЅСѓ
         
         # РџРµСЂРµРІС–СЂРєР° РІР°Р»С–РґРЅРѕСЃС‚С– zone_polygon_coords
         if zone_polygon_coords is not None:
             if len(zone_polygon_coords) < 3:
-                print(f"[WARN] Zone {zone_id_str}: zone_polygon_coords РјР°С” РјРµРЅС€Рµ 3 С‚РѕС‡РѕРє ({len(zone_polygon_coords)}), РІСЃС‚Р°РЅРѕРІР»СЋС”РјРѕ None")
+                print(f"[WARN] Zone {zone_id_str}: zone_polygon_coords РјР°С" РјРµРЅС€Рµ 3 С‚РѕС‡РѕРє ({len(zone_polygon_coords)}), РІСЃС‚Р°РЅРѕРІР»СЋС"РјРѕ None")
                 zone_polygon_coords = None
             else:
-                print(f"[DEBUG] Zone {zone_id_str}: zone_polygon_coords РјР°С” {len(zone_polygon_coords)} С‚РѕС‡РѕРє")
+                print(f"[DEBUG] Zone {zone_id_str}: zone_polygon_coords РјР°С" {len(zone_polygon_coords)} С‚РѕС‡РѕРє")
         else:
-            print(f"[WARN] Zone {zone_id_str}: zone_polygon_coords С” None, РѕР±СЂС–Р·Р°РЅРЅСЏ Р±СѓРґРµ РїРѕ bbox")
+            print(f"[WARN] Zone {zone_id_str}: zone_polygon_coords С" None, РѕР±СЂС–Р·Р°РЅРЅСЏ Р±СѓРґРµ РїРѕ bbox")
         
-        print(f"[INFO] РЎС‚РІРѕСЂСЋС”РјРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ Р·РѕРЅРё {zone_id_str} (Р·РѕРЅР° {zone_idx + 1}/{len(request.zones)})")
+        print(f"[INFO] РЎС‚РІРѕСЂСЋС"РјРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ Р·РѕРЅРё {zone_id_str} (Р·РѕРЅР° {zone_idx + 1}/{len(request.zones)})")
         print(f"[DEBUG] Zone bbox: north={zone_bbox['north']:.6f}, south={zone_bbox['south']:.6f}, east={zone_bbox['east']:.6f}, west={zone_bbox['west']:.6f}")
         print(f"[DEBUG] Zone polygon coords: {'present' if zone_polygon_coords else 'missing'}, grid_bbox_latlon: {'present' if grid_bbox_latlon else 'missing'}, row/col: {zone_row}/{zone_col}")
         
@@ -1560,7 +1560,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             task_id=task_id,
             request=zone_request,
             zone_id=zone_id_str,
-            zone_polygon_coords=zone_polygon_coords,  # РџРµСЂРµРґР°С”РјРѕ РєРѕРѕСЂРґРёРЅР°С‚Рё РїРѕР»С–РіРѕРЅСѓ РґР»СЏ РѕР±СЂС–Р·Р°РЅРЅСЏ (fallback)
+            zone_polygon_coords=zone_polygon_coords,  # РџРµСЂРµРґР°С"РјРѕ РєРѕРѕСЂРґРёРЅР°С‚Рё РїРѕР»С–РіРѕРЅСѓ РґР»СЏ РѕР±СЂС–Р·Р°РЅРЅСЏ (fallback)
             zone_row=zone_row,
             zone_col=zone_col,
             grid_bbox_latlon=grid_bbox_latlon,
@@ -1568,31 +1568,31 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
         )
         
         task_ids.append(task_id)
-        print(f"[DEBUG] Р—Р°РґР°С‡Р° {task_id} РґРѕРґР°РЅР° РґРѕ background_tasks. Р’СЃСЊРѕРіРѕ Р·Р°РґР°С‡: {len(task_ids)}")
+        print(f"[DEBUG] Р—Р°РґР°С‡Р° {task_id} РґРѕРґР°РЅР° РґРѕ background_tasks. Р'СЃСЊРѕРіРѕ Р·Р°РґР°С‡: {len(task_ids)}")
     
     if len(task_ids) == 0:
         raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ СЃС‚РІРѕСЂРёС‚Рё Р·Р°РґР°С‡С– РґР»СЏ Р·РѕРЅ")
     
     print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ {len(task_ids)} Р·Р°РґР°С‡ РґР»СЏ РіРµРЅРµСЂР°С†С–С— Р·РѕРЅ: {task_ids}")
     
-    # Р—Р±РµСЂС–РіР°С”РјРѕ Р·РІ'СЏР·РѕРє РґР»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·Р°РґР°С‡
-    # Р’РђР–Р›РР’Рћ: РіСЂСѓРїРѕРІРёР№ task_id РјР°С” Р±СѓС‚Рё СѓРЅС–РєР°Р»СЊРЅРёРј, С–РЅР°РєС€Рµ multiple_2 Р±СѓРґРµ РєРѕР»С–Р·РёС‚Рё РјС–Р¶ Р·Р°РїСѓСЃРєР°РјРё
+    # Р—Р±РµСЂС–РіР°С"РјРѕ Р·РІ'СЏР·РѕРє РґР»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·Р°РґР°С‡
+    # Р'РђР–Р›РР'Рћ: РіСЂСѓРїРѕРІРёР№ task_id РјР°С" Р±СѓС‚Рё СѓРЅС–РєР°Р»СЊРЅРёРј, С–РЅР°РєС€Рµ multiple_2 Р±СѓРґРµ РєРѕР»С–Р·РёС‚Рё РјС–Р¶ Р·Р°РїСѓСЃРєР°РјРё
     if len(task_ids) > 1:
         main_task_id = f"batch_{uuid.uuid4()}"
         multiple_tasks_map[main_task_id] = task_ids
         print(f"[INFO] Batch Р·Р°РґР°С‡С–: {main_task_id} -> {task_ids}")
-        print(f"[INFO] Р”Р»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ СЂР°Р·РѕРј РІРёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids: {task_ids}")
+        print(f"[INFO] Р"Р»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ СЂР°Р·РѕРј РІРёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids: {task_ids}")
     else:
         main_task_id = task_ids[0]
     
-    # РџРѕРІРµСЂС‚Р°С”РјРѕ СЃРїРёСЃРѕРє task_id
-    # Р’РђР–Р›РР’Рћ: all_task_ids РјС–СЃС‚РёС‚СЊ РІСЃС– task_id РґР»СЏ РєРѕР¶РЅРѕС— Р·РѕРЅРё
-    # Р¤СЂРѕРЅС‚РµРЅРґ РјР°С” Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё РІСЃС– С„Р°Р№Р»Рё Р· С†РёС… task_id С‚Р° РѕР±'С”РґРЅР°С‚Рё С—С…
+    # РџРѕРІРµСЂС‚Р°С"РјРѕ СЃРїРёСЃРѕРє task_id
+    # Р'РђР–Р›РР'Рћ: all_task_ids РјС–СЃС‚РёС‚СЊ РІСЃС– task_id РґР»СЏ РєРѕР¶РЅРѕС— Р·РѕРЅРё
+    # Р¤СЂРѕРЅС‚РµРЅРґ РјР°С" Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё РІСЃС– С„Р°Р№Р»Рё Р· С†РёС… task_id С‚Р° РѕР±'С"РґРЅР°С‚Рё С—С…
     return GenerationResponse(
         task_id=main_task_id,
         status="processing",
-        message=f"РЎС‚РІРѕСЂРµРЅРѕ {len(task_ids)} Р·Р°РґР°С‡ РґР»СЏ РіРµРЅРµСЂР°С†С–С— Р·РѕРЅ. Р’РёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ.",
-        all_task_ids=task_ids  # Р”РѕРґР°С”РјРѕ СЃРїРёСЃРѕРє РІСЃС–С… task_id
+        message=f"РЎС‚РІРѕСЂРµРЅРѕ {len(task_ids)} Р·Р°РґР°С‡ РґР»СЏ РіРµРЅРµСЂР°С†С–С— Р·РѕРЅ. Р'РёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ.",
+        all_task_ids=task_ids  # Р"РѕРґР°С"РјРѕ СЃРїРёСЃРѕРє РІСЃС–С… task_id
     )
 
 
@@ -1607,7 +1607,7 @@ def generate_model_task(
     hex_size_m: Optional[float] = None,
 ):
 
-    print(f"[INFO] === РџРћР§РђРўРћРљ Р“Р•РќР•Р РђР¦Р†Р‡ РњРћР”Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}")
+    print(f"[INFO] === РџРћР§РђРўРћРљ Р"Р•РќР•Р РђР¦Р†Р‡ РњРћР"Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}")
     task = tasks[task_id]
     zone_prefix = f"[{zone_id}] " if zone_id else ""
     # Перевіряємо чи задача не скасована до початку
@@ -1753,7 +1753,7 @@ def generate_model_task(
         
         
     except Exception as e:
-        print(f"[ERROR] === РџРћРњРР›РљРђ Р“Р•РќР•Р РђР¦Р†Р‡ РњРћР”Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}, Error: {e}")
+        print(f"[ERROR] === РџРћРњРР›РљРђ Р"Р•РќР•Р РђР¦Р†Р‡ РњРћР"Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}, Error: {e}")
         import traceback
         traceback.print_exc()
         task.fail(str(e))
