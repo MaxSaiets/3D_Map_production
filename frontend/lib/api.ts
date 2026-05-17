@@ -93,6 +93,12 @@ export interface FastPreviewResponse {
     lat: number;
     lng: number;
   };
+  model_logic?: {
+    model_size_mm?: number;
+    scale_factor_mm_per_m?: number;
+    [key: string]: any;
+  };
+  preview_id?: string;
   material?: string;
 }
 
