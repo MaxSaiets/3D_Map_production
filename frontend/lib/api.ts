@@ -83,11 +83,15 @@ export interface FastPreviewResponse {
       features?: any[];
     };
   };
-  bounds?: {
+  bounds: {
     north: number;
     south: number;
     east: number;
     west: number;
+  };
+  center: {
+    lat: number;
+    lng: number;
   };
   material?: string;
 }
