@@ -70,7 +70,7 @@ export interface FastPreviewResponse {
         z: number[][];
         z_max_m?: number;
         [key: string]: any;
-      };
+      } | null;
     };
     buildings: {
       features?: any[];
