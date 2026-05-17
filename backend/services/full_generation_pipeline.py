@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gc
 import json
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,7 @@ from services.data_fetch_pipeline import fetch_generation_data
 from services.debug_bundle_pipeline import create_debug_bundle
 from services.detail_layer_pipeline import process_detail_layers
 from services.export_pipeline import export_generation_outputs
+from services.flat_plate_pipeline import run_flat_plate_pipeline
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM
 from services.firebase_publish_pipeline import publish_outputs_to_firebase
 from services.mesh_clip_pipeline import clip_generated_meshes
@@ -49,15 +51,6 @@ class FullGenerationPipelineResult:
     output_file_abs: Path
     primary_format: str
     terrain_only_result: Optional[TerrainOnlyPipelineResult] = None
-
-
-@dataclass
-class CanonicalPreviewPipelineResult:
-    zone: ZonePreparationResult
-    source: SourceDataResult
-    canonical_2d_stage: Any
-    canonical_mask_bundle: Any
-    elapsed_seconds: float
 
 
 def _geometry_area(geom: Any) -> float:
@@ -329,8 +322,13 @@ def _validate_groove_stage(
     detail_layers: Any,
     task: Any,
     zone_prefix: str,
-    require_success: bool = True,
 ) -> None:
+    # Preview mode runs with BOOLEAN_BACKEND=noop on purpose — grooves stay
+    # uncut by design, so the "did the boolean actually change terrain?"
+    # check must not fail the task. Just log and return.
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping groove validation (noop backend)")
+        return
     groove_result = getattr(detail_layers, "groove_result", None)
     if groove_result is None:
         return
@@ -350,9 +348,6 @@ def _validate_groove_stage(
     if bool(getattr(groove_result, "rejected", False)):
         reason = getattr(groove_result, "rejection_reason", None) or getattr(groove_result, "failure_reason", None) or "unknown_rejection"
         message = f"Groove stage failed: unsafe groove cut was rejected ({reason})"
-        if not require_success:
-            print(f"[WARN] {zone_prefix}{message}; continuing because groove success is optional for this run")
-            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
@@ -363,9 +358,6 @@ def _validate_groove_stage(
             f"Groove stage failed: canonical groove masks existed but no groove cut was applied "
             f"({reason})"
         )
-        if not require_success:
-            print(f"[WARN] {zone_prefix}{message}; continuing because groove success is optional for this run")
-            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
@@ -471,63 +463,6 @@ def _validate_source_stage(
             f"[WARN] {zone_prefix}Source data is sparse after API fetch; continuing in sparse-zone mode "
             f"(roads={road_count}, buildings={building_count}, water={water_count}, green={green_count})"
         )
-
-
-def run_canonical_preview_pipeline(
-    *,
-    task: Any,
-    request: Any,
-    task_id: str,
-    output_dir: Path,
-    global_center: Any,
-    zone_polygon_coords: Optional[list],
-    grid_bbox_latlon: Any,
-    zone_row: Any = None,
-    zone_col: Any = None,
-    hex_size_m: Any = None,
-    zone_prefix: str = "[preview] ",
-) -> CanonicalPreviewPipelineResult:
-    """Run the real generation pipeline until the canonical 2D handoff.
-
-    This is the latest point before terrain booleans, Blender/mesh construction,
-    export, and slicer validation become expensive. The returned canonical masks
-    are exactly the geometry source consumed by the 3D stages in
-    `run_full_generation_pipeline`.
-    """
-    pipeline_start = time.perf_counter()
-    zone = _prepare_zone_stage(
-        request=request,
-        global_center=global_center,
-        zone_polygon_coords=zone_polygon_coords,
-        grid_bbox_latlon=grid_bbox_latlon,
-        zone_row=zone_row,
-        zone_col=zone_col,
-        hex_size_m=hex_size_m,
-        zone_prefix=zone_prefix,
-    )
-    source = _fetch_source_stage(
-        task=task,
-        request=request,
-        global_center=global_center,
-        zone_prefix=zone_prefix,
-    )
-    _validate_source_stage(source=source, zone_prefix=zone_prefix)
-    canonical_2d_stage = prepare_canonical_2d_stage(
-        task_id=task_id,
-        request=request,
-        source=source,
-        zone=zone,
-        global_center=global_center,
-        debug_generated_dir=(output_dir.parent / "debug" / "generated"),
-        zone_prefix=zone_prefix,
-    )
-    return CanonicalPreviewPipelineResult(
-        zone=zone,
-        source=source,
-        canonical_2d_stage=canonical_2d_stage,
-        canonical_mask_bundle=canonical_2d_stage.canonical_mask_bundle,
-        elapsed_seconds=time.perf_counter() - pipeline_start,
-    )
 
 
 def _run_terrain_stage(
@@ -682,21 +617,23 @@ def run_full_generation_pipeline(
     zone_prefix: str = "",
     min_printable_gap_mm: float = 1.0,
     groove_clearance_mm: float = 0.15,
-    require_groove_success: bool = True,
-    require_print_acceptance: bool = True,
-    apply_grooves: bool = True,
+    file_basename: Optional[str] = None,
 ) -> FullGenerationPipelineResult:
     pipeline_start = time.perf_counter()
     stage_snapshot_collector = None
     stage_snapshot_manifest_path: Optional[Path] = None
-    try:
-        stage_snapshot_collector = create_stage_snapshot_collector(
-            task_id=task_id,
-            debug_root=(output_dir.parent / "debug"),
-            zone_prefix=zone_prefix,
-        )
-    except Exception as exc:
-        print(f"[WARN] {zone_prefix}Failed to initialize stage snapshot collector: {exc}")
+    # Preview mode: skip stage snapshot collection (~5-15s of debug PNGs).
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping stage snapshots")
+    else:
+        try:
+            stage_snapshot_collector = create_stage_snapshot_collector(
+                task_id=task_id,
+                debug_root=(output_dir.parent / "debug"),
+                zone_prefix=zone_prefix,
+            )
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix}Failed to initialize stage snapshot collector: {exc}")
 
     def _log_stage(name: str, started_at: float) -> None:
         elapsed = time.perf_counter() - started_at
@@ -770,6 +707,26 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix}Stage snapshot failed at canonical_2d: {exc}")
 
+    if bool(getattr(request, "flat_plate_mode", False)):
+        print(f"[INFO] {zone_prefix}FLAT_PLATE_MODE: skipping DEM terrain, grooves, inlays, and print-fit gates")
+        stage_start = time.perf_counter()
+        export_result = run_flat_plate_pipeline(
+            task=task,
+            request=request,
+            task_id=task_id,
+            output_dir=output_dir,
+            zone=zone,
+            source=source,
+            canonical_2d_stage=canonical_2d_stage,
+            global_center=global_center,
+            file_basename=file_basename,
+        )
+        _log_stage("flat_plate_pipeline", stage_start)
+        return FullGenerationPipelineResult(
+            output_file_abs=export_result.output_file_abs,
+            primary_format=export_result.primary_format,
+        )
+
     stage_start = time.perf_counter()
     terrain_stage = _run_terrain_stage(
         task=task,
@@ -819,7 +776,6 @@ def run_full_generation_pipeline(
         water_depth_m=terrain_stage.water_depth_m,
         gdf_green=source.gdf_green,
         groove_clearance_mm=groove_clearance_mm,
-        apply_grooves=apply_grooves,
         zone_prefix=zone_prefix,
         canonical_mask_bundle=canonical_mask_bundle,
     )
@@ -835,15 +791,7 @@ def run_full_generation_pipeline(
         detail_layers=detail_layers,
         zone_prefix=zone_prefix,
     )
-    if apply_grooves:
-        _validate_groove_stage(
-            detail_layers=detail_layers,
-            task=task,
-            zone_prefix=zone_prefix,
-            require_success=require_groove_success,
-        )
-    else:
-        print(f"[INFO] {zone_prefix}Groove validation skipped because grooves were not applied")
+    _validate_groove_stage(detail_layers=detail_layers, task=task, zone_prefix=zone_prefix)
 
     terrain_mesh = detail_layers.terrain_mesh
     road_mesh = detail_layers.road_mesh
@@ -873,6 +821,90 @@ def run_full_generation_pipeline(
     building_meshes = postprocess_result.building_meshes
     water_mesh = postprocess_result.water_mesh
     parks_mesh = postprocess_result.parks_mesh
+
+    # PREVIEW: turn roads / parks / water 3D inlays into thin coloured decals
+    # draped on top of terrain. MUST run AFTER postprocess_generated_meshes —
+    # postprocess strips "thin mesh components < 0.7mm" which would otherwise
+    # delete our flat decal sheets entirely (this happened on the previous
+    # render: water=None, parks=None despite OSM providing both).
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        from services.terrain_cutter import build_terrain_decal_from_2d_mask, flatten_inlay_to_terrain_decal
+        try:
+            terrain_provider = getattr(terrain_stage, "terrain_provider", None)
+        except Exception:
+            terrain_provider = None
+        try:
+            def _first_nonempty_geometry(*items):
+                for item in items:
+                    if item is not None and not getattr(item, "is_empty", False):
+                        return item
+                return None
+
+            def _first_surface_geometry(*items):
+                for item in items:
+                    if item is None or getattr(item, "is_empty", False):
+                        continue
+                    if getattr(item, "geom_type", "") in ("Polygon", "MultiPolygon", "GeometryCollection"):
+                        return item
+                return None
+
+            road_mask = _first_surface_geometry(
+                getattr(canonical_mask_bundle, "roads_final", None)
+                if canonical_mask_bundle is not None else None,
+                getattr(detail_layers, "road_groove_mask", None),
+                terrain_stage.road_cut_mask,
+            )
+            if road_mask is not None or road_mesh is not None:
+                rebuilt = build_terrain_decal_from_2d_mask(
+                    road_mask,
+                    terrain_provider,
+                    offset_m=0.02,
+                    target_edge_len_m=3.0,
+                    simplify_tolerance_m=0.05,
+                )
+                road_mesh = rebuilt if rebuilt is not None else (
+                    flatten_inlay_to_terrain_decal(road_mesh, terrain_provider, offset_m=0.02)
+                    if road_mesh is not None else None
+                )
+            parks_mask = _first_nonempty_geometry(
+                getattr(canonical_mask_bundle, "parks_final", None)
+                if canonical_mask_bundle is not None else None,
+                getattr(getattr(detail_layers, "parks_result", None), "processed_polygons", None),
+            )
+            if parks_mask is not None or parks_mesh is not None:
+                rebuilt = build_terrain_decal_from_2d_mask(
+                    parks_mask,
+                    terrain_provider,
+                    offset_m=0.02,
+                    target_edge_len_m=3.0,
+                    simplify_tolerance_m=0.05,
+                )
+                parks_mesh = rebuilt if rebuilt is not None else (
+                    flatten_inlay_to_terrain_decal(parks_mesh, terrain_provider, offset_m=0.02)
+                    if parks_mesh is not None else None
+                )
+            water_mask = _first_nonempty_geometry(
+                getattr(canonical_mask_bundle, "water_final", None)
+                if canonical_mask_bundle is not None else None,
+                getattr(detail_layers, "water_cut_polygons", None),
+            )
+            if water_mask is not None or water_mesh is not None:
+                rebuilt = build_terrain_decal_from_2d_mask(
+                    water_mask,
+                    terrain_provider,
+                    offset_m=0.02,
+                    target_edge_len_m=3.0,
+                    simplify_tolerance_m=0.05,
+                )
+                water_mesh = rebuilt if rebuilt is not None else (
+                    flatten_inlay_to_terrain_decal(water_mesh, terrain_provider, offset_m=0.02)
+                    if water_mesh is not None else None
+                )
+            print(
+                f"[INFO] {zone_prefix}PREVIEW_MODE: built roads/parks/water from 2D masks as terrain decals"
+            )
+        except Exception as exc:
+            print(f"[WARN] {zone_prefix}PREVIEW_MODE flatten_inlay failed: {exc}")
 
     if not request.is_ams_mode and zone.scale_factor and zone.scale_factor > 0:
         try:
@@ -914,20 +946,38 @@ def run_full_generation_pipeline(
     parks_mesh = clip_result.parks_mesh
 
     stage_start = time.perf_counter()
-    merge_result = merge_terrain_and_buildings(
-        terrain_mesh=terrain_mesh,
-        building_meshes=building_meshes,
-        merged_building_mesh=union_mesh_collection(building_meshes, label="clipped_building_layer"),
-        support_meshes=detail_layers.support_meshes,
-    )
-    _log_stage("merge_terrain_buildings", stage_start)
-    if stage_snapshot_collector is not None:
-        try:
-            stage_snapshot_collector.capture_merge_stage(merge_result)
-        except Exception as exc:
-            print(f"[WARN] {zone_prefix}Stage snapshot failed at merge: {exc}")
-    terrain_mesh = merge_result.terrain_mesh
-    building_meshes = merge_result.building_meshes
+    merge_result = None  # defined for downstream debug_bundle/return value
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        # Preview mode: skip the manifold3d boolean union (~30-60s on real
+        # OSM data). Buildings stay as separate meshes alongside terrain.
+        #
+        # ВАЖЛИВО: НЕ викликаємо extend_buildings_mesh_to_uniform_bottom
+        # у preview. Раніше викликали з target_z = terrain_mesh.bounds[0][2]
+        # (~-17м), і building walls простягались до самого дна підложки.
+        # Без boolean union ці стіни проходили КРІЗЬ terrain — видно з кутів
+        # як темні sliver-зрізи. У preview building лишається там де його
+        # поставив process_buildings (flat_base_z = ground_max - 0.1mm)
+        # — sit-on-terrain look без z-fighting артефактів.
+        print(
+            f"[INFO] {zone_prefix}PREVIEW_MODE: skipped boolean union AND extend "
+            f"(buildings sit on terrain as-is to avoid sliver artifacts)"
+        )
+        _log_stage("merge_terrain_buildings (preview-skip)", stage_start)
+    else:
+        merge_result = merge_terrain_and_buildings(
+            terrain_mesh=terrain_mesh,
+            building_meshes=building_meshes,
+            merged_building_mesh=union_mesh_collection(building_meshes, label="clipped_building_layer"),
+            support_meshes=detail_layers.support_meshes,
+        )
+        _log_stage("merge_terrain_buildings", stage_start)
+        if stage_snapshot_collector is not None:
+            try:
+                stage_snapshot_collector.capture_merge_stage(merge_result)
+            except Exception as exc:
+                print(f"[WARN] {zone_prefix}Stage snapshot failed at merge: {exc}")
+        terrain_mesh = merge_result.terrain_mesh
+        building_meshes = merge_result.building_meshes
 
     task.update_status("processing", 82, "Експорт моделі...")
     stage_start = time.perf_counter()
@@ -942,6 +992,7 @@ def run_full_generation_pipeline(
         water_mesh=water_mesh,
         parks_mesh=parks_mesh,
         reference_xy_m=zone.reference_xy_m,
+        file_basename=file_basename,
     )
     _log_stage("export_outputs", stage_start)
     if stage_snapshot_collector is not None:
@@ -959,7 +1010,12 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix}Failed to finalize stage snapshots: {exc}")
 
-    if require_print_acceptance:
+    # Preview mode: skip the slicer-based print_acceptance gate entirely.
+    # It runs a real slicer (PrusaSlicer/Bambu) on every part — easily 60-120s
+    # on its own, and the preview model isn't going to be printed anyway.
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping print_acceptance gate")
+    else:
         stage_start = time.perf_counter()
         printer_profile = get_printer_profile_for_request(request)
         parts_for_print = _collect_print_part_paths(task, export_result)
@@ -995,41 +1051,46 @@ def run_full_generation_pipeline(
         if print_acceptance_report.get("status") != "pass":
             raise RuntimeError(summarize_export_print_failures(print_acceptance_report))
         _log_stage("print_acceptance", stage_start)
+
+    stage_start = time.perf_counter()
+    _preview_mode_on = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    if _preview_mode_on:
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping debug bundle")
     else:
-        print(f"[INFO] {zone_prefix}Print acceptance skipped for this run")
+        try:
+            debug_bundle_dir = create_debug_bundle(
+                task_id=task_id,
+                request=request,
+                output_dir=output_dir,
+                zone=zone,
+                source=source,
+                terrain_stage=terrain_stage,
+                detail_layers=detail_layers,
+                postprocess_result=postprocess_result,
+                clip_result=clip_result,
+                merge_result=merge_result,
+                export_result=export_result,
+                global_center=global_center,
+                canonical_mask_bundle=canonical_mask_bundle,
+            )
+            if debug_bundle_dir is not None:
+                print(f"[DEBUG] Debug bundle created: {debug_bundle_dir}")
+        except Exception as exc:
+            print(f"[WARN] Failed to create debug bundle for {task_id}: {exc}")
+        _log_stage("debug_bundle", stage_start)
 
-    stage_start = time.perf_counter()
-    try:
-        debug_bundle_dir = create_debug_bundle(
-            task_id=task_id,
-            request=request,
-            output_dir=output_dir,
-            zone=zone,
-            source=source,
-            terrain_stage=terrain_stage,
-            detail_layers=detail_layers,
-            postprocess_result=postprocess_result,
-            clip_result=clip_result,
-            merge_result=merge_result,
-            export_result=export_result,
-            global_center=global_center,
-            canonical_mask_bundle=canonical_mask_bundle,
+    if _preview_mode_on:
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping Firebase upload (preview not shared)")
+    else:
+        print("[INFO] Running garbage collection before upload...")
+        gc.collect()
+        stage_start = time.perf_counter()
+        publish_outputs_to_firebase(
+            task=task,
+            output_file_abs=export_result.output_file_abs,
+            primary_format=export_result.primary_format,
         )
-        if debug_bundle_dir is not None:
-            print(f"[DEBUG] Debug bundle created: {debug_bundle_dir}")
-    except Exception as exc:
-        print(f"[WARN] Failed to create debug bundle for {task_id}: {exc}")
-    _log_stage("debug_bundle", stage_start)
-
-    print("[INFO] Running garbage collection before upload...")
-    gc.collect()
-    stage_start = time.perf_counter()
-    publish_outputs_to_firebase(
-        task=task,
-        output_file_abs=export_result.output_file_abs,
-        primary_format=export_result.primary_format,
-    )
-    _log_stage("firebase_publish", stage_start)
+        _log_stage("firebase_publish", stage_start)
     print(f"[TIMING] {zone_prefix}full_generation_pipeline total: {time.perf_counter() - pipeline_start:.2f}s")
 
     return FullGenerationPipelineResult(

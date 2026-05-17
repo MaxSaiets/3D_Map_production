@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -301,10 +302,15 @@ def export_generation_outputs(
     preserve_z: bool = False,
     preserve_xy: bool = False,
     include_preview_parts: bool = True,
+    include_parallel_stl: bool = True,
+    include_print_package: bool = True,
     completion_message: str = "РњРѕРґРµР»СЊ РіРѕС‚РѕРІР°!",
+    file_basename: Optional[str] = None,
 ) -> ExportPipelineResult:
     primary_format = request.export_format.lower()
-    output_file = output_dir / f"{task_id}.{primary_format}"
+    # Descriptive filename: model_<grid>_<mm>_<row>_<col>.<ext>, fallback to task_id.
+    basename = file_basename or task_id
+    output_file = output_dir / f"{basename}.{primary_format}"
     output_file_abs = output_file.resolve()
     assembly_3mf_abs: Optional[Path] = None
     stl_parts_from_preview: Optional[Dict[str, str]] = None
@@ -353,9 +359,10 @@ def export_generation_outputs(
                 continue
             task.set_output(f"{part_name}_stl", str(Path(path).resolve()))
 
+    _preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
     stl_preview_abs: Optional[Path] = None
-    if primary_format == "3mf":
-        stl_preview_abs = (output_dir / f"{task_id}.stl").resolve()
+    if primary_format == "3mf" and not _preview_mode and include_parallel_stl:
+        stl_preview_abs = (output_dir / f"{basename}.stl").resolve()
         stl_parts = export_scene(
             terrain_mesh=terrain_mesh_for_export,
             road_mesh=road_mesh,
@@ -378,8 +385,13 @@ def export_generation_outputs(
                 if str(part_name).lower() == "stl":
                     continue
                 task.set_output(f"{part_name}_stl", str(Path(path).resolve()))
+    elif _preview_mode:
+        print("[INFO] PREVIEW_MODE: skipping parallel STL export (local GLB preview is enough)")
 
-    if include_preview_parts:
+    # Full/export mode can still expose per-component 3MF parts. Fast preview
+    # uses one local 3MF scene only; writing five extra archives just slows the
+    # local viewer path down.
+    if include_preview_parts and not _preview_mode:
         try:
             preview_items: list[Tuple[str, trimesh.Trimesh]] = []
             if terrain_mesh_for_export is not None:
@@ -399,7 +411,7 @@ def export_generation_outputs(
                 preview_items.append(("Parks", parks_mesh))
 
             if preview_items:
-                prefix = str((output_dir / task_id).resolve())
+                prefix = str((output_dir / basename).resolve())
                 include_components = {
                     "base": getattr(request, "preview_include_base", True),
                     "terrain": getattr(request, "preview_include_base", True),
@@ -428,7 +440,7 @@ def export_generation_outputs(
 
     if not output_file_abs.exists():
         if primary_format == "3mf":
-            stl_fallback = (output_dir / f"{task_id}.stl").resolve()
+            stl_fallback = (output_dir / f"{basename}.stl").resolve()
             if stl_fallback.exists():
                 task.set_output("stl", str(stl_fallback))
                 task.complete(str(stl_fallback))
@@ -445,27 +457,33 @@ def export_generation_outputs(
     task.set_output(primary_format, str(output_file_abs))
     if stl_preview_abs and stl_preview_abs.exists():
         task.set_output("stl", str(stl_preview_abs))
-    parts_for_layout = stl_parts_from_preview or parts_from_main
-    print_layout_3mf_abs = _create_print_layout_3mf(
-        output_dir=output_dir,
-        task_id=task_id,
-        parts_from_main=parts_for_layout,
-    )
-    if print_layout_3mf_abs and print_layout_3mf_abs.exists():
-        task.set_output("print_layout_3mf", str(print_layout_3mf_abs))
-        if primary_format == "3mf":
-            task.set_output("assembly_3mf", str(output_file_abs))
 
-    package_abs = _create_print_package(
-        output_dir=output_dir,
-        task_id=task_id,
-        primary_format=primary_format,
-        output_file_abs=output_file_abs,
-        stl_preview_abs=stl_preview_abs,
-        parts_from_main=parts_from_main,
-    )
-    if package_abs and package_abs.exists():
-        task.set_output("print_package", str(package_abs))
+    if include_print_package and not _preview_mode:
+        parts_for_layout = stl_parts_from_preview or parts_from_main
+        print_layout_3mf_abs = _create_print_layout_3mf(
+            output_dir=output_dir,
+            task_id=task_id,
+            parts_from_main=parts_for_layout,
+        )
+        if print_layout_3mf_abs and print_layout_3mf_abs.exists():
+            task.set_output("print_layout_3mf", str(print_layout_3mf_abs))
+            if primary_format == "3mf":
+                task.set_output("assembly_3mf", str(output_file_abs))
+
+        package_abs = _create_print_package(
+            output_dir=output_dir,
+            task_id=task_id,
+            primary_format=primary_format,
+            output_file_abs=output_file_abs,
+            stl_preview_abs=stl_preview_abs,
+            parts_from_main=parts_from_main,
+        )
+        if package_abs and package_abs.exists():
+            task.set_output("print_package", str(package_abs))
+    elif _preview_mode:
+        print("[INFO] PREVIEW_MODE: skipping print layout/package export")
+    else:
+        print("[INFO] Skipping print layout/package export")
 
     task.complete(str(output_file_abs))
     task.update_status("completed", 100, completion_message)

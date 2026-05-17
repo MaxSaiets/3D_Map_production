@@ -682,8 +682,11 @@ def get_building_height(row, min_height: float) -> float:
     def _parse_number(val) -> Optional[float]:
         if val is None:
             return None
-        if isinstance(val, (int, float)) and not np.isnan(val):
-            return float(val)
+        if isinstance(val, (int, float, np.integer, np.floating)):
+            num = float(val)
+            if np.isfinite(num):
+                return num
+            return None
         if isinstance(val, str):
             s = val.strip().replace(",", ".")
             m = re.search(r"[-+]?\d+(\.\d+)?", s)
@@ -702,8 +705,11 @@ def get_building_height(row, min_height: float) -> float:
         """
         if val is None:
             return None
-        if isinstance(val, (int, float)) and not np.isnan(val):
-            return float(val)
+        if isinstance(val, (int, float, np.integer, np.floating)):
+            num = float(val)
+            if np.isfinite(num):
+                return num
+            return None
         if isinstance(val, str):
             s = val.strip().lower().replace(",", ".")
             num = _parse_number(s)

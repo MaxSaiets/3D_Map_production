@@ -1,12 +1,12 @@
 ﻿from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 import time
 from typing import Any, Optional
 
 import trimesh
 from geopandas import GeoDataFrame
-from shapely.geometry import GeometryCollection
 from shapely.geometry.base import BaseGeometry
 
 from services.boolean_backends import BooleanBackend
@@ -16,7 +16,7 @@ from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM, MICRO_REGION_TH
 from services.groove_pipeline import GrooveCutResult, cut_inlay_grooves, prepare_road_cut_mask
 from services.inlay_fit import InlayFitConfig
 from services.parks_pipeline import process_park_layer
-from services.processing_results import GreenAreaProcessingResult, RoadProcessingResult
+from services.processing_results import GreenAreaProcessingResult, RoadLayerResult, RoadProcessingResult
 from services.roads_pipeline import process_road_layer
 from services.water_layer_pipeline import process_water_layer
 
@@ -177,7 +177,6 @@ def process_detail_layers(
     water_depth_m: float,
     gdf_green: Optional[GeoDataFrame],
     groove_clearance_mm: float,
-    apply_grooves: bool = True,
     boolean_backend: Optional[BooleanBackend] = None,
     zone_prefix: str = "",
     canonical_mask_bundle: Optional[CanonicalMaskBundle] = None,
@@ -204,27 +203,41 @@ def process_detail_layers(
     # doubled. Use a split-fit for parks/water inserts.
     shared_inlay_fit_clearance_mm = float(fit_config.groove_side_clearance_mm) * 0.5
     stage_start = time.perf_counter()
-    road_layer = process_road_layer(
-        task=task,
-        request=request,
-        scale_factor=scale_factor,
-        terrain_provider=terrain_provider,
-        terrain_mesh=terrain_mesh,
-        global_center=global_center,
-        G_roads=G_roads,
-        water_geoms_for_bridges=water_geoms_for_bridges,
-        road_width_multiplier_effective=road_width_multiplier_effective,
-        zone_polygon_local=zone_polygon_local,
-        building_union_local=building_union_local,
-        merged_roads_geom_local=merged_roads_geom_local,
-        road_height_m=road_height_m,
-        road_embed_m=road_embed_m,
-        stl_extra_embed_m=stl_extra_embed_m,
-        fit_config=fit_config,
-        road_polygons_override=(
-            getattr(canonical_mask_bundle, "roads_final", None) if canonical_mask_bundle is not None else None
-        ),
+    preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    preview_roads_mask = (
+        getattr(canonical_mask_bundle, "roads_final", None) if canonical_mask_bundle is not None else None
     )
+    if preview_mode and preview_roads_mask is not None and not getattr(preview_roads_mask, "is_empty", True):
+        road_layer = RoadLayerResult(
+            mesh=None,
+            road_result=RoadProcessingResult(
+                mesh=None,
+                source_polygons=preview_roads_mask,
+                cutting_polygons=preview_roads_mask,
+            ),
+            road_cut_source=preview_roads_mask,
+        )
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipped expensive 3D road mesh; using canonical 2D road mask")
+    else:
+        road_layer = process_road_layer(
+            task=task,
+            request=request,
+            scale_factor=scale_factor,
+            terrain_provider=terrain_provider,
+            terrain_mesh=terrain_mesh,
+            global_center=global_center,
+            G_roads=G_roads,
+            water_geoms_for_bridges=water_geoms_for_bridges,
+            road_width_multiplier_effective=road_width_multiplier_effective,
+            zone_polygon_local=zone_polygon_local,
+            building_union_local=building_union_local,
+            merged_roads_geom_local=merged_roads_geom_local,
+            road_height_m=road_height_m,
+            road_embed_m=road_embed_m,
+            stl_extra_embed_m=stl_extra_embed_m,
+            fit_config=fit_config,
+            road_polygons_override=preview_roads_mask,
+        )
     _log_stage("roads", stage_start)
     road_mesh = road_layer.mesh
     road_result = road_layer.road_result
@@ -256,12 +269,6 @@ def process_detail_layers(
     canonical_road_groove_mask = canonical_masks.road_groove_mask
     support_exclusion_mask = canonical_masks.support_exclusion_mask
     building_exclusion_mask = canonical_masks.building_exclusion_mask
-
-    canonical_water_for_detail = None
-    if canonical_mask_bundle is not None:
-        canonical_water_for_detail = getattr(canonical_mask_bundle, "water_final", None)
-        if canonical_water_for_detail is None:
-            canonical_water_for_detail = GeometryCollection()
 
     stage_start = time.perf_counter()
     building_layer = process_building_layer(
@@ -295,7 +302,9 @@ def process_detail_layers(
         building_polygons=building_union_local,
         coordinates_already_local=True,
         zone_prefix=zone_prefix,
-        water_polygons_override=canonical_water_for_detail,
+        water_polygons_override=(
+            getattr(canonical_mask_bundle, "water_final", None) if canonical_mask_bundle is not None else None
+        ),
         fit_clearance_mm=float(shared_inlay_fit_clearance_mm),
     )
     _log_stage("water", stage_start)
@@ -329,63 +338,37 @@ def process_detail_layers(
     parks_result = park_layer.parks_result
 
     has_road_grooves = (
-        apply_grooves
-        and not request.is_ams_mode
-        and terrain_mesh is not None
-        and road_mesh is not None
-        and scale_factor
-        and scale_factor > 0
+        not request.is_ams_mode and terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     )
-    road_grooves_only = bool(getattr(request, "preview_road_grooves_only", False))
     has_park_grooves = (
-        apply_grooves
-        and not road_grooves_only
-        and not request.is_ams_mode
-        and terrain_mesh is not None
-        and parks_mesh is not None
-        and scale_factor
-        and scale_factor > 0
+        not request.is_ams_mode and terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
     )
     has_water_grooves = (
-        apply_grooves
-        and not road_grooves_only
-        and not request.is_ams_mode
-        and terrain_mesh is not None
-        and water_mesh is not None
-        and scale_factor
-        and scale_factor > 0
+        not request.is_ams_mode and terrain_mesh is not None and water_mesh is not None and scale_factor and scale_factor > 0
     )
 
     groove_result = None
-    if not apply_grooves:
-        print(f"[INFO] {zone_prefix} Groove cutting skipped: preview exports the real pipeline mesh before groove booleans")
-    if has_road_grooves or has_park_grooves or has_water_grooves:
+    if preview_mode:
+        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipped groove cutting; local preview uses surface decals")
+    elif has_road_grooves or has_park_grooves or has_water_grooves:
         try:
             stage_start = time.perf_counter()
             groove_result = cut_inlay_grooves(
                 terrain_mesh=terrain_mesh,
                 road_mesh=road_mesh,
-                parks_mesh=None if road_grooves_only else parks_mesh,
-                water_mesh=None if road_grooves_only else water_mesh,
+                parks_mesh=parks_mesh,
+                water_mesh=water_mesh,
                 road_cut_mask=canonical_road_groove_mask or road_cut_mask,
                 merged_roads_geom_local=road_insert_exclusion_polygons or road_cut_source,
                 parks_polygons=(
-                    None
-                    if road_grooves_only
-                    else (
                     getattr(canonical_mask_bundle, "parks_final", None)
                     if canonical_mask_bundle is not None and getattr(canonical_mask_bundle, "parks_final", None) is not None
                     else (parks_result.processed_polygons if parks_result is not None else None)
-                    )
                 ),
                 water_polygons=(
-                    None
-                    if road_grooves_only
-                    else (
-                    canonical_water_for_detail
-                    if canonical_mask_bundle is not None
+                    getattr(canonical_mask_bundle, "water_final", None)
+                    if canonical_mask_bundle is not None and getattr(canonical_mask_bundle, "water_final", None) is not None
                     else water_cut_polygons
-                    )
                 ),
                 building_polygons=building_union_local,
                 scale_factor=float(scale_factor),
@@ -398,21 +381,15 @@ def process_detail_layers(
                 zone_polygon_local=zone_polygon_local,
                 min_printable_mm=max(float(MIN_LAND_WIDTH_MODEL_MM), tiny_feature_threshold_mm),
                 parks_groove_override=(
-                    None
-                    if road_grooves_only
-                    else (getattr(canonical_mask_bundle, "parks_groove_mask", None) if canonical_mask_bundle is not None else None)
+                    getattr(canonical_mask_bundle, "parks_groove_mask", None) if canonical_mask_bundle is not None else None
                 ),
                 water_groove_override=(
-                    None
-                    if road_grooves_only
-                    else (
                     (
                         getattr(canonical_mask_bundle, "water_groove_mask", None)
                         or getattr(canonical_mask_bundle, "water_final", None)
                     )
                     if canonical_mask_bundle is not None
                     else None
-                    )
                 ),
                 use_exact_masks=canonical_mask_bundle is not None,
             )

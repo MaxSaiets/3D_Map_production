@@ -8,7 +8,7 @@ import { api } from "@/lib/api";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
-import JSZip from "jszip";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { useFrame } from "@react-three/fiber";
 
 function bakeStlZUpToThreeYUp(object: THREE.Object3D) {
@@ -48,7 +48,10 @@ async function loadStlAsMesh(blob: Blob, color: number): Promise<THREE.Mesh> {
       url,
       (geometry) => {
         URL.revokeObjectURL(url);
-        const material = new THREE.MeshStandardMaterial({ color, flatShading: true });
+        // DoubleSide: preview meshes from backend can be top-only (no bottom
+        // cap in preview mode). Without DoubleSide the underside renders as
+        // transparent and you see the 3D viewport's floor grid through it.
+        const material = new THREE.MeshStandardMaterial({ color, flatShading: true, side: THREE.DoubleSide });
         const mesh = new THREE.Mesh(geometry, material);
         bakeStlZUpToThreeYUp(mesh);
         resolve(mesh);
@@ -65,13 +68,13 @@ async function loadStlAsMesh(blob: Blob, color: number): Promise<THREE.Mesh> {
 async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" | "buildings" | "water", Blob>>): Promise<THREE.Group> {
   const group = new THREE.Group();
   const colors: Record<string, number> = {
-    // Base (ground) is now grey to look like city concrete/pavement
-    // Parks will be green overlay on top
-    base: 0x909090,
-    roads: 0x1e1e1e,
+    base: 0xc8b48e,
+    terrain: 0xc8b48e,
+    roads: 0x3c3c3c,
     buildings: 0xe3e3e3,
-    water: 0x2f6fb8,
-    parks: 0x3e8f3e,
+    water: 0x6496c8,
+    parks: 0x649664,
+    green: 0x649664,
   };
 
   const entries = Object.entries(blobs) as Array<[keyof typeof blobs, Blob]>;
@@ -136,148 +139,181 @@ async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" 
   return group;
 }
 
-// Функція для завантаження 3MF (3MF це ZIP з XML та STL файлами всередині)
+// Функція для завантаження локального 3MF fallback.
 async function load3MF(blob: Blob): Promise<THREE.Group> {
-  try {
-    // ThreeMFLoader потребує URL, але може не працювати з blob URL
-    // Спробуємо спочатку через ThreeMFLoader, якщо не вийде - розпакуємо ZIP вручну
-    const zipUrl = URL.createObjectURL(blob);
+  const zipUrl = URL.createObjectURL(blob);
+  return await new Promise<THREE.Group>((resolve, reject) => {
+    const loader = new ThreeMFLoader();
+    loader.load(
+      zipUrl,
+      (object) => {
+        URL.revokeObjectURL(zipUrl);
+        const group = new THREE.Group();
+        group.add(object);
 
-    try {
-      return await new Promise<THREE.Group>((resolve, reject) => {
-        const loader = new ThreeMFLoader();
-        loader.load(
-          zipUrl,
-          (object) => {
-            URL.revokeObjectURL(zipUrl);
-            console.log("3MF модель завантажена через ThreeMFLoader");
-            console.log("Об'єктів в моделі:", object.children.length);
+        let totalVertices = 0;
+        let totalMeshes = 0;
+        const colorMap: Record<string, number> = {
+          base: 0xc8b48e,
+          terrain: 0xc8b48e,
+          roads: 0x3c3c3c,
+          buildings: 0xe3e3e3,
+          water: 0x6496c8,
+          parks: 0x649664,
+          green: 0x649664,
+        };
 
-            // ThreeMFLoader повертає Object3D, обгортаємо в Group
-            const group = new THREE.Group();
-            group.add(object);
+        group.traverse((child) => {
+          if (!(child instanceof THREE.Mesh)) return;
 
-            // Логуємо інформацію про модель та застосовуємо кольори
-            let totalVertices = 0;
-            let totalMeshes = 0;
-            const colorMap: Record<string, number> = {
-              base: 0xc8b48e,      // Бежевий для рельєфу (200, 180, 140)
-              terrain: 0xc8b48e,   // Бежевий для рельєфу
-              roads: 0x3c3c3c,      // Темно-сірий для доріг (60, 60, 60)
-              buildings: 0x787878, // Сірий для будівель (120, 120, 120)
-              water: 0x6496c8,     // Блакитний для води (100, 150, 200)
-              parks: 0x649664,     // Зелений для парків (100, 150, 100)
-              green: 0x649664,     // Зелений для парків
-            };
-
-            group.traverse((child) => {
-              if (child instanceof THREE.Mesh) {
-                totalMeshes++;
-                const geometry = child.geometry;
-                if (geometry.attributes.position) {
-                  totalVertices += geometry.attributes.position.count;
-                }
-                
-                // Застосовуємо кольори на основі імені об'єкта або матеріалу
-                const material = child.material as THREE.MeshStandardMaterial;
-                if (material) {
-                  // Перевіряємо, чи є колір в матеріалі
-                  if (material.color && material.color.getHex() === 0xffffff) {
-                    // Якщо колір білий (за замовчуванням), застосовуємо колір на основі імені
-                    const name = child.name.toLowerCase();
-                    for (const [key, color] of Object.entries(colorMap)) {
-                      if (name.includes(key)) {
-                        material.color.setHex(color);
-                        material.needsUpdate = true;
-                        // Зберігаємо тип частини для перемикання видимості
-                        (child as any).userData = { ...(child as any).userData, part: key };
-                        break;
-                      }
-                    }
-                  } else {
-                    // Якщо колір вже встановлений, зберігаємо його
-                    const name = child.name.toLowerCase();
-                    for (const [key] of Object.entries(colorMap)) {
-                      if (name.includes(key)) {
-                        (child as any).userData = { ...(child as any).userData, part: key };
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            });
-            console.log("Загальна кількість вершин:", totalVertices, "мешів:", totalMeshes);
-
-            if (totalVertices === 0) {
-              reject(new Error("Модель не містить вершин"));
-              return;
-            }
-
-            resolve(group);
-          },
-          undefined,
-          (error) => {
-            URL.revokeObjectURL(zipUrl);
-            console.warn("ThreeMFLoader не спрацював, спробуємо розпакувати ZIP:", error);
-            reject(error);
+          totalMeshes++;
+          const geometry = child.geometry;
+          if (geometry.attributes.position) {
+            totalVertices += geometry.attributes.position.count;
           }
-        );
-      });
-    } catch (loaderError: any) {
-      URL.revokeObjectURL(zipUrl);
-      console.log("ThreeMFLoader не спрацював, розпаковуємо ZIP вручну...");
 
-      // Fallback: розпаковуємо ZIP і шукаємо STL або використовуємо .model файл
-      const zip = await JSZip.loadAsync(blob);
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-      // Шукаємо .model файл
-      const modelFile = zip.file("3D/3dmodel.model");
-      if (!modelFile) {
-        throw new Error("Не знайдено файл 3D/3dmodel.model в 3MF");
-      }
-
-      const modelBlob = await modelFile.async('blob');
-
-      // Перевіряємо, чи це XML (3MF формат) або бінарний (STL)
-      const firstBytes = await modelBlob.slice(0, 50).text();
-      const isXML = firstBytes.trim().startsWith('<?xml') || firstBytes.trim().startsWith('<model');
-
-      if (isXML) {
-        // Це XML 3MF - потрібен парсер, але наразі використаємо fallback
-        throw new Error("XML 3MF формат потребує спеціального парсера. Використовуйте STL формат або встановіть 3MF парсер.");
-      } else {
-        // Це бінарний STL - завантажуємо напряму
-        const stlUrl = URL.createObjectURL(modelBlob);
-        return new Promise((resolve, reject) => {
-          const loader = new STLLoader();
-          loader.load(
-            stlUrl,
-            (geometry) => {
-              URL.revokeObjectURL(stlUrl);
-              const material = new THREE.MeshStandardMaterial({
-                color: 0x888888,
-                flatShading: true
-              });
-              const mesh = new THREE.Mesh(geometry, material);
-              bakeStlZUpToThreeYUp(mesh);
-              const group = new THREE.Group();
-              group.add(mesh);
-              resolve(group);
-            },
-            undefined,
-            (error) => {
-              URL.revokeObjectURL(stlUrl);
-              console.error("Помилка завантаження STL:", error);
-              reject(error);
+          const name = child.name.toLowerCase();
+          let partKey: string | null = null;
+          let partColor: number | null = null;
+          for (const [key, color] of Object.entries(colorMap)) {
+            if (name.includes(key)) {
+              partKey = key;
+              partColor = color;
+              break;
             }
-          );
+          }
+          if (partKey) {
+            (child as any).userData = { ...(child as any).userData, part: partKey };
+          }
+
+          for (const material of materials) {
+            if (!material) continue;
+            const maybeColored = material as THREE.Material & { color?: THREE.Color };
+            if (partColor !== null && maybeColored.color?.getHex() === 0xffffff) {
+              maybeColored.color.setHex(partColor);
+            }
+            material.side = THREE.DoubleSide;
+            material.needsUpdate = true;
+          }
         });
+
+        if (totalVertices === 0) {
+          reject(new Error("Модель не містить вершин"));
+          return;
+        }
+
+        console.log(`[Preview3D] Loaded local 3MF: meshes=${totalMeshes}, vertices=${totalVertices}`);
+        resolve(group);
+      },
+      undefined,
+      (error) => {
+        URL.revokeObjectURL(zipUrl);
+        reject(error);
       }
+    );
+  });
+}
+
+async function loadGLB(blob: Blob): Promise<THREE.Group> {
+  const url = URL.createObjectURL(blob);
+  return await new Promise<THREE.Group>((resolve, reject) => {
+    const loader = new GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => {
+        URL.revokeObjectURL(url);
+        const group = gltf.scene || new THREE.Group();
+        // Trimesh exports GLB in the same Z-up map space as STL/3MF. Rotate
+        // the scene root cheaply; do not bake every geometry or recompute
+        // normals here, because preview GLBs can contain hundreds of thousands
+        // of faces and that kept the viewer stuck in the loading placeholder.
+        group.rotation.x = -Math.PI / 2;
+        group.updateMatrixWorld(true);
+        let totalVertices = 0;
+        let totalMeshes = 0;
+        const colorMap: Record<string, { color: number; part: string }> = {
+          base: { color: 0xc8b48e, part: "base" },
+          terrain: { color: 0xc8b48e, part: "terrain" },
+          roads: { color: 0x3c3c3c, part: "roads" },
+          buildings: { color: 0xe3e3e3, part: "buildings" },
+          water: { color: 0x6496c8, part: "water" },
+          parks: { color: 0x649664, part: "parks" },
+          green: { color: 0x649664, part: "parks" },
+        };
+        group.traverse((child) => {
+          if (!(child instanceof THREE.Mesh)) return;
+          totalMeshes++;
+          const geometry = child.geometry;
+          if (geometry.attributes.position) {
+            totalVertices += geometry.attributes.position.count;
+          }
+          const materialNames = (Array.isArray(child.material) ? child.material : [child.material])
+            .map((material) => material?.name || "")
+            .join(" ");
+          const name = `${child.name || ""} ${child.parent?.name || ""} ${materialNames}`.toLowerCase();
+          const entry = Object.entries(colorMap).find(([key]) => name.includes(key))?.[1];
+          if (entry) {
+            child.userData = { ...(child.userData || {}), part: entry.part };
+          }
+          const isSurfaceDecal =
+            entry?.part === "roads" || entry?.part === "parks" || entry?.part === "water";
+          child.material = new THREE.MeshBasicMaterial({
+            color: entry?.color ?? 0x9a9a9a,
+            side: THREE.DoubleSide,
+            polygonOffset: isSurfaceDecal,
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -2,
+          });
+        });
+        if (totalVertices === 0) {
+          reject(new Error("GLB preview не містить вершин"));
+          return;
+        }
+        console.log(`[Preview3D] Loaded local GLB: meshes=${totalMeshes}, vertices=${totalVertices}`);
+        resolve(group);
+      },
+      undefined,
+      (error) => {
+        URL.revokeObjectURL(url);
+        reject(error);
+      }
+    );
+  });
+}
+
+async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
+  let glbError: unknown = null;
+  try {
+    const blobGlb = await api.downloadModel(taskId, "glb");
+    if (!blobGlb || blobGlb.size <= 100) {
+      throw new Error("Локальне GLB preview порожнє або не створене");
     }
-  } catch (error: any) {
-    console.error("Помилка обробки 3MF:", error);
-    throw error;
+    try {
+      return await loadGLB(blobGlb);
+    } catch (error) {
+      glbError = error;
+      const type = String(blobGlb.type || "").toLowerCase();
+      if (type.includes("3mf")) {
+        return await load3MF(blobGlb);
+      }
+      throw error;
+    }
+  } catch (error) {
+    glbError = error;
+  }
+
+  try {
+    const blob3mf = await api.downloadModel(taskId, "3mf");
+    if (!blob3mf || blob3mf.size <= 100) {
+      throw new Error("Локальне 3MF preview порожнє або не створене");
+    }
+    return await load3MF(blob3mf);
+  } catch (error3mf: any) {
+    const glbMessage = glbError instanceof Error ? glbError.message : String(glbError || "");
+    const mfMessage = error3mf instanceof Error ? error3mf.message : String(error3mf || "");
+    throw new Error(`Не вдалося завантажити preview: GLB (${glbMessage}); 3MF (${mfMessage})`);
   }
 }
 
@@ -481,6 +517,9 @@ function FreeFlyControls({
 }
 
 function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
+  const three = useThree();
+  const camera = three.camera;
+  const controls = (three as any).controls as { target?: THREE.Vector3; update?: () => void } | undefined;
   const { 
     downloadUrl, 
     activeTaskId, 
@@ -511,193 +550,42 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     }
   };
 
-  // Завантажуємо тестову модель при старті
-  useEffect(() => {
-    if (showAllZones) return;
-    if (hasLoadedTestModel || downloadUrl) return;
+  const fitCameraToObject = (object: THREE.Object3D) => {
+    object.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(object);
+    if (box.isEmpty()) return;
 
-    const loadTestModel = async () => {
-      setLoading(true);
-      try {
-        console.log("=== Завантаження тестової моделі (кольорові частини) ===");
-        // 1) Пробуємо маніфест частин
-        let loadedModel: THREE.Group | THREE.Mesh;
-        try {
-          const mResp = await fetch("http://localhost:8000/api/test-model/manifest");
-          if (mResp.ok) {
-            const json = await mResp.json();
-            const parts = json?.parts || {};
-            const blobs: any = {};
-            const fetchPart = async (p: "base" | "roads" | "buildings" | "water" | "parks") => {
-              const url = parts[p];
-              if (!url) return;
-              const r = await fetch(`http://localhost:8000${url}`);
-              if (r.ok) blobs[p] = await r.blob();
-            };
-            await Promise.all([
-              fetchPart("base"),
-              fetchPart("roads"),
-              fetchPart("buildings"),
-              fetchPart("water"),
-              fetchPart("parks"),
-            ]);
-            if (Object.keys(blobs).length > 0) {
-              loadedModel = await loadColoredPartsFromBlobs(blobs);
-            } else {
-              throw new Error("Маніфест є, але частини не завантажились");
-            }
-          } else {
-            throw new Error("Маніфест не доступний");
-          }
-        } catch (e) {
-          // 2) Fallback на старий endpoint
-          const response = await fetch("http://localhost:8000/api/test-model");
-          if (!response.ok) {
-            console.warn("Тестова модель не знайдена (404), пропускаємо");
-            setLoading(false);
-            return;
-          }
-          const blob = await response.blob();
-          loadedModel = await loadStlAsMesh(blob, 0x888888);
-        }
-
-        // ВАЖЛИВО: для стабільного превʼю не центруємо по "висоті".
-        // Ми ставимо модель на "підлогу" (minY=0) і центруємо тільки X/Z.
-        // Інакше камера часто опиняється під моделлю, а обʼєкти виглядають так, ніби "висять".
-        loadedModel.position.set(0, 0, 0);
-        loadedModel.scale.set(1, 1, 1);
-        loadedModel.updateMatrixWorld(true);
-
-        const box = new THREE.Box3().setFromObject(loadedModel);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-
-
-
-        if (maxDim > 0) {
-          const targetSize = maxDim < 0.1 ? 300 : 220;
-          const viewScale = targetSize / maxDim;
-          loadedModel.scale.set(viewScale, viewScale, viewScale);
-          loadedModel.updateMatrixWorld(true);
-
-          const boxAfter = new THREE.Box3().setFromObject(loadedModel);
-          const center = boxAfter.getCenter(new THREE.Vector3());
-          const min = boxAfter.min.clone();
-
-          loadedModel.position.x -= center.x;
-          loadedModel.position.z -= center.z;
-          loadedModel.position.y -= min.y;
-          loadedModel.updateMatrixWorld(true);
-        } else {
-          console.error("❌ Модель має нульовий розмір!");
-        }
-
-        console.log("✅ Тестова модель готова до відображення");
-        setModel(loadedModel);
-        setHasLoadedTestModel(true);
-        setLoading(false);
-      } catch (err: any) {
-        console.warn("Не вдалося завантажити тестову модель:", err);
-        setLoading(false);
-      }
-    };
-
-    loadTestModel();
-  }, [hasLoadedTestModel, downloadUrl]);
-
-  const normalizeModelForPreview = (obj: THREE.Object3D) => {
-    obj.position.set(0, 0, 0);
-    obj.scale.set(1, 1, 1);
-    obj.updateMatrixWorld(true);
-
-    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    const min = box.min.clone();
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (!Number.isFinite(maxDim) || maxDim <= 0) return;
 
-    obj.position.x -= center.x;
-    obj.position.z -= center.z;
-    obj.position.y -= min.y;
-    obj.updateMatrixWorld(true);
+    const perspective = camera as THREE.PerspectiveCamera;
+    const fov = THREE.MathUtils.degToRad(perspective.fov || 50);
+    const distance = (maxDim / (2 * Math.tan(fov / 2))) * 1.35;
+    const horizontal = Math.max(distance, maxDim * 0.85);
+    const vertical = Math.max(distance * 0.72, size.y * 1.35, 70);
 
-    const boxAfter = new THREE.Box3().setFromObject(obj);
-    const sizeAfter = boxAfter.getSize(new THREE.Vector3());
-    const maxDim = Math.max(sizeAfter.x, sizeAfter.y, sizeAfter.z);
-
-    return { size: sizeAfter, maxDim };
-  };
-
-  const loadZoneModel = async (id: string) => {
-    // 1) Спочатку пробуємо завантажити 3MF прев'ю (основний файл з усіма частинами)
-    let loadedModel: THREE.Group | THREE.Mesh;
-    try {
-      const blob = await api.downloadModel(id, "3mf");
-      if (blob && blob.size > 100) {
-        console.log(`[Preview3D:Single] Loading 3MF preview for ${id}`);
-        loadedModel = await load3MF(blob);
-        const info = normalizeModelForPreview(loadedModel);
-        return { id, obj: loadedModel, ...info };
-      }
-    } catch (e: any) {
-      if (e.response && e.response.status !== 404) {
-        console.warn(`[Preview3D:Single] Failed to load 3MF preview:`, e.message);
-      }
-    }
-
-    // 2) Fallback: Кольорові частини в 3MF форматі
-    const blobs: any = {};
-    const tryPart = async (p: "base" | "roads" | "buildings" | "water" | "parks") => {
-      let retryCount = 0;
-      const maxRetries = 2;
-      while (retryCount <= maxRetries) {
-        try {
-          const b = await api.downloadModel(id, "3mf", p);
-          if (b && b.size > 100) {
-            blobs[p] = b;
-            return;
-          }
-          break;
-        } catch (e: any) {
-          if (e.response && e.response.status === 404) {
-            console.log(`[Preview3D:Single] Part ${p} not found (404), skipping.`);
-            break;
-          }
-          retryCount++;
-          if (retryCount <= maxRetries) {
-            console.warn(`[Preview3D:Single] Retry ${retryCount} for part ${p}...`, e.message);
-            await new Promise(r => setTimeout(r, 1000 * retryCount));
-          } else {
-            console.warn(`[Preview3D:Single] Failed to load part ${p} after ${maxRetries + 1} attempts:`, e.message || e);
-          }
-        }
-      }
-    };
-    // Load parts sequentially to avoid concurrent request issues on large files
-    await tryPart("base");
-    await tryPart("roads");
-    await tryPart("buildings");
-    await tryPart("water");
-    await tryPart("parks");
-
-    if (Object.keys(blobs).length > 0) {
-      // Завантажуємо 3MF частини
-      const groups = await Promise.all(
-        Object.entries(blobs).map(async ([part, blob]) => {
-          const group = await load3MF(blob as Blob);
-          return { part, group };
-        })
-      );
-      const combinedGroup = new THREE.Group();
-      groups.forEach(({ group }) => combinedGroup.add(group));
-      loadedModel = combinedGroup;
+    camera.position.set(center.x + horizontal, center.y + vertical, center.z + horizontal);
+    if (controls?.target) {
+      controls.target.copy(center);
+      controls.update?.();
     } else {
-      // 3) Final fallback: STL
-      const blob = await api.downloadModel(id, "stl");
-      loadedModel = await loadStlAsMesh(blob, 0x888888);
+      camera.lookAt(center.x, center.y, center.z);
     }
-
-    const info = normalizeModelForPreview(loadedModel);
-    return { id, obj: loadedModel, ...info };
+    perspective.near = Math.max(0.01, distance / 1000);
+    perspective.far = Math.max(2000, distance * 20, maxDim * 20);
+    perspective.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
   };
+
+  // Немає готової задачі -> показуємо локальний placeholder нижче.
+  // Не ходимо в /api/test-model: це старий demo fallback, який тільки дає 404 у preview.
+  useEffect(() => {
+    if (downloadUrl) return;
+    setHasLoadedTestModel(false);
+    setLoading(false);
+  }, [downloadUrl]);
 
   // Batch preview:
   // - If tiles are exported in global XY (stitching mode), we should NOT normalize each tile individually,
@@ -719,101 +607,8 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
       setLoading(true);
       setError(null);
       try {
-        // Load without per-tile normalize so we can preserve real relative alignment (when available)
         const loadZoneModelRaw = async (id: string) => {
-          let loadedModel: THREE.Group | THREE.Mesh;
-          const taskInfo = taskStatuses[id];
-          
-          // 1) Спочатку пробуємо завантажити 3MF прев'ю (основний файл)
-          try {
-            const fbUrl3mf = taskInfo?.firebase_preview_3mf;
-            const staticUrl3mf = taskInfo?.preview_3mf;
-            let blob3mf: Blob | null = null;
-            
-            if (fbUrl3mf) {
-              blob3mf = await api.downloadFile(fbUrl3mf);
-            } else if (staticUrl3mf) {
-              blob3mf = await api.downloadFile(staticUrl3mf);
-            } else {
-              blob3mf = await api.downloadModel(id, "3mf");
-            }
-            
-            if (blob3mf && blob3mf.size > 100) {
-              console.log(`[Preview3D:Raw] Loading 3MF preview for ${id}`);
-              loadedModel = await load3MF(blob3mf);
-              loadedModel.updateMatrixWorld(true);
-              return { id, obj: loadedModel };
-            }
-          } catch (e: any) {
-            if (e.response && e.response.status !== 404) {
-              console.warn(`[Preview3D:Raw] Failed to load 3MF preview:`, e.message);
-            }
-          }
-
-          // 2) Fallback: Окремі 3MF частини
-          const blobs: any = {};
-          const tryPart = async (p: "base" | "roads" | "buildings" | "water" | "parks") => {
-            const maxRetries = 2;
-            let attempt = 0;
-
-            while (attempt <= maxRetries) {
-              try {
-                let b: Blob | null = null;
-                const fbUrl = taskInfo?.firebase_preview_parts?.[p];
-                const staticUrl = taskInfo?.preview_parts?.[p];
-
-                if (fbUrl) {
-                  b = await api.downloadFile(fbUrl);
-                } else if (staticUrl) {
-                  b = await api.downloadFile(staticUrl);
-                } else {
-                  b = await api.downloadModel(id, "3mf", p);
-                }
-
-                if (b && b.size > 100) {
-                  blobs[p] = b;
-                  return;
-                }
-                break;
-              } catch (e: any) {
-                if (e.response && e.response.status === 404) {
-                  console.log(`[Preview3D:Raw] Part ${p} not found (404), skipping.`);
-                  break;
-                }
-                attempt++;
-                if (attempt <= maxRetries) {
-                  console.warn(`[Preview3D:Raw] Retry ${attempt} for part ${p}...`, e.message);
-                  await new Promise(r => setTimeout(r, 1000 * attempt));
-                } else {
-                  console.warn(`[Preview3D:Raw] Failed to load part ${p} after ${maxRetries + 1} attempts:`, e.message || e);
-                }
-              }
-            }
-          };
-          // Load parts sequentially to avoid hitting browser/server concurrent request limits
-          await tryPart("base");
-          await tryPart("roads");
-          await tryPart("buildings");
-          await tryPart("water");
-          await tryPart("parks");
-
-          if (Object.keys(blobs).length > 0) {
-            // Завантажуємо 3MF частини
-            const groups = await Promise.all(
-              Object.entries(blobs).map(async ([part, blob]) => {
-                const group = await load3MF(blob as Blob);
-                return { part, group };
-              })
-            );
-            const combinedGroup = new THREE.Group();
-            groups.forEach(({ group }) => combinedGroup.add(group));
-            loadedModel = combinedGroup;
-          } else {
-            // 3) Final fallback: STL
-            const blob = await api.downloadModel(id, "stl");
-            loadedModel = await loadStlAsMesh(blob, 0x888888);
-          }
-
+          const loadedModel = await loadPreviewModelForTask(id);
           loadedModel.updateMatrixWorld(true);
           return { id, obj: loadedModel };
         };
@@ -956,105 +751,8 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
       setLoading(true);
       setError(null);
       try {
-        console.log("Завантаження моделі...", { taskId: activeTaskId, downloadUrl, exportFormat });
-
-        // 1) Спочатку пробуємо завантажити 3MF прев'ю (основний файл з усіма частинами)
-        let loadedModel: THREE.Group | THREE.Mesh;
-        const taskInfo = activeTaskId ? taskStatuses[activeTaskId] : null;
-        
-        try {
-          const fbUrl3mf = taskInfo?.firebase_preview_3mf;
-          const staticUrl3mf = taskInfo?.preview_3mf;
-          let blob3mf: Blob | null = null;
-          
-          if (fbUrl3mf) {
-            console.log(`[Preview3D] Loading 3MF preview from Firebase:`, fbUrl3mf);
-            blob3mf = await api.downloadFile(fbUrl3mf);
-          } else if (staticUrl3mf) {
-            console.log(`[Preview3D] Loading 3MF preview from static URL:`, staticUrl3mf);
-            blob3mf = await api.downloadFile(staticUrl3mf);
-          } else {
-            console.log(`[Preview3D] Loading 3MF preview from API`);
-            blob3mf = await api.downloadModel(activeTaskId, "3mf");
-          }
-          
-          if (blob3mf && blob3mf.size > 100) {
-            console.log(`[Preview3D] 3MF preview loaded, size:`, blob3mf.size);
-            loadedModel = await load3MF(blob3mf);
-          } else {
-            throw new Error("3MF preview is empty or too small");
-          }
-        } catch (e: any) {
-          console.warn(`[Preview3D] Failed to load 3MF preview, trying parts:`, e.message);
-          
-          // 2) Fallback: Окремі 3MF частини
-        const blobs: any = {};
-        const tryPart = async (p: "base" | "roads" | "buildings" | "water" | "parks") => {
-          let retryCount = 0;
-          const maxRetries = 2;
-          while (retryCount <= maxRetries) {
-            try {
-                let b: Blob | null = null;
-              const fbUrl = taskInfo?.firebase_preview_parts?.[p];
-              const staticUrl = taskInfo?.preview_parts?.[p];
-
-              if (fbUrl) {
-                console.log(`[Preview3D] fetch part ${p} using Firebase Cloud:`, fbUrl);
-                b = await api.downloadFile(fbUrl);
-              } else if (staticUrl) {
-                console.log(`[Preview3D] fetch part ${p} using static URL:`, staticUrl);
-                b = await api.downloadFile(staticUrl);
-              } else {
-                  b = await api.downloadModel(activeTaskId, "3mf", p);
-              }
-              console.log(`[Preview3D] fetch part ${p}, blob size:`, b?.size);
-              if (b && b.size > 100) {
-                blobs[p] = b;
-                return;
-              } else {
-                console.warn(`[Preview3D] fetch part ${p} returned empty/small blob:`, b?.size);
-              }
-              break;
-            } catch (e: any) {
-              if (e.response && e.response.status === 404) {
-                console.log(`[Preview3D] Part ${p} not found (404), skipping.`);
-                break;
-              }
-              retryCount++;
-              if (retryCount <= maxRetries) {
-                console.warn(`[Preview3D] Retry ${retryCount} for part ${p}...`, e.message);
-                await new Promise(r => setTimeout(r, 1000 * retryCount));
-              } else {
-                console.warn(`[Preview3D] Failed to load part ${p} after ${maxRetries + 1} attempts:`, e.message || e);
-              }
-            }
-          }
-        };
-        // Load parts sequentially to avoid hitting browser/server concurrent request limits
-        await tryPart("base");
-        await tryPart("roads");
-        await tryPart("buildings");
-        await tryPart("water");
-        await tryPart("parks");
-
-        if (Object.keys(blobs).length > 0) {
-            // Завантажуємо 3MF частини
-            const groups = await Promise.all(
-              Object.entries(blobs).map(async ([part, blob]) => {
-                const group = await load3MF(blob as Blob);
-                return { part, group };
-              })
-            );
-            const combinedGroup = new THREE.Group();
-            groups.forEach(({ group }) => combinedGroup.add(group));
-            loadedModel = combinedGroup;
-        } else {
-            // 3) Final fallback: STL
-            console.log(`[Preview3D] Falling back to STL format`);
-          const blob = await api.downloadModel(activeTaskId, "stl");
-          loadedModel = await loadStlAsMesh(blob, 0x888888);
-          }
-        }
+        console.log("[Preview3D] Loading local preview", { taskId: activeTaskId });
+        const loadedModel = await loadPreviewModelForTask(activeTaskId);
 
         // Стабільні трансформації для превʼю:
         // - масштабуємо під камеру
@@ -1107,6 +805,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
         };
 
         console.log("✅ Модель готова до відображення, встановлюємо в state");
+        fitCameraToObject(loadedModel);
         setModel(loadedModel);
         setLoading(false);
         console.log("✅ Модель встановлена в state, має відображатися");
@@ -1585,6 +1284,7 @@ export function Preview3D() {
           <CameraController />
           <FreeFlyControls enabled={cameraMode === "fly"} speed={flySpeed} onSpeedChange={setFlySpeed} />
           <OrbitControls
+            makeDefault
             enabled={cameraMode === "orbit"}
             enableDamping
             dampingFactor={0.05}

@@ -112,7 +112,7 @@ def create_solid_terrain_robust(
     if terrain_top is None or len(terrain_top.vertices) == 0 or len(terrain_top.faces) == 0:
         print("[ERROR] Invalid terrain_top mesh")
         return None
-    
+
     try:
         print(f"[SOLIDIFIER] Starting solidification...")
         print(f"[SOLIDIFIER] Input mesh: {len(terrain_top.vertices)} vertices, {len(terrain_top.faces)} faces")

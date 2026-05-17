@@ -42,6 +42,10 @@ interface GenerationState {
 
   // AMS Mode
   isAmsMode: boolean;
+  flatPlateMode: boolean;
+
+  // Fast Preview Mode (~30s vs full 5-15min)
+  previewMode: boolean;
 
   // Preview visibility controls
   previewIncludeBase: boolean;
@@ -80,6 +84,8 @@ interface GenerationState {
 
   setTerrainSmoothShading: (value: boolean) => void;
   setAmsMode: (value: boolean) => void;
+  setFlatPlateMode: (value: boolean) => void;
+  setPreviewMode: (value: boolean) => void;
 
   setPreviewIncludeBase: (value: boolean) => void;
   setPreviewIncludeRoads: (value: boolean) => void;
@@ -115,11 +121,11 @@ const initialState = {
   buildingEmbedMm: 0.2,
   waterDepth: 2.0,
   terrainEnabled: true,
-  terrainZScale: 0.5,
-  // Підложка має відповідати production-рецепту, щоб preview і фінальна модель збігались.
-  terrainBaseThicknessMm: 1.7,
+  terrainZScale: 1.0,
+  // Тонка “підложка” під рельєф (мм на фінальній моделі)
+  terrainBaseThicknessMm: 0.3,
   // Вища деталізація рельєфу -> менші трикутники, більше “реальності”
-  terrainResolution: 350,
+  terrainResolution: 180,
   terrariumZoom: 15,
   exportFormat: "3mf" as const,
   modelSizeMm: 80.0, // 80мм = 8см за замовчуванням
@@ -127,6 +133,8 @@ const initialState = {
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
   isAmsMode: false,
+  flatPlateMode: false,
+  previewMode: true,  // default to fast preview for buyers
   // Preview visibility defaults - all enabled
   previewIncludeBase: true,
   previewIncludeRoads: true,
@@ -182,6 +190,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
 
   setTerrainSmoothShading: (value) => set({ terrainSmoothShading: value }),
   setAmsMode: (value) => set({ isAmsMode: value }),
+  setFlatPlateMode: (value) => set({ flatPlateMode: value }),
+  setPreviewMode: (value) => set({ previewMode: value }),
 
   setPreviewIncludeBase: (value) => set({ previewIncludeBase: value }),
   setPreviewIncludeRoads: (value) => set({ previewIncludeRoads: value }),
@@ -191,4 +201,3 @@ export const useGenerationStore = create<GenerationState>((set) => ({
 
   reset: () => set(initialState),
 }));
-

@@ -592,6 +592,11 @@ def repair_road_export_mesh(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh
         components = list(original.split(only_watertight=False))
     except Exception:
         components = [original]
+    try:
+        if components and all(bool(getattr(component, "is_watertight", False)) for component in components):
+            return original
+    except Exception:
+        pass
 
     repaired = []
     for component in components:
@@ -938,29 +943,33 @@ def smart_combine_meshes(
     # Combine all components
     combined = trimesh.util.concatenate(cleaned)
     
-    # Final aggressive cleanup for watertight mesh
-    if aggressive_cleanup:
+    # Final aggressive cleanup for watertight mesh — skip in preview mode
+    # (the cleanup is for the printer and adds 10-20s on 60k+ vert terrain;
+    # the buyer's preview doesn't need watertight meshes).
+    import os as _os_skipcheck
+    _preview_skip = _os_skipcheck.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    if aggressive_cleanup and not _preview_skip:
         try:
             print("[INFO] Applying final aggressive cleanup...")
-            
+
             # Remove duplicates
             combined.update_faces(combined.unique_faces())
             combined.merge_vertices(digits_vertex=6)  # 0.001mm precision
             combined.remove_unreferenced_vertices()
-            
+
             # Fix winding order
             try:
                 trimesh.repair.fix_winding(combined)
             except Exception:
                 pass
-            
+
             # Fill remaining holes
             if not combined.is_watertight:
                 try:
                     combined.fill_holes()
                 except Exception:
                     pass
-            
+
             # Remove degenerate/broken faces
             try:
                 trimesh.repair.broken_faces(combined, color=None)
@@ -1224,7 +1233,11 @@ def prepare_scene_parts(
 
     # 8. CRITICAL: Final aggressive repair after combination
     # Even if each component is watertight, concatenation can create gaps
-    if repair_meshes:
+    # Preview-mode skips this — `improve_mesh_for_3d_printing` short-circuits
+    # internally anyway, so the per-part repair work here is wasted overhead
+    # (saves ~10-20s on big terrain meshes per export call).
+    import os as _os_repair
+    if repair_meshes and _os_repair.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes"):
         print(f"\n[FINAL REPAIR] Applying aggressive repair to combined mesh...")
         for key, mesh in transformed_parts.items():
             try:
@@ -1475,6 +1488,188 @@ def export_3mf(
     return {"3mf": filename}
 
 
+def _to_preview_trimesh(obj: Union[trimesh.Trimesh, trimesh.Scene]) -> Optional[trimesh.Trimesh]:
+    if obj is None:
+        return None
+    if isinstance(obj, trimesh.Scene):
+        meshes = [
+            g.copy() for g in obj.geometry.values()
+            if isinstance(g, trimesh.Trimesh) and g.faces is not None and len(g.faces) > 0
+        ]
+        if not meshes:
+            return None
+        obj = trimesh.util.concatenate(meshes)
+    if not isinstance(obj, trimesh.Trimesh):
+        return None
+    if obj.vertices is None or obj.faces is None or len(obj.vertices) == 0 or len(obj.faces) == 0:
+        return None
+    try:
+        mesh = obj.copy()
+    except Exception:
+        return None
+    try:
+        mesh.update_faces(mesh.nondegenerate_faces())
+        mesh.remove_unreferenced_vertices()
+    except Exception:
+        pass
+    if mesh.vertices is None or mesh.faces is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
+        return None
+    return _sanitize_mesh_visual(mesh) or mesh
+
+
+def _prepare_preview_glb_parts_fast(
+    mesh_items: List[Tuple[str, trimesh.Trimesh]],
+    model_size_mm: float,
+    add_base: bool,
+    base_thickness_mm: float,
+    reference_xy_m: Optional[Tuple[float, float]],
+    preserve_xy: bool,
+    preserve_z: bool,
+) -> Dict[str, trimesh.Trimesh]:
+    valid_items: Dict[str, trimesh.Trimesh] = {}
+    for name, mesh in mesh_items:
+        tm = _to_preview_trimesh(mesh)
+        if tm is None:
+            continue
+        key = str(name).lower()
+        tm.metadata["original_name"] = name
+        if key in valid_items:
+            valid_items[key] = trimesh.util.concatenate([valid_items[key], tm])
+            valid_items[key].metadata["original_name"] = name
+        else:
+            valid_items[key] = tm
+
+    if not valid_items:
+        fb = fallback_box()
+        fb.metadata["original_name"] = "Fallback"
+        return {"fallback": fb}
+
+    def _combined_bounds(items: Dict[str, trimesh.Trimesh]) -> np.ndarray:
+        mins = []
+        maxs = []
+        for mesh in items.values():
+            if mesh is None or mesh.vertices is None or len(mesh.vertices) == 0:
+                continue
+            mins.append(np.asarray(mesh.bounds[0], dtype=float))
+            maxs.append(np.asarray(mesh.bounds[1], dtype=float))
+        if not mins:
+            return np.asarray(fallback_box().bounds, dtype=float)
+        return np.vstack([np.min(np.vstack(mins), axis=0), np.max(np.vstack(maxs), axis=0)])
+
+    bounds = _combined_bounds(valid_items)
+    size = bounds[1] - bounds[0]
+    square_output = os.environ.get("MODEL_SQUARE_OUTPUT", "1").lower() in ("1", "true", "yes")
+    avg_xy = max(float(size[0]), float(size[1])) if square_output else float((size[0] + size[1]) / 2.0)
+    if reference_xy_m and not square_output:
+        ref_avg = float((reference_xy_m[0] + reference_xy_m[1]) / 2.0)
+        if ref_avg > 1e-3:
+            avg_xy = ref_avg
+    elif reference_xy_m and square_output:
+        avg_xy = max(avg_xy, float(max(reference_xy_m[0], reference_xy_m[1])))
+
+    scale_factor = float(model_size_mm) / avg_xy if avg_xy > 1e-6 else 1.0
+    if scale_factor > 100000:
+        print(f"[WARN] Huge GLB preview scale factor detected: {scale_factor:.2f}. Clamping to 1.0.")
+        scale_factor = 1.0
+
+    if add_base:
+        base = create_base_in_mesh_space(bounds, float(base_thickness_mm), scale_factor)
+        base.metadata["original_name"] = "Base"
+        if "base" in valid_items:
+            valid_items["base"] = trimesh.util.concatenate([valid_items["base"], base])
+        elif "terrain" in valid_items:
+            valid_items["terrain"] = trimesh.util.concatenate([valid_items["terrain"], base])
+        else:
+            valid_items["base"] = base
+        bounds = _combined_bounds(valid_items)
+        size = bounds[1] - bounds[0]
+
+    print(f"[GLB PREVIEW] Fast transform: Bounds={size}, RefXY={avg_xy:.4f}, Scale={scale_factor:.6f}")
+    matrix = get_transform_matrix(bounds, scale_factor, reference_xy_m, preserve_xy, preserve_z, False)
+    if square_output:
+        scaled_size = size * scale_factor
+        pad_x = (float(model_size_mm) - scaled_size[0]) / 2.0 if scaled_size[0] < float(model_size_mm) - 1e-6 else 0.0
+        pad_y = (float(model_size_mm) - scaled_size[1]) / 2.0 if scaled_size[1] < float(model_size_mm) - 1e-6 else 0.0
+        if abs(pad_x) > 1e-6 or abs(pad_y) > 1e-6:
+            t_pad = np.eye(4)
+            t_pad[0, 3] = pad_x
+            t_pad[1, 3] = pad_y
+            matrix = np.dot(t_pad, matrix)
+
+    transformed: Dict[str, trimesh.Trimesh] = {}
+    for key, mesh in valid_items.items():
+        m_trans = mesh.copy()
+        m_trans.apply_transform(matrix)
+        transformed[key] = m_trans
+
+    if not preserve_z and transformed:
+        min_z = min(float(mesh.bounds[0][2]) for mesh in transformed.values())
+        for mesh in transformed.values():
+            mesh.apply_translation([0.0, 0.0, -min_z])
+
+    return transformed
+
+
+def export_glb(
+    filename: str,
+    mesh_items: List[Tuple[str, trimesh.Trimesh]],
+    model_size_mm: float = 100.0,
+    add_flat_base: bool = True,
+    base_thickness_mm: float = 2.0,
+    rotate_to_ground: bool = False,
+    reference_xy_m: Optional[Tuple[float, float]] = None,
+    preserve_z: bool = False,
+    preserve_xy: bool = False,
+) -> Dict[str, str]:
+    print("[GLB PREVIEW] Starting local preview export")
+    parts = _prepare_preview_glb_parts_fast(
+        mesh_items,
+        model_size_mm,
+        add_flat_base,
+        base_thickness_mm,
+        reference_xy_m,
+        preserve_xy,
+        preserve_z,
+    )
+
+    color_map = {
+        "base": [200, 180, 140, 255],
+        "terrain": [200, 180, 140, 255],
+        "roads": [60, 60, 60, 255],
+        "buildings": [227, 227, 227, 255],
+        "water": [100, 150, 200, 255],
+        "parks": [100, 150, 100, 255],
+        "green": [100, 150, 100, 255],
+    }
+
+    scene = trimesh.Scene()
+    for key, mesh in parts.items():
+        if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
+            continue
+        color = color_map.get(key.lower(), [150, 150, 150, 255])
+        try:
+            mesh = mesh.copy()
+            # GLB export from ColorVisuals writes COLOR_0 but no material, and
+            # Three.js can render that almost black depending on loader state.
+            # Use explicit materials for preview so colours survive without
+            # frontend guesses.
+            mesh.visual = trimesh.visual.TextureVisuals(
+                material=trimesh.visual.material.SimpleMaterial(
+                    name=str(key),
+                    diffuse=np.asarray(color, dtype=np.uint8),
+                )
+            )
+        except Exception:
+            pass
+        name = mesh.metadata.get("original_name", key) if hasattr(mesh, "metadata") else key
+        scene.add_geometry(mesh, node_name=name, geom_name=name)
+
+    os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+    scene.export(filename, file_type="glb")
+    print(f"[GLB PREVIEW] Exported local preview with {len(scene.geometry)} parts to {filename}")
+    return {"glb": filename}
+
+
 # ============================================================
 # PUBLIC API
 # ============================================================
@@ -1586,6 +1781,19 @@ def export_scene(
             add_flat_base,
             base_thickness_mm,
             rotate_to_ground,  # True для вертикальної орієнтації
+            reference_xy_m,
+            preserve_z,
+            preserve_xy,
+        )
+
+    if format.lower() == "glb":
+        return export_glb(
+            filename,
+            items,
+            model_size_mm,
+            add_flat_base,
+            base_thickness_mm,
+            rotate_to_ground,
             reference_xy_m,
             preserve_z,
             preserve_xy,

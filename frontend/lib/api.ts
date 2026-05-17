@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface GenerationRequest {
   north: number;
@@ -23,180 +23,47 @@ export interface GenerationRequest {
   flatten_buildings_on_terrain?: boolean;
   export_format: "stl" | "3mf";
   model_size_mm: number;
+  context_padding_m?: number;
   is_ams_mode: boolean;
-  hex_size_m?: number;
+  flat_plate_mode?: boolean;
+  flat_water_layer_mm?: number;
+  flat_roads_layer_mm?: number;
+  flat_parks_layer_mm?: number;
+  flat_max_building_height_mm?: number;
+  keychain_mode?: boolean;
+  keychain_label?: string;
+  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon";
+  keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
+  keychain_loop_angle_deg?: number;
+  keychain_body_width_mm?: number;
+  keychain_body_height_mm?: number;
+  keychain_map_x_mm?: number;
+  keychain_map_y_mm?: number;
+  keychain_map_width_mm?: number;
+  keychain_map_height_mm?: number;
+  keychain_loop_center_x_mm?: number;
+  keychain_loop_center_y_mm?: number;
+  keychain_label_center_x_mm?: number;
+  keychain_label_center_y_mm?: number;
+  keychain_label_angle_deg?: number;
+  keychain_loop_outer_radius_mm?: number;
+  keychain_loop_inner_radius_mm?: number;
+  keychain_corner_radius_mm?: number;
+  keychain_label_band_height_mm?: number;
+  keychain_label_raise_mm?: number;
+  keychain_label_text_height_mm?: number;
+  // Fast preview (~30s): skip Blender grooves + manifold cleanup, terrain 80x80
+  preview_mode?: boolean;
   preview_include_base?: boolean;
   preview_include_roads?: boolean;
   preview_include_buildings?: boolean;
   preview_include_water?: boolean;
   preview_include_parks?: boolean;
-  context_padding_m?: number;
-}
-
-export interface PreviewRequest {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-  polygon_geojson?: any;
-  include_terrain?: boolean;
-  include_roads?: boolean;
-  include_buildings?: boolean;
-  include_water?: boolean;
-  include_parks?: boolean;
-  road_width_multiplier?: number;
-  building_min_height?: number;
-  building_height_multiplier?: number;
-  model_size_mm?: number;
-  terrain_z_scale?: number;
-  terrain_resolution?: number;
-  road_height_mm?: number;
-  road_embed_mm?: number;
-  building_foundation_mm?: number;
-  building_embed_mm?: number;
-  water_depth?: number;
-  parks_height_mm?: number;
-  parks_embed_mm?: number;
-  generation_request?: GenerationRequest;
-}
-
-export interface FastPreviewResponse {
-  preview_id: string;
-  preview_status?: "processing" | "ready" | "failed";
-  cached: boolean;
-  model_file_url?: string | null;
-  preview_stl?: string | null;
-  preview_3mf?: string | null;
-  download_url?: string | null;
-  download_url_3mf?: string | null;
-  download_url_stl?: string | null;
-  task_outputs?: Record<string, string | null>;
-  bounds: { north: number; south: number; east: number; west: number };
-  center: { lat: number; lng: number };
-  selection?: any;
-  layers: {
-    terrain: {
-      enabled: boolean;
-      source?: string;
-      heightfield?: {
-        x: number[];
-        y: number[];
-        z: number[][];
-        z_min_m?: number;
-        z_max_m?: number;
-        mesh_vertices?: number;
-        mesh_faces?: number;
-      } | null;
-    };
-    roads: any;
-    buildings: any;
-    water: any;
-    parks: any;
-  };
-  metrics: {
-    buildings: number;
-    roads: number;
-    water: number;
-    parks: number;
-    elapsed_ms: number;
-  };
-  model_logic?: Record<string, any>;
-}
-
-export interface SiteOrderRequest {
-  name: string;
-  contact: string;
-  city: string;
-  bounds: { north: number; south: number; east: number; west: number };
-  polygon_geojson?: any;
-  preview_id?: string;
-  model_size_mm: number;
-  material: string;
-  layers: Record<string, boolean>;
-  price_uah?: number;
-  comment?: string;
-  area_mode?: string;
-  selected_zones?: any[];
-  grid_type?: string;
-  hex_size_m?: number;
-  preview_metrics?: Record<string, any>;
-  model_logic?: Record<string, any>;
-  generation_request?: GenerationRequest;
 }
 
 export interface GenerationResponse {
   task_id: string;
   status: string;
-  message?: string;
-  all_task_ids?: string[];
-}
-
-export interface AccountUsage {
-  free_limit: number;
-  used: number;
-  completed: number;
-  remaining: number;
-}
-
-export interface AccountModel {
-  id: string;
-  task_id: string;
-  title: string;
-  city: string;
-  status: string;
-  progress: number;
-  message?: string;
-  created_at: string;
-  updated_at?: string;
-  finished_at?: string;
-  model_size_mm?: number;
-  material?: string;
-  layers?: Record<string, boolean>;
-  bounds?: { north: number; south: number; east: number; west: number };
-  preview_snapshot?: FastPreviewResponse | null;
-  download_url?: string | null;
-  download_url_3mf?: string | null;
-  download_url_stl?: string | null;
-  preview_3mf?: string | null;
-  firebase_url?: string | null;
-  error?: string | null;
-}
-
-export interface AccountResponse {
-  profile: {
-    uid: string;
-    email?: string;
-    name?: string;
-    picture?: string;
-    plan?: string;
-  };
-  usage: AccountUsage;
-  recent_models?: AccountModel[];
-  models?: AccountModel[];
-}
-
-export interface AccountGenerateRequest {
-  title: string;
-  city: string;
-  preview_id?: string;
-  preview_snapshot?: FastPreviewResponse | null;
-  bounds: { north: number; south: number; east: number; west: number };
-  polygon_geojson?: any;
-  model_size_mm: number;
-  material: string;
-  layers: Record<string, boolean>;
-  generation_request: GenerationRequest;
-}
-
-let authTokenProvider: (() => Promise<string | null>) | null = null;
-
-export function setApiAuthTokenProvider(provider: (() => Promise<string | null>) | null) {
-  authTokenProvider = provider;
-}
-
-async function authHeaders() {
-  const token = authTokenProvider ? await authTokenProvider() : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export interface TaskStatus {
@@ -238,66 +105,10 @@ export interface BatchTaskStatusResponse {
 export type StatusResponse = TaskStatus | BatchTaskStatusResponse;
 
 export const api = {
-  async createFastPreview(request: PreviewRequest): Promise<FastPreviewResponse> {
-    const response = await axios.post<FastPreviewResponse>(`${API_BASE_URL}/api/preview`, request, {
-      timeout: 120000,
-    });
-    return response.data;
-  },
-
-  async createSiteOrder(request: SiteOrderRequest): Promise<{ ok: boolean; order_id: string }> {
-    const response = await axios.post(`${API_BASE_URL}/api/orders`, request, {
-      timeout: 30000,
-    });
-    return response.data;
-  },
-
-  async getAdminOrders(token?: string): Promise<{ orders: any[] }> {
-    const params = token ? `?token=${encodeURIComponent(token)}` : "";
-    const response = await axios.get(`${API_BASE_URL}/api/admin/orders${params}`);
-    return response.data;
-  },
-
-  async startOrderGeneration(orderId: string, token?: string): Promise<GenerationResponse> {
-    const params = token ? `?token=${encodeURIComponent(token)}` : "";
-    const response = await axios.post<GenerationResponse>(
-      `${API_BASE_URL}/api/admin/orders/${encodeURIComponent(orderId)}/generate${params}`,
-      {},
-      { timeout: 30000 }
-    );
-    return response.data;
-  },
-
   async generateModel(request: GenerationRequest): Promise<GenerationResponse> {
     const response = await axios.post<GenerationResponse>(
       `${API_BASE_URL}/api/generate`,
       request
-    );
-    return response.data;
-  },
-
-  async getAccount(): Promise<AccountResponse> {
-    const response = await axios.get<AccountResponse>(`${API_BASE_URL}/api/account/me`, {
-      headers: await authHeaders(),
-    });
-    return response.data;
-  },
-
-  async getAccountModels(): Promise<AccountResponse> {
-    const response = await axios.get<AccountResponse>(`${API_BASE_URL}/api/account/models`, {
-      headers: await authHeaders(),
-    });
-    return response.data;
-  },
-
-  async startAccountGeneration(request: AccountGenerateRequest): Promise<GenerationResponse> {
-    const response = await axios.post<GenerationResponse>(
-      `${API_BASE_URL}/api/account/models/generate`,
-      request,
-      {
-        headers: await authHeaders(),
-        timeout: 30000,
-      }
     );
     return response.data;
   },
@@ -311,7 +122,7 @@ export const api = {
 
   async downloadModel(
     taskId: string,
-    format?: "stl" | "3mf",
+    format?: "stl" | "3mf" | "glb",
     part?: "base" | "roads" | "buildings" | "water" | "parks"
   ): Promise<Blob> {
     const params = new URLSearchParams();

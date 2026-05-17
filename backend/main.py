@@ -1,5 +1,5 @@
 ﻿import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Header, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -15,12 +15,10 @@ load_dotenv()
 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Optional, List, Tuple
+from typing import Optional, List, Tuple
 import os
-import json
 import uuid
 from pathlib import Path
-from datetime import datetime, timezone
 import trimesh
 import httpx
 import numpy as np
@@ -60,7 +58,6 @@ ox.settings.log_console = False # Reduce noise
 
 from services.full_generation_pipeline import run_full_generation_pipeline
 from services.generation_runtime_context import prepare_generation_runtime_context
-from services.site_preview import build_fast_preview
 
 from services.generation_task import GenerationTask
 from services.firebase_service import FirebaseService
@@ -99,11 +96,43 @@ import tempfile
 # Р¦Рµ РІРёСЂС–С€СѓС” РїСЂРѕР±Р»РµРјСѓ Р·РЅРёРєРЅРµРЅРЅСЏ С„Р°Р№Р»С–РІ Сѓ С‚РёРјС‡Р°СЃРѕРІРёС… РїР°РїРєР°С…
 OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-ORDERS_DIR = Path(os.getenv("ORDERS_DIR", "orders")).resolve()
-ORDERS_DIR.mkdir(parents=True, exist_ok=True)
-USER_DATA_DIR = Path(os.getenv("USER_DATA_DIR", "user_data")).resolve()
-USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
-FREE_FULL_GENERATION_LIMIT = int(os.getenv("FREE_FULL_GENERATION_LIMIT", "10"))
+
+
+def _make_export_basename(
+    task_id: str,
+    hex_size_m: Optional[float] = None,
+    model_size_mm: Optional[float] = None,
+    zone_row: Optional[int] = None,
+    zone_col: Optional[int] = None,
+) -> str:
+    """Build descriptive file basename. 4-tier graceful fallback:
+
+    1. Batch with row/col   → `model_<grid>_<mm>_<row>_<col>` (e.g. model_300_80_38_40)
+    2. Batch w/o row/col    → `model_<grid>_<mm>_<uuid8>`
+    3. Single endpoint      → `model_<mm>_<uuid8>`
+    4. Nothing known        → original `task_id` (legacy UUID)
+
+    The frontend reads basename from backend's download_url and uses it as
+    the download filename, so the slicer label matches the descriptive name.
+    """
+    short = task_id.replace("-", "")[:8] if task_id else "single"
+    try:
+        if all(v is not None for v in (hex_size_m, model_size_mm, zone_row, zone_col)):
+            return (
+                f"model_{int(round(float(hex_size_m)))}_"
+                f"{int(round(float(model_size_mm)))}_"
+                f"{int(zone_row)}_{int(zone_col)}"
+            )
+        if hex_size_m is not None and model_size_mm is not None:
+            return (
+                f"model_{int(round(float(hex_size_m)))}_"
+                f"{int(round(float(model_size_mm)))}_{short}"
+            )
+        if model_size_mm is not None:
+            return f"model_{int(round(float(model_size_mm)))}_{short}"
+    except (TypeError, ValueError):
+        pass
+    return task_id
 
 CANONICAL_CONTROL_BUNDLE_DIR = (Path("debug") / "generated" / "final_3d_input_masks_parks_fit_v006").resolve()
 CONTROL_ZONE_ID = "hex_43_38"
@@ -189,6 +218,12 @@ def _apply_default_canonical_bundle_if_needed(
 
 
 def _compute_safe_base_thickness_mm(request: "GenerationRequest") -> float:
+    if bool(getattr(request, "flat_plate_mode", False)):
+        try:
+            floor = 1.6 if bool(getattr(request, "keychain_mode", False)) else 0.2
+            return max(float(request.terrain_base_thickness_mm), floor)
+        except Exception:
+            return 1.6 if bool(getattr(request, "keychain_mode", False)) else 0.2
     try:
         min_required_base_mm = max(
             0.2,
@@ -248,30 +283,43 @@ async def startup_event():
         if file_path.suffix.lower() not in [".stl", ".3mf"]:
             continue
         
-        # task_id - С†Рµ С–Рј'СЏ С„Р°Р№Р»Сѓ РґРѕ РїРµСЂС€РѕРіРѕ "_" Р°Р±Рѕ "."
+        # Parse filename — supports two formats:
+        #   legacy:      <uuid>[_<part>].<ext>             → task_id = uuid
+        #   descriptive: model_<grid>_<mm>_<row>_<col>[_<part>].<ext>
+        #                                                  → task_id = the full 5-token basename
         name = file_path.name
-        task_id = name.split(".")[0].split("_")[0]
-        
-        # РЇРєС‰Рѕ С‚Р°РєРёР№ task_id С‰Рµ РЅРµ РІ СЃРїРёСЃРєСѓ, СЃС‚РІРѕСЂСЋС”РјРѕ "Р·Р°РіР»СѓС€РєСѓ"
+        stem = file_path.stem
+        if stem.startswith("model_"):
+            parts = stem.split("_")
+            if len(parts) >= 5:
+                task_id = "_".join(parts[:5])
+                part_part = "_".join(parts[5:]) if len(parts) > 5 else None
+            else:
+                task_id = stem
+                part_part = None
+        else:
+            if "_" in stem:
+                task_id, part_part = stem.split("_", 1)
+            else:
+                task_id = stem
+                part_part = None
+
+        # Якщо такий task_id ще не в списку, створюємо "заглушку"
         if task_id not in tasks:
             tasks[task_id] = GenerationTask(
                 task_id=task_id,
-                request=None, # РњРё РЅРµ Р·РЅР°С”РјРѕ РїР°СЂР°РјРµС‚СЂС–РІ СЃС‚Р°СЂРѕРіРѕ Р·Р°РїРёС‚Сѓ
+                request=None,  # Параметри старого запиту не відомі
                 status="completed",
                 progress=100,
                 output_file=str(file_path)
             )
-        
-        # Р”РѕРґР°С”РјРѕ С„Р°Р№Р» РґРѕ output_files
-        # Р¤РѕСЂРјР°С‚ С–РјРµРЅС–: {task_id}_{part}.stl Р°Р±Рѕ {task_id}.stl/3mf
+
         task = tasks[task_id]
-        if "_" in name:
-            part_part = name.split("_")[1].split(".")[0]
-            ext = file_path.suffix.lstrip(".").lower()
+        ext = file_path.suffix.lstrip(".").lower()
+        if part_part:
             key = f"{part_part}_{ext}"
             task.set_output(key, str(file_path))
         else:
-            ext = file_path.suffix.lstrip(".").lower()
             task.set_output(ext, str(file_path))
             if not task.output_file:
                 task.output_file = str(file_path)
@@ -306,7 +354,7 @@ class GenerationRequest(BaseModel):
     parks_embed_mm: float = Field(default=1.0, ge=0.0, le=2.0)
     water_depth: float = 1.2  # РјРј РІ Р·РµРјР»С– (РїРѕРІРµСЂС…РЅСЏ РІРѕРґРё 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ)
     terrain_enabled: bool = True
-    terrain_z_scale: float = 0.5  # РџРѕРјС–СЂРЅРёР№ СЂРµР»СЊС”С„ РґР»СЏ 8СЃРј РјРѕРґРµР»С–
+    terrain_z_scale: float = 3.0  # Р—Р±С–Р»СЊС€РµРЅРѕ РґР»СЏ РєСЂР°С‰РѕС— РІРёРґРёРјРѕСЃС‚С– СЂРµР»СЊС”С„Сѓ
     # РўРѕРЅРєР° РѕСЃРЅРѕРІР° РґР»СЏ РґСЂСѓРєСѓ: Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 1РјРј (РєРѕСЂРёСЃС‚СѓРІР°С‡ РјРѕР¶Рµ Р·РјС–РЅРёС‚Рё).
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
     # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
@@ -327,6 +375,10 @@ class GenerationRequest(BaseModel):
     # РѕСЃРєС–Р»СЊРєРё РґР»СЏ РіСѓСЃС‚РѕС— РјРµСЂРµР¶С– РґРѕСЂС–Рі С†Рµ СЃС‚РІРѕСЂСЋС” С€С‚СѓС‡РЅС– "РїР»Р°С‚Рѕ" (С‡РµСЂРµР· Р·Р»РёС‚С‚СЏ РіРµРѕРјРµС‚СЂС–Р№),
     # С‰Рѕ РїСЃСѓС” СЂРµР»СЊС”С„ РЅР° РїР°РіРѕСЂР±Р°С…. Р”РѕСЂРѕРіРё С– С‚Р°Рє РіР°СЂРЅРѕ Р»СЏРіР°СЋС‚СЊ РїРѕ СЃРїР»Р°Р№РЅР°С….
     flatten_roads_on_terrain: bool = False
+    # Fast preview mode (~30s): skip Blender groove cutting + manifold cleanup,
+    # downscale terrain to 60x60. Includes ALL layers (terrain/roads/buildings/
+    # parks/water) but they sit as separate components (no printability checks).
+    preview_mode: bool = False
     export_format: str = "3mf"  # "stl" Р°Р±Рѕ "3mf"
     model_size_mm: float = 80.0  # Р РѕР·РјС–СЂ РјРѕРґРµР»С– РІ РјС–Р»С–РјРµС‚СЂР°С… (Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 80РјРј = 8СЃРј)
     # РљРѕРЅС‚РµРєСЃС‚ РЅР°РІРєРѕР»Рѕ Р·РѕРЅРё (РІ РјРµС‚СЂР°С…): Р·Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ OSM/Extras Р· Р±С–Р»СЊС€РёРј bbox,
@@ -352,6 +404,34 @@ class GenerationRequest(BaseModel):
     hex_size_m: float = Field(default=300.0, ge=100.0, le=2000.0)
     # AMS / Flat Mode: Optimized for multicolor printing (Flat terrain + Fixed layers)
     is_ams_mode: bool = False
+    # Layered plate mode: flat solid base plus additive water/road/park/building layers.
+    flat_plate_mode: bool = False
+    flat_water_layer_mm: float = Field(default=0.22, ge=0.0, le=5.0)
+    flat_roads_layer_mm: float = Field(default=0.42, ge=0.0, le=5.0)
+    flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
+    flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
+    keychain_mode: bool = False
+    keychain_label: str = Field(default="", max_length=64)
+    keychain_base_shape: str = Field(default="rounded", max_length=24)
+    keychain_loop_style: str = Field(default="round", max_length=24)
+    keychain_loop_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
+    keychain_body_width_mm: float = Field(default=78.0, ge=20.0, le=180.0)
+    keychain_body_height_mm: float = Field(default=48.0, ge=16.0, le=140.0)
+    keychain_map_x_mm: float = Field(default=0.0, ge=0.0, le=180.0)
+    keychain_map_y_mm: float = Field(default=0.0, ge=0.0, le=140.0)
+    keychain_map_width_mm: float = Field(default=78.0, ge=4.0, le=180.0)
+    keychain_map_height_mm: float = Field(default=38.0, ge=4.0, le=140.0)
+    keychain_loop_center_x_mm: float = Field(default=8.5, ge=-30.0, le=210.0)
+    keychain_loop_center_y_mm: float = Field(default=-4.0, ge=-40.0, le=180.0)
+    keychain_label_center_x_mm: float = Field(default=39.0, ge=0.0, le=180.0)
+    keychain_label_center_y_mm: float = Field(default=43.5, ge=0.0, le=140.0)
+    keychain_label_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
+    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=3.5, le=18.0)
+    keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
+    keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
+    keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
+    keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
+    keychain_label_text_height_mm: float = Field(default=3.8, ge=1.0, le=12.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -364,487 +444,9 @@ class GenerationResponse(BaseModel):
     all_task_ids: Optional[List[str]] = None  # Р”Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
 
 
-class PreviewRequest(BaseModel):
-    north: float
-    south: float
-    east: float
-    west: float
-    polygon_geojson: Optional[dict] = None
-    include_terrain: bool = True
-    include_roads: bool = True
-    include_buildings: bool = True
-    include_water: bool = True
-    include_parks: bool = True
-    road_width_multiplier: float = 0.8
-    building_min_height: float = 5.0
-    building_height_multiplier: float = 1.8
-    model_size_mm: float = 80.0
-    terrain_z_scale: float = 0.5
-    terrain_resolution: int = 350
-    road_height_mm: float = 0.5
-    road_embed_mm: float = 0.3
-    building_foundation_mm: float = 0.6
-    building_embed_mm: float = 0.2
-    water_depth: float = 1.2
-    parks_height_mm: float = 0.6
-    parks_embed_mm: float = 1.0
-    generation_request: Optional[dict] = None
-
-
-class SiteOrderRequest(BaseModel):
-    name: str = ""
-    contact: str = ""
-    city: str = "Київ"
-    bounds: dict
-    polygon_geojson: Optional[dict] = None
-    preview_id: Optional[str] = None
-    model_size_mm: float = 80.0
-    material: str = "white"
-    layers: dict = Field(default_factory=dict)
-    price_uah: Optional[int] = None
-    comment: str = ""
-    area_mode: str = "rect"
-    selected_zones: List[dict] = Field(default_factory=list)
-    grid_type: str = "rect"
-    hex_size_m: float = 650.0
-    preview_metrics: dict = Field(default_factory=dict)
-    model_logic: dict = Field(default_factory=dict)
-    generation_request: Optional[dict] = None
-
-
-class AccountGenerateRequest(BaseModel):
-    title: str = "3D-мапа"
-    city: str = "Київ"
-    preview_id: Optional[str] = None
-    preview_snapshot: Optional[dict] = None
-    bounds: dict
-    polygon_geojson: Optional[dict] = None
-    model_size_mm: float = 80.0
-    material: str = "white"
-    layers: dict = Field(default_factory=dict)
-    generation_request: dict
-
-
-def _safe_uid(uid: str) -> str:
-    return "".join(ch for ch in uid if ch.isalnum() or ch in {"-", "_"})[:128]
-
-
-def _user_dir(uid: str) -> Path:
-    path = USER_DATA_DIR / _safe_uid(uid)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _profile_path(uid: str) -> Path:
-    return _user_dir(uid) / "profile.json"
-
-
-def _models_dir(uid: str) -> Path:
-    path = _user_dir(uid) / "models"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _model_path(uid: str, model_id: str) -> Path:
-    safe_id = "".join(ch for ch in model_id if ch.isalnum() or ch in {"-", "_"})
-    return _models_dir(uid) / f"{safe_id}.json"
-
-
-def _read_json(path: Path, default: Any) -> Any:
-    try:
-        if path.exists():
-            return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        pass
-    return default
-
-
-def _write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def _current_user_from_token(authorization: Optional[str] = Header(default=None)) -> dict[str, Any]:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Потрібен вхід через Google")
-    decoded = FirebaseService.verify_id_token(authorization.split(" ", 1)[1].strip())
-    if not decoded:
-        raise HTTPException(status_code=401, detail="Firebase token недійсний або Firebase не налаштований")
-    uid = str(decoded.get("uid") or decoded.get("sub") or "")
-    if not uid:
-        raise HTTPException(status_code=401, detail="Firebase token без uid")
-    return {
-        "uid": uid,
-        "email": decoded.get("email") or "",
-        "name": decoded.get("name") or decoded.get("email") or "Користувач",
-        "picture": decoded.get("picture") or "",
-    }
-
-
-def _ensure_user_profile(user: dict[str, Any]) -> dict[str, Any]:
-    path = _profile_path(user["uid"])
-    profile = _read_json(path, {})
-    now = datetime.now(timezone.utc).isoformat()
-    if not profile:
-        profile = {
-            "uid": user["uid"],
-            "email": user.get("email", ""),
-            "name": user.get("name", ""),
-            "picture": user.get("picture", ""),
-            "role": "customer",
-            "plan": "free",
-            "created_at": now,
-        }
-    profile.update({
-        "email": user.get("email", profile.get("email", "")),
-        "name": user.get("name", profile.get("name", "")),
-        "picture": user.get("picture", profile.get("picture", "")),
-        "last_login_at": now,
-    })
-    _write_json(path, profile)
-    return profile
-
-
-def _task_output_payload(task: GenerationTask) -> dict[str, Any]:
-    output_files = getattr(task, "output_files", {}) or {}
-
-    def to_static_url(path_str):
-        if not path_str:
-            return None
-        return f"/files/{Path(path_str).name}"
-
-    return {
-        "download_url": to_static_url(task.output_file) if task.output_file else to_static_url(output_files.get("3mf") or output_files.get("stl")),
-        "download_url_3mf": to_static_url(output_files.get("3mf")),
-        "download_url_stl": to_static_url(output_files.get("stl")),
-        "preview_3mf": to_static_url(output_files.get("preview_3mf")),
-        "preview_parts": {
-            "base": to_static_url(output_files.get("base_3mf")),
-            "roads": to_static_url(output_files.get("roads_3mf")),
-            "buildings": to_static_url(output_files.get("buildings_3mf")),
-            "water": to_static_url(output_files.get("water_3mf")),
-            "parks": to_static_url(output_files.get("parks_3mf")),
-        },
-        "firebase_url": getattr(task, "firebase_url", None),
-        "firebase_outputs": getattr(task, "firebase_outputs", {}) or {},
-    }
-
-
-def _sync_user_model(uid: str, model: dict[str, Any]) -> dict[str, Any]:
-    task_id = model.get("task_id")
-    if task_id and task_id in tasks:
-        task = tasks[task_id]
-        model.update({
-            "status": task.status,
-            "progress": task.progress,
-            "message": task.message,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            **_task_output_payload(task),
-        })
-        if task.status in {"completed", "failed"} and not model.get("finished_at"):
-            model["finished_at"] = datetime.now(timezone.utc).isoformat()
-            if task.error:
-                model["error"] = task.error
-        _write_json(_model_path(uid, model["id"]), model)
-    return model
-
-
-def _list_user_models(uid: str) -> list[dict[str, Any]]:
-    models = []
-    for path in sorted(_models_dir(uid).glob("*.json"), reverse=True):
-        model = _read_json(path, None)
-        if isinstance(model, dict):
-            models.append(_sync_user_model(uid, model))
-    return sorted(models, key=lambda item: item.get("created_at", ""), reverse=True)
-
-
-def _usage_from_models(models: list[dict[str, Any]]) -> dict[str, int]:
-    used = sum(1 for item in models if item.get("status") in {"processing", "pending", "completed"})
-    completed = sum(1 for item in models if item.get("status") == "completed")
-    return {
-        "free_limit": FREE_FULL_GENERATION_LIMIT,
-        "used": used,
-        "completed": completed,
-        "remaining": max(0, FREE_FULL_GENERATION_LIMIT - used),
-    }
-
-
-def _order_path(order_id: str) -> Path:
-    safe_id = "".join(ch for ch in order_id if ch.isalnum() or ch in {"-", "_"})
-    return ORDERS_DIR / f"{safe_id}.json"
-
-
-def _read_order(order_id: str) -> dict[str, Any]:
-    path = _order_path(order_id)
-    if not path.exists():
-        raise HTTPException(status_code=404, detail="Заявку не знайдено")
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Не вдалося прочитати заявку: {exc}")
-
-
-def _write_order(order: dict[str, Any]) -> None:
-    _order_path(str(order["id"])).write_text(json.dumps(order, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def _bounds_from_order(order: dict[str, Any]) -> dict[str, float]:
-    bounds = order.get("bounds") or {}
-    return {
-        "north": float(bounds.get("north")),
-        "south": float(bounds.get("south")),
-        "east": float(bounds.get("east")),
-        "west": float(bounds.get("west")),
-    }
-
-
-def _synthesize_generation_request(order: dict[str, Any]) -> dict[str, Any]:
-    if isinstance(order.get("generation_request"), dict):
-        request = dict(order["generation_request"])
-    else:
-        bounds = _bounds_from_order(order)
-        layers = order.get("layers") or {}
-        request = {
-            **bounds,
-            "road_width_multiplier": 0.8,
-            "road_height_mm": 0.5,
-            "road_embed_mm": 0.3,
-            "building_min_height": 5.0,
-            "building_height_multiplier": 1.8,
-            "building_foundation_mm": 0.6,
-            "building_embed_mm": 0.2,
-            "building_max_foundation_mm": 5.0,
-            "water_depth": 1.2,
-            "terrain_enabled": bool(layers.get("terrain", True)),
-            "terrain_z_scale": 0.5,
-            "terrain_base_thickness_mm": 0.3,
-            "terrain_resolution": 350,
-            "terrarium_zoom": 15,
-            "terrain_subdivide": True,
-            "terrain_subdivide_levels": 1,
-            "terrain_smoothing_sigma": 2.0,
-            "flatten_buildings_on_terrain": False,
-            "flatten_roads_on_terrain": False,
-            "export_format": "3mf",
-            "model_size_mm": float(order.get("model_size_mm") or 80.0),
-            "context_padding_m": 400.0,
-            "terrain_only": False,
-            "include_parks": bool(layers.get("parks", True)),
-            "parks_height_mm": 0.6,
-            "parks_embed_mm": 1.0,
-            "preview_include_base": bool(layers.get("terrain", True)),
-            "preview_include_roads": bool(layers.get("roads", True)),
-            "preview_include_buildings": bool(layers.get("buildings", True)),
-            "preview_include_water": bool(layers.get("water", True)),
-            "preview_include_parks": bool(layers.get("parks", True)),
-            "hex_size_m": float(order.get("hex_size_m") or 300.0),
-            "is_ams_mode": False,
-        }
-    bounds = _bounds_from_order(order)
-    for key, value in bounds.items():
-        request.setdefault(key, value)
-    request.setdefault("model_size_mm", float(order.get("model_size_mm") or 80.0))
-    request.setdefault("hex_size_m", float(order.get("hex_size_m") or 300.0))
-    request.setdefault("context_padding_m", 400.0)
-    return request
-
-
 @app.get("/")
 async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
-
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
-
-
-@app.post("/api/preview")
-async def create_fast_preview(request: PreviewRequest):
-    if request.north <= request.south or request.east <= request.west:
-        raise HTTPException(status_code=400, detail="Некоректні межі ділянки")
-
-    lat_span = abs(request.north - request.south)
-    lng_span = abs(request.east - request.west)
-    if lat_span * lng_span > 0.00025:
-        raise HTTPException(status_code=400, detail="Ділянка завелика для швидкого preview. Зменшіть рамку або розбийте її на зони.")
-
-    recipe = request.generation_request or {}
-
-    return build_fast_preview(
-        bounds={
-            "north": request.north,
-            "south": request.south,
-            "east": request.east,
-            "west": request.west,
-        },
-        polygon_geojson=request.polygon_geojson,
-        include_terrain=bool(recipe.get("preview_include_base", request.include_terrain)),
-        include_roads=bool(recipe.get("preview_include_roads", request.include_roads)),
-        include_buildings=bool(recipe.get("preview_include_buildings", request.include_buildings)),
-        include_water=bool(recipe.get("preview_include_water", request.include_water)),
-        include_parks=bool(recipe.get("preview_include_parks", request.include_parks)),
-        road_width_multiplier=float(recipe.get("road_width_multiplier", request.road_width_multiplier)),
-        building_min_height=float(recipe.get("building_min_height", request.building_min_height)),
-        building_height_multiplier=float(recipe.get("building_height_multiplier", request.building_height_multiplier)),
-        model_size_mm=float(recipe.get("model_size_mm", request.model_size_mm)),
-        terrain_z_scale=float(recipe.get("terrain_z_scale", request.terrain_z_scale)),
-        terrain_resolution=int(recipe.get("terrain_resolution", request.terrain_resolution)),
-        road_height_mm=float(recipe.get("road_height_mm", request.road_height_mm)),
-        road_embed_mm=float(recipe.get("road_embed_mm", request.road_embed_mm)),
-        building_foundation_mm=float(recipe.get("building_foundation_mm", request.building_foundation_mm)),
-        building_embed_mm=float(recipe.get("building_embed_mm", request.building_embed_mm)),
-        water_depth=float(recipe.get("water_depth", request.water_depth)),
-        parks_height_mm=float(recipe.get("parks_height_mm", request.parks_height_mm)),
-        parks_embed_mm=float(recipe.get("parks_embed_mm", request.parks_embed_mm)),
-    )
-
-
-@app.post("/api/orders")
-async def create_site_order(request: SiteOrderRequest):
-    order_id = f"R-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
-    payload = request.model_dump()
-    payload["generation_request"] = _synthesize_generation_request(payload)
-    payload.update(
-        {
-            "id": order_id,
-            "status": "new",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
-    _write_order(payload)
-    return {"ok": True, "order_id": order_id}
-
-
-@app.get("/api/admin/orders")
-async def list_site_orders(token: Optional[str] = Query(default=None)):
-    expected = os.getenv("ADMIN_API_TOKEN")
-    if expected and token != expected:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    orders = []
-    for path in sorted(ORDERS_DIR.glob("*.json"), reverse=True):
-        try:
-            orders.append(json.loads(path.read_text(encoding="utf-8")))
-        except Exception:
-            continue
-    return {"orders": orders}
-
-
-@app.post("/api/admin/orders/{order_id}/generate", response_model=GenerationResponse)
-async def start_order_generation(order_id: str, background_tasks: BackgroundTasks, token: Optional[str] = Query(default=None)):
-    expected = os.getenv("ADMIN_API_TOKEN")
-    if expected and token != expected:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    order = _read_order(order_id)
-    request_payload = _synthesize_generation_request(order)
-    selected_zones = order.get("selected_zones") or []
-
-    try:
-        if selected_zones:
-            zone_request_payload = dict(request_payload)
-            zone_request_payload["zones"] = selected_zones
-            zone_request_payload["hex_size_m"] = float(order.get("hex_size_m") or request_payload.get("hex_size_m") or 300.0)
-            response = await generate_zones_endpoint(ZoneGenerationRequest(**zone_request_payload), background_tasks)
-        else:
-            response = await generate_model(GenerationRequest(**request_payload), background_tasks)
-
-        order["generation_request"] = request_payload
-        order["generation_task_id"] = response.task_id
-        order["generation_all_task_ids"] = response.all_task_ids or []
-        order["generation_status"] = response.status
-        order["status"] = "in_progress"
-        order["generated_at"] = datetime.now(timezone.utc).isoformat()
-        _write_order(order)
-        return response
-    except HTTPException:
-        raise
-    except Exception as exc:
-        order["generation_status"] = "failed_to_start"
-        order["generation_error"] = str(exc)
-        _write_order(order)
-        raise HTTPException(status_code=500, detail=f"Не вдалося запустити Blender: {exc}")
-
-
-@app.get("/api/account/me")
-async def get_account_me(user: dict[str, Any] = Depends(_current_user_from_token)):
-    profile = _ensure_user_profile(user)
-    models = _list_user_models(user["uid"])
-    return {
-        "profile": profile,
-        "usage": _usage_from_models(models),
-        "recent_models": models[:6],
-    }
-
-
-@app.get("/api/account/models")
-async def get_account_models(user: dict[str, Any] = Depends(_current_user_from_token)):
-    profile = _ensure_user_profile(user)
-    models = _list_user_models(user["uid"])
-    return {
-        "profile": profile,
-        "usage": _usage_from_models(models),
-        "models": models,
-    }
-
-
-@app.post("/api/account/models/generate", response_model=GenerationResponse)
-async def start_account_model_generation(
-    request: AccountGenerateRequest,
-    background_tasks: BackgroundTasks,
-    user: dict[str, Any] = Depends(_current_user_from_token),
-):
-    profile = _ensure_user_profile(user)
-    models = _list_user_models(user["uid"])
-    usage = _usage_from_models(models)
-    if usage["remaining"] <= 0:
-        raise HTTPException(
-            status_code=402,
-            detail="Безкоштовний ліміт 10 повних генерацій вичерпано. Напишіть нам або оформіть оплату.",
-        )
-
-    try:
-        generation_payload = dict(request.generation_request)
-        bounds = request.bounds or {}
-        for key in ("north", "south", "east", "west"):
-            generation_payload.setdefault(key, bounds.get(key))
-        generation_payload.setdefault("model_size_mm", request.model_size_mm)
-        generation_payload.setdefault("context_padding_m", 400.0)
-        generation_payload.setdefault("export_format", "3mf")
-        generation_request = GenerationRequest(**generation_payload)
-
-        task_id = str(uuid.uuid4())
-        task = GenerationTask(task_id=task_id, request=generation_request, status="processing", progress=0, message="У черзі генерації")
-        tasks[task_id] = task
-
-        model_id = f"M-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-        model = {
-            "id": model_id,
-            "uid": user["uid"],
-            "task_id": task_id,
-            "title": request.title or f"3D-мапа {request.city}",
-            "city": request.city,
-            "preview_id": request.preview_id,
-            "preview_snapshot": request.preview_snapshot,
-            "bounds": request.bounds,
-            "polygon_geojson": request.polygon_geojson,
-            "model_size_mm": request.model_size_mm,
-            "material": request.material,
-            "layers": request.layers,
-            "generation_request": generation_payload,
-            "status": "processing",
-            "progress": 0,
-            "message": "Генерацію поставлено в чергу",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        _write_json(_model_path(user["uid"], model_id), model)
-        background_tasks.add_task(generate_account_model_task, user["uid"], model_id, task_id, generation_request)
-        return GenerationResponse(task_id=task_id, status="processing", message=f"Модель {model_id} створюється")
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Не вдалося створити модель в кабінеті: {exc}")
 
 
 @app.post("/api/generate", response_model=GenerationResponse)
@@ -999,6 +601,32 @@ async def download_model(
         raise HTTPException(status_code=400, detail="Model not ready")
     
     print(f"[DEBUG] Download request: task={task_id}, format={format}, part={part}")
+
+    output_files = getattr(task, "output_files", {}) or {}
+    preview_mode = bool(getattr(getattr(task, "request", None), "preview_mode", False))
+
+    def _serve_local_file(local_path: str):
+        print(f"[INFO] Serving local file: {local_path}")
+        lower = local_path.lower()
+        if lower.endswith(".3mf"):
+            mt = "model/3mf"
+        elif lower.endswith(".glb"):
+            mt = "model/gltf-binary"
+        else:
+            mt = "application/octet-stream"
+        return FileResponse(local_path, media_type=mt, filename=Path(local_path).name)
+
+    if preview_mode:
+        if part:
+            raise HTTPException(status_code=404, detail="Preview uses a single local GLB file")
+
+        preview_path = output_files.get("glb") or output_files.get("3mf")
+        if not preview_path and task.output_file and task.output_file.lower().endswith((".glb", ".3mf")):
+            preview_path = task.output_file
+        if preview_path and Path(preview_path).exists():
+            return _serve_local_file(preview_path)
+
+        raise HTTPException(status_code=404, detail="Local preview file not found")
     
     # 1. Р’РёР·РЅР°С‡Р°С”РјРѕ РєР»СЋС‡ РїРѕС‚СЂС–Р±РЅРѕРіРѕ С„Р°Р№Р»Сѓ РІ Firebase
     target_key = None
@@ -1023,7 +651,10 @@ async def download_model(
     
     # РЇРєС‰Рѕ С†Рµ РѕСЃРЅРѕРІРЅРёР№ С„Р°Р№Р», РјРѕР¶Рµ Р±СѓС‚Рё РІ task.firebase_url
     if not firebase_url and (not part) and task.firebase_url:
-         firebase_url = task.firebase_url
+         requested_fmt = (format or "").lower().strip(".")
+         firebase_ext = Path(str(task.firebase_url).split("?", 1)[0]).suffix.lstrip(".").lower()
+         if not requested_fmt or not firebase_ext or firebase_ext == requested_fmt:
+             firebase_url = task.firebase_url
 
     # Fallback: СЏРєС‰Рѕ РїРѕС‚СЂС–Р±РЅР° С‡Р°СЃС‚РёРЅР° (base_3mf, roads_3mf С‚РѕС‰Рѕ) РІС–РґСЃСѓС‚РЅСЏ вЂ” РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РѕСЃРЅРѕРІРЅРёР№ 3MF
     # (РѕРєСЂРµРјС– С‡Р°СЃС‚РёРЅРё РЅРµ Р·Р°РІР°РЅС‚Р°Р¶СѓСЋС‚СЊСЃСЏ, 3MF РјС–СЃС‚РёС‚СЊ СѓСЃС– РєРѕРјРїРѕРЅРµРЅС‚Рё РІ РѕРґРЅРѕРјСѓ С„Р°Р№Р»С–)
@@ -1038,13 +669,45 @@ async def download_model(
             if firebase_url:
                 print(f"[INFO] Part {part}_3mf not found, using main 3MF file (contains all parts)")
 
+    # FALLBACK: якщо немає Firebase URL (preview-mode пропускає Firebase upload,
+    # або просто перший запуск без cloud) — шукаємо файл локально на диску.
     if not firebase_url:
-        # РЇРєС‰Рѕ С†Рµ POI С– Р№РѕРіРѕ РЅРµРјР°С” - 404
+        local_path: Optional[str] = None
+
+        # 1. Точний ключ у task.output_files (e.g. "3mf", "base_3mf", "roads_stl")
+        if target_key and target_key in output_files:
+            cand = output_files[target_key]
+            if cand and Path(cand).exists():
+                local_path = cand
+
+        # 2. Якщо це основний файл (без part) — пробуємо task.output_file
+        if not local_path and not part and task.output_file and Path(task.output_file).exists():
+            requested_fmt = (format or "").lower().strip(".")
+            output_ext = Path(task.output_file).suffix.lstrip(".").lower()
+            if requested_fmt and output_ext and output_ext != requested_fmt:
+                local_path = None
+            else:
+                local_path = task.output_file
+
+        # 3. Якщо запитали part у 3mf і немає окремої part-файлу — віддаємо основний
+        #    (вся scene у одному 3mf файлі)
+        if not local_path and part and (format or "").lower() == "3mf":
+            valid_parts = {"base", "roads", "buildings", "water", "parks", "green"}
+            if part.lower() in valid_parts:
+                main_3mf = output_files.get("3mf")
+                if main_3mf and Path(main_3mf).exists():
+                    local_path = main_3mf
+                    print(f"[INFO] Part {part}_3mf not on disk, using main 3MF (contains all parts)")
+                elif task.output_file and task.output_file.lower().endswith(".3mf") and Path(task.output_file).exists():
+                    local_path = task.output_file
+
+        if local_path:
+            return _serve_local_file(local_path)
+
         if part == "poi":
             print(f"[INFO] POI part not available (expected), returning 404")
-        
-        print(f"[WARN] File not found in Firebase: key={target_key}")
-        raise HTTPException(status_code=404, detail=f"File not found in Firebase: {target_key}")
+        print(f"[WARN] File not found in Firebase or locally: key={target_key}")
+        raise HTTPException(status_code=404, detail=f"File not found: {target_key}")
 
     # 3. Р—Р°РІР°РЅС‚Р°Р¶СѓС”РјРѕ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
     print(f"[INFO] Proxying file from Firebase: {firebase_url}")
@@ -1311,7 +974,6 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
     """
     import hashlib
     import json
-    import math
     
     try:
         # РЎС‚РІРѕСЂСЋС”РјРѕ С…РµС€ РїР°СЂР°РјРµС‚СЂС–РІ РґР»СЏ С–РґРµРЅС‚РёС„С–РєР°С†С–С— СЃС–С‚РєРё
@@ -1348,36 +1010,6 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
         )
         bbox_meters = bbox_utm[:4]  # (minx, miny, maxx, maxy)
         to_wgs84 = bbox_utm[6]  # Р¤СѓРЅРєС†С–СЏ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— UTM -> WGS84 (С–РЅРґРµРєСЃ 6)
-        minx, miny, maxx, maxy = bbox_meters
-
-        max_grid_cells = 1500
-        if grid_type == 'square':
-            estimated_cells = (math.ceil((maxx - minx) / request.hex_size_m) + 1) * (
-                math.ceil((maxy - miny) / request.hex_size_m) + 1
-            )
-        elif grid_type == 'circle':
-            diameter_m = request.hex_size_m
-            estimated_cells = (math.ceil((maxx - minx) / diameter_m) + 1) * (
-                math.ceil((maxy - miny) / diameter_m) + 1
-            )
-        else:
-            hex_width = math.sqrt(3) * request.hex_size_m
-            hex_height = 1.5 * request.hex_size_m
-            estimated_cells = (math.ceil((maxx - minx) / hex_width) + 2) * (
-                math.ceil((maxy - miny) / hex_height) + 2
-            )
-
-        if estimated_cells > max_grid_cells:
-            suggested_size = math.ceil(
-                request.hex_size_m * math.sqrt(estimated_cells / max_grid_cells) / 100
-            ) * 100
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Сітка занадто щільна для цієї області: приблизно {estimated_cells} клітинок. "
-                    f"Збільште розмір клітинки до ~{suggested_size} м або виберіть меншу область."
-                ),
-            )
         
         # Р“РµРЅРµСЂСѓС”РјРѕ СЃС–С‚РєСѓ (С€РµСЃС‚РёРєСѓС‚РЅРёРєРё, РєРІР°РґСЂР°С‚Рё Р°Р±Рѕ РєСЂСѓРіРё)
         if grid_type == 'square':
@@ -1441,8 +1073,6 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ Р·Р±РµСЂРµРіС‚Рё СЃС–С‚РєСѓ РІ РєРµС€: {e}")
         
         return response
-    except HTTPException:
-        raise
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
@@ -1477,14 +1107,17 @@ class ZoneGenerationRequest(BaseModel):
     water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ
     terrain_enabled: bool = True
     terrain_z_scale: float = Field(default=0.5, ge=0.1, le=10.0)
-    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)
-    terrain_resolution: int = Field(default=350, ge=50, le=500)
+    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РџС–РґР»РѕР¶РєР° 0.3РјРј Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј
+    terrain_resolution: int = Field(default=180, ge=50, le=500)
     terrarium_zoom: int = Field(default=15, ge=10, le=18)
     terrain_smoothing_sigma: Optional[float] = Field(default=None, ge=0.0, le=5.0)
-    terrain_subdivide: bool = True
+    terrain_subdivide: bool = False
     terrain_subdivide_levels: int = Field(default=1, ge=1, le=3)
-    flatten_buildings_on_terrain: bool = False
+    flatten_buildings_on_terrain: bool = True
     flatten_roads_on_terrain: bool = False
+    # Fast preview mode (~30s): skip Blender groove cutting + manifold cleanup,
+    # downscale terrain to 60x60. Same content as full mode.
+    preview_mode: bool = False
     export_format: str = Field(default="3mf", pattern="^(stl|3mf)$")
     context_padding_m: float = Field(default=400.0, ge=0.0, le=5000.0)
     # Fast mode for stitching diagnostics: generate only terrain (optionally with water depression)
@@ -1494,6 +1127,33 @@ class ZoneGenerationRequest(BaseModel):
     parks_embed_mm: float = Field(default=1.0, ge=0.0, le=2.0)
     include_pois: bool = False # POI removed but keep field for compatibility
     is_ams_mode: bool = False
+    flat_plate_mode: bool = False
+    flat_water_layer_mm: float = Field(default=0.22, ge=0.0, le=5.0)
+    flat_roads_layer_mm: float = Field(default=0.42, ge=0.0, le=5.0)
+    flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
+    flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
+    keychain_mode: bool = False
+    keychain_label: str = Field(default="", max_length=64)
+    keychain_base_shape: str = Field(default="rounded", max_length=24)
+    keychain_loop_style: str = Field(default="round", max_length=24)
+    keychain_loop_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
+    keychain_body_width_mm: float = Field(default=78.0, ge=20.0, le=180.0)
+    keychain_body_height_mm: float = Field(default=48.0, ge=16.0, le=140.0)
+    keychain_map_x_mm: float = Field(default=0.0, ge=0.0, le=180.0)
+    keychain_map_y_mm: float = Field(default=0.0, ge=0.0, le=140.0)
+    keychain_map_width_mm: float = Field(default=78.0, ge=4.0, le=180.0)
+    keychain_map_height_mm: float = Field(default=38.0, ge=4.0, le=140.0)
+    keychain_loop_center_x_mm: float = Field(default=8.5, ge=-30.0, le=210.0)
+    keychain_loop_center_y_mm: float = Field(default=-4.0, ge=-40.0, le=180.0)
+    keychain_label_center_x_mm: float = Field(default=39.0, ge=0.0, le=180.0)
+    keychain_label_center_y_mm: float = Field(default=43.5, ge=0.0, le=140.0)
+    keychain_label_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
+    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=3.5, le=18.0)
+    keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
+    keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
+    keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
+    keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
+    keychain_label_text_height_mm: float = Field(default=3.8, ge=1.0, le=12.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -1510,36 +1170,11 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     # С– С–РґРµР°Р»СЊРЅРѕ РїС–РґС…РѕРґСЏС‚СЊ РѕРґРЅР° РґРѕ РѕРґРЅРѕС—
     print(f"[INFO] Р’РёР·РЅР°С‡РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ РґР»СЏ РІСЃС–С”С— СЃС–С‚РєРё ({len(request.zones)} Р·РѕРЅ)...")
     
-    selected_grid_bbox = None
-    all_lons = []
-    all_lats = []
-    for zone in request.zones:
-        geometry = zone.get('geometry', {})
-        if geometry.get('type') != 'Polygon':
-            continue
-        coordinates = geometry.get('coordinates', [])
-        if not coordinates or len(coordinates) == 0:
-            continue
-        all_coords = [coord for ring in coordinates for coord in ring]
-        zone_lons = [coord[0] for coord in all_coords]
-        zone_lats = [coord[1] for coord in all_coords]
-        all_lons.extend(zone_lons)
-        all_lats.extend(zone_lats)
-    if len(all_lons) == 0 or len(all_lats) == 0:
-        raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё РєРѕРѕСЂРґРёРЅР°С‚Рё Р·РѕРЅ")
-    selected_grid_bbox = {
-        'north': max(all_lats),
-        'south': min(all_lats),
-        'east': max(all_lons),
-        'west': min(all_lons)
-    }
-
     grid_bbox = None
-    # 1) Use explicit city bbox only for larger batches. For small interactive
-    # selections, a full-city DEM scan blocks the request before a task id is returned.
+    # 1) Prefer explicit city bbox (stable across later zone additions)
     try:
         if request.north is not None and request.south is not None and request.east is not None and request.west is not None:
-            if len(request.zones) > 3 and float(request.north) > float(request.south) and float(request.east) > float(request.west):
+            if float(request.north) > float(request.south) and float(request.east) > float(request.west):
                 grid_bbox = {
                     "north": float(request.north),
                     "south": float(request.south),
@@ -1549,9 +1184,30 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     except Exception:
         grid_bbox = None
 
-    # 2) Fallback: compute bbox from selected zones (fast interactive behavior)
+    # 2) Fallback: compute bbox from selected zones (old behavior)
     if grid_bbox is None:
-        grid_bbox = selected_grid_bbox
+        all_lons = []
+        all_lats = []
+        for zone in request.zones:
+            geometry = zone.get('geometry', {})
+            if geometry.get('type') != 'Polygon':
+                continue
+            coordinates = geometry.get('coordinates', [])
+            if not coordinates or len(coordinates) == 0:
+                continue
+            all_coords = [coord for ring in coordinates for coord in ring]
+            zone_lons = [coord[0] for coord in all_coords]
+            zone_lats = [coord[1] for coord in all_coords]
+            all_lons.extend(zone_lons)
+            all_lats.extend(zone_lats)
+        if len(all_lons) == 0 or len(all_lats) == 0:
+            raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё РєРѕРѕСЂРґРёРЅР°С‚Рё Р·РѕРЅ")
+        grid_bbox = {
+            'north': max(all_lats),
+            'south': min(all_lats),
+            'east': max(all_lons),
+            'west': min(all_lons)
+        }
     
     # Р’РёР·РЅР°С‡Р°С”РјРѕ С†РµРЅС‚СЂ РІСЃС–С”С— СЃС–С‚РєРё
     grid_center_lat = (grid_bbox['north'] + grid_bbox['south']) / 2.0
@@ -1765,6 +1421,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             export_format=request.export_format,
             context_padding_m=request.context_padding_m,
             terrain_only=bool(getattr(request, "terrain_only", False)),
+            preview_mode=bool(getattr(request, "preview_mode", False)) and not bool(getattr(request, "flat_plate_mode", False)),
             include_parks=request.include_parks,
             parks_height_mm=request.parks_height_mm,
             parks_embed_mm=request.parks_embed_mm,
@@ -1774,7 +1431,34 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             baseline_offset_m=global_baseline_offset_m,  # Р“Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
             preserve_global_xy=True,  # IMPORTANT: export in a shared coordinate frame for stitching
             grid_step_m=global_grid_step_m,  # GLOBAL GRID FIX
-            is_ams_mode=request.is_ams_mode,
+            is_ams_mode=request.is_ams_mode and not bool(getattr(request, "flat_plate_mode", False)),
+            flat_plate_mode=bool(getattr(request, "flat_plate_mode", False)),
+            flat_water_layer_mm=float(getattr(request, "flat_water_layer_mm", 0.22)),
+            flat_roads_layer_mm=float(getattr(request, "flat_roads_layer_mm", 0.42)),
+            flat_parks_layer_mm=float(getattr(request, "flat_parks_layer_mm", 0.36)),
+            flat_max_building_height_mm=float(getattr(request, "flat_max_building_height_mm", 0.0)),
+            keychain_mode=bool(getattr(request, "keychain_mode", False)),
+            keychain_label=str(getattr(request, "keychain_label", "") or ""),
+            keychain_base_shape=str(getattr(request, "keychain_base_shape", "rounded") or "rounded"),
+            keychain_loop_style=str(getattr(request, "keychain_loop_style", "round") or "round"),
+            keychain_loop_angle_deg=float(getattr(request, "keychain_loop_angle_deg", 0.0)),
+            keychain_body_width_mm=float(getattr(request, "keychain_body_width_mm", 78.0)),
+            keychain_body_height_mm=float(getattr(request, "keychain_body_height_mm", 48.0)),
+            keychain_map_x_mm=float(getattr(request, "keychain_map_x_mm", 0.0)),
+            keychain_map_y_mm=float(getattr(request, "keychain_map_y_mm", 0.0)),
+            keychain_map_width_mm=float(getattr(request, "keychain_map_width_mm", 78.0)),
+            keychain_map_height_mm=float(getattr(request, "keychain_map_height_mm", 38.0)),
+            keychain_loop_center_x_mm=float(getattr(request, "keychain_loop_center_x_mm", 8.5)),
+            keychain_loop_center_y_mm=float(getattr(request, "keychain_loop_center_y_mm", -4.0)),
+            keychain_label_center_x_mm=float(getattr(request, "keychain_label_center_x_mm", 39.0)),
+            keychain_label_center_y_mm=float(getattr(request, "keychain_label_center_y_mm", 43.5)),
+            keychain_label_angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0)),
+            keychain_loop_outer_radius_mm=float(getattr(request, "keychain_loop_outer_radius_mm", 6.5)),
+            keychain_loop_inner_radius_mm=float(getattr(request, "keychain_loop_inner_radius_mm", 3.0)),
+            keychain_corner_radius_mm=float(getattr(request, "keychain_corner_radius_mm", 4.0)),
+            keychain_label_band_height_mm=float(getattr(request, "keychain_label_band_height_mm", 9.0)),
+            keychain_label_raise_mm=float(getattr(request, "keychain_label_raise_mm", 0.45)),
+            keychain_label_text_height_mm=float(getattr(request, "keychain_label_text_height_mm", 3.8)),
         )
         
         # Р“РµРЅРµСЂСѓС”РјРѕ РјРѕРґРµР»СЊ РґР»СЏ Р·РѕРЅРё
@@ -1859,6 +1543,92 @@ def generate_model_task(
     task = tasks[task_id]
     zone_prefix = f"[{zone_id}] " if zone_id else ""
 
+    # ULTRA-FAST PREVIEW MODE (~30s target): aggressively trim every heavy
+    # input so the deep pipeline produces a buyer-friendly model fast.
+    # Deep helpers in terrain_cutter / mesh_quality / full_generation_pipeline
+    # / export_pipeline read the PREVIEW_MODE env var directly so we don't
+    # have to thread a new param through 5+ layers.
+    flat_plate_mode = bool(getattr(request, "flat_plate_mode", False))
+    preview_mode = bool(getattr(request, "preview_mode", False)) and not flat_plate_mode
+    if flat_plate_mode and bool(getattr(request, "keychain_mode", False)):
+        try:
+            if float(getattr(request, "context_padding_m", 0) or 0) > 35.0:
+                request.context_padding_m = 35.0
+        except Exception:
+            request.context_padding_m = 35.0
+    if preview_mode:
+        os.environ["PREVIEW_MODE"] = "1"
+        request.export_format = "glb"
+        # Boolean grooves in newer pipeline go through resolve_boolean_backend
+        # which reads BOOLEAN_BACKEND env var. "noop" = NoOpBooleanBackend that
+        # returns terrain unchanged → grooves visible on the screenshot vanish.
+        os.environ["BOOLEAN_BACKEND"] = "noop"
+        try:
+            # 1. Smaller terrain mesh (50×50 ≈ 2500 verts vs 350×350 = 122k)
+            if int(getattr(request, "terrain_resolution", 0) or 0) > 50:
+                request.terrain_resolution = 50
+            # 2. Skip terrain smoothing (Gaussian) — fast pass on raw DEM
+            if getattr(request, "terrain_smoothing_sigma", 0):
+                request.terrain_smoothing_sigma = 0.0
+            # 3. Skip subdivision (doubles vertex count each level)
+            if hasattr(request, "terrain_subdivide"):
+                request.terrain_subdivide = False
+            # 4. Lower DEM zoom — fewer Mapbox tiles to fetch (each ~256 px)
+            try:
+                if int(getattr(request, "terrarium_zoom", 0) or 0) > 13:
+                    request.terrarium_zoom = 13
+            except Exception:
+                pass
+            # 5. Trim OSM context padding — less Overpass payload to download
+            try:
+                if float(getattr(request, "context_padding_m", 0) or 0) > 50.0:
+                    request.context_padding_m = 50.0
+            except Exception:
+                pass
+            # 6. Roads sit FLAT on terrain (no inlay embed). Without groove
+            # cuts the original road inlay mesh (embedded 2m into terrain)
+            # punched ragged dark slivers above the surface — looked like
+            # broken textures. road_embed=0 lifts the road plate onto the
+            # surface so it reads as a clean coloured ribbon.
+            try:
+                request.road_embed_mm = 0.0
+            except Exception:
+                pass
+            try:
+                # Very thin road plate so it can't punch through slopes.
+                # 0.15mm in model ≈ 1m world — reads as a flat dark ribbon
+                # without sliver artifacts on rolling terrain.
+                request.road_height_mm = 0.15
+            except Exception:
+                pass
+            # 7. Parks sit flat on terrain — embed=0. Default 1.0mm × (1/0.143)
+            # = ~7m world embed, but without groove cut that embedded portion
+            # cuts through terrain leaving dark slivers around park edges.
+            try:
+                request.parks_embed_mm = 0.0
+            except Exception:
+                pass
+            try:
+                # Thinner park top so any remaining height contrast is small.
+                if float(getattr(request, "parks_height_mm", 0) or 0) > 0.3:
+                    request.parks_height_mm = 0.3
+            except Exception:
+                pass
+        except Exception:
+            pass
+        print(
+            f"[INFO] {zone_prefix}PREVIEW MODE ON: "
+            f"terrain={getattr(request, 'terrain_resolution', '?')}, "
+            f"smoothing={getattr(request, 'terrain_smoothing_sigma', '?')}, "
+            f"subdivide={getattr(request, 'terrain_subdivide', '?')}, "
+            f"zoom={getattr(request, 'terrarium_zoom', '?')}, "
+            f"padding={getattr(request, 'context_padding_m', '?')}m; "
+            f"grooves/manifold/print-gate/boolean/firebase/preview-parts ALL skipped"
+        )
+    else:
+        os.environ.pop("PREVIEW_MODE", None)
+        os.environ.pop("BOOLEAN_BACKEND", None)
+
     _apply_default_canonical_bundle_if_needed(
         request,
         zone_id=zone_id,
@@ -1869,6 +1639,7 @@ def generate_model_task(
     _normalize_request_base_thickness(request, zone_prefix=zone_prefix)
     
     print(f"[DEBUG] {zone_prefix} AMS Mode: {'ENABLED' if request.is_ams_mode else 'DISABLED'}")
+    print(f"[DEBUG] {zone_prefix} Flat Plate Mode: {'ENABLED' if flat_plate_mode else 'DISABLED'}")
     
     try:
         runtime_context = prepare_generation_runtime_context(
@@ -1877,6 +1648,15 @@ def generate_model_task(
         )
         latlon_bbox = runtime_context.latlon_bbox
         global_center = runtime_context.global_center
+
+        file_basename = _make_export_basename(
+            task_id,
+            hex_size_m=hex_size_m,
+            model_size_mm=getattr(request, "model_size_mm", None),
+            zone_row=zone_row,
+            zone_col=zone_col,
+        )
+        print(f"[INFO] {zone_prefix}File basename: {file_basename}")
 
         workflow_result = run_full_generation_pipeline(
             task=task,
@@ -1893,6 +1673,7 @@ def generate_model_task(
             zone_prefix=zone_prefix,
             min_printable_gap_mm=MIN_PRINTABLE_GAP_MM,
             groove_clearance_mm=GROOVE_CLEARANCE_MM,
+            file_basename=file_basename,
         )
         if workflow_result.terrain_only_result is not None:
             return
@@ -1907,46 +1688,6 @@ def generate_model_task(
         # IMPORTANT: don't re-raise from background task, otherwise Starlette logs it as ASGI error
         # and it can interrupt other tasks. The failure is already recorded in task state.
         return
-
-
-def generate_account_model_task(
-    uid: str,
-    model_id: str,
-    task_id: str,
-    request: GenerationRequest,
-) -> None:
-    model_path = _model_path(uid, model_id)
-    model = _read_json(model_path, {})
-    try:
-        model.update({
-            "status": "processing",
-            "message": "Повна модель створюється",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        })
-        _write_json(model_path, model)
-        generate_model_task(task_id, request)
-    finally:
-        task = tasks.get(task_id)
-        model = _read_json(model_path, model)
-        if task is not None:
-            model.update({
-                "status": task.status,
-                "progress": task.progress,
-                "message": task.message,
-                "error": task.error,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                **_task_output_payload(task),
-            })
-            if task.status in {"completed", "failed"}:
-                model["finished_at"] = datetime.now(timezone.utc).isoformat()
-        else:
-            model.update({
-                "status": "failed",
-                "message": "Backend перезапустився під час генерації",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                "finished_at": datetime.now(timezone.utc).isoformat(),
-            })
-        _write_json(model_path, model)
 
 
 if __name__ == "__main__":

@@ -35,13 +35,23 @@ def fetch_generation_data(
     print(f"[DEBUG] {zone_prefix} Starting parallel data fetch for zone...")
 
     def get_city_data():
-        road_padding = 0.01
+        if bool(getattr(request, "keychain_mode", False)):
+            padding_m = max(float(getattr(request, "context_padding_m", 35.0) or 35.0), 0.0)
+            # Keychains are standalone crops, so we only need enough outside
+            # context for roads touching the edge. The normal map workflow
+            # fetches a much larger neighborhood for bridges/stitching, which
+            # makes tiny keychain previews spend most time on irrelevant roads.
+            road_padding = min(padding_m / 111_000.0, 0.001)
+            loader_padding = 0.0
+        else:
+            road_padding = 0.01
+            loader_padding = 0.005
         return fetch_city_data(
             request.north + road_padding,
             request.south - road_padding,
             request.east + road_padding,
             request.west - road_padding,
-            padding=0.005,
+            padding=loader_padding,
             target_crs=global_center.utm_crs if global_center else None,
         )
 

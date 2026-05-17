@@ -57,7 +57,7 @@ def _run_blender_boolean(
 
     terrain_path = os.path.abspath(os.path.join(temp_dir, "terrain.obj"))
     cutter_path = os.path.abspath(os.path.join(temp_dir, "cutter.obj"))
-    result_path = os.path.abspath(os.path.join(temp_dir, "result.obj"))
+    result_path = os.path.abspath(os.path.join(temp_dir, "result.stl"))
     script_path = os.path.abspath(os.path.join(temp_dir, "boolean.py"))
 
     try:
@@ -133,9 +133,9 @@ bpy.ops.object.select_all(action='DESELECT')
 terrain.select_set(True)
 bpy.context.view_layer.objects.active = terrain
 try:
-    bpy.ops.wm.obj_export(filepath=r"{result_path}", export_selected_objects=True)
-except Exception:
-    bpy.ops.export_scene.obj(filepath=r"{result_path}", use_selection=True)
+    bpy.ops.wm.stl_export(filepath=r"{result_path}", export_selected_objects=True)
+except:
+    bpy.ops.export_mesh.stl(filepath=r"{result_path}", use_selection=True)
 
 print("BOOLEAN_SUCCESS")
 """
@@ -168,7 +168,7 @@ print("BOOLEAN_SUCCESS")
 
         # Завантажуємо результат
         if os.path.exists(result_path):
-            result_mesh = trimesh.load(result_path, file_type="obj", force="mesh")
+            result_mesh = trimesh.load(result_path, file_type="stl", force="mesh")
 
             if isinstance(result_mesh, trimesh.Scene):
                 geoms = list(result_mesh.geometry.values())
@@ -488,6 +488,263 @@ def extend_road_mesh_to_uniform_bottom(road_mesh: "trimesh.Trimesh") -> None:
     road_mesh.fix_normals()
 
 
+def extend_buildings_mesh_to_uniform_bottom(
+    building_meshes: Optional[List["trimesh.Trimesh"]],
+    target_z: float,
+) -> None:
+    """Опускає нижні грані КОЖНОЇ будівлі до спільного `target_z`.
+
+    Аналогічно `extend_road_mesh_to_uniform_bottom`: знаходимо downward-facing
+    faces (normal.z < -0.5) і переносимо їх vertices у `target_z`. Бокові
+    стіни автоматично стають довшими — building solid тепер з'єднується з
+    підложкою terrain, перекриття/overhang з рельєфом зникає (саме те, на що
+    скаржиться Bambu Studio: "плаваюча консоль" біля будівель на схилах).
+
+    Виклик у pipeline ПІСЛЯ `process_buildings(...)` коли terrain_mesh готовий:
+        target_z = float(terrain_mesh.bounds[0][2])  # дно підложки
+        extend_buildings_mesh_to_uniform_bottom(building_meshes, target_z=target_z)
+    """
+    if not building_meshes:
+        return
+    for mesh in building_meshes:
+        if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
+            continue
+        try:
+            faces = mesh.faces
+            vertices = mesh.vertices.copy()
+            norms = mesh.face_normals
+            bottom_face_mask = norms[:, 2] < -0.5
+            if not np.any(bottom_face_mask):
+                continue
+            bottom_vertex_indices = np.unique(faces[bottom_face_mask].ravel())
+            vertices[bottom_vertex_indices, 2] = float(target_z)
+            mesh.vertices = vertices
+            try:
+                mesh.fix_normals()
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"[WARN] extend_buildings_mesh_to_uniform_bottom failed for one mesh: {e}")
+            continue
+
+
+def flatten_inlay_to_terrain_decal(
+    inlay_mesh: Optional["trimesh.Trimesh"],
+    terrain_provider,
+    offset_m: float = 0.05,
+) -> Optional["trimesh.Trimesh"]:
+    """Convert a 3D inlay (road/park/water) into a thin coloured decal hugging
+    the terrain surface — for the FAST PREVIEW path.
+
+    Approach: extract the inlay's 2D footprint (its highest-z vertices per
+    XY position), keep the triangulation between those vertices, then drape
+    them onto terrain_provider's surface at `terrain_height + offset_m`.
+
+    Why per-vertex max-Z instead of "top face by normal":
+      The previous version filtered faces by normal.z > 0.5 which discarded
+      top faces sitting on slopes (their normal tilts as the road follows
+      the hill). After draping every vertex to terrain anyway, the precise
+      original Z doesn't matter — we just need ONE vertex per XY position.
+
+    Result: a single-layer triangulated sheet sitting strictly on terrain,
+    no side walls, no embedded bottom, no slivers possible.
+    """
+    if inlay_mesh is None or len(inlay_mesh.vertices) == 0 or len(inlay_mesh.faces) == 0:
+        return inlay_mesh
+    try:
+        V = np.asarray(inlay_mesh.vertices, dtype=float)
+        F = np.asarray(inlay_mesh.faces, dtype=np.int64)
+
+        # Step 1: collapse duplicate XY columns — keep the vertex with the
+        # highest Z (= top surface). This effectively flattens stacks of
+        # top/bottom verts at the same (x,y) into one decal vertex.
+        # Quantize to 1mm in model space to merge ~equal coordinates.
+        keys = np.round(V[:, :2], 3)
+        # Use structured-array trick for unique-by-row + which-index
+        view = np.ascontiguousarray(keys).view(
+            np.dtype((np.void, keys.dtype.itemsize * keys.shape[1]))
+        )
+        _, unique_inv = np.unique(view, return_inverse=True)
+        n_unique = int(unique_inv.max() + 1) if len(unique_inv) else 0
+        if n_unique == 0:
+            return inlay_mesh
+        new_verts = np.zeros((n_unique, 3), dtype=float)
+        # representative XY = average of duplicates (close enough since
+        # quantized to 1mm), Z = max over duplicates
+        np.add.at(new_verts[:, :2], unique_inv, V[:, :2])
+        counts = np.bincount(unique_inv, minlength=n_unique).astype(float)
+        counts[counts == 0] = 1.0
+        new_verts[:, :2] = new_verts[:, :2] / counts[:, None]
+        z_max = np.full(n_unique, -np.inf, dtype=float)
+        np.maximum.at(z_max, unique_inv, V[:, 2])
+        new_verts[:, 2] = z_max
+
+        # Step 2: remap faces, drop degenerate ones (where two or more
+        # corners collapsed to the same XY).
+        new_F = unique_inv[F]
+        non_deg = (
+            (new_F[:, 0] != new_F[:, 1]) &
+            (new_F[:, 1] != new_F[:, 2]) &
+            (new_F[:, 0] != new_F[:, 2])
+        )
+        new_F = new_F[non_deg]
+        if len(new_F) == 0:
+            return inlay_mesh
+
+        # Step 3: drape every vertex to terrain + offset. After this Z values
+        # come from the terrain provider, not the original inlay solid.
+        if terrain_provider is not None and len(new_verts) > 0:
+            try:
+                heights = terrain_provider.get_surface_heights_for_points(new_verts[:, :2])
+                if heights is not None and len(heights) == len(new_verts):
+                    heights = np.where(np.isfinite(heights), heights, new_verts[:, 2])
+                    new_verts[:, 2] = heights + float(offset_m)
+            except Exception as e:
+                print(f"[WARN] flatten_inlay_to_terrain_decal: draping failed: {e}")
+
+        return trimesh.Trimesh(vertices=new_verts, faces=new_F, process=False)
+    except Exception as e:
+        print(f"[WARN] flatten_inlay_to_terrain_decal failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return inlay_mesh
+
+
+def build_terrain_decal_from_2d_mask(
+    mask_geometry,
+    terrain_provider,
+    offset_m: float = 0.75,
+    target_edge_len_m: float = 4.0,
+    simplify_tolerance_m: float = 0.0,
+) -> Optional["trimesh.Trimesh"]:
+    """Build a preview-only surface decal from a canonical 2D mask.
+
+    This intentionally ignores the source inlay mesh triangulation. Some park
+    and road solids are triangulated as large fans; once draped onto terrain,
+    those long triangles cut through hills and show visible rays.
+
+    Use constrained polygon triangulation first so the boundary follows the
+    canonical mask exactly, then subdivide long edges so the surface samples
+    terrain often enough to stay visibly above it.
+    """
+    if mask_geometry is None or getattr(mask_geometry, "is_empty", True) or terrain_provider is None:
+        return None
+
+    def _iter_polys(geom):
+        if geom is None or getattr(geom, "is_empty", True):
+            return []
+        if getattr(geom, "geom_type", "") == "Polygon":
+            return [geom]
+        return [
+            part for part in getattr(geom, "geoms", [])
+            if getattr(part, "geom_type", "") == "Polygon" and not getattr(part, "is_empty", True)
+        ]
+
+    def _clean_poly(poly):
+        try:
+            clean = poly.buffer(0)
+            tolerance = max(float(simplify_tolerance_m or 0.0), 0.0)
+            if tolerance > 0.0 and clean is not None and not getattr(clean, "is_empty", True):
+                simplified = clean.simplify(tolerance, preserve_topology=True)
+                if simplified is not None and not getattr(simplified, "is_empty", True):
+                    clean = simplified
+            if clean is not None and not getattr(clean, "is_empty", True):
+                return clean
+        except Exception:
+            pass
+        return poly
+
+    def _surface_mesh_from_polygon(poly) -> Optional[trimesh.Trimesh]:
+        try:
+            max_edge = max(float(target_edge_len_m or 0.0), 0.5)
+            max_area = max((max_edge * max_edge) * 0.45, 0.25)
+            vertices_2d = None
+            faces = None
+
+            for engine in ("triangle", "earcut", None):
+                try:
+                    kwargs = {"engine": engine} if engine is not None else {}
+                    if engine == "triangle":
+                        kwargs["triangle_args"] = f"pq30a{max_area:.6f}"
+                    vertices_2d, faces = trimesh.creation.triangulate_polygon(poly, **kwargs)
+                    if vertices_2d is not None and faces is not None and len(vertices_2d) >= 3 and len(faces) > 0:
+                        break
+                except Exception:
+                    vertices_2d = None
+                    faces = None
+                    continue
+
+            if vertices_2d is None or faces is None or len(vertices_2d) < 3 or len(faces) == 0:
+                return None
+
+            vertices_3d = np.column_stack(
+                [np.asarray(vertices_2d, dtype=float), np.zeros(len(vertices_2d), dtype=float)]
+            )
+            mesh = trimesh.Trimesh(vertices=vertices_3d, faces=np.asarray(faces, dtype=np.int64), process=False)
+            mesh.remove_unreferenced_vertices()
+
+            try:
+                verts, subdiv_faces = trimesh.remesh.subdivide_to_size(
+                    vertices=mesh.vertices,
+                    faces=mesh.faces,
+                    max_edge=max_edge,
+                    max_iter=4,
+                )
+                if len(verts) <= 120000 and len(subdiv_faces) > 0:
+                    mesh = trimesh.Trimesh(vertices=verts, faces=subdiv_faces, process=False)
+                    mesh.remove_unreferenced_vertices()
+            except Exception:
+                pass
+
+            return mesh if len(mesh.vertices) > 0 and len(mesh.faces) > 0 else None
+        except Exception as exc:
+            print(f"[WARN] build_terrain_decal_from_2d_mask: constrained triangulation failed: {exc}")
+            return None
+
+    meshes: list[trimesh.Trimesh] = []
+    try:
+        cleaned_polys = [_clean_poly(poly) for poly in _iter_polys(mask_geometry)]
+        valid_polys = [poly for poly in cleaned_polys if poly is not None and not getattr(poly, "is_empty", True)]
+        if valid_polys:
+            mask_geometry = unary_union(valid_polys).buffer(0)
+    except Exception:
+        pass
+
+    for poly in _iter_polys(mask_geometry):
+        if getattr(poly, "area", 0.0) <= 1e-6:
+            continue
+        clean = _clean_poly(poly)
+        mesh = _surface_mesh_from_polygon(clean)
+
+        if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
+            continue
+
+        try:
+            new_verts = np.asarray(mesh.vertices, dtype=float).copy()
+            heights = terrain_provider.get_surface_heights_for_points(new_verts[:, :2])
+            if heights is not None and len(heights) == len(new_verts):
+                heights = np.where(np.isfinite(heights), heights, new_verts[:, 2])
+                new_verts[:, 2] = heights + float(offset_m)
+
+            decal = trimesh.Trimesh(vertices=new_verts, faces=np.asarray(mesh.faces, dtype=np.int64), process=False)
+            decal.remove_unreferenced_vertices()
+            if len(decal.vertices) > 0 and len(decal.faces) > 0:
+                meshes.append(decal)
+        except Exception as exc:
+            print(f"[WARN] build_terrain_decal_from_2d_mask failed for polygon: {exc}")
+            continue
+
+    if not meshes:
+        return None
+
+    try:
+        combined = trimesh.util.concatenate(meshes)
+        combined.remove_unreferenced_vertices()
+        return combined
+    except Exception:
+        return meshes[0]
+
+
 def extend_parks_mesh_to_uniform_bottom(parks_mesh: "trimesh.Trimesh") -> None:
     """
     Продовжує дно парків вниз до найнижчої точки мешу.
@@ -513,13 +770,17 @@ def cut_parks_from_solid_terrain(
 ) -> Optional[trimesh.Trimesh]:
     """
     Вирізає ПАЗИ (Grooves) для парків у рельєфі.
-    
+
     АЛГОРИТМ (Inlay):
       1. Беремо оригінальний 3D меш парків (з урахуванням draping та embed_m).
       2. Передаємо його в Blender як cutter.
       3. Blender застосовує модифікатор DISPLACE (clearance_m) для точного 3D-розширення.
       4. Boolean DIFFERENCE створює паз, який ідеально повторює форму парку.
     """
+    # Preview mode: skip ~30-60s of Blender boolean. Parks just sit on terrain.
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        print("[TERRAIN CUT] PREVIEW_MODE: skipping parks groove cutting")
+        return terrain_mesh
     if terrain_mesh is None:
         return terrain_mesh
     
@@ -648,6 +909,10 @@ def cut_roads_from_solid_terrain(
     road_height_m: Optional[float] = None,
     road_mesh: Optional[trimesh.Trimesh] = None
 ) -> Optional[trimesh.Trimesh]:
+    # Preview mode: skip Blender groove cutting (~30-90s saved).
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        print("[TERRAIN CUT] PREVIEW_MODE: skipping roads groove cutting")
+        return terrain_mesh
     """
     Вирізає ПАЗИ (Grooves) для доріг у рельєфі.
 

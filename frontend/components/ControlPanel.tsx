@@ -226,6 +226,8 @@ export function ControlPanel({
     exportFormat,
     modelSizeMm,
     isAmsMode,
+    flatPlateMode,
+    previewMode,
     previewIncludeBase,
     previewIncludeRoads,
     previewIncludeBuildings,
@@ -247,6 +249,8 @@ export function ControlPanel({
     setExportFormat,
     setModelSizeMm,
     setAmsMode,
+    setFlatPlateMode,
+    setPreviewMode,
     setPreviewIncludeBase,
     setPreviewIncludeRoads,
     setPreviewIncludeBuildings,
@@ -349,17 +353,8 @@ export function ControlPanel({
           setGenerating(false);
           setError(single.message);
         }
-      } catch (pollError: any) {
+      } catch (pollError) {
         console.error("Помилка перевірки статусу:", pollError);
-        if (pollError?.response?.status === 404) {
-          setGenerating(false);
-          setTaskGroup(null, []);
-          setActiveTaskId(null);
-          setTaskStatuses({});
-          setDownloadUrl(null);
-          updateProgress(0, "");
-          setError("Попередню задачу не знайдено на сервері. Можна запускати нову генерацію.");
-        }
       } finally {
         pollingInFlightRef.current = false;
       }
@@ -369,18 +364,7 @@ export function ControlPanel({
       clearInterval(interval);
       pollingInFlightRef.current = false;
     };
-  }, [
-    taskGroupId,
-    isGenerating,
-    updateProgress,
-    setGenerating,
-    setDownloadUrl,
-    activeTaskId,
-    taskIds,
-    setTaskStatuses,
-    setTaskGroup,
-    setActiveTaskId,
-  ]);
+  }, [taskGroupId, isGenerating, updateProgress, setGenerating, setDownloadUrl, activeTaskId, taskIds, setTaskStatuses]);
 
   const handleGenerate = async () => {
     if (!selectedArea) {
@@ -415,7 +399,9 @@ export function ControlPanel({
         export_format: exportFormat,
         model_size_mm: modelSizeMm,
         context_padding_m: 400.0,
-        is_ams_mode: isAmsMode,
+        is_ams_mode: isAmsMode && !flatPlateMode,
+        flat_plate_mode: flatPlateMode,
+        preview_mode: previewMode && !flatPlateMode,
         preview_include_base: previewIncludeBase,
         preview_include_roads: previewIncludeRoads,
         preview_include_buildings: previewIncludeBuildings,
@@ -445,27 +431,29 @@ export function ControlPanel({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `model_${activeTaskId.slice(0, 8)}.${exportFormat}`;
-      document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-    } catch (downloadError) {
-      console.error("[Download Error]", downloadError);
-      setError("Помилка завантаження файлу");
-    }
-  };
-
-  const handleDownloadFormat = async (fmt: "3mf" | "stl") => {
-    if (!activeTaskId) return;
-    try {
-      const fbUrl = taskStatuses[activeTaskId]?.firebase_url;
-      const isFormatMatch = fbUrl && fbUrl.toLowerCase().split("?")[0].endsWith(`.${fmt}`);
-      const blob = fbUrl && isFormatMatch ? await api.downloadFile(fbUrl) : await api.downloadModel(activeTaskId, fmt);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `model_${activeTaskId.slice(0, 8)}.${fmt}`;
+      // Read descriptive basename (model_<grid>_<mm>_<row>_<col>) from
+      // backend's download_url instead of slicing the UUID — keeps the slicer
+      // label aligned with the on-disk filename produced by the backend.
+      const status = taskStatuses[activeTaskId];
+      const sources = [
+        status?.download_url,
+        status?.download_url_3mf,
+        status?.download_url_stl,
+        status?.firebase_url,
+      ];
+      let exportBasename = `model_${activeTaskId.slice(0, 8)}`;
+      for (const src of sources) {
+        if (!src) continue;
+        const path = String(src).split("?")[0];
+        const filename = path.split(/[\\/]/).pop() || "";
+        const dotIdx = filename.lastIndexOf(".");
+        const stem = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
+        if (stem && stem !== activeTaskId) {
+          exportBasename = stem;
+          break;
+        }
+      }
+      link.download = `${exportBasename}.${exportFormat}`;
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(url);
@@ -481,37 +469,6 @@ export function ControlPanel({
     south: 50.2,
     east: 30.8,
     west: 30.2,
-  };
-
-  const getSelectedZonesBounds = (zones: any[]) => {
-    const lats: number[] = [];
-    const lons: number[] = [];
-
-    zones.forEach((zone) => {
-      const coordinates = zone?.geometry?.coordinates;
-      if (!Array.isArray(coordinates)) return;
-      coordinates.forEach((ring: any[]) => {
-        if (!Array.isArray(ring)) return;
-        ring.forEach((coord) => {
-          if (!Array.isArray(coord) || coord.length < 2) return;
-          const lon = Number(coord[0]);
-          const lat = Number(coord[1]);
-          if (Number.isFinite(lat) && Number.isFinite(lon)) {
-            lats.push(lat);
-            lons.push(lon);
-          }
-        });
-      });
-    });
-
-    if (lats.length === 0 || lons.length === 0) return null;
-
-    return {
-      north: Math.max(...lats),
-      south: Math.min(...lats),
-      east: Math.max(...lons),
-      west: Math.min(...lons),
-    };
   };
 
   const handleGenerateZones = async () => {
@@ -537,9 +494,9 @@ export function ControlPanel({
         return aid.localeCompare(bid);
       });
 
-      let requestBounds = getSelectedZonesBounds(zonesSorted) || kyivBounds;
+      let requestBounds = kyivBounds;
       if (availableCities && selectedCityKey && availableCities[selectedCityKey]) {
-        requestBounds = getSelectedZonesBounds(zonesSorted) || availableCities[selectedCityKey].bounds;
+        requestBounds = availableCities[selectedCityKey].bounds;
       }
 
       const request = {
@@ -567,7 +524,9 @@ export function ControlPanel({
         flatten_roads_on_terrain: false,
         export_format: exportFormat,
         model_size_mm: modelSizeMm,
-        is_ams_mode: isAmsMode,
+        is_ams_mode: isAmsMode && !flatPlateMode,
+        flat_plate_mode: flatPlateMode,
+        preview_mode: previewMode && !flatPlateMode,
         preview_include_base: previewIncludeBase,
         preview_include_roads: previewIncludeRoads,
         preview_include_buildings: previewIncludeBuildings,
@@ -807,6 +766,36 @@ export function ControlPanel({
               </div>
 
               <div className="flex flex-col gap-2 sm:items-end">
+                {/* Preview / Full mode toggle — show prominently above Generate */}
+                <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode(true)}
+                    disabled={isGenerating}
+                    className={`rounded-full px-3 py-1.5 font-semibold transition ${
+                      previewMode
+                        ? "bg-[var(--accent-strong)] text-white shadow"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                    title="Швидке превю ~30s — для показу покупцям"
+                  >
+                    Превю ~30s
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode(false)}
+                    disabled={isGenerating}
+                    className={`rounded-full px-3 py-1.5 font-semibold transition ${
+                      !previewMode
+                        ? "bg-[var(--accent-strong)] text-white shadow"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                    title="Повна модель з пазами та manifold cleanup — для друку"
+                  >
+                    Повна
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   onClick={showHexGrid ? handleGenerateZones : handleGenerate}
@@ -822,6 +811,7 @@ export function ControlPanel({
                     <>
                       <Play className="h-4 w-4" />
                       {primaryActionLabel}
+                      {previewMode && <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">ПРЕВ'Ю</span>}
                     </>
                   )}
                 </button>
@@ -947,24 +937,14 @@ export function ControlPanel({
           )}
 
           {downloadUrl && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleDownloadFormat("3mf")}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
-              >
-                <Download className="h-4 w-4" />
-                3MF
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDownloadFormat("stl")}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-slate-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(71,85,105,0.22)] transition hover:bg-slate-500"
-              >
-                <Download className="h-4 w-4" />
-                STL
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
+            >
+              <Download className="h-4 w-4" />
+              Завантажити модель
+            </button>
           )}
 
           {error && (
@@ -1088,13 +1068,20 @@ export function ControlPanel({
               />
 
               <CheckboxRow
+                label="Пласкі пластини"
+                description="Новий режим без DEM-рельєфу і пазів: рівна основа, вода, дороги/зелені зони та будівлі друкуються шарами."
+                checked={flatPlateMode}
+                onChange={setFlatPlateMode}
+              />
+
+              <CheckboxRow
                 label="AMS / Flat Mode"
                 description="Оптимізація під шаровий друк: рельєф стає пласкішим і більш передбачуваним."
-                checked={isAmsMode}
+                checked={isAmsMode && !flatPlateMode}
                 onChange={setAmsMode}
               />
 
-              {!isAmsMode && (
+              {!isAmsMode && !flatPlateMode && (
                 <>
                   <CheckboxRow
                     label="Увімкнути рельєф"
