@@ -107,11 +107,22 @@ export default function HexagonalGrid({
 
   // Використовуємо зовнішні значення якщо передані, інакше внутрішні
   const [internalGridType, setInternalGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
+  // "Applied" params — те, що реально використовувалось при генерації
+  const [appliedGridType, setAppliedGridType] = useState(externalGridType || "hexagonal");
+  const [appliedHexSizeM, setAppliedHexSizeM] = useState(externalHexSizeM || 300.0);
+
   const gridType = externalGridType || internalGridType;
   const hexSizeM = externalHexSizeM || 300.0;
 
+  // Чи є незастосовані зміни параметрів
+  const hasPendingChanges = gridType !== appliedGridType || hexSizeM !== appliedHexSizeM;
+
   const generateGrid = async () => {
     if (isLoading) return; // Запобігаємо подвійній генерації
+
+    // Запам'ятовуємо параметри які застосовуємо
+    setAppliedGridType(gridType);
+    setAppliedHexSizeM(hexSizeM);
 
     setIsLoading(true);
     setHexGrid(null); // Скидаємо попередню сітку
@@ -272,32 +283,17 @@ export default function HexagonalGrid({
     (bounds.east + bounds.west) / 2,
   ];
 
-  // Автоматично генеруємо сітку при відкритті
+  // Автоматично генеруємо сітку при першому відкритті або зміні bounds (міста)
+  // НЕ перегенеруємо при зміні gridType/hexSizeM — для цього є кнопка "Застосувати"
   useEffect(() => {
-    console.log("[HexagonalGrid] useEffect викликано, bounds:", bounds, "hexGrid:", !!hexGrid, "isLoading:", isLoading, "gridType:", gridType);
-
-    // Перевіряємо валідність bounds
-    if (!bounds) {
-      console.warn("[HexagonalGrid] bounds не визначено");
-      return;
-    }
-
-    if (bounds.north <= bounds.south || bounds.east <= bounds.west) {
-      console.error("[HexagonalGrid] Невірні координати:", bounds);
-      return;
-    }
-
-    // Генеруємо сітку якщо вона ще не згенерована
+    if (!bounds) return;
+    if (bounds.north <= bounds.south || bounds.east <= bounds.west) return;
     if (!hexGrid && !isLoading) {
-      console.log("[HexagonalGrid] Запускаємо генерацію сітки для bounds:", bounds);
-      // Невелика затримка для гарантії, що компонент повністю змонтований
-      const timer = setTimeout(() => {
-        generateGrid();
-      }, 200);
+      const timer = setTimeout(() => { generateGrid(); }, 200);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bounds?.north, bounds?.south, bounds?.east, bounds?.west, hexGrid, isLoading, gridType, hexSizeM]); // перегенеруємо при зміні bounds/gridType/hexSizeM
+  }, [bounds?.north, bounds?.south, bounds?.east, bounds?.west]);
 
   const zoom = 11; // Оптимальний zoom для Києва
 
@@ -328,6 +324,15 @@ export default function HexagonalGrid({
               )}
             </div>
             <div className="flex items-center gap-1.5">
+              {hasPendingChanges && (
+                <button
+                  onClick={generateGrid}
+                  className="px-2 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
+                  title={`Застосувати нові параметри: ${gridType}, ${hexSizeM}м`}
+                >
+                  ↻ Застосувати
+                </button>
+              )}
               <button
                 onClick={handleSelectAll}
                 className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"

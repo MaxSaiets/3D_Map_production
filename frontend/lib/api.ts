@@ -307,6 +307,13 @@ export const api = {
     return response.data;
   },
 
+  async cancelTask(taskId: string): Promise<{ cancelled: boolean; count?: number }> {
+    const response = await axios.delete<{ cancelled: boolean; count?: number }>(
+      `${API_BASE_URL}/api/task/${taskId}`
+    );
+    return response.data;
+  },
+
   async getAdminOrders(token?: string): Promise<{ orders: any[] }> {
     const params: Record<string, string> = {};
     if (token) params["token"] = token;

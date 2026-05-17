@@ -154,6 +154,16 @@ export const useGenerationStore = create<GenerationState>((set) => ({
       const nextActive = s.activeTaskId && nextTaskIds.includes(s.activeTaskId)
         ? s.activeTaskId
         : (nextTaskIds[0] ?? null);
+      // Зберігаємо в localStorage щоб відновити після refresh
+      if (typeof window !== "undefined") {
+        if (taskGroupId) {
+          localStorage.setItem("3dmap_task_group_id", taskGroupId);
+          localStorage.setItem("3dmap_task_ids", JSON.stringify(nextTaskIds));
+        } else {
+          localStorage.removeItem("3dmap_task_group_id");
+          localStorage.removeItem("3dmap_task_ids");
+        }
+      }
       return {
         taskGroupId,
         taskIds: nextTaskIds,

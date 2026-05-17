@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState } from "react";
-import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, X } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
@@ -64,7 +64,31 @@ export default function Home() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
 
-  const { isGenerating, progress, status, downloadUrl, selectedArea } = useGenerationStore();
+  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating } = useGenerationStore();
+
+  // Відновлюємо task_id з localStorage після refresh
+  useEffect(() => {
+    const savedGroupId = localStorage.getItem("3dmap_task_group_id");
+    const savedTaskIds = localStorage.getItem("3dmap_task_ids");
+    if (savedGroupId && !taskGroupId) {
+      const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
+      setTaskGroup(savedGroupId, ids);
+      setGenerating(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCancelTask = async () => {
+    if (!taskGroupId) return;
+    try {
+      const { api } = await import("@/lib/api");
+      await api.cancelTask(taskGroupId);
+    } catch {/* ignore */}
+    setTaskGroup(null);
+    setGenerating(false);
+    localStorage.removeItem("3dmap_task_group_id");
+    localStorage.removeItem("3dmap_task_ids");
+  };
 
   const currentCity = CITIES[currentCityKey];
   const selectedCityLabel = CITY_LABELS[currentCityKey] ?? currentCityKey;
@@ -209,7 +233,7 @@ export default function Home() {
                 <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
                   {showHexGrid ? (
                     <HexagonalGrid
-                      key={`hex-grid-${gridType}-${hexSizeM}-${currentCityKey}`}
+                      key={`hex-grid-${currentCityKey}`}
                       bounds={currentCity.bounds}
                       onZonesSelected={setSelectedZones}
                       gridType={gridType}
@@ -243,7 +267,18 @@ export default function Home() {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       Стан
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</div>
+                    <div className="mt-1 flex items-center justify-end gap-2">
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</span>
+                      {isGenerating && taskGroupId && (
+                        <button
+                          onClick={handleCancelTask}
+                          className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-200 transition-colors"
+                          title="Скасувати генерацію"
+                        >
+                          <X size={10} /> Скасувати
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 

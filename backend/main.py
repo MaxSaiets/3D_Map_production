@@ -256,9 +256,23 @@ from fastapi.staticfiles import StaticFiles
 app.mount("/files", StaticFiles(directory=OUTPUT_DIR), name="files")
 
 
-@app.on_event("startup")
+async def _ttl_cleanup_loop():
+    “””Кожні 30 хвилин видаляє задачі старші 2 годин з пам’яті.”””
+    import asyncio
+    while True:
+        await asyncio.sleep(1800)  # 30 хвилин
+        stale_keys = [tid for tid, t in list(tasks.items()) if t.is_stale(max_age_hours=2.0)]
+        for tid in stale_keys:
+            tasks.pop(tid, None)
+        if stale_keys:
+            print(f”[TTL] Видалено {len(stale_keys)} застарілих задач: {stale_keys[:5]}”)
+
+
+@app.on_event(“startup”)
 async def startup_event():
-    """Р’С–РґРЅРѕРІР»СЋС”РјРѕ СЃС‚Р°РЅ Р·Р°РґР°С‡ РЅР° РѕСЃРЅРѕРІС– С„Р°Р№Р»С–РІ Сѓ РґРёСЂРµРєС‚РѕСЂС–С— output С‚Р° РїРµСЂРµРІС–СЂСЏС”РјРѕ Firebase"""
+    “””Відновлюємо стан задач на основі файлів у директорії output та перевіряємо Firebase”””
+    import asyncio
+    asyncio.create_task(_ttl_cleanup_loop())
     
     # Р†РЅС–С†С–Р°Р»С–Р·Р°С†С–СЏ Firebase С‚Р° РІРёРІС–Рґ СЃС‚Р°С‚СѓСЃСѓ
     print("\n" + "="*60)
@@ -610,6 +624,28 @@ async def get_status(task_id: str):
             "parks": task.firebase_outputs.get("parks_3mf"),
         },
     }
+
+
+@app.delete("/api/task/{task_id}")
+async def cancel_task(task_id: str):
+    """Скасовує задачу генерації. Якщо batch — скасовує всі підзадачі."""
+    if task_id.startswith("batch_"):
+        task_ids = multiple_tasks_map.get(task_id, [])
+        count = 0
+        for tid in task_ids:
+            if tid in tasks:
+                tasks[tid].cancel()
+                count += 1
+        if count == 0:
+            raise HTTPException(status_code=404, detail="Batch tasks not found")
+        print(f"[INFO] Cancelled batch {task_id} ({count} sub-tasks)")
+        return {"cancelled": True, "count": count}
+
+    if task_id not in tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    tasks[task_id].cancel()
+    print(f"[INFO] Cancelled task {task_id}")
+    return {"cancelled": True}
 
 
 @app.get("/api/download/{task_id}")
@@ -1574,6 +1610,10 @@ def generate_model_task(
     print(f"[INFO] === РџРћР§РђРўРћРљ Р“Р•РќР•Р РђР¦Р†Р‡ РњРћР”Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}")
     task = tasks[task_id]
     zone_prefix = f"[{zone_id}] " if zone_id else ""
+    # Перевіряємо чи задача не скасована до початку
+    if task.cancelled:
+        print(f"[INFO] {zone_prefix}Task {task_id} cancelled before start — skipping")
+        return
 
     # ULTRA-FAST PREVIEW MODE (~30s target): aggressively trim every heavy
     # input so the deep pipeline produces a buyer-friendly model fast.

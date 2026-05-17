@@ -334,6 +334,8 @@ export function ControlPanel({
 
           if (completed + failed >= total) {
             setGenerating(false);
+            localStorage.removeItem("3dmap_task_group_id");
+            localStorage.removeItem("3dmap_task_ids");
             if (failed) {
               const firstFailed = tasksList.find((task) => task.status === "failed");
               if (firstFailed) setError(firstFailed.message || "Одна з зон не згенерувалася");
@@ -349,9 +351,13 @@ export function ControlPanel({
         if (single.status === "completed") {
           setGenerating(false);
           setDownloadUrl(single.download_url);
-        } else if (single.status === "failed") {
+          localStorage.removeItem("3dmap_task_group_id");
+          localStorage.removeItem("3dmap_task_ids");
+        } else if (single.status === "failed" || single.status === "cancelled") {
           setGenerating(false);
-          setError(single.message);
+          localStorage.removeItem("3dmap_task_group_id");
+          localStorage.removeItem("3dmap_task_ids");
+          if (single.status === "failed") setError(single.message);
         }
       } catch (pollError) {
         console.error("Помилка перевірки статусу:", pollError);
