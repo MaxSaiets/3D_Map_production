@@ -98,9 +98,17 @@ export interface FastPreviewResponse {
   model_logic?: {
     model_size_mm?: number;
     scale_factor_mm_per_m?: number;
+    terrain_base_thickness_mm?: number;
+    terrain_z_scale?: number;
+    road_height_mm?: number;
+    parks_height_mm?: number;
+    preview_message?: string;
     [key: string]: any;
   };
   preview_id?: string;
+  preview_status?: string;
+  preview_stl?: string | null;
+  model_file_url?: string | null;
   material?: string;
 }
 
