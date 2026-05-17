@@ -68,6 +68,8 @@ export interface FastPreviewResponse {
         x: number[];
         y: number[];
         z: number[][];
+        z_max_m?: number;
+        [key: string]: any;
       };
     };
     buildings: {
