@@ -2,6 +2,64 @@ import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// ── Auth token provider ───────────────────────────────────────────────────────
+type TokenProvider = (() => Promise<string | null>) | null;
+let _tokenProvider: TokenProvider = null;
+
+export function setApiAuthTokenProvider(provider: TokenProvider) {
+  _tokenProvider = provider;
+}
+
+axios.interceptors.request.use(async (config) => {
+  if (_tokenProvider) {
+    try {
+      const token = await _tokenProvider();
+      if (token) {
+        config.headers = config.headers ?? {};
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+    } catch {
+      // ignore token errors
+    }
+  }
+  return config;
+});
+
+// ── Account types ─────────────────────────────────────────────────────────────
+export interface AccountModel {
+  id: string;
+  title?: string;
+  city?: string;
+  status: string;
+  progress?: number;
+  model_size_mm?: number;
+  created_at?: string;
+  error?: string;
+  message?: string;
+  download_url?: string | null;
+  download_url_3mf?: string | null;
+  download_url_stl?: string | null;
+  layers?: {
+    terrain?: boolean;
+    roads?: boolean;
+    buildings?: boolean;
+    water?: boolean;
+    parks?: boolean;
+  };
+  material?: string;
+  preview_snapshot?: any;
+}
+
+export interface AccountResponse {
+  models: AccountModel[];
+  usage?: {
+    remaining: number;
+    free_limit: number;
+    completed: number;
+    used: number;
+  };
+}
+
 export interface GenerationRequest {
   north: number;
   south: number;
@@ -184,6 +242,13 @@ export const api = {
         zones,
         ...params,
       }
+    );
+    return response.data;
+  },
+
+  async getAccountModels(): Promise<AccountResponse> {
+    const response = await axios.get<AccountResponse>(
+      `${API_BASE_URL}/api/account/models`
     );
     return response.data;
   },
