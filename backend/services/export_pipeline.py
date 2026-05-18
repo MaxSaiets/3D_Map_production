@@ -306,6 +306,7 @@ def export_generation_outputs(
     include_print_package: bool = True,
     completion_message: str = "РњРѕРґРµР»СЊ РіРѕС‚РѕРІР°!",
     file_basename: Optional[str] = None,
+    extra_mesh_items: Optional[list[Tuple[str, trimesh.Trimesh]]] = None,
 ) -> ExportPipelineResult:
     primary_format = request.export_format.lower()
     # Descriptive filename: model_<grid>_<mm>_<row>_<col>.<ext>, fallback to task_id.
@@ -351,6 +352,7 @@ def export_generation_outputs(
         preserve_z=preserve_z,
         preserve_xy=preserve_xy,
         rotate_to_ground=False,
+        extra_mesh_items=extra_mesh_items,
     )
 
     if parts_from_main and isinstance(parts_from_main, dict) and primary_format == "stl":
@@ -378,6 +380,7 @@ def export_generation_outputs(
             preserve_z=preserve_z,
             preserve_xy=preserve_xy,
             rotate_to_ground=False,
+            extra_mesh_items=extra_mesh_items,
         )
         stl_parts_from_preview = stl_parts if isinstance(stl_parts, dict) else None
         if stl_parts and isinstance(stl_parts, dict):
@@ -409,6 +412,8 @@ def export_generation_outputs(
                 preview_items.append(("Water", water_mesh))
             if parks_mesh is not None:
                 preview_items.append(("Parks", parks_mesh))
+            if extra_mesh_items:
+                preview_items.extend((name, mesh) for name, mesh in extra_mesh_items if mesh is not None)
 
             if preview_items:
                 prefix = str((output_dir / basename).resolve())
@@ -420,6 +425,8 @@ def export_generation_outputs(
                     "water": getattr(request, "preview_include_water", True),
                     "parks": getattr(request, "preview_include_parks", True),
                     "green": getattr(request, "preview_include_parks", True),
+                    "rim": True,
+                    "text": True,
                 }
                 parts = export_preview_parts_3mf(
                     output_prefix=prefix,

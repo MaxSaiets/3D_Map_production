@@ -1466,6 +1466,8 @@ def export_3mf(
                 "water": [100, 150, 200, 255],     # Блакитний для води
                 "parks": [100, 150, 100, 255],     # Зелений для парків
                 "green": [100, 150, 100, 255],     # Зелений для парків
+                "rim": [92, 80, 58, 255],           # Темніший край брелка
+                "text": [245, 245, 238, 255],       # Окремий світлий шар напису
             }
             
             key_lower = key.lower()
@@ -1690,6 +1692,7 @@ def export_scene(
     preserve_z: bool = False,
     preserve_xy: bool = False,
     rotate_to_ground: bool = True,  # Default True for vertical orientation
+    extra_mesh_items: Optional[List[Tuple[str, trimesh.Trimesh]]] = None,
 ):
 
     items: List[Tuple[str, trimesh.Trimesh]] = []
@@ -1704,6 +1707,9 @@ def export_scene(
     add("Water", water_mesh)
     add("Parks", parks_mesh)
     add("POI", poi_mesh)
+    if extra_mesh_items:
+        for extra_name, extra_mesh in extra_mesh_items:
+            add(extra_name, extra_mesh)
 
     if building_meshes:
         valid = [to_trimesh(b) for b in building_meshes if to_trimesh(b)]
@@ -1726,6 +1732,8 @@ def export_scene(
             "parks": [100, 150, 100, 255],     # Зелений для парків
             "green": [100, 150, 100, 255],     # Зелений для парків
             "poi": [255, 200, 100, 255],       # Помаранчевий для POI
+            "rim": [92, 80, 58, 255],           # Темніший край брелка
+            "text": [245, 245, 238, 255],       # Окремий світлий шар напису
         }
         
         colored_items = []

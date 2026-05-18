@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
@@ -149,6 +149,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const rectangleRef = useRef<L.Rectangle | null>(null);
   const resizeHandleRef = useRef<L.Marker | null>(null);
   const labelRef = useRef<L.Marker | null>(null);
+  const lastDragEndedAtRef = useRef(0);
   const dragStateRef = useRef<{
     startPoint: L.Point;
     startCenter: L.LatLng;
@@ -190,9 +191,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     });
     const labelIcon = L.divIcon({
       className: "",
-      html: '<div style="padding:6px 9px;border-radius:999px;background:rgba(5,10,24,.82);border:1px solid rgba(255,255,255,.3);color:white;font:700 11px/1.1 system-ui;white-space:nowrap;">зона брелка</div>',
-      iconSize: [94, 28],
-      iconAnchor: [47, 36],
+      html: '<div style="padding:6px 9px;border-radius:999px;background:rgba(5,10,24,.82);border:1px solid rgba(255,255,255,.3);color:white;font:700 11px/1.1 system-ui;white-space:nowrap;">клік = поставити</div>',
+      iconSize: [116, 28],
+      iconAnchor: [58, 36],
     });
 
     const handle = L.marker(initialBounds.getSouthEast(), {
@@ -248,6 +249,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const handleEnd = () => {
       if (!dragStateRef.current) return;
       dragStateRef.current = null;
+      lastDragEndedAtRef.current = Date.now();
       map.dragging.enable();
     };
 
@@ -260,12 +262,21 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
     };
 
+    const handleMapClick = (event: L.LeafletMouseEvent) => {
+      if (Date.now() - lastDragEndedAtRef.current < 180) return;
+      const current = rectangle.getBounds();
+      const size = boundsSizeMeters(current);
+      const widthM = Math.min(Math.max(size.widthM, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      updateBounds(boundsFromCenterMeters(event.latlng, widthM, widthM / aspect));
+    };
+
     rectangle.on("mousedown", handleRectangleDown);
     rectangle.on("touchstart", handleRectangleDown as any);
     map.on("mousemove", handleMove);
     map.on("touchmove", handleMove as any);
     map.on("mouseup", handleEnd);
     map.on("touchend", handleEnd);
+    map.on("click", handleMapClick);
     handle.on("drag", handleResize);
 
     return () => {
@@ -275,6 +286,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       map.off("touchmove", handleMove as any);
       map.off("mouseup", handleEnd);
       map.off("touchend", handleEnd);
+      map.off("click", handleMapClick);
       handle.off("drag", handleResize);
       rectangle.remove();
       handle.remove();
@@ -300,21 +312,46 @@ interface MapSelectorProps {
 }
 
 export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSelectorProps) {
+  const [tileMode, setTileMode] = useState<"map" | "satellite">("map");
+
   return (
-    <div className="w-full h-full" style={{ minHeight: '100%' }}>
+    <div className="relative h-full w-full" style={{ minHeight: '100%' }}>
       <MapContainer
         center={center} // Initial center
         zoom={13}
         style={{ height: "100%", width: "100%", minHeight: "100%" }}
         className="w-full h-full"
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {tileMode === "satellite" ? (
+          <TileLayer
+            attribution='Tiles &copy; Esri'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        )}
         {keychainCrop ? <KeychainCropOverlay spec={keychainCrop} /> : <DrawControl />}
         <MapViewUpdater center={center} />
       </MapContainer>
+      <div className="absolute left-3 top-3 z-[500] flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-1 shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setTileMode("map")}
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${tileMode === "map" ? "bg-white text-[#050a18]" : "text-white/80"}`}
+        >
+          Карта
+        </button>
+        <button
+          type="button"
+          onClick={() => setTileMode("satellite")}
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${tileMode === "satellite" ? "bg-white text-[#050a18]" : "text-white/80"}`}
+        >
+          Супутник
+        </button>
+      </div>
     </div>
   );
 }

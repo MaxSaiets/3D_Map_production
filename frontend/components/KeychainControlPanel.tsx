@@ -84,12 +84,13 @@ function ChoiceButton({
 }
 
 function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
-  const bodyWidthMm = Math.min(140, Math.max(36, next.bodyWidthMm));
+  const bodyWidthMm = Math.min(140, Math.max(35, next.bodyWidthMm));
   const bodyHeightMm = Math.min(96, Math.max(26, next.bodyHeightMm));
   const minMapWidthMm = Math.min(28, bodyWidthMm);
   const minMapHeightMm = Math.min(18, bodyHeightMm);
   const mapXMm = Math.min(Math.max(next.mapXMm, 0), Math.max(bodyWidthMm - minMapWidthMm, 0));
   const mapYMm = Math.min(Math.max(next.mapYMm, 0), Math.max(bodyHeightMm - minMapHeightMm, 0));
+  const loopMargin = Math.max(next.loopOuterMm * 0.85, 4);
   return {
     ...next,
     bodyWidthMm,
@@ -100,6 +101,11 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
     mapHeightMm: Math.min(Math.max(next.mapHeightMm, minMapHeightMm), Math.max(bodyHeightMm - mapYMm, minMapHeightMm)),
     labelXMm: Math.min(Math.max(next.labelXMm, 4), Math.max(bodyWidthMm - 4, 4)),
     labelYMm: Math.min(Math.max(next.labelYMm, 4), Math.max(bodyHeightMm - 4, 4)),
+    labelWidthMm: Math.min(Math.max(next.labelWidthMm, 8), bodyWidthMm),
+    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 2.4), 8.5),
+    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.4), 2.0),
+    loopXMm: Math.min(Math.max(next.loopXMm, -loopMargin), bodyWidthMm + loopMargin),
+    loopYMm: Math.min(Math.max(next.loopYMm, -loopMargin), bodyHeightMm + loopMargin),
     loopInnerMm: Math.min(Math.max(next.loopInnerMm, 1.6), Math.max(next.loopOuterMm - 1.4, 1.6)),
     rimWidthMm: Math.min(Math.max(next.rimWidthMm, 0), 6),
     rimHeightMm: Math.min(Math.max(next.rimHeightMm, 0), 3),
@@ -154,7 +160,6 @@ export function KeychainControlPanel({
   const [parkLayerMm, setParkLayerMm] = useState(0.34);
   const [waterLayerMm, setWaterLayerMm] = useState(0.28);
   const [buildingMaxMm, setBuildingMaxMm] = useState(2.2);
-  const [textHeightMm, setTextHeightMm] = useState(3.8);
   const pollingInFlightRef = useRef(false);
   const printScale = useMemo(() => {
     const size = selectedAreaMeters(selectedArea);
@@ -175,10 +180,10 @@ export function KeychainControlPanel({
 
   const placeLoop = (position: "top-left" | "top-right" | "right" | "bottom-left") => {
     const presets = {
-      "top-left": { loopXMm: 8.5, loopYMm: -4, loopAngleDeg: 0 },
-      "top-right": { loopXMm: design.bodyWidthMm - 8.5, loopYMm: -4, loopAngleDeg: 0 },
-      right: { loopXMm: design.bodyWidthMm + 5.5, loopYMm: design.bodyHeightMm / 2, loopAngleDeg: 270 },
-      "bottom-left": { loopXMm: 8.5, loopYMm: design.bodyHeightMm + 4, loopAngleDeg: 180 },
+      "top-left": { loopXMm: Math.min(8.5, design.bodyWidthMm / 2), loopYMm: -4, loopAngleDeg: 0 },
+      "top-right": { loopXMm: Math.max(design.bodyWidthMm - 8.5, design.bodyWidthMm / 2), loopYMm: -4, loopAngleDeg: 0 },
+      right: { loopXMm: design.bodyWidthMm + Math.max(design.loopOuterMm * 0.58, 3.2), loopYMm: design.bodyHeightMm / 2, loopAngleDeg: 270 },
+      "bottom-left": { loopXMm: Math.min(8.5, design.bodyWidthMm / 2), loopYMm: design.bodyHeightMm + Math.max(design.loopOuterMm * 0.58, 3.2), loopAngleDeg: 180 },
     } satisfies Record<string, Partial<KeychainDesignerConfig>>;
     updateDesign(presets[position]);
   };
@@ -274,7 +279,9 @@ export function KeychainControlPanel({
         keychain_corner_radius_mm: design.cornerRadiusMm,
         keychain_label_band_height_mm: design.labelBandMm,
         keychain_label_raise_mm: 0.45,
-        keychain_label_text_height_mm: textHeightMm,
+        keychain_label_text_height_mm: design.labelTextHeightMm,
+        keychain_label_width_mm: design.labelWidthMm,
+        keychain_label_stroke_mm: design.labelStrokeMm,
         keychain_rim_width_mm: design.rimWidthMm,
         keychain_rim_height_mm: design.rimHeightMm,
         flat_water_layer_mm: waterLayerMm,
@@ -388,7 +395,7 @@ export function KeychainControlPanel({
           </div>
 
           <div className="mt-4 space-y-3">
-            <SliderField label="Ширина основи" valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={36} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
+            <SliderField label="Ширина основи" valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
             <SliderField label="Висота основи" valueLabel={`${design.bodyHeightMm.toFixed(0)} мм`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
             <SliderField label="Товщина основи" valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.6} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
             <SliderField label="Зовнішній радіус петлі" valueLabel={`${design.loopOuterMm.toFixed(1)} мм`} min={4.5} max={11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
@@ -454,6 +461,9 @@ export function KeychainControlPanel({
           <div className="mt-4 space-y-3">
             <SliderField label="Ширина зони карти" valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
             <SliderField label="Висота зони карти" valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
+            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={8} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={2.4} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Поворот тексту</div>
               <div className="grid grid-cols-4 gap-2">
@@ -472,7 +482,6 @@ export function KeychainControlPanel({
             <SliderField label="Парки" valueLabel={`${parkLayerMm.toFixed(2)} мм`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
             <SliderField label="Вода" valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
             <SliderField label="Максимум будівель" valueLabel={`${buildingMaxMm.toFixed(1)} мм`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
-            <SliderField label="Висота тексту" valueLabel={`${textHeightMm.toFixed(1)} мм`} min={2.4} max={7.5} step={0.1} value={textHeightMm} onChange={setTextHeightMm} />
           </div>
         </section>
 

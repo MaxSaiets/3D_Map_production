@@ -24,6 +24,8 @@ LAYER_COLORS = {
     "buildings": [225, 225, 225, 255],
     "water": [100, 150, 200, 255],
     "parks": [100, 150, 100, 255],
+    "rim": [92, 80, 58, 255],
+    "text": [245, 245, 238, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -578,6 +580,7 @@ def build_keychain_layout(
     loop_center_y_mm: Optional[float] = None,
     label_center_x_mm: Optional[float] = None,
     label_center_y_mm: Optional[float] = None,
+    label_width_mm: Optional[float] = None,
     loop_outer_radius_mm: float,
     loop_inner_radius_mm: float,
     corner_radius_mm: float,
@@ -586,7 +589,7 @@ def build_keychain_layout(
     minx, miny, maxx, maxy = bbox_meters
     source_w = max(float(maxx - minx), 1e-6)
     source_h = max(float(maxy - miny), 1e-6)
-    body_w_mm = max(float(body_width_mm or model_size_mm or 78.0), 24.0)
+    body_w_mm = max(float(body_width_mm or model_size_mm or 35.0), 24.0)
     body_h_mm = max(float(body_height_mm or (body_w_mm * source_h / max(source_w, 1e-6))), 18.0)
     map_w_mm = max(float(map_width_mm or body_w_mm), 4.0)
     map_h_mm = max(float(map_height_mm or max(body_h_mm - label_band_height_mm, 4.0)), 4.0)
@@ -615,8 +618,17 @@ def build_keychain_layout(
     map_miny = map_maxy - max(map_h, 1e-6)
 
     body = _keychain_body_shape(body_minx, body_miny, body_maxx, body_maxy, radius_m=corner_m, shape=base_shape)
-    loop_center_x = float(loop_center_x_mm if loop_center_x_mm is not None else (loop_outer_radius_mm + 3.0)) * layout_scale_m_per_mm
-    loop_center_y = body_maxy - float(loop_center_y_mm if loop_center_y_mm is not None else -loop_outer_radius_mm * 0.45) * layout_scale_m_per_mm
+    loop_margin_mm = max(float(loop_outer_radius_mm) * 0.85, 4.0)
+    loop_center_x_mm_safe = min(
+        max(float(loop_center_x_mm if loop_center_x_mm is not None else body_w_mm / 2.0), -loop_margin_mm),
+        body_w_mm + loop_margin_mm,
+    )
+    loop_center_y_mm_safe = min(
+        max(float(loop_center_y_mm if loop_center_y_mm is not None else -loop_outer_radius_mm * 0.58), -loop_margin_mm),
+        body_h_mm + loop_margin_mm,
+    )
+    loop_center_x = loop_center_x_mm_safe * layout_scale_m_per_mm
+    loop_center_y = body_maxy - loop_center_y_mm_safe * layout_scale_m_per_mm
     outer_loop = _keychain_loop_outer(center_x=loop_center_x, center_y=loop_center_y, outer_m=outer_m, style=loop_style)
     inner_hole = _keychain_loop_inner(center_x=loop_center_x, center_y=loop_center_y, inner_m=inner_m, style=loop_style)
     neck_half = max((outer_m - inner_m) * 0.72, _model_mm_to_world_m(1.8, export_scale))
@@ -651,7 +663,8 @@ def build_keychain_layout(
 
     label_center_x = float(label_center_x_mm if label_center_x_mm is not None else body_w_mm / 2.0) * layout_scale_m_per_mm
     label_center_y = body_maxy - float(label_center_y_mm if label_center_y_mm is not None else (body_h_mm - label_band_height_mm / 2.0)) * layout_scale_m_per_mm
-    label_w = body_w_mm * 0.86 * layout_scale_m_per_mm
+    label_w_mm = min(max(float(label_width_mm or body_w_mm * 0.86), 8.0), body_w_mm)
+    label_w = label_w_mm * layout_scale_m_per_mm
     label_h = max(label_band_h_m, 1e-6)
     label_band = box(
         max(body_minx, label_center_x - label_w / 2.0),
@@ -668,6 +681,7 @@ def build_keychain_layout(
         "base": base,
         "body": body,
         "content_area": content_area,
+        "map_slot_area": box(map_minx, map_miny, map_maxx, map_maxy),
         "label_band": label_band,
         "loop_hole": inner_hole,
         "source_bbox": box(minx, miny, maxx, maxy),
@@ -818,6 +832,7 @@ def build_keychain_label_mesh(
     thickness_m: float,
     text_height_m: float,
     color: list[int],
+    stroke_width_m: float = 0.0,
     angle_deg: float = 0.0,
     min_stroke_m: float = 0.0,
 ) -> Optional[trimesh.Trimesh]:
@@ -825,8 +840,9 @@ def build_keychain_label_mesh(
     if not label or thickness_m <= 0 or text_height_m <= 0:
         return None
     band_minx, band_miny, band_maxx, band_maxy = label_band_geometry.bounds
-    max_width = max((band_maxx - band_minx) * 0.86, 1e-6)
+    max_width = max((band_maxx - band_minx) * 0.96, 1e-6)
     cell = max(float(text_height_m) / 7.0, float(min_stroke_m or 0.0))
+    stroke_m = max(float(stroke_width_m or 0.0), float(min_stroke_m or 0.0), cell)
     char_units = [6 if ch != " " else 3 for ch in label]
     raw_width = max(sum(char_units) - 1, 1) * cell
     if raw_width > max_width:
@@ -857,7 +873,8 @@ def build_keychain_label_mesh(
                     continue
                 x0 = cursor_x + col_idx * cell
                 y0 = start_y + (6 - row_idx) * cell
-                glyph_pixels.append(box(x0, y0, x0 + cell, y0 + cell))
+                bleed = max((stroke_m - cell) * 0.5, 0.0)
+                glyph_pixels.append(box(x0 - bleed, y0 - bleed, x0 + cell + bleed, y0 + cell + bleed))
         cursor_x += (6 if ch != " " else 3) * cell
     if not glyph_pixels:
         return None
@@ -1027,6 +1044,8 @@ def run_flat_plate_pipeline(
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
+    keychain_rim_mesh: Optional[trimesh.Trimesh] = None
+    keychain_text_mesh: Optional[trimesh.Trimesh] = None
     source_bounds: Optional[tuple[float, float, float, float]] = None
     target_bounds: Optional[tuple[float, float, float, float]] = None
     if keychain_mode:
@@ -1047,6 +1066,7 @@ def run_flat_plate_pipeline(
             loop_center_y_mm=float(getattr(request, "keychain_loop_center_y_mm", 0.0) or 0.0) or None,
             label_center_x_mm=float(getattr(request, "keychain_label_center_x_mm", 0.0) or 0.0) or None,
             label_center_y_mm=float(getattr(request, "keychain_label_center_y_mm", 0.0) or 0.0) or None,
+            label_width_mm=float(getattr(request, "keychain_label_width_mm", 0.0) or 0.0) or None,
             loop_outer_radius_mm=float(getattr(request, "keychain_loop_outer_radius_mm", 6.5) or 6.5),
             loop_inner_radius_mm=float(getattr(request, "keychain_loop_inner_radius_mm", 3.0) or 3.0),
             corner_radius_mm=float(getattr(request, "keychain_corner_radius_mm", 4.0) or 4.0),
@@ -1061,6 +1081,16 @@ def run_flat_plate_pipeline(
         base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
         source_bounds = tuple(float(v) for v in keychain_layout["source_bbox"].bounds)
         target_bounds = tuple(float(v) for v in keychain_layout["map_target_bounds"])
+        rim_width_m = _model_mm_to_world_m(float(getattr(request, "keychain_rim_width_mm", 0.0) or 0.0), export_scale_factor)
+        if rim_width_m > 0:
+            try:
+                inner_base = keychain_layout["base"].buffer(-rim_width_m, join_style=1)
+                clipped_content = keychain_layout["map_slot_area"].intersection(inner_base)
+                if clipped_content is not None and not clipped_content.is_empty:
+                    content_area = clipped_content.buffer(0)
+                    keychain_layout["content_area"] = content_area
+            except Exception:
+                pass
 
     preclip_result = getattr(canonical_2d_stage, "preclip_result", None)
     gdf_buildings_local = getattr(preclip_result, "gdf_buildings_local", None)
@@ -1095,18 +1125,12 @@ def run_flat_plate_pipeline(
     if keychain_layout is not None and terrain_mesh is not None:
         rim_width_mm = float(getattr(request, "keychain_rim_width_mm", 0.0) or 0.0)
         rim_height_mm = float(getattr(request, "keychain_rim_height_mm", 0.0) or 0.0)
-        rim_mesh = build_keychain_rim_mesh(
+        keychain_rim_mesh = build_keychain_rim_mesh(
             base_geometry=keychain_layout["base"],
             bottom_z_m=base_top_m,
             width_m=_model_mm_to_world_m(rim_width_mm, export_scale_factor),
             height_m=_model_mm_to_world_m(rim_height_mm, export_scale_factor),
         )
-        if rim_mesh is not None:
-            try:
-                terrain_mesh = trimesh.util.concatenate([terrain_mesh, rim_mesh])
-                _with_color(terrain_mesh, LAYER_COLORS["base"])
-            except Exception:
-                pass
 
     bundle = canonical_2d_stage.canonical_mask_bundle
     min_feature_m = _model_mm_to_world_m(
@@ -1209,19 +1233,18 @@ def run_flat_plate_pipeline(
         base_top_m=base_top_m,
     )
     if keychain_layout is not None:
-        label_mesh = build_keychain_label_mesh(
+        keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),
             body_geometry=keychain_layout["body"],
             label_band_geometry=keychain_layout["label_band"],
             bottom_z_m=base_top_m,
             thickness_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_raise_mm", 0.45) or 0.45), export_scale_factor),
             text_height_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8), export_scale_factor),
-            color=LAYER_COLORS["buildings"],
+            color=LAYER_COLORS["text"],
+            stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_PRINT_FEATURE_MM) or MIN_KEYCHAIN_PRINT_FEATURE_MM), export_scale_factor),
             angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
         )
-        if label_mesh is not None:
-            building_meshes.append(label_mesh)
 
     print(
         f"[{'KEYCHAIN' if keychain_mode else 'FLAT PLATE'}] Built layered plate: "
@@ -1229,7 +1252,9 @@ def run_flat_plate_pipeline(
         f"water={'OK' if water_mesh is not None else 'None'}, "
         f"roads={'OK' if road_mesh is not None else 'None'}, "
         f"parks={'OK' if parks_mesh is not None else 'None'}, "
-        f"buildings={len(building_meshes)}"
+        f"buildings={len(building_meshes)}, "
+        f"rim={'OK' if keychain_rim_mesh is not None else 'None'}, "
+        f"text={'OK' if keychain_text_mesh is not None else 'None'}"
     )
     print(
         f"[{'KEYCHAIN' if keychain_mode else 'FLAT PLATE'}] Layer tops: "
@@ -1249,6 +1274,13 @@ def run_flat_plate_pipeline(
         building_meshes=building_meshes,
         water_mesh=water_mesh,
         parks_mesh=parks_mesh,
+        extra_mesh_items=[
+            item for item in (
+                ("Rim", keychain_rim_mesh),
+                ("Text", keychain_text_mesh),
+            )
+            if item[1] is not None
+        ],
         reference_xy_m=keychain_layout["body_reference_xy_m"] if keychain_layout else zone.reference_xy_m,
         preserve_z=False,
         preserve_xy=False,
