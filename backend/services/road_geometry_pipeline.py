@@ -204,25 +204,57 @@ def prepare_road_geometry(
                             )
                     except Exception as exc:
                         print(f"[WARN] {zone_prefix} road gap-fill failed: {exc}")
-        elif (
-            G_roads is not None
-            and not isinstance(G_roads, GeoDataFrame)
-            and hasattr(G_roads, "edges")
-            and len(G_roads.edges) > 0
+        # FALLBACK STAGE 1: якщо local-edges branch не дав результату, спробуємо G_roads (повний граф)
+        need_fallback_to_global = (
+            merged_roads_geom_local is None
+            or getattr(merged_roads_geom_local, "is_empty", True)
+        )
+        if need_fallback_to_global and G_roads is not None and len(G_roads.edges) > 0:
+            try:
+                merged_roads_geom = build_road_polygons(
+                    G_roads,
+                    width_multiplier=float(road_width_multiplier_effective),
+                    min_width_m=min_road_width_for_build,
+                    scale_factor=scale_factor,
+                )
+                if merged_roads_geom is not None and not getattr(merged_roads_geom, "is_empty", True):
+                    print(
+                        f"[DEBUG] {zone_prefix} merged_roads_geom (fallback to global graph) created: "
+                        f"area={getattr(merged_roads_geom, 'area', 0.0):.2f} m2"
+                    )
+            except Exception as exc:
+                print(f"[WARN] {zone_prefix} G_roads fallback failed: {exc}")
+
+        # FALLBACK STAGE 2: якщо все ще пусто — рятуємо буфером по semantic_centerlines (raw geometry)
+        if (
+            (merged_roads_geom_local is None or getattr(merged_roads_geom_local, "is_empty", True))
+            and (merged_roads_geom is None or getattr(merged_roads_geom, "is_empty", True))
+            and semantic_centerlines_local is not None
+            and not getattr(semantic_centerlines_local, "is_empty", True)
         ):
-            merged_roads_geom = build_road_polygons(
-                G_roads,
-                width_multiplier=float(road_width_multiplier_effective),
-                min_width_m=min_road_width_for_build,
-                scale_factor=scale_factor,
-            )
-            print(
-                f"[DEBUG] {zone_prefix} merged_roads_geom created: area={merged_roads_geom.area:.2f} m2"
-                if merged_roads_geom is not None and hasattr(merged_roads_geom, "area")
-                else f"[DEBUG] {zone_prefix} merged_roads_geom created"
-            )
-        else:
-            print(f"[DEBUG] {zone_prefix} G_roads is None or empty, cannot create merged_roads_geom")
+            try:
+                # Простий буфер по центральних лініях. Ширина за замовч. 3м world
+                # (типова вулиця після врахування multiplier).
+                fallback_width_m = max(
+                    float(min_road_width_for_build) if min_road_width_for_build else 0.0,
+                    1.5,
+                )
+                buffered = semantic_centerlines_local.buffer(fallback_width_m, cap_style=2, join_style=2)
+                if buffered is not None and not getattr(buffered, "is_empty", True):
+                    if zone_polygon_local is not None:
+                        buffered = buffered.intersection(zone_polygon_local).buffer(0)
+                    if buffered is not None and not getattr(buffered, "is_empty", True):
+                        merged_roads_geom_local = buffered
+                        merged_roads_geom_local_raw = buffered
+                        print(
+                            f"[FALLBACK] {zone_prefix} Roads recovered via centerline buffer "
+                            f"({fallback_width_m:.2f}m world): area={buffered.area:.2f} m2"
+                        )
+            except Exception as exc:
+                print(f"[WARN] {zone_prefix} Centerline buffer fallback failed: {exc}")
+
+        if merged_roads_geom is None and merged_roads_geom_local is None:
+            print(f"[DEBUG] {zone_prefix} all road sources exhausted, layer will be empty")
     except Exception as exc:
         print(f"[WARN] {zone_prefix} Failed to create merged_roads_geom: {exc}")
         merged_roads_geom = None
