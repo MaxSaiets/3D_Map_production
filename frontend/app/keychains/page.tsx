@@ -58,11 +58,11 @@ export default function KeychainsPage() {
   const keychainCrop = useMemo(
     () => ({
       aspectRatio: mapAspectRatio,
-      // maxMetersPerMm — це максимум, який дозволяє drag (інакше деталь зливається)
-      maxMetersPerMm: 7.5,
-      // targetMetersPerMm — це INITIAL комфортний масштаб для нового користувача
-      // (на сторінці — зелена зона друкованості, без червоних попереджень)
-      targetMetersPerMm: 3.0,
+      // FDM 0.4mm nozzle: max 7.0 м/мм (6m вулиця = 0.86mm — на межі), drag-limit
+      maxMetersPerMm: 7.0,
+      // INITIAL comfortable: 3.5 м/мм → 3m вулиця = 0.86mm (комфорт), 6m = 1.7mm
+      // Користувач відкриває сторінку → одразу зелена зона, без червоних warning'ів
+      targetMetersPerMm: 3.5,
       mapWidthMm: design.mapWidthMm,
       mapHeightMm: design.mapHeightMm,
       rotationDeg: cropRotationDeg,

@@ -32,13 +32,27 @@ const PANEL_SECTIONS: Array<{ id: PanelSection; label: string }> = [
 
 const PANEL_CARD_CLASS =
   "rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5";
-const MIN_PRINT_FEATURE_MM = 0.4;
-// Пороги м'якіші щоб не лякати користувача дочасно:
-// - <= 4.5 м/мм: ЗЕЛЕНИЙ (хороша деталізація)
-// - 4.5–6.0 м/мм: ЖОВТИЙ (можна, але дрібні вулиці злипнуться)
-// - > 6.0 м/мм: ЧЕРВОНИЙ (FDM не друкне без виправлень)
-const GOOD_METERS_PER_MM = 4.5;
-const HARD_METERS_PER_MM = 6.0;
+// ── FDM 0.4mm nozzle print standards ──────────────────────────────────────────
+// На основі дослідження reddit/r/3Dprinting + Bambu/Prusa/All3DP рекомендацій:
+// - Nozzle 0.4mm → мінімальна XY-деталь = 0.4mm (1× nozzle)
+// - Рекомендовано: 0.5-0.6mm (1.25-1.5× nozzle) — для надійного друку
+// - Min wall thickness: 0.8mm (2× nozzle), оптимально 1.2mm (3×)
+// - Min hole diameter: 2mm (5× nozzle)
+// - Min text stroke: 0.6mm для читання
+//
+// Для МАСШТАБУ КАРТИ:
+// - Звичайна вулиця у місті = 6m wide
+// - Мінімальна вулиця/тротуар = 2-3m
+// - При 5 м/мм: вулиця 3m = 0.6mm (на межі), 6m = 1.2mm (комфортно)
+// - При 7 м/мм: вулиця 3m = 0.43mm (зливаються), 6m = 0.86mm (на межі)
+const MIN_PRINT_FEATURE_MM = 0.4;  // 1× nozzle — абсолютний фізичний мінімум
+const RECOMMENDED_FEATURE_MM = 0.6; // 1.5× nozzle — рекомендовано
+// Пороги масштабу карти (м/мм):
+// - ≤ 5.0 м/мм: ЗЕЛЕНИЙ (стандартні вулиці 3m = 0.6mm, чудова деталізація)
+// - 5.0–7.0 м/мм: ЖОВТИЙ (вулиці 6m = OK, тонкі тротуари зникнуть)
+// - > 7.0 м/мм: ЧЕРВОНИЙ (тільки магістралі читаються, дрібниці зливаються)
+const GOOD_METERS_PER_MM = 5.0;
+const HARD_METERS_PER_MM = 7.0;
 
 function SliderField({
   label,

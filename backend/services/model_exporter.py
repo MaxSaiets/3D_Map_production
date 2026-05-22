@@ -1440,45 +1440,70 @@ def export_3mf(
     scene = trimesh.Scene()
     preview_parts = _build_assembly_preview_parts(parts)
 
-    # Add items to scene with names and colors
-    for key, mesh in preview_parts.items():
-        # Clean name for 3MF metadata?
-        # Trimesh handles scene nodes.
-        # metadata["original_name"] might have "Base", "Roads"
-        name = key
-        if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
-            name = mesh.metadata['original_name']
-        
-        # Перевіряємо, чи є кольори в меші
+    COLOR_MAP = {
+        "base": [200, 180, 140, 255],      # Бежевий для рельєфу
+        "terrain": [200, 180, 140, 255],  # Бежевий для рельєфу
+        "roads": [60, 60, 60, 255],        # Темно-сірий для доріг
+        "buildings": [120, 120, 120, 255], # Сірий для будівель
+        "water": [100, 150, 200, 255],     # Блакитний для води
+        "parks": [100, 150, 100, 255],     # Зелений для парків
+        "green": [100, 150, 100, 255],     # Зелений для парків
+        "rim": [92, 80, 58, 255],           # Темніший край брелка
+        "text": [245, 245, 238, 255],       # Окремий світлий шар напису
+    }
+
+    def _ensure_face_colors(mesh: trimesh.Trimesh, key: str) -> trimesh.Trimesh:
+        """Гарантує що меш має face_colors. Повертає мутований меш."""
         has_colors = False
         if hasattr(mesh, 'visual') and mesh.visual is not None:
-            if hasattr(mesh.visual, 'face_colors') and mesh.visual.face_colors is not None:
-                if len(mesh.visual.face_colors) > 0:
-                    has_colors = True
-        
-        # Якщо кольорів немає, застосовуємо кольори на основі імені
-        if not has_colors:
-            color_map = {
-                "base": [200, 180, 140, 255],      # Бежевий для рельєфу
-                "terrain": [200, 180, 140, 255],  # Бежевий для рельєфу
-                "roads": [60, 60, 60, 255],        # Темно-сірий для доріг
-                "buildings": [120, 120, 120, 255], # Сірий для будівель
-                "water": [100, 150, 200, 255],     # Блакитний для води
-                "parks": [100, 150, 100, 255],     # Зелений для парків
-                "green": [100, 150, 100, 255],     # Зелений для парків
-                "rim": [92, 80, 58, 255],           # Темніший край брелка
-                "text": [245, 245, 238, 255],       # Окремий світлий шар напису
-            }
-            
-            key_lower = key.lower()
-            color = color_map.get(key_lower, [150, 150, 150, 255])  # Сірий за замовчуванням
-            
-            if len(mesh.faces) > 0:
-                face_colors = np.tile(color, (len(mesh.faces), 1))
-                mesh.visual = trimesh.visual.ColorVisuals(face_colors=face_colors)
-                print(f"[3MF EXPORT] Applied color to {name}: {color[:3]}")
-            
-        scene.add_geometry(mesh, node_name=name, geom_name=name)
+            fc = getattr(mesh.visual, 'face_colors', None)
+            if fc is not None and len(fc) == len(mesh.faces):
+                has_colors = True
+        if not has_colors and len(mesh.faces) > 0:
+            color = COLOR_MAP.get(key.lower(), [150, 150, 150, 255])
+            face_colors = np.tile(color, (len(mesh.faces), 1))
+            mesh.visual = trimesh.visual.ColorVisuals(face_colors=face_colors)
+        return mesh
+
+    # KEY FIX: Bambu Studio розкидає окремі trimesh.Scene geometry по плиті як
+    # незалежні об'єкти. Для keychain/flat plate щоб всі шари були ОДНИМ об'єктом —
+    # зливаємо їх у єдиний меш з face_colors (Bambu сприймає кольори через 3MF
+    # multi-material).
+    has_keychain_markers = any(k.lower() in ("rim", "text") for k in preview_parts.keys())
+
+    if has_keychain_markers and len(preview_parts) > 1:
+        # Merge all parts into ONE mesh with per-face colors preserved
+        merged_meshes = []
+        for key, mesh in preview_parts.items():
+            if mesh is None or len(mesh.faces) == 0:
+                continue
+            _ensure_face_colors(mesh, key)
+            merged_meshes.append(mesh)
+        if merged_meshes:
+            try:
+                combined = trimesh.util.concatenate(merged_meshes)
+                # Зберігаємо face_colors при concatenate (trimesh робить це автоматично)
+                scene.add_geometry(combined, node_name="keychain", geom_name="keychain")
+                print(
+                    f"[3MF EXPORT] Keychain: merged {len(merged_meshes)} layers into "
+                    f"single mesh ({len(combined.vertices)} verts, "
+                    f"{len(combined.faces)} faces) — Bambu treats as ONE object"
+                )
+            except Exception as exc:
+                print(f"[3MF EXPORT] Merge failed, falling back to separate parts: {exc}")
+                # Fallback: separate parts
+                for key, mesh in preview_parts.items():
+                    name = mesh.metadata.get('original_name', key) if hasattr(mesh, 'metadata') else key
+                    _ensure_face_colors(mesh, key)
+                    scene.add_geometry(mesh, node_name=name, geom_name=name)
+    else:
+        # Regular maps: keep separate parts (legacy behavior)
+        for key, mesh in preview_parts.items():
+            name = key
+            if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
+                name = mesh.metadata['original_name']
+            _ensure_face_colors(mesh, key)
+            scene.add_geometry(mesh, node_name=name, geom_name=name)
 
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
     scene.export(filename)
