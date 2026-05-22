@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, Settings2 } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
 import { KeychainLifePreview, KeychainSlicerPreview } from "@/components/KeychainLifePreview";
@@ -49,7 +49,14 @@ export default function KeychainsPage() {
   const [sidePreview, setSidePreview] = useState<"life" | "slicer">("life");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
-  const { selectedArea, downloadUrl, isGenerating, progress, status } = useGenerationStore();
+  const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
+
+  // Очищаємо попередню зону при відкритті /keychains щоб MapSelector стартував
+  // з targetMetersPerMm (зелена зона), а не з пам'яті з main мапи.
+  useEffect(() => {
+    setSelectedArea(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
   const handleCropRotationChange = useCallback((rotationDeg: number) => {

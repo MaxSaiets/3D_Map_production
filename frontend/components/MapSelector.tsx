@@ -245,12 +245,16 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     const initialSelectedArea = initialSelectedAreaRef.current;
     const existingCenter = initialSelectedArea?.getCenter() ?? map.getCenter();
-    // FIRST OPEN: використовуємо комфортний targetSize (зеленa зона друкованості)
-    // RETURN: зберігаємо попередній розмір
-    const existingSize = initialSelectedArea ? boundsSizeMeters(initialSelectedArea) : targetSize;
+    // KEYCHAIN-MODE: ЗАВЖДИ починаємо з комфортного targetSize. Попередня зона
+    // з іншої сторінки/міста ігнорується — інакше нова мапа відкривається з
+    // занадто великою зоною (RED warning) тільки тому що в Zustand store
+    // ще лежить bounds від main мапи.
     const aspect = Math.max(spec.aspectRatio, 0.2);
-    const unclampedWidth = Math.min(existingSize.widthM || targetSize.widthM, safeSize.widthM);
-    const widthM = Math.max(Math.min(unclampedWidth, safeSize.widthM), Math.min(targetSize.widthM, 80));
+    const existingSize = initialSelectedArea ? boundsSizeMeters(initialSelectedArea) : targetSize;
+    // Якщо попередня зона менша за target — поважаємо вибір користувача.
+    // Якщо більша за target → знижуємо до target (комфорт за замовчуванням).
+    const candidateWidth = Math.min(existingSize.widthM || targetSize.widthM, targetSize.widthM);
+    const widthM = Math.max(Math.min(candidateWidth, safeSize.widthM), Math.min(targetSize.widthM, 80));
     const heightM = Math.min(widthM / aspect, safeSize.heightM);
     const initialBounds = boundsFromCenterMeters(existingCenter, widthM, heightM);
 
