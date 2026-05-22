@@ -14,7 +14,7 @@ if hasattr(sys.stderr, "reconfigure"):
 load_dotenv()
 
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Optional, List, Tuple
 import os
 import uuid
@@ -342,9 +342,50 @@ async def startup_event():
 
 
 class GenerationRequest(BaseModel):
-    """Р—Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ 3D РјРѕРґРµР»С–"""
+    """Запит на генерацію 3D моделі"""
     model_config = ConfigDict(protected_namespaces=())
-    
+
+    # ── Auto-clamp: замість 422 помилок — м'яко клампимо значення в межі Field(ge/le)
+    @model_validator(mode='before')
+    @classmethod
+    def _auto_clamp_numeric_fields(cls, data):
+        if not isinstance(data, dict):
+            return data
+        try:
+            from annotated_types import Ge, Le, Gt, Lt
+        except ImportError:
+            return data
+        for field_name, field_info in cls.model_fields.items():
+            if field_name not in data:
+                continue
+            value = data[field_name]
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                continue
+            ge_val = le_val = gt_val = lt_val = None
+            for meta in getattr(field_info, 'metadata', []) or []:
+                if isinstance(meta, Ge):
+                    ge_val = meta.ge
+                elif isinstance(meta, Le):
+                    le_val = meta.le
+                elif isinstance(meta, Gt):
+                    gt_val = meta.gt
+                elif isinstance(meta, Lt):
+                    lt_val = meta.lt
+            orig = value
+            clamped = value
+            if ge_val is not None and clamped < ge_val:
+                clamped = ge_val
+            if gt_val is not None and clamped <= gt_val:
+                clamped = gt_val + (1 if isinstance(value, int) else 0.001)
+            if le_val is not None and clamped > le_val:
+                clamped = le_val
+            if lt_val is not None and clamped >= lt_val:
+                clamped = lt_val - (1 if isinstance(value, int) else 0.001)
+            if clamped != orig:
+                print(f"[AUTO-CLAMP] {field_name}: {orig} -> {clamped} (limits ge={ge_val} le={le_val})")
+                data[field_name] = type(orig)(clamped) if isinstance(orig, int) else float(clamped)
+        return data
+
     north: float
     south: float
     east: float
@@ -373,7 +414,7 @@ class GenerationRequest(BaseModel):
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
     # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
     # - terrain_resolution: РєС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РїРѕ РѕСЃС– (mesh РґРµС‚Р°Р»СЊ). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, РїРѕРІС–Р»СЊРЅС–С€Рµ.
-    terrain_resolution: int = Field(default=350, ge=80, le=600)  # Р’РёСЃРѕРєР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ РґР»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РїР»Р°РІРЅРѕРіРѕ СЂРµР»СЊС”С„Сѓ
+    terrain_resolution: int = Field(default=350, ge=40, le=600)  # Висока деталізація для максимально плавного рельєфу
     # Subdivision: РґРѕРґР°С‚РєРѕРІР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ mesh РїС–СЃР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ (РґР»СЏ С‰Рµ РїР»Р°РІРЅС–С€РѕРіРѕ СЂРµР»СЊС”С„Сѓ)
     terrain_subdivide: bool = Field(default=True, description="Р—Р°СЃС‚РѕСЃСѓРІР°С‚Рё subdivision РґР»СЏ РїР»Р°РІРЅС–С€РѕРіРѕ mesh")
     terrain_subdivide_levels: int = Field(default=1, ge=0, le=2, description="Р С–РІРЅС– subdivision (0-2, Р±С–Р»СЊС€Рµ = РїР»Р°РІРЅС–С€Рµ Р°Р»Рµ РїРѕРІС–Р»СЊРЅС–С€Рµ)")
@@ -424,9 +465,11 @@ class GenerationRequest(BaseModel):
     flat_roads_layer_mm: float = Field(default=0.42, ge=0.0, le=5.0)
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
+    flat_uniform_building_height: bool = False
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
+    keychain_layout_rotation_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_loop_style: str = Field(default="round", max_length=24)
     keychain_loop_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_body_width_mm: float = Field(default=35.0, ge=20.0, le=180.0)
@@ -435,12 +478,13 @@ class GenerationRequest(BaseModel):
     keychain_map_y_mm: float = Field(default=3.0, ge=0.0, le=140.0)
     keychain_map_width_mm: float = Field(default=31.0, ge=4.0, le=180.0)
     keychain_map_height_mm: float = Field(default=40.0, ge=4.0, le=140.0)
+    keychain_map_rotation_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_loop_center_x_mm: float = Field(default=17.5, ge=-30.0, le=210.0)
     keychain_loop_center_y_mm: float = Field(default=-4.0, ge=-40.0, le=180.0)
     keychain_label_center_x_mm: float = Field(default=17.5, ge=0.0, le=180.0)
     keychain_label_center_y_mm: float = Field(default=49.5, ge=0.0, le=140.0)
     keychain_label_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
-    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=3.5, le=18.0)
+    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=2.4, le=18.0)
     keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
     keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
@@ -448,6 +492,7 @@ class GenerationRequest(BaseModel):
     keychain_label_text_height_mm: float = Field(default=4.2, ge=1.0, le=12.0)
     keychain_label_width_mm: float = Field(default=30.0, ge=4.0, le=180.0)
     keychain_label_stroke_mm: float = Field(default=0.65, ge=0.4, le=3.0)
+    keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     canonical_mask_bundle_dir: Optional[str] = None
@@ -468,6 +513,13 @@ async def root():
 
 
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:
+    """Auto-adjust keychain scale instead of erroring.
+
+    Якщо зона завелика для обраного розміру карти на брелку, замість 422 помилки
+    розширюємо keychain_map_width_mm/keychain_map_height_mm так, щоб масштаб
+    залишався друкованим (≤ 8 м/мм). Залишаємо керування користувачу — він
+    може зменшити ділянку, але система не блокує генерацію.
+    """
     if not (bool(getattr(request, "flat_plate_mode", False)) and bool(getattr(request, "keychain_mode", False))):
         return
     map_w_mm = max(float(getattr(request, "keychain_map_width_mm", 0.0) or 0.0), 1.0)
@@ -476,17 +528,25 @@ def _validate_keychain_print_scale(request: GenerationRequest) -> None:
     width_m = abs(float(request.east) - float(request.west)) * 111_320.0 * max(float(np.cos(np.deg2rad(lat_mid))), 0.2)
     height_m = abs(float(request.north) - float(request.south)) * 111_320.0
     meters_per_mm = max(width_m / map_w_mm, height_m / map_h_mm)
-    # Above this, 6m streets fall below roughly 0.75mm and small buildings
-    # collapse into noise even after canonical cleanup. Frontend prevents it;
-    # this guard keeps direct API requests from producing slicer garbage.
-    if meters_per_mm > 8.0:
-        raise HTTPException(
-            status_code=422,
-            detail=(
-                "Обрана зона завелика для брелка: "
-                f"{meters_per_mm:.1f} м/мм. Зменшіть ділянку або збільшіть вікно карти "
-                "до масштабу не більше 8 м/мм."
-            ),
+    MAX_M_PER_MM = 8.0
+    if meters_per_mm > MAX_M_PER_MM:
+        # Розраховуємо мінімальну ширину/висоту карти щоб залишитися в межах
+        body_w = float(getattr(request, "keychain_body_width_mm", 35.0) or 35.0)
+        body_h = float(getattr(request, "keychain_body_height_mm", 55.0) or 55.0)
+        # Розширюємо карту: збільшуємо обидва виміри пропорційно, не більше тіла мінус rim
+        rim_w = float(getattr(request, "keychain_rim_width_mm", 1.2) or 1.2)
+        max_map_w = max(body_w - 2 * rim_w, 8.0)
+        max_map_h = max(body_h - 2 * rim_w - 12.0, 8.0)  # 12mm запас на label band/loop
+        new_w = min(max(width_m / MAX_M_PER_MM, map_w_mm), max_map_w)
+        new_h = min(max(height_m / MAX_M_PER_MM, map_h_mm), max_map_h)
+        request.keychain_map_width_mm = float(new_w)
+        request.keychain_map_height_mm = float(new_h)
+        # Переоцінюємо
+        actual_m_per_mm = max(width_m / new_w, height_m / new_h)
+        print(
+            f"[AUTO-ADJUST] Keychain scale: {meters_per_mm:.1f} м/мм -> "
+            f"{actual_m_per_mm:.1f} м/мм (map={new_w:.1f}x{new_h:.1f}mm). "
+            f"Якщо все ще завелика — деталь може злитися; рекомендуємо зменшити ділянку."
         )
 
 
@@ -558,6 +618,7 @@ async def get_status(task_id: str):
                     "message": t.message,
                     "output_file": t.output_file,
                     "output_files": output_files,
+                    "keychain_manifest": getattr(t, "keychain_manifest", None),
                     "download_url": download_url,
                     "firebase_url": getattr(t, "firebase_url", None),
                     "preview_3mf": to_static_url(output_files.get("preview_3mf")),
@@ -609,6 +670,7 @@ async def get_status(task_id: str):
         "firebase_url": task.firebase_url,
         "download_url_stl": to_static_url(output_files.get("stl")),
         "download_url_3mf": to_static_url(output_files.get("3mf")),
+        "keychain_manifest": getattr(task, "keychain_manifest", None),
         "preview_3mf": to_static_url(output_files.get("preview_3mf")),  # РћСЃРЅРѕРІРЅРµ РїСЂРµРІ'СЋ РІ 3MF
         "preview_parts": {
             "base": to_static_url(output_files.get("base_3mf")),
@@ -1193,9 +1255,11 @@ class ZoneGenerationRequest(BaseModel):
     flat_roads_layer_mm: float = Field(default=0.42, ge=0.0, le=5.0)
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
+    flat_uniform_building_height: bool = False
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
+    keychain_layout_rotation_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_loop_style: str = Field(default="round", max_length=24)
     keychain_loop_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_body_width_mm: float = Field(default=35.0, ge=20.0, le=180.0)
@@ -1204,12 +1268,13 @@ class ZoneGenerationRequest(BaseModel):
     keychain_map_y_mm: float = Field(default=3.0, ge=0.0, le=140.0)
     keychain_map_width_mm: float = Field(default=31.0, ge=4.0, le=180.0)
     keychain_map_height_mm: float = Field(default=40.0, ge=4.0, le=140.0)
+    keychain_map_rotation_deg: float = Field(default=0.0, ge=0.0, le=360.0)
     keychain_loop_center_x_mm: float = Field(default=17.5, ge=-30.0, le=210.0)
     keychain_loop_center_y_mm: float = Field(default=-4.0, ge=-40.0, le=180.0)
     keychain_label_center_x_mm: float = Field(default=17.5, ge=0.0, le=180.0)
     keychain_label_center_y_mm: float = Field(default=49.5, ge=0.0, le=140.0)
     keychain_label_angle_deg: float = Field(default=0.0, ge=0.0, le=360.0)
-    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=3.5, le=18.0)
+    keychain_loop_outer_radius_mm: float = Field(default=6.5, ge=2.4, le=18.0)
     keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
     keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
@@ -1217,6 +1282,7 @@ class ZoneGenerationRequest(BaseModel):
     keychain_label_text_height_mm: float = Field(default=4.2, ge=1.0, le=12.0)
     keychain_label_width_mm: float = Field(default=30.0, ge=4.0, le=180.0)
     keychain_label_stroke_mm: float = Field(default=0.65, ge=0.4, le=3.0)
+    keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
     canonical_mask_bundle_dir: Optional[str] = None
@@ -1502,9 +1568,11 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             flat_roads_layer_mm=float(getattr(request, "flat_roads_layer_mm", 0.42)),
             flat_parks_layer_mm=float(getattr(request, "flat_parks_layer_mm", 0.36)),
             flat_max_building_height_mm=float(getattr(request, "flat_max_building_height_mm", 0.0)),
+            flat_uniform_building_height=bool(getattr(request, "flat_uniform_building_height", False)),
             keychain_mode=bool(getattr(request, "keychain_mode", False)),
             keychain_label=str(getattr(request, "keychain_label", "") or ""),
             keychain_base_shape=str(getattr(request, "keychain_base_shape", "rounded") or "rounded"),
+            keychain_layout_rotation_deg=float(getattr(request, "keychain_layout_rotation_deg", 0.0)),
             keychain_loop_style=str(getattr(request, "keychain_loop_style", "round") or "round"),
             keychain_loop_angle_deg=float(getattr(request, "keychain_loop_angle_deg", 0.0)),
             keychain_body_width_mm=float(getattr(request, "keychain_body_width_mm", 35.0)),
@@ -1513,6 +1581,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             keychain_map_y_mm=float(getattr(request, "keychain_map_y_mm", 3.0)),
             keychain_map_width_mm=float(getattr(request, "keychain_map_width_mm", 31.0)),
             keychain_map_height_mm=float(getattr(request, "keychain_map_height_mm", 40.0)),
+            keychain_map_rotation_deg=float(getattr(request, "keychain_map_rotation_deg", 0.0)),
             keychain_loop_center_x_mm=float(getattr(request, "keychain_loop_center_x_mm", 17.5)),
             keychain_loop_center_y_mm=float(getattr(request, "keychain_loop_center_y_mm", -4.0)),
             keychain_label_center_x_mm=float(getattr(request, "keychain_label_center_x_mm", 17.5)),
@@ -1526,6 +1595,7 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             keychain_label_text_height_mm=float(getattr(request, "keychain_label_text_height_mm", 4.2)),
             keychain_label_width_mm=float(getattr(request, "keychain_label_width_mm", 30.0)),
             keychain_label_stroke_mm=float(getattr(request, "keychain_label_stroke_mm", 0.65)),
+            keychain_label_font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
             keychain_rim_width_mm=float(getattr(request, "keychain_rim_width_mm", 1.2)),
             keychain_rim_height_mm=float(getattr(request, "keychain_rim_height_mm", 0.45)),
         )
