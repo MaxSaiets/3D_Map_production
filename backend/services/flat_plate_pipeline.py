@@ -1336,17 +1336,54 @@ def run_flat_plate_pipeline(
                 angle_deg=map_rotation_deg,
             )
 
-        building_mask = _clip_geometry(_xform(getattr(bundle, "buildings_footprints", None)), content_area)
-        road_mask = _clip_geometry(_xform(getattr(bundle, "roads_final", None)), content_area)
-        parks_mask = _clip_geometry(_xform(getattr(bundle, "parks_final", None)), content_area)
-        water_source = getattr(bundle, "water_final", None)
+        # Гарантуємо raw fallback'и: якщо canonical bundle порожній, беремо
+        # сирі OSM дані (з preclip + road_geometry). Інакше для малих зон з
+        # тонкими дорогами / нечисленними будівлями весь шар стає None.
         raw_water_source = None
+        raw_road_source = None
+        raw_buildings_source = None
+        raw_parks_source = None
         try:
             gdf_water_local = getattr(preclip_result, "gdf_water_local", None)
             if gdf_water_local is not None and not gdf_water_local.empty:
                 raw_water_source = _mask_union_from_geometries(gdf_water_local.geometry.values)
         except Exception:
             raw_water_source = None
+        try:
+            road_geometry = getattr(canonical_2d_stage, "road_geometry", None)
+            if road_geometry is not None:
+                raw_road_source = (
+                    getattr(road_geometry, "merged_roads_geom_local", None)
+                    or getattr(road_geometry, "merged_roads_geom_local_raw", None)
+                )
+        except Exception:
+            raw_road_source = None
+        try:
+            if gdf_buildings_local is not None and not gdf_buildings_local.empty:
+                raw_buildings_source = _mask_union_from_geometries(gdf_buildings_local.geometry.values)
+        except Exception:
+            raw_buildings_source = None
+
+        # Buildings: bundle або raw
+        bundle_buildings = getattr(bundle, "buildings_footprints", None)
+        if bundle_buildings is None or getattr(bundle_buildings, "is_empty", True):
+            if raw_buildings_source is not None and not getattr(raw_buildings_source, "is_empty", True):
+                print("[KEYCHAIN] Canonical buildings empty; using raw clipped buildings")
+                bundle_buildings = raw_buildings_source
+        building_mask = _clip_geometry(_xform(bundle_buildings), content_area)
+
+        # Roads: bundle або raw (merged_roads_geom_local)
+        bundle_roads = getattr(bundle, "roads_final", None)
+        if bundle_roads is None or getattr(bundle_roads, "is_empty", True):
+            if raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
+                print("[KEYCHAIN] Canonical roads empty; using raw clipped roads")
+                bundle_roads = raw_road_source
+        road_mask = _clip_geometry(_xform(bundle_roads), content_area)
+
+        # Parks: bundle (raw source поки що недоступний на цьому етапі)
+        parks_mask = _clip_geometry(_xform(getattr(bundle, "parks_final", None)), content_area)
+
+        water_source = getattr(bundle, "water_final", None)
         if water_source is None or getattr(water_source, "is_empty", True):
             if raw_water_source is not None and not getattr(raw_water_source, "is_empty", True):
                 print("[KEYCHAIN] Canonical water was empty; using raw clipped water as flat layer source")
@@ -1359,6 +1396,14 @@ def run_flat_plate_pipeline(
             min_area_m2=min_area_m2,
             label="roads",
         )
+        if (road_mask is None or getattr(road_mask, "is_empty", True)) and raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
+            print("[KEYCHAIN] Roads collapsed after sanitize; retrying with raw road source + soft filter")
+            road_mask = _sanitize_layer_mask(
+                _subtract_geometry(_clip_geometry(_xform(raw_road_source), content_area), building_mask),
+                min_feature_m=float(min_feature_m) * 0.5,  # м'якший фільтр
+                min_area_m2=float(min_area_m2) * 0.4,
+                label="raw roads",
+            )
         water_mask = _sanitize_layer_mask(
             _subtract_geometry(water_mask, road_mask, building_mask),
             min_feature_m=min_feature_m,
