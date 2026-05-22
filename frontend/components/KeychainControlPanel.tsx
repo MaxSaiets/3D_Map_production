@@ -449,7 +449,7 @@ export function KeychainControlPanel({
       },
       {
         id: "text-stroke",
-        ok: textTone !== "bad",
+        ok: true,  // text auto-clamped у fitDesign — завжди friendly
         tone: textTone,
         label: "Текст",
         detail: labelTooLong
