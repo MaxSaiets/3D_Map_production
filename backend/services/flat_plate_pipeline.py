@@ -1380,6 +1380,29 @@ def run_flat_plate_pipeline(
                 bundle_roads = raw_road_source
         road_mask = _clip_geometry(_xform(bundle_roads), content_area)
 
+        # KEYCHAIN ROADS BOOST: При малому масштабі (>3 м/мм) тонкі вулиці
+        # (3-5м, типові міські) дають у моделі менше 0.5mm — і випадають з
+        # друку. Розширюємо road_mask на min_feature_m*0.6, щоб типові
+        # вулиці гарантовано пройшли фільтр і були видимі. Магістралі при
+        # цьому розширяться непомітно (вони вже широкі), а маленькі вулиці
+        # «потовщаться» до мінімально друкованих.
+        if keychain_mode and road_mask is not None and not getattr(road_mask, "is_empty", True):
+            try:
+                widen_m = float(min_feature_m) * 0.6
+                if widen_m > 0:
+                    widened = road_mask.buffer(widen_m, join_style=2, cap_style=2)
+                    if widened is not None and not getattr(widened, "is_empty", True):
+                        # Залишаємось у межах content_area
+                        widened = widened.intersection(content_area).buffer(0)
+                        if widened is not None and not getattr(widened, "is_empty", True):
+                            road_mask = widened
+                            print(
+                                f"[KEYCHAIN] Roads widened by {widen_m*1000:.2f}mm "
+                                f"to survive print filter (thin streets become visible)"
+                            )
+            except Exception as exc:
+                print(f"[KEYCHAIN] Road widen failed: {exc}")
+
         # Parks: bundle (raw source поки що недоступний на цьому етапі)
         parks_mask = _clip_geometry(_xform(getattr(bundle, "parks_final", None)), content_area)
 
