@@ -26,6 +26,19 @@ const MapSelector = dynamic(
   },
 );
 
+// Реальний 3D перегляд згенерованого брелка (Three.js, важкий, потрібен ssr:false)
+const Preview3D = dynamic(
+  () => import("@/components/Preview3D").then((mod) => ({ default: mod.Preview3D })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full min-h-[320px] items-center justify-center rounded-[20px] bg-[#0f172a] text-sm text-white/70">
+        Завантаження 3D перегляду…
+      </div>
+    ),
+  },
+);
+
 const CITIES: Record<string, { center: [number, number]; label: string; defaultText: string }> = {
   Kyiv: { center: [50.4501, 30.5234], label: "Київ", defaultText: "KYIV MAP" },
   Khmelnytskyi: { center: [49.42, 26.98], label: "Хмельницький", defaultText: "KHMEL MAP" },
@@ -46,7 +59,7 @@ export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV MAP");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
-  const [sidePreview, setSidePreview] = useState<"life" | "slicer">("life");
+  const [sidePreview, setSidePreview] = useState<"life" | "slicer" | "model3d">("life");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
@@ -250,26 +263,52 @@ export default function KeychainsPage() {
                 </div>
                 <div className="hidden min-h-[360px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] 2xl:block">
                   <div className="relative h-full">
-                    <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/35 p-1 backdrop-blur">
+                    <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/45 p-1 backdrop-blur">
                       <button
                         type="button"
                         onClick={() => setSidePreview("life")}
-                        className={`min-h-[34px] rounded-full px-3 text-xs font-semibold ${sidePreview === "life" ? "bg-white text-[#111827]" : "text-white/76"}`}
+                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "life" ? "bg-white text-[#111827]" : "text-white/76"}`}
                       >
                         У житті
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSidePreview("slicer")}
-                        className={`min-h-[34px] rounded-full px-3 text-xs font-semibold ${sidePreview === "slicer" ? "bg-white text-[#111827]" : "text-white/76"}`}
+                        onClick={() => setSidePreview("model3d")}
+                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold relative ${sidePreview === "model3d" ? "bg-white text-[#111827]" : "text-white/76"}`}
                       >
-                        Слайсер
+                        3D
+                        {downloadUrl ? (
+                          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 align-middle" title="Модель готова" />
+                        ) : null}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSidePreview("slicer")}
+                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "slicer" ? "bg-white text-[#111827]" : "text-white/76"}`}
+                      >
+                        Шари
                       </button>
                     </div>
-                    {sidePreview === "life" ? (
-                      <KeychainLifePreview design={design} label={label} />
-                    ) : (
-                      <KeychainSlicerPreview design={design} label={label} />
+                    {sidePreview === "life" && <KeychainLifePreview design={design} label={label} />}
+                    {sidePreview === "slicer" && <KeychainSlicerPreview design={design} label={label} />}
+                    {sidePreview === "model3d" && (
+                      downloadUrl ? (
+                        <Preview3D />
+                      ) : (
+                        <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 rounded-[22px] bg-[#0f172a] p-6 text-center text-white/85">
+                          <KeyRound size={32} className="text-[#5eead4]" />
+                          <div className="font-title text-lg">3D модель з'явиться після генерації</div>
+                          <div className="text-sm leading-6 text-white/55">
+                            Натисніть «Створити брелок» — з'явиться реальний 3D перегляд згенерованого 3MF з усіма шарами.
+                          </div>
+                          {isGenerating && (
+                            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                              Генерація: {progress}%
+                            </div>
+                          )}
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
