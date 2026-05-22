@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { ArrowLeft, KeyRound, Layers3, Map as MapIcon } from "lucide-react";
+import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, Settings2 } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
 import { KeychainLifePreview, KeychainSlicerPreview } from "@/components/KeychainLifePreview";
 import {
@@ -40,12 +40,15 @@ const CITIES: Record<string, { center: [number, number]; label: string; defaultT
   Manual: { center: [49.0, 31.0], label: "Інше / вручну", defaultText: "CITY MAP" },
 };
 
+type MobileTab = "map" | "settings" | "design";
+
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV MAP");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const [sidePreview, setSidePreview] = useState<"life" | "slicer">("life");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const { selectedArea, downloadUrl, isGenerating, progress, status } = useGenerationStore();
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
@@ -74,6 +77,11 @@ export default function KeychainsPage() {
       : selectedArea
         ? "Ділянка вибрана"
         : "Оберіть ділянку";
+
+  // Mobile-tabs visibility classes
+  const mapPanelClasses = mobileTab === "map" ? "flex" : "hidden lg:flex";
+  const settingsPanelClasses = mobileTab === "settings" ? "block" : "hidden lg:block";
+  const designPanelClasses = mobileTab === "design" ? "flex" : "hidden lg:flex";
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
@@ -132,8 +140,8 @@ export default function KeychainsPage() {
           </div>
         </header>
 
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-          <div className="order-1 flex min-h-[460px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]">
+        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
+          <div className={`${mapPanelClasses} order-1 min-h-[calc(100dvh-220px)] flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
             <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
               <div>
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -151,21 +159,41 @@ export default function KeychainsPage() {
                 <button
                   type="button"
                   onClick={() => handleCropRotationChange(((cropRotationDeg || 0) - 15 + 360) % 360)}
-                  className="min-h-[40px] px-3 text-sm font-black text-[var(--text-primary)]"
-                  aria-label="Повернути рамку вибору карти проти годинникової стрілки"
+                  className="min-h-[40px] px-2 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-black/5"
+                  aria-label="−15 градусів"
+                  title="−15°"
+                >
+                  ⟲⟲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) - 1 + 360) % 360)}
+                  className="min-h-[40px] px-3 text-base font-black text-[var(--text-primary)] transition hover:bg-black/5"
+                  aria-label="−1 градус"
+                  title="−1°"
                 >
                   ↺
                 </button>
-                <div className="grid min-w-[58px] place-items-center px-2 text-sm font-bold text-[var(--accent-strong)]">
+                <div className="grid min-w-[54px] place-items-center px-1 text-sm font-bold text-[var(--accent-strong)] tabular-nums">
                   {Math.round(cropRotationDeg || 0)}°
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 15) % 360)}
-                  className="min-h-[40px] px-3 text-sm font-black text-[var(--text-primary)]"
-                  aria-label="Повернути рамку вибору карти за годинниковою стрілкою"
+                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 1) % 360)}
+                  className="min-h-[40px] px-3 text-base font-black text-[var(--text-primary)] transition hover:bg-black/5"
+                  aria-label="+1 градус"
+                  title="+1°"
                 >
                   ↻
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 15) % 360)}
+                  className="min-h-[40px] px-2 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-black/5"
+                  aria-label="+15 градусів"
+                  title="+15°"
+                >
+                  ⟳⟳
                 </button>
               </div>
             </div>
@@ -176,7 +204,7 @@ export default function KeychainsPage() {
             </div>
           </div>
 
-          <aside className="order-2 overflow-hidden rounded-[26px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur">
+          <aside className={`${settingsPanelClasses} order-2 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -185,7 +213,7 @@ export default function KeychainsPage() {
             />
           </aside>
 
-          <section className="order-3 flex min-h-[500px] flex-col overflow-hidden rounded-[26px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]">
+          <section className={`${designPanelClasses} order-3 min-h-[calc(100dvh-220px)] flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -242,6 +270,48 @@ export default function KeychainsPage() {
           </section>
         </div>
       </div>
+
+      {/* Mobile bottom tab bar — sticky, прихований на десктопі */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] px-2 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={() => setMobileTab("map")}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
+              mobileTab === "map"
+                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
+                : "text-[var(--text-secondary)]"
+            }`}
+          >
+            <MapIcon size={18} />
+            Карта
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("settings")}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
+              mobileTab === "settings"
+                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
+                : "text-[var(--text-secondary)]"
+            }`}
+          >
+            <Settings2 size={18} />
+            Налаштування
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("design")}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
+              mobileTab === "design"
+                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
+                : "text-[var(--text-secondary)]"
+            }`}
+          >
+            <Layers3 size={18} />
+            Дизайн
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

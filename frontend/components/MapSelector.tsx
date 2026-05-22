@@ -138,7 +138,8 @@ function boundsSizeMeters(bounds: L.LatLngBounds) {
 }
 
 function normalizeAngle(angleDeg: number) {
-  return ((Math.round(angleDeg / 5) * 5) % 360 + 360) % 360;
+  // Гранулярність 1° (раніше було 5°). Користувач має повний контроль над кутом.
+  return ((Math.round(angleDeg) % 360) + 360) % 360;
 }
 
 function offsetLatLngMeters(center: L.LatLng, dxM: number, dyM: number) {
@@ -571,21 +572,41 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           <button
             type="button"
             onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) - 15))}
-            className="min-h-[44px] px-3 text-sm font-black text-white/90 transition hover:bg-white/10"
-            aria-label="Повернути область карти проти годинникової стрілки"
+            className="min-h-[44px] px-2 text-[11px] font-black text-white/80 transition hover:bg-white/10"
+            aria-label="−15 градусів"
+            title="−15°"
+          >
+            ⟲⟲
+          </button>
+          <button
+            type="button"
+            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) - 1))}
+            className="min-h-[44px] px-3 text-base font-black text-white/95 transition hover:bg-white/10"
+            aria-label="−1 градус"
+            title="−1°"
           >
             ↺
           </button>
-          <div className="grid min-w-[64px] place-items-center px-2 text-xs font-bold text-white">
+          <div className="grid min-w-[58px] place-items-center px-1 text-xs font-bold text-white tabular-nums">
             {normalizeAngle(keychainCrop.rotationDeg || 0)}°
           </div>
           <button
             type="button"
-            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 15))}
-            className="min-h-[44px] px-3 text-sm font-black text-white/90 transition hover:bg-white/10"
-            aria-label="Повернути область карти за годинниковою стрілкою"
+            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 1))}
+            className="min-h-[44px] px-3 text-base font-black text-white/95 transition hover:bg-white/10"
+            aria-label="+1 градус"
+            title="+1°"
           >
             ↻
+          </button>
+          <button
+            type="button"
+            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 15))}
+            className="min-h-[44px] px-2 text-[11px] font-black text-white/80 transition hover:bg-white/10"
+            aria-label="+15 градусів"
+            title="+15°"
+          >
+            ⟳⟳
           </button>
         </div>
       ) : null}
