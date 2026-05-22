@@ -400,6 +400,7 @@ def _sanitize_layer_mask(
     geometry = _clean_polygonal_geometry(geometry)
     if geometry is None:
         return None
+    original = geometry  # збережемо оригінал для fallback
     try:
         # Opening removes spikes and one-line fragments below the real nozzle
         # floor. Keep the radius conservative; printable masks were already
@@ -416,8 +417,26 @@ def _sanitize_layer_mask(
         min_feature_m=min_feature_m,
         min_area_m2=min_area_m2,
     )
-    if cleaned is None and geometry is not None and not getattr(geometry, "is_empty", True):
-        print(f"[KEYCHAIN] {label} collapsed under 0.4mm print filter")
+    if cleaned is None and original is not None and not getattr(original, "is_empty", True):
+        # FALLBACK: замість того щоб втратити шар повністю, розширюємо оригінал
+        # на min_feature_m і повертаємо це. Краще "трохи товстіші дороги" ніж
+        # "немає доріг взагалі".
+        try:
+            widen_radius = max(float(min_feature_m) * 0.6, 0.05)
+            widened = original.buffer(widen_radius, join_style=1, cap_style=1)
+            if widened is not None and not getattr(widened, "is_empty", True):
+                # Знову відсікаємо мікро-фрагменти, але з пом'якшеним порогом
+                soft_cleaned = _drop_subprintable_fragments(
+                    widened.buffer(0),
+                    min_feature_m=float(min_feature_m) * 0.4,  # пом'якшено в 2.5×
+                    min_area_m2=float(min_area_m2) * 0.4,
+                )
+                if soft_cleaned is not None and not getattr(soft_cleaned, "is_empty", True):
+                    print(f"[KEYCHAIN] {label} collapsed under {min_feature_m*1000:.2f}mm filter — using widened fallback (radius={widen_radius:.3f}m)")
+                    return soft_cleaned
+        except Exception as e:
+            print(f"[KEYCHAIN] {label} fallback failed: {e}")
+        print(f"[KEYCHAIN] {label} collapsed under {min_feature_m*1000:.2f}mm print filter — layer will be empty")
     return cleaned
 
 

@@ -469,9 +469,28 @@ export function KeychainControlPanel({
       : "Можна створювати 3MF.";
 
   const repairForPrint = () => {
+    // Триетапна стратегія для покращення масштабу:
+    // 1) Якщо є місце на брелку — розширюємо саму карту (мінімум жертви)
+    // 2) Якщо все одно завелика — обрізаємо ділянку на мапі
+    // 3) Додатково підвищуємо мінімуми текст/вушко/rim
+
+    let nextMapWidth = design.mapWidthMm;
+    let nextMapHeight = design.mapHeightMm;
+
+    if (printScale?.tooLarge) {
+      // Спершу максимізуємо саму карту в межах тіла (мінус rim + label band)
+      const rim = Math.max(design.rimWidthMm, 1.0);
+      const maxMapW = Math.max(design.bodyWidthMm - 2 * rim - 4, 14);
+      const maxMapH = Math.max(design.bodyHeightMm - 2 * rim - design.labelBandMm - 4, 14);
+      nextMapWidth = Math.max(design.mapWidthMm, maxMapW);
+      nextMapHeight = Math.max(design.mapHeightMm, maxMapH);
+    }
+
+    // Перевіряємо, чи розширення карти достатньо. Якщо ні — обрізаємо ділянку.
     if (selectedArea && printScale?.tooLarge) {
-      const targetWidthM = Math.max(design.mapWidthMm * GOOD_METERS_PER_MM, 60);
-      const targetHeightM = Math.max(design.mapHeightMm * GOOD_METERS_PER_MM, 60);
+      // Цільовий масштаб — за ширшу зі сторін
+      const targetWidthM = Math.max(nextMapWidth * GOOD_METERS_PER_MM, 60);
+      const targetHeightM = Math.max(nextMapHeight * GOOD_METERS_PER_MM, 60);
       const repairedBounds = shrinkBoundsToMeters(selectedArea, targetWidthM, targetHeightM);
       if (repairedBounds) {
         setSelectedArea(repairedBounds);
@@ -479,15 +498,17 @@ export function KeychainControlPanel({
     }
     const repaired = fitDesign({
       ...design,
-      labelStrokeMm: Math.max(design.labelStrokeMm, 0.65),
-      labelTextHeightMm: Math.max(design.labelTextHeightMm, 3.6),
+      mapWidthMm: nextMapWidth,
+      mapHeightMm: nextMapHeight,
+      labelStrokeMm: Math.max(design.labelStrokeMm, 0.8),
+      labelTextHeightMm: Math.max(design.labelTextHeightMm, 3.8),
       labelWidthMm: Math.max(design.labelWidthMm, Math.min(design.bodyWidthMm - 4, Math.max(22, label.trim().length * 2.1))),
-      loopOuterMm: Math.max(design.loopOuterMm, 4.2),
+      loopOuterMm: Math.max(design.loopOuterMm, 4.5),
       loopInnerMm: Math.max(design.loopInnerMm, 1.5),
       rimWidthMm: Math.max(design.rimWidthMm, 1.0),
       rimHeightMm: Math.max(design.rimHeightMm, 0.4),
-      mapXMm: Math.max((design.bodyWidthMm - design.mapWidthMm) / 2, 0),
-      mapYMm: Math.max((design.bodyHeightMm - design.labelBandMm - design.mapHeightMm) / 2, 0),
+      mapXMm: Math.max((design.bodyWidthMm - nextMapWidth) / 2, 0),
+      mapYMm: Math.max((design.bodyHeightMm - design.labelBandMm - nextMapHeight) / 2, 0),
     });
     onDesignChange(repaired);
     setBaseThicknessMm((value) => Math.max(value, 2.0));
