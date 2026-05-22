@@ -140,9 +140,11 @@ export interface GenerationRequest {
   flat_roads_layer_mm?: number;
   flat_parks_layer_mm?: number;
   flat_max_building_height_mm?: number;
+  flat_uniform_building_height?: boolean;
   keychain_mode?: boolean;
   keychain_label?: string;
-  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon";
+  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token";
+  keychain_layout_rotation_deg?: number;
   keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
   keychain_loop_angle_deg?: number;
   keychain_body_width_mm?: number;
@@ -151,6 +153,7 @@ export interface GenerationRequest {
   keychain_map_y_mm?: number;
   keychain_map_width_mm?: number;
   keychain_map_height_mm?: number;
+  keychain_map_rotation_deg?: number;
   keychain_loop_center_x_mm?: number;
   keychain_loop_center_y_mm?: number;
   keychain_label_center_x_mm?: number;
@@ -164,6 +167,7 @@ export interface GenerationRequest {
   keychain_label_text_height_mm?: number;
   keychain_label_width_mm?: number;
   keychain_label_stroke_mm?: number;
+  keychain_label_font_style?: "block" | "wide" | "condensed";
   keychain_rim_width_mm?: number;
   keychain_rim_height_mm?: number;
   // Fast preview (~30s): skip Blender grooves + manifold cleanup, terrain 80x80
@@ -198,6 +202,19 @@ export interface TaskStatus {
     water?: string | null;
     parks?: string | null;
   };
+  keychain_manifest?: {
+    mode?: string;
+    print_rules?: Record<string, any>;
+    dimensions?: Record<string, number>;
+    layers?: Record<string, {
+      present?: boolean;
+      vertices?: number;
+      faces?: number;
+      size_mm?: number[];
+      z_min_mm?: number;
+      z_max_mm?: number;
+    }>;
+  } | null;
   firebase_preview_parts?: {
     base?: string | null;
     roads?: string | null;

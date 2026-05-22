@@ -2,12 +2,14 @@
 
 import { useMemo, useRef, useState } from "react";
 
-export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon";
+export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
+export type KeychainLabelFontStyle = "block" | "wide" | "condensed";
 
 export type KeychainDesignerConfig = {
   bodyWidthMm: number;
   bodyHeightMm: number;
+  layoutRotationDeg: number;
   cornerRadiusMm: number;
   baseShape: KeychainBaseShape;
   loopStyle: KeychainLoopStyle;
@@ -20,12 +22,14 @@ export type KeychainDesignerConfig = {
   mapYMm: number;
   mapWidthMm: number;
   mapHeightMm: number;
+  mapRotationDeg: number;
   labelXMm: number;
   labelYMm: number;
   labelWidthMm: number;
   labelBandMm: number;
   labelTextHeightMm: number;
   labelStrokeMm: number;
+  labelFontStyle: KeychainLabelFontStyle;
   labelAngleDeg: number;
   rimWidthMm: number;
   rimHeightMm: number;
@@ -47,6 +51,8 @@ type DragSession = {
 
 const MIN_MAP_WIDTH_MM = 28;
 const MIN_MAP_HEIGHT_MM = 18;
+const MIN_TOKEN_MAP_WIDTH_MM = 18;
+const MIN_TOKEN_MAP_HEIGHT_MM = 8;
 const SNAP_MM = 1.15;
 
 function clamp(value: number, min: number, max: number) {
@@ -58,25 +64,39 @@ function snapTo(value: number, target: number, threshold = SNAP_MM) {
 }
 
 function clampLoopToBody(next: KeychainDesignerConfig) {
-  const margin = Math.max(next.loopOuterMm * 0.85, 4);
+  if (next.baseShape === "token") {
+    const wallMm = Math.max(next.loopInnerMm + 2.0, 3.5);
+    next.loopXMm = clamp(next.loopXMm, wallMm, next.bodyWidthMm - wallMm);
+    next.loopYMm = clamp(next.loopYMm, wallMm, next.bodyHeightMm - wallMm);
+    next.loopXMm = snapTo(next.loopXMm, 4.5, 1.4);
+    next.loopYMm = snapTo(next.loopYMm, next.bodyHeightMm / 2);
+    return next;
+  }
+
+  const attachOffset = Math.max(next.loopOuterMm * 0.58, 3.2);
+  const margin = Math.max(attachOffset, 3.8);
   next.loopXMm = clamp(next.loopXMm, -margin, next.bodyWidthMm + margin);
   next.loopYMm = clamp(next.loopYMm, -margin, next.bodyHeightMm + margin);
   next.loopXMm = snapTo(next.loopXMm, next.bodyWidthMm / 2);
   next.loopYMm = snapTo(next.loopYMm, next.bodyHeightMm / 2);
-  next.loopYMm = snapTo(next.loopYMm, -Math.max(next.loopOuterMm * 0.58, 3.2));
-  next.loopYMm = snapTo(next.loopYMm, next.bodyHeightMm + Math.max(next.loopOuterMm * 0.58, 3.2));
-  next.loopXMm = snapTo(next.loopXMm, -Math.max(next.loopOuterMm * 0.58, 3.2));
-  next.loopXMm = snapTo(next.loopXMm, next.bodyWidthMm + Math.max(next.loopOuterMm * 0.58, 3.2));
+  next.loopYMm = snapTo(next.loopYMm, -attachOffset);
+  next.loopYMm = snapTo(next.loopYMm, next.bodyHeightMm + attachOffset);
+  next.loopXMm = snapTo(next.loopXMm, -attachOffset);
+  next.loopXMm = snapTo(next.loopXMm, next.bodyWidthMm + attachOffset);
   return next;
 }
 
 function fitAfterBodyResize(next: KeychainDesignerConfig) {
-  const minMapWidthMm = Math.min(MIN_MAP_WIDTH_MM, next.bodyWidthMm);
-  const minMapHeightMm = Math.min(MIN_MAP_HEIGHT_MM, next.bodyHeightMm);
+  const minMapWidthBaseMm = next.baseShape === "token" ? MIN_TOKEN_MAP_WIDTH_MM : MIN_MAP_WIDTH_MM;
+  const minMapHeightBaseMm = next.baseShape === "token" ? MIN_TOKEN_MAP_HEIGHT_MM : MIN_MAP_HEIGHT_MM;
+  const minMapWidthMm = Math.min(minMapWidthBaseMm, next.bodyWidthMm);
+  const minMapHeightMm = Math.min(minMapHeightBaseMm, next.bodyHeightMm);
+  next.layoutRotationDeg = ((Math.round((next.layoutRotationDeg || 0) / 90) * 90) % 360 + 360) % 360;
   next.mapXMm = clamp(next.mapXMm, 0, Math.max(0, next.bodyWidthMm - minMapWidthMm));
   next.mapYMm = clamp(next.mapYMm, 0, Math.max(0, next.bodyHeightMm - minMapHeightMm));
   next.mapWidthMm = clamp(next.mapWidthMm, minMapWidthMm, Math.max(minMapWidthMm, next.bodyWidthMm - next.mapXMm));
   next.mapHeightMm = clamp(next.mapHeightMm, minMapHeightMm, Math.max(minMapHeightMm, next.bodyHeightMm - next.mapYMm));
+  next.mapRotationDeg = ((Math.round((next.mapRotationDeg || 0) / 15) * 15) % 360 + 360) % 360;
   next.labelXMm = clamp(next.labelXMm, 4, Math.max(4, next.bodyWidthMm - 4));
   next.labelYMm = clamp(next.labelYMm, 4, Math.max(4, next.bodyHeightMm - 4));
   next.labelWidthMm = clamp(next.labelWidthMm, 8, next.bodyWidthMm);
@@ -89,6 +109,7 @@ function fitAfterBodyResize(next: KeychainDesignerConfig) {
 export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   bodyWidthMm: 35,
   bodyHeightMm: 55,
+  layoutRotationDeg: 0,
   cornerRadiusMm: 4.2,
   baseShape: "rounded",
   loopStyle: "round",
@@ -101,12 +122,14 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   mapYMm: 3,
   mapWidthMm: 31,
   mapHeightMm: 40,
+  mapRotationDeg: 0,
   labelXMm: 17.5,
   labelYMm: 49.5,
   labelWidthMm: 30,
   labelBandMm: 9.5,
   labelTextHeightMm: 4.2,
   labelStrokeMm: 0.75,
+  labelFontStyle: "block",
   labelAngleDeg: 0,
   rimWidthMm: 1.2,
   rimHeightMm: 0.45,
@@ -118,6 +141,36 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
     name: "35 x 55",
     description: "Стандартний компактний вертикальний брелок.",
     design: DEFAULT_KEYCHAIN_DESIGN,
+  },
+  {
+    id: "token-45",
+    name: "Token 45 x 26",
+    description: "Жетон з лівим отвором Ø3 мм і капсульною основою.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 45,
+      bodyHeightMm: 26,
+      cornerRadiusMm: 13,
+      baseShape: "token",
+      loopStyle: "round",
+      loopXMm: 4.5,
+      loopYMm: 13,
+      loopOuterMm: 2.8,
+      loopInnerMm: 1.5,
+      mapXMm: 9,
+      mapYMm: 4,
+      mapWidthMm: 32,
+      mapHeightMm: 13,
+      mapRotationDeg: 0,
+      labelXMm: 26,
+      labelYMm: 21.8,
+      labelWidthMm: 28,
+      labelBandMm: 6,
+      labelTextHeightMm: 3.1,
+      labelStrokeMm: 0.7,
+      rimWidthMm: 0.9,
+      rimHeightMm: 0.35,
+    },
   },
   {
     id: "right-loop",
@@ -183,26 +236,61 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
 ];
 
-function bodyPath(value: KeychainDesignerConfig) {
-  const w = value.bodyWidthMm;
-  const h = value.bodyHeightMm;
-  const r = clamp(value.cornerRadiusMm, 0, Math.min(w, h) / 2);
-  if (value.baseShape === "capsule") {
+function shapePath(
+  value: KeychainDesignerConfig,
+  {
+    x = 0,
+    y = 0,
+    width = value.bodyWidthMm,
+    height = value.bodyHeightMm,
+    radius = value.cornerRadiusMm,
+  }: { x?: number; y?: number; width?: number; height?: number; radius?: number } = {},
+) {
+  const w = Math.max(width, 0.1);
+  const h = Math.max(height, 0.1);
+  const r = clamp(radius, 0, Math.min(w, h) / 2);
+  const minX = x;
+  const minY = y;
+  const maxX = x + w;
+  const maxY = y + h;
+  if (value.baseShape === "capsule" || value.baseShape === "token") {
     const cr = h / 2;
-    return `M ${cr} 0 H ${w - cr} A ${cr} ${cr} 0 0 1 ${w - cr} ${h} H ${cr} A ${cr} ${cr} 0 0 1 ${cr} 0 Z`;
+    return `M ${minX + cr} ${minY} H ${maxX - cr} A ${cr} ${cr} 0 0 1 ${maxX - cr} ${maxY} H ${minX + cr} A ${cr} ${cr} 0 0 1 ${minX + cr} ${minY} Z`;
   }
   if (value.baseShape === "tag") {
     const cut = Math.min(w, h) * 0.16;
-    return `M ${r} 0 H ${w - cut} L ${w} ${cut} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+    return `M ${minX} ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} H ${maxX - cut} L ${maxX} ${minY + cut} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Z`;
   }
   if (value.baseShape === "octagon") {
     const cut = Math.min(w, h) * 0.13;
-    return `M ${cut} 0 H ${w - cut} L ${w} ${cut} V ${h - cut} L ${w - cut} ${h} H ${cut} L 0 ${h - cut} V ${cut} Z`;
+    return `M ${minX + cut} ${minY} H ${maxX - cut} L ${maxX} ${minY + cut} V ${maxY - cut} L ${maxX - cut} ${maxY} H ${minX + cut} L ${minX} ${maxY - cut} V ${minY + cut} Z`;
   }
-  return `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  return `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`;
+}
+
+function bodyPath(value: KeychainDesignerConfig) {
+  return shapePath(value);
+}
+
+function innerBodyPath(value: KeychainDesignerConfig) {
+  const inset = Math.max(value.rimWidthMm, 0);
+  if (inset <= 0) return bodyPath(value);
+  const width = Math.max(value.bodyWidthMm - inset * 2, 0.1);
+  const height = Math.max(value.bodyHeightMm - inset * 2, 0.1);
+  return shapePath(value, {
+    x: inset,
+    y: inset,
+    width,
+    height,
+    radius: Math.max(value.cornerRadiusMm - inset, 0),
+  });
 }
 
 function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
+  if (value.baseShape === "token") {
+    return null;
+  }
+
   const outer = value.loopOuterMm;
   const inner = value.loopInnerMm;
   const tabWidth = Math.max((outer - inner) * 1.35, 2.4);
@@ -246,6 +334,45 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
   );
 }
 
+function TokenHolePreview({ value }: { value: KeychainDesignerConfig }) {
+  if (value.baseShape !== "token") {
+    return null;
+  }
+
+  const inner = Math.max(value.loopInnerMm, 1.5);
+  const guideOuter = Math.max(inner + 0.9, 2.35);
+  return (
+    <g pointerEvents="none">
+      <circle
+        cx={value.loopXMm}
+        cy={value.loopYMm}
+        r={guideOuter}
+        fill="none"
+        stroke="rgba(248,250,252,0.75)"
+        strokeWidth={0.28}
+      />
+      <circle
+        cx={value.loopXMm}
+        cy={value.loopYMm}
+        r={inner}
+        fill="#050a18"
+        stroke="rgba(248,250,252,0.42)"
+        strokeWidth={0.22}
+      />
+      <path
+        d={`M ${value.loopXMm - guideOuter - 1.6} ${value.loopYMm} H ${value.loopXMm + guideOuter + 1.6}`}
+        stroke="rgba(248,250,252,0.55)"
+        strokeWidth={0.16}
+      />
+      <path
+        d={`M ${value.loopXMm} ${value.loopYMm - guideOuter - 1.6} V ${value.loopYMm + guideOuter + 1.6}`}
+        stroke="rgba(248,250,252,0.55)"
+        strokeWidth={0.16}
+      />
+    </g>
+  );
+}
+
 function TemplateMiniature({ design, label, active }: { design: KeychainDesignerConfig; label: string; active: boolean }) {
   const pad = Math.max(design.loopOuterMm * 2.2, 12);
   const view = {
@@ -255,9 +382,13 @@ function TemplateMiniature({ design, label, active }: { design: KeychainDesigner
     h: design.bodyHeightMm + pad * 2,
   };
   const clipId = `templateMapClip-${design.bodyWidthMm}-${design.bodyHeightMm}-${design.loopXMm}-${design.loopYMm}`.replace(/\./g, "-");
+  const mapCx = design.mapXMm + design.mapWidthMm / 2;
+  const mapCy = design.mapYMm + design.mapHeightMm / 2;
+  const bodyCx = design.bodyWidthMm / 2;
+  const bodyCy = design.bodyHeightMm / 2;
 
   return (
-    <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className="h-20 w-full rounded-[14px] bg-[#050a18]">
+    <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className="h-14 w-full rounded-[12px] bg-[#050a18] sm:h-16 lg:h-12">
       <defs>
         <clipPath id={clipId}>
           <rect
@@ -269,40 +400,45 @@ function TemplateMiniature({ design, label, active }: { design: KeychainDesigner
           />
         </clipPath>
       </defs>
-      <LoopPreview value={design} />
-      <path d={bodyPath(design)} fill="#a6926b" stroke={active ? "#5eead4" : "rgba(255,255,255,0.35)"} strokeWidth={active ? 0.75 : 0.35} />
-      {design.rimWidthMm > 0 && (
-        <path
-          d={bodyPath(design)}
-          fill="none"
-          stroke="rgba(68,55,32,0.34)"
-          strokeWidth={Math.min(design.rimWidthMm * 1.6, 5)}
-        />
-      )}
-      <g clipPath={`url(#${clipId})`}>
-        <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#b7ab8e" />
-        <path d={`M ${design.mapXMm + design.mapWidthMm * 0.18} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.34} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
-        <path d={`M ${design.mapXMm + design.mapWidthMm * 0.56} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.66} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
-        <path d={`M ${design.mapXMm + design.mapWidthMm * 0.76} ${design.mapYMm + 3} C ${design.mapXMm + design.mapWidthMm * 0.9} ${design.mapYMm + design.mapHeightMm * 0.45}, ${design.mapXMm + design.mapWidthMm * 0.62} ${design.mapYMm + design.mapHeightMm * 0.62}, ${design.mapXMm + design.mapWidthMm * 0.8} ${design.mapYMm + design.mapHeightMm - 2}`} fill="none" stroke="#6fa1c8" strokeWidth={1.5} />
-        <rect x={design.mapXMm + design.mapWidthMm * 0.48} y={design.mapYMm + design.mapHeightMm * 0.28} width={design.mapWidthMm * 0.12} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
-        <rect x={design.mapXMm + design.mapWidthMm * 0.22} y={design.mapYMm + design.mapHeightMm * 0.52} width={design.mapWidthMm * 0.14} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
-        <path d={`M ${design.mapXMm + design.mapWidthMm * 0.69} ${design.mapYMm + design.mapHeightMm * 0.5} l 4 1 l -1 4 l -5 1 z`} fill="#3f8a4d" />
+      <g transform={`rotate(${design.layoutRotationDeg || 0} ${bodyCx} ${bodyCy})`}>
+        <LoopPreview value={design} />
+        <path d={bodyPath(design)} fill="#a6926b" stroke={active ? "#5eead4" : "rgba(255,255,255,0.35)"} strokeWidth={active ? 0.75 : 0.35} />
+        <TokenHolePreview value={design} />
+        {design.rimWidthMm > 0 && (
+          <path
+            d={bodyPath(design)}
+            fill="none"
+            stroke="rgba(68,55,32,0.34)"
+            strokeWidth={Math.min(design.rimWidthMm * 1.6, 5)}
+          />
+        )}
+        <g clipPath={`url(#${clipId})`} transform={`rotate(${design.mapRotationDeg || 0} ${mapCx} ${mapCy})`}>
+          <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#b7ab8e" />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.18} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.34} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.56} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.66} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.76} ${design.mapYMm + 3} C ${design.mapXMm + design.mapWidthMm * 0.9} ${design.mapYMm + design.mapHeightMm * 0.45}, ${design.mapXMm + design.mapWidthMm * 0.62} ${design.mapYMm + design.mapHeightMm * 0.62}, ${design.mapXMm + design.mapWidthMm * 0.8} ${design.mapYMm + design.mapHeightMm - 2}`} fill="none" stroke="#6fa1c8" strokeWidth={1.5} />
+          <rect x={design.mapXMm + design.mapWidthMm * 0.48} y={design.mapYMm + design.mapHeightMm * 0.28} width={design.mapWidthMm * 0.12} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
+          <rect x={design.mapXMm + design.mapWidthMm * 0.22} y={design.mapYMm + design.mapHeightMm * 0.52} width={design.mapWidthMm * 0.14} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.69} ${design.mapYMm + design.mapHeightMm * 0.5} l 4 1 l -1 4 l -5 1 z`} fill="#3f8a4d" />
+        </g>
+        <text
+          x={design.labelXMm}
+          y={design.labelYMm}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#f1f5f9"
+          stroke="rgba(248,250,252,0.45)"
+          strokeWidth={Math.max(design.labelStrokeMm * 0.08, 0.04)}
+          paintOrder="stroke"
+          fontSize={Math.max(design.labelTextHeightMm * 0.7, 2.5)}
+          fontWeight={700}
+          fontFamily={design.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : design.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
+          letterSpacing={design.labelFontStyle === "wide" ? 0.55 : design.labelFontStyle === "condensed" ? 0.05 : 0.28}
+          transform={`rotate(${design.labelAngleDeg} ${design.labelXMm} ${design.labelYMm})`}
+        >
+          {label || "TEXT"}
+        </text>
       </g>
-      <text
-        x={design.labelXMm}
-        y={design.labelYMm}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill="#f1f5f9"
-        stroke="rgba(248,250,252,0.45)"
-        strokeWidth={Math.max(design.labelStrokeMm * 0.08, 0.04)}
-        paintOrder="stroke"
-        fontSize={Math.max(design.labelTextHeightMm * 0.7, 2.5)}
-        fontWeight={700}
-        transform={`rotate(${design.labelAngleDeg} ${design.labelXMm} ${design.labelYMm})`}
-      >
-        {label || "TEXT"}
-      </text>
     </svg>
   );
 }
@@ -317,12 +453,12 @@ export function KeychainTemplateStrip({
   onSelect: (value: KeychainDesignerConfig) => void;
 }) {
   return (
-    <div className="border-t border-white/10 bg-[#070d1d] px-3 py-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
+    <div className="border-t border-white/10 bg-[#070d1d] px-2 py-2 sm:px-3">
+      <div className="mb-1.5 flex items-center justify-between gap-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">Готові шаблони</div>
         <div className="text-[11px] font-medium text-slate-400">tap / click</div>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {KEYCHAIN_TEMPLATES.map((template) => {
           const active =
             template.design.baseShape === value.baseShape &&
@@ -334,15 +470,15 @@ export function KeychainTemplateStrip({
               key={template.id}
               type="button"
               onClick={() => onSelect(template.design)}
-              className={`min-w-[142px] rounded-[18px] border p-2 text-left transition ${
+              className={`min-w-[108px] rounded-[16px] border p-1.5 text-left transition sm:min-w-[118px] ${
                 active
                   ? "border-teal-300 bg-teal-300/10"
                   : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.07]"
               }`}
             >
               <TemplateMiniature design={template.design} label={label} active={active} />
-              <div className="mt-2 text-xs font-semibold text-white">{template.name}</div>
-              <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-400">{template.description}</div>
+              <div className="mt-1 text-[11px] font-semibold text-white sm:text-xs">{template.name}</div>
+              <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-400 lg:hidden">{template.description}</div>
             </button>
           );
         })}
@@ -364,9 +500,14 @@ export function KeychainDesigner({
   const dragSessionRef = useRef<DragSession | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const [dragTarget, setDragTarget] = useState<DragTarget | null>(null);
+  const [previewSide, setPreviewSide] = useState<"front" | "back">("front");
+  const mapCx = value.mapXMm + value.mapWidthMm / 2;
+  const mapCy = value.mapYMm + value.mapHeightMm / 2;
+  const bodyCx = value.bodyWidthMm / 2;
+  const bodyCy = value.bodyHeightMm / 2;
 
   const view = useMemo(() => {
-    const pad = Math.max(value.loopOuterMm * 2.4, 14);
+    const pad = Math.max(value.loopOuterMm * 1.55, 8);
     return {
       x: -pad,
       y: -pad,
@@ -399,29 +540,34 @@ export function KeychainDesigner({
     const point = pointerToMmFromClient(clientX, clientY);
     const dx = point.x - session.start.x;
     const dy = point.y - session.start.y;
+    const layoutAngle = -((session.initial.layoutRotationDeg || 0) * Math.PI) / 180;
+    const localDx = dx * Math.cos(layoutAngle) - dy * Math.sin(layoutAngle);
+    const localDy = dx * Math.sin(layoutAngle) + dy * Math.cos(layoutAngle);
     const next = { ...session.initial };
 
     if (session.target === "body") {
-      next.bodyWidthMm = clamp(session.initial.bodyWidthMm + dx, 35, 140);
-      next.bodyHeightMm = clamp(session.initial.bodyHeightMm + dy, 26, 96);
+      next.bodyWidthMm = clamp(session.initial.bodyWidthMm + localDx, 35, 140);
+      next.bodyHeightMm = clamp(session.initial.bodyHeightMm + localDy, 26, 96);
       fitAfterBodyResize(next);
     } else if (session.target === "map-move") {
-      next.mapXMm = clamp(session.initial.mapXMm + dx, 0, next.bodyWidthMm - next.mapWidthMm);
-      next.mapYMm = clamp(session.initial.mapYMm + dy, 0, next.bodyHeightMm - next.mapHeightMm);
+      next.mapXMm = clamp(session.initial.mapXMm + localDx, 0, next.bodyWidthMm - next.mapWidthMm);
+      next.mapYMm = clamp(session.initial.mapYMm + localDy, 0, next.bodyHeightMm - next.mapHeightMm);
       const mapCenterX = snapTo(next.mapXMm + next.mapWidthMm / 2, next.bodyWidthMm / 2);
       const mapCenterY = snapTo(next.mapYMm + next.mapHeightMm / 2, next.bodyHeightMm / 2);
       next.mapXMm = clamp(mapCenterX - next.mapWidthMm / 2, 0, next.bodyWidthMm - next.mapWidthMm);
       next.mapYMm = clamp(mapCenterY - next.mapHeightMm / 2, 0, next.bodyHeightMm - next.mapHeightMm);
     } else if (session.target === "map-resize") {
-      next.mapWidthMm = clamp(session.initial.mapWidthMm + dx, Math.min(MIN_MAP_WIDTH_MM, next.bodyWidthMm), next.bodyWidthMm - next.mapXMm);
-      next.mapHeightMm = clamp(session.initial.mapHeightMm + dy, Math.min(MIN_MAP_HEIGHT_MM, next.bodyHeightMm), next.bodyHeightMm - next.mapYMm);
+      const minMapWidthBaseMm = next.baseShape === "token" ? MIN_TOKEN_MAP_WIDTH_MM : MIN_MAP_WIDTH_MM;
+      const minMapHeightBaseMm = next.baseShape === "token" ? MIN_TOKEN_MAP_HEIGHT_MM : MIN_MAP_HEIGHT_MM;
+      next.mapWidthMm = clamp(session.initial.mapWidthMm + localDx, Math.min(minMapWidthBaseMm, next.bodyWidthMm), next.bodyWidthMm - next.mapXMm);
+      next.mapHeightMm = clamp(session.initial.mapHeightMm + localDy, Math.min(minMapHeightBaseMm, next.bodyHeightMm), next.bodyHeightMm - next.mapYMm);
     } else if (session.target === "loop") {
-      next.loopXMm = session.initial.loopXMm + dx;
-      next.loopYMm = session.initial.loopYMm + dy;
+      next.loopXMm = session.initial.loopXMm + localDx;
+      next.loopYMm = session.initial.loopYMm + localDy;
       clampLoopToBody(next);
     } else if (session.target === "label") {
-      next.labelXMm = clamp(session.initial.labelXMm + dx, 4, next.bodyWidthMm - 4);
-      next.labelYMm = clamp(session.initial.labelYMm + dy, 4, next.bodyHeightMm - 4);
+      next.labelXMm = clamp(session.initial.labelXMm + localDx, 4, next.bodyWidthMm - 4);
+      next.labelYMm = clamp(session.initial.labelYMm + localDy, 4, next.bodyHeightMm - 4);
       next.labelXMm = snapTo(next.labelXMm, next.bodyWidthMm / 2);
       next.labelYMm = snapTo(next.labelYMm, next.bodyHeightMm - next.labelBandMm / 2);
     }
@@ -471,13 +617,32 @@ export function KeychainDesigner({
   };
 
   return (
-    <div className="h-full min-h-[320px] rounded-[24px] bg-[#050a18] p-3">
+    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[22px] bg-[#050a18] p-2 sm:min-h-[340px] sm:p-3">
+      <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[11px] font-semibold text-white/75 backdrop-blur">
+        {previewSide === "front" ? "Тягни карту, текст, вушко або нижній правий маркер" : "Зворот: контроль отвору, ободка і внутрішнього тексту"}
+      </div>
+      <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/15 bg-black/35 p-1 backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setPreviewSide("front")}
+          className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+        >
+          Лице
+        </button>
+        <button
+          type="button"
+          onClick={() => setPreviewSide("back")}
+          className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+        >
+          Зворот
+        </button>
+      </div>
       <svg
         ref={svgRef}
         data-testid="keychain-designer-svg"
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        preserveAspectRatio="xMidYMin meet"
-        className="h-full min-h-[320px] w-full touch-none select-none"
+        preserveAspectRatio="xMidYMid meet"
+        className="block h-full min-h-[280px] w-full touch-none select-none sm:min-h-[340px]"
         onPointerMove={updateFromPointer}
         onPointerUp={(event) => {
           dragCleanupRef.current?.();
@@ -510,6 +675,9 @@ export function KeychainDesigner({
               rx={Math.min(value.cornerRadiusMm, 3)}
             />
           </clipPath>
+          <clipPath id="keychainInnerBodyClip">
+            <path d={innerBodyPath(value)} />
+          </clipPath>
         </defs>
 
         <rect x={view.x} y={view.y} width={view.w} height={view.h} fill="url(#keychainGrid)" />
@@ -537,96 +705,118 @@ export function KeychainDesigner({
             strokeWidth={0.22}
           />
         </g>
-        <LoopPreview value={value} />
-        <path d={bodyPath(value)} fill="#a6926b" stroke="rgba(255,255,255,0.42)" strokeWidth={0.35} />
-        {value.rimWidthMm > 0 && (
-          <path
-            d={bodyPath(value)}
-            fill="none"
-            stroke="rgba(68,55,32,0.32)"
-            strokeWidth={Math.min(value.rimWidthMm * 1.6, 5)}
+        <g transform={`rotate(${value.layoutRotationDeg || 0} ${bodyCx} ${bodyCy})`}>
+          <LoopPreview value={value} />
+          <path d={bodyPath(value)} fill="#a6926b" stroke="rgba(255,255,255,0.42)" strokeWidth={0.35} />
+          <TokenHolePreview value={value} />
+          {value.rimWidthMm > 0 && (
+            <path
+              d={bodyPath(value)}
+              fill="none"
+              stroke="rgba(68,55,32,0.32)"
+              strokeWidth={Math.min(value.rimWidthMm * 1.6, 5)}
+              pointerEvents="none"
+            />
+          )}
+          <rect
+            x={value.labelXMm - value.labelWidthMm / 2}
+            y={value.labelYMm - value.labelBandMm / 2}
+            width={value.labelWidthMm}
+            height={value.labelBandMm}
+            rx={Math.min(2, value.labelBandMm / 2)}
+            fill={previewSide === "back" ? "rgba(5,10,24,0.16)" : "rgba(255,255,255,0.04)"}
+            stroke={previewSide === "back" ? "rgba(94,234,212,0.38)" : "rgba(255,255,255,0.28)"}
+            strokeDasharray="1.4 1.2"
+            strokeWidth={0.28}
+            transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
             pointerEvents="none"
           />
-        )}
-        <rect
-          x={value.labelXMm - value.labelWidthMm / 2}
-          y={value.labelYMm - value.labelBandMm / 2}
-          width={value.labelWidthMm}
-          height={value.labelBandMm}
-          rx={Math.min(2, value.labelBandMm / 2)}
-          fill="rgba(255,255,255,0.04)"
-          stroke="rgba(255,255,255,0.28)"
-          strokeDasharray="1.4 1.2"
-          strokeWidth={0.28}
-          transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
-          pointerEvents="none"
-        />
 
-        <g clipPath="url(#keychainMapClip)" opacity={0.96}>
-          <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#b7ab8e" />
-          {Array.from({ length: 10 }).map((_, idx) => {
-            const x = value.mapXMm + ((idx * 13) % Math.max(value.mapWidthMm, 1));
-            return (
-              <path
-                key={`road-${idx}`}
-                d={`M ${x} ${value.mapYMm - 4} L ${x + 10} ${value.mapYMm + value.mapHeightMm + 6}`}
-                stroke="#101010"
-                strokeWidth={0.9}
-                strokeLinecap="round"
-              />
-            );
-          })}
-          {Array.from({ length: 18 }).map((_, idx) => {
-            const x = value.mapXMm + 4 + ((idx * 9) % Math.max(value.mapWidthMm - 12, 1));
-            const y = value.mapYMm + 4 + ((idx * 7) % Math.max(value.mapHeightMm - 12, 1));
-            return <rect key={`b-${idx}`} x={x} y={y} width={5 + (idx % 4)} height={2 + (idx % 3)} fill="#d8d8d8" />;
-          })}
-          <path
-            d={`M ${value.mapXMm + value.mapWidthMm * 0.62} ${value.mapYMm + 3} C ${value.mapXMm + value.mapWidthMm * 0.8} ${value.mapYMm + value.mapHeightMm * 0.35}, ${value.mapXMm + value.mapWidthMm * 0.55} ${value.mapYMm + value.mapHeightMm * 0.58}, ${value.mapXMm + value.mapWidthMm * 0.82} ${value.mapYMm + value.mapHeightMm - 2}`}
-            fill="none"
-            stroke="#6fa1c8"
-            strokeWidth={1.4}
+          {previewSide === "front" ? (
+            <g clipPath="url(#keychainInnerBodyClip)">
+              <g clipPath="url(#keychainMapClip)" opacity={0.96} transform={`rotate(${value.mapRotationDeg || 0} ${mapCx} ${mapCy})`}>
+                <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#b7ab8e" />
+                {Array.from({ length: 10 }).map((_, idx) => {
+                  const x = value.mapXMm + ((idx * 13) % Math.max(value.mapWidthMm, 1));
+                  return (
+                    <path
+                      key={`road-${idx}`}
+                      d={`M ${x} ${value.mapYMm - 4} L ${x + 10} ${value.mapYMm + value.mapHeightMm + 6}`}
+                      stroke="#101010"
+                      strokeWidth={0.9}
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
+                {Array.from({ length: 18 }).map((_, idx) => {
+                  const x = value.mapXMm + 4 + ((idx * 9) % Math.max(value.mapWidthMm - 12, 1));
+                  const y = value.mapYMm + 4 + ((idx * 7) % Math.max(value.mapHeightMm - 12, 1));
+                  return <rect key={`b-${idx}`} x={x} y={y} width={5 + (idx % 4)} height={2 + (idx % 3)} fill="#d8d8d8" />;
+                })}
+                <path
+                  d={`M ${value.mapXMm + value.mapWidthMm * 0.62} ${value.mapYMm + 3} C ${value.mapXMm + value.mapWidthMm * 0.8} ${value.mapYMm + value.mapHeightMm * 0.35}, ${value.mapXMm + value.mapWidthMm * 0.55} ${value.mapYMm + value.mapHeightMm * 0.58}, ${value.mapXMm + value.mapWidthMm * 0.82} ${value.mapYMm + value.mapHeightMm - 2}`}
+                  fill="none"
+                  stroke="#6fa1c8"
+                  strokeWidth={1.4}
+                />
+                <path
+                  d={`M ${value.mapXMm + value.mapWidthMm * 0.68} ${value.mapYMm + value.mapHeightMm * 0.5} l 5 1 l -1 4 l -6 1 z`}
+                  fill="#3f8a4d"
+                />
+              </g>
+            </g>
+          ) : (
+            <g pointerEvents="none">
+              <path d={innerBodyPath(value)} fill="rgba(255,255,255,0.035)" stroke="rgba(94,234,212,0.28)" strokeDasharray="1.8 1.4" strokeWidth={0.28} />
+              <text
+                x={bodyCx}
+                y={Math.max(value.bodyHeightMm - 4, value.bodyHeightMm / 2)}
+                textAnchor="middle"
+                fill="rgba(248,250,252,0.64)"
+                fontSize={2.1}
+                fontWeight={800}
+              >
+                back side / mirrored check
+              </text>
+            </g>
+          )}
+
+          <rect
+            data-testid="map-move-hit"
+            x={value.mapXMm}
+            y={value.mapYMm}
+            width={value.mapWidthMm}
+            height={value.mapHeightMm}
+            rx={Math.min(value.cornerRadiusMm, 3)}
+            fill="transparent"
+            stroke="#e9f5ff"
+            strokeDasharray="1.8 1.4"
+            strokeWidth={0.45}
+            className="cursor-move"
+            onPointerDown={(event) => beginDrag(event, "map-move")}
           />
-          <path
-            d={`M ${value.mapXMm + value.mapWidthMm * 0.68} ${value.mapYMm + value.mapHeightMm * 0.5} l 5 1 l -1 4 l -6 1 z`}
-            fill="#3f8a4d"
-          />
+
+          <text
+            data-testid="label-move-hit"
+            x={value.labelXMm}
+            y={value.labelYMm}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill={previewSide === "back" ? "#050a18" : "#f1f5f9"}
+            stroke={previewSide === "back" ? "rgba(248,250,252,0.36)" : "rgba(248,250,252,0.58)"}
+            strokeWidth={previewSide === "back" ? Math.max(value.labelStrokeMm * 0.12, 0.08) : Math.max(value.labelStrokeMm * 0.08, 0.04)}
+            paintOrder="stroke"
+            fontSize={Math.max(value.labelTextHeightMm * 0.72, 2.6)}
+            fontWeight={700}
+            fontFamily={value.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : value.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
+            letterSpacing={value.labelFontStyle === "wide" ? 0.55 : value.labelFontStyle === "condensed" ? 0.05 : 0.28}
+            transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+            className="cursor-move"
+            onPointerDown={(event) => beginDrag(event, "label")}
+          >
+            {label || "TEXT"}
+          </text>
         </g>
-
-        <rect
-          data-testid="map-move-hit"
-          x={value.mapXMm}
-          y={value.mapYMm}
-          width={value.mapWidthMm}
-          height={value.mapHeightMm}
-          rx={Math.min(value.cornerRadiusMm, 3)}
-          fill="transparent"
-          stroke="#e9f5ff"
-          strokeDasharray="1.8 1.4"
-          strokeWidth={0.45}
-          className="cursor-move"
-          onPointerDown={(event) => beginDrag(event, "map-move")}
-        />
-
-        <text
-          data-testid="label-move-hit"
-          x={value.labelXMm}
-          y={value.labelYMm}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="#f1f5f9"
-          stroke="rgba(248,250,252,0.58)"
-          strokeWidth={Math.max(value.labelStrokeMm * 0.08, 0.04)}
-          paintOrder="stroke"
-          fontSize={Math.max(value.labelTextHeightMm * 0.72, 2.6)}
-          fontWeight={700}
-          letterSpacing={0.35}
-          transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
-          className="cursor-move"
-          onPointerDown={(event) => beginDrag(event, "label")}
-        >
-          {label || "TEXT"}
-        </text>
 
         <g fill="none" stroke="rgba(255,255,255,0.66)" strokeWidth={0.28}>
           <path d={`M 0 ${-4.2} H ${value.bodyWidthMm}`} />
@@ -644,7 +834,7 @@ export function KeychainDesigner({
             map {value.mapWidthMm.toFixed(0)} x {value.mapHeightMm.toFixed(0)}
           </text>
           <text x={value.loopXMm} y={value.loopYMm - value.loopOuterMm - 2.2} textAnchor="middle">
-            O {value.loopOuterMm.toFixed(1)} / hole {value.loopInnerMm.toFixed(1)}
+            {value.baseShape === "token" ? `hole Ø${(value.loopInnerMm * 2).toFixed(1)}` : `O ${value.loopOuterMm.toFixed(1)} / hole ${value.loopInnerMm.toFixed(1)}`}
           </text>
         </g>
 
@@ -663,8 +853,8 @@ export function KeychainDesigner({
           data-testid="map-resize-handle"
           x={value.mapXMm + value.mapWidthMm - 5}
           y={value.mapYMm + value.mapHeightMm - 5}
-          width={10}
-          height={10}
+          width={11}
+          height={11}
           rx={1.7}
           fill="#f8fafc"
           stroke="#14b8a6"
@@ -674,10 +864,10 @@ export function KeychainDesigner({
         />
         <rect
           data-testid="body-resize-handle"
-          x={value.bodyWidthMm - 3.8}
-          y={value.bodyHeightMm - 3.8}
-          width={7.6}
-          height={7.6}
+          x={value.bodyWidthMm - 4.4}
+          y={value.bodyHeightMm - 4.4}
+          width={8.8}
+          height={8.8}
           rx={1.1}
           fill="#14b8a6"
           className="cursor-nwse-resize"

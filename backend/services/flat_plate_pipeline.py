@@ -474,7 +474,7 @@ def _keychain_body_shape(
     shape_name = (shape or "rounded").lower().replace("_", "-")
     width = max(maxx - minx, 1e-6)
     height = max(maxy - miny, 1e-6)
-    if shape_name == "capsule":
+    if shape_name in {"capsule", "token"}:
         return _rounded_rect(minx, miny, maxx, maxy, height / 2.0)
     if shape_name == "tag":
         cut = min(width, height) * 0.16
@@ -604,7 +604,11 @@ def build_keychain_layout(
     body_maxx = body_w_mm * layout_scale_m_per_mm
     body_maxy = body_h_mm * layout_scale_m_per_mm
     outer_m = max(loop_outer_radius_mm, 4.0) * layout_scale_m_per_mm
-    inner_m = min(max(loop_inner_radius_mm, 1.6), max(loop_outer_radius_mm - 1.8, 1.6)) * layout_scale_m_per_mm
+    min_hole_radius_mm = 1.5 if (base_shape or "").lower().replace("_", "-") == "token" else 1.6
+    inner_m = min(
+        max(loop_inner_radius_mm, min_hole_radius_mm),
+        max(loop_outer_radius_mm - 1.8, min_hole_radius_mm),
+    ) * layout_scale_m_per_mm
     corner_m = max(corner_radius_mm, 0.0) * layout_scale_m_per_mm
     label_band_h_m = max(label_band_height_mm, 0.0) * layout_scale_m_per_mm
 
@@ -764,6 +768,47 @@ def _stretch_geometry_into_bounds(
         return geometry
 
 
+def _rotated_source_bounds(source_bounds: tuple[float, float, float, float], angle_deg: float) -> tuple[float, float, float, float]:
+    angle = float(angle_deg or 0.0) % 360.0
+    if abs(angle) <= 1e-6:
+        return source_bounds
+    try:
+        src_box = box(*source_bounds)
+        cx = (source_bounds[0] + source_bounds[2]) / 2.0
+        cy = (source_bounds[1] + source_bounds[3]) / 2.0
+        return tuple(float(v) for v in affinity.rotate(src_box, angle, origin=(cx, cy), use_radians=False).bounds)
+    except Exception:
+        return source_bounds
+
+
+def _orient_then_stretch_geometry_into_bounds(
+    geometry: Optional[BaseGeometry],
+    *,
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+    angle_deg: float,
+) -> Optional[BaseGeometry]:
+    if geometry is None or getattr(geometry, "is_empty", True):
+        return geometry
+    angle = float(angle_deg or 0.0) % 360.0
+    oriented = geometry
+    oriented_bounds = source_bounds
+    if abs(angle) > 1e-6:
+        try:
+            cx = (source_bounds[0] + source_bounds[2]) / 2.0
+            cy = (source_bounds[1] + source_bounds[3]) / 2.0
+            oriented = affinity.rotate(geometry, angle, origin=(cx, cy), use_radians=False)
+            oriented_bounds = _rotated_source_bounds(source_bounds, angle)
+        except Exception:
+            oriented = geometry
+            oriented_bounds = source_bounds
+    return _stretch_geometry_into_bounds(
+        oriented,
+        source_bounds=oriented_bounds,
+        target_bounds=target_bounds,
+    )
+
+
 def _fit_gdf_into_bounds(
     gdf: Optional[GeoDataFrame],
     *,
@@ -791,6 +836,28 @@ def _stretch_gdf_into_bounds(
     fitted = gdf.copy()
     fitted.geometry = [
         _stretch_geometry_into_bounds(geom, source_bounds=source_bounds, target_bounds=target_bounds)
+        for geom in fitted.geometry
+    ]
+    return fitted
+
+
+def _orient_then_stretch_gdf_into_bounds(
+    gdf: Optional[GeoDataFrame],
+    *,
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+    angle_deg: float,
+) -> Optional[GeoDataFrame]:
+    if gdf is None or gdf.empty:
+        return gdf
+    fitted = gdf.copy()
+    fitted.geometry = [
+        _orient_then_stretch_geometry_into_bounds(
+            geom,
+            source_bounds=source_bounds,
+            target_bounds=target_bounds,
+            angle_deg=angle_deg,
+        )
         for geom in fitted.geometry
     ]
     return fitted
@@ -835,6 +902,7 @@ def build_keychain_label_mesh(
     stroke_width_m: float = 0.0,
     angle_deg: float = 0.0,
     min_stroke_m: float = 0.0,
+    font_style: str = "block",
 ) -> Optional[trimesh.Trimesh]:
     label = _normalize_label_text(text)
     if not label or thickness_m <= 0 or text_height_m <= 0:
@@ -843,7 +911,10 @@ def build_keychain_label_mesh(
     max_width = max((band_maxx - band_minx) * 0.96, 1e-6)
     cell = max(float(text_height_m) / 7.0, float(min_stroke_m or 0.0))
     stroke_m = max(float(stroke_width_m or 0.0), float(min_stroke_m or 0.0), cell)
-    char_units = [6 if ch != " " else 3 for ch in label]
+    style = (font_style or "block").lower().replace("_", "-")
+    x_scale = 1.25 if style == "wide" else 0.82 if style in {"condensed", "narrow"} else 1.0
+    gap_units = 1.15 if style == "wide" else 0.75 if style in {"condensed", "narrow"} else 1.0
+    char_units = [5.0 * x_scale + gap_units if ch != " " else 3.0 * x_scale for ch in label]
     raw_width = max(sum(char_units) - 1, 1) * cell
     if raw_width > max_width:
         max_units = max_width / max(cell, 1e-9)
@@ -858,7 +929,7 @@ def build_keychain_label_mesh(
         label = "".join(kept).strip()
         if not label:
             return None
-        char_units = [6 if ch != " " else 3 for ch in label]
+        char_units = [5.0 * x_scale + gap_units if ch != " " else 3.0 * x_scale for ch in label]
     raw_width = max(sum(char_units) - 1, 1) * cell
     start_x = (band_minx + band_maxx - raw_width) / 2.0
     start_y = band_miny + max((band_maxy - band_miny) - 7.0 * cell, 0.0) / 2.0
@@ -871,19 +942,42 @@ def build_keychain_label_mesh(
             for col_idx, bit in enumerate(row):
                 if bit != "1":
                     continue
-                x0 = cursor_x + col_idx * cell
+                x0 = cursor_x + col_idx * cell * x_scale
                 y0 = start_y + (6 - row_idx) * cell
                 bleed = max((stroke_m - cell) * 0.5, 0.0)
-                glyph_pixels.append(box(x0 - bleed, y0 - bleed, x0 + cell + bleed, y0 + cell + bleed))
-        cursor_x += (6 if ch != " " else 3) * cell
+                glyph_pixels.append(box(x0 - bleed, y0 - bleed, x0 + cell * x_scale + bleed, y0 + cell + bleed))
+        cursor_x += (5.0 * x_scale + gap_units if ch != " " else 3.0 * x_scale) * cell
     if not glyph_pixels:
         return None
+    text_geometries: list[BaseGeometry] = []
+    cx = (band_minx + band_maxx) * 0.5
+    cy = (band_miny + band_maxy) * 0.5
+    clip_geometry = label_band_geometry.intersection(body_geometry)
+    if clip_geometry is None or getattr(clip_geometry, "is_empty", True):
+        return None
+    for pixel in glyph_pixels:
+        try:
+            geom = pixel
+            if angle_deg:
+                geom = affinity.rotate(
+                    geom,
+                    float(angle_deg),
+                    origin=(cx, cy),
+                    use_radians=False,
+                )
+            geom = geom.intersection(clip_geometry)
+            if geom is not None and not getattr(geom, "is_empty", True) and float(getattr(geom, "area", 0.0) or 0.0) > 0:
+                text_geometries.append(geom)
+        except Exception:
+            continue
+    if not text_geometries:
+        return None
     try:
-        text_geometry = unary_union(glyph_pixels).buffer(0)
+        text_geometry = GeometryCollection(text_geometries)
     except Exception:
-        text_geometry = glyph_pixels[0]
+        text_geometry = text_geometries[0]
     combined = build_flat_layer_mesh_from_mask(
-        text_geometry.intersection(label_band_geometry),
+        text_geometry,
         bottom_z_m=bottom_z_m,
         thickness_m=thickness_m,
         color=color,
@@ -891,19 +985,31 @@ def build_keychain_label_mesh(
     )
     if combined is None:
         return None
-    if angle_deg:
-        try:
-            cx = (band_minx + band_maxx) * 0.5
-            cy = (band_miny + band_maxy) * 0.5
-            matrix = trimesh.transformations.rotation_matrix(
-                np.deg2rad(float(angle_deg)),
-                [0.0, 0.0, 1.0],
-                [cx, cy, bottom_z_m],
-            )
-            combined.apply_transform(matrix)
-        except Exception:
-            pass
     return _with_color(combined, color)
+
+
+def _rotate_meshes_for_keychain_layout(
+    *,
+    meshes: list[Optional[trimesh.Trimesh]],
+    building_meshes: list[trimesh.Trimesh],
+    angle_deg: float,
+    origin_xy: tuple[float, float],
+    origin_z: float,
+) -> None:
+    angle = float(angle_deg or 0.0) % 360.0
+    if abs(angle) <= 1e-6:
+        return
+    matrix = trimesh.transformations.rotation_matrix(
+        np.deg2rad(angle),
+        [0.0, 0.0, 1.0],
+        [float(origin_xy[0]), float(origin_xy[1]), float(origin_z)],
+    )
+    for mesh in meshes:
+        if mesh is not None:
+            mesh.apply_transform(matrix)
+    for mesh in building_meshes:
+        if mesh is not None:
+            mesh.apply_transform(matrix)
 
 
 def build_keychain_rim_mesh(
@@ -947,6 +1053,41 @@ def _clamp_mesh_height(mesh: trimesh.Trimesh, *, min_height_m: float, max_height
     return mesh
 
 
+def _set_mesh_height(mesh: trimesh.Trimesh, *, target_height_m: float) -> trimesh.Trimesh:
+    if mesh.vertices is None or len(mesh.vertices) == 0 or target_height_m <= 0:
+        return mesh
+    z = mesh.vertices[:, 2]
+    z_min = float(np.min(z))
+    z_max = float(np.max(z))
+    current = max(z_max - z_min, 1e-9)
+    verts = np.asarray(mesh.vertices, dtype=float).copy()
+    verts[:, 2] = (verts[:, 2] - z_min) * (float(target_height_m) / current)
+    mesh.vertices = verts
+    return mesh
+
+
+def _mesh_manifest(mesh: Optional[trimesh.Trimesh], *, scale_factor: float) -> dict[str, Any]:
+    if mesh is None or mesh.vertices is None or len(mesh.vertices) == 0 or mesh.faces is None:
+        return {"present": False, "vertices": 0, "faces": 0}
+    try:
+        bounds = np.asarray(mesh.bounds, dtype=float)
+        extents_mm = (bounds[1] - bounds[0]) * float(scale_factor)
+        z_min_mm = float(bounds[0][2]) * float(scale_factor)
+        z_max_mm = float(bounds[1][2]) * float(scale_factor)
+    except Exception:
+        extents_mm = np.zeros(3, dtype=float)
+        z_min_mm = 0.0
+        z_max_mm = 0.0
+    return {
+        "present": True,
+        "vertices": int(len(mesh.vertices)),
+        "faces": int(len(mesh.faces)),
+        "size_mm": [round(float(v), 3) for v in extents_mm.tolist()],
+        "z_min_mm": round(z_min_mm, 3),
+        "z_max_mm": round(z_max_mm, 3),
+    }
+
+
 def build_flat_building_meshes(
     *,
     request: Any,
@@ -977,6 +1118,8 @@ def build_flat_building_meshes(
         if max_building_height_mm > 0
         else 0.0
     )
+    uniform_height = bool(getattr(request, "flat_uniform_building_height", False))
+    uniform_height_m = max_building_height_m or _model_mm_to_world_m(2.0, float(export_scale_factor or scale_factor))
 
     records = process_buildings(
         gdf_buildings_for_mesh,
@@ -997,7 +1140,9 @@ def build_flat_building_meshes(
         if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
             continue
         mesh = mesh.copy()
-        if max_building_height_m > 0:
+        if uniform_height:
+            mesh = _set_mesh_height(mesh, target_height_m=max(uniform_height_m, min_building_height_m))
+        elif max_building_height_m > 0:
             mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         mesh.apply_translation([0.0, 0.0, float(base_top_m)])
         _with_color(mesh, LAYER_COLORS["buildings"])
@@ -1140,11 +1285,14 @@ def run_flat_plate_pipeline(
     min_area_m2 = max((min_feature_m ** 2) * 0.5, 1e-9)
 
     if keychain_layout and source_bounds and target_bounds:
+        map_rotation_deg = float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0)
+
         def _xform(geometry: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
-            return _stretch_geometry_into_bounds(
+            return _orient_then_stretch_geometry_into_bounds(
                 geometry,
                 source_bounds=source_bounds,
                 target_bounds=target_bounds,
+                angle_deg=map_rotation_deg,
             )
 
         building_mask = _clip_geometry(_xform(getattr(bundle, "buildings_footprints", None)), content_area)
@@ -1218,10 +1366,11 @@ def run_flat_plate_pipeline(
     )
 
     if keychain_mode:
-        gdf_buildings_local = _stretch_gdf_into_bounds(
+        gdf_buildings_local = _orient_then_stretch_gdf_into_bounds(
             gdf_buildings_local,
             source_bounds=source_bounds,
             target_bounds=target_bounds,
+            angle_deg=float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0),
         )
         gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, content_area)
 
@@ -1244,7 +1393,23 @@ def run_flat_plate_pipeline(
             stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_PRINT_FEATURE_MM) or MIN_KEYCHAIN_PRINT_FEATURE_MM), export_scale_factor),
             angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
+            font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
+
+    if keychain_layout is not None:
+        layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)
+        if layout_rotation_deg:
+            try:
+                minx, miny, maxx, maxy = keychain_layout["body"].bounds
+                _rotate_meshes_for_keychain_layout(
+                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh],
+                    building_meshes=building_meshes,
+                    angle_deg=layout_rotation_deg,
+                    origin_xy=((minx + maxx) * 0.5, (miny + maxy) * 0.5),
+                    origin_z=0.0,
+                )
+            except Exception as exc:
+                print(f"[KEYCHAIN] Layout rotation skipped: {exc}")
 
     print(
         f"[{'KEYCHAIN' if keychain_mode else 'FLAT PLATE'}] Built layered plate: "
@@ -1263,6 +1428,45 @@ def run_flat_plate_pipeline(
         f"roads={base_thickness_mm + roads_layer_mm:.2f}mm, "
         f"parks={base_thickness_mm + parks_layer_mm:.2f}mm"
     )
+    if keychain_mode:
+        try:
+            combined_buildings = (
+                trimesh.util.concatenate([mesh for mesh in building_meshes if mesh is not None])
+                if building_meshes
+                else None
+            )
+        except Exception:
+            combined_buildings = None
+        layer_manifest = {
+            "mode": "keychain",
+            "print_rules": {
+                "minimum_feature_mm": MIN_KEYCHAIN_PRINT_FEATURE_MM,
+                "text_is_separate_layer": keychain_text_mesh is not None,
+                "rim_is_separate_layer": keychain_rim_mesh is not None,
+                "map_clipped_to_inner_rim": keychain_layout is not None,
+                "roads_buildings_precedence": True,
+            },
+            "dimensions": {
+                "body_width_mm": float(getattr(request, "keychain_body_width_mm", 0.0) or 0.0),
+                "body_height_mm": float(getattr(request, "keychain_body_height_mm", 0.0) or 0.0),
+                "map_width_mm": float(getattr(request, "keychain_map_width_mm", 0.0) or 0.0),
+                "map_height_mm": float(getattr(request, "keychain_map_height_mm", 0.0) or 0.0),
+                "map_rotation_deg": float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0),
+            },
+            "layers": {
+                "base": _mesh_manifest(terrain_mesh, scale_factor=export_scale_factor),
+                "rim": _mesh_manifest(keychain_rim_mesh, scale_factor=export_scale_factor),
+                "water": _mesh_manifest(water_mesh, scale_factor=export_scale_factor),
+                "parks": _mesh_manifest(parks_mesh, scale_factor=export_scale_factor),
+                "roads": _mesh_manifest(road_mesh, scale_factor=export_scale_factor),
+                "buildings": _mesh_manifest(combined_buildings, scale_factor=export_scale_factor),
+                "text": _mesh_manifest(keychain_text_mesh, scale_factor=export_scale_factor),
+            },
+        }
+        try:
+            setattr(task, "keychain_manifest", layer_manifest)
+        except Exception:
+            pass
 
     return export_generation_outputs(
         task=task,
