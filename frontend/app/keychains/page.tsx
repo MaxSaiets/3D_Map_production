@@ -64,6 +64,9 @@ export default function KeychainsPage() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
 
+  const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
+  const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
+
   // Очищаємо попередню зону при відкритті /keychains щоб MapSelector стартував
   // з targetMetersPerMm (зелена зона), а не з пам'яті з main мапи.
   useEffect(() => {
@@ -78,8 +81,6 @@ export default function KeychainsPage() {
     setSelectedArea(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapAspectRatio]);
-  const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
-  const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
   const handleCropRotationChange = useCallback((rotationDeg: number) => {
     setCropRotationDeg(rotationDeg);
   }, []);
