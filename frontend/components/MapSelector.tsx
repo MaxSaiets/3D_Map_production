@@ -106,6 +106,8 @@ function DrawControl() {
 type KeychainCropSpec = {
   aspectRatio: number;
   maxMetersPerMm: number;
+  /** Комфортний цільовий масштаб для INITIAL розміру crop. Якщо не задано — береться 60% від maxMetersPerMm. */
+  targetMetersPerMm?: number;
   mapWidthMm: number;
   mapHeightMm: number;
   rotationDeg?: number;
@@ -178,6 +180,17 @@ function rotatedControlPoint(center: L.LatLng, widthM: number, heightM: number, 
   );
 }
 
+function targetCropMeters(spec: KeychainCropSpec) {
+  // Комфортний initial — на 60% від максимуму або як задано в spec.targetMetersPerMm.
+  // Це гарантує що при першому відкритті крокова зона "у зеленій зоні" друкованості.
+  const aspect = Math.max(spec.aspectRatio, 0.2);
+  const target = spec.targetMetersPerMm ?? Math.max(spec.maxMetersPerMm * 0.5, 2.5);
+  const byWidth = spec.mapWidthMm * target;
+  const byHeight = spec.mapHeightMm * target * aspect;
+  const widthM = Math.min(byWidth, byHeight);
+  return { widthM, heightM: widthM / aspect };
+}
+
 function safeCropMeters(spec: KeychainCropSpec) {
   const aspect = Math.max(spec.aspectRatio, 0.2);
   const safeByWidth = spec.mapWidthMm * spec.maxMetersPerMm;
@@ -209,6 +222,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   } | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
+  const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
   const northCenter = (bounds: L.LatLngBounds) => L.latLng(bounds.getNorth(), bounds.getCenter().lng);
   const rotationDeg = normalizeAngle(spec.rotationDeg || 0);
   const rotationRef = useRef(rotationDeg);
@@ -230,10 +244,12 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     const initialSelectedArea = initialSelectedAreaRef.current;
     const existingCenter = initialSelectedArea?.getCenter() ?? map.getCenter();
-    const existingSize = initialSelectedArea ? boundsSizeMeters(initialSelectedArea) : safeSize;
+    // FIRST OPEN: використовуємо комфортний targetSize (зеленa зона друкованості)
+    // RETURN: зберігаємо попередній розмір
+    const existingSize = initialSelectedArea ? boundsSizeMeters(initialSelectedArea) : targetSize;
     const aspect = Math.max(spec.aspectRatio, 0.2);
-    const unclampedWidth = Math.min(existingSize.widthM || safeSize.widthM, safeSize.widthM);
-    const widthM = Math.max(Math.min(unclampedWidth, safeSize.widthM), Math.min(safeSize.widthM, 80));
+    const unclampedWidth = Math.min(existingSize.widthM || targetSize.widthM, safeSize.widthM);
+    const widthM = Math.max(Math.min(unclampedWidth, safeSize.widthM), Math.min(targetSize.widthM, 80));
     const heightM = Math.min(widthM / aspect, safeSize.heightM);
     const initialBounds = boundsFromCenterMeters(existingCenter, widthM, heightM);
 

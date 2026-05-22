@@ -33,8 +33,12 @@ const PANEL_SECTIONS: Array<{ id: PanelSection; label: string }> = [
 const PANEL_CARD_CLASS =
   "rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5";
 const MIN_PRINT_FEATURE_MM = 0.4;
+// Пороги м'якіші щоб не лякати користувача дочасно:
+// - <= 4.5 м/мм: ЗЕЛЕНИЙ (хороша деталізація)
+// - 4.5–6.0 м/мм: ЖОВТИЙ (можна, але дрібні вулиці злипнуться)
+// - > 6.0 м/мм: ЧЕРВОНИЙ (FDM не друкне без виправлень)
 const GOOD_METERS_PER_MM = 4.5;
-const HARD_METERS_PER_MM = 7.5;
+const HARD_METERS_PER_MM = 6.0;
 
 function SliderField({
   label,

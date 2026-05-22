@@ -2,16 +2,16 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
+import { KeychainLifePreview, KeychainSlicerPreview } from "@/components/KeychainLifePreview";
 import {
   DEFAULT_KEYCHAIN_DESIGN,
   KeychainDesigner,
   KeychainTemplateStrip,
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
-import { Preview3D } from "@/components/Preview3D";
 import { useGenerationStore } from "@/store/generation-store";
 
 const MapSelector = dynamic(
@@ -26,30 +26,46 @@ const MapSelector = dynamic(
   },
 );
 
-const CITIES: Record<string, { center: [number, number] }> = {
-  Kyiv: { center: [50.4501, 30.5234] },
-  Khmelnytskyi: { center: [49.42, 26.98] },
-};
-
-const CITY_LABELS: Record<string, string> = {
-  Kyiv: "Київ",
-  Khmelnytskyi: "Хмельницький",
+const CITIES: Record<string, { center: [number, number]; label: string; defaultText: string }> = {
+  Kyiv: { center: [50.4501, 30.5234], label: "Київ", defaultText: "KYIV MAP" },
+  Khmelnytskyi: { center: [49.42, 26.98], label: "Хмельницький", defaultText: "KHMEL MAP" },
+  Lviv: { center: [49.8397, 24.0297], label: "Львів", defaultText: "LVIV MAP" },
+  Odesa: { center: [46.4825, 30.7233], label: "Одеса", defaultText: "ODESA MAP" },
+  Dnipro: { center: [48.4647, 35.0462], label: "Дніпро", defaultText: "DNIPRO MAP" },
+  Kharkiv: { center: [49.9935, 36.2304], label: "Харків", defaultText: "KHARKIV MAP" },
+  Vinnytsia: { center: [49.2331, 28.4682], label: "Вінниця", defaultText: "VINNYTSIA" },
+  Ternopil: { center: [49.5535, 25.5948], label: "Тернопіль", defaultText: "TERNOPIL" },
+  IvanoFrankivsk: { center: [48.9226, 24.7111], label: "Івано-Франківськ", defaultText: "IF MAP" },
+  Chernihiv: { center: [51.4982, 31.2893], label: "Чернігів", defaultText: "CHERNIHIV" },
+  Manual: { center: [49.0, 31.0], label: "Інше / вручну", defaultText: "CITY MAP" },
 };
 
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV MAP");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
+  const [sidePreview, setSidePreview] = useState<"life" | "slicer">("life");
+  const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const { selectedArea, downloadUrl, isGenerating, progress, status } = useGenerationStore();
-  const currentCity = CITIES[currentCityKey];
+  const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
+  const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
+  const handleCropRotationChange = useCallback((rotationDeg: number) => {
+    setCropRotationDeg(rotationDeg);
+  }, []);
   const keychainCrop = useMemo(
     () => ({
-      aspectRatio: design.mapWidthMm / Math.max(design.mapHeightMm, 1),
+      aspectRatio: mapAspectRatio,
+      // maxMetersPerMm — це максимум, який дозволяє drag (інакше деталь зливається)
       maxMetersPerMm: 7.5,
+      // targetMetersPerMm — це INITIAL комфортний масштаб для нового користувача
+      // (на сторінці — зелена зона друкованості, без червоних попереджень)
+      targetMetersPerMm: 3.0,
       mapWidthMm: design.mapWidthMm,
       mapHeightMm: design.mapHeightMm,
+      rotationDeg: cropRotationDeg,
+      onRotationChange: handleCropRotationChange,
     }),
-    [design.mapHeightMm, design.mapWidthMm],
+    [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, handleCropRotationChange, mapAspectRatio],
   );
   const statusLabel = isGenerating
     ? `${progress}% • ${status || "Генерація"}`
@@ -61,15 +77,15 @@ export default function KeychainsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-6 pt-3 sm:px-4 lg:px-6">
-        <header className="rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.9)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="mx-auto flex min-h-[100dvh] max-w-[1800px] flex-col px-2 pb-4 pt-2 sm:px-4 lg:px-5">
+        <header className="rounded-[24px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-4 py-3 shadow-[0_12px_40px_rgba(31,41,55,0.07)] backdrop-blur lg:px-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
                 Keychain Studio
               </p>
               <div>
-                <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+                <h1 className="font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl">
                   Майстерня брелків з мапою
                 </h1>
                 <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:block sm:text-[15px]">
@@ -78,10 +94,10 @@ export default function KeychainsPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[520px]">
+            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[500px]">
               <Link
                 href="/"
-                className="flex items-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
+                className="flex min-h-[48px] items-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
               >
                 <ArrowLeft size={17} />
                 До мап
@@ -92,12 +108,16 @@ export default function KeychainsPage() {
                 </div>
                 <select
                   value={currentCityKey}
-                  onChange={(event) => setCurrentCityKey(event.target.value)}
-                  className="mt-1 w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
+                  onChange={(event) => {
+                    const nextKey = event.target.value;
+                    setCurrentCityKey(nextKey);
+                    setLabel(CITIES[nextKey]?.defaultText ?? "CITY MAP");
+                  }}
+                  className="mt-1 min-h-[32px] w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
                 >
                   {Object.keys(CITIES).map((cityKey) => (
                     <option key={cityKey} value={cityKey}>
-                      {CITY_LABELS[cityKey] ?? cityKey}
+                      {CITIES[cityKey].label}
                     </option>
                   ))}
                 </select>
@@ -112,8 +132,51 @@ export default function KeychainsPage() {
           </div>
         </header>
 
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 lg:h-[calc(100dvh-150px)] lg:min-h-[720px] lg:grid-cols-[390px,minmax(0,1fr)]">
-          <aside className="order-2 min-h-0 overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-1">
+        <div className="mt-3 grid min-h-0 flex-1 gap-3 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+          <div className="order-1 flex min-h-[460px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
+              <div>
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                  <MapIcon size={14} />
+                  Map Crop
+                </p>
+                <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
+                  Поставте форму брелка на карту
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] sm:text-sm">
+                  Бірюзова рамка повторює пропорції області карти з превю і не дає вибрати crop, який дрібніший за 0.4 мм у друці.
+                </p>
+              </div>
+              <div className="flex shrink-0 overflow-hidden rounded-full border border-[var(--surface-border)] bg-white/85 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+                <button
+                  type="button"
+                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) - 15 + 360) % 360)}
+                  className="min-h-[40px] px-3 text-sm font-black text-[var(--text-primary)]"
+                  aria-label="Повернути рамку вибору карти проти годинникової стрілки"
+                >
+                  ↺
+                </button>
+                <div className="grid min-w-[58px] place-items-center px-2 text-sm font-bold text-[var(--accent-strong)]">
+                  {Math.round(cropRotationDeg || 0)}°
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 15) % 360)}
+                  className="min-h-[40px] px-3 text-sm font-black text-[var(--text-primary)]"
+                  aria-label="Повернути рамку вибору карти за годинниковою стрілкою"
+                >
+                  ↻
+                </button>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
+              <div className="h-full overflow-hidden rounded-[24px]">
+                <MapSelector center={currentCity.center} keychainCrop={keychainCrop} />
+              </div>
+            </div>
+          </div>
+
+          <aside className="order-2 overflow-hidden rounded-[26px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur">
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -122,18 +185,17 @@ export default function KeychainsPage() {
             />
           </aside>
 
-          <section className="order-1 grid min-h-0 gap-3 lg:order-2 lg:grid-rows-[minmax(430px,1fr),minmax(280px,0.72fr)]">
-            <div className="order-2 flex min-h-[520px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-1 lg:min-h-0">
-              <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
+          <section className="order-3 flex min-h-[500px] flex-col overflow-hidden rounded-[26px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]">
+              <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
                     <Layers3 size={14} />
                     Product Layout
                   </p>
-                  <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
+                  <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
                     Розмір, зона карти, вушко і підпис
                   </h2>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] sm:text-sm">
                     Підбери форму брелка локально, потім встав обрану ділянку карти в пунктирну область.
                   </p>
                 </div>
@@ -144,44 +206,39 @@ export default function KeychainsPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid min-h-0 flex-1 gap-3 p-2 sm:p-3 xl:grid-cols-[minmax(0,1.08fr),minmax(320px,0.92fr)]">
-                <div className="flex min-h-[390px] flex-col overflow-hidden rounded-[24px] border border-[rgba(15,23,42,0.12)] lg:min-h-0">
-                  <div className="min-h-[320px] flex-1 lg:min-h-0">
+              <div className="grid min-h-0 flex-1 gap-3 p-2 sm:p-3 2xl:grid-cols-[minmax(0,1fr),300px]">
+                <div className="flex min-h-[380px] flex-col overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[460px] lg:min-h-0">
+                  <div className="min-h-[280px] flex-1 sm:min-h-[340px]">
                     <KeychainDesigner value={design} label={label} onChange={setDesign} />
                   </div>
                   <KeychainTemplateStrip value={design} label={label} onSelect={setDesign} />
                 </div>
-                <div className="min-h-[390px] overflow-hidden rounded-[24px] border border-[rgba(15,23,42,0.12)] lg:min-h-0">
-                  <Preview3D />
+                <div className="hidden min-h-[360px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] 2xl:block">
+                  <div className="relative h-full">
+                    <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/35 p-1 backdrop-blur">
+                      <button
+                        type="button"
+                        onClick={() => setSidePreview("life")}
+                        className={`min-h-[34px] rounded-full px-3 text-xs font-semibold ${sidePreview === "life" ? "bg-white text-[#111827]" : "text-white/76"}`}
+                      >
+                        У житті
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSidePreview("slicer")}
+                        className={`min-h-[34px] rounded-full px-3 text-xs font-semibold ${sidePreview === "slicer" ? "bg-white text-[#111827]" : "text-white/76"}`}
+                      >
+                        Слайсер
+                      </button>
+                    </div>
+                    {sidePreview === "life" ? (
+                      <KeychainLifePreview design={design} label={label} />
+                    ) : (
+                      <KeychainSlicerPreview design={design} label={label} />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="order-1 flex min-h-[430px] flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:min-h-0">
-              <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
-                <div>
-                  <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                    <MapIcon size={14} />
-                    Map Crop
-                  </p>
-                  <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                    Поставте форму брелка на карту
-                  </h2>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    Бірюзова рамка повторює пропорції області карти з превю і не дає вибрати crop, який дрібніший за 0.4 мм у друці.
-                  </p>
-                </div>
-              </div>
-              <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
-                <div className="h-full overflow-hidden rounded-[24px]">
-                  <MapSelector
-                    key={`${currentCityKey}-${Math.round(design.mapWidthMm)}-${Math.round(design.mapHeightMm)}`}
-                    center={currentCity.center}
-                    keychainCrop={keychainCrop}
-                  />
-                </div>
-              </div>
-            </div>
           </section>
         </div>
       </div>
