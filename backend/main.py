@@ -642,6 +642,23 @@ async def get_status(task_id: str):
         }
     
     if task_id not in tasks:
+        disk_file = _find_file_on_disk_by_task_id(task_id)
+        if disk_file is not None:
+            return {
+                "task_id": task_id,
+                "status": "completed",
+                "progress": 100,
+                "message": "Model ready (restored from disk)",
+                "download_url": f"/files/{disk_file.name}",
+                "firebase_url": None,
+                "download_url_stl": None,
+                "download_url_3mf": f"/files/{disk_file.name}" if disk_file.suffix.lower() == ".3mf" else None,
+                "keychain_manifest": None,
+                "preview_3mf": None,
+                "preview_parts": {"base": None, "roads": None, "buildings": None, "water": None, "parks": None},
+                "firebase_preview_3mf": None,
+                "firebase_preview_parts": {"base": None, "roads": None, "buildings": None, "water": None, "parks": None},
+            }
         raise HTTPException(status_code=404, detail="Task not found")
     
     task = tasks[task_id]
@@ -707,6 +724,29 @@ async def cancel_task(task_id: str):
     return {"cancelled": True}
 
 
+def _find_file_on_disk_by_task_id(task_id, format=None):
+    """Locate generated file on disk by task_id when task is missing from memory.
+    Supports new naming model_<grid>_<mm>_<short>.<ext> and legacy <task_id>.<ext>."""
+    from pathlib import Path
+    if not OUTPUT_DIR.exists():
+        return None
+    fmt = (format or "").lower().strip(".") or "3mf"
+    short = task_id.replace("-", "")[:8]
+    exts = [fmt, "3mf", "stl", "glb"]
+    seen = set()
+    for ext in exts:
+        if ext in seen:
+            continue
+        seen.add(ext)
+        exact = OUTPUT_DIR / f"{task_id}.{ext}"
+        if exact.exists():
+            return exact
+        for path in OUTPUT_DIR.glob(f"*{short}*.{ext}"):
+            if path.is_file():
+                return path
+    return None
+
+
 @app.get("/api/download/{task_id}")
 async def download_model(
     task_id: str,
@@ -717,6 +757,19 @@ async def download_model(
     Р—Р°РІР°РЅС‚Р°Р¶СѓС” Р·РіРµРЅРµСЂРѕРІР°РЅРёР№ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
     """
     if task_id not in tasks:
+        disk_file = _find_file_on_disk_by_task_id(task_id, format)
+        if disk_file is not None:
+            print(f"[INFO] Task {task_id} not in memory, serving from disk: {disk_file}")
+            lower = str(disk_file).lower()
+            if lower.endswith(".3mf"):
+                mt = "model/3mf"
+            elif lower.endswith(".glb"):
+                mt = "model/gltf-binary"
+            elif lower.endswith(".stl"):
+                mt = "model/stl"
+            else:
+                mt = "application/octet-stream"
+            return FileResponse(str(disk_file), media_type=mt, filename=disk_file.name)
         raise HTTPException(status_code=404, detail="Task not found")
     
     task = tasks[task_id]

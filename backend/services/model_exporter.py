@@ -1465,45 +1465,34 @@ def export_3mf(
             mesh.visual = trimesh.visual.ColorVisuals(face_colors=face_colors)
         return mesh
 
-    # KEY FIX: Bambu Studio розкидає окремі trimesh.Scene geometry по плиті як
-    # незалежні об'єкти. Для keychain/flat plate щоб всі шари були ОДНИМ об'єктом —
-    # зливаємо їх у єдиний меш з face_colors (Bambu сприймає кольори через 3MF
-    # multi-material).
-    has_keychain_markers = any(k.lower() in ("rim", "text") for k in preview_parts.keys())
-
-    if has_keychain_markers and len(preview_parts) > 1:
-        # Merge all parts into ONE mesh with per-face colors preserved
-        merged_meshes = []
-        for key, mesh in preview_parts.items():
-            if mesh is None or len(mesh.faces) == 0:
-                continue
-            _ensure_face_colors(mesh, key)
-            merged_meshes.append(mesh)
-        if merged_meshes:
-            try:
-                combined = trimesh.util.concatenate(merged_meshes)
-                # Зберігаємо face_colors при concatenate (trimesh робить це автоматично)
-                scene.add_geometry(combined, node_name="keychain", geom_name="keychain")
-                print(
-                    f"[3MF EXPORT] Keychain: merged {len(merged_meshes)} layers into "
-                    f"single mesh ({len(combined.vertices)} verts, "
-                    f"{len(combined.faces)} faces) — Bambu treats as ONE object"
-                )
-            except Exception as exc:
-                print(f"[3MF EXPORT] Merge failed, falling back to separate parts: {exc}")
-                # Fallback: separate parts
-                for key, mesh in preview_parts.items():
-                    name = mesh.metadata.get('original_name', key) if hasattr(mesh, 'metadata') else key
-                    _ensure_face_colors(mesh, key)
-                    scene.add_geometry(mesh, node_name=name, geom_name=name)
-    else:
-        # Regular maps: keep separate parts (legacy behavior)
-        for key, mesh in preview_parts.items():
-            name = key
-            if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
-                name = mesh.metadata['original_name']
-            _ensure_face_colors(mesh, key)
-            scene.add_geometry(mesh, node_name=name, geom_name=name)
+    # Bambu Studio multi-color: КОЖЕН шар — окремий <object> у 3MF з заданим
+    # кольором матеріалу. Bambu в'яже об'єкти на одне і те ж місце (всі мають
+    # identity transform від prepare_scene_parts), і користувач може призначити
+    # окремий filament/material для кожного шару (multi-color AMS друк).
+    #
+    # IMPORTANT: всі parts ВЖЕ позиціоновані в одному mm-просторі через
+    # prepare_scene_parts → transform_matrix. Тому Bambu бачить їх як ОДИН
+    # зібраний об'єкт із кількома материалами, а не як розкидані частини.
+    NAME_ORDER = ["base", "terrain", "rim", "water", "parks", "green", "roads", "buildings", "text"]
+    ordered_keys = sorted(
+        preview_parts.keys(),
+        key=lambda k: NAME_ORDER.index(k.lower()) if k.lower() in NAME_ORDER else 999,
+    )
+    for key in ordered_keys:
+        mesh = preview_parts.get(key)
+        if mesh is None or len(mesh.faces) == 0:
+            continue
+        # Display name (Base, Rim, Water, ...) for Bambu UI
+        if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
+            name = mesh.metadata['original_name']
+        else:
+            name = key.capitalize()
+        _ensure_face_colors(mesh, key)
+        scene.add_geometry(mesh, node_name=name, geom_name=name)
+    print(
+        f"[3MF EXPORT] Multi-material scene: {len(ordered_keys)} layers as separate "
+        f"objects with per-layer colors — user can assign filaments per part in Bambu"
+    )
 
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
     scene.export(filename)
