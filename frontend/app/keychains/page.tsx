@@ -70,6 +70,14 @@ export default function KeychainsPage() {
     setSelectedArea(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Якщо користувач змінює шаблон (Token 45×26, 35×55, тощо) — мапа має інший
+  // aspect ratio для карти. Скидаємо crop щоб MapSelector перерахував його під
+  // новий aspect (вертикальний vs горизонтальний). Інакше залишається стара форма.
+  useEffect(() => {
+    setSelectedArea(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapAspectRatio]);
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
   const handleCropRotationChange = useCallback((rotationDeg: number) => {

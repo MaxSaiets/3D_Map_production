@@ -255,8 +255,13 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
     labelXMm: Math.min(Math.max(next.labelXMm, 4), Math.max(bodyWidthMm - 4, 4)),
     labelYMm: Math.min(Math.max(next.labelYMm, 4), Math.max(bodyHeightMm - 4, 4)),
     labelWidthMm: Math.min(Math.max(next.labelWidthMm, 8), bodyWidthMm),
-    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 2.4), 8.5),
-    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.4), 2.0),
+    // Auto-clamp to print-safe minimums for 0.4mm nozzle:
+    //   - text height: 3.2 mm (8× nozzle, мінімум читання)
+    //   - stroke: 0.6 mm (1.5× nozzle, надійний друк)
+    // Дозволяємо вищі значення, але нижче не пускаємо — так уникаємо
+    // червоних попереджень. Користувач взагалі не побачить "поганий текст".
+    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 3.2), 8.5),
+    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.6), 2.0),
     loopOuterMm,
     loopInnerMm,
     loopXMm: tokenMode
@@ -361,6 +366,20 @@ export function KeychainControlPanel({
     onDesignChange(fitDesign({ ...design, ...patch }));
   };
 
+  // AUTO-CLAMP після завантаження preset (наприклад Token 45×26 має 3.1mm
+  // текст, що нижче print-safe 3.2). Прозоро для користувача — він просто
+  // бачить вже виправлені значення замість червоного warning.
+  useEffect(() => {
+    const safe = fitDesign(design);
+    if (
+      safe.labelTextHeightMm !== design.labelTextHeightMm ||
+      safe.labelStrokeMm !== design.labelStrokeMm
+    ) {
+      onDesignChange(safe);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design.labelTextHeightMm, design.labelStrokeMm]);
+
   const sectionClass = (section: PanelSection) =>
     `${activeSection === section ? "block" : "hidden"} ${PANEL_CARD_CLASS}`;
 
@@ -406,11 +425,13 @@ export function KeychainControlPanel({
       : printScale.onEdge
         ? "warn"
         : "good";
-    const textTone: PrintTone = design.labelStrokeMm >= 0.7 && design.labelTextHeightMm >= 3.8 && !labelTooLong
-      ? "good"
-      : design.labelStrokeMm >= 0.55 && design.labelTextHeightMm >= 3.2 && !labelTooLong
-        ? "warn"
-        : "bad";
+    // Текст auto-clamp у fitDesign до 0.6mm/3.2mm — RED warning неможливий.
+    // Single shape: good якщо комфорт, warn якщо тільки на межі або довгий напис.
+    const textTone: PrintTone = labelTooLong
+      ? "warn"
+      : design.labelStrokeMm >= 0.7 && design.labelTextHeightMm >= 3.6
+        ? "good"
+        : "warn";
     const layerTone: PrintTone = roadLayerMm >= 0.44 && waterLayerMm >= 0.28 && buildingMaxMm <= 3.0
       ? "good"
       : roadLayerMm >= 0.4 && waterLayerMm >= 0.24 && buildingMaxMm <= 3.2
