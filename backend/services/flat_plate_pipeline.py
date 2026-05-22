@@ -1380,6 +1380,52 @@ def run_flat_plate_pipeline(
                 bundle_roads = raw_road_source
         road_mask = _clip_geometry(_xform(bundle_roads), content_area)
 
+        # BRIDGES: Витягуємо edges з OSM тегом bridge=yes/viaduct/etc, формуємо
+        # окрему bridge_mask. Мости рендеряться вище звичайних доріг — їх видно
+        # як виступаючі сегменти, схоже на main-pipeline де мости визначались
+        # через перепад висоти терейну. У keychain рельєфу немає, тож тег з OSM —
+        # єдиний reliable spoob детектити мости.
+        bridge_mask = None
+        try:
+            road_geometry_obj = getattr(canonical_2d_stage, "road_geometry", None)
+            G_roads_obj = getattr(source, "G_roads", None)
+            local_edges = None
+            if G_roads_obj is not None:
+                try:
+                    import osmnx as _ox
+                    local_edges = _ox.graph_to_gdfs(G_roads_obj, nodes=False)
+                except Exception:
+                    local_edges = None
+            if local_edges is not None and not local_edges.empty and "bridge" in local_edges.columns:
+                # bridge column має значення "yes", "viaduct", "movable", etc. Тільки no/NaN = не міст.
+                bridge_rows = local_edges[local_edges["bridge"].notna() & (local_edges["bridge"].astype(str).str.lower() != "no")]
+                if not bridge_rows.empty:
+                    print(f"[KEYCHAIN] Bridges detected: {len(bridge_rows)}/{len(local_edges)} edges have bridge tag")
+                    # Конвертуємо в локальні координати
+                    def _to_local_geom(g):
+                        try:
+                            xs, ys = g.coords.xy
+                            pts = [global_center.to_local(x, y) for x, y in zip(xs, ys)]
+                            from shapely.geometry import LineString
+                            return LineString(pts) if len(pts) >= 2 else None
+                        except Exception:
+                            return None
+                    bridge_lines = [
+                        _to_local_geom(g) for g in bridge_rows.geometry.values
+                        if g is not None and hasattr(g, "coords")
+                    ]
+                    bridge_lines = [g for g in bridge_lines if g is not None and not g.is_empty]
+                    if bridge_lines:
+                        # Буферимо bridge edges у полігони (типова ширина моста ~6m + widen)
+                        bridge_geom = unary_union([line.buffer(3.5, cap_style=2, join_style=2) for line in bridge_lines])
+                        # Трансформуємо у content_area (keychain mm-space)
+                        bridge_mask_raw = _clip_geometry(_xform(bridge_geom), content_area)
+                        if bridge_mask_raw is not None and not getattr(bridge_mask_raw, "is_empty", True):
+                            bridge_mask = bridge_mask_raw.buffer(0)
+        except Exception as exc:
+            print(f"[KEYCHAIN] Bridge detection failed (non-fatal): {exc}")
+            bridge_mask = None
+
         # KEYCHAIN ROADS BOOST: При малому масштабі (>3 м/мм) тонкі вулиці
         # (3-5м, типові міські) дають у моделі менше 0.5mm — і випадають з
         # друку. Розширюємо road_mask на min_feature_m*0.6, щоб типові
@@ -1466,6 +1512,26 @@ def run_flat_plate_pipeline(
         color=LAYER_COLORS["roads"],
         min_area_m2=min_area_m2,
     )
+    # Bridge mesh — окремий шар, рендериться на +0.2мм вище за road,
+    # щоб мости візуально виступали над звичайними дорогами (як у main pipeline
+    # де мости детектувались через DEM elevation).
+    bridge_mesh = None
+    if keychain_mode and 'bridge_mask' in dir() and bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
+        try:
+            bridge_top_m = base_top_m + _model_mm_to_world_m(roads_layer_mm, export_scale_factor)
+            bridge_thickness_m = _model_mm_to_world_m(0.2, export_scale_factor)  # 0.2mm extra above roads
+            bridge_mesh = build_flat_layer_mesh_from_mask(
+                _clip_geometry(bridge_mask, content_area),
+                bottom_z_m=bridge_top_m,
+                thickness_m=bridge_thickness_m,
+                color=LAYER_COLORS.get("rim", [92, 80, 58, 255]),  # темно-бежевий
+                min_area_m2=min_area_m2,
+            )
+            if bridge_mesh is not None:
+                print(f"[KEYCHAIN] Bridges rendered as separate +0.2mm layer above roads")
+        except Exception as exc:
+            print(f"[KEYCHAIN] Bridge mesh build failed: {exc}")
+            bridge_mesh = None
     parks_mesh = build_flat_layer_mesh_from_mask(
         _clip_geometry(parks_mask, content_area),
         bottom_z_m=base_top_m,
@@ -1591,6 +1657,7 @@ def run_flat_plate_pipeline(
             item for item in (
                 ("Rim", keychain_rim_mesh),
                 ("Text", keychain_text_mesh),
+                ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
             )
             if item[1] is not None
         ],
