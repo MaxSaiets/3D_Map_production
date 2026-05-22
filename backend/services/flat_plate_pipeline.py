@@ -1121,6 +1121,28 @@ def build_flat_building_meshes(
         return []
 
     gdf_buildings_for_mesh = split_building_parts_from_parent_footprints(gdf_buildings_local)
+
+    # MEMORY GUARD: для keychain/flat режиму обмежуємо кількість будівель.
+    # На сервері з 3.8GB RAM боолеан-операції з 700+ будівель зачасту викликають OOM.
+    # Тримаємо топ-N найбільших за площею — це візуально найважливіші об'єкти.
+    is_keychain = bool(getattr(request, "keychain_mode", False))
+    is_flat = bool(getattr(request, "flat_plate_mode", False))
+    if (is_keychain or is_flat) and gdf_buildings_for_mesh is not None and not gdf_buildings_for_mesh.empty:
+        max_buildings = 200 if is_keychain else 500
+        if len(gdf_buildings_for_mesh) > max_buildings:
+            try:
+                # Сортуємо за площею (більші першими) і беремо топ-N
+                areas = gdf_buildings_for_mesh.geometry.area
+                sorted_idx = areas.sort_values(ascending=False).index[:max_buildings]
+                original_count = len(gdf_buildings_for_mesh)
+                gdf_buildings_for_mesh = gdf_buildings_for_mesh.loc[sorted_idx].copy()
+                print(
+                    f"[MEMORY-GUARD] Reduced buildings from {original_count} to "
+                    f"{len(gdf_buildings_for_mesh)} (top-{max_buildings} by area, "
+                    f"{'keychain' if is_keychain else 'flat'} mode)"
+                )
+            except Exception as e:
+                print(f"[MEMORY-GUARD] Building filter failed: {e}; proceeding with full set")
     height_scale_factor = float(
         getattr(request, "buildings_height_scale", None)
         or getattr(request, "building_height_multiplier", 1.0)
