@@ -748,30 +748,33 @@ export function KeychainDesigner({
                 transform={`rotate(${((cropRotationDeg || 0) + (value.mapRotationDeg || 0)) % 360} ${mapCx} ${mapCy})`}
               >
                 <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
-                {mapBounds ? (() => {
-                  // staticmap.openstreetmap.de потребує center+zoom (НЕ bbox!)
-                  // Рахуємо центр і zoom із обраного bbox.
-                  const cLat = (mapBounds.north + mapBounds.south) / 2;
-                  const cLng = (mapBounds.east + mapBounds.west) / 2;
-                  const latSpan = Math.abs(mapBounds.north - mapBounds.south);
-                  const lngSpan = Math.abs(mapBounds.east - mapBounds.west);
-                  // Zoom такий, щоб bbox вписався в ~400px tile area
-                  // Web Mercator: zoom Z покриває 360°/2^Z по lng в 256px
-                  // Для 400px: ~zoom = log2(360 / lngSpan * 400/256)
-                  const z = Math.max(10, Math.min(19, Math.floor(Math.log2(360 / Math.max(lngSpan, 0.0001) * (400 / 256)))));
-                  const url = `https://staticmap.openstreetmap.de/staticmap.php?center=${cLat.toFixed(5)},${cLng.toFixed(5)}&zoom=${z}&size=400x400&maptype=mapnik`;
-                  return (
-                    <image
-                      href={url}
-                      x={value.mapXMm}
-                      y={value.mapYMm}
-                      width={value.mapWidthMm}
-                      height={value.mapHeightMm}
-                      preserveAspectRatio="xMidYMid slice"
-                      pointerEvents="none"
+                {mapBounds ? (
+                  /* Офіційний OSM embed iframe — реальна жива карта тієї саме
+                     ділянки яку обрав користувач. URL з ?bbox=... працює
+                     надійно (на відміну від staticmap.de). Оновлюється
+                     одразу при будь-якій зміні bounds.
+                     foreignObject дозволяє вставити HTML iframe у SVG. */
+                  <foreignObject
+                    x={value.mapXMm}
+                    y={value.mapYMm}
+                    width={value.mapWidthMm}
+                    height={value.mapHeightMm}
+                    pointerEvents="none"
+                  >
+                    <iframe
+                      title="map-preview"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapBounds.west.toFixed(6)}%2C${mapBounds.south.toFixed(6)}%2C${mapBounds.east.toFixed(6)}%2C${mapBounds.north.toFixed(6)}&layer=mapnik`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                        pointerEvents: "none",
+                      }}
+                      // @ts-ignore — xmlns required for foreignObject children
+                      xmlns="http://www.w3.org/1999/xhtml"
                     />
-                  );
-                })() : (
+                  </foreignObject>
+                ) : (
                   /* Fallback — generic stripes якщо ще не обрано ділянку */
                   <>
                     {Array.from({ length: 8 }).map((_, idx) => (
