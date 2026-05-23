@@ -1475,15 +1475,24 @@ def run_flat_plate_pipeline(
         # єдиний reliable spoob детектити мости.
         bridge_mask = None
         try:
-            road_geometry_obj = getattr(canonical_2d_stage, "road_geometry", None)
-            G_roads_obj = getattr(source, "G_roads", None)
+            # ДЖЕРЕЛО 1 (надійне): окремий gdf_bridges з data_loader._fetch_bridges
+            # ДЖЕРЕЛО 2 (fallback): graph_to_gdfs(G_roads) — може не мати bridge column
             local_edges = None
-            if G_roads_obj is not None:
-                try:
-                    import osmnx as _ox
-                    local_edges = _ox.graph_to_gdfs(G_roads_obj, nodes=False)
-                except Exception:
-                    local_edges = None
+            gdf_b = getattr(source.gdf_buildings, "attrs", {}).get("bridges") if source.gdf_buildings is not None else None
+            if gdf_b is not None and not gdf_b.empty:
+                # Reset index, keep highway/bridge columns
+                local_edges = gdf_b.reset_index(drop=True)
+                if "bridge" not in local_edges.columns:
+                    local_edges["bridge"] = "yes"
+                print(f"[KEYCHAIN] Using dedicated bridge fetcher: {len(local_edges)} bridge ways")
+            else:
+                G_roads_obj = getattr(source, "G_roads", None)
+                if G_roads_obj is not None:
+                    try:
+                        import osmnx as _ox
+                        local_edges = _ox.graph_to_gdfs(G_roads_obj, nodes=False)
+                    except Exception:
+                        local_edges = None
             if local_edges is not None and not local_edges.empty and "bridge" in local_edges.columns:
                 # bridge column має значення "yes", "viaduct", "movable", etc. Тільки no/NaN = не міст.
                 bridge_rows = local_edges[local_edges["bridge"].notna() & (local_edges["bridge"].astype(str).str.lower() != "no")]

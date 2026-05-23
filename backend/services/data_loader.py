@@ -612,6 +612,53 @@ def fetch_city_data(
             print(f"Помилка завантаження будівель: {e}")
             return gpd.GeoDataFrame()
 
+    def _fetch_bridges():
+        """Окремий fetcher для мостів через features API (надійніше ніж через
+        graph: OSMnx не завжди зберігає bridge атрибут на edges). Повертає
+        GDF з LineString геометріями і колонкою 'highway' для визначення ширини."""
+        print("Завантаження мостів...")
+        tags_bridges = {'bridge': True}
+        try:
+            def _load_bridges_once():
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    try:
+                        return ox.features_from_bbox(bbox=padded_bbox, tags=tags_bridges)
+                    except TypeError:
+                        return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_bridges)
+            gdf_br = _run_overpass_with_retries("bridges", _load_bridges_once)
+            if gdf_br is None or gdf_br.empty:
+                return gpd.GeoDataFrame()
+            gdf_br = gdf_br[gdf_br.geometry.notna()]
+            # Тільки LineString (way) — без node-bridges
+            gdf_br = gdf_br[gdf_br.geom_type.isin(["LineString", "MultiLineString"])]
+            if gdf_br.empty:
+                return gdf_br
+            # Виключаємо bridge=no
+            if "bridge" in gdf_br.columns:
+                gdf_br = gdf_br[gdf_br["bridge"].astype(str).str.lower() != "no"]
+            # Кліп до bbox
+            try:
+                gdf_br = gdf_br[gdf_br.geometry.intersects(target_bbox_wgs84)]
+            except Exception:
+                pass
+            if gdf_br.empty:
+                return gdf_br
+            # Проекція
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                try:
+                    gdf_br = gdf_br.to_crs(target_crs) if target_crs else ox.project_gdf(gdf_br)
+                except AttributeError:
+                    gdf_br = gdf_br.to_crs(target_crs) if target_crs else ox.projection.project_gdf(gdf_br)
+            print(f"[DEBUG] Bridges loaded: {len(gdf_br)} ways")
+            return gdf_br
+        except InsufficientResponseError:
+            return gpd.GeoDataFrame()
+        except Exception as e:
+            print(f"[WARN] Завантаження мостів не вдалося: {e}")
+            return gpd.GeoDataFrame()
+
     def _fetch_water():
         print("Завантаження водних об'єктів...")
         # Розширений набір тегів: ловить Дніпро (relation natural=water),
@@ -748,16 +795,27 @@ def fetch_city_data(
     import concurrent.futures
     gdf_buildings = gpd.GeoDataFrame()
     gdf_water = gpd.GeoDataFrame()
+    gdf_bridges = gpd.GeoDataFrame()
     G_roads = None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         future_buildings = executor.submit(_fetch_buildings)
         future_water = executor.submit(_fetch_water)
         future_roads = executor.submit(_fetch_roads)
+        future_bridges = executor.submit(_fetch_bridges)
 
         gdf_buildings = future_buildings.result()
         gdf_water = future_water.result()
         G_roads = future_roads.result()
+        gdf_bridges = future_bridges.result()
+
+    # Append bridges as GDF attribute on gdf_buildings (back-compatible: existing
+    # callers still get the 3-tuple, but bridges accessible via gdf_buildings.attrs)
+    try:
+        if gdf_buildings is not None:
+            gdf_buildings.attrs["bridges"] = gdf_bridges
+    except Exception:
+        pass
 
     # Optional: footprints replacement
     try:
