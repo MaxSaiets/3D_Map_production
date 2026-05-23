@@ -1223,9 +1223,13 @@ def run_flat_plate_pipeline(
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)
     keychain_mode = bool(getattr(request, "keychain_mode", False))
     if keychain_mode:
-        water_layer_mm = max(water_layer_mm, 0.24)
-        roads_layer_mm = max(roads_layer_mm, 0.40)
-        parks_layer_mm = max(parks_layer_mm, 0.32)
+        # Бампим товщини, щоб шари були ВИДНІ як рельєф на однокольоровому пластику.
+        # 0.22-0.32mm майже не помітно — оку треба ≥0.4mm перепад. Воду робимо
+        # найтоншою (нижче за дороги/парки/будівлі), бо вона «провалюється» візуально
+        # — інші шари виглядають як виступи над водою.
+        water_layer_mm = max(water_layer_mm, 0.30)
+        parks_layer_mm = max(parks_layer_mm, 0.50)   # парки помітніші ніж вода
+        roads_layer_mm = max(roads_layer_mm, 0.55)   # дороги ще вище
 
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
@@ -1629,21 +1633,29 @@ def run_flat_plate_pipeline(
             min_area_m2=min_area_m2,
             label="parks",
         )
-        # Bridge має приорітет над water/road в зоні мосту — щоб міст йшов поверх,
-        # а вода/дорога не «вилазили» з-під нього. Робимо це через subtract:
-        # water_mask = water - bridge, road_mask = road - bridge (під мостом).
+        # КРИТИЧНО: bridge_mask geometrically не співпадає з road_mask
+        # (бо bridge_mask з raw OSM features, а road_mask проходить через
+        # OSMnx граф + gap_fill + widen). Тож просто перекриваються частково
+        # → візуально міст «обірваний» від доріг.
+        # Фікс: bridge = ПЕРЕТИН (intersection) bridge_mask з road_mask. Тоді
+        # міст рівно лежить на тих самих сегментах road_mask — без зазорів.
+        # Те що поза road_mask (за межі бордюра) — обрізаємо.
         if bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
             try:
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    # Розширюємо bridge на половину road width щоб гарантовано
+                    # покрити перетин з широкими розширеними дорогами
+                    bridge_widened = bridge_mask.buffer(0.5).buffer(0)
+                    bridge_on_road = bridge_widened.intersection(road_mask).buffer(0)
+                    if bridge_on_road is not None and not getattr(bridge_on_road, "is_empty", True):
+                        bridge_mask = bridge_on_road
+                        print(f"[KEYCHAIN] Bridge mask aligned to road_mask (intersection)")
                 if water_mask is not None and not getattr(water_mask, "is_empty", True):
                     water_mask = water_mask.difference(bridge_mask).buffer(0)
-                if road_mask is not None and not getattr(road_mask, "is_empty", True):
-                    # Лишаємо road в зоні моста (адже міст це частина дороги +0.2mm зверху),
-                    # але приховуємо building_mask щоб не виглядав мостом-будинком
-                    pass
                 if building_mask is not None and not getattr(building_mask, "is_empty", True):
                     building_mask = building_mask.difference(bridge_mask).buffer(0)
             except Exception as exc:
-                print(f"[KEYCHAIN] Bridge priority subtract failed: {exc}")
+                print(f"[KEYCHAIN] Bridge align/subtract failed: {exc}")
         if (parks_mask is None or getattr(parks_mask, "is_empty", True)) and raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
             print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + soft filter")
             parks_mask = _sanitize_layer_mask(
@@ -1707,18 +1719,12 @@ def run_flat_plate_pipeline(
     )
 
     if keychain_mode:
-        gdf_buildings_local = _orient_then_stretch_gdf_into_bounds(
-            gdf_buildings_local,
-            source_bounds=source_bounds,
-            target_bounds=target_bounds,
-            angle_deg=float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0),
-        )
-        # КРИТИЧНО: для keychain треба пропустити будівлі через ту саму
-        # unwrap-трансформацію що roads/water/parks. Інакше вони лежать у
-        # source coords а решта у target → візуальне зміщення.
-        if keychain_mode and gdf_buildings_local is not None and not gdf_buildings_local.empty:
+        # КРИТИЧНО: тільки ОДИН transform — _xform (новий unwrap). Старий
+        # _orient_then_stretch_gdf_into_bounds ВИДАЛЕНО, бо він робив подвійну
+        # трансформацію поверх _xform → координати спотворювались, будівлі
+        # летіли за слот і фільтрувались до 0.
+        if gdf_buildings_local is not None and not gdf_buildings_local.empty:
             try:
-                from geopandas import GeoDataFrame as _GDF
                 xformed_geoms = [_xform(g) for g in gdf_buildings_local.geometry.values]
                 xformed_geoms = [g if g is not None and not getattr(g, "is_empty", True) else None for g in xformed_geoms]
                 gdf_xformed = gdf_buildings_local.copy()
