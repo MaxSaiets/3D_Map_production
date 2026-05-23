@@ -76,21 +76,25 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
         }
       }
 
+      // Фільтр: чи хоч одна точка попадає в bbox (інакше це шматок великого
+      // об'єкта типу Дніпра, що вилазить далеко за зону і створює фантомні
+      // плями на preview).
+      const inBbox = (pts: Pts) =>
+        pts.some(([lon, lat]) => lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north);
+
       for (const el of data.elements || []) {
         const tags = el.tags || {};
         if (el.type === "way" && el.geometry) {
           const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
-          classifyAndPush(tags, points);
+          if (inBbox(points)) classifyAndPush(tags, points);
         } else if (el.type === "relation" && el.members) {
-          // Multipolygon (наприклад, Дніпро): обробляємо кожен member як окремий полігон.
-          // Це КРИТИЧНО для великих водойм/парків — вони майже завжди relations в OSM.
+          // Multipolygon (наприклад, Дніпро): обробляємо кожен member окремо.
+          // КРИТИЧНО фільтрувати по bbox — інакше member-way великої водойми
+          // тягнеться через увесь preview як фантомна синя смуга.
           for (const m of el.members) {
-            if (m.type === "way" && m.geometry && m.geometry.length >= 2) {
+            if (m.type === "way" && m.geometry && m.geometry.length >= 2 && m.role !== "inner") {
               const points: Pts = m.geometry.map((g: any) => [g.lon, g.lat]);
-              // role "outer" — основний контур, "inner" — отвір. Беремо outer.
-              if (m.role !== "inner") {
-                classifyAndPush(tags, points);
-              }
+              if (inBbox(points)) classifyAndPush(tags, points);
             }
           }
         }
@@ -232,16 +236,11 @@ export function LiveCity3D({
   }, [cropPolygon, project]);
   const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
 
-  // Центр map area — навколо нього обертаємо КАМЕРУ (SVG transform).
-  // Дані рендеряться north-up; clip-rect (cropPolygon) у north-up просторі —
-  // це повернутий прямокутник. Коли ми обертаємо групу на -cropRotationDeg
-  // навколо центру слота, clip ВИРІВНЮЄТЬСЯ з осями слота і заповнює його,
-  // а контент усередині виглядає повернутим разом з камерою — точно як на карті.
-  const mapCx = design.mapXMm + design.mapWidthMm / 2;
-  const mapCy = design.mapYMm + design.mapHeightMm / 2;
-  const cameraTransform = cropRotationDeg
-    ? `rotate(${-cropRotationDeg} ${mapCx} ${mapCy})`
-    : undefined;
+  // Жодного обертання ні даних, ні камери. Preview — це NORTH-UP витяг
+  // ділянки. cropPolygon (4 кути повернутого rect) у north-up mm-просторі
+  // виглядає як повернутий чотирикутник — він і служить SVG-clipом.
+  // Користувач бачить тільки контент усередині обраної зони, орієнтований
+  // природньо (північ зверху), просто вписаний у слот брелка.
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
@@ -265,10 +264,10 @@ export function LiveCity3D({
           height={design.mapHeightMm}
           fill="#e0d4b5"
         />
-        {/* Контент обмежений полігоном — preview = РЕАЛЬНА обрана ділянка.
-            Transform = камера: обертає увесь north-up рендер навколо центру
-            слота, тому clip-rect стає axis-aligned, а контент крутиться. */}
-        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined} transform={cameraTransform}>
+        {/* Контент north-up, обрізаний по cropPolygon (повернутий чотирикутник
+            у north-up просторі). Жодного обертання — preview просто показує
+            ділянку природньо орієнтованою, як на оригінальній OSM-карті. */}
+        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined}>
           {printable.parks.map((pts, i) => (
             <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
           ))}
