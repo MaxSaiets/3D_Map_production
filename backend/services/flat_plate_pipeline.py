@@ -1328,13 +1328,81 @@ def run_flat_plate_pipeline(
     if keychain_layout and source_bounds and target_bounds:
         map_rotation_deg = float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0)
 
+        # KEYCHAIN UNWRAP: повернута рамка (zone_polygon_local) — CCW поворот rect
+        # на map_rotation_deg. Щоб упакувати її ВМІСТ у axis-aligned слот, треба:
+        # 1) центрувати геометрію навколо center повернутої рамки
+        # 2) обернути на -map_rotation_deg (CW) — рамка стає axis-aligned
+        # 3) скейлити її РЕАЛЬНІ розміри (rect_w × rect_h) у target_bounds
+        # 4) перенести в центр target_bounds
+        zone_poly = zone.zone_polygon_local
+        unwrap_params: Optional[dict] = None
+        if zone_poly is not None and not getattr(zone_poly, "is_empty", True):
+            try:
+                # Координати з orient (CCW) — беремо першу зовнішню кільцю
+                exterior = list(zone_poly.exterior.coords)
+                # Прибираємо закриваючу точку
+                if len(exterior) > 1 and exterior[0] == exterior[-1]:
+                    exterior = exterior[:-1]
+                cx_zone = sum(p[0] for p in exterior) / len(exterior)
+                cy_zone = sum(p[1] for p in exterior) / len(exterior)
+                # Реальні розміри rect: rotate exterior by -angle around center → axis-aligned bbox
+                from shapely.geometry import Polygon as _P
+                unrot = affinity.rotate(_P(exterior), -map_rotation_deg, origin=(cx_zone, cy_zone), use_radians=False)
+                ub = unrot.bounds  # (minx, miny, maxx, maxy) axis-aligned
+                rect_w = float(ub[2] - ub[0])
+                rect_h = float(ub[3] - ub[1])
+                if rect_w > 1e-6 and rect_h > 1e-6:
+                    tgt_w = float(target_bounds[2] - target_bounds[0])
+                    tgt_h = float(target_bounds[3] - target_bounds[1])
+                    tgt_cx = (target_bounds[0] + target_bounds[2]) / 2.0
+                    tgt_cy = (target_bounds[1] + target_bounds[3]) / 2.0
+                    unwrap_params = {
+                        "cx_src": cx_zone, "cy_src": cy_zone,
+                        "rect_w": rect_w, "rect_h": rect_h,
+                        "tgt_cx": tgt_cx, "tgt_cy": tgt_cy,
+                        "tgt_w": tgt_w, "tgt_h": tgt_h,
+                        "angle": map_rotation_deg,
+                    }
+                    print(
+                        f"[KEYCHAIN UNWRAP] center=({cx_zone:.2f},{cy_zone:.2f}) "
+                        f"rect={rect_w:.2f}x{rect_h:.2f}m angle={map_rotation_deg:.1f}° "
+                        f"target={tgt_w:.4f}x{tgt_h:.4f} center=({tgt_cx:.4f},{tgt_cy:.4f})"
+                    )
+            except Exception as exc:
+                print(f"[KEYCHAIN UNWRAP] failed: {exc}; falling back to legacy transform")
+                unwrap_params = None
+
         def _xform(geometry: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
-            return _orient_then_stretch_geometry_into_bounds(
-                geometry,
-                source_bounds=source_bounds,
-                target_bounds=target_bounds,
-                angle_deg=map_rotation_deg,
-            )
+            if geometry is None or getattr(geometry, "is_empty", True):
+                return geometry
+            if unwrap_params is None:
+                return _orient_then_stretch_geometry_into_bounds(
+                    geometry,
+                    source_bounds=source_bounds,
+                    target_bounds=target_bounds,
+                    angle_deg=map_rotation_deg,
+                )
+            # UNWRAP: 1) translate to origin 2) rotate -angle 3) scale 4) translate to target
+            try:
+                p = unwrap_params
+                # 1. центр зони → (0,0)
+                step = affinity.translate(geometry, xoff=-p["cx_src"], yoff=-p["cy_src"])
+                # 2. rotate -angle (CW)
+                step = affinity.rotate(step, -p["angle"], origin=(0, 0), use_radians=False)
+                # 3. scale: rect_w → tgt_w, rect_h → tgt_h
+                sx = p["tgt_w"] / p["rect_w"]
+                sy = p["tgt_h"] / p["rect_h"]
+                step = affinity.scale(step, xfact=sx, yfact=sy, origin=(0, 0))
+                # 4. translate to target center
+                step = affinity.translate(step, xoff=p["tgt_cx"], yoff=p["tgt_cy"])
+                return step.buffer(0)
+            except Exception:
+                return _orient_then_stretch_geometry_into_bounds(
+                    geometry,
+                    source_bounds=source_bounds,
+                    target_bounds=target_bounds,
+                    angle_deg=map_rotation_deg,
+                )
 
         # Гарантуємо raw fallback'и: якщо canonical bundle порожній, беремо
         # сирі OSM дані (з preclip + road_geometry). Інакше для малих зон з
