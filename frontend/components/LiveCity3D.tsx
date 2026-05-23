@@ -163,11 +163,10 @@ export function LiveCity3D({
   }, [bounds.north, bounds.south, bounds.east, bounds.west]);
 
   // lat/lon → координати всередині map area (у тих же мм як SVG-дизайнер).
-  // БЕЗ повороту в preview: preview ЗАВЖДИ axis-aligned. Поворот рамки на
-  // мапі впливає тільки на POLYGON CLIPPING (передається backend'у через
-  // zone_polygon_coords) — preview просто показує що буде у вибраній зоні,
-  // в нормальній орієнтації.
-  void cropRotationDeg; // явно ігноруємо для preview
+  // Frame (рамка SVG) лишається прямокутним та axis-aligned, але ВМІСТ
+  // повертається — щоб коли користувач крутить рамку на мапі, preview
+  // показував іншу геометричну ділянку (rotated rect intersects different
+  // streets/buildings). Це matches що backend зробить при генерації моделі.
   const project = useMemo(() => {
     const cLat = (bounds.north + bounds.south) / 2;
     const mPerDegLng = 111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.18);
@@ -178,15 +177,25 @@ export function LiveCity3D({
     const fitHmm = hM * mmPerM;
     const ox = design.mapXMm + (design.mapWidthMm - fitWmm) / 2;
     const oy = design.mapYMm + (design.mapHeightMm - fitHmm) / 2;
+    // -cropRotationDeg: коли user-rect повертається CW на мапі, ми повертаємо
+    // ВМІСТ CCW так, щоб user-rect-aligned content виглядав axis-aligned
+    // у map slot брелка.
+    const angleRad = (-Number(cropRotationDeg || 0) * Math.PI) / 180;
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
         const u = (lon - bounds.west) * mPerDegLng / wM;
         const v = 1 - (lat - bounds.south) * 111_320 / hM;
-        return [ox + u * fitWmm, oy + v * fitHmm];
+        // Поворот навколо центру bbox (0.5, 0.5)
+        const du = u - 0.5, dv = v - 0.5;
+        const u2 = 0.5 + du * cosA - dv * sinA;
+        const v2 = 0.5 + du * sinA + dv * cosA;
+        return [ox + u2 * fitWmm, oy + v2 * fitHmm];
       },
       mmPerM,
     };
-  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
+  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm, cropRotationDeg]);
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
