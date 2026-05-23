@@ -23,7 +23,17 @@ type DesignShape = {
 type Pts = Array<[number, number]>;
 type BuildingRec = { points: Pts; levels: number };
 type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service" };
-type CityData = { buildings: BuildingRec[]; roads: RoadRec[]; water: Pts[]; parks: Pts[]; plazas: Pts[] };
+type FountainRec = { lon: number; lat: number; radiusM: number };
+type CityData = {
+  buildings: BuildingRec[];
+  roads: RoadRec[];
+  water: Pts[];
+  parks: Pts[];
+  plazas: Pts[];
+  fountains: FountainRec[];
+  trees: FountainRec[];
+  bridges: Array<{ points: Pts; widthM: number }>;
+};
 
 const OVERPASS_URLS = [
   "https://overpass-api.de/api/interpreter",
@@ -43,7 +53,7 @@ const bboxKey = (b: Bounds) =>
 async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<CityData> {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
   // Додаємо: area:highway=pedestrian (площі типу Майдан), place=square, landuse=pedestrian
-  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["highway"="pedestrian"]["area"="yes"](${bbox});way["place"~"^(square|plaza)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"~"^(riverbank|dock)$"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|pedestrian)$"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["highway"="pedestrian"](${bbox}););out geom;`;
+  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian|footway|path|cycleway)$"](${bbox});way["highway"="pedestrian"]["area"="yes"](${bbox});way["place"~"^(square|plaza)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|pedestrian)$"](${bbox});way["man_made"="bridge"](${bbox});way["bridge"="yes"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["highway"="pedestrian"](${bbox});relation["landuse"="forest"](${bbox});node["amenity"="fountain"](${bbox});node["natural"="tree"](${bbox}););out geom;`;
   let lastErr: any = null;
   for (const url of OVERPASS_URLS) {
     try {
@@ -60,6 +70,9 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
       const water: Pts[] = [];
       const parks: Pts[] = [];
       const plazas: Pts[] = [];
+      const fountains: FountainRec[] = [];
+      const trees: FountainRec[] = [];   // дерева як крапки-кружки
+      const bridges: Array<{ points: Pts; widthM: number }> = [];
 
       // Замкнутий полігон = перша точка == остання (з допуском floating point)
       const isClosedRing = (pts: Pts) =>
@@ -73,15 +86,26 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           tags.place === "square" || tags.place === "plaza" ||
           tags.landuse === "pedestrian" ||
           (tags.highway === "pedestrian" && (tags.area === "yes" || isClosedRing(points)));
+        const isBridge = tags.bridge === "yes" || tags.man_made === "bridge";
         if (tags.building) {
           buildings.push({ points, levels: Math.max(1, Math.min(40, Number(tags["building:levels"]) || 3)) });
         } else if (isPlaza && isClosedRing(points)) {
           // Площа (Майдан, променад) — окремий шар, не дорога і не вода
           plazas.push(points);
+        } else if (isBridge && !tags.building) {
+          // Міст — рендериться поверх води, ширший за звичайну дорогу
+          const widths: Record<string, number> = {
+            motorway: 16, trunk: 14, primary: 12, secondary: 10, tertiary: 9,
+            residential: 7, unclassified: 7, service: 5, pedestrian: 5,
+            footway: 3, path: 3, cycleway: 3,
+          };
+          const w = widths[String(tags.highway)] || 8;
+          bridges.push({ points, widthM: w });
         } else if (tags.highway) {
           const widths: Record<string, number> = {
             motorway: 14, trunk: 12, primary: 10, secondary: 8, tertiary: 7,
             residential: 5, unclassified: 5, service: 3.5, pedestrian: 4,
+            footway: 2, path: 2, cycleway: 2.5,
           };
           const kind: RoadRec["kind"] =
             ["motorway", "trunk", "primary", "secondary"].includes(String(tags.highway)) ? "major"
@@ -102,30 +126,50 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
         }
       }
 
-      // Фільтр: чи хоч одна точка попадає в bbox (інакше це шматок великого
-      // об'єкта типу Дніпра, що вилазить далеко за зону і створює фантомні
-      // плями на preview).
+      // Перевірка чи лінія/полігон ПЕРЕТИНАЄ bbox (не тільки має точки всередині).
+      // Для великої води (Дніпро) — її outer way може не мати ВЛАСНИХ точок
+      // у малому bbox, але berm тягнеться через нього. Тоді перевіряємо чи
+      // bbox center попадає в полігон.
       const inBbox = (pts: Pts) =>
         pts.some(([lon, lat]) => lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north);
+      const lineIntersectsBbox = (pts: Pts) => {
+        if (inBbox(pts)) return true;
+        // Bbox полігона перетинає селекцію?
+        let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+        for (const [lon, lat] of pts) {
+          if (lat > n) n = lat; if (lat < s) s = lat;
+          if (lon > e) e = lon; if (lon < w) w = lon;
+        }
+        return !(e < b.west || w > b.east || n < b.south || s > b.north);
+      };
 
       for (const el of data.elements || []) {
         const tags = el.tags || {};
-        if (el.type === "way" && el.geometry) {
+        if (el.type === "node" && tags.amenity === "fountain") {
+          if (el.lon >= b.west && el.lon <= b.east && el.lat >= b.south && el.lat <= b.north) {
+            fountains.push({ lon: el.lon, lat: el.lat, radiusM: 3.5 });
+          }
+        } else if (el.type === "node" && tags.natural === "tree") {
+          if (el.lon >= b.west && el.lon <= b.east && el.lat >= b.south && el.lat <= b.north) {
+            trees.push({ lon: el.lon, lat: el.lat, radiusM: 2.0 });
+          }
+        } else if (el.type === "way" && el.geometry) {
           const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
-          if (inBbox(points)) classifyAndPush(tags, points);
+          if (lineIntersectsBbox(points)) classifyAndPush(tags, points);
         } else if (el.type === "relation" && el.members) {
-          // Multipolygon (наприклад, Дніпро): обробляємо кожен member окремо.
-          // КРИТИЧНО фільтрувати по bbox — інакше member-way великої водойми
-          // тягнеться через увесь preview як фантомна синя смуга.
+          // Multipolygon: для воді/парків обробляємо outer members, ALWAYS
+          // (навіть якщо точки за bbox — це шматок великої водойми/лісу що
+          // ПЕРЕКРИВАЄ нашу зону). Backend на стороні preview обрізає по
+          // slot-clipPath, тож лишній рендер не страшний.
           for (const m of el.members) {
             if (m.type === "way" && m.geometry && m.geometry.length >= 2 && m.role !== "inner") {
               const points: Pts = m.geometry.map((g: any) => [g.lon, g.lat]);
-              if (inBbox(points)) classifyAndPush(tags, points);
+              if (lineIntersectsBbox(points)) classifyAndPush(tags, points);
             }
           }
         }
       }
-      return { buildings, roads, water, parks, plazas };
+      return { buildings, roads, water, parks, plazas, fountains, trees, bridges } as any;
     } catch (e: any) {
       if (e.name === "AbortError") throw e;
       lastErr = e;
@@ -276,7 +320,7 @@ export function LiveCity3D({
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
-    if (!data) return { buildings: [], roads: [], water: [], parks: [], plazas: [] };
+    if (!data) return { buildings: [], roads: [], water: [], parks: [], plazas: [], fountains: [], trees: [], bridges: [] };
     const { lonLatToMm, mmPerM } = project;
     // Buildings: пропускаємо ті де min-розмір < MIN_PRINT_MM
     const buildings = data.buildings
@@ -308,7 +352,21 @@ export function LiveCity3D({
       .map((pts) => pts.map(([lon, lat]) => lonLatToMm(lon, lat)))
       .filter((pts) => pts.length >= 3 && polygonArea(pts) >= 4)
       .sort((a, b) => polygonArea(b) - polygonArea(a));
-    return { buildings, roads, water, parks, plazas };
+    const bridges = data.bridges.map((br) => ({
+      path: polylineToPath(br.points.map(([lon, lat]) => lonLatToMm(lon, lat))),
+      widthMm: Math.max(MIN_PRINT_MM * 1.5, br.widthM * mmPerM),
+    }));
+    const fountains = data.fountains
+      .map((f) => ({
+        center: lonLatToMm(f.lon, f.lat),
+        rMm: Math.max(0.8, f.radiusM * mmPerM),
+      }));
+    const trees = data.trees
+      .map((t) => ({
+        center: lonLatToMm(t.lon, t.lat),
+        rMm: Math.max(0.6, t.radiusM * mmPerM),
+      }));
+    return { buildings, roads, water, parks, plazas, bridges, fountains, trees };
   }, [data, project]);
 
   // Розміри viewBox матчать map area (мм)
@@ -366,8 +424,36 @@ export function LiveCity3D({
               strokeLinejoin="round"
             />
           ))}
+          {/* Мости — поверх води/доріг, темно-сірі */}
+          {printable.bridges.map((br, i) => (
+            <path
+              key={`br-${i}`}
+              d={br.path}
+              stroke="#2a2a2a"
+              strokeWidth={br.widthMm}
+              fill="none"
+              strokeLinecap="butt"
+              strokeLinejoin="round"
+            />
+          ))}
           {printable.buildings.map((pts, i) => (
             <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
+          ))}
+          {/* Дерева — маленькі зелені крапки */}
+          {printable.trees.map((t, i) => (
+            <circle key={`t-${i}`} cx={t.center[0]} cy={t.center[1]} r={t.rMm} fill="#6b9c52" />
+          ))}
+          {/* Фонтани — сині кружки з білим обведенням */}
+          {printable.fountains.map((f, i) => (
+            <circle
+              key={`f-${i}`}
+              cx={f.center[0]}
+              cy={f.center[1]}
+              r={f.rMm}
+              fill="#5a91c4"
+              stroke="#ffffff"
+              strokeWidth={0.3}
+            />
           ))}
         </g>
       </svg>
