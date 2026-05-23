@@ -756,7 +756,9 @@ export function KeychainDesigner({
           />
 
           {previewSide === "front" ? (
-            <g clipPath="url(#keychainInnerBodyClip)">
+            /* НЕМАЄ зовнішнього keychainInnerBodyClip — map area прямокутний
+               і має бути таким же. Округлення rim/тіла стосуються лише корпусу. */
+            <g>
               <g
                 clipPath="url(#keychainMapClip)"
                 opacity={0.98}
