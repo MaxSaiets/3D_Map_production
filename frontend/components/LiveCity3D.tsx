@@ -1,7 +1,6 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -211,12 +210,14 @@ export function LiveCity3D({ bounds, design }: { bounds: Bounds; design: DesignS
     return data.parks.map((p) => makeShape(p.points.map(([lon, lat]) => lonLatToMap(lon, lat)))).filter(Boolean) as THREE.Shape[];
   }, [data, lonLatToMap]);
 
-  const body = useMemo(() => bodyShape(design), [design]);
-  const loop = useMemo(() => loopShape(design), [design]);
-
-  // Scene: center the keychain at origin so OrbitControls work nicely
-  const offsetX = -design.bodyWidthMm / 2;
-  const offsetY = -design.bodyHeightMm / 2;
+  // Scene: фокусуємось ТІЛЬКИ на map area (тіло вже малює SVG зовні).
+  // Камера статична, top-down з нахилом ~25° — як у Bambu Studio slicer view.
+  const mapCenterX = design.mapXMm + design.mapWidthMm / 2;
+  const mapCenterY = design.mapYMm + design.mapHeightMm / 2;
+  const mapMax = Math.max(design.mapWidthMm, design.mapHeightMm);
+  // Зсуваємо групу так, щоб центр map area = (0, 0)
+  const offsetX = -mapCenterX;
+  const offsetY = -mapCenterY;
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[10px] bg-[#0f172a]">
@@ -237,96 +238,76 @@ export function LiveCity3D({ bounds, design }: { bounds: Bounds; design: DesignS
       )}
       <Canvas
         shadows
-        camera={{ position: [design.bodyWidthMm * 0.7, design.bodyHeightMm * 0.9, design.bodyWidthMm * 0.7], fov: 32, near: 0.1, far: 500 }}
+        camera={{
+          // Top-down з легким нахилом, дивиться на центр map area
+          position: [0, mapMax * 1.1, mapMax * 0.5],
+          fov: 38,
+          near: 0.1,
+          far: mapMax * 10,
+        }}
         dpr={[1, 2]}
         gl={{ antialias: true }}
-        style={{ background: "linear-gradient(to bottom, #1e293b 0%, #475569 60%, #f5ecd0 100%)" }}
+        style={{ background: "#d4cdb6" }}
       >
-        <ambientLight intensity={0.65} />
-        <directionalLight position={[design.bodyWidthMm * 1.5, design.bodyHeightMm * 2, design.bodyWidthMm]} intensity={1.4} castShadow shadow-mapSize={[2048, 2048]}>
-          <orthographicCamera attach="shadow-camera" args={[-design.bodyWidthMm, design.bodyWidthMm, design.bodyHeightMm, -design.bodyHeightMm, 0.1, 200]} />
+        <ambientLight intensity={0.85} />
+        <directionalLight
+          position={[mapMax * 0.8, mapMax * 2, mapMax * 0.5]}
+          intensity={1.1}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+        >
+          <orthographicCamera
+            attach="shadow-camera"
+            args={[-mapMax, mapMax, mapMax, -mapMax, 0.1, mapMax * 4]}
+          />
         </directionalLight>
-        <directionalLight position={[-design.bodyWidthMm, design.bodyHeightMm, -design.bodyWidthMm]} intensity={0.35} />
 
+        {/* Все рендериться в просторі мм, центр map area = (0, 0).
+            rotation X = -90° перетворює XY-площину в XZ (горизонтальну). */}
         <group position={[offsetX, 0, offsetY]} rotation={[-Math.PI / 2, 0, 0]}>
-          {/* ── KEYCHAIN BODY ─────────────────────────────── */}
-          <mesh castShadow receiveShadow>
-            <extrudeGeometry args={[body, { depth: 2.0, bevelEnabled: false }]} />
-            <meshStandardMaterial color="#c8a96a" roughness={0.75} metalness={0.05} />
+          {/* Бежева база map area — щоб простір карти був видимий ще ДО fetch */}
+          <mesh receiveShadow position={[mapCenterX, mapCenterY, 0]}>
+            <planeGeometry args={[design.mapWidthMm, design.mapHeightMm]} />
+            <meshStandardMaterial color="#e0d4b5" roughness={0.9} />
           </mesh>
 
-          {/* ── LOOP ring on top ──────────────────────────── */}
-          {loop && (
-            <mesh castShadow receiveShadow position={[0, 0, 0]}>
-              <extrudeGeometry args={[loop.ring, { depth: 2.0, bevelEnabled: false }]} />
-              <meshStandardMaterial color="#c8a96a" roughness={0.75} metalness={0.05} />
+          {/* Парки (зелені) */}
+          {parkMeshes.map((s, i) => (
+            <mesh key={`p-${i}`} castShadow receiveShadow position={[0, 0, 0.02]}>
+              <extrudeGeometry args={[s, { depth: 0.32, bevelEnabled: false }]} />
+              <meshStandardMaterial color="#88b06e" roughness={0.85} />
             </mesh>
-          )}
-
-          {/* ── RIM border (raised outline) ───────────────── */}
-          {design.rimWidthMm > 0 && (() => {
-            const rim = bodyShape(design);
-            const inner = bodyShape({
-              ...design,
-              bodyWidthMm: design.bodyWidthMm - 2 * design.rimWidthMm,
-              bodyHeightMm: design.bodyHeightMm - 2 * design.rimWidthMm,
-              cornerRadiusMm: Math.max(design.cornerRadiusMm - design.rimWidthMm, 0),
-            });
-            // Translate inner so it's centered in rim
-            const path = new THREE.Path();
-            const innerPts = inner.getPoints(32).map((p) => [p.x + design.rimWidthMm, p.y + design.rimWidthMm] as [number, number]);
-            path.moveTo(innerPts[0][0], innerPts[0][1]);
-            for (let i = 1; i < innerPts.length; i++) path.lineTo(innerPts[i][0], innerPts[i][1]);
-            rim.holes.push(path);
-            return (
-              <mesh castShadow receiveShadow position={[0, 0, 2.0]}>
-                <extrudeGeometry args={[rim, { depth: 0.45, bevelEnabled: false }]} />
-                <meshStandardMaterial color="#7a6440" roughness={0.7} />
-              </mesh>
-            );
-          })()}
-
-          {/* ── MAP CONTENT (extruded city) ────────────────── */}
-          <group position={[0, 0, 2.0]}>
-            {/* Parks first (lowest) */}
-            {parkMeshes.map((s, i) => (
-              <mesh key={`p-${i}`} castShadow receiveShadow>
-                <extrudeGeometry args={[s, { depth: 0.32, bevelEnabled: false }]} />
-                <meshStandardMaterial color="#88b06e" roughness={0.85} />
-              </mesh>
-            ))}
-            {/* Water */}
-            {waterMeshes.map((s, i) => (
-              <mesh key={`w-${i}`} castShadow receiveShadow>
-                <extrudeGeometry args={[s, { depth: 0.28, bevelEnabled: false }]} />
-                <meshStandardMaterial color="#5a91c4" roughness={0.4} />
-              </mesh>
-            ))}
-            {/* Roads */}
-            {roadMeshes.map((r, i) => (
-              <mesh key={`r-${i}`} castShadow receiveShadow>
-                <extrudeGeometry args={[r.shape, { depth: r.kind === "major" ? 0.5 : 0.44, bevelEnabled: false }]} />
-                <meshStandardMaterial color={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"} roughness={0.65} />
-              </mesh>
-            ))}
-            {/* Buildings — extruded prisms */}
-            {buildingMeshes.map((b, i) => (
-              <mesh key={`b-${i}`} castShadow receiveShadow>
-                <extrudeGeometry args={[b.shape, { depth: b.h, bevelEnabled: false }]} />
-                <meshStandardMaterial color="#e8dfca" roughness={0.8} />
-              </mesh>
-            ))}
-          </group>
+          ))}
+          {/* Вода */}
+          {waterMeshes.map((s, i) => (
+            <mesh key={`w-${i}`} castShadow receiveShadow position={[0, 0, 0.04]}>
+              <extrudeGeometry args={[s, { depth: 0.28, bevelEnabled: false }]} />
+              <meshStandardMaterial color="#5a91c4" roughness={0.4} />
+            </mesh>
+          ))}
+          {/* Дороги (різна висота за класом) */}
+          {roadMeshes.map((r, i) => (
+            <mesh key={`r-${i}`} castShadow receiveShadow position={[0, 0, 0.06]}>
+              <extrudeGeometry
+                args={[r.shape, { depth: r.kind === "major" ? 0.5 : 0.44, bevelEnabled: false }]}
+              />
+              <meshStandardMaterial
+                color={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
+                roughness={0.65}
+              />
+            </mesh>
+          ))}
+          {/* Будівлі — екструдовані призми */}
+          {buildingMeshes.map((b, i) => (
+            <mesh key={`b-${i}`} castShadow receiveShadow position={[0, 0, 0.08]}>
+              <extrudeGeometry args={[b.shape, { depth: b.h, bevelEnabled: false }]} />
+              <meshStandardMaterial color="#e8dfca" roughness={0.8} />
+            </mesh>
+          ))}
         </group>
 
-        <OrbitControls
-          enablePan={false}
-          enableZoom={false}
-          maxPolarAngle={Math.PI / 2.1}
-          minPolarAngle={Math.PI / 6}
-          autoRotate
-          autoRotateSpeed={0.5}
-        />
+        {/* Статична камера — без OrbitControls. Користувач не може випадково
+            покрутити сцену і "загубити" вид. */}
       </Canvas>
     </div>
   );
