@@ -149,8 +149,25 @@ export function LiveCity3D({
   const [error, setError] = useState<string | null>(null);
   const reqRef = useRef<AbortController | null>(null);
 
+  // Bbox для OSM-fetch — розширений до bbox ПОВЕРНУТОЇ зони, інакше при
+  // куті ≠ 0 кути зони вилазять за axis-aligned bounds і дані не вантажаться.
+  const fetchBounds = useMemo<Bounds>(() => {
+    if (!cropPolygon || cropPolygon.length < 3) return bounds;
+    let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+    for (const [lon, lat] of cropPolygon) {
+      if (lat > n) n = lat; if (lat < s) s = lat;
+      if (lon > e) e = lon; if (lon < w) w = lon;
+    }
+    return {
+      north: Math.max(n, bounds.north),
+      south: Math.min(s, bounds.south),
+      east: Math.max(e, bounds.east),
+      west: Math.min(w, bounds.west),
+    };
+  }, [bounds, cropPolygon]);
+
   useEffect(() => {
-    if (!bounds) return;
+    if (!fetchBounds) return;
     reqRef.current?.abort();
     const ctrl = new AbortController();
     reqRef.current = ctrl;
@@ -158,7 +175,7 @@ export function LiveCity3D({
       setLoading(true);
       setError(null);
       try {
-        const d = await fetchOSMForBounds(bounds, ctrl.signal);
+        const d = await fetchOSMForBounds(fetchBounds, ctrl.signal);
         if (!ctrl.signal.aborted) setData(d);
       } catch (e: any) {
         if (e.name !== "AbortError") setError(e.message || "Overpass");
@@ -167,7 +184,7 @@ export function LiveCity3D({
       }
     }, 400);
     return () => { clearTimeout(timer); ctrl.abort(); };
-  }, [bounds.north, bounds.south, bounds.east, bounds.west]);
+  }, [fetchBounds.north, fetchBounds.south, fetchBounds.east, fetchBounds.west]);
 
   // lat/lon → mm координати ВСЕРЕДИНІ map area. БЕЗ обертання даних —
   // геометрія завжди north-up. Обертання робимо нижче через SVG transform
@@ -236,11 +253,25 @@ export function LiveCity3D({
   }, [cropPolygon, project]);
   const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
 
-  // Жодного обертання ні даних, ні камери. Preview — це NORTH-UP витяг
-  // ділянки. cropPolygon (4 кути повернутого rect) у north-up mm-просторі
-  // виглядає як повернутий чотирикутник — він і служить SVG-clipом.
-  // Користувач бачить тільки контент усередині обраної зони, орієнтований
-  // природньо (північ зверху), просто вписаний у слот брелка.
+  // ЦЕНТР повернутої зони (у mm) — навколо нього робимо ВНУТРІШНЄ обертання.
+  // Дані у north-up; зона на карті повернута на θ; ми обертаємо ВЕСЬ контент
+  // на -θ навколо центру зони → повернутий rect стає axis-aligned і ідеально
+  // лягає на слот. Контент усередині повертається разом, але це норма:
+  // користувач бачить «вирізану і покладену рівно» ділянку, без беж-полів.
+  const cropCenterMm = useMemo(() => {
+    if (!cropPolygon || cropPolygon.length < 1) {
+      return [design.mapXMm + design.mapWidthMm / 2, design.mapYMm + design.mapHeightMm / 2] as const;
+    }
+    let cx = 0, cy = 0;
+    for (const [lon, lat] of cropPolygon) {
+      const [x, y] = project.lonLatToMm(lon, lat);
+      cx += x; cy += y;
+    }
+    return [cx / cropPolygon.length, cy / cropPolygon.length] as const;
+  }, [cropPolygon, project]);
+  const viewTransform = cropRotationDeg
+    ? `rotate(${-cropRotationDeg} ${cropCenterMm[0]} ${cropCenterMm[1]})`
+    : undefined;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
@@ -264,10 +295,10 @@ export function LiveCity3D({
           height={design.mapHeightMm}
           fill="#e0d4b5"
         />
-        {/* Контент north-up, обрізаний по cropPolygon (повернутий чотирикутник
-            у north-up просторі). Жодного обертання — preview просто показує
-            ділянку природньо орієнтованою, як на оригінальній OSM-карті. */}
-        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined}>
+        {/* Контент + clip разом обертаються на -θ навколо центру зони.
+            Так повернутий cropPolygon стає axis-aligned і заповнює слот,
+            а контент усередині йде з ним — зона «розгортається» рівно. */}
+        <g transform={viewTransform} clipPath={cropClipPath ? `url(#${clipId})` : undefined}>
           {printable.parks.map((pts, i) => (
             <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
           ))}
