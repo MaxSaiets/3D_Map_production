@@ -1671,14 +1671,15 @@ def run_flat_plate_pipeline(
         color=LAYER_COLORS["roads"],
         min_area_m2=min_area_m2,
     )
-    # Bridge mesh — окремий шар, рендериться на +0.2мм вище за road,
-    # щоб мости візуально виступали над звичайними дорогами (як у main pipeline
-    # де мости детектувались через DEM elevation).
+    # Bridge mesh — НА РІВНІ ЗВИЧАЙНИХ ДОРІГ (не вище), просто інший колір.
+    # Раніше робилось +0.2mm вище, але візуально мости "плавали в повітрі"
+    # — особливо коли під ними немає води (тінь з боків). Тепер міст лежить
+    # на тій же висоті що road, відрізняється тільки кольором.
     bridge_mesh = None
     if keychain_mode and 'bridge_mask' in dir() and bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
         try:
-            bridge_top_m = base_top_m + _model_mm_to_world_m(roads_layer_mm, export_scale_factor)
-            bridge_thickness_m = _model_mm_to_world_m(0.2, export_scale_factor)  # 0.2mm extra above roads
+            bridge_top_m = base_top_m  # ТАКА Ж висота як roads
+            bridge_thickness_m = _model_mm_to_world_m(roads_layer_mm, export_scale_factor)  # = roads
             # КРИТИЧНО: bridge — вузька лінія, агресивний min_area_m2 (як для парків)
             # її повністю зʼїдає. Використовуємо МІНІМАЛЬНИЙ поріг — площа полігона
             # моста 5×0.5mm = 2.5mm² → потрібен поріг ~0.5mm² у model space.
@@ -1712,6 +1713,21 @@ def run_flat_plate_pipeline(
             target_bounds=target_bounds,
             angle_deg=float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0),
         )
+        # КРИТИЧНО: для keychain треба пропустити будівлі через ту саму
+        # unwrap-трансформацію що roads/water/parks. Інакше вони лежать у
+        # source coords а решта у target → візуальне зміщення.
+        if keychain_mode and gdf_buildings_local is not None and not gdf_buildings_local.empty:
+            try:
+                from geopandas import GeoDataFrame as _GDF
+                xformed_geoms = [_xform(g) for g in gdf_buildings_local.geometry.values]
+                xformed_geoms = [g if g is not None and not getattr(g, "is_empty", True) else None for g in xformed_geoms]
+                gdf_xformed = gdf_buildings_local.copy()
+                gdf_xformed.geometry = xformed_geoms
+                gdf_xformed = gdf_xformed[gdf_xformed.geometry.notna()]
+                gdf_buildings_local = gdf_xformed
+                print(f"[KEYCHAIN] Buildings transformed through unwrap: {len(gdf_buildings_local)} remaining")
+            except Exception as exc:
+                print(f"[KEYCHAIN] Building unwrap failed (using source coords): {exc}")
         gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, content_area)
 
     building_meshes = build_flat_building_meshes(
