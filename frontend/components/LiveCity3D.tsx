@@ -186,30 +186,51 @@ export function LiveCity3D({
     return () => { clearTimeout(timer); ctrl.abort(); };
   }, [fetchBounds.north, fetchBounds.south, fetchBounds.east, fetchBounds.west]);
 
-  // Проекція використовує bbox ПОВЕРНУТОЇ зони (fetchBounds) — це гарантує
-  // що коли user крутить зону на карті, охоплення content'у зростає/змінюється
-  // (бо bbox повернутого rect більший за axis-aligned). Дані рендеряться
-  // north-up і ВЖЕ заповнюють слот — без обертання, без беж-обрізки.
+  // ПРАВИЛЬНА проекція: беремо ПОВЕРНУТУ зону як viewport.
+  // 1) Центр зони (lon, lat) — або з cropPolygon, або з bounds.
+  // 2) Розміри зони widthM × heightM — з bounds (bounds = bbox unrotated rect
+  //    того ж widthM × heightM при тому ж центрі).
+  // 3) Для кожної точки:
+  //    a) у локальні метри від центру (east, north)
+  //    b) повертаємо на -θ (інверсія повороту рамки) → координати у власних
+  //       осях рамки
+  //    c) скейлимо у слот мм
+  // Результат: повернута зона ЗАВЖДИ ідеально лягає на слот, content обертається
+  // разом з нею. Зона «розгортається», вміст «крутиться у середині», слот завжди
+  // прямокутний і повністю заповнений.
   const project = useMemo(() => {
-    const b = fetchBounds;
-    const cLat = (b.north + b.south) / 2;
+    // Центр зони — від cropPolygon (точно) або з bounds (fallback)
+    let cLon: number, cLat: number;
+    if (cropPolygon && cropPolygon.length >= 3) {
+      cLon = cropPolygon.reduce((a, p) => a + p[0], 0) / cropPolygon.length;
+      cLat = cropPolygon.reduce((a, p) => a + p[1], 0) / cropPolygon.length;
+    } else {
+      cLon = (bounds.east + bounds.west) / 2;
+      cLat = (bounds.north + bounds.south) / 2;
+    }
     const mPerDegLng = 111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.18);
-    const wM = (b.east - b.west) * mPerDegLng || 1;
-    const hM = (b.north - b.south) * 111_320 || 1;
-    const mmPerM = Math.min(design.mapWidthMm / wM, design.mapHeightMm / hM);
-    const fitWmm = wM * mmPerM;
-    const fitHmm = hM * mmPerM;
-    const ox = design.mapXMm + (design.mapWidthMm - fitWmm) / 2;
-    const oy = design.mapYMm + (design.mapHeightMm - fitHmm) / 2;
+    const widthM = (bounds.east - bounds.west) * mPerDegLng || 1;
+    const heightM = (bounds.north - bounds.south) * 111_320 || 1;
+    const theta = (cropRotationDeg * Math.PI) / 180;
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
+    const mmPerM = Math.min(design.mapWidthMm / widthM, design.mapHeightMm / heightM);
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
-        const u = (lon - b.west) * mPerDegLng / wM;
-        const v = 1 - (lat - b.south) * 111_320 / hM;
-        return [ox + u * fitWmm, oy + v * fitHmm];
+        // Локальні метри відносно центру зони
+        const dx = (lon - cLon) * mPerDegLng;
+        const dy = (lat - cLat) * 111_320;
+        // Інверсія повороту рамки: CW rotation на θ (= CCW на -θ)
+        const rx = dx * cosT + dy * sinT;
+        const ry = -dx * sinT + dy * cosT;
+        // rx ∈ [-widthM/2, widthM/2] для точок усередині зони → слот mm
+        const mx = design.mapXMm + design.mapWidthMm * (rx / widthM + 0.5);
+        const my = design.mapYMm + design.mapHeightMm * (0.5 - ry / heightM);
+        return [mx, my];
       },
       mmPerM,
     };
-  }, [fetchBounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
+  }, [bounds, cropPolygon, cropRotationDeg, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
@@ -245,11 +266,8 @@ export function LiveCity3D({
   // Розміри viewBox матчать map area (мм)
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
 
-  // Прибрано: cropPolygon clip, обертання групи. Preview — це чистий
-  // north-up витяг bbox повернутої зони, axis-aligned заповнює слот.
-  // _unused: cropRotationDeg, cropPolygon все ще потрібні щоб fetchBounds
-  // знав про ROTATED bbox, але візуально вони не впливають.
-  void cropRotationDeg;
+  // Slot-shape clip — щоб контент який виходить за межі слота не вилазив.
+  const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
@@ -258,6 +276,16 @@ export function LiveCity3D({
         preserveAspectRatio="xMidYMid meet"
         style={{ width: "100%", height: "100%", display: "block" }}
       >
+        <defs>
+          <clipPath id={clipId}>
+            <rect
+              x={design.mapXMm}
+              y={design.mapYMm}
+              width={design.mapWidthMm}
+              height={design.mapHeightMm}
+            />
+          </clipPath>
+        </defs>
         {/* Базова бежева плита на весь слот */}
         <rect
           x={design.mapXMm}
@@ -266,8 +294,9 @@ export function LiveCity3D({
           height={design.mapHeightMm}
           fill="#e0d4b5"
         />
-        {/* Контент — чистий north-up, заповнює слот */}
-        <g>
+        {/* Контент уже спроектований так що повернута зона = слот.
+            Slot-clip обрізає випадковий overshoot за межами слота. */}
+        <g clipPath={`url(#${clipId})`}>
           {printable.parks.map((pts, i) => (
             <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
           ))}
