@@ -165,11 +165,10 @@ export function LiveCity3D({
     return () => { clearTimeout(timer); ctrl.abort(); };
   }, [bounds.north, bounds.south, bounds.east, bounds.west]);
 
-  // lat/lon → координати всередині map area (у тих же мм як SVG-дизайнер).
-  // Frame (рамка SVG) лишається прямокутним та axis-aligned, але ВМІСТ
-  // повертається — щоб коли користувач крутить рамку на мапі, preview
-  // показував іншу геометричну ділянку (rotated rect intersects different
-  // streets/buildings). Це matches що backend зробить при генерації моделі.
+  // lat/lon → mm координати ВСЕРЕДИНІ map area. БЕЗ обертання даних —
+  // геометрія завжди north-up. Обертання робимо нижче через SVG transform
+  // на групі (rotation КАМЕРИ, не даних). Так візуально це виглядає як
+  // user повертає камеру навколо map area, а не пересуває саму карту.
   const project = useMemo(() => {
     const cLat = (bounds.north + bounds.south) / 2;
     const mPerDegLng = 111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.18);
@@ -180,25 +179,15 @@ export function LiveCity3D({
     const fitHmm = hM * mmPerM;
     const ox = design.mapXMm + (design.mapWidthMm - fitWmm) / 2;
     const oy = design.mapYMm + (design.mapHeightMm - fitHmm) / 2;
-    // -cropRotationDeg: коли user-rect повертається CW на мапі, ми повертаємо
-    // ВМІСТ CCW так, щоб user-rect-aligned content виглядав axis-aligned
-    // у map slot брелка.
-    const angleRad = (-Number(cropRotationDeg || 0) * Math.PI) / 180;
-    const cosA = Math.cos(angleRad);
-    const sinA = Math.sin(angleRad);
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
         const u = (lon - bounds.west) * mPerDegLng / wM;
         const v = 1 - (lat - bounds.south) * 111_320 / hM;
-        // Поворот навколо центру bbox (0.5, 0.5)
-        const du = u - 0.5, dv = v - 0.5;
-        const u2 = 0.5 + du * cosA - dv * sinA;
-        const v2 = 0.5 + du * sinA + dv * cosA;
-        return [ox + u2 * fitWmm, oy + v2 * fitHmm];
+        return [ox + u * fitWmm, oy + v * fitHmm];
       },
       mmPerM,
     };
-  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm, cropRotationDeg]);
+  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
@@ -243,6 +232,17 @@ export function LiveCity3D({
   }, [cropPolygon, project]);
   const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
 
+  // Центр map area — навколо нього обертаємо КАМЕРУ (SVG transform).
+  // Дані рендеряться north-up; clip-rect (cropPolygon) у north-up просторі —
+  // це повернутий прямокутник. Коли ми обертаємо групу на -cropRotationDeg
+  // навколо центру слота, clip ВИРІВНЮЄТЬСЯ з осями слота і заповнює його,
+  // а контент усередині виглядає повернутим разом з камерою — точно як на карті.
+  const mapCx = design.mapXMm + design.mapWidthMm / 2;
+  const mapCy = design.mapYMm + design.mapHeightMm / 2;
+  const cameraTransform = cropRotationDeg
+    ? `rotate(${-cropRotationDeg} ${mapCx} ${mapCy})`
+    : undefined;
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
       <svg
@@ -265,8 +265,10 @@ export function LiveCity3D({
           height={design.mapHeightMm}
           fill="#e0d4b5"
         />
-        {/* Контент обмежений полігоном — preview = РЕАЛЬНА обрана ділянка */}
-        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined}>
+        {/* Контент обмежений полігоном — preview = РЕАЛЬНА обрана ділянка.
+            Transform = камера: обертає увесь north-up рендер навколо центру
+            слота, тому clip-rect стає axis-aligned, а контент крутиться. */}
+        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined} transform={cameraTransform}>
           {printable.parks.map((pts, i) => (
             <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
           ))}
