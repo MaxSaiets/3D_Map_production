@@ -51,10 +51,9 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
       const roads: RoadRec[] = [];
       const water: Pts[] = [];
       const parks: Pts[] = [];
-      for (const el of data.elements || []) {
-        if (!el.geometry || el.geometry.length < 2) continue;
-        const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
-        const tags = el.tags || {};
+
+      function classifyAndPush(tags: any, points: Pts) {
+        if (!points || points.length < 2) return;
         if (tags.building) {
           buildings.push({ points, levels: Math.max(1, Math.min(40, Number(tags["building:levels"]) || 3)) });
         } else if (tags.highway) {
@@ -68,16 +67,32 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           roads.push({ points, widthM: widths[String(tags.highway)] || 4, kind });
         } else if (tags.natural === "water" || tags.waterway) {
           water.push(points);
-        } else if (
-          tags.leisure || tags.landuse || tags.natural
-        ) {
-          // Будь-що зелене: парки, ліси, луки, сади, спортмайданчики,
-          // садки, кладовища, сільгосп — все що OSM маркує як "green-ish"
+        } else if (tags.leisure || tags.landuse || tags.natural) {
           const isGreen =
             ["park", "garden", "pitch", "playground", "nature_reserve"].includes(tags.leisure) ||
             ["grass", "forest", "recreation_ground", "meadow", "village_green", "cemetery", "allotments", "orchard", "farmland"].includes(tags.landuse) ||
             ["wood", "grassland", "scrub", "heath"].includes(tags.natural);
           if (isGreen) parks.push(points);
+        }
+      }
+
+      for (const el of data.elements || []) {
+        const tags = el.tags || {};
+        if (el.type === "way" && el.geometry) {
+          const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
+          classifyAndPush(tags, points);
+        } else if (el.type === "relation" && el.members) {
+          // Multipolygon (наприклад, Дніпро): обробляємо кожен member як окремий полігон.
+          // Це КРИТИЧНО для великих водойм/парків — вони майже завжди relations в OSM.
+          for (const m of el.members) {
+            if (m.type === "way" && m.geometry && m.geometry.length >= 2) {
+              const points: Pts = m.geometry.map((g: any) => [g.lon, g.lat]);
+              // role "outer" — основний контур, "inner" — отвір. Беремо outer.
+              if (m.role !== "inner") {
+                classifyAndPush(tags, points);
+              }
+            }
+          }
         }
       }
       return { buildings, roads, water, parks };
@@ -192,8 +207,9 @@ export function LiveCity3D({
       .filter((pts) => {
         if (pts.length < 3) return false;
         const area = polygonArea(pts);
-        // мінімальна площа = MIN_PRINT_MM²×1.5 (квадрат сторони 0.7-0.8mm)
-        return area >= MIN_PRINT_MM * MIN_PRINT_MM * 1.5;
+        // М'якший поріг — показуємо все що ≥ 0.5×0.5mm (видимий блок).
+        // Зайве "видалення" робилось бекендом, тут preview має бути informative.
+        return area >= 0.25;
       });
     // Roads: переводимо реальну ширину м → mm і пропускаємо тонкі
     const roads = data.roads
