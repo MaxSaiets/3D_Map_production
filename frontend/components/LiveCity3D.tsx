@@ -162,9 +162,12 @@ export function LiveCity3D({
     return () => { clearTimeout(timer); ctrl.abort(); };
   }, [bounds.north, bounds.south, bounds.east, bounds.west]);
 
-  // lat/lon → координати всередині map area (у тих же мм як SVG-дизайнер)
-  // З підтримкою rotation: повертаємо проекцію на -cropRotationDeg навколо
-  // центру bbox, щоб user-rotated rect виглядав axis-aligned на брелку.
+  // lat/lon → координати всередині map area (у тих же мм як SVG-дизайнер).
+  // БЕЗ повороту в preview: preview ЗАВЖДИ axis-aligned. Поворот рамки на
+  // мапі впливає тільки на POLYGON CLIPPING (передається backend'у через
+  // zone_polygon_coords) — preview просто показує що буде у вибраній зоні,
+  // в нормальній орієнтації.
+  void cropRotationDeg; // явно ігноруємо для preview
   const project = useMemo(() => {
     const cLat = (bounds.north + bounds.south) / 2;
     const mPerDegLng = 111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.18);
@@ -175,27 +178,15 @@ export function LiveCity3D({
     const fitHmm = hM * mmPerM;
     const ox = design.mapXMm + (design.mapWidthMm - fitWmm) / 2;
     const oy = design.mapYMm + (design.mapHeightMm - fitHmm) / 2;
-    // SVG y inverted (lat зростає вгору, SVG-y вниз) → rotation в SVG-просторі
-    // має додатне напрямок clockwise. Користувач крутить рамку clockwise →
-    // ми повертаємо контент counter-clockwise, тобто -cropRotationDeg.
-    const angleRad = (-Number(cropRotationDeg || 0) * Math.PI) / 180;
-    const cosA = Math.cos(angleRad);
-    const sinA = Math.sin(angleRad);
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
-        // Normalized u,v у [0,1] від bbox
         const u = (lon - bounds.west) * mPerDegLng / wM;
         const v = 1 - (lat - bounds.south) * 111_320 / hM;
-        // Поворот навколо центру bbox (0.5, 0.5)
-        const du = u - 0.5;
-        const dv = v - 0.5;
-        const u2 = 0.5 + du * cosA - dv * sinA;
-        const v2 = 0.5 + du * sinA + dv * cosA;
-        return [ox + u2 * fitWmm, oy + v2 * fitHmm];
+        return [ox + u * fitWmm, oy + v * fitHmm];
       },
       mmPerM,
     };
-  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm, cropRotationDeg]);
+  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
@@ -232,7 +223,7 @@ export function LiveCity3D({
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-[8px] bg-[#e0d4b5]">
+    <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
       <svg
         viewBox={vb}
         preserveAspectRatio="xMidYMid meet"
