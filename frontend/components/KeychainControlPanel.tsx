@@ -701,11 +701,31 @@ export function KeychainControlPanel({
     setShowAllZones(false);
 
     try {
+      // КРИТИЧНО: коли рамка повернута (cropPolygon, cropRotationDeg !== 0),
+      // selectedArea — це bbox UNROTATED прямокутника. Реальна повернута зона
+      // має кути ЗА межами цього малого bbox. Backend має качати OSM для
+      // BBOX ПОВЕРНУТОЇ ЗОНИ (cropPolygon), інакше у мостах/будинках на
+      // краях зони буде пустота.
+      let fetchNorth = selectedArea.getNorth();
+      let fetchSouth = selectedArea.getSouth();
+      let fetchEast = selectedArea.getEast();
+      let fetchWest = selectedArea.getWest();
+      if (cropPolygon && cropPolygon.length >= 3) {
+        let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+        for (const [lon, lat] of cropPolygon) {
+          if (lat > n) n = lat; if (lat < s) s = lat;
+          if (lon > e) e = lon; if (lon < w) w = lon;
+        }
+        fetchNorth = Math.max(fetchNorth, n);
+        fetchSouth = Math.min(fetchSouth, s);
+        fetchEast = Math.max(fetchEast, e);
+        fetchWest = Math.min(fetchWest, w);
+      }
       const response = await api.generateModel({
-        north: selectedArea.getNorth(),
-        south: selectedArea.getSouth(),
-        east: selectedArea.getEast(),
-        west: selectedArea.getWest(),
+        north: fetchNorth,
+        south: fetchSouth,
+        east: fetchEast,
+        west: fetchWest,
         road_width_multiplier: 0.62,
         road_height_mm: roadLayerMm,
         road_embed_mm: 0,
