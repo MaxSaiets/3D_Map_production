@@ -1,6 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
+
+// Three.js + Overpass fetch — lazy load to avoid SSR + keep designer bundle light
+const LiveCity3D = dynamic(
+  () => import("@/components/LiveCity3D").then((m) => ({ default: m.LiveCity3D })),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
+        Завантаження 3D…
+      </div>
+    ),
+  },
+);
 
 export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
@@ -749,11 +763,10 @@ export function KeychainDesigner({
               >
                 <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
                 {mapBounds ? (
-                  /* Офіційний OSM embed iframe — реальна жива карта тієї саме
-                     ділянки яку обрав користувач. URL з ?bbox=... працює
-                     надійно (на відміну від staticmap.de). Оновлюється
-                     одразу при будь-якій зміні bounds.
-                     foreignObject дозволяє вставити HTML iframe у SVG. */
+                  /* Реальний 3D перегляд: фетчимо OSM (buildings+roads) для
+                     обраної ділянки і рендеримо як 3D-екструзії (Three.js).
+                     Це показує саме те, що буде на брелку у фінальному 3MF —
+                     не плоска картинка, а реальна 3D-мапа. */
                   <foreignObject
                     x={value.mapXMm}
                     y={value.mapYMm}
@@ -761,18 +774,10 @@ export function KeychainDesigner({
                     height={value.mapHeightMm}
                     pointerEvents="none"
                   >
-                    <iframe
-                      title="map-preview"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapBounds.west.toFixed(6)}%2C${mapBounds.south.toFixed(6)}%2C${mapBounds.east.toFixed(6)}%2C${mapBounds.north.toFixed(6)}&layer=mapnik`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        border: "none",
-                        pointerEvents: "none",
-                      }}
-                      // @ts-ignore — xmlns required for foreignObject children
-                      xmlns="http://www.w3.org/1999/xhtml"
-                    />
+                    {/* @ts-ignore xmlns required for foreignObject children */}
+                    <div xmlns="http://www.w3.org/1999/xhtml" style={{ width: "100%", height: "100%" }}>
+                      <LiveCity3D bounds={mapBounds} />
+                    </div>
                   </foreignObject>
                 ) : (
                   /* Fallback — generic stripes якщо ще не обрано ділянку */
