@@ -776,7 +776,24 @@ export function KeychainDesigner({
                   >
                     {/* @ts-ignore xmlns required for foreignObject children */}
                     <div xmlns="http://www.w3.org/1999/xhtml" style={{ width: "100%", height: "100%" }}>
-                      <LiveCity3D bounds={mapBounds} />
+                      <LiveCity3D
+                        bounds={mapBounds}
+                        design={{
+                          bodyWidthMm: value.bodyWidthMm,
+                          bodyHeightMm: value.bodyHeightMm,
+                          cornerRadiusMm: value.cornerRadiusMm,
+                          mapXMm: value.mapXMm,
+                          mapYMm: value.mapYMm,
+                          mapWidthMm: value.mapWidthMm,
+                          mapHeightMm: value.mapHeightMm,
+                          loopXMm: value.loopXMm,
+                          loopYMm: value.loopYMm,
+                          loopOuterMm: value.loopOuterMm,
+                          loopInnerMm: value.loopInnerMm,
+                          rimWidthMm: value.rimWidthMm,
+                          baseShape: value.baseShape as any,
+                        }}
+                      />
                     </div>
                   </foreignObject>
                 ) : (
