@@ -689,12 +689,13 @@ export function KeychainDesigner({
             <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.25" />
           </pattern>
           <clipPath id="keychainMapClip">
+            {/* Прямокутний clip — карта прямокутна (як обрано на мапі).
+                Округлення rim/корпусу не впливає на саму карту. */}
             <rect
               x={value.mapXMm}
               y={value.mapYMm}
               width={value.mapWidthMm}
               height={value.mapHeightMm}
-              rx={Math.min(value.cornerRadiusMm, 3)}
             />
           </clipPath>
           <clipPath id="keychainInnerBodyClip">
