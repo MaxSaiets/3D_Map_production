@@ -500,6 +500,16 @@ def fetch_city_data(
     # Налаштування osmnx: кеш ВИМКНЕНО для меншого використання пам'яті
     ox.settings.use_cache = False
     ox.settings.log_console = False
+    # КРИТИЧНО: зберігаємо bridge, tunnel, area теги на ребрах — інакше
+    # bridge-mask у flat_plate_pipeline ніколи не спрацює (column відсутня).
+    try:
+        existing = set(getattr(ox.settings, "useful_tags_way", []) or [])
+        needed = {"bridge", "tunnel", "area", "access", "service", "ref", "name",
+                  "highway", "maxspeed", "lanes", "oneway", "width", "junction",
+                  "layer", "surface", "bicycle", "foot", "psv"}
+        ox.settings.useful_tags_way = sorted(existing | needed)
+    except Exception:
+        pass
     
     # Helper functions for parallel execution
     def _fetch_buildings():
@@ -604,11 +614,14 @@ def fetch_city_data(
 
     def _fetch_water():
         print("Завантаження водних об'єктів...")
+        # Розширений набір тегів: ловить Дніпро (relation natural=water),
+        # пристані (waterway=dock), штучні озера (water=*), резервуари.
         tags_water = {
             'natural': 'water',
             'water': True,
-            'waterway': 'riverbank',
-            'landuse': 'reservoir',
+            'waterway': ['riverbank', 'dock', 'canal'],
+            'landuse': ['reservoir', 'basin'],
+            'man_made': ['water_well', 'reservoir_covered'],
         }
         try:
             def _load_water_once():

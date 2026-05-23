@@ -1363,6 +1363,26 @@ def run_flat_plate_pipeline(
                 raw_buildings_source = _mask_union_from_geometries(gdf_buildings_local.geometry.values)
         except Exception:
             raw_buildings_source = None
+        # RAW PARKS FALLBACK: коли canonical parks_final порожній (буває для
+        # дрібних зон де всі парки відфільтровуються), беремо raw gdf_green
+        # з extras_loader і локалізуємо через global_center.
+        try:
+            gdf_green_src = getattr(source, "gdf_green", None)
+            if gdf_green_src is not None and not gdf_green_src.empty:
+                from shapely.ops import transform as _shp_transform
+                def _to_local(g):
+                    try:
+                        return _shp_transform(lambda x, y, z=None: global_center.to_local(x, y), g)
+                    except Exception:
+                        return None
+                local_geoms = [_to_local(g) for g in gdf_green_src.geometry.values if g is not None]
+                local_geoms = [g for g in local_geoms if g is not None and not g.is_empty]
+                if local_geoms:
+                    raw_parks_source = _mask_union_from_geometries(local_geoms)
+                    print(f"[KEYCHAIN] raw_parks_source from gdf_green: {len(local_geoms)} polygons")
+        except Exception as exc:
+            print(f"[KEYCHAIN] raw_parks_source failed: {exc}")
+            raw_parks_source = None
 
         # Buildings: bundle або raw
         bundle_buildings = getattr(bundle, "buildings_footprints", None)
@@ -1450,8 +1470,13 @@ def run_flat_plate_pipeline(
             except Exception as exc:
                 print(f"[KEYCHAIN] Road widen failed: {exc}")
 
-        # Parks: bundle (raw source поки що недоступний на цьому етапі)
-        parks_mask = _clip_geometry(_xform(getattr(bundle, "parks_final", None)), content_area)
+        # Parks: bundle або raw fallback (для дрібних зон де canonical фільтр зʼїдає все)
+        parks_source = getattr(bundle, "parks_final", None)
+        if parks_source is None or getattr(parks_source, "is_empty", True):
+            if raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
+                print("[KEYCHAIN] Canonical parks empty; using raw clipped parks as flat layer source")
+                parks_source = raw_parks_source
+        parks_mask = _clip_geometry(_xform(parks_source), content_area)
 
         water_source = getattr(bundle, "water_final", None)
         if water_source is None or getattr(water_source, "is_empty", True):
@@ -1502,6 +1527,14 @@ def run_flat_plate_pipeline(
             min_area_m2=min_area_m2,
             label="parks",
         )
+        if (parks_mask is None or getattr(parks_mask, "is_empty", True)) and raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
+            print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + soft filter")
+            parks_mask = _sanitize_layer_mask(
+                _subtract_geometry(_clip_geometry(_xform(raw_parks_source), content_area), road_mask, water_mask, building_mask),
+                min_feature_m=float(min_feature_m) * 0.5,
+                min_area_m2=float(min_area_m2) * 0.4,
+                label="raw parks",
+            )
     else:
         road_mask = getattr(bundle, "roads_final", None)
         water_mask = getattr(bundle, "water_final", None)

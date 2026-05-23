@@ -237,11 +237,12 @@ def fetch_extras(
     ox.settings.use_cache = False
     ox.settings.log_console = False
 
-    # Parks/green polygons
+    # Parks/green polygons — розширений набір. Раніше пропускали:
+    # cemetery, allotments, orchard, scrub, heath, grassland, nature_reserve, garden=fence
     tags_green = {
-        "leisure": ["park", "garden", "playground", "recreation_ground", "pitch"],
-        "landuse": ["grass", "meadow", "forest", "village_green"],
-        "natural": ["wood"],
+        "leisure": ["park", "garden", "playground", "recreation_ground", "pitch", "nature_reserve", "golf_course"],
+        "landuse": ["grass", "meadow", "forest", "village_green", "cemetery", "allotments", "orchard", "recreation_ground"],
+        "natural": ["wood", "grassland", "scrub", "heath"],
     }
     # POIs - REMOVED per user request
     # tags_pois = { ... }
