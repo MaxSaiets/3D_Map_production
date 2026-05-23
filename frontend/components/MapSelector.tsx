@@ -239,10 +239,14 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     if (!bounds || !shape) return;
     const center = bounds.getCenter();
     const size = boundsSizeMeters(bounds);
-    shape.setLatLngs(rotatedCropCorners(center, size.widthM, size.heightM, rotationDeg));
+    const corners = rotatedCropCorners(center, size.widthM, size.heightM, rotationDeg);
+    shape.setLatLngs(corners);
     resizeHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, size.widthM / 2, -size.heightM / 2));
     rotateHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, 0, size.heightM / 2 + 42));
-  }, [rotationDeg]);
+    // КРИТИЧНО: emit polygon, інакше preview не буде знати про новий поворот
+    // (bounds — axis-aligned bbox і не змінюється при обертанні).
+    spec.onPolygonChange?.(corners.map((c) => [c.lng, c.lat]));
+  }, [rotationDeg, spec.onPolygonChange]);
 
   useEffect(() => {
     if (!map) return;
@@ -425,6 +429,10 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       rotationRef.current = next;
       spec.onRotationChange?.(next);
       syncDecorations(current, next);
+      // Emit polygon з новим кутом — без цього preview не оновлюється під час drag.
+      const size = boundsSizeMeters(current);
+      const corners = rotatedCropCorners(center, size.widthM, size.heightM, next);
+      spec.onPolygonChange?.(corners.map((c) => [c.lng, c.lat]));
     };
 
     const handleMapClick = (event: L.LeafletMouseEvent) => {
