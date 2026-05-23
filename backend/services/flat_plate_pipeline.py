@@ -1613,55 +1613,49 @@ def run_flat_plate_pipeline(
                 min_area_m2=float(min_area_m2) * 0.4,
                 label="raw roads",
             )
+        # KEYCHAIN: МІНІМАЛЬНІ субтракції. Z-order забезпечує видимість шарів:
+        # water=0.30mm < parks=0.50mm < roads=0.55mm < buildings=1.55mm.
+        # Виглядає природньо: вода зверху видно, парк піднімається над водою,
+        # дорога над парком, будівлі вище за все.
         water_mask = _sanitize_layer_mask(
-            _subtract_geometry(water_mask, road_mask, building_mask),
+            water_mask,  # БЕЗ subtract — інші шари над нею через z-order
             min_feature_m=min_feature_m,
             min_area_m2=min_area_m2,
             label="water",
         )
         if (water_mask is None or getattr(water_mask, "is_empty", True)) and raw_water_source is not None and not getattr(raw_water_source, "is_empty", True):
-            print("[KEYCHAIN] Canonical water collapsed after layer precedence; retrying with raw clipped water")
+            print("[KEYCHAIN] Canonical water collapsed; retrying with raw")
             water_mask = _sanitize_layer_mask(
-                _subtract_geometry(_clip_geometry(_xform(raw_water_source), content_area), road_mask, building_mask),
+                _clip_geometry(_xform(raw_water_source), content_area),
                 min_feature_m=min_feature_m,
                 min_area_m2=min_area_m2,
                 label="raw water",
             )
         parks_mask = _sanitize_layer_mask(
-            _subtract_geometry(parks_mask, road_mask, water_mask, building_mask),
-            min_feature_m=min_feature_m,
-            min_area_m2=min_area_m2,
+            parks_mask,  # БЕЗ subtract — мʼякий фільтр щоб маленькі парки лишались
+            min_feature_m=float(min_feature_m) * 0.5,
+            min_area_m2=float(min_area_m2) * 0.3,
             label="parks",
         )
-        # КРИТИЧНО: bridge_mask geometrically не співпадає з road_mask
-        # (бо bridge_mask з raw OSM features, а road_mask проходить через
-        # OSMnx граф + gap_fill + widen). Тож просто перекриваються частково
-        # → візуально міст «обірваний» від доріг.
-        # Фікс: bridge = ПЕРЕТИН (intersection) bridge_mask з road_mask. Тоді
-        # міст рівно лежить на тих самих сегментах road_mask — без зазорів.
-        # Те що поза road_mask (за межі бордюра) — обрізаємо.
+        # BRIDGE: розширюємо на ту ж ширину що були widened roads, щоб
+        # геометрично злитися з road_mask і не «висіти» окремо.
+        # widen_m обчислюється нижче (для roads), тут використовуємо тіж дані.
         if bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
             try:
-                if road_mask is not None and not getattr(road_mask, "is_empty", True):
-                    # Розширюємо bridge на половину road width щоб гарантовано
-                    # покрити перетин з широкими розширеними дорогами
-                    bridge_widened = bridge_mask.buffer(0.5).buffer(0)
-                    bridge_on_road = bridge_widened.intersection(road_mask).buffer(0)
-                    if bridge_on_road is not None and not getattr(bridge_on_road, "is_empty", True):
-                        bridge_mask = bridge_on_road
-                        print(f"[KEYCHAIN] Bridge mask aligned to road_mask (intersection)")
-                if water_mask is not None and not getattr(water_mask, "is_empty", True):
-                    water_mask = water_mask.difference(bridge_mask).buffer(0)
-                if building_mask is not None and not getattr(building_mask, "is_empty", True):
-                    building_mask = building_mask.difference(bridge_mask).buffer(0)
+                # Buffer bridge by same amount as roads widen → bridge зливається з road_mask
+                bridge_widen_m = float(min_feature_m) * 0.8  # трохи більше за road widen
+                bridge_widened = bridge_mask.buffer(bridge_widen_m, join_style=2, cap_style=2).buffer(0)
+                if not bridge_widened.is_empty:
+                    bridge_mask = bridge_widened.intersection(content_area).buffer(0)
+                    print(f"[KEYCHAIN] Bridge widened by {bridge_widen_m:.2f}m (matches road widening)")
             except Exception as exc:
-                print(f"[KEYCHAIN] Bridge align/subtract failed: {exc}")
+                print(f"[KEYCHAIN] Bridge widen failed: {exc}")
         if (parks_mask is None or getattr(parks_mask, "is_empty", True)) and raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
-            print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + soft filter")
+            print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + ultra-soft filter")
             parks_mask = _sanitize_layer_mask(
-                _subtract_geometry(_clip_geometry(_xform(raw_parks_source), content_area), road_mask, water_mask, building_mask),
-                min_feature_m=float(min_feature_m) * 0.5,
-                min_area_m2=float(min_area_m2) * 0.4,
+                _clip_geometry(_xform(raw_parks_source), content_area),
+                min_feature_m=float(min_feature_m) * 0.3,
+                min_area_m2=float(min_area_m2) * 0.15,
                 label="raw parks",
             )
     else:
