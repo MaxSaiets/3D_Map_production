@@ -23,7 +23,7 @@ type DesignShape = {
 type Pts = Array<[number, number]>;
 type BuildingRec = { points: Pts; levels: number };
 type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service" };
-type CityData = { buildings: BuildingRec[]; roads: RoadRec[]; water: Pts[]; parks: Pts[] };
+type CityData = { buildings: BuildingRec[]; roads: RoadRec[]; water: Pts[]; parks: Pts[]; plazas: Pts[] };
 
 const OVERPASS_URLS = [
   "https://overpass-api.de/api/interpreter",
@@ -33,9 +33,17 @@ const OVERPASS_URLS = [
 // Мінімальна друкована деталь — все що менше, не друкується якісно у 0.4mm соплі
 const MIN_PRINT_MM = 0.6;
 
+// LRU-кеш OSM-відповідей по bbox-ключу. Друге заходження в ту саму зону —
+// миттєве (без 3-10 сек запиту до Overpass).
+const OSM_CACHE = new Map<string, any>();
+const OSM_CACHE_MAX = 20;
+const bboxKey = (b: Bounds) =>
+  `${b.south.toFixed(5)},${b.west.toFixed(5)},${b.north.toFixed(5)},${b.east.toFixed(5)}`;
+
 async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<CityData> {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
-  const q = `[out:json][timeout:15];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|farmland)$"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox}););out geom;`;
+  // Додаємо: area:highway=pedestrian (площі типу Майдан), place=square, landuse=pedestrian
+  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["highway"="pedestrian"]["area"="yes"](${bbox});way["place"~"^(square|plaza)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"~"^(riverbank|dock)$"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|pedestrian)$"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["highway"="pedestrian"](${bbox}););out geom;`;
   let lastErr: any = null;
   for (const url of OVERPASS_URLS) {
     try {
@@ -51,6 +59,7 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
       const roads: RoadRec[] = [];
       const water: Pts[] = [];
       const parks: Pts[] = [];
+      const plazas: Pts[] = [];
 
       // Замкнутий полігон = перша точка == остання (з допуском floating point)
       const isClosedRing = (pts: Pts) =>
@@ -60,8 +69,15 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
 
       function classifyAndPush(tags: any, points: Pts) {
         if (!points || points.length < 2) return;
+        const isPlaza =
+          tags.place === "square" || tags.place === "plaza" ||
+          tags.landuse === "pedestrian" ||
+          (tags.highway === "pedestrian" && (tags.area === "yes" || isClosedRing(points)));
         if (tags.building) {
           buildings.push({ points, levels: Math.max(1, Math.min(40, Number(tags["building:levels"]) || 3)) });
+        } else if (isPlaza && isClosedRing(points)) {
+          // Площа (Майдан, променад) — окремий шар, не дорога і не вода
+          plazas.push(points);
         } else if (tags.highway) {
           const widths: Record<string, number> = {
             motorway: 14, trunk: 12, primary: 10, secondary: 8, tertiary: 7,
@@ -109,7 +125,7 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           }
         }
       }
-      return { buildings, roads, water, parks };
+      return { buildings, roads, water, parks, plazas };
     } catch (e: any) {
       if (e.name === "AbortError") throw e;
       lastErr = e;
@@ -178,6 +194,14 @@ export function LiveCity3D({
 
   useEffect(() => {
     if (!fetchBounds) return;
+    // Cache hit → миттєвий результат, без сетіменту loading
+    const key = bboxKey(fetchBounds);
+    const cached = OSM_CACHE.get(key);
+    if (cached) {
+      setData(cached);
+      setError(null);
+      return;
+    }
     reqRef.current?.abort();
     const ctrl = new AbortController();
     reqRef.current = ctrl;
@@ -186,13 +210,21 @@ export function LiveCity3D({
       setError(null);
       try {
         const d = await fetchOSMForBounds(fetchBounds, ctrl.signal);
-        if (!ctrl.signal.aborted) setData(d);
+        if (!ctrl.signal.aborted) {
+          // LRU: видаляємо найстаріший якщо переповнено
+          if (OSM_CACHE.size >= OSM_CACHE_MAX) {
+            const firstKey = OSM_CACHE.keys().next().value;
+            if (firstKey) OSM_CACHE.delete(firstKey);
+          }
+          OSM_CACHE.set(key, d);
+          setData(d);
+        }
       } catch (e: any) {
         if (e.name !== "AbortError") setError(e.message || "Overpass");
       } finally {
         if (!ctrl.signal.aborted) setLoading(false);
       }
-    }, 400);
+    }, 250);  // зменшено з 400 → швидший відгук при дрібних рухах
     return () => { clearTimeout(timer); ctrl.abort(); };
   }, [fetchBounds.north, fetchBounds.south, fetchBounds.east, fetchBounds.west]);
 
@@ -244,7 +276,7 @@ export function LiveCity3D({
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
-    if (!data) return { buildings: [], roads: [], water: [], parks: [] };
+    if (!data) return { buildings: [], roads: [], water: [], parks: [], plazas: [] };
     const { lonLatToMm, mmPerM } = project;
     // Buildings: пропускаємо ті де min-розмір < MIN_PRINT_MM
     const buildings = data.buildings
@@ -272,7 +304,11 @@ export function LiveCity3D({
       .map((pts) => pts.map(([lon, lat]) => lonLatToMm(lon, lat)))
       .filter((pts) => pts.length >= 3 && polygonArea(pts) >= 4)
       .sort((a, b) => polygonArea(b) - polygonArea(a));
-    return { buildings, roads, water, parks };
+    const plazas = data.plazas
+      .map((pts) => pts.map(([lon, lat]) => lonLatToMm(lon, lat)))
+      .filter((pts) => pts.length >= 3 && polygonArea(pts) >= 4)
+      .sort((a, b) => polygonArea(b) - polygonArea(a));
+    return { buildings, roads, water, parks, plazas };
   }, [data, project]);
 
   // Розміри viewBox матчать map area (мм)
@@ -314,6 +350,10 @@ export function LiveCity3D({
           ))}
           {printable.water.map((pts, i) => (
             <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
+          ))}
+          {/* Пішохідні площі — світло-лавандовий як на OSM-тайлах */}
+          {printable.plazas.map((pts, i) => (
+            <path key={`pl-${i}`} d={pointsToPath(pts)} fill="#d4cce0" />
           ))}
           {printable.roads.map((r, i) => (
             <path
