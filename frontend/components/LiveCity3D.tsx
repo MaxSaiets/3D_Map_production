@@ -80,8 +80,12 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
         Math.abs(pts[0][0] - pts[pts.length - 1][0]) < 1e-9 &&
         Math.abs(pts[0][1] - pts[pts.length - 1][1]) < 1e-9;
 
-      function classifyAndPush(tags: any, points: Pts) {
+      function classifyAndPush(tags: any, points: Pts, fromRelation = false) {
         if (!points || points.length < 2) return;
+        // Для members з relation — closing робиться на рівні relation
+        // (стичка кількох ways у замкнуте кільце). Окремі way-members ЗДЕБІЛЬШОГО
+        // не closed, тож вимога isClosedRing для них некоректна.
+        const polygonOk = (pts: Pts) => fromRelation ? pts.length >= 3 : isClosedRing(pts);
         const isPlaza =
           tags.place === "square" || tags.place === "plaza" ||
           tags.landuse === "pedestrian" ||
@@ -89,7 +93,7 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
         const isBridge = tags.bridge === "yes" || tags.man_made === "bridge";
         if (tags.building) {
           buildings.push({ points, levels: Math.max(1, Math.min(40, Number(tags["building:levels"]) || 3)) });
-        } else if (isPlaza && isClosedRing(points)) {
+        } else if (isPlaza && polygonOk(points)) {
           // Площа (Майдан, променад) — окремий шар, не дорога і не вода
           plazas.push(points);
         } else if (isBridge && !tags.building) {
@@ -112,17 +116,17 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
             : ["residential", "tertiary", "unclassified"].includes(String(tags.highway)) ? "minor" : "service";
           roads.push({ points, widthM: widths[String(tags.highway)] || 4, kind });
         } else if (tags.natural === "water" || tags.waterway === "riverbank" || tags.waterway === "dock") {
-          // ТІЛЬКИ полігони. waterway=river/stream/ditch — це лінії (way без area),
-          // якщо їх запхати в polygon-fill, отримуємо рандомні сині трикутники.
-          if (isClosedRing(points)) water.push(points);
+          // ТІЛЬКИ полігони. waterway=river/stream/ditch — це лінії (way без area).
+          // Для members з relation — кільце замикається на рівні relation,
+          // тож не вимагаємо closed ring окремо.
+          if (polygonOk(points)) water.push(points);
         } else if (tags.leisure || tags.landuse || tags.natural) {
           const isGreen =
             ["park", "garden", "pitch", "playground", "nature_reserve", "golf_course"].includes(tags.leisure) ||
             ["grass", "forest", "recreation_ground", "meadow", "village_green", "cemetery", "allotments", "orchard"].includes(tags.landuse) ||
             ["wood", "grassland", "scrub", "heath"].includes(tags.natural);
-          // Зелень теж тільки якщо замкнутий полігон. Лінії (наприклад tree_row)
-          // не повинні створювати fill.
-          if (isGreen && isClosedRing(points)) parks.push(points);
+          // Зелень теж: standalone way → closed ring; relation member → ok як ≥3 точок.
+          if (isGreen && polygonOk(points)) parks.push(points);
         }
       }
 
@@ -157,15 +161,19 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
           if (lineIntersectsBbox(points)) classifyAndPush(tags, points);
         } else if (el.type === "relation" && el.members) {
-          // Multipolygon: для воді/парків обробляємо outer members, ALWAYS
-          // (навіть якщо точки за bbox — це шматок великої водойми/лісу що
-          // ПЕРЕКРИВАЄ нашу зону). Backend на стороні preview обрізає по
-          // slot-clipPath, тож лишній рендер не страшний.
+          // Multipolygon: outers — це АРКИ (шматки), які формують кільце.
+          // Дніпро: outer = довжелезна лінія по західному березі, інша по
+          // східному, плюс торці. Окремий arc НЕ замкнутий і fill дає рандом.
+          // Тож стичкуємо outers по spільних endpoints у замкнуті кільця.
+          const outerArcs: Pts[] = [];
           for (const m of el.members) {
             if (m.type === "way" && m.geometry && m.geometry.length >= 2 && m.role !== "inner") {
-              const points: Pts = m.geometry.map((g: any) => [g.lon, g.lat]);
-              if (lineIntersectsBbox(points)) classifyAndPush(tags, points);
+              outerArcs.push(m.geometry.map((g: any) => [g.lon, g.lat]));
             }
+          }
+          const stitched = stitchArcs(outerArcs);
+          for (const ring of stitched) {
+            if (lineIntersectsBbox(ring)) classifyAndPush(tags, ring, true);
           }
         }
       }
@@ -176,6 +184,54 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
     }
   }
   throw lastErr || new Error("Overpass unreachable");
+}
+
+/** Стичкує OSM relation outer members (окремі arcs) у замкнуті кільця.
+ *  Дніпро/великі парки — outer = N окремих ways по endpoint-match. Якщо
+ *  залишився незамкнутий хвіст — замикаємо штучно (краще зайвий fill, ніж нічого). */
+function stitchArcs(arcs: Pts[]): Pts[] {
+  if (arcs.length === 0) return [];
+  if (arcs.length === 1) {
+    const a = arcs[0];
+    if (a.length < 2) return [];
+    // Якщо вже closed — повертаємо як є
+    if (Math.abs(a[0][0] - a[a.length - 1][0]) < 1e-9 && Math.abs(a[0][1] - a[a.length - 1][1]) < 1e-9) return [a];
+    return [[...a, a[0]]]; // штучно замикаємо
+  }
+  const rings: Pts[] = [];
+  const pool = arcs.map((a) => [...a]);  // копія, щоб мутувати
+  const eq = (p: [number, number], q: [number, number]) =>
+    Math.abs(p[0] - q[0]) < 1e-7 && Math.abs(p[1] - q[1]) < 1e-7;
+
+  while (pool.length > 0) {
+    const ring: Pts = pool.shift()!;
+    let progress = true;
+    while (progress && !(ring.length > 1 && eq(ring[0], ring[ring.length - 1]))) {
+      progress = false;
+      for (let i = 0; i < pool.length; i++) {
+        const arc = pool[i];
+        if (eq(ring[ring.length - 1], arc[0])) {
+          ring.push(...arc.slice(1));
+          pool.splice(i, 1); progress = true; break;
+        } else if (eq(ring[ring.length - 1], arc[arc.length - 1])) {
+          ring.push(...[...arc].reverse().slice(1));
+          pool.splice(i, 1); progress = true; break;
+        } else if (eq(ring[0], arc[arc.length - 1])) {
+          ring.unshift(...arc.slice(0, -1));
+          pool.splice(i, 1); progress = true; break;
+        } else if (eq(ring[0], arc[0])) {
+          ring.unshift(...[...arc].reverse().slice(0, -1));
+          pool.splice(i, 1); progress = true; break;
+        }
+      }
+    }
+    // Якщо все одно не замкнулось (broken multipolygon) — закриваємо силою
+    if (ring.length >= 3 && !eq(ring[0], ring[ring.length - 1])) {
+      ring.push(ring[0]);
+    }
+    if (ring.length >= 4) rings.push(ring);
+  }
+  return rings;
 }
 
 function polygonArea(pts: Pts): number {
