@@ -507,6 +507,7 @@ export function KeychainDesigner({
   onChange,
   mapBounds,
   cropRotationDeg = 0,
+  cropPolygon = null,
 }: {
   value: KeychainDesignerConfig;
   label: string;
@@ -517,6 +518,8 @@ export function KeychainDesigner({
   /** Crop rotation from MapSelector (deg). Applied together with design.mapRotationDeg
    *  so the preview always matches what will be on the printed keychain. */
   cropRotationDeg?: number;
+  /** 4 кути обернутого rect ([lon, lat]) — preview обрізає по полігону. */
+  cropPolygon?: Array<[number, number]> | null;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragSessionRef = useRef<DragSession | null>(null);
@@ -756,9 +759,10 @@ export function KeychainDesigner({
           />
 
           {previewSide === "front" ? (
-            /* НЕМАЄ зовнішнього keychainInnerBodyClip — map area прямокутний
-               і має бути таким же. Округлення rim/тіла стосуються лише корпусу. */
-            <g>
+            /* Preview обрізається по INNER BODY (форма тіла мінус rim).
+               Так контент карти не вилазить за межі корпусу — як на готовому
+               надрукованому брелку. */
+            <g clipPath="url(#keychainInnerBodyClip)">
               <g
                 clipPath="url(#keychainMapClip)"
                 opacity={0.98}
@@ -782,6 +786,7 @@ export function KeychainDesigner({
                       <LiveCity3D
                         bounds={mapBounds}
                         cropRotationDeg={cropRotationDeg}
+                        cropPolygon={cropPolygon}
                         design={{
                           bodyWidthMm: value.bodyWidthMm,
                           bodyHeightMm: value.bodyHeightMm,
@@ -850,7 +855,6 @@ export function KeychainDesigner({
             y={value.mapYMm}
             width={value.mapWidthMm}
             height={value.mapHeightMm}
-            rx={Math.min(value.cornerRadiusMm, 3)}
             fill="transparent"
             stroke="#e9f5ff"
             strokeDasharray="1.8 1.4"

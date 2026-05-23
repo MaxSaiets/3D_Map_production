@@ -274,6 +274,8 @@ export default function KeychainsPage() {
                       value={design}
                       label={label}
                       onChange={setDesign}
+                      cropRotationDeg={cropRotationDeg}
+                      cropPolygon={cropPolygon}
                       mapBounds={selectedArea ? {
                         north: selectedArea.getNorth(),
                         south: selectedArea.getSouth(),

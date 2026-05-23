@@ -129,13 +129,16 @@ export function LiveCity3D({
   bounds,
   design,
   cropRotationDeg = 0,
+  cropPolygon = null,
 }: {
   bounds: Bounds;
   design: DesignShape;
-  /** Поворот рамки на карті — для preview повертаємо OSM-дані на -кут,
-   *  щоб користувач бачив свою rotated-зону в "розпрямленому" вигляді
-   *  саме так як буде на брелку. */
+  /** Поворот рамки на карті — preview обертає контент на -кут щоб ділянка
+   *  виглядала axis-aligned у map slot. */
   cropRotationDeg?: number;
+  /** 4 кути обернутого rect [[lon, lat], ...]. Preview clipує OSM по цьому
+   *  полігону — показує ТІЛЬКИ те що буде на готовому 3MF, нічого зайвого. */
+  cropPolygon?: Array<[number, number]> | null;
 }) {
   const [data, setData] = useState<CityData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -231,6 +234,15 @@ export function LiveCity3D({
   // Розміри viewBox матчать map area (мм)
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
 
+  // Полігон у mm-координатах для SVG clip (обмежує preview до точної
+  // обраної ділянки, не bbox).
+  const cropClipPath = useMemo(() => {
+    if (!cropPolygon || cropPolygon.length < 3) return null;
+    const pts = cropPolygon.map(([lon, lat]) => project.lonLatToMm(lon, lat));
+    return pointsToPath(pts);
+  }, [cropPolygon, project]);
+  const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
       <svg
@@ -238,7 +250,14 @@ export function LiveCity3D({
         preserveAspectRatio="xMidYMid meet"
         style={{ width: "100%", height: "100%", display: "block" }}
       >
-        {/* Базова бежева плита */}
+        {cropClipPath && (
+          <defs>
+            <clipPath id={clipId}>
+              <path d={cropClipPath} />
+            </clipPath>
+          </defs>
+        )}
+        {/* Базова бежева плита — показуємо тільки в межах rotated polygon */}
         <rect
           x={design.mapXMm}
           y={design.mapYMm}
@@ -246,30 +265,29 @@ export function LiveCity3D({
           height={design.mapHeightMm}
           fill="#e0d4b5"
         />
-        {/* Парки (зелені) */}
-        {printable.parks.map((pts, i) => (
-          <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
-        ))}
-        {/* Вода (синя) */}
-        {printable.water.map((pts, i) => (
-          <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
-        ))}
-        {/* Дороги (товсті лінії за класом) */}
-        {printable.roads.map((r, i) => (
-          <path
-            key={`r-${i}`}
-            d={r.path}
-            stroke={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
-            strokeWidth={r.widthMm}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ))}
-        {/* Будівлі (бежеві блоки) */}
-        {printable.buildings.map((pts, i) => (
-          <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
-        ))}
+        {/* Контент обмежений полігоном — preview = РЕАЛЬНА обрана ділянка */}
+        <g clipPath={cropClipPath ? `url(#${clipId})` : undefined}>
+          {printable.parks.map((pts, i) => (
+            <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
+          ))}
+          {printable.water.map((pts, i) => (
+            <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
+          ))}
+          {printable.roads.map((r, i) => (
+            <path
+              key={`r-${i}`}
+              d={r.path}
+              stroke={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
+              strokeWidth={r.widthMm}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+          {printable.buildings.map((pts, i) => (
+            <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
+          ))}
+        </g>
       </svg>
       {loading && (
         <div className="pointer-events-none absolute right-1 top-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[9px] font-semibold text-white">
