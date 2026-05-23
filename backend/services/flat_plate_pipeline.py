@@ -1460,12 +1460,20 @@ def run_flat_plate_pipeline(
                 water_source = raw_water_source
         water_mask = _clip_geometry(_xform(water_source), content_area)
 
+        # ПРІОРИТЕТ: roads STAY full, buildings get clipped where they overlap.
+        # Юзер хоче щоб дороги були неперервні і видимі — як у головної мапи
+        # (full_generation_pipeline). Так само як на реальній мапі: будівлі
+        # не "сидять" на проїжджій частині, тому будемо обрізати building_mask
+        # по road_mask нижче. road_mask залишається цілий.
         road_mask = _sanitize_layer_mask(
-            _subtract_geometry(road_mask, building_mask),
+            road_mask,
             min_feature_m=min_feature_m,
             min_area_m2=min_area_m2,
             label="roads",
         )
+        # Building footprints — мінус road area (clip buildings out of roads).
+        if road_mask is not None and not getattr(road_mask, "is_empty", True):
+            building_mask = _subtract_geometry(building_mask, road_mask)
         if (road_mask is None or getattr(road_mask, "is_empty", True)) and raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
             print("[KEYCHAIN] Roads collapsed after sanitize; retrying with raw road source + soft filter")
             road_mask = _sanitize_layer_mask(

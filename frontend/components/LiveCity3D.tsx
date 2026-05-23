@@ -35,7 +35,7 @@ const MIN_PRINT_MM = 0.6;
 
 async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<CityData> {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
-  const q = `[out:json][timeout:15];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["natural"="water"](${bbox});way["waterway"](${bbox});way["leisure"="park"](${bbox});way["landuse"="grass"](${bbox}););out geom;`;
+  const q = `[out:json][timeout:15];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|farmland)$"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox}););out geom;`;
   let lastErr: any = null;
   for (const url of OVERPASS_URLS) {
     try {
@@ -68,8 +68,16 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           roads.push({ points, widthM: widths[String(tags.highway)] || 4, kind });
         } else if (tags.natural === "water" || tags.waterway) {
           water.push(points);
-        } else if (tags.leisure === "park" || tags.landuse === "grass") {
-          parks.push(points);
+        } else if (
+          tags.leisure || tags.landuse || tags.natural
+        ) {
+          // Будь-що зелене: парки, ліси, луки, сади, спортмайданчики,
+          // садки, кладовища, сільгосп — все що OSM маркує як "green-ish"
+          const isGreen =
+            ["park", "garden", "pitch", "playground", "nature_reserve"].includes(tags.leisure) ||
+            ["grass", "forest", "recreation_ground", "meadow", "village_green", "cemetery", "allotments", "orchard", "farmland"].includes(tags.landuse) ||
+            ["wood", "grassland", "scrub", "heath"].includes(tags.natural);
+          if (isGreen) parks.push(points);
         }
       }
       return { buildings, roads, water, parks };
@@ -102,7 +110,18 @@ function polylineToPath(pts: Pts): string {
 /** Чистий 2D preview ділянки — рендериться тими ж SVG-координатами як map area.
  *  Показує ТІЛЬКИ те, що буде роздруковано: будівлі, дороги, воду, парки.
  *  Без OSM-міток, іконок, POI — чисто схематично, як у фінальному 3MF. */
-export function LiveCity3D({ bounds, design }: { bounds: Bounds; design: DesignShape }) {
+export function LiveCity3D({
+  bounds,
+  design,
+  cropRotationDeg = 0,
+}: {
+  bounds: Bounds;
+  design: DesignShape;
+  /** Поворот рамки на карті — для preview повертаємо OSM-дані на -кут,
+   *  щоб користувач бачив свою rotated-зону в "розпрямленому" вигляді
+   *  саме так як буде на брелку. */
+  cropRotationDeg?: number;
+}) {
   const [data, setData] = useState<CityData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +148,8 @@ export function LiveCity3D({ bounds, design }: { bounds: Bounds; design: DesignS
   }, [bounds.north, bounds.south, bounds.east, bounds.west]);
 
   // lat/lon → координати всередині map area (у тих же мм як SVG-дизайнер)
+  // З підтримкою rotation: повертаємо проекцію на -cropRotationDeg навколо
+  // центру bbox, щоб user-rotated rect виглядав axis-aligned на брелку.
   const project = useMemo(() => {
     const cLat = (bounds.north + bounds.south) / 2;
     const mPerDegLng = 111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.18);
@@ -139,15 +160,27 @@ export function LiveCity3D({ bounds, design }: { bounds: Bounds; design: DesignS
     const fitHmm = hM * mmPerM;
     const ox = design.mapXMm + (design.mapWidthMm - fitWmm) / 2;
     const oy = design.mapYMm + (design.mapHeightMm - fitHmm) / 2;
+    // SVG y inverted (lat зростає вгору, SVG-y вниз) → rotation в SVG-просторі
+    // має додатне напрямок clockwise. Користувач крутить рамку clockwise →
+    // ми повертаємо контент counter-clockwise, тобто -cropRotationDeg.
+    const angleRad = (-Number(cropRotationDeg || 0) * Math.PI) / 180;
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
+        // Normalized u,v у [0,1] від bbox
         const u = (lon - bounds.west) * mPerDegLng / wM;
-        const v = 1 - (lat - bounds.south) * 111_320 / hM;  // flip Y (SVG y=down, lat=up)
-        return [ox + u * fitWmm, oy + v * fitHmm];
+        const v = 1 - (lat - bounds.south) * 111_320 / hM;
+        // Поворот навколо центру bbox (0.5, 0.5)
+        const du = u - 0.5;
+        const dv = v - 0.5;
+        const u2 = 0.5 + du * cosA - dv * sinA;
+        const v2 = 0.5 + du * sinA + dv * cosA;
+        return [ox + u2 * fitWmm, oy + v2 * fitHmm];
       },
       mmPerM,
     };
-  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
+  }, [bounds, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm, cropRotationDeg]);
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {

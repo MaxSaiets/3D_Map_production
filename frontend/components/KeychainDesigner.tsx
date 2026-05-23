@@ -778,6 +778,7 @@ export function KeychainDesigner({
                     <div xmlns="http://www.w3.org/1999/xhtml" style={{ width: "100%", height: "100%" }}>
                       <LiveCity3D
                         bounds={mapBounds}
+                        cropRotationDeg={cropRotationDeg}
                         design={{
                           bodyWidthMm: value.bodyWidthMm,
                           bodyHeightMm: value.bodyHeightMm,
