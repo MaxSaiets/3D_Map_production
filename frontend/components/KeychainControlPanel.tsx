@@ -313,11 +313,16 @@ export function KeychainControlPanel({
   onLabelChange,
   design,
   onDesignChange,
+  cropRotationDeg = 0,
 }: {
   label: string;
   onLabelChange: (value: string) => void;
   design: KeychainDesignerConfig;
   onDesignChange: (value: KeychainDesignerConfig) => void;
+  /** Поворот рамки вибору ділянки на карті (з MapSelector). Додається до
+   *  design.mapRotationDeg щоб згенерована модель показала саме той вміст,
+   *  який користувач "обвів" нахиленою рамкою. */
+  cropRotationDeg?: number;
 }) {
   const {
     selectedArea,
@@ -728,7 +733,11 @@ export function KeychainControlPanel({
         keychain_map_y_mm: design.mapYMm,
         keychain_map_width_mm: design.mapWidthMm,
         keychain_map_height_mm: design.mapHeightMm,
-        keychain_map_rotation_deg: design.mapRotationDeg,
+        // Комбіноване обертання: поворот рамки на карті (cropRotationDeg)
+        // + поворот мапи в дизайнері (design.mapRotationDeg).
+        // Backend застосує це обертання щоб вміст з'явився саме так як
+        // людина виділила нахиленою рамкою.
+        keychain_map_rotation_deg: ((Number(cropRotationDeg || 0) + Number(design.mapRotationDeg || 0)) % 360 + 360) % 360,
         keychain_loop_center_x_mm: design.loopXMm,
         keychain_loop_center_y_mm: design.loopYMm,
         keychain_label_center_x_mm: design.labelXMm,

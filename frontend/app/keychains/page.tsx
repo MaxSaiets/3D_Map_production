@@ -239,6 +239,7 @@ export default function KeychainsPage() {
               onLabelChange={setLabel}
               design={design}
               onDesignChange={setDesign}
+              cropRotationDeg={cropRotationDeg}
             />
           </aside>
 
