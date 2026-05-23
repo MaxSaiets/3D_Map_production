@@ -267,7 +267,18 @@ export default function KeychainsPage() {
               <div className="grid min-h-0 flex-1 gap-3 p-2 sm:p-3 2xl:grid-cols-[minmax(0,1fr),300px]">
                 <div className="flex min-h-[380px] flex-col overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[460px] lg:min-h-0">
                   <div className="min-h-[280px] flex-1 sm:min-h-[340px]">
-                    <KeychainDesigner value={design} label={label} onChange={setDesign} />
+                    <KeychainDesigner
+                      value={design}
+                      label={label}
+                      onChange={setDesign}
+                      mapBounds={selectedArea ? {
+                        north: selectedArea.getNorth(),
+                        south: selectedArea.getSouth(),
+                        east: selectedArea.getEast(),
+                        west: selectedArea.getWest(),
+                      } : null}
+                      cropRotationDeg={cropRotationDeg}
+                    />
                   </div>
                   <KeychainTemplateStrip value={design} label={label} onSelect={setDesign} />
                 </div>

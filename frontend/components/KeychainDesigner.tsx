@@ -491,10 +491,18 @@ export function KeychainDesigner({
   value,
   label,
   onChange,
+  mapBounds,
+  cropRotationDeg = 0,
 }: {
   value: KeychainDesignerConfig;
   label: string;
   onChange: (value: KeychainDesignerConfig) => void;
+  /** Bounds of the selected area on the main map. When provided, KeychainDesigner
+   *  shows a real OSM tile preview inside the map area instead of generic stripes. */
+  mapBounds?: { north: number; south: number; east: number; west: number } | null;
+  /** Crop rotation from MapSelector (deg). Applied together with design.mapRotationDeg
+   *  so the preview always matches what will be on the printed keychain. */
+  cropRotationDeg?: number;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragSessionRef = useRef<DragSession | null>(null);
@@ -734,35 +742,51 @@ export function KeychainDesigner({
 
           {previewSide === "front" ? (
             <g clipPath="url(#keychainInnerBodyClip)">
-              <g clipPath="url(#keychainMapClip)" opacity={0.96} transform={`rotate(${value.mapRotationDeg || 0} ${mapCx} ${mapCy})`}>
-                <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#b7ab8e" />
-                {Array.from({ length: 10 }).map((_, idx) => {
-                  const x = value.mapXMm + ((idx * 13) % Math.max(value.mapWidthMm, 1));
-                  return (
-                    <path
-                      key={`road-${idx}`}
-                      d={`M ${x} ${value.mapYMm - 4} L ${x + 10} ${value.mapYMm + value.mapHeightMm + 6}`}
-                      stroke="#101010"
-                      strokeWidth={0.9}
-                      strokeLinecap="round"
-                    />
-                  );
-                })}
-                {Array.from({ length: 18 }).map((_, idx) => {
-                  const x = value.mapXMm + 4 + ((idx * 9) % Math.max(value.mapWidthMm - 12, 1));
-                  const y = value.mapYMm + 4 + ((idx * 7) % Math.max(value.mapHeightMm - 12, 1));
-                  return <rect key={`b-${idx}`} x={x} y={y} width={5 + (idx % 4)} height={2 + (idx % 3)} fill="#d8d8d8" />;
-                })}
-                <path
-                  d={`M ${value.mapXMm + value.mapWidthMm * 0.62} ${value.mapYMm + 3} C ${value.mapXMm + value.mapWidthMm * 0.8} ${value.mapYMm + value.mapHeightMm * 0.35}, ${value.mapXMm + value.mapWidthMm * 0.55} ${value.mapYMm + value.mapHeightMm * 0.58}, ${value.mapXMm + value.mapWidthMm * 0.82} ${value.mapYMm + value.mapHeightMm - 2}`}
-                  fill="none"
-                  stroke="#6fa1c8"
-                  strokeWidth={1.4}
-                />
-                <path
-                  d={`M ${value.mapXMm + value.mapWidthMm * 0.68} ${value.mapYMm + value.mapHeightMm * 0.5} l 5 1 l -1 4 l -6 1 z`}
-                  fill="#3f8a4d"
-                />
+              <g
+                clipPath="url(#keychainMapClip)"
+                opacity={0.98}
+                transform={`rotate(${((cropRotationDeg || 0) + (value.mapRotationDeg || 0)) % 360} ${mapCx} ${mapCy})`}
+              >
+                <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
+                {mapBounds ? (
+                  /* Реальне OSM-зображення обраної ділянки. URL оновлюється
+                     при будь-якій зміні bbox — користувач одразу бачить
+                     дороги/будівлі/воду конкретної області. */
+                  <image
+                    href={`https://staticmap.openstreetmap.de/staticmap.php?bbox=${mapBounds.west},${mapBounds.south},${mapBounds.east},${mapBounds.north}&size=400x400&maptype=mapnik`}
+                    x={value.mapXMm}
+                    y={value.mapYMm}
+                    width={value.mapWidthMm}
+                    height={value.mapHeightMm}
+                    preserveAspectRatio="xMidYMid slice"
+                    pointerEvents="none"
+                  />
+                ) : (
+                  /* Fallback — generic stripes якщо ще не обрано ділянку */
+                  <>
+                    {Array.from({ length: 8 }).map((_, idx) => (
+                      <path
+                        key={`stub-road-${idx}`}
+                        d={`M ${value.mapXMm + ((idx * 13) % Math.max(value.mapWidthMm, 1))} ${value.mapYMm - 4} L ${value.mapXMm + ((idx * 13) % Math.max(value.mapWidthMm, 1)) + 10} ${value.mapYMm + value.mapHeightMm + 6}`}
+                        stroke="#999"
+                        strokeWidth={0.6}
+                        opacity={0.5}
+                        strokeLinecap="round"
+                      />
+                    ))}
+                    <text
+                      x={mapCx}
+                      y={mapCy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="#6a5d44"
+                      fontSize={2.2}
+                      fontWeight={700}
+                    >
+                      Обери ділянку на карті
+                    </text>
+                  </>
+                )}
               </g>
             </g>
           ) : (
