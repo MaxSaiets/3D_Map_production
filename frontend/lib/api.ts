@@ -169,6 +169,8 @@ export interface GenerationRequest {
   keychain_label_stroke_mm?: number;
   keychain_label_font_style?: "block" | "wide" | "condensed";
   keychain_rim_width_mm?: number;
+  /** 4 corners of rotated rect [[lon, lat], ...] for precise OSM clipping */
+  zone_polygon_coords?: Array<[number, number]>;
   keychain_rim_height_mm?: number;
   // Fast preview (~30s): skip Blender grooves + manifold cleanup, terrain 80x80
   preview_mode?: boolean;

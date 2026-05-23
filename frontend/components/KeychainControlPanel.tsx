@@ -314,6 +314,7 @@ export function KeychainControlPanel({
   design,
   onDesignChange,
   cropRotationDeg = 0,
+  cropPolygon = null,
 }: {
   label: string;
   onLabelChange: (value: string) => void;
@@ -323,6 +324,9 @@ export function KeychainControlPanel({
    *  design.mapRotationDeg щоб згенерована модель показала саме той вміст,
    *  який користувач "обвів" нахиленою рамкою. */
   cropRotationDeg?: number;
+  /** 4 кути обернутого rect'а [[lon, lat], ...]. Backend обрізає OSM точно
+   *  по полігону а не bbox — гарантовано показує тільки те що обрав юзер. */
+  cropPolygon?: Array<[number, number]> | null;
 }) {
   const {
     selectedArea,
@@ -754,6 +758,9 @@ export function KeychainControlPanel({
         keychain_label_font_style: design.labelFontStyle,
         keychain_rim_width_mm: design.rimWidthMm,
         keychain_rim_height_mm: design.rimHeightMm,
+        // Точний полігон обернутого rect — backend обрізає OSM по ньому,
+        // а не по axis-aligned bbox. Так модель показує саме те що обрав юзер.
+        ...(cropPolygon && cropPolygon.length >= 3 ? { zone_polygon_coords: cropPolygon } : {}),
         flat_water_layer_mm: waterLayerMm,
         flat_roads_layer_mm: roadLayerMm,
         flat_parks_layer_mm: parkLayerMm,

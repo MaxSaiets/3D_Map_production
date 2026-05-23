@@ -112,6 +112,10 @@ type KeychainCropSpec = {
   mapHeightMm: number;
   rotationDeg?: number;
   onRotationChange?: (rotationDeg: number) => void;
+  /** Викликається при будь-якій зміні rect (drag/resize/rotate) з 4-ма кутами
+   *  rotated rect у форматі [lon, lat]. Backend використовує це щоб обрізати
+   *  OSM-дані строго до обраної ділянки (а не axis-aligned bbox). */
+  onPolygonChange?: (polygon: Array<[number, number]>) => void;
 };
 
 const MAP_CLICK_SUPPRESS_AFTER_DRAG_MS = 900;
@@ -324,6 +328,14 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       currentBoundsRef.current = bounds;
       syncDecorations(bounds);
       setSelectedArea(bounds);
+      // Обчислюємо 4 кути ОБЕРНУТОГО прямокутника (lat/lon) і передаємо нагору.
+      // Це дозволяє backend'у обрізати OSM строго по обертанню, а не bbox.
+      if (spec.onPolygonChange) {
+        const center = bounds.getCenter();
+        const size = boundsSizeMeters(bounds);
+        const corners = rotatedCropCorners(center, size.widthM, size.heightM, rotationRef.current);
+        spec.onPolygonChange(corners.map((c) => [c.lng, c.lat]));
+      }
     };
 
     const blockMapPlacement = () => {

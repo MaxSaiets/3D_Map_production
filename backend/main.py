@@ -393,6 +393,9 @@ class GenerationRequest(BaseModel):
     # РџР°СЂР°РјРµС‚СЂРё РіРµРЅРµСЂР°С†С–С—
     road_width_multiplier: float = 1.0
     # Print-aware РїР°СЂР°РјРµС‚СЂРё (РІ РњР†Р›Р†РњР•РўР РђРҐ РЅР° С„С–РЅР°Р»СЊРЅС–Р№ РјРѕРґРµР»С–)
+    # Rotated rect polygon (4 corners as [lon, lat]) — для повернутих ділянок.
+    # Якщо задано, backend обрізає OSM до цього полігону, а не axis-aligned bbox.
+    zone_polygon_coords: Optional[list] = None
     road_height_mm: float = Field(default=0.5, ge=0.2, le=5.0)
     road_embed_mm: float = Field(default=0.3, ge=0.0, le=2.0)
     # road_clearance_mm РІРёРґР°Р»РµРЅРѕ вЂ” Р·Р°РІР¶РґРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”С‚СЊСЃСЏ GROOVE_CLEARANCE_MM = 0.15
@@ -572,8 +575,16 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
         task = GenerationTask(task_id=task_id, request=request)
         tasks[task_id] = task
         
-        # Р—Р°РїСѓСЃРєР°С”РјРѕ РіРµРЅРµСЂР°С†С–СЋ РІ С„РѕРЅС–
-        background_tasks.add_task(generate_model_task, task_id, request)
+        # Запускаємо генерацію в фоні. Передаємо zone_polygon_coords якщо є —
+        # для повернутих rect-ділянок backend обріже OSM по полігону, а не bbox.
+        polygon_coords = getattr(request, "zone_polygon_coords", None)
+        background_tasks.add_task(
+            generate_model_task,
+            task_id,
+            request,
+            None,  # zone_id
+            polygon_coords,  # zone_polygon_coords
+        )
         
         print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С–")
         return GenerationResponse(task_id=task_id, status="processing", message="Р—Р°РґР°С‡Р° СЃС‚РІРѕСЂРµРЅР°")

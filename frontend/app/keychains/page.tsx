@@ -62,6 +62,7 @@ export default function KeychainsPage() {
   const [sidePreview, setSidePreview] = useState<"life" | "slicer" | "model3d">("life");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
+  const [cropPolygon, setCropPolygon] = useState<Array<[number, number]> | null>(null);
   const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
 
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
@@ -96,6 +97,7 @@ export default function KeychainsPage() {
       mapHeightMm: design.mapHeightMm,
       rotationDeg: cropRotationDeg,
       onRotationChange: handleCropRotationChange,
+      onPolygonChange: setCropPolygon,
     }),
     [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, handleCropRotationChange, mapAspectRatio],
   );
@@ -240,6 +242,7 @@ export default function KeychainsPage() {
               design={design}
               onDesignChange={setDesign}
               cropRotationDeg={cropRotationDeg}
+              cropPolygon={cropPolygon}
             />
           </aside>
 
