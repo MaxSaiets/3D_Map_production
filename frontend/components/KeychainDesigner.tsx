@@ -745,7 +745,7 @@ export function KeychainDesigner({
               <g
                 clipPath="url(#keychainMapClip)"
                 opacity={0.98}
-                transform={`rotate(${((cropRotationDeg || 0) + (value.mapRotationDeg || 0)) % 360} ${mapCx} ${mapCy})`}
+                transform={`rotate(${(value.mapRotationDeg || 0) % 360} ${mapCx} ${mapCy})`}
               >
                 <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
                 {mapBounds ? (

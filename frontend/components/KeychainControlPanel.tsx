@@ -737,11 +737,11 @@ export function KeychainControlPanel({
         keychain_map_y_mm: design.mapYMm,
         keychain_map_width_mm: design.mapWidthMm,
         keychain_map_height_mm: design.mapHeightMm,
-        // Комбіноване обертання: поворот рамки на карті (cropRotationDeg)
-        // + поворот мапи в дизайнері (design.mapRotationDeg).
-        // Backend застосує це обертання щоб вміст з'явився саме так як
-        // людина виділила нахиленою рамкою.
-        keychain_map_rotation_deg: ((Number(cropRotationDeg || 0) + Number(design.mapRotationDeg || 0)) % 360 + 360) % 360,
+        // ТІЛЬКИ design.mapRotationDeg впливає на візуальне обертання карти.
+        // cropRotationDeg (поворот рамки на карті) — це лише ВИБІР ділянки,
+        // він передається бекенду через zone_polygon_coords для clipping,
+        // але саме обертання вмісту не змінює.
+        keychain_map_rotation_deg: Number(design.mapRotationDeg || 0),
         keychain_loop_center_x_mm: design.loopXMm,
         keychain_loop_center_y_mm: design.loopYMm,
         keychain_label_center_x_mm: design.labelXMm,
