@@ -748,20 +748,30 @@ export function KeychainDesigner({
                 transform={`rotate(${((cropRotationDeg || 0) + (value.mapRotationDeg || 0)) % 360} ${mapCx} ${mapCy})`}
               >
                 <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
-                {mapBounds ? (
-                  /* Реальне OSM-зображення обраної ділянки. URL оновлюється
-                     при будь-якій зміні bbox — користувач одразу бачить
-                     дороги/будівлі/воду конкретної області. */
-                  <image
-                    href={`https://staticmap.openstreetmap.de/staticmap.php?bbox=${mapBounds.west},${mapBounds.south},${mapBounds.east},${mapBounds.north}&size=400x400&maptype=mapnik`}
-                    x={value.mapXMm}
-                    y={value.mapYMm}
-                    width={value.mapWidthMm}
-                    height={value.mapHeightMm}
-                    preserveAspectRatio="xMidYMid slice"
-                    pointerEvents="none"
-                  />
-                ) : (
+                {mapBounds ? (() => {
+                  // staticmap.openstreetmap.de потребує center+zoom (НЕ bbox!)
+                  // Рахуємо центр і zoom із обраного bbox.
+                  const cLat = (mapBounds.north + mapBounds.south) / 2;
+                  const cLng = (mapBounds.east + mapBounds.west) / 2;
+                  const latSpan = Math.abs(mapBounds.north - mapBounds.south);
+                  const lngSpan = Math.abs(mapBounds.east - mapBounds.west);
+                  // Zoom такий, щоб bbox вписався в ~400px tile area
+                  // Web Mercator: zoom Z покриває 360°/2^Z по lng в 256px
+                  // Для 400px: ~zoom = log2(360 / lngSpan * 400/256)
+                  const z = Math.max(10, Math.min(19, Math.floor(Math.log2(360 / Math.max(lngSpan, 0.0001) * (400 / 256)))));
+                  const url = `https://staticmap.openstreetmap.de/staticmap.php?center=${cLat.toFixed(5)},${cLng.toFixed(5)}&zoom=${z}&size=400x400&maptype=mapnik`;
+                  return (
+                    <image
+                      href={url}
+                      x={value.mapXMm}
+                      y={value.mapYMm}
+                      width={value.mapWidthMm}
+                      height={value.mapHeightMm}
+                      preserveAspectRatio="xMidYMid slice"
+                      pointerEvents="none"
+                    />
+                  );
+                })() : (
                   /* Fallback — generic stripes якщо ще не обрано ділянку */
                   <>
                     {Array.from({ length: 8 }).map((_, idx) => (
