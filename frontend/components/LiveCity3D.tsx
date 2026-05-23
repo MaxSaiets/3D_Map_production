@@ -52,6 +52,12 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
       const water: Pts[] = [];
       const parks: Pts[] = [];
 
+      // Замкнутий полігон = перша точка == остання (з допуском floating point)
+      const isClosedRing = (pts: Pts) =>
+        pts.length >= 4 &&
+        Math.abs(pts[0][0] - pts[pts.length - 1][0]) < 1e-9 &&
+        Math.abs(pts[0][1] - pts[pts.length - 1][1]) < 1e-9;
+
       function classifyAndPush(tags: any, points: Pts) {
         if (!points || points.length < 2) return;
         if (tags.building) {
@@ -65,14 +71,18 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
             ["motorway", "trunk", "primary", "secondary"].includes(String(tags.highway)) ? "major"
             : ["residential", "tertiary", "unclassified"].includes(String(tags.highway)) ? "minor" : "service";
           roads.push({ points, widthM: widths[String(tags.highway)] || 4, kind });
-        } else if (tags.natural === "water" || tags.waterway) {
-          water.push(points);
+        } else if (tags.natural === "water" || tags.waterway === "riverbank" || tags.waterway === "dock") {
+          // ТІЛЬКИ полігони. waterway=river/stream/ditch — це лінії (way без area),
+          // якщо їх запхати в polygon-fill, отримуємо рандомні сині трикутники.
+          if (isClosedRing(points)) water.push(points);
         } else if (tags.leisure || tags.landuse || tags.natural) {
           const isGreen =
-            ["park", "garden", "pitch", "playground", "nature_reserve"].includes(tags.leisure) ||
-            ["grass", "forest", "recreation_ground", "meadow", "village_green", "cemetery", "allotments", "orchard", "farmland"].includes(tags.landuse) ||
+            ["park", "garden", "pitch", "playground", "nature_reserve", "golf_course"].includes(tags.leisure) ||
+            ["grass", "forest", "recreation_ground", "meadow", "village_green", "cemetery", "allotments", "orchard"].includes(tags.landuse) ||
             ["wood", "grassland", "scrub", "heath"].includes(tags.natural);
-          if (isGreen) parks.push(points);
+          // Зелень теж тільки якщо замкнутий полігон. Лінії (наприклад tree_row)
+          // не повинні створювати fill.
+          if (isGreen && isClosedRing(points)) parks.push(points);
         }
       }
 
@@ -256,10 +266,12 @@ export function LiveCity3D({
       .filter((r) => r.widthMm >= MIN_PRINT_MM * 0.8);  // дороги тонші 0.5mm дропаємо
     const water = data.water
       .map((pts) => pts.map(([lon, lat]) => lonLatToMm(lon, lat)))
-      .filter((pts) => pts.length >= 3 && polygonArea(pts) >= MIN_PRINT_MM * MIN_PRINT_MM * 4);
+      .filter((pts) => pts.length >= 3 && polygonArea(pts) >= 4)  // ≥ 2×2 mm
+      .sort((a, b) => polygonArea(b) - polygonArea(a));            // великі знизу
     const parks = data.parks
       .map((pts) => pts.map(([lon, lat]) => lonLatToMm(lon, lat)))
-      .filter((pts) => pts.length >= 3 && polygonArea(pts) >= MIN_PRINT_MM * MIN_PRINT_MM * 4);
+      .filter((pts) => pts.length >= 3 && polygonArea(pts) >= 4)
+      .sort((a, b) => polygonArea(b) - polygonArea(a));
     return { buildings, roads, water, parks };
   }, [data, project]);
 
@@ -320,10 +332,12 @@ export function LiveCity3D({
         </g>
       </svg>
       {loading && (
-        <div
-          className="pointer-events-none absolute right-1 top-1 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500/80"
-          aria-label="Завантаження"
-        />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-[#0f766e]"
+            aria-label="Завантаження"
+          />
+        </div>
       )}
       {error && (
         <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-red-500/90 px-1.5 py-0.5 text-center text-[8px] text-white">
