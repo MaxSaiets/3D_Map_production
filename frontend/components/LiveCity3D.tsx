@@ -320,9 +320,10 @@ export function LiveCity3D({
         </g>
       </svg>
       {loading && (
-        <div className="pointer-events-none absolute right-1 top-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[9px] font-semibold text-white">
-          Завантаження…
-        </div>
+        <div
+          className="pointer-events-none absolute right-1 top-1 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500/80"
+          aria-label="Завантаження"
+        />
       )}
       {error && (
         <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-red-500/90 px-1.5 py-0.5 text-center text-[8px] text-white">
