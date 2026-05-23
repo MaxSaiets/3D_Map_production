@@ -1434,7 +1434,10 @@ def run_flat_plate_pipeline(
         # «потовщаться» до мінімально друкованих.
         if keychain_mode and road_mask is not None and not getattr(road_mask, "is_empty", True):
             try:
-                widen_m = float(min_feature_m) * 0.6
+                # Зменшено з 0.6 до 0.35: щоб дороги ставали ширшими але НЕ
+                # зливались у моноблок з близькими будинками. 0.35 × ~1m =
+                # +0.35m кожна сторона дороги (тротуар-like прибавка).
+                widen_m = float(min_feature_m) * 0.35
                 if widen_m > 0:
                     widened = road_mask.buffer(widen_m, join_style=2, cap_style=2)
                     if widened is not None and not getattr(widened, "is_empty", True):
