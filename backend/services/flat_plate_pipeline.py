@@ -1489,7 +1489,13 @@ def run_flat_plate_pipeline(
                 bridge_rows = local_edges[local_edges["bridge"].notna() & (local_edges["bridge"].astype(str).str.lower() != "no")]
                 if not bridge_rows.empty:
                     print(f"[KEYCHAIN] Bridges detected: {len(bridge_rows)}/{len(local_edges)} edges have bridge tag")
-                    # Конвертуємо в локальні координати
+                    # Ширина моста залежить від типу дороги (з highway тегу)
+                    BRIDGE_WIDTHS_M = {
+                        "motorway": 9.0, "trunk": 8.0, "primary": 7.0, "secondary": 6.5, "tertiary": 6.0,
+                        "residential": 4.5, "unclassified": 4.5, "service": 3.5, "pedestrian": 3.5,
+                        "footway": 2.5, "path": 2.0, "cycleway": 2.5,
+                    }
+                    # Конвертуємо в локальні координати з ВЛАСНОЮ шириною
                     def _to_local_geom(g):
                         try:
                             xs, ys = g.coords.xy
@@ -1498,18 +1504,37 @@ def run_flat_plate_pipeline(
                             return LineString(pts) if len(pts) >= 2 else None
                         except Exception:
                             return None
-                    bridge_lines = [
-                        _to_local_geom(g) for g in bridge_rows.geometry.values
-                        if g is not None and hasattr(g, "coords")
-                    ]
-                    bridge_lines = [g for g in bridge_lines if g is not None and not g.is_empty]
-                    if bridge_lines:
-                        # Буферимо bridge edges у полігони (типова ширина моста ~6m + widen)
-                        bridge_geom = unary_union([line.buffer(3.5, cap_style=2, join_style=2) for line in bridge_lines])
+                    has_highway_col = "highway" in bridge_rows.columns
+                    bridge_polys = []
+                    for idx, row in bridge_rows.iterrows():
+                        g = row.geometry
+                        if g is None or not hasattr(g, "coords"):
+                            continue
+                        line = _to_local_geom(g)
+                        if line is None or line.is_empty:
+                            continue
+                        # Визначаємо ширину з тегу highway
+                        hw = str(row.get("highway") if has_highway_col else "primary").lower() if has_highway_col else "primary"
+                        # OSMnx іноді віддає список (для multi-tagged edges) — беремо перший
+                        if hw.startswith("["):
+                            hw = hw.strip("[]'\" ").split(",")[0].strip("'\" ")
+                        # Half-width у метрах (буфер з обох сторін)
+                        half_w = BRIDGE_WIDTHS_M.get(hw, 5.0) / 2.0
+                        try:
+                            bridge_polys.append(line.buffer(half_w, cap_style=2, join_style=2))
+                        except Exception:
+                            pass
+                    if bridge_polys:
+                        bridge_geom = unary_union(bridge_polys)
                         # Трансформуємо у content_area (keychain mm-space)
                         bridge_mask_raw = _clip_geometry(_xform(bridge_geom), content_area)
                         if bridge_mask_raw is not None and not getattr(bridge_mask_raw, "is_empty", True):
                             bridge_mask = bridge_mask_raw.buffer(0)
+                            try:
+                                area_mm = bridge_mask.area  # в model_mm² бо target_bounds у mm
+                                print(f"[KEYCHAIN] Bridge polygons: {len(bridge_polys)}, mask area={area_mm:.2f}mm²")
+                            except Exception:
+                                pass
         except Exception as exc:
             print(f"[KEYCHAIN] Bridge detection failed (non-fatal): {exc}")
             bridge_mask = None
@@ -1595,6 +1620,21 @@ def run_flat_plate_pipeline(
             min_area_m2=min_area_m2,
             label="parks",
         )
+        # Bridge має приорітет над water/road в зоні мосту — щоб міст йшов поверх,
+        # а вода/дорога не «вилазили» з-під нього. Робимо це через subtract:
+        # water_mask = water - bridge, road_mask = road - bridge (під мостом).
+        if bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
+            try:
+                if water_mask is not None and not getattr(water_mask, "is_empty", True):
+                    water_mask = water_mask.difference(bridge_mask).buffer(0)
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    # Лишаємо road в зоні моста (адже міст це частина дороги +0.2mm зверху),
+                    # але приховуємо building_mask щоб не виглядав мостом-будинком
+                    pass
+                if building_mask is not None and not getattr(building_mask, "is_empty", True):
+                    building_mask = building_mask.difference(bridge_mask).buffer(0)
+            except Exception as exc:
+                print(f"[KEYCHAIN] Bridge priority subtract failed: {exc}")
         if (parks_mask is None or getattr(parks_mask, "is_empty", True)) and raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
             print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + soft filter")
             parks_mask = _sanitize_layer_mask(
@@ -1630,15 +1670,21 @@ def run_flat_plate_pipeline(
         try:
             bridge_top_m = base_top_m + _model_mm_to_world_m(roads_layer_mm, export_scale_factor)
             bridge_thickness_m = _model_mm_to_world_m(0.2, export_scale_factor)  # 0.2mm extra above roads
+            # КРИТИЧНО: bridge — вузька лінія, агресивний min_area_m2 (як для парків)
+            # її повністю зʼїдає. Використовуємо МІНІМАЛЬНИЙ поріг — площа полігона
+            # моста 5×0.5mm = 2.5mm² → потрібен поріг ~0.5mm² у model space.
+            bridge_min_area_m2 = _model_mm_to_world_m(0.5, export_scale_factor) ** 2
             bridge_mesh = build_flat_layer_mesh_from_mask(
                 _clip_geometry(bridge_mask, content_area),
                 bottom_z_m=bridge_top_m,
                 thickness_m=bridge_thickness_m,
                 color=LAYER_COLORS.get("rim", [92, 80, 58, 255]),  # темно-бежевий
-                min_area_m2=min_area_m2,
+                min_area_m2=bridge_min_area_m2,
             )
             if bridge_mesh is not None:
-                print(f"[KEYCHAIN] Bridges rendered as separate +0.2mm layer above roads")
+                print(f"[KEYCHAIN] Bridges rendered as separate +0.2mm layer above roads (min_area={bridge_min_area_m2*1e6:.2f}mm²)")
+            else:
+                print(f"[KEYCHAIN] Bridge mesh build returned None (mask area may be below threshold)")
         except Exception as exc:
             print(f"[KEYCHAIN] Bridge mesh build failed: {exc}")
             bridge_mesh = None
