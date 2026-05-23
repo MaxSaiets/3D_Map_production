@@ -1692,7 +1692,7 @@ def run_flat_plate_pipeline(
                 min_area_m2=bridge_min_area_m2,
             )
             if bridge_mesh is not None:
-                print(f"[KEYCHAIN] Bridges rendered as separate +0.2mm layer above roads (min_area={bridge_min_area_m2*1e6:.2f}mm²)")
+                print(f"[KEYCHAIN] Bridges rendered AT road level (dark-beige color, min_area={bridge_min_area_m2*1e6:.2f}mm²)")
             else:
                 print(f"[KEYCHAIN] Bridge mesh build returned None (mask area may be below threshold)")
         except Exception as exc:
