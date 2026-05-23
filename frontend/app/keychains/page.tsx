@@ -282,7 +282,6 @@ export default function KeychainsPage() {
                         east: selectedArea.getEast(),
                         west: selectedArea.getWest(),
                       } : null}
-                      cropRotationDeg={cropRotationDeg}
                     />
                   </div>
                   <KeychainTemplateStrip value={design} label={label} onSelect={setDesign} />
