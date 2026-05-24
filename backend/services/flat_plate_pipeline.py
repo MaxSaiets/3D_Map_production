@@ -921,6 +921,69 @@ def _normalize_label_text(text: str) -> str:
     return "".join(ch if ch in _FONT_5X7 else " " for ch in value).strip()[:28]
 
 
+def _ttf_text_polygons(text: str, height_m: float, font_family: str = "DejaVu Sans") -> list[BaseGeometry]:
+    """Рендерить текст через matplotlib TTF + повертає список shapely Polygons.
+    Дає СПРАВЖНІ smooth letters замість пікселього 5×7 шрифту."""
+    try:
+        from matplotlib.textpath import TextToPath
+        from matplotlib.font_manager import FontProperties
+        from matplotlib.path import Path as MPath
+        from shapely.geometry import Polygon as _Poly
+        from shapely.ops import unary_union
+    except Exception:
+        return []
+    if not text or height_m <= 0:
+        return []
+    tp = TextToPath()
+    # size в "font points" — потім масштабуємо у метри
+    fp = FontProperties(family=font_family, weight="bold")
+    try:
+        # get_text_path returns vertices + codes (M, L, C, Z)
+        size_pt = 100.0  # рендеримо у великому масштабі для точності
+        verts, codes = tp.get_text_path(fp, text)
+    except Exception:
+        return []
+    if len(verts) == 0:
+        return []
+    # Збираємо paths з Bezier curves → апроксимуємо лінійно
+    mpath = MPath(verts, codes)
+    # to_polygons() повертає список замкнутих polygons (rings)
+    polys = mpath.to_polygons(closed_only=False)
+    if not polys:
+        return []
+    # Обчислюємо bbox для масштабування у потрібну висоту
+    all_y = [v[1] for v in verts]
+    text_height_pt = max(all_y) - min(all_y) if all_y else 1.0
+    if text_height_pt <= 0:
+        return []
+    scale = height_m / text_height_pt
+    # Створюємо shapely polygons, шкалюємо, нормалізуємо позицію (start at origin)
+    all_x = [v[0] for v in verts]
+    offset_x = min(all_x) if all_x else 0
+    offset_y = min(all_y) if all_y else 0
+    rings = []
+    for poly_pts in polys:
+        if len(poly_pts) < 3:
+            continue
+        scaled = [((x - offset_x) * scale, (y - offset_y) * scale) for x, y in poly_pts]
+        try:
+            p = _Poly(scaled).buffer(0)
+            if not p.is_empty:
+                rings.append(p)
+        except Exception:
+            continue
+    if not rings:
+        return []
+    # Union для обробки внутрішніх дірок (літера O, A тощо)
+    try:
+        merged = unary_union(rings)
+        if hasattr(merged, "geoms"):
+            return list(merged.geoms)
+        return [merged]
+    except Exception:
+        return rings
+
+
 def build_keychain_label_mesh(
     text: str,
     *,
@@ -940,6 +1003,53 @@ def build_keychain_label_mesh(
         return None
     band_minx, band_miny, band_maxx, band_maxy = label_band_geometry.bounds
     max_width = max((band_maxx - band_minx) * 0.96, 1e-6)
+    max_height = max((band_maxy - band_miny) * 0.92, 1e-6)
+
+    # ПРОПЕРНИЙ TTF РЕНДЕР через matplotlib — smooth glyphs замість 5×7 pixel art.
+    # Cyrillic вже переведена в latin через _normalize_label_text.
+    try:
+        ttf_polys = _ttf_text_polygons(label, height_m=text_height_m, font_family="DejaVu Sans")
+        if ttf_polys:
+            from shapely.ops import unary_union as _uu
+            text_polygon = _uu(ttf_polys).buffer(0)
+            # Bbox тексту після рендеру
+            t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
+            text_w = t_maxx - t_minx
+            text_h = t_maxy - t_miny
+            # Якщо ширина переповнює — scale down щоб fit у max_width
+            if text_w > max_width:
+                fit_scale = max_width / text_w
+                text_polygon = affinity.scale(text_polygon, xfact=fit_scale, yfact=fit_scale, origin=(t_minx, t_miny))
+                t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
+                text_w = t_maxx - t_minx
+                text_h = t_maxy - t_miny
+            # Центруємо у band
+            cx = (band_minx + band_maxx) / 2
+            cy = (band_miny + band_maxy) / 2
+            offset_x = cx - (t_minx + text_w / 2)
+            offset_y = cy - (t_miny + text_h / 2)
+            text_polygon = affinity.translate(text_polygon, xoff=offset_x, yoff=offset_y)
+            # Поворот
+            if angle_deg:
+                text_polygon = affinity.rotate(text_polygon, float(angle_deg), origin=(cx, cy), use_radians=False)
+            # Кліп до body щоб не вилазив
+            text_polygon = text_polygon.intersection(body_geometry).buffer(0)
+            if text_polygon is None or text_polygon.is_empty:
+                return None
+            combined = build_flat_layer_mesh_from_mask(
+                text_polygon, bottom_z_m=bottom_z_m, thickness_m=thickness_m,
+                color=color, min_area_m2=1e-12,
+            )
+            if combined is None:
+                return None
+            try:
+                combined.metadata["text_polygon"] = text_polygon
+            except Exception:
+                pass
+            return _with_color(combined, color)
+    except Exception as exc:
+        print(f"[KEYCHAIN] TTF text render failed, fallback to pixel font: {exc}")
+    # FALLBACK: старий 5×7 pixel font
     cell = max(float(text_height_m) / 7.0, float(min_stroke_m or 0.0))
     stroke_m = max(float(stroke_width_m or 0.0), float(min_stroke_m or 0.0), cell)
     style = (font_style or "block").lower().replace("_", "-")
