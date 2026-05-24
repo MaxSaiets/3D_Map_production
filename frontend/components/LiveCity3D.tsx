@@ -89,9 +89,17 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
         : ["residential","tertiary","unclassified"].includes(r.highway) ? "minor" : "service";
       return { points: pts, widthM: roadWidths[r.highway], kind };
     }).filter(Boolean);
-    const water: Pts[] = (data.water || []).map((w: any) => parseWkt(w.wkt)).filter(Boolean);
-    const parks: Pts[] = (data.parks || []).map((p: any) => parseWkt(p.wkt)).filter(Boolean);
-    return { buildings, roads, water, parks };
+    const water: Pts[] = (data.water || []).map((w: any) => parseWkt(w.wkt)).filter(Boolean) as Pts[];
+    const parks: Pts[] = (data.parks || []).map((p: any) => parseWkt(p.wkt)).filter(Boolean) as Pts[];
+    // CityData type вимагає plazas, fountains, trees, bridges — заповнюємо порожніми
+    // (вони не друкуються у моделі і прибрані з рендеру у Sprint 3.5)
+    return {
+      buildings, roads, water, parks,
+      plazas: [] as Pts[],
+      fountains: [] as any[],
+      trees: [] as any[],
+      bridges: [] as any[],
+    } as any;
   } catch (e: any) {
     if (e.name === "AbortError") throw e;
     return null;
