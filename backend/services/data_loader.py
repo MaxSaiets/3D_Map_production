@@ -528,6 +528,28 @@ def fetch_city_data(
     print(f"[INFO] Буферизація: розширено bbox на {padding} градусів (~{padding * 111000:.0f}м) для коректної обробки країв")
     print(f"[INFO] Завантаження даних для розширеного bbox: north={padded_north}, south={padded_south}, east={padded_east}, west={padded_west}")
     
+    # SPRINT 1: спершу пробуємо локальну DuckDB (12ms vs 2-10s Overpass)
+    try:
+        from services.local_osm_db import is_available, get_gdf
+        if is_available():
+            print("[LOCAL OSM DB] Available — using DuckDB instead of Overpass for buildings/water/bridges/parks", flush=True)
+            t_local = time.time()
+            local_buildings = get_gdf("buildings", target_north, target_south, target_east, target_west, target_crs=target_crs)
+            local_water = get_gdf("water", target_north, target_south, target_east, target_west, target_crs=target_crs)
+            local_bridges = get_gdf("bridges", target_north, target_south, target_east, target_west, target_crs=target_crs)
+            print(f"[LOCAL OSM DB] Loaded in {(time.time()-t_local)*1000:.0f}ms: "
+                  f"buildings={len(local_buildings) if local_buildings is not None else 0}, "
+                  f"water={len(local_water) if local_water is not None else 0}, "
+                  f"bridges={len(local_bridges) if local_bridges is not None else 0}", flush=True)
+            # Roads — поки через Overpass (потрібен networkx graph для downstream pipeline).
+            # Можна швидко повернутись (~1 sec для невеликих зон).
+            _LOCAL_DB_DATA = {"buildings": local_buildings, "water": local_water, "bridges": local_bridges}
+        else:
+            _LOCAL_DB_DATA = None
+    except Exception as _exc:
+        print(f"[LOCAL OSM DB] failed (fallback to Overpass): {_exc}", flush=True)
+        _LOCAL_DB_DATA = None
+
     # Налаштування osmnx: кеш ВИМКНЕНО для меншого використання пам'яті
     ox.settings.use_cache = False
     ox.settings.log_console = False
@@ -822,23 +844,37 @@ def fetch_city_data(
             traceback.print_exc()
             return None
 
-    # Execute in parallel
+    # Execute in parallel — але якщо local DB є, скіпаємо Overpass для buildings/water/bridges
     import concurrent.futures
     gdf_buildings = gpd.GeoDataFrame()
     gdf_water = gpd.GeoDataFrame()
     gdf_bridges = gpd.GeoDataFrame()
     G_roads = None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        future_buildings = executor.submit(_fetch_buildings)
-        future_water = executor.submit(_fetch_water)
-        future_roads = executor.submit(_fetch_roads)
-        future_bridges = executor.submit(_fetch_bridges)
+    if _LOCAL_DB_DATA is not None:
+        # Беремо buildings/water/bridges локально (миттєво), тільки roads — через Overpass
+        if _LOCAL_DB_DATA.get("buildings") is not None and not _LOCAL_DB_DATA["buildings"].empty:
+            gdf_buildings = _LOCAL_DB_DATA["buildings"]
+        if _LOCAL_DB_DATA.get("water") is not None and not _LOCAL_DB_DATA["water"].empty:
+            gdf_water = _LOCAL_DB_DATA["water"]
+        if _LOCAL_DB_DATA.get("bridges") is not None and not _LOCAL_DB_DATA["bridges"].empty:
+            gdf_bridges = _LOCAL_DB_DATA["bridges"]
+        # Тільки roads через Overpass
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            G_roads = executor.submit(_fetch_roads).result()
+        print(f"[LOCAL OSM DB] Used local for buildings/water/bridges, Overpass only for roads", flush=True)
+    else:
+        # Fallback: усе через Overpass
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            future_buildings = executor.submit(_fetch_buildings)
+            future_water = executor.submit(_fetch_water)
+            future_roads = executor.submit(_fetch_roads)
+            future_bridges = executor.submit(_fetch_bridges)
 
-        gdf_buildings = future_buildings.result()
-        gdf_water = future_water.result()
-        G_roads = future_roads.result()
-        gdf_bridges = future_bridges.result()
+            gdf_buildings = future_buildings.result()
+            gdf_water = future_water.result()
+            G_roads = future_roads.result()
+            gdf_bridges = future_bridges.result()
 
     # Append bridges as GDF attribute on gdf_buildings (back-compatible: existing
     # callers still get the 3-tuple, but bridges accessible via gdf_buildings.attrs)

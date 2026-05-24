@@ -74,6 +74,63 @@ def _bbox_key(north: float, south: float, east: float, west: float) -> str:
     return f"{south:.5f},{west:.5f},{north:.5f},{east:.5f}"
 
 
+def get_gdf(
+    table: str,
+    north: float, south: float, east: float, west: float,
+    target_crs=None,
+):
+    """Повертає GeoDataFrame з геометріями для заданого bbox.
+    Використовується у data_loader.py для backend генерації (заміна Overpass).
+    """
+    if not is_available():
+        return None
+    try:
+        import geopandas as gpd  # type: ignore
+        from shapely import wkt as shapely_wkt  # type: ignore
+    except Exception:
+        return None
+    conn = _get_conn()
+    if conn is None:
+        return None
+    cols_map = {
+        "buildings": "id, levels, wkt",
+        "roads":     "id, highway, bridge, wkt",
+        "bridges":   "id, highway, wkt",
+        "water":     "id, type, wkt",
+        "parks":     "id, type, wkt",
+    }
+    if table not in cols_map:
+        return None
+    bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
+    params = (east, west, north, south)
+    with _CONN_LOCK:
+        rows = conn.execute(
+            f"SELECT {cols_map[table]} FROM {table} WHERE {bbox_filter}",
+            params,
+        ).fetchall()
+    if not rows:
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    cols = cols_map[table].split(", ")
+    wkt_idx = cols.index("wkt")
+    data = {c: [] for c in cols if c != "wkt"}
+    geoms = []
+    for r in rows:
+        try:
+            geoms.append(shapely_wkt.loads(r[wkt_idx]))
+            for i, c in enumerate(cols):
+                if c != "wkt":
+                    data[c].append(r[i])
+        except Exception:
+            continue
+    gdf = gpd.GeoDataFrame(data, geometry=geoms, crs="EPSG:4326")
+    if target_crs is not None:
+        try:
+            gdf = gdf.to_crs(target_crs)
+        except Exception:
+            pass
+    return gdf
+
+
 def extract_bbox(
     north: float, south: float, east: float, west: float
 ) -> dict:
