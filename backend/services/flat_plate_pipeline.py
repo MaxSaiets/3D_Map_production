@@ -700,15 +700,9 @@ def build_keychain_layout(
         content_area = content_area.buffer(0)
     except Exception:
         pass
-    # КРИТИЧНО: вирізаємо label_band з content_area щоб мапа НЕ накладалась
-    # на текст брелка (особливо коли map_height = body_height у token-mode).
-    if label_band is not None and not label_band.is_empty:
-        try:
-            content_area_clipped = content_area.difference(label_band).buffer(0)
-            if content_area_clipped is not None and not content_area_clipped.is_empty:
-                content_area = content_area_clipped
-        except Exception:
-            pass
+    # Раніше я вирізав label_band з content_area — це робило мапу обірваною
+    # на пів-токені. Тепер мапа покриває ВСЮ площу, текст engraved зверху —
+    # карвиться у base разом з усім контентом (карвинг видаляє і map layers).
     return {
         "base": base,
         "body": body,
@@ -1859,11 +1853,18 @@ def run_flat_plate_pipeline(
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
-        # ENGRAVE: вирізаємо text polygon З base polygon. КРИТИЧНО: КОМБІНУЄМО
-        # з water carve (інакше друга rebuild перезапише першу і вода зникне).
+        # ENGRAVE: вирізаємо text polygon з base + з map layers (roads/buildings/etc)
+        # ВАЖЛИВО: text повинен бути ВИДНИМ — тому видаляємо map content в зоні тексту.
         try:
             text_poly_carve = getattr(keychain_text_mesh, "metadata", {}).get("text_polygon") if keychain_text_mesh is not None else None
-            # Стартуємо з base; додаємо water hole + text hole в одну операцію
+            # Буфер 0.6мм навколо тексту — щоб трохи "повітря" по краях гліфів
+            if text_poly_carve is not None and not text_poly_carve.is_empty:
+                try:
+                    text_padding_m = _model_mm_to_world_m(0.6, export_scale_factor)
+                    text_poly_carve = text_poly_carve.buffer(text_padding_m).buffer(0)
+                except Exception:
+                    pass
+            # Combined carve: water hole + text hole (одна rebuild щоб не перезапис)
             carve_geom = None
             if text_poly_carve is not None and not text_poly_carve.is_empty:
                 carve_geom = text_poly_carve
@@ -1883,10 +1884,24 @@ def run_flat_plate_pipeline(
                         terrain_mesh = new_terrain
                         carves = []
                         if text_poly_carve is not None and not text_poly_carve.is_empty:
-                            carves.append(f"text({text_depth_mm:.2f}mm)")
+                            carves.append(f"text({text_depth_mm:.2f}mm +0.6mm pad)")
                         if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
                             carves.append(f"water({water_layer_mm:.2f}mm)")
                         print(f"[KEYCHAIN] Base rebuilt with carves: {', '.join(carves)}")
+            # Видаляємо text-area з map layers щоб не перекривали engraved text
+            if text_poly_carve is not None and not text_poly_carve.is_empty:
+                for mask_name in ("road_mask", "building_mask", "parks_mask", "bridge_mask"):
+                    mask_var = locals().get(mask_name)
+                    if mask_var is not None and not getattr(mask_var, "is_empty", True):
+                        try:
+                            new_mask = mask_var.difference(text_poly_carve).buffer(0)
+                            # Перезаписуємо локальну змінну через exec (workaround for locals)
+                            if mask_name == "road_mask": road_mask = new_mask
+                            elif mask_name == "building_mask": building_mask = new_mask
+                            elif mask_name == "parks_mask": parks_mask = new_mask
+                            elif mask_name == "bridge_mask": bridge_mask = new_mask
+                        except Exception:
+                            pass
         except Exception as exc:
             print(f"[KEYCHAIN] Combined engrave failed: {exc}")
 
