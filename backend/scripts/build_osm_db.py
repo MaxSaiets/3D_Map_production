@@ -44,11 +44,14 @@ PARKS_COLS = ["id", "type", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 
 
 class FastHandler(osmium.SimpleHandler):
-    """Streaming-handler з рукописною WKT-генерацією (10× швидше за shapely)."""
+    """Streaming-handler з рукописною WKT-генерацією (10× швидше за shapely).
+    Підтримує both ways AND areas (multipolygon relations) — критично для
+    великих водойм типу Дніпра."""
 
     def __init__(self, conn):
         super().__init__()
         self.conn = conn
+        self.wkt_factory = osmium.geom.WKTFactory()
         self.buildings = []
         self.roads = []
         self.bridges = []
@@ -58,23 +61,76 @@ class FastHandler(osmium.SimpleHandler):
         self.last_log = time.time()
         self.start = time.time()
         self.way_count = 0
+        self.area_count = 0
+
+    def area(self, a):
+        """Зібрана area — закритий way АБО multipolygon relation.
+        Критично для Дніпра, великих лісів і парків (relation outer).
+        Обробляє: water, parks, buildings (все що є polygon)."""
+        self.area_count += 1
+        tags = a.tags
+        if not tags:
+            return
+        is_building = "building" in tags
+        nat = tags.get("natural")
+        wway = tags.get("waterway")
+        lu = tags.get("landuse")
+        leis = tags.get("leisure")
+        is_water = (
+            nat == "water"
+            or wway in WATERWAY_TAGS
+            or lu in LANDUSE_WATER
+        )
+        is_park = (
+            leis in LEISURE_PARK
+            or lu in LANDUSE_PARK
+            or nat in NATURAL_PARK
+        )
+        if not (is_water or is_park or is_building):
+            return
+        try:
+            wkt = self.wkt_factory.create_multipolygon(a)
+        except Exception:
+            return
+        # Bbox з WKT (швидше за shapely)
+        import re
+        nums = re.findall(r"-?\d+\.?\d*", wkt)
+        if len(nums) < 4:
+            return
+        lons = [float(nums[i]) for i in range(0, len(nums), 2)]
+        lats = [float(nums[i]) for i in range(1, len(nums), 2)]
+        if not lons or not lats:
+            return
+        minlon, maxlon = min(lons), max(lons)
+        minlat, maxlat = min(lats), max(lats)
+        rid = a.orig_id() if hasattr(a, "orig_id") else (a.id if hasattr(a, "id") else 0)
+        if is_building:
+            try:
+                levels = int(float(tags.get("building:levels") or 0))
+            except Exception:
+                levels = 0
+            self.buildings.append((rid, levels, wkt, minlon, minlat, maxlon, maxlat))
+        if is_water:
+            self.water.append((rid, nat or wway or lu or "water", wkt, minlon, minlat, maxlon, maxlat))
+        if is_park:
+            ptype = leis or lu or nat or "park"
+            self.parks.append((rid, ptype, wkt, minlon, minlat, maxlon, maxlat))
+        total_batch = (len(self.buildings) + len(self.roads) + len(self.bridges)
+                       + len(self.water) + len(self.parks))
+        if total_batch >= BATCH_SIZE:
+            self._flush()
 
     def way(self, w):
+        """Only LINEAR features: highway, bridge. Polygons (building/water/park)
+        обробляються в area() — він краще handles relations multipolygon."""
         self.way_count += 1
-        # ШВИДКИЙ доступ до тегів — без dict comprehension.
         tags = w.tags
         if not tags or len(w.nodes) < 2:
             return
-        # Швидка перевірка чи варто взагалі обробляти — за наявністю тегів
-        has_building = "building" in tags
         has_highway = "highway" in tags
         has_bridge = "bridge" in tags
-        has_natural = "natural" in tags
-        has_waterway = "waterway" in tags
-        has_landuse = "landuse" in tags
-        has_leisure = "leisure" in tags
-        if not (has_building or has_highway or has_bridge or has_natural
-                or has_waterway or has_landuse or has_leisure):
+        # Building/water/park НЕ обробляємо тут — лише area()
+        if not (has_highway or has_bridge):
             return
 
         # Координати з locations index
@@ -104,49 +160,20 @@ class FastHandler(osmium.SimpleHandler):
         wkt_poly = "POLYGON((" + coords_str + "))" if is_closed else wkt_line
         wid = w.id
 
-        # Building
-        if has_building and is_closed:
-            try:
-                levels = int(float(tags.get("building:levels") or 0))
-            except Exception:
-                levels = 0
-            self.buildings.append((wid, levels, wkt_poly, minlon, minlat, maxlon, maxlat))
-
-        # Bridge
+        # Bridge — linear, тут
         if has_bridge:
             br = tags.get("bridge")
             if br and br not in ("no", ""):
                 self.bridges.append((wid, tags.get("highway") or "primary", wkt_line, minlon, minlat, maxlon, maxlat))
 
-        # Road
+        # Road — linear, тут
         if has_highway:
             hw = tags.get("highway")
             if hw in HIGHWAY_TAGS:
                 br = tags.get("bridge") or "no"
                 self.roads.append((wid, hw, br, wkt_line, minlon, minlat, maxlon, maxlat))
 
-        # Water (polygons)
-        if is_closed:
-            if has_natural and tags.get("natural") == "water":
-                self.water.append((wid, "water", wkt_poly, minlon, minlat, maxlon, maxlat))
-            elif has_waterway and tags.get("waterway") in WATERWAY_TAGS:
-                self.water.append((wid, tags.get("waterway"), wkt_poly, minlon, minlat, maxlon, maxlat))
-            elif has_landuse:
-                lu = tags.get("landuse")
-                if lu in LANDUSE_WATER:
-                    self.water.append((wid, lu, wkt_poly, minlon, minlat, maxlon, maxlat))
-                elif lu in LANDUSE_PARK:
-                    self.parks.append((wid, lu, wkt_poly, minlon, minlat, maxlon, maxlat))
-
-            # Parks
-            if has_leisure:
-                leis = tags.get("leisure")
-                if leis in LEISURE_PARK:
-                    self.parks.append((wid, leis, wkt_poly, minlon, minlat, maxlon, maxlat))
-            if has_natural:
-                nat = tags.get("natural")
-                if nat in NATURAL_PARK:
-                    self.parks.append((wid, nat, wkt_poly, minlon, minlat, maxlon, maxlat))
+        # Building/water/parks обробляються в area() — підтримує multipolygon relations
 
         # Flush якщо батч переповнено
         total_batch = (len(self.buildings) + len(self.roads) + len(self.bridges)

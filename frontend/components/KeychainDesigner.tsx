@@ -129,7 +129,9 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   loopStyle: "round",
   loopAngleDeg: 0,
   loopXMm: 17.5,
-  loopYMm: -4,
+  // loopYMm = -2.4: центр петлі 2.4mm над верхом тіла, при outerR=4mm → 40%
+  // петлі заходить в тіло брелка (overlap), 60% стирчить назовні.
+  loopYMm: -2.4,
   loopOuterMm: 4.0,   // зовнішній радіус петлі (стандарт)
   loopInnerMm: 2.0,   // радіус отвору під кільце (стандарт)
   mapXMm: 2,
