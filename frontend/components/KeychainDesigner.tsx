@@ -130,8 +130,8 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   loopAngleDeg: 0,
   loopXMm: 17.5,
   loopYMm: -4,
-  loopOuterMm: 6.8,
-  loopInnerMm: 3.1,
+  loopOuterMm: 4.0,   // зовнішній радіус петлі (стандарт)
+  loopInnerMm: 2.0,   // радіус отвору під кільце (стандарт)
   mapXMm: 2,
   mapYMm: 3,
   mapWidthMm: 31,
