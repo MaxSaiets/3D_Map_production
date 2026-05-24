@@ -110,6 +110,10 @@ type KeychainCropSpec = {
   targetMetersPerMm?: number;
   mapWidthMm: number;
   mapHeightMm: number;
+  /** Форма брелка — впливає на полігон виділення на карті. */
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token";
+  /** Радіус заокруглення кутів (для visual shape). */
+  cornerRadiusMm?: number;
   rotationDeg?: number;
   onRotationChange?: (rotationDeg: number) => void;
   /** Викликається при будь-якій зміні rect (drag/resize/rotate) з 4-ма кутами
@@ -155,6 +159,81 @@ function localOffsetFromCenterMeters(center: L.LatLng, point: L.LatLng) {
     x: (point.lng - center.lng) * metersPerDegreeLng(center.lat),
     y: (point.lat - center.lat) * 111_320,
   };
+}
+
+/** Генерує полігон форми брелка (token=oval, rounded=rect with rounded corners, etc).
+ *  Повертає список точок ВЗДОВЖ ПЕРИМЕТРА у local (dx, dy) метрах від центру.
+ *  Для backend і aspect-розрахунків використовується bbox цих точок (axis-aligned). */
+function shapeOutlinePoints(widthM: number, heightM: number, shape: string, cornerRadiusFraction: number = 0.15): Array<{x: number; y: number}> {
+  const w = widthM, h = heightM;
+  const pts: Array<{x: number; y: number}> = [];
+  if (shape === "token" || shape === "capsule") {
+    // Capsule/oval — дві півкола по краях, прямі сторони
+    const r = Math.min(w, h) / 2;  // radius = half of smaller dim
+    const straight = Math.abs(w - h);  // довжина прямих сторін
+    const isWide = w >= h;
+    const N = 24;
+    if (isWide) {
+      // лівий півкруг (від низу проти годинникової)
+      for (let i = 0; i <= N / 2; i++) {
+        const a = Math.PI / 2 + (Math.PI * i / (N / 2));
+        pts.push({ x: -straight / 2 + Math.cos(a) * r, y: Math.sin(a) * r });
+      }
+      // правий півкруг
+      for (let i = 0; i <= N / 2; i++) {
+        const a = -Math.PI / 2 + (Math.PI * i / (N / 2));
+        pts.push({ x: straight / 2 + Math.cos(a) * r, y: Math.sin(a) * r });
+      }
+    } else {
+      for (let i = 0; i <= N / 2; i++) {
+        const a = 0 + (Math.PI * i / (N / 2));
+        pts.push({ x: Math.cos(a) * r, y: straight / 2 + Math.sin(a) * r });
+      }
+      for (let i = 0; i <= N / 2; i++) {
+        const a = Math.PI + (Math.PI * i / (N / 2));
+        pts.push({ x: Math.cos(a) * r, y: -straight / 2 + Math.sin(a) * r });
+      }
+    }
+  } else if (shape === "octagon") {
+    const r = Math.min(w, h) / 2 * 0.4;  // зрізаний кут
+    pts.push({ x: -w / 2 + r, y: -h / 2 });
+    pts.push({ x: w / 2 - r, y: -h / 2 });
+    pts.push({ x: w / 2, y: -h / 2 + r });
+    pts.push({ x: w / 2, y: h / 2 - r });
+    pts.push({ x: w / 2 - r, y: h / 2 });
+    pts.push({ x: -w / 2 + r, y: h / 2 });
+    pts.push({ x: -w / 2, y: h / 2 - r });
+    pts.push({ x: -w / 2, y: -h / 2 + r });
+  } else {
+    // rounded/tag — прямокутник з заокругленими кутами
+    const r = Math.min(w, h) * cornerRadiusFraction;
+    const N = 6;  // points per corner
+    // bottom-left → bottom-right → top-right → top-left → close
+    for (let i = 0; i <= N; i++) {
+      const a = Math.PI + (Math.PI / 2 * i / N);
+      pts.push({ x: -w / 2 + r + Math.cos(a) * r, y: -h / 2 + r + Math.sin(a) * r });
+    }
+    for (let i = 0; i <= N; i++) {
+      const a = -Math.PI / 2 + (Math.PI / 2 * i / N);
+      pts.push({ x: w / 2 - r + Math.cos(a) * r, y: -h / 2 + r + Math.sin(a) * r });
+    }
+    for (let i = 0; i <= N; i++) {
+      const a = 0 + (Math.PI / 2 * i / N);
+      pts.push({ x: w / 2 - r + Math.cos(a) * r, y: h / 2 - r + Math.sin(a) * r });
+    }
+    for (let i = 0; i <= N; i++) {
+      const a = Math.PI / 2 + (Math.PI / 2 * i / N);
+      pts.push({ x: -w / 2 + r + Math.cos(a) * r, y: h / 2 - r + Math.sin(a) * r });
+    }
+  }
+  return pts;
+}
+
+function rotatedShapePoints(center: L.LatLng, widthM: number, heightM: number, rotationDeg: number, shape: string, cornerRadiusFraction: number = 0.15): L.LatLng[] {
+  const pts = shapeOutlinePoints(widthM, heightM, shape, cornerRadiusFraction);
+  const angle = (rotationDeg * Math.PI) / 180;
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  return pts.map((p) => offsetLatLngMeters(center, p.x * cos - p.y * sin, p.x * sin + p.y * cos));
 }
 
 function rotatedCropCorners(center: L.LatLng, widthM: number, heightM: number, rotationDeg: number) {
@@ -239,14 +318,17 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     if (!bounds || !shape) return;
     const center = bounds.getCenter();
     const size = boundsSizeMeters(bounds);
+    // Visual shape outline (oval for token, rounded rect etc)
+    const shapeKind = spec.baseShape || "rounded";
+    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    const visualPoints = rotatedShapePoints(center, size.widthM, size.heightM, rotationDeg, shapeKind, cornerFrac);
+    shape.setLatLngs(visualPoints);
+    // Polygon для backend = 4 кути axis-aligned bbox (без shape деталей)
     const corners = rotatedCropCorners(center, size.widthM, size.heightM, rotationDeg);
-    shape.setLatLngs(corners);
     resizeHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, size.widthM / 2, -size.heightM / 2));
     rotateHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, 0, size.heightM / 2 + 42));
-    // КРИТИЧНО: emit polygon, інакше preview не буде знати про новий поворот
-    // (bounds — axis-aligned bbox і не змінюється при обертанні).
     spec.onPolygonChange?.(corners.map((c) => [c.lng, c.lat]));
-  }, [rotationDeg, spec.onPolygonChange]);
+  }, [rotationDeg, spec.onPolygonChange, spec.baseShape, spec.cornerRadiusMm, spec.mapWidthMm, spec.mapHeightMm]);
 
   useEffect(() => {
     if (!map) return;
@@ -267,7 +349,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const initialBounds = boundsFromCenterMeters(existingCenter, widthM, heightM);
 
     const cropSize = { widthM, heightM };
-    const shape = L.polygon(rotatedCropCorners(existingCenter, cropSize.widthM, cropSize.heightM, rotationRef.current), {
+    const shapeKind = spec.baseShape || "rounded";
+    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    const shape = L.polygon(rotatedShapePoints(existingCenter, cropSize.widthM, cropSize.heightM, rotationRef.current, shapeKind, cornerFrac), {
       color: "#14b8a6",
       weight: 2,
       fillColor: "#14b8a6",
@@ -322,7 +406,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const syncDecorations = (bounds: L.LatLngBounds, nextRotationDeg = rotationRef.current) => {
       const center = bounds.getCenter();
       const size = boundsSizeMeters(bounds);
-      shape.setLatLngs(rotatedCropCorners(center, size.widthM, size.heightM, nextRotationDeg));
+      // Visual: показуємо форму брелка (oval/rect/тощо)
+      shape.setLatLngs(rotatedShapePoints(center, size.widthM, size.heightM, nextRotationDeg, shapeKind, cornerFrac));
       resizeHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, nextRotationDeg, size.widthM / 2, -size.heightM / 2));
       rotateHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, nextRotationDeg, 0, size.heightM / 2 + 42));
       labelRef.current?.setLatLng(northCenter(bounds));

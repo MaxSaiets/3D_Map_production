@@ -88,18 +88,17 @@ export default function KeychainsPage() {
   const keychainCrop = useMemo(
     () => ({
       aspectRatio: mapAspectRatio,
-      // FDM 0.4mm nozzle: max 7.0 м/мм (6m вулиця = 0.86mm — на межі), drag-limit
       maxMetersPerMm: 7.0,
-      // INITIAL comfortable: 3.5 м/мм → 3m вулиця = 0.86mm (комфорт), 6m = 1.7mm
-      // Користувач відкриває сторінку → одразу зелена зона, без червоних warning'ів
       targetMetersPerMm: 3.5,
       mapWidthMm: design.mapWidthMm,
       mapHeightMm: design.mapHeightMm,
+      baseShape: design.baseShape,
+      cornerRadiusMm: design.cornerRadiusMm,
       rotationDeg: cropRotationDeg,
       onRotationChange: handleCropRotationChange,
       onPolygonChange: setCropPolygon,
     }),
-    [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, handleCropRotationChange, mapAspectRatio],
+    [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio],
   );
   const statusLabel = isGenerating
     ? `${progress}% • ${status || "Генерація"}`
