@@ -1836,16 +1836,15 @@ def run_flat_plate_pipeline(
         base_top_m=base_top_m,
     )
     if keychain_layout is not None:
-        # SPRINT 5: ВРІЗАНИЙ ТЕКСТ (engraved). Глибина суттєва щоб видно було.
-        # Дефолт 0.8мм — ~4 шари FDM, виразне заглиблення на однокольоровому пластику.
-        text_depth_mm = float(getattr(request, "keychain_label_raise_mm", 0.8) or 0.8)
-        text_depth_m = _model_mm_to_world_m(text_depth_mm, export_scale_factor)
+        # RAISED TEXT — текст підіймається над базою як рельєф (попередня логіка).
+        text_raise_mm = float(getattr(request, "keychain_label_raise_mm", 0.5) or 0.5)
+        text_raise_m = _model_mm_to_world_m(text_raise_mm, export_scale_factor)
         keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),
             body_geometry=keychain_layout["body"],
             label_band_geometry=keychain_layout["label_band"],
-            bottom_z_m=base_top_m - text_depth_m,  # знизу заглиблення
-            thickness_m=text_depth_m,  # тонка плита заповнює дірку
+            bottom_z_m=base_top_m,                # на верхній грані бази
+            thickness_m=text_raise_m,             # піднятий рельєф
             text_height_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8), export_scale_factor),
             color=LAYER_COLORS["text"],
             stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_PRINT_FEATURE_MM) or MIN_KEYCHAIN_PRINT_FEATURE_MM), export_scale_factor),
@@ -1853,35 +1852,16 @@ def run_flat_plate_pipeline(
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
-        # ENGRAVE: вирізаємо text polygon з base + з map layers (roads/buildings/etc)
-        # ВАЖЛИВО: text повинен бути ВИДНИМ — тому видаляємо map content в зоні тексту.
+        # Залишаємо тільки water depression carve (без text engrave)
         try:
-            text_poly_carve = getattr(keychain_text_mesh, "metadata", {}).get("text_polygon") if keychain_text_mesh is not None else None
-            # Маленький padding 0.2мм навколо гліфів (тонкий контур щоб не злипались)
-            if text_poly_carve is not None and not text_poly_carve.is_empty:
-                try:
-                    text_padding_m = _model_mm_to_world_m(0.2, export_scale_factor)
-                    text_poly_carve = text_poly_carve.buffer(text_padding_m).buffer(0)
-                except Exception:
-                    pass
-            # Combined carve: water hole + text hole (одна rebuild щоб не перезапис)
-            carve_geom = None
-            if text_poly_carve is not None and not text_poly_carve.is_empty:
-                carve_geom = text_poly_carve
             if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
-                carve_geom = water_clipped.union(carve_geom).buffer(0) if carve_geom is not None else water_clipped
-            if carve_geom is not None and not carve_geom.is_empty:
-                base_poly_combined = keychain_layout["base"].difference(carve_geom).buffer(0)
-                # КРИТИЧНО: після carve geometry може стати MultiPolygon з кучею
-                # disconnect-фрагментів — Bambu їх розкидає по столу як окремі частини.
-                # Залишаємо тільки НАЙБІЛЬШИЙ компонент (брелок зв'язний).
+                base_poly_combined = keychain_layout["base"].difference(water_clipped).buffer(0)
                 if base_poly_combined is not None and not base_poly_combined.is_empty:
                     if hasattr(base_poly_combined, "geoms"):
-                        # MultiPolygon — беремо найбільший за площею
                         largest = max(base_poly_combined.geoms, key=lambda g: g.area)
                         n_dropped = sum(1 for g in base_poly_combined.geoms if g is not largest)
                         if n_dropped > 0:
-                            print(f"[KEYCHAIN] Base fragments cleanup: dropped {n_dropped} tiny pieces, kept largest")
+                            print(f"[KEYCHAIN] Base fragments cleanup: dropped {n_dropped} tiny pieces")
                         base_poly_combined = largest
                 if base_poly_combined is not None and not base_poly_combined.is_empty:
                     new_terrain = build_flat_layer_mesh_from_mask(
@@ -1893,28 +1873,9 @@ def run_flat_plate_pipeline(
                     )
                     if new_terrain is not None:
                         terrain_mesh = new_terrain
-                        carves = []
-                        if text_poly_carve is not None and not text_poly_carve.is_empty:
-                            carves.append(f"text({text_depth_mm:.2f}mm +0.6mm pad)")
-                        if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
-                            carves.append(f"water({water_layer_mm:.2f}mm)")
-                        print(f"[KEYCHAIN] Base rebuilt with carves: {', '.join(carves)}")
-            # Видаляємо text-area з map layers щоб не перекривали engraved text
-            if text_poly_carve is not None and not text_poly_carve.is_empty:
-                for mask_name in ("road_mask", "building_mask", "parks_mask", "bridge_mask"):
-                    mask_var = locals().get(mask_name)
-                    if mask_var is not None and not getattr(mask_var, "is_empty", True):
-                        try:
-                            new_mask = mask_var.difference(text_poly_carve).buffer(0)
-                            # Перезаписуємо локальну змінну через exec (workaround for locals)
-                            if mask_name == "road_mask": road_mask = new_mask
-                            elif mask_name == "building_mask": building_mask = new_mask
-                            elif mask_name == "parks_mask": parks_mask = new_mask
-                            elif mask_name == "bridge_mask": bridge_mask = new_mask
-                        except Exception:
-                            pass
+                        print(f"[KEYCHAIN] Base rebuilt with water depression ({water_layer_mm:.2f}mm)")
         except Exception as exc:
-            print(f"[KEYCHAIN] Combined engrave failed: {exc}")
+            print(f"[KEYCHAIN] Water carve failed: {exc}")
 
     if keychain_layout is not None:
         layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)
