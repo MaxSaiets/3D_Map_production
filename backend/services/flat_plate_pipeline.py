@@ -1872,6 +1872,17 @@ def run_flat_plate_pipeline(
                 carve_geom = water_clipped.union(carve_geom).buffer(0) if carve_geom is not None else water_clipped
             if carve_geom is not None and not carve_geom.is_empty:
                 base_poly_combined = keychain_layout["base"].difference(carve_geom).buffer(0)
+                # КРИТИЧНО: після carve geometry може стати MultiPolygon з кучею
+                # disconnect-фрагментів — Bambu їх розкидає по столу як окремі частини.
+                # Залишаємо тільки НАЙБІЛЬШИЙ компонент (брелок зв'язний).
+                if base_poly_combined is not None and not base_poly_combined.is_empty:
+                    if hasattr(base_poly_combined, "geoms"):
+                        # MultiPolygon — беремо найбільший за площею
+                        largest = max(base_poly_combined.geoms, key=lambda g: g.area)
+                        n_dropped = sum(1 for g in base_poly_combined.geoms if g is not largest)
+                        if n_dropped > 0:
+                            print(f"[KEYCHAIN] Base fragments cleanup: dropped {n_dropped} tiny pieces, kept largest")
+                        base_poly_combined = largest
                 if base_poly_combined is not None and not base_poly_combined.is_empty:
                     new_terrain = build_flat_layer_mesh_from_mask(
                         base_poly_combined,
