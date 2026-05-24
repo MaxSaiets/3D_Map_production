@@ -1108,6 +1108,37 @@ async def set_global_center_endpoint(center_lat: float = Query(...), center_lon:
         raise HTTPException(status_code=400, detail=f"РџРѕРјРёР»РєР° РІСЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ: {str(e)}")
 
 
+@app.get("/api/osm/extract")
+async def osm_extract_endpoint(
+    north: float, south: float, east: float, west: float
+):
+    """
+    Локальний OSM extract з DuckDB (заміна Overpass API).
+    Швидкість: 50-200ms vs 2-10s Overpass.
+
+    Повертає {"buildings":[], "roads":[], "bridges":[], "water":[], "parks":[], "source":"local|overpass"}
+    Кожен елемент має {id, wkt, тип-специфічні поля}.
+    Якщо локальна БД відсутня — повертає {"source": "unavailable"} і frontend має fallback на Overpass.
+    """
+    from services.local_osm_db import is_available, extract_bbox
+    if not is_available():
+        return {"buildings": [], "roads": [], "bridges": [], "water": [], "parks": [],
+                "source": "unavailable", "message": "Local OSM DB not found, use Overpass API"}
+    try:
+        # Валідація bbox
+        if not (-90 <= south <= north <= 90) or not (-180 <= west <= east <= 180):
+            raise HTTPException(status_code=400, detail=f"Invalid bbox: N={north} S={south} E={east} W={west}")
+        if (north - south) > 1.0 or (east - west) > 1.0:
+            raise HTTPException(status_code=400, detail="bbox too large (>1°), please narrow selection")
+        data = extract_bbox(north, south, east, west)
+        data["source"] = "local"
+        return data
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"OSM extract failed: {exc}")
+
+
 @app.get("/api/global-center")
 async def get_global_center_endpoint():
     """

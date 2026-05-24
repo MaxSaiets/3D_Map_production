@@ -50,7 +50,60 @@ const OSM_CACHE_MAX = 20;
 const bboxKey = (b: Bounds) =>
   `${b.south.toFixed(5)},${b.west.toFixed(5)},${b.north.toFixed(5)},${b.east.toFixed(5)}`;
 
+async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<CityData | null> {
+  // SPRINT 1: спершу пробуємо локальну DuckDB (50-200ms). Fallback на Overpass.
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "") + "/api/osm/extract";
+  try {
+    const res = await fetch(
+      `${apiUrl}?north=${b.north}&south=${b.south}&east=${b.east}&west=${b.west}`,
+      { signal: abortSignal },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.source !== "local") return null;
+    // Парсимо WKT → точки (тільки LINESTRING і POLYGON для нашого випадку)
+    const parseWkt = (wkt: string): Pts | null => {
+      if (!wkt) return null;
+      const m = wkt.match(/\(\(([^()]+)\)\)|\(([^()]+)\)/);
+      if (!m) return null;
+      const coordsStr = m[1] || m[2];
+      return coordsStr.split(",").map((p) => {
+        const [lon, lat] = p.trim().split(/\s+/).map(Number);
+        return [lon, lat] as [number, number];
+      }).filter((c) => isFinite(c[0]) && isFinite(c[1]));
+    };
+    const buildings: BuildingRec[] = (data.buildings || []).map((b: any) => {
+      const pts = parseWkt(b.wkt);
+      return pts ? { points: pts, levels: Math.max(1, Math.min(40, Number(b.levels) || 3)) } : null;
+    }).filter(Boolean);
+    const roadWidths: Record<string, number> = {
+      motorway: 14, trunk: 12, primary: 10, secondary: 8, tertiary: 7,
+      residential: 5, unclassified: 5, service: 3.5, pedestrian: 4,
+    };
+    const roads: RoadRec[] = (data.roads || []).map((r: any) => {
+      if (!roadWidths[r.highway]) return null;
+      const pts = parseWkt(r.wkt);
+      if (!pts) return null;
+      const kind: RoadRec["kind"] =
+        ["motorway","trunk","primary","secondary"].includes(r.highway) ? "major"
+        : ["residential","tertiary","unclassified"].includes(r.highway) ? "minor" : "service";
+      return { points: pts, widthM: roadWidths[r.highway], kind };
+    }).filter(Boolean);
+    const water: Pts[] = (data.water || []).map((w: any) => parseWkt(w.wkt)).filter(Boolean);
+    const parks: Pts[] = (data.parks || []).map((p: any) => parseWkt(p.wkt)).filter(Boolean);
+    return { buildings, roads, water, parks };
+  } catch (e: any) {
+    if (e.name === "AbortError") throw e;
+    return null;
+  }
+}
+
 async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<CityData> {
+  // Спершу — локальна DuckDB. Якщо немає або помилка — Overpass.
+  const local = await fetchFromLocalDB(b, abortSignal);
+  if (local !== null) {
+    return local;
+  }
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
   // Додаємо: area:highway=pedestrian (площі типу Майдан), place=square, landuse=pedestrian
   // ЛИШЕ ті теги що реально друкуються у 3MF backend:
