@@ -131,6 +131,109 @@ def get_gdf(
     return gdf
 
 
+def get_roads_graph(north: float, south: float, east: float, west: float, target_crs=None):
+    """Будує networkx MultiDiGraph з локальних roads, сумісний з OSMnx.
+
+    Заміна `ox.graph_from_bbox` через локальну БД (12ms vs 2-5s Overpass).
+
+    Returns:
+        networkx.MultiDiGraph або None якщо БД недоступна.
+    """
+    if not is_available():
+        return None
+    try:
+        import networkx as nx
+        import osmnx as ox  # type: ignore
+        import geopandas as gpd  # type: ignore
+        from shapely import wkt as shapely_wkt  # type: ignore
+        from shapely.geometry import Point
+    except Exception:
+        return None
+
+    conn = _get_conn()
+    if conn is None:
+        return None
+
+    bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
+    params = (east, west, north, south)
+    with _CONN_LOCK:
+        rows = conn.execute(
+            f"SELECT id, highway, bridge, wkt FROM roads WHERE {bbox_filter}",
+            params,
+        ).fetchall()
+
+    if not rows:
+        return None
+
+    # Будуємо edges_gdf і nodes_gdf для ox.graph_from_gdfs.
+    # Node id = (lon_int, lat_int) (тo7-digit precision = ~1cm) — стабільний хеш.
+    def coord_to_id(lon: float, lat: float) -> int:
+        # Encode as int: 9 цифр на координату
+        return int(round((lat + 90) * 1e7)) * 10_000_000_000 + int(round((lon + 180) * 1e7))
+
+    nodes_data = {}  # node_id -> (lon, lat)
+    edges_data = []  # list of (u, v, key, attrs)
+    edge_key_counter = {}  # (u,v) -> next key
+
+    for road_id, highway, bridge, wkt in rows:
+        try:
+            line = shapely_wkt.loads(wkt)
+        except Exception:
+            continue
+        coords = list(line.coords)
+        if len(coords) < 2:
+            continue
+        start_lon, start_lat = coords[0]
+        end_lon, end_lat = coords[-1]
+        u = coord_to_id(start_lon, start_lat)
+        v = coord_to_id(end_lon, end_lat)
+        if u == v:
+            continue
+        nodes_data[u] = (start_lon, start_lat)
+        nodes_data[v] = (end_lon, end_lat)
+        key = edge_key_counter.get((u, v), 0)
+        edge_key_counter[(u, v)] = key + 1
+        # Орієнтовна довжина в метрах (rough Haversine для коротких)
+        import math
+        dx = (end_lon - start_lon) * 111_320 * math.cos(math.radians((start_lat + end_lat) / 2))
+        dy = (end_lat - start_lat) * 111_320
+        length_m = (dx * dx + dy * dy) ** 0.5
+        edges_data.append({
+            "u": u, "v": v, "key": key,
+            "osmid": road_id,
+            "highway": highway,
+            "bridge": bridge if bridge != "no" else None,
+            "length": length_m,
+            "geometry": line,
+        })
+
+    if not nodes_data or not edges_data:
+        return None
+
+    # Створюємо GeoDataFrames у форматі OSMnx
+    nodes_records = []
+    for nid, (lon, lat) in nodes_data.items():
+        nodes_records.append({
+            "osmid": nid, "x": lon, "y": lat, "geometry": Point(lon, lat),
+        })
+    nodes_gdf = gpd.GeoDataFrame(nodes_records, crs="EPSG:4326").set_index("osmid")
+
+    edges_df = gpd.GeoDataFrame(edges_data, crs="EPSG:4326").set_index(["u", "v", "key"])
+
+    try:
+        G = ox.graph_from_gdfs(nodes_gdf, edges_df)
+        # Проекція у target_crs якщо потрібно
+        if target_crs is not None:
+            try:
+                G = ox.project_graph(G, to_crs=target_crs)
+            except Exception:
+                pass
+        return G
+    except Exception as exc:
+        print(f"[LOCAL OSM DB] graph_from_gdfs failed: {exc}")
+        return None
+
+
 def extract_bbox(
     north: float, south: float, east: float, west: float
 ) -> dict:

@@ -530,20 +530,20 @@ def fetch_city_data(
     
     # SPRINT 1: спершу пробуємо локальну DuckDB (12ms vs 2-10s Overpass)
     try:
-        from services.local_osm_db import is_available, get_gdf
+        from services.local_osm_db import is_available, get_gdf, get_roads_graph
         if is_available():
-            print("[LOCAL OSM DB] Available — using DuckDB instead of Overpass for buildings/water/bridges/parks", flush=True)
+            print("[LOCAL OSM DB] Available — using DuckDB instead of Overpass for ALL data", flush=True)
             t_local = time.time()
             local_buildings = get_gdf("buildings", target_north, target_south, target_east, target_west, target_crs=target_crs)
             local_water = get_gdf("water", target_north, target_south, target_east, target_west, target_crs=target_crs)
             local_bridges = get_gdf("bridges", target_north, target_south, target_east, target_west, target_crs=target_crs)
+            local_roads = get_roads_graph(target_north, target_south, target_east, target_west, target_crs=target_crs)
             print(f"[LOCAL OSM DB] Loaded in {(time.time()-t_local)*1000:.0f}ms: "
                   f"buildings={len(local_buildings) if local_buildings is not None else 0}, "
                   f"water={len(local_water) if local_water is not None else 0}, "
-                  f"bridges={len(local_bridges) if local_bridges is not None else 0}", flush=True)
-            # Roads — поки через Overpass (потрібен networkx graph для downstream pipeline).
-            # Можна швидко повернутись (~1 sec для невеликих зон).
-            _LOCAL_DB_DATA = {"buildings": local_buildings, "water": local_water, "bridges": local_bridges}
+                  f"bridges={len(local_bridges) if local_bridges is not None else 0}, "
+                  f"roads={len(list(local_roads.edges())) if local_roads is not None else 0} edges", flush=True)
+            _LOCAL_DB_DATA = {"buildings": local_buildings, "water": local_water, "bridges": local_bridges, "roads": local_roads}
         else:
             _LOCAL_DB_DATA = None
     except Exception as _exc:
@@ -852,17 +852,21 @@ def fetch_city_data(
     G_roads = None
 
     if _LOCAL_DB_DATA is not None:
-        # Беремо buildings/water/bridges локально (миттєво), тільки roads — через Overpass
+        # ВСІ дані локально — Overpass не використовується
         if _LOCAL_DB_DATA.get("buildings") is not None and not _LOCAL_DB_DATA["buildings"].empty:
             gdf_buildings = _LOCAL_DB_DATA["buildings"]
         if _LOCAL_DB_DATA.get("water") is not None and not _LOCAL_DB_DATA["water"].empty:
             gdf_water = _LOCAL_DB_DATA["water"]
         if _LOCAL_DB_DATA.get("bridges") is not None and not _LOCAL_DB_DATA["bridges"].empty:
             gdf_bridges = _LOCAL_DB_DATA["bridges"]
-        # Тільки roads через Overpass
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            G_roads = executor.submit(_fetch_roads).result()
-        print(f"[LOCAL OSM DB] Used local for buildings/water/bridges, Overpass only for roads", flush=True)
+        if _LOCAL_DB_DATA.get("roads") is not None:
+            G_roads = _LOCAL_DB_DATA["roads"]
+            print(f"[LOCAL OSM DB] FULL local mode: all data from DuckDB (no Overpass calls)", flush=True)
+        else:
+            # Roads через Overpass якщо локально не побудувалось
+            print("[LOCAL OSM DB] Roads graph local fallback failed; using Overpass for roads", flush=True)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                G_roads = executor.submit(_fetch_roads).result()
     else:
         # Fallback: усе через Overpass
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
