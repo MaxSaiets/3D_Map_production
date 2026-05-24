@@ -1478,31 +1478,20 @@ def export_3mf(
         preview_parts.keys(),
         key=lambda k: NAME_ORDER.index(k.lower()) if k.lower() in NAME_ORDER else 999,
     )
-    # КРИТИЧНО: Bambu Studio розкидає окремі <object> у 3MF по столу при імпорті.
-    # Щоб брелок лишався як ЄДИНА деталь — конкатенуємо ВСІ шари у ОДИН mesh
-    # зі збереженими face_colors (multi-color через колір вершин/граней).
-    all_meshes = []
+    # Separate objects (multi-material у Bambu). Scattering вирішується тим що
+    # base тепер єдиний зв'язаний компонент (fragments cleanup у flat_plate_pipeline).
+    # Concat у один mesh створював overlapping internal faces → візуальний шум.
     for key in ordered_keys:
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
+        if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
+            name = mesh.metadata['original_name']
+        else:
+            name = key.capitalize()
         _ensure_face_colors(mesh, key)
-        all_meshes.append(mesh.copy())
-    if all_meshes:
-        try:
-            combined = trimesh.util.concatenate(all_meshes)
-            scene.add_geometry(combined, node_name="Keychain", geom_name="Keychain")
-            print(f"[3MF EXPORT] Combined {len(all_meshes)} layers into SINGLE assembled mesh "
-                  f"({len(combined.faces)} faces) — Bambu бачить як одну деталь")
-        except Exception as exc:
-            print(f"[3MF EXPORT] Concatenate failed ({exc}); fallback to separate objects")
-            for key in ordered_keys:
-                mesh = preview_parts.get(key)
-                if mesh is None or len(mesh.faces) == 0:
-                    continue
-                name = (mesh.metadata.get('original_name') if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata
-                        else key.capitalize())
-                scene.add_geometry(mesh, node_name=name, geom_name=name)
+        scene.add_geometry(mesh, node_name=name, geom_name=name)
+    print(f"[3MF EXPORT] {len(ordered_keys)} layers as separate objects (Bambu multi-material)")
 
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
     scene.export(filename)

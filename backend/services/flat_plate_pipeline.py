@@ -1857,10 +1857,10 @@ def run_flat_plate_pipeline(
         # ВАЖЛИВО: text повинен бути ВИДНИМ — тому видаляємо map content в зоні тексту.
         try:
             text_poly_carve = getattr(keychain_text_mesh, "metadata", {}).get("text_polygon") if keychain_text_mesh is not None else None
-            # Буфер 0.6мм навколо тексту — щоб трохи "повітря" по краях гліфів
+            # Маленький padding 0.2мм навколо гліфів (тонкий контур щоб не злипались)
             if text_poly_carve is not None and not text_poly_carve.is_empty:
                 try:
-                    text_padding_m = _model_mm_to_world_m(0.6, export_scale_factor)
+                    text_padding_m = _model_mm_to_world_m(0.2, export_scale_factor)
                     text_poly_carve = text_poly_carve.buffer(text_padding_m).buffer(0)
                 except Exception:
                     pass
