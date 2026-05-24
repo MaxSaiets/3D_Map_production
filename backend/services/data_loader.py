@@ -402,9 +402,40 @@ def fetch_city_data(
                     print(f"[CACHE] OK: Використано кешовані дані: {len(buildings_cached) if buildings_cached is not None and not buildings_cached.empty else 0} будівель, "
                           f"{len(water_cached) if water_cached is not None and not water_cached.empty else 0} водних об'єктів, "
                           f"{roads_count} доріг")
-                    # Виправлено: використовуємо перевірку is None замість or (GeoDataFrame не можна використовувати в булевих контекстах)
+                    # КРИТИЧНО: кеш не містить bridges → треба завжди довантажити їх.
+                    # Bridges потрібні для keychain режиму, інакше міст відсутній у моделі.
+                    buildings_ret = buildings_cached if buildings_cached is not None and not buildings_cached.empty else gpd.GeoDataFrame()
+                    try:
+                        print("[CACHE] Bridges не зберігаються в кеші — довантажую окремо...")
+                        tags_bridges = {'bridge': True}
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", DeprecationWarning)
+                            try:
+                                gdf_br = ox.features_from_bbox(bbox=padded_bbox, tags=tags_bridges)
+                            except TypeError:
+                                gdf_br = ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_bridges)
+                        if gdf_br is not None and not gdf_br.empty:
+                            gdf_br = gdf_br[gdf_br.geometry.notna()]
+                            gdf_br = gdf_br[gdf_br.geom_type.isin(["LineString", "MultiLineString"])]
+                            if "bridge" in gdf_br.columns:
+                                gdf_br = gdf_br[gdf_br["bridge"].astype(str).str.lower() != "no"]
+                            try:
+                                gdf_br = gdf_br[gdf_br.geometry.intersects(target_bbox_wgs84)]
+                            except Exception:
+                                pass
+                            if not gdf_br.empty:
+                                with warnings.catch_warnings():
+                                    warnings.simplefilter("ignore", DeprecationWarning)
+                                    try:
+                                        gdf_br = gdf_br.to_crs(target_crs) if target_crs else ox.project_gdf(gdf_br)
+                                    except AttributeError:
+                                        gdf_br = gdf_br.to_crs(target_crs) if target_crs else ox.projection.project_gdf(gdf_br)
+                                buildings_ret.attrs["bridges"] = gdf_br
+                                print(f"[CACHE] Bridges довантажено: {len(gdf_br)} ways")
+                    except Exception as exc:
+                        print(f"[CACHE] Bridge fetch failed (non-fatal): {exc}")
                     return (
-                        buildings_cached if buildings_cached is not None and not buildings_cached.empty else gpd.GeoDataFrame(),
+                        buildings_ret,
                         water_cached if water_cached is not None and not water_cached.empty else gpd.GeoDataFrame(),
                         roads_cached
                     )
