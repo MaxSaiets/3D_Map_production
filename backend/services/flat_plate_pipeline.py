@@ -700,6 +700,15 @@ def build_keychain_layout(
         content_area = content_area.buffer(0)
     except Exception:
         pass
+    # КРИТИЧНО: вирізаємо label_band з content_area щоб мапа НЕ накладалась
+    # на текст брелка (особливо коли map_height = body_height у token-mode).
+    if label_band is not None and not label_band.is_empty:
+        try:
+            content_area_clipped = content_area.difference(label_band).buffer(0)
+            if content_area_clipped is not None and not content_area_clipped.is_empty:
+                content_area = content_area_clipped
+        except Exception:
+            pass
     return {
         "base": base,
         "body": body,
@@ -991,12 +1000,19 @@ def build_keychain_label_mesh(
             continue
     if not text_geometries:
         return None
+    # ENGRAVED TEXT: повертаємо UNION гліфів (без extrude в mesh).
+    # Caller використає цей полігон щоб ВИРІЗАТИ текст з base
+    # і заповнити нижчою плитою на (base_top - depth).
+    from shapely.ops import unary_union
     try:
-        text_geometry = GeometryCollection(text_geometries)
+        text_polygon = unary_union(text_geometries).buffer(0)
     except Exception:
-        text_geometry = text_geometries[0]
+        text_polygon = text_geometries[0]
+    if text_polygon is None or text_polygon.is_empty:
+        return None
+    # Каллер вирішить: extrude як raised mesh АБО використовувати як carve mask
     combined = build_flat_layer_mesh_from_mask(
-        text_geometry,
+        text_polygon,
         bottom_z_m=bottom_z_m,
         thickness_m=thickness_m,
         color=color,
@@ -1004,6 +1020,11 @@ def build_keychain_label_mesh(
     )
     if combined is None:
         return None
+    # Прикріплюємо polygon як attribute для caller-а (engrave usage)
+    try:
+        combined.metadata["text_polygon"] = text_polygon
+    except Exception:
+        pass
     return _with_color(combined, color)
 
 
@@ -1832,12 +1853,19 @@ def run_flat_plate_pipeline(
         base_top_m=base_top_m,
     )
     if keychain_layout is not None:
+        # SPRINT 5: ВРІЗАНИЙ ТЕКСТ (engraved). Глибина = label_raise_mm (наприклад 0.5mm).
+        # 1) Будуємо text polygon (буферований на 0.4mm — щоб гліфи були чіткі)
+        # 2) Вирізаємо з body → terrain має дірки за формою тексту
+        # 3) Заповнюємо ці дірки нижчою плитою (висота base_top - text_depth)
+        # Результат: текст видно як ЗАГЛИБЛЕННЯ у тілі брелка.
+        text_depth_mm = float(getattr(request, "keychain_label_raise_mm", 0.5) or 0.5)
+        text_depth_m = _model_mm_to_world_m(text_depth_mm, export_scale_factor)
         keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),
             body_geometry=keychain_layout["body"],
             label_band_geometry=keychain_layout["label_band"],
-            bottom_z_m=base_top_m,
-            thickness_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_raise_mm", 0.45) or 0.45), export_scale_factor),
+            bottom_z_m=base_top_m - text_depth_m,  # знизу заглиблення
+            thickness_m=text_depth_m,  # тонка плита заповнює дірку
             text_height_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8), export_scale_factor),
             color=LAYER_COLORS["text"],
             stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_PRINT_FEATURE_MM) or MIN_KEYCHAIN_PRINT_FEATURE_MM), export_scale_factor),
@@ -1845,6 +1873,26 @@ def run_flat_plate_pipeline(
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
+        # ENGRAVE: вирізаємо text polygon з terrain_mesh (через base polygon difference)
+        try:
+            text_poly_carve = getattr(keychain_text_mesh, "metadata", {}).get("text_polygon") if keychain_text_mesh is not None else None
+            if text_poly_carve is not None and not text_poly_carve.is_empty:
+                # Беремо base polygon з layout і вирізаємо текст
+                base_poly_with_text_hole = keychain_layout["base"].difference(text_poly_carve).buffer(0)
+                if base_poly_with_text_hole is not None and not base_poly_with_text_hole.is_empty:
+                    # Перебудовуємо terrain з діркою під текст
+                    new_terrain = build_flat_layer_mesh_from_mask(
+                        base_poly_with_text_hole,
+                        bottom_z_m=0.0,
+                        thickness_m=base_top_m,
+                        color=LAYER_COLORS["base"],
+                        min_area_m2=0.001,
+                    )
+                    if new_terrain is not None:
+                        terrain_mesh = new_terrain
+                        print(f"[KEYCHAIN] Text ENGRAVED ({text_depth_mm:.2f}mm deep, label='{getattr(request, 'keychain_label', '')}')")
+        except Exception as exc:
+            print(f"[KEYCHAIN] Text engrave failed (fallback raised): {exc}")
 
     if keychain_layout is not None:
         layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)

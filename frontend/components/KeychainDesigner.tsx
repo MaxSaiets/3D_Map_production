@@ -446,7 +446,7 @@ function TemplateMiniature({ design, label, active }: { design: KeychainDesigner
           stroke="rgba(248,250,252,0.45)"
           strokeWidth={Math.max(design.labelStrokeMm * 0.08, 0.04)}
           paintOrder="stroke"
-          fontSize={Math.max(design.labelTextHeightMm * 0.7, 2.5)}
+          fontSize={Math.max(design.labelTextHeightMm / 0.7, 2.5)}
           fontWeight={700}
           fontFamily={design.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : design.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
           letterSpacing={design.labelFontStyle === "wide" ? 0.55 : design.labelFontStyle === "condensed" ? 0.05 : 0.28}
@@ -875,7 +875,7 @@ export function KeychainDesigner({
             stroke={previewSide === "back" ? "rgba(248,250,252,0.36)" : "rgba(248,250,252,0.58)"}
             strokeWidth={previewSide === "back" ? Math.max(value.labelStrokeMm * 0.12, 0.08) : Math.max(value.labelStrokeMm * 0.08, 0.04)}
             paintOrder="stroke"
-            fontSize={Math.max(value.labelTextHeightMm * 0.72, 2.6)}
+            fontSize={Math.max(value.labelTextHeightMm / 0.7, 2.6)}
             fontWeight={700}
             fontFamily={value.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : value.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
             letterSpacing={value.labelFontStyle === "wide" ? 0.55 : value.labelFontStyle === "condensed" ? 0.05 : 0.28}
