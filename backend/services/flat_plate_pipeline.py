@@ -1185,29 +1185,30 @@ def build_flat_building_meshes(
         if uniform_height:
             mesh = _set_mesh_height(mesh, target_height_m=max(uniform_height_m, min_building_height_m))
         elif is_keychain and max_building_height_m > 0:
-            # SPRINT 4: variable heights — більш реалістичне місто.
-            # OSM `height`/`building:levels` → реальна висота. Інакше — heuristic
-            # за площею footprint: великі будівлі (бізнес-центри/ТЦ) вищі за
-            # одноповерхові магазини. Дає виразний міський силует.
+            # SPRINT 4 v2: РЕАЛІСТИЧНІ висоти через ЛОГ-шкалу.
+            # OSM реальна висота → log-mapping у [min..max]mm щоб і 1-поверхові
+            # і хмарочоси виглядали різними і пропорційними.
+            # Real 3m (1 floor)  → ~0.65mm
+            # Real 15m (5 floors) → ~1.5mm
+            # Real 50m (15 floors) → ~2.5mm
+            # Real 150m (45 floors) → ~3.5mm
             try:
                 bz = float(mesh.bounds[0][2])
                 tz = float(mesh.bounds[1][2])
-                osm_height_m = tz - bz
+                osm_height_m = max(tz - bz, 0.1)
+                # Якщо OSM не дав height/levels — оцінка за площею
                 footprint_area_m2 = float(getattr(mesh, "area_faces", None) or 100.0)
-                # Якщо OSM явно дав height/levels — поважаємо. Інакше — heuristic.
-                if osm_height_m < 4.0:  # дефолтні 3 поверхи без явного levels тегу
-                    # Площа footprint → висота: sqrt(area) * scale → більше площа = вище
-                    # Малий будинок 50м² → 7м; великий ТЦ 5000м² → 35м;
-                    # вежа 200м² (footprint) → 14м але багатоповерхова реально
-                    est_height_m = max(6.0, min(80.0, footprint_area_m2 ** 0.45 * 1.8))
-                    target_height_m = min(max_building_height_m, _model_mm_to_world_m(
-                        max(0.65, est_height_m / 30.0 * 2.0),  # 30м реальний → 2mm модель
-                        float(export_scale_factor or scale_factor)
-                    ))
-                    target_height_m = max(target_height_m, min_building_height_m)
-                    mesh = _set_mesh_height(mesh, target_height_m=target_height_m)
-                else:
-                    mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
+                if osm_height_m < 4.0:
+                    # Heuristic: невеликі ~6m, великі ~20m, вежі-в-плані ~40m
+                    osm_height_m = max(6.0, min(60.0, footprint_area_m2 ** 0.42 * 1.5))
+                # ЛОГ-mapping у print mm: log2(height/3) * 0.5 + 0.65
+                # log2(3/3)=0 → 0.65mm; log2(12/3)=2 → 1.65mm; log2(48/3)=4 → 2.65mm
+                import math
+                target_mm = 0.65 + math.log2(max(osm_height_m / 3.0, 1.0)) * 0.5
+                target_mm = max(0.65, min(target_mm, max(max_building_height_mm or 4.0, 4.0)))
+                target_height_m = _model_mm_to_world_m(target_mm, float(export_scale_factor or scale_factor))
+                target_height_m = max(target_height_m, min_building_height_m)
+                mesh = _set_mesh_height(mesh, target_height_m=target_height_m)
             except Exception:
                 mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         elif max_building_height_m > 0:
@@ -1715,8 +1716,16 @@ def run_flat_plate_pipeline(
     # Результат: на моделі вода видна як заглиблений басейн глибиною water_depth_m.
     water_depth_m = _model_mm_to_world_m(water_layer_mm, export_scale_factor)
     water_clipped = _clip_geometry(water_mask, content_area)
+    # КРИТИЧНО: water_mask може мати ВЕЛИКІ полігони (Дніпро, озера) що
+    # тягнуться поза content_area. Robust intersection з content_area щоб
+    # не було гігантських bbox у Bambu (іноді трапляється коли relation outer
+    # не правильно сток'нувся).
     if keychain_mode and water_clipped is not None and not getattr(water_clipped, "is_empty", True) and keychain_layout is not None:
         try:
+            # STRICT intersection — обмежуємо water до площі content_area
+            water_clipped = water_clipped.intersection(keychain_layout["content_area"]).buffer(0)
+            if water_clipped.is_empty:
+                raise ValueError("water empty after strict clip")
             base_with_hole = keychain_layout["base"].difference(water_clipped).buffer(0)
             if base_with_hole is not None and not base_with_hole.is_empty:
                 new_terrain = build_flat_layer_mesh_from_mask(

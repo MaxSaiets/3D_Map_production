@@ -723,6 +723,15 @@ export function KeychainControlPanel({
         fetchEast = Math.max(fetchEast, e);
         fetchWest = Math.min(fetchWest, w);
       }
+      // PADDING: розширюємо bbox на ~60м щоб дороги/будівлі на межі мали контекст
+      // (інакше дороги «заокруглюються» на краях коли немає сусідніх сегментів).
+      const cLatRad = ((fetchNorth + fetchSouth) / 2) * Math.PI / 180;
+      const padLat = 60 / 111_320;
+      const padLon = 60 / (111_320 * Math.max(Math.cos(cLatRad), 0.2));
+      fetchNorth += padLat;
+      fetchSouth -= padLat;
+      fetchEast += padLon;
+      fetchWest -= padLon;
       const response = await api.generateModel({
         north: fetchNorth,
         south: fetchSouth,
