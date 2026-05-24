@@ -612,7 +612,11 @@ def build_keychain_layout(
     body_w_mm = max(float(body_width_mm or model_size_mm or 35.0), 24.0)
     body_h_mm = max(float(body_height_mm or (body_w_mm * source_h / max(source_w, 1e-6))), 18.0)
     map_w_mm = max(float(map_width_mm or body_w_mm), 4.0)
-    map_h_mm = max(float(map_height_mm or max(body_h_mm - label_band_height_mm, 4.0)), 4.0)
+    # ВАЖЛИВО: за замовчуванням слот мапи = ВЕСЬ body (а не body - label_band).
+    # Юзер хоче "квадрат обрізаний по межам жетона" — мапа займає всю площу,
+    # текст рендериться зверху (engraved/raised). label_band тепер лише
+    # для розміщення тексту, не "відрізає" місце від мапи.
+    map_h_mm = max(float(map_height_mm or body_h_mm), 4.0)
     # Use the real map slot width as the XY scale. The selected bbox is later
     # stretched into the slot so the generated map occupies the same rectangle
     # the user edited in the keychain preview.
