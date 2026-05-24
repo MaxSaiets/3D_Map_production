@@ -1478,20 +1478,31 @@ def export_3mf(
         preview_parts.keys(),
         key=lambda k: NAME_ORDER.index(k.lower()) if k.lower() in NAME_ORDER else 999,
     )
-    # Separate objects (multi-material у Bambu). Scattering вирішується тим що
-    # base тепер єдиний зв'язаний компонент (fragments cleanup у flat_plate_pipeline).
-    # Concat у один mesh створював overlapping internal faces → візуальний шум.
+    # CONCATENATE усі шари у ОДИН Trimesh з зберігженими face_colors.
+    # Це КРИТИЧНО — Bambu розкидає окремі objects при імпорті.
+    # Single mesh з multi-color faces = одна деталь у Bambu, кольори видно у
+    # painted preview, друк single material.
+    all_meshes = []
     for key in ordered_keys:
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
-        if hasattr(mesh, 'metadata') and 'original_name' in mesh.metadata:
-            name = mesh.metadata['original_name']
-        else:
-            name = key.capitalize()
         _ensure_face_colors(mesh, key)
-        scene.add_geometry(mesh, node_name=name, geom_name=name)
-    print(f"[3MF EXPORT] {len(ordered_keys)} layers as separate objects (Bambu multi-material)")
+        all_meshes.append(mesh.copy())
+    if all_meshes:
+        try:
+            combined = trimesh.util.concatenate(all_meshes)
+            # Single object — Bambu won't scatter
+            scene.add_geometry(combined, node_name="Keychain", geom_name="Keychain")
+            print(f"[3MF EXPORT] {len(all_meshes)} layers CONCATENATED into 1 object ({len(combined.faces)} faces) — Bambu не розкидає")
+        except Exception as exc:
+            print(f"[3MF EXPORT] Concat failed: {exc}; fallback to separate")
+            for key in ordered_keys:
+                mesh = preview_parts.get(key)
+                if mesh is None or len(mesh.faces) == 0:
+                    continue
+                name = mesh.metadata.get('original_name', key.capitalize()) if hasattr(mesh, 'metadata') else key.capitalize()
+                scene.add_geometry(mesh, node_name=name, geom_name=name)
 
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
     scene.export(filename)
