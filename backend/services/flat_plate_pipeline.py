@@ -1176,6 +1176,7 @@ def build_flat_building_meshes(
     )
 
     meshes: list[trimesh.Trimesh] = []
+    is_keychain = bool(getattr(request, "keychain_mode", False))
     for record in records:
         mesh = getattr(record, "mesh", None)
         if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
@@ -1183,6 +1184,32 @@ def build_flat_building_meshes(
         mesh = mesh.copy()
         if uniform_height:
             mesh = _set_mesh_height(mesh, target_height_m=max(uniform_height_m, min_building_height_m))
+        elif is_keychain and max_building_height_m > 0:
+            # SPRINT 4: variable heights — більш реалістичне місто.
+            # OSM `height`/`building:levels` → реальна висота. Інакше — heuristic
+            # за площею footprint: великі будівлі (бізнес-центри/ТЦ) вищі за
+            # одноповерхові магазини. Дає виразний міський силует.
+            try:
+                bz = float(mesh.bounds[0][2])
+                tz = float(mesh.bounds[1][2])
+                osm_height_m = tz - bz
+                footprint_area_m2 = float(getattr(mesh, "area_faces", None) or 100.0)
+                # Якщо OSM явно дав height/levels — поважаємо. Інакше — heuristic.
+                if osm_height_m < 4.0:  # дефолтні 3 поверхи без явного levels тегу
+                    # Площа footprint → висота: sqrt(area) * scale → більше площа = вище
+                    # Малий будинок 50м² → 7м; великий ТЦ 5000м² → 35м;
+                    # вежа 200м² (footprint) → 14м але багатоповерхова реально
+                    est_height_m = max(6.0, min(80.0, footprint_area_m2 ** 0.45 * 1.8))
+                    target_height_m = min(max_building_height_m, _model_mm_to_world_m(
+                        max(0.65, est_height_m / 30.0 * 2.0),  # 30м реальний → 2mm модель
+                        float(export_scale_factor or scale_factor)
+                    ))
+                    target_height_m = max(target_height_m, min_building_height_m)
+                    mesh = _set_mesh_height(mesh, target_height_m=target_height_m)
+                else:
+                    mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
+            except Exception:
+                mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         elif max_building_height_m > 0:
             mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         mesh.apply_translation([0.0, 0.0, float(base_top_m)])
@@ -1206,7 +1233,7 @@ def run_flat_plate_pipeline(
     if not (zone.scale_factor and float(zone.scale_factor) > 0):
         raise ValueError("flat_plate_mode requires a valid scale_factor")
 
-    task.update_status("processing", 55, "Генерація пласких шарів...")
+    task.update_status("processing", 55, "Генерую пласкі шари (вода/дороги/будівлі)...")
     scale_factor = float(zone.scale_factor)
     export_scale_factor = scale_factor
     try:
@@ -1623,6 +1650,9 @@ def run_flat_plate_pipeline(
                 min_area_m2=float(min_area_m2) * 0.4,
                 label="raw roads",
             )
+        if keychain_mode:
+            try: task.update_status("processing", 70, "Збираю карту: дороги, мости, будівлі...")
+            except Exception: pass
         # KEYCHAIN: МІНІМАЛЬНІ субтракції. Z-order забезпечує видимість шарів:
         # water=0.30mm < parks=0.50mm < roads=0.55mm < buildings=1.55mm.
         # Виглядає природньо: вода зверху видно, парк піднімається над водою,
@@ -1678,13 +1708,50 @@ def run_flat_plate_pipeline(
         water_mask = getattr(bundle, "water_final", None)
         parks_mask = getattr(bundle, "parks_final", None)
 
-    water_mesh = build_flat_layer_mesh_from_mask(
-        _clip_geometry(water_mask, content_area),
-        bottom_z_m=base_top_m,
-        thickness_m=_model_mm_to_world_m(water_layer_mm, export_scale_factor),
-        color=LAYER_COLORS["water"],
-        min_area_m2=min_area_m2,
-    )
+    # SPRINT 2: ВОДА ЯК ЗАПАДИНА (а не виступ над базою).
+    # Алгоритм: при keychain_mode рендеримо water як ЗАГЛИБЛЕННЯ
+    # 1) Перебудовуємо terrain (base) — вирізаємо water area з полігона
+    # 2) Water mesh заповнює дірку від низу до (base_top - water_depth)
+    # Результат: на моделі вода видна як заглиблений басейн глибиною water_depth_m.
+    water_depth_m = _model_mm_to_world_m(water_layer_mm, export_scale_factor)
+    water_clipped = _clip_geometry(water_mask, content_area)
+    if keychain_mode and water_clipped is not None and not getattr(water_clipped, "is_empty", True) and keychain_layout is not None:
+        try:
+            base_with_hole = keychain_layout["base"].difference(water_clipped).buffer(0)
+            if base_with_hole is not None and not base_with_hole.is_empty:
+                new_terrain = build_flat_layer_mesh_from_mask(
+                    base_with_hole,
+                    bottom_z_m=0.0,
+                    thickness_m=base_top_m,
+                    color=LAYER_COLORS["base"],
+                    min_area_m2=0.001,
+                )
+                if new_terrain is not None:
+                    terrain_mesh = new_terrain
+                    print(f"[KEYCHAIN] Base rebuilt with water depression ({water_depth_m*1000:.2f}mm deep)")
+            # Water тепер заповнює дірку до рівня нижче base_top
+            water_mesh = build_flat_layer_mesh_from_mask(
+                water_clipped,
+                bottom_z_m=0.0,
+                thickness_m=max(base_top_m - water_depth_m, 0.001),
+                color=LAYER_COLORS["water"],
+                min_area_m2=min_area_m2,
+            )
+        except Exception as exc:
+            print(f"[KEYCHAIN] Water depression failed, fallback to layer: {exc}")
+            water_mesh = build_flat_layer_mesh_from_mask(
+                water_clipped, bottom_z_m=base_top_m, thickness_m=water_depth_m,
+                color=LAYER_COLORS["water"], min_area_m2=min_area_m2,
+            )
+    else:
+        # Non-keychain або no water: класичний шар поверх
+        water_mesh = build_flat_layer_mesh_from_mask(
+            water_clipped,
+            bottom_z_m=base_top_m,
+            thickness_m=water_depth_m,
+            color=LAYER_COLORS["water"],
+            min_area_m2=min_area_m2,
+        )
     road_mesh = build_flat_layer_mesh_from_mask(
         _clip_geometry(road_mask, content_area),
         bottom_z_m=base_top_m,
@@ -1745,6 +1812,9 @@ def run_flat_plate_pipeline(
                 print(f"[KEYCHAIN] Building unwrap failed (using source coords): {exc}")
         gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, content_area)
 
+    if keychain_mode:
+        try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
+        except Exception: pass
     building_meshes = build_flat_building_meshes(
         request=request,
         scale_factor=scale_factor,
