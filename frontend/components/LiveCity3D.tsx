@@ -427,11 +427,12 @@ export function LiveCity3D({
     const cosT = Math.cos(theta);
     const sinT = Math.sin(theta);
     const mmPerM = Math.min(design.mapWidthMm / widthM, design.mapHeightMm / heightM);
-    // UNIFORM scale (cover) — без спотворення. Беремо MAX щоб контент
-    // ЗАПОВНЮВАВ слот; зайве по краях обрізається slot-clip.
+    // UNIFORM scale (CONTAIN) — без спотворення, повна карта вміщається.
+    // MIN щоб ні шматочок не вилазив за межі слота; невикористані краї
+    // будуть базового кольору (як empty padding).
     const sx = design.mapWidthMm / widthM;
     const sy = design.mapHeightMm / heightM;
-    const s = Math.max(sx, sy);  // cover behavior
+    const s = Math.min(sx, sy);  // contain behavior
     const cxSlot = design.mapXMm + design.mapWidthMm / 2;
     const cySlot = design.mapYMm + design.mapHeightMm / 2;
     return {

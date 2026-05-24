@@ -1445,12 +1445,12 @@ def run_flat_plate_pipeline(
                 step = affinity.translate(geometry, xoff=-p["cx_src"], yoff=-p["cy_src"])
                 # 2. rotate -angle (CW)
                 step = affinity.rotate(step, -p["angle"], origin=(0, 0), use_radians=False)
-                # 3. UNIFORM scale — без спотворення (квадрат лишається квадратом).
-                # Беремо MAX(sx, sy) щоб контент ЗАПОВНЮВАВ слот (як background-size:cover).
-                # Зайвий контент по краях обрізається content_area clip — це OK.
+                # 3. UNIFORM scale (CONTAIN) — без спотворення, повна карта без обрізки.
+                # MIN(sx, sy) → вся обрана зона ВЛІЗАЄ у слот; невикористані краї
+                # лишаються базовим кольором (немає content там).
                 sx = p["tgt_w"] / p["rect_w"]
                 sy = p["tgt_h"] / p["rect_h"]
-                s = max(sx, sy)  # cover — заповнюємо слот без empty borders
+                s = min(sx, sy)  # contain — повна карта без обрізки
                 step = affinity.scale(step, xfact=s, yfact=s, origin=(0, 0))
                 # 4. translate to target center
                 step = affinity.translate(step, xoff=p["tgt_cx"], yoff=p["tgt_cy"])
