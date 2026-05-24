@@ -1478,25 +1478,48 @@ def export_3mf(
         preview_parts.keys(),
         key=lambda k: NAME_ORDER.index(k.lower()) if k.lower() in NAME_ORDER else 999,
     )
-    # CONCATENATE усі шари у ОДИН Trimesh з зберігженими face_colors.
-    # Це КРИТИЧНО — Bambu розкидає окремі objects при імпорті.
-    # Single mesh з multi-color faces = одна деталь у Bambu, кольори видно у
-    # painted preview, друк single material.
-    all_meshes = []
+    # CONCATENATE усі шари у ОДИН Trimesh ВРУЧНУ — щоб зберегти face_colors.
+    # trimesh.util.concatenate ВТРАЧАЄ кольори при різних visual типах.
+    # Ми збираємо vertices/faces/colors самі.
+    all_v = []   # vertices
+    all_f = []   # faces (з offset)
+    all_c = []   # face colors
+    v_offset = 0
+    layer_stats = []
     for key in ordered_keys:
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
         _ensure_face_colors(mesh, key)
-        all_meshes.append(mesh.copy())
-    if all_meshes:
+        verts = np.asarray(mesh.vertices)
+        faces = np.asarray(mesh.faces)
+        # Витягуємо face_colors як (N, 4) uint8
         try:
-            combined = trimesh.util.concatenate(all_meshes)
-            # Single object — Bambu won't scatter
+            fc = np.asarray(mesh.visual.face_colors, dtype=np.uint8)
+            if fc.ndim == 1:
+                fc = np.tile(fc, (len(faces), 1))
+            elif len(fc) != len(faces):
+                color = COLOR_MAP.get(key.lower(), [150, 150, 150, 255])
+                fc = np.tile(color, (len(faces), 1)).astype(np.uint8)
+        except Exception:
+            color = COLOR_MAP.get(key.lower(), [150, 150, 150, 255])
+            fc = np.tile(color, (len(faces), 1)).astype(np.uint8)
+        all_v.append(verts)
+        all_f.append(faces + v_offset)
+        all_c.append(fc)
+        v_offset += len(verts)
+        layer_stats.append(f"{key}({len(faces)})")
+    if all_v:
+        try:
+            vertices = np.vstack(all_v)
+            faces = np.vstack(all_f)
+            face_colors = np.vstack(all_c)
+            combined = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
+            combined.visual = trimesh.visual.ColorVisuals(mesh=combined, face_colors=face_colors)
             scene.add_geometry(combined, node_name="Keychain", geom_name="Keychain")
-            print(f"[3MF EXPORT] {len(all_meshes)} layers CONCATENATED into 1 object ({len(combined.faces)} faces) — Bambu не розкидає")
+            print(f"[3MF EXPORT] Concatenated 1 object: {len(faces)} faces, {len(np.unique(face_colors.reshape(-1,4), axis=0))} colors. Layers: {', '.join(layer_stats)}")
         except Exception as exc:
-            print(f"[3MF EXPORT] Concat failed: {exc}; fallback to separate")
+            print(f"[3MF EXPORT] Manual concat failed: {exc}; fallback separate")
             for key in ordered_keys:
                 mesh = preview_parts.get(key)
                 if mesh is None or len(mesh.faces) == 0:
