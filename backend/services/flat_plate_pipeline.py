@@ -1747,19 +1747,8 @@ def run_flat_plate_pipeline(
             water_clipped = water_clipped.intersection(keychain_layout["content_area"]).buffer(0)
             if water_clipped.is_empty:
                 raise ValueError("water empty after strict clip")
-            base_with_hole = keychain_layout["base"].difference(water_clipped).buffer(0)
-            if base_with_hole is not None and not base_with_hole.is_empty:
-                new_terrain = build_flat_layer_mesh_from_mask(
-                    base_with_hole,
-                    bottom_z_m=0.0,
-                    thickness_m=base_top_m,
-                    color=LAYER_COLORS["base"],
-                    min_area_m2=0.001,
-                )
-                if new_terrain is not None:
-                    terrain_mesh = new_terrain
-                    print(f"[KEYCHAIN] Base rebuilt with water depression ({water_depth_m*1000:.2f}mm deep)")
-            # Water тепер заповнює дірку до рівня нижче base_top
+            # NOTE: terrain rebuild відбувається ПІЗНІШЕ комбіновано з text engrave
+            # (інакше друга rebuild перезаписує першу). Тут лише будуємо water fill mesh.
             water_mesh = build_flat_layer_mesh_from_mask(
                 water_clipped,
                 bottom_z_m=0.0,
@@ -1873,16 +1862,21 @@ def run_flat_plate_pipeline(
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
-        # ENGRAVE: вирізаємо text polygon з terrain_mesh (через base polygon difference)
+        # ENGRAVE: вирізаємо text polygon З base polygon. КРИТИЧНО: КОМБІНУЄМО
+        # з water carve (інакше друга rebuild перезапише першу і вода зникне).
         try:
             text_poly_carve = getattr(keychain_text_mesh, "metadata", {}).get("text_polygon") if keychain_text_mesh is not None else None
+            # Стартуємо з base; додаємо water hole + text hole в одну операцію
+            carve_geom = None
             if text_poly_carve is not None and not text_poly_carve.is_empty:
-                # Беремо base polygon з layout і вирізаємо текст
-                base_poly_with_text_hole = keychain_layout["base"].difference(text_poly_carve).buffer(0)
-                if base_poly_with_text_hole is not None and not base_poly_with_text_hole.is_empty:
-                    # Перебудовуємо terrain з діркою під текст
+                carve_geom = text_poly_carve
+            if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
+                carve_geom = water_clipped.union(carve_geom).buffer(0) if carve_geom is not None else water_clipped
+            if carve_geom is not None and not carve_geom.is_empty:
+                base_poly_combined = keychain_layout["base"].difference(carve_geom).buffer(0)
+                if base_poly_combined is not None and not base_poly_combined.is_empty:
                     new_terrain = build_flat_layer_mesh_from_mask(
-                        base_poly_with_text_hole,
+                        base_poly_combined,
                         bottom_z_m=0.0,
                         thickness_m=base_top_m,
                         color=LAYER_COLORS["base"],
@@ -1890,9 +1884,14 @@ def run_flat_plate_pipeline(
                     )
                     if new_terrain is not None:
                         terrain_mesh = new_terrain
-                        print(f"[KEYCHAIN] Text ENGRAVED ({text_depth_mm:.2f}mm deep, label='{getattr(request, 'keychain_label', '')}')")
+                        carves = []
+                        if text_poly_carve is not None and not text_poly_carve.is_empty:
+                            carves.append(f"text({text_depth_mm:.2f}mm)")
+                        if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
+                            carves.append(f"water({water_layer_mm:.2f}mm)")
+                        print(f"[KEYCHAIN] Base rebuilt with carves: {', '.join(carves)}")
         except Exception as exc:
-            print(f"[KEYCHAIN] Text engrave failed (fallback raised): {exc}")
+            print(f"[KEYCHAIN] Combined engrave failed: {exc}")
 
     if keychain_layout is not None:
         layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)

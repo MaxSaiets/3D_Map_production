@@ -56,7 +56,7 @@ export type KeychainTemplate = {
   design: KeychainDesignerConfig;
 };
 
-type DragTarget = "body" | "map-move" | "map-resize" | "loop" | "label";
+type DragTarget = "body" | "map-move" | "map-resize" | "loop" | "label" | "label-rotate";
 type DragSession = {
   target: DragTarget;
   start: { x: number; y: number };
@@ -597,6 +597,17 @@ export function KeychainDesigner({
       next.labelYMm = clamp(session.initial.labelYMm + localDy, 4, next.bodyHeightMm - 4);
       next.labelXMm = snapTo(next.labelXMm, next.bodyWidthMm / 2);
       next.labelYMm = snapTo(next.labelYMm, next.bodyHeightMm - next.labelBandMm / 2);
+    } else if (session.target === "label-rotate") {
+      // Кут між початковою позицією pointer та центром label, плюс
+      // кут між поточною позицією pointer та центром label — різниця = поворот.
+      const cx = session.initial.labelXMm;
+      const cy = session.initial.labelYMm;
+      const startAngle = Math.atan2(session.start.y - cy, session.start.x - cx);
+      const currentAngle = Math.atan2(point.y - cy, point.x - cx);
+      let newAngle = ((session.initial.labelAngleDeg + (currentAngle - startAngle) * 180 / Math.PI) % 360 + 360) % 360;
+      // Snap to 15° increments коли shift не утримується (просто 1° для свободи)
+      newAngle = Math.round(newAngle);
+      next.labelAngleDeg = newAngle;
     }
 
     onChange(next);
@@ -735,7 +746,22 @@ export function KeychainDesigner({
         </g>
         <g transform={`rotate(${value.layoutRotationDeg || 0} ${bodyCx} ${bodyCy})`}>
           <LoopPreview value={value} />
-          <path d={bodyPath(value)} fill="#a6926b" stroke="rgba(255,255,255,0.42)" strokeWidth={0.35} />
+          {/* Token mode: реальний отвір у body через mask (фон видно крізь нього) */}
+          {value.baseShape === "token" && (
+            <defs>
+              <mask id="tokenBodyMask">
+                <path d={bodyPath(value)} fill="white" />
+                <circle cx={value.loopXMm} cy={value.loopYMm} r={Math.max(value.loopInnerMm, 1.5)} fill="black" />
+              </mask>
+            </defs>
+          )}
+          <path
+            d={bodyPath(value)}
+            fill="#a6926b"
+            stroke="rgba(255,255,255,0.42)"
+            strokeWidth={0.35}
+            mask={value.baseShape === "token" ? "url(#tokenBodyMask)" : undefined}
+          />
           <TokenHolePreview value={value} />
           {value.rimWidthMm > 0 && (
             <path
@@ -885,6 +911,20 @@ export function KeychainDesigner({
           >
             {label || "TEXT"}
           </text>
+          {/* Rotate handle для тексту: маленьке кружальце над текстом */}
+          {(() => {
+            const handleOffset = Math.max(value.labelTextHeightMm / 0.7, 3) * 0.9 + 1.5;
+            const angle = value.labelAngleDeg * Math.PI / 180;
+            const hx = value.labelXMm + Math.sin(-angle) * handleOffset;
+            const hy = value.labelYMm - Math.cos(-angle) * handleOffset;
+            return (
+              <g onPointerDown={(event) => beginDrag(event, "label-rotate")} className="cursor-grab">
+                <line x1={value.labelXMm} y1={value.labelYMm} x2={hx} y2={hy} stroke="rgba(94,234,212,0.6)" strokeWidth={0.2} strokeDasharray="0.5 0.4" />
+                <circle cx={hx} cy={hy} r={1.4} fill="#5eead4" stroke="white" strokeWidth={0.25} />
+                <text x={hx} y={hy + 0.35} textAnchor="middle" fontSize={1.2} fill="#050a18" fontWeight={900}>↻</text>
+              </g>
+            );
+          })()}
         </g>
 
         <g fill="none" stroke="rgba(255,255,255,0.66)" strokeWidth={0.28}>
