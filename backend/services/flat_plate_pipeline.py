@@ -1223,13 +1223,12 @@ def run_flat_plate_pipeline(
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)
     keychain_mode = bool(getattr(request, "keychain_mode", False))
     if keychain_mode:
-        # Бампим товщини, щоб шари були ВИДНІ як рельєф на однокольоровому пластику.
-        # 0.22-0.32mm майже не помітно — оку треба ≥0.4mm перепад. Воду робимо
-        # найтоншою (нижче за дороги/парки/будівлі), бо вона «провалюється» візуально
-        # — інші шари виглядають як виступи над водою.
-        water_layer_mm = max(water_layer_mm, 0.30)
-        parks_layer_mm = max(parks_layer_mm, 0.50)   # парки помітніші ніж вода
-        roads_layer_mm = max(roads_layer_mm, 0.55)   # дороги ще вище
+        # Збільшені товщини для видимого рельєфу на однокольоровому пластику.
+        # Поступове наростання z для природної ієрархії:
+        # water 0.45mm → parks 0.65mm → roads 0.75mm → buildings 1.5mm+
+        water_layer_mm = max(water_layer_mm, 0.45)
+        parks_layer_mm = max(parks_layer_mm, 0.65)
+        roads_layer_mm = max(roads_layer_mm, 0.75)
 
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
@@ -1608,7 +1607,12 @@ def run_flat_plate_pipeline(
         if building_mask is not None and not getattr(building_mask, "is_empty", True) and road_mask is not None and not getattr(road_mask, "is_empty", True):
             try:
                 road_mask = _subtract_geometry(road_mask, building_mask)
-                print(f"[KEYCHAIN] Roads clipped under buildings (building has priority)")
+                # Згладжуємо мікро-зубці після subtract: opening = erosion + dilation
+                # на 0.3m → видаляє «гачки» між будинками без зміни форми.
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    smooth_m = 0.3
+                    road_mask = road_mask.buffer(-smooth_m).buffer(smooth_m).buffer(0)
+                print(f"[KEYCHAIN] Roads clipped under buildings + smoothed (no zigzag artifacts)")
             except Exception:
                 pass
         if (road_mask is None or getattr(road_mask, "is_empty", True)) and raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
@@ -1643,19 +1647,24 @@ def run_flat_plate_pipeline(
             min_area_m2=float(min_area_m2) * 0.3,
             label="parks",
         )
-        # BRIDGE: розширюємо на ту ж ширину що були widened roads, щоб
-        # геометрично злитися з road_mask і не «висіти» окремо.
-        # widen_m обчислюється нижче (для roads), тут використовуємо тіж дані.
-        if bridge_mask is not None and not getattr(bridge_mask, "is_empty", True):
+        # BRIDGE = підмножина road_mask по bridge centerlines. Гарантує
+        # 1:1 співпадіння з road network → жодних розривів.
+        # Алгоритм: bridge centerlines buffered щедро (15m radius у source meters)
+        # → перетин з road_mask = саме ті сегменти road що належать мостам.
+        if bridge_mask is not None and not getattr(bridge_mask, "is_empty", True) and road_mask is not None and not getattr(road_mask, "is_empty", True):
             try:
-                # Buffer bridge by same amount as roads widen → bridge зливається з road_mask
-                bridge_widen_m = float(min_feature_m) * 0.8  # трохи більше за road widen
-                bridge_widened = bridge_mask.buffer(bridge_widen_m, join_style=2, cap_style=2).buffer(0)
-                if not bridge_widened.is_empty:
-                    bridge_mask = bridge_widened.intersection(content_area).buffer(0)
-                    print(f"[KEYCHAIN] Bridge widened by {bridge_widen_m:.2f}m (matches road widening)")
+                # Buffer широко щоб точно покрити road_mask навколо мосту
+                bridge_buffer_m = max(float(min_feature_m) * 2.0, 8.0)  # 8m+ buffer
+                bridge_buffered = bridge_mask.buffer(bridge_buffer_m, join_style=2, cap_style=2).buffer(0)
+                # ПЕРЕТИН з road_mask: бридж = ті сегменти road які належать мостам
+                bridge_aligned = road_mask.intersection(bridge_buffered).buffer(0)
+                if not bridge_aligned.is_empty:
+                    bridge_mask = bridge_aligned
+                    print(f"[KEYCHAIN] Bridge = road_mask ∩ bridge_centerlines.buffer({bridge_buffer_m:.1f}m) — 1:1 alignment")
+                else:
+                    print(f"[KEYCHAIN] Bridge intersection empty, keeping original bridge_mask")
             except Exception as exc:
-                print(f"[KEYCHAIN] Bridge widen failed: {exc}")
+                print(f"[KEYCHAIN] Bridge alignment failed: {exc}")
         if (parks_mask is None or getattr(parks_mask, "is_empty", True)) and raw_parks_source is not None and not getattr(raw_parks_source, "is_empty", True):
             print("[KEYCHAIN] Canonical parks collapsed; retrying with raw + ultra-soft filter")
             parks_mask = _sanitize_layer_mask(
