@@ -427,9 +427,10 @@ export function LiveCity3D({
     const cosT = Math.cos(theta);
     const sinT = Math.sin(theta);
     const mmPerM = Math.min(design.mapWidthMm / widthM, design.mapHeightMm / heightM);
-    // STRETCH (anisotropic) — заповнює слот, можливе легке спотворення.
+    // COVER scale — uniform max, заповнює слот, обрізається при різній aspect
     const sx = design.mapWidthMm / widthM;
     const sy = design.mapHeightMm / heightM;
+    const s = Math.max(sx, sy);
     const cxSlot = design.mapXMm + design.mapWidthMm / 2;
     const cySlot = design.mapYMm + design.mapHeightMm / 2;
     return {
@@ -438,8 +439,8 @@ export function LiveCity3D({
         const dy = (lat - cLat) * 111_320;
         const rx = dx * cosT + dy * sinT;
         const ry = -dx * sinT + dy * cosT;
-        const mx = cxSlot + rx * sx;
-        const my = cySlot - ry * sy;
+        const mx = cxSlot + rx * s;
+        const my = cySlot - ry * s;
         return [mx, my];
       },
       mmPerM,

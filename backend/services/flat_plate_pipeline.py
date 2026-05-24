@@ -1555,15 +1555,14 @@ def run_flat_plate_pipeline(
                 step = affinity.translate(geometry, xoff=-p["cx_src"], yoff=-p["cy_src"])
                 # 2. rotate -angle (CW)
                 step = affinity.rotate(step, -p["angle"], origin=(0, 0), use_radians=False)
-                # 3. STRETCH (anisotropic) — повна карта заповнює слот.
-                # Легке спотворення aspect ratio але користувач бачить ВСЮ обрану
-                # зону у всьому слоті, без пустих країв/обрізки.
+                # 3. COVER (uniform scale + crop) — найпростіша поведінка.
+                # MAX(sx, sy) → контент ЗАВЖДИ заповнює слот без спотворення.
+                # Зайве по краях обрізається body shape (content_area).
                 sx = p["tgt_w"] / p["rect_w"]
                 sy = p["tgt_h"] / p["rect_h"]
-                # У наступних рядках використовуємо sx, sy окремо для anisotropic scale
-                s = (sx + sy) / 2  # mean — для fallback uniform; реально не вживається
-                # Anisotropic scale щоб карта заповнила весь слот
-                step = affinity.scale(step, xfact=sx, yfact=sy, origin=(0, 0))
+                s = max(sx, sy)
+                # Uniform cover scale — без спотворення, заповнює слот, обрізаєм краї
+                step = affinity.scale(step, xfact=s, yfact=s, origin=(0, 0))
                 # 4. translate to target center
                 step = affinity.translate(step, xoff=p["tgt_cx"], yoff=p["tgt_cy"])
                 return step.buffer(0)
