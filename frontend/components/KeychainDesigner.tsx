@@ -704,9 +704,36 @@ export function KeychainDesigner({
           <pattern id="keychainGrid" width="5" height="5" patternUnits="userSpaceOnUse">
             <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.25" />
           </pattern>
+          {/* Map area MASK: прямокутник мапи МІНУС label_band МІНУС token hole.
+              Так карта НЕ накладається на текст і не показується крізь отвір токена. */}
+          <mask id="keychainMapAreaMask">
+            <rect
+              x={value.mapXMm}
+              y={value.mapYMm}
+              width={value.mapWidthMm}
+              height={value.mapHeightMm}
+              fill="white"
+            />
+            {/* Виключаємо label band (текст) — обернутий прямокутник */}
+            <rect
+              x={value.labelXMm - value.labelWidthMm / 2}
+              y={value.labelYMm - value.labelBandMm / 2}
+              width={value.labelWidthMm}
+              height={value.labelBandMm}
+              fill="black"
+              transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+            />
+            {/* Виключаємо token loop hole */}
+            {value.baseShape === "token" && (
+              <circle
+                cx={value.loopXMm}
+                cy={value.loopYMm}
+                r={Math.max(value.loopInnerMm, 1.5) + 0.5}
+                fill="black"
+              />
+            )}
+          </mask>
           <clipPath id="keychainMapClip">
-            {/* Прямокутний clip — карта прямокутна (як обрано на мапі).
-                Округлення rim/корпусу не впливає на саму карту. */}
             <rect
               x={value.mapXMm}
               y={value.mapYMm}
@@ -792,7 +819,7 @@ export function KeychainDesigner({
                надрукованому брелку. */
             <g clipPath="url(#keychainInnerBodyClip)">
               <g
-                clipPath="url(#keychainMapClip)"
+                mask="url(#keychainMapAreaMask)"
                 opacity={0.98}
                 transform={`rotate(${(value.mapRotationDeg || 0) % 360} ${mapCx} ${mapCy})`}
               >
@@ -911,17 +938,19 @@ export function KeychainDesigner({
           >
             {label || "TEXT"}
           </text>
-          {/* Rotate handle для тексту: маленьке кружальце над текстом */}
+          {/* Rotate handle: великий кружок з ↻, на 6мм над текстом (далеко щоб
+              не плутати з drag-move). Drag по ньому = поворот тексту. */}
           {(() => {
-            const handleOffset = Math.max(value.labelTextHeightMm / 0.7, 3) * 0.9 + 1.5;
+            const handleOffset = Math.max(value.labelBandMm / 2 + 4.5, 5.5);
             const angle = value.labelAngleDeg * Math.PI / 180;
-            const hx = value.labelXMm + Math.sin(-angle) * handleOffset;
-            const hy = value.labelYMm - Math.cos(-angle) * handleOffset;
+            // напрям "вгору" від тексту з врахуванням поточного кута
+            const hx = value.labelXMm + Math.sin(angle) * handleOffset;
+            const hy = value.labelYMm - Math.cos(angle) * handleOffset;
             return (
-              <g onPointerDown={(event) => beginDrag(event, "label-rotate")} className="cursor-grab">
-                <line x1={value.labelXMm} y1={value.labelYMm} x2={hx} y2={hy} stroke="rgba(94,234,212,0.6)" strokeWidth={0.2} strokeDasharray="0.5 0.4" />
-                <circle cx={hx} cy={hy} r={1.4} fill="#5eead4" stroke="white" strokeWidth={0.25} />
-                <text x={hx} y={hy + 0.35} textAnchor="middle" fontSize={1.2} fill="#050a18" fontWeight={900}>↻</text>
+              <g onPointerDown={(event) => beginDrag(event, "label-rotate")} className="cursor-grab" data-testid="label-rotate-hit">
+                <line x1={value.labelXMm} y1={value.labelYMm} x2={hx} y2={hy} stroke="rgba(94,234,212,0.55)" strokeWidth={0.35} strokeDasharray="0.8 0.6" />
+                <circle cx={hx} cy={hy} r={2.4} fill="#5eead4" stroke="#050a18" strokeWidth={0.35} />
+                <text x={hx} y={hy + 0.7} textAnchor="middle" fontSize={2.6} fill="#050a18" fontWeight={900} pointerEvents="none">↻</text>
               </g>
             );
           })()}
