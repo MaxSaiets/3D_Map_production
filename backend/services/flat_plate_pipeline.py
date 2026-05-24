@@ -600,6 +600,7 @@ def build_keychain_layout(
     label_center_x_mm: Optional[float] = None,
     label_center_y_mm: Optional[float] = None,
     label_width_mm: Optional[float] = None,
+    label_angle_deg: float = 0.0,
     loop_outer_radius_mm: float,
     loop_inner_radius_mm: float,
     corner_radius_mm: float,
@@ -689,11 +690,19 @@ def build_keychain_layout(
     label_w_mm = min(max(float(label_width_mm or body_w_mm * 0.86), 8.0), body_w_mm)
     label_w = label_w_mm * layout_scale_m_per_mm
     label_h = max(label_band_h_m, 1e-6)
+    # ВРАХОВУЄМО ОБЕРТАННЯ: angle 90°/270° → band стає VERTICAL (swap dims).
+    # Інакше для token mode з rotated текстом band був горизонтальний 20×5,
+    # а текст потребував вертикальний 5×20 — gli'fs не помістились.
+    angle_normalized = abs(float(label_angle_deg or 0.0) % 180.0)
+    is_perpendicular = 45.0 < angle_normalized < 135.0
+    if is_perpendicular:
+        # Swap: текст вертикальний → band вертикальний (висота=label_w, ширина=label_h)
+        label_w, label_h = label_h, label_w
     label_band = box(
-        max(body_minx, label_center_x - label_w / 2.0),
-        max(body_miny, label_center_y - label_h / 2.0),
-        min(body_maxx, label_center_x + label_w / 2.0),
-        min(body_maxy, label_center_y + label_h / 2.0),
+        label_center_x - label_w / 2.0,
+        label_center_y - label_h / 2.0,
+        label_center_x + label_w / 2.0,
+        label_center_y + label_h / 2.0,
     )
     content_area = box(map_minx, map_miny, map_maxx, map_maxy).intersection(body)
     try:
@@ -1299,6 +1308,7 @@ def run_flat_plate_pipeline(
             label_center_x_mm=float(getattr(request, "keychain_label_center_x_mm", 0.0) or 0.0) or None,
             label_center_y_mm=float(getattr(request, "keychain_label_center_y_mm", 0.0) or 0.0) or None,
             label_width_mm=float(getattr(request, "keychain_label_width_mm", 0.0) or 0.0) or None,
+            label_angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
             loop_outer_radius_mm=float(getattr(request, "keychain_loop_outer_radius_mm", 6.5) or 6.5),
             loop_inner_radius_mm=float(getattr(request, "keychain_loop_inner_radius_mm", 3.0) or 3.0),
             corner_radius_mm=float(getattr(request, "keychain_corner_radius_mm", 4.0) or 4.0),
