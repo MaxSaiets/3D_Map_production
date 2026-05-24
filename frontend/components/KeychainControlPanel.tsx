@@ -474,8 +474,8 @@ export function KeychainControlPanel({
       },
       {
         id: "base",
-        ok: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8,
-        tone: baseThicknessMm >= 2.0 && design.rimWidthMm >= 1.0 ? "good" : baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "warn" : "bad",
+        ok: baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6,
+        tone: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6 ? "warn" : "bad",
         label: "Основа і край",
         detail: `${baseThicknessMm.toFixed(1)} мм основа, ${design.rimWidthMm.toFixed(1)} мм край`,
       },
@@ -1226,7 +1226,7 @@ export function KeychainControlPanel({
             <SliderField label="Ширина основи" valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
             <SliderField label="Висота основи" valueLabel={`${design.bodyHeightMm.toFixed(0)} мм`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
             <SliderField label="Поворот макета" valueLabel={`${design.layoutRotationDeg.toFixed(0)}°`} min={0} max={270} step={90} value={design.layoutRotationDeg} onChange={(value) => updateDesign({ layoutRotationDeg: value })} />
-            <SliderField label="Товщина основи" valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.6} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
+            <SliderField label="Товщина основи" valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.0} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
             <SliderField label={design.baseShape === "token" ? "Контрольний радіус навколо отвору" : "Зовнішній радіус петлі"} valueLabel={`${design.loopOuterMm.toFixed(1)} мм`} min={design.baseShape === "token" ? 2.4 : 4.5} max={design.baseShape === "token" ? 6 : 11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
             <SliderField
               label="Отвір під кільце"

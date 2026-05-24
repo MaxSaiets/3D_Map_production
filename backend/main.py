@@ -220,10 +220,12 @@ def _apply_default_canonical_bundle_if_needed(
 def _compute_safe_base_thickness_mm(request: "GenerationRequest") -> float:
     if bool(getattr(request, "flat_plate_mode", False)):
         try:
-            floor = 1.6 if bool(getattr(request, "keychain_mode", False)) else 0.2
+            # Знижено з 1.6 → 1.0мм. 1.0мм = 5 шарів × 0.2мм, мінімально жорстко
+            # для брелка але можливо. Користувач сам відповідальний за warping.
+            floor = 1.0 if bool(getattr(request, "keychain_mode", False)) else 0.2
             return max(float(request.terrain_base_thickness_mm), floor)
         except Exception:
-            return 1.6 if bool(getattr(request, "keychain_mode", False)) else 0.2
+            return 1.0 if bool(getattr(request, "keychain_mode", False)) else 0.2
     try:
         min_required_base_mm = max(
             0.2,
