@@ -784,7 +784,7 @@ export function KeychainControlPanel({
         keychain_loop_inner_radius_mm: design.loopInnerMm,
         keychain_corner_radius_mm: design.cornerRadiusMm,
         keychain_label_band_height_mm: design.labelBandMm,
-        keychain_label_raise_mm: 0.45,
+        keychain_label_raise_mm: 0.8,
         keychain_label_text_height_mm: design.labelTextHeightMm,
         keychain_label_width_mm: design.labelWidthMm,
         keychain_label_stroke_mm: design.labelStrokeMm,

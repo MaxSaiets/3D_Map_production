@@ -1842,12 +1842,9 @@ def run_flat_plate_pipeline(
         base_top_m=base_top_m,
     )
     if keychain_layout is not None:
-        # SPRINT 5: ВРІЗАНИЙ ТЕКСТ (engraved). Глибина = label_raise_mm (наприклад 0.5mm).
-        # 1) Будуємо text polygon (буферований на 0.4mm — щоб гліфи були чіткі)
-        # 2) Вирізаємо з body → terrain має дірки за формою тексту
-        # 3) Заповнюємо ці дірки нижчою плитою (висота base_top - text_depth)
-        # Результат: текст видно як ЗАГЛИБЛЕННЯ у тілі брелка.
-        text_depth_mm = float(getattr(request, "keychain_label_raise_mm", 0.5) or 0.5)
+        # SPRINT 5: ВРІЗАНИЙ ТЕКСТ (engraved). Глибина суттєва щоб видно було.
+        # Дефолт 0.8мм — ~4 шари FDM, виразне заглиблення на однокольоровому пластику.
+        text_depth_mm = float(getattr(request, "keychain_label_raise_mm", 0.8) or 0.8)
         text_depth_m = _model_mm_to_world_m(text_depth_mm, export_scale_factor)
         keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),

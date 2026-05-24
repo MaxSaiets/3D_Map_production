@@ -405,6 +405,19 @@ def fetch_city_data(
                     # КРИТИЧНО: кеш не містить bridges → треба завжди довантажити їх.
                     # Bridges потрібні для keychain режиму, інакше міст відсутній у моделі.
                     buildings_ret = buildings_cached if buildings_cached is not None and not buildings_cached.empty else gpd.GeoDataFrame()
+                    # Якщо є локальна БД — bridges йдуть звідти через main flow.
+                    # Skip Overpass bridge fetch (інакше падає padded_bbox not defined).
+                    try:
+                        from services.local_osm_db import is_available as _local_db_avail
+                        if _local_db_avail():
+                            print("[CACHE] Skip bridge Overpass fetch — local DB will provide")
+                            return (
+                                buildings_ret,
+                                water_cached if water_cached is not None and not water_cached.empty else gpd.GeoDataFrame(),
+                                roads_cached
+                            )
+                    except Exception:
+                        pass
                     try:
                         print("[CACHE] Bridges не зберігаються в кеші — довантажую окремо...")
                         tags_bridges = {'bridge': True}
