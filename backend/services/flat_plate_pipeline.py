@@ -1493,6 +1493,8 @@ def run_flat_plate_pipeline(
 
     if keychain_layout and source_bounds and target_bounds:
         map_rotation_deg = float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0)
+        print(f"[DEBUG TARGET_BOUNDS] target_bounds={target_bounds}  source_bounds={source_bounds}")
+        print(f"[DEBUG TARGET_BOUNDS] body_w_mm={getattr(request, 'keychain_body_width_mm', 0)} body_h_mm={getattr(request, 'keychain_body_height_mm', 0)} map_w_mm={getattr(request, 'keychain_map_width_mm', 0)} map_h_mm={getattr(request, 'keychain_map_height_mm', 0)}")
 
         # KEYCHAIN UNWRAP: повернута рамка (zone_polygon_local) — CCW поворот rect
         # на map_rotation_deg. Щоб упакувати її ВМІСТ у axis-aligned слот, треба:
