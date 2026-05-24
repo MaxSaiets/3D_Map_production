@@ -53,7 +53,12 @@ const bboxKey = (b: Bounds) =>
 async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<CityData> {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
   // Додаємо: area:highway=pedestrian (площі типу Майдан), place=square, landuse=pedestrian
-  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian|footway|path|cycleway)$"](${bbox});way["highway"="pedestrian"]["area"="yes"](${bbox});way["place"~"^(square|plaza)$"](${bbox});way["natural"~"^(water|wood|grassland|scrub|heath)$"](${bbox});way["waterway"](${bbox});way["leisure"~"^(park|garden|pitch|playground|nature_reserve)$"](${bbox});way["landuse"~"^(grass|forest|recreation_ground|meadow|village_green|cemetery|allotments|orchard|pedestrian)$"](${bbox});way["man_made"="bridge"](${bbox});way["bridge"="yes"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["highway"="pedestrian"](${bbox});relation["landuse"="forest"](${bbox});node["amenity"="fountain"](${bbox});node["natural"="tree"](${bbox}););out geom;`;
+  // ЛИШЕ ті теги що реально друкуються у 3MF backend:
+  // - buildings, water polygons, parks polygons
+  // - roads ТІЛЬКИ значимої ширини (без footway/path/cycleway — вони відсіються
+  //   фільтром min_feature 0.5mm у backend, тож показувати їх у превʼю — обман)
+  // - bridges (з road network)
+  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["natural"~"^(water|wood)$"](${bbox});way["waterway"~"^(riverbank|dock)$"](${bbox});way["leisure"~"^(park|garden|nature_reserve)$"](${bbox});way["landuse"~"^(forest|grass|cemetery)$"](${bbox});way["bridge"="yes"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["landuse"="forest"](${bbox}););out geom;`;
   let lastErr: any = null;
   for (const url of OVERPASS_URLS) {
     try {
@@ -106,11 +111,15 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           const w = widths[String(tags.highway)] || 8;
           bridges.push({ points, widthM: w });
         } else if (tags.highway) {
+          // ТІЛЬКИ дороги що реально друкуються — без footway/path/cycleway.
+          // Ці тонкі стежки в 0.4mm соплі неможливо надрукувати, у backend їх
+          // дропає фільтр min_feature_m, тож і в превʼю не показуємо (інакше
+          // обман — у моделі їх не буде).
           const widths: Record<string, number> = {
             motorway: 14, trunk: 12, primary: 10, secondary: 8, tertiary: 7,
             residential: 5, unclassified: 5, service: 3.5, pedestrian: 4,
-            footway: 2, path: 2, cycleway: 2.5,
           };
+          if (!widths[String(tags.highway)]) return;  // пропускаємо footway/path/etc
           const kind: RoadRec["kind"] =
             ["motorway", "trunk", "primary", "secondary"].includes(String(tags.highway)) ? "major"
             : ["residential", "tertiary", "unclassified"].includes(String(tags.highway)) ? "minor" : "service";
