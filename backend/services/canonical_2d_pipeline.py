@@ -700,11 +700,9 @@ def prepare_canonical_2d_stage(
     # 1.0mm model == 5.0m world at scale 0.2 (standard 1 km zone):
     #   • fills junction triangle gaps and parallel-lane gaps ≤ 5m
     #   • orphan_hole (0.5mm = 2.5m) fills small interior intersection holes
-    # KEYCHAIN: agresivнiший gap-fill — на масштабі 20+ m/mm дрібні розриви
-    # дають фрагментовану мережу. Підіймаємо до 2.5mm щоб junction-кільця та
-    # розриви біля мостів заповнювались.
-    is_keychain_pipeline = bool(getattr(request, "keychain_mode", False))
-    road_gap_fill_mm_effective = 2.5 if is_keychain_pipeline else 1.0
+    # KEYCHAIN: НЕ агресивно merge'имо — користувач хоче чисту мережу без
+    # «заливки» junction-трикутників. Використовуємо мінімальний gap-fill.
+    road_gap_fill_mm_effective = 1.0
     building_exclusion_for_roads = _expand_building_mask_for_roads(
         building_geometry.building_union_local,
         scale_factor=zone.scale_factor,
