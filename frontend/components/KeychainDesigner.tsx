@@ -113,8 +113,8 @@ function fitAfterBodyResize(next: KeychainDesignerConfig) {
   next.mapRotationDeg = ((Math.round((next.mapRotationDeg || 0) / 15) * 15) % 360 + 360) % 360;
   next.labelXMm = clamp(next.labelXMm, 4, Math.max(4, next.bodyWidthMm - 4));
   next.labelYMm = clamp(next.labelYMm, 4, Math.max(4, next.bodyHeightMm - 4));
-  next.labelWidthMm = clamp(next.labelWidthMm, 8, next.bodyWidthMm);
-  next.labelTextHeightMm = clamp(next.labelTextHeightMm, 2.4, 8.5);
+  next.labelWidthMm = clamp(next.labelWidthMm, 6, next.bodyWidthMm);
+  next.labelTextHeightMm = clamp(next.labelTextHeightMm, 1.6, 8.5);
   next.labelStrokeMm = clamp(next.labelStrokeMm, 0.4, 2.0);
   clampLoopToBody(next);
   return next;
@@ -140,11 +140,11 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   mapHeightMm: 40,
   mapRotationDeg: 0,
   labelXMm: 17.5,
-  labelYMm: 49.5,
+  labelYMm: 51.0,
   labelWidthMm: 30,
-  labelBandMm: 9.5,
-  labelTextHeightMm: 4.2,
-  labelStrokeMm: 0.75,
+  labelBandMm: 5.0,   // мінімальна смуга (висота літер + 1.2мм padding)
+  labelTextHeightMm: 3.2,
+  labelStrokeMm: 0.55,
   labelFontStyle: "block",
   labelAngleDeg: 0,
   rimWidthMm: 1.2,

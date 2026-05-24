@@ -254,14 +254,16 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
     mapRotationDeg: ((Math.round((next.mapRotationDeg || 0) / 15) * 15) % 360 + 360) % 360,
     labelXMm: Math.min(Math.max(next.labelXMm, 4), Math.max(bodyWidthMm - 4, 4)),
     labelYMm: Math.min(Math.max(next.labelYMm, 4), Math.max(bodyHeightMm - 4, 4)),
-    labelWidthMm: Math.min(Math.max(next.labelWidthMm, 8), bodyWidthMm),
-    // Auto-clamp to print-safe minimums for 0.4mm nozzle:
-    //   - text height: 3.2 mm (8× nozzle, мінімум читання)
-    //   - stroke: 0.6 mm (1.5× nozzle, надійний друк)
-    // Дозволяємо вищі значення, але нижче не пускаємо — так уникаємо
-    // червоних попереджень. Користувач взагалі не побачить "поганий текст".
-    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 3.2), 8.5),
-    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.6), 2.0),
+    labelWidthMm: Math.min(Math.max(next.labelWidthMm, 6), bodyWidthMm),
+    // Знижено пороги: дозволяємо дрібний текст (від 1.6мм height, 0.4мм stroke).
+    // FDM 0.4мм друк може зробити текст 1.6мм висотою якщо stroke ≥ 0.4мм.
+    // Користувач сам відповідальний за читабельність — попередження "warn",
+    // але не блокуємо вибір.
+    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 1.6), 8.5),
+    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.4), 2.0),
+    // labelBandMm не клампимо вище мінімуму 3мм — користувач може зробити
+    // тонку смугу навколо тексту якщо хоче.
+    labelBandMm: Math.min(Math.max(next.labelBandMm, 3), 18),
     loopOuterMm,
     loopInnerMm,
     loopXMm: tokenMode
@@ -1150,9 +1152,9 @@ export function KeychainControlPanel({
             Поточний текст: {design.labelTextHeightMm.toFixed(1)} мм висота, {design.labelStrokeMm.toFixed(2)} мм штрих, стиль {design.labelFontStyle}.
           </div>
           <div className="mt-4 space-y-3">
-            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={12} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={3.0} max={7.2} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
-            <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.55} max={1.6} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
           </div>
         </section>
 
@@ -1249,7 +1251,7 @@ export function KeychainControlPanel({
               onChange={(value) => updateDesign({ loopInnerMm: design.baseShape === "token" ? Math.min(value, design.loopOuterMm - 0.8) : Math.min(value, design.loopOuterMm - 1.4) })}
             />
             <SliderField label="Заокруглення кутів" valueLabel={`${design.cornerRadiusMm.toFixed(1)} мм`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
-            <SliderField label="Смуга під напис" valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={5} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
+            <SliderField label="Смуга під напис" valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={3} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
             <SliderField label="Ширина бокової грані" valueLabel={`${design.rimWidthMm.toFixed(1)} мм`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
             <SliderField label="Висота бокової грані" valueLabel={`${design.rimHeightMm.toFixed(2)} мм`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
           </div>
@@ -1314,8 +1316,8 @@ export function KeychainControlPanel({
                 ))}
               </div>
             </div>
-            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={8} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={2.4} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
             <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Шрифт для друку</div>
