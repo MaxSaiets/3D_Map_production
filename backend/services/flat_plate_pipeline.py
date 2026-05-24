@@ -1479,24 +1479,27 @@ def run_flat_plate_pipeline(
         # єдиний reliable spoob детектити мости.
         bridge_mask = None
         try:
-            # ДЖЕРЕЛО 1 (надійне): окремий gdf_bridges з data_loader._fetch_bridges
-            # ДЖЕРЕЛО 2 (fallback): graph_to_gdfs(G_roads) — може не мати bridge column
+            # ПРІОРИТЕТ: extract з G_roads (геометрія співпадає з road_mask 1:1)
+            # FALLBACK: окремий _fetch_bridges якщо graph не має bridge column
             local_edges = None
-            gdf_b = getattr(source.gdf_buildings, "attrs", {}).get("bridges") if source.gdf_buildings is not None else None
-            if gdf_b is not None and not gdf_b.empty:
-                # Reset index, keep highway/bridge columns
-                local_edges = gdf_b.reset_index(drop=True)
-                if "bridge" not in local_edges.columns:
-                    local_edges["bridge"] = "yes"
-                print(f"[KEYCHAIN] Using dedicated bridge fetcher: {len(local_edges)} bridge ways")
-            else:
-                G_roads_obj = getattr(source, "G_roads", None)
-                if G_roads_obj is not None:
-                    try:
-                        import osmnx as _ox
-                        local_edges = _ox.graph_to_gdfs(G_roads_obj, nodes=False)
-                    except Exception:
-                        local_edges = None
+            G_roads_obj = getattr(source, "G_roads", None)
+            if G_roads_obj is not None:
+                try:
+                    import osmnx as _ox
+                    candidate = _ox.graph_to_gdfs(G_roads_obj, nodes=False)
+                    if "bridge" in candidate.columns:
+                        # Bridges є у графі — використовуємо їх (геометрія = road_mask)
+                        local_edges = candidate
+                        print(f"[KEYCHAIN] Bridges from G_roads (1:1 with road_mask)")
+                except Exception:
+                    pass
+            if local_edges is None:
+                gdf_b = getattr(source.gdf_buildings, "attrs", {}).get("bridges") if source.gdf_buildings is not None else None
+                if gdf_b is not None and not gdf_b.empty:
+                    local_edges = gdf_b.reset_index(drop=True)
+                    if "bridge" not in local_edges.columns:
+                        local_edges["bridge"] = "yes"
+                    print(f"[KEYCHAIN] Using dedicated bridge fetcher fallback: {len(local_edges)} ways")
             if local_edges is not None and not local_edges.empty and "bridge" in local_edges.columns:
                 # bridge column має значення "yes", "viaduct", "movable", etc. Тільки no/NaN = не міст.
                 bridge_rows = local_edges[local_edges["bridge"].notna() & (local_edges["bridge"].astype(str).str.lower() != "no")]
@@ -1591,20 +1594,23 @@ def run_flat_plate_pipeline(
                 water_source = raw_water_source
         water_mask = _clip_geometry(_xform(water_source), content_area)
 
-        # ПРІОРИТЕТ: roads STAY full, buildings get clipped where they overlap.
-        # Юзер хоче щоб дороги були неперервні і видимі — як у головної мапи
-        # (full_generation_pipeline). Так само як на реальній мапі: будівлі
-        # не "сидять" на проїжджій частині, тому будемо обрізати building_mask
-        # по road_mask нижче. road_mask залишається цілий.
+        # ПРІОРИТЕТ: buildings STAY full, roads get clipped under buildings.
+        # Юзер: «треба зробити щоб дорога обрізалась під будинками щоб вона
+        # там не робилась». Тобто будівлі залишаються повними прямокутниками,
+        # дороги обходять їх «вирізами».
         road_mask = _sanitize_layer_mask(
             road_mask,
             min_feature_m=min_feature_m,
             min_area_m2=min_area_m2,
             label="roads",
         )
-        # Building footprints — мінус road area (clip buildings out of roads).
-        if road_mask is not None and not getattr(road_mask, "is_empty", True):
-            building_mask = _subtract_geometry(building_mask, road_mask)
+        # Roads - building footprint → дорога не лізе під будинок.
+        if building_mask is not None and not getattr(building_mask, "is_empty", True) and road_mask is not None and not getattr(road_mask, "is_empty", True):
+            try:
+                road_mask = _subtract_geometry(road_mask, building_mask)
+                print(f"[KEYCHAIN] Roads clipped under buildings (building has priority)")
+            except Exception:
+                pass
         if (road_mask is None or getattr(road_mask, "is_empty", True)) and raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
             print("[KEYCHAIN] Roads collapsed after sanitize; retrying with raw road source + soft filter")
             road_mask = _sanitize_layer_mask(

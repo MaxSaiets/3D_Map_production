@@ -465,10 +465,6 @@ export function LiveCity3D({
           {printable.water.map((pts, i) => (
             <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
           ))}
-          {/* Пішохідні площі — світло-лавандовий як на OSM-тайлах */}
-          {printable.plazas.map((pts, i) => (
-            <path key={`pl-${i}`} d={pointsToPath(pts)} fill="#d4cce0" />
-          ))}
           {printable.roads.map((r, i) => (
             <path
               key={`r-${i}`}
@@ -495,22 +491,8 @@ export function LiveCity3D({
           {printable.buildings.map((pts, i) => (
             <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
           ))}
-          {/* Дерева — маленькі зелені крапки */}
-          {printable.trees.map((t, i) => (
-            <circle key={`t-${i}`} cx={t.center[0]} cy={t.center[1]} r={t.rMm} fill="#6b9c52" />
-          ))}
-          {/* Фонтани — сині кружки з білим обведенням */}
-          {printable.fountains.map((f, i) => (
-            <circle
-              key={`f-${i}`}
-              cx={f.center[0]}
-              cy={f.center[1]}
-              r={f.rMm}
-              fill="#5a91c4"
-              stroke="#ffffff"
-              strokeWidth={0.3}
-            />
-          ))}
+          {/* Прибрано: дерева, фонтани, плази — не друкуються у 3MF.
+              Превʼю показує тільки те що буде в моделі. */}
         </g>
       </svg>
       {loading && (
