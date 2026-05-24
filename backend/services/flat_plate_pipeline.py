@@ -1438,17 +1438,20 @@ def run_flat_plate_pipeline(
                     target_bounds=target_bounds,
                     angle_deg=map_rotation_deg,
                 )
-            # UNWRAP: 1) translate to origin 2) rotate -angle 3) scale 4) translate to target
+            # UNWRAP: 1) translate to origin 2) rotate -angle 3) UNIFORM scale 4) translate to target
             try:
                 p = unwrap_params
                 # 1. центр зони → (0,0)
                 step = affinity.translate(geometry, xoff=-p["cx_src"], yoff=-p["cy_src"])
                 # 2. rotate -angle (CW)
                 step = affinity.rotate(step, -p["angle"], origin=(0, 0), use_radians=False)
-                # 3. scale: rect_w → tgt_w, rect_h → tgt_h
+                # 3. UNIFORM scale — без спотворення (квадрат лишається квадратом).
+                # Беремо MAX(sx, sy) щоб контент ЗАПОВНЮВАВ слот (як background-size:cover).
+                # Зайвий контент по краях обрізається content_area clip — це OK.
                 sx = p["tgt_w"] / p["rect_w"]
                 sy = p["tgt_h"] / p["rect_h"]
-                step = affinity.scale(step, xfact=sx, yfact=sy, origin=(0, 0))
+                s = max(sx, sy)  # cover — заповнюємо слот без empty borders
+                step = affinity.scale(step, xfact=s, yfact=s, origin=(0, 0))
                 # 4. translate to target center
                 step = affinity.translate(step, xoff=p["tgt_cx"], yoff=p["tgt_cy"])
                 return step.buffer(0)

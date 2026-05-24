@@ -427,17 +427,21 @@ export function LiveCity3D({
     const cosT = Math.cos(theta);
     const sinT = Math.sin(theta);
     const mmPerM = Math.min(design.mapWidthMm / widthM, design.mapHeightMm / heightM);
+    // UNIFORM scale (cover) — без спотворення. Беремо MAX щоб контент
+    // ЗАПОВНЮВАВ слот; зайве по краях обрізається slot-clip.
+    const sx = design.mapWidthMm / widthM;
+    const sy = design.mapHeightMm / heightM;
+    const s = Math.max(sx, sy);  // cover behavior
+    const cxSlot = design.mapXMm + design.mapWidthMm / 2;
+    const cySlot = design.mapYMm + design.mapHeightMm / 2;
     return {
       lonLatToMm: (lon: number, lat: number): [number, number] => {
-        // Локальні метри відносно центру зони
         const dx = (lon - cLon) * mPerDegLng;
         const dy = (lat - cLat) * 111_320;
-        // Інверсія повороту рамки: CW rotation на θ (= CCW на -θ)
         const rx = dx * cosT + dy * sinT;
         const ry = -dx * sinT + dy * cosT;
-        // rx ∈ [-widthM/2, widthM/2] для точок усередині зони → слот mm
-        const mx = design.mapXMm + design.mapWidthMm * (rx / widthM + 0.5);
-        const my = design.mapYMm + design.mapHeightMm * (0.5 - ry / heightM);
+        const mx = cxSlot + rx * s;
+        const my = cySlot - ry * s;  // флип y (SVG)
         return [mx, my];
       },
       mmPerM,
