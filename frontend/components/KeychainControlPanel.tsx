@@ -474,8 +474,10 @@ export function KeychainControlPanel({
       },
       {
         id: "base",
-        ok: baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6,
-        tone: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6 ? "warn" : "bad",
+        // OK = можна друкувати (matched backend floor 1.0mm).
+        // Тонкі брелки можуть гнутись/зламатись, але це вибір користувача.
+        ok: baseThicknessMm >= 1.0 && design.rimWidthMm >= 0.4,
+        tone: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6 ? "warn" : "warn",
         label: "Основа і край",
         detail: `${baseThicknessMm.toFixed(1)} мм основа, ${design.rimWidthMm.toFixed(1)} мм край`,
       },
