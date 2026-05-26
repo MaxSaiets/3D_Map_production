@@ -708,7 +708,11 @@ def build_keychain_layout(
         label_center_x + label_w / 2.0,
         label_center_y + label_h / 2.0,
     )
-    content_area = box(map_minx, map_miny, map_maxx, map_maxy).intersection(body)
+    # ВАЖЛИВО: content_area = ВЕСЬ body (а не map_slot ∩ body).
+    # Це означає: карта завжди заповнює всю площу жетона, обрізається лише
+    # формою body (oval/capsule/tag/rounded). Текст накладається зверху як
+    # raised relief — він не "вирізає" місце з карти, просто стоїть зверху.
+    content_area = body
     try:
         content_area = content_area.buffer(0)
     except Exception:
@@ -725,7 +729,9 @@ def build_keychain_layout(
         "loop_hole": inner_hole,
         "source_bbox": box(minx, miny, maxx, maxy),
         "body_reference_xy_m": (body_maxx - body_minx, body_maxy - body_miny),
-        "map_target_bounds": (map_minx, map_miny, map_maxx, map_maxy),
+        # map_target_bounds = ВЕСЬ body bbox (не лише slot rect). Це гарантує
+        # що COVER scale заповнює всю площу жетона, обрізається формою body.
+        "map_target_bounds": (body_minx, body_miny, body_maxx, body_maxy),
         "layout_scale_m_per_mm": layout_scale_m_per_mm,
         "export_size_mm": export_size_mm,
     }
