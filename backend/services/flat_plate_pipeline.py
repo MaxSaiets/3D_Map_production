@@ -1447,7 +1447,8 @@ def run_flat_plate_pipeline(
         if rim_width_m > 0:
             try:
                 inner_base = keychain_layout["base"].buffer(-rim_width_m, join_style=1)
-                clipped_content = keychain_layout["map_slot_area"].intersection(inner_base)
+                # Карта обмежена ВСІМ inner_base (body мінус rim), а не slot rect
+                clipped_content = inner_base
                 if clipped_content is not None and not clipped_content.is_empty:
                     content_area = clipped_content.buffer(0)
                     keychain_layout["content_area"] = content_area
