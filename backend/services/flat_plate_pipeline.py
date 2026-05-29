@@ -659,7 +659,9 @@ def build_keychain_layout(
         body_w_mm + loop_margin_mm,
     )
     loop_center_y_mm_safe = min(
-        max(float(loop_center_y_mm if loop_center_y_mm is not None else -loop_outer_radius_mm * 0.58), -loop_margin_mm),
+        # DEFAULT: петля ВТОПЛЕНА в тіло (центр на outerR+0.5mm нижче верху),
+        # отвір по центру зверху. Раніше було -outerR*0.58 (стирчала назовні).
+        max(float(loop_center_y_mm if loop_center_y_mm is not None else (loop_outer_radius_mm + 0.5)), -loop_margin_mm),
         body_h_mm + loop_margin_mm,
     )
     loop_center_x = loop_center_x_mm_safe * layout_scale_m_per_mm
@@ -715,6 +717,32 @@ def build_keychain_layout(
         label_center_x + label_w / 2.0,
         label_center_y + label_h / 2.0,
     )
+    # CLEAR BAND: орієнтований прямокутник під текстом (для очистки карти).
+    # Будуємо з СПРАВЖНІХ (не свопнутих) розмірів напису + невеликий відступ,
+    # і ОБЕРТАЄМО на label_angle_deg → точно слідує за позицією/кутом тексту.
+    # Карта (дороги/парки/будівлі/вода) вирізається в цій зоні, щоб напис
+    # стояв на чистому фоні (юзер: «обрізати карту вокруг текста»).
+    clear_margin_m = _model_mm_to_world_m(1.2, export_scale)
+    clear_w = float(label_w_mm) * layout_scale_m_per_mm + 2.0 * clear_margin_m
+    clear_h = float(label_band_h_m) + 2.0 * clear_margin_m
+    label_clear_band = box(
+        label_center_x - clear_w / 2.0,
+        label_center_y - clear_h / 2.0,
+        label_center_x + clear_w / 2.0,
+        label_center_y + clear_h / 2.0,
+    )
+    if label_angle_deg:
+        try:
+            label_clear_band = affinity.rotate(
+                label_clear_band, float(label_angle_deg),
+                origin=(label_center_x, label_center_y), use_radians=False,
+            )
+        except Exception:
+            pass
+    try:
+        label_clear_band = label_clear_band.intersection(body).buffer(0)
+    except Exception:
+        pass
     # ВАЖЛИВО: content_area = ВЕСЬ body (а не map_slot ∩ body).
     # Це означає: карта завжди заповнює всю площу жетона, обрізається лише
     # формою body (oval/capsule/tag/rounded). Текст накладається зверху як
@@ -733,6 +761,7 @@ def build_keychain_layout(
         "content_area": content_area,
         "map_slot_area": box(map_minx, map_miny, map_maxx, map_maxy),
         "label_band": label_band,
+        "label_clear_band": label_clear_band,
         "loop_hole": inner_hole,
         "source_bbox": box(minx, miny, maxx, maxy),
         "body_reference_xy_m": (body_maxx - body_minx, body_maxy - body_miny),
@@ -984,21 +1013,58 @@ def _ttf_text_polygons(text: str, height_m: float, font_family: str = "DejaVu Sa
             continue
         scaled = [((x - offset_x) * scale, (y - offset_y) * scale) for x, y in poly_pts]
         try:
-            p = _Poly(scaled).buffer(0)
-            if not p.is_empty:
+            p = _Poly(scaled)
+            if not p.is_valid:
+                p = p.buffer(0)
+            if p is not None and not p.is_empty and p.area > 0:
                 rings.append(p)
         except Exception:
             continue
     if not rings:
         return []
-    # Union для обробки внутрішніх дірок (літера O, A тощо)
-    try:
-        merged = unary_union(rings)
-        if hasattr(merged, "geoms"):
-            return list(merged.geoms)
-        return [merged]
-    except Exception:
+    # EVEN-ODD FILL: кільце O/A/P/R/B складається з ЗОВНІШНЬОГО контуру та
+    # ВНУТРІШНЬОГО (counter). to_polygons() повертає їх окремими кільцями.
+    # Раніше ми робили unary_union(filled_rings) — внутрішній «лічильник»
+    # заповнювався суцільним диском і ДІРКА зникала (літери зливались).
+    # Тут визначаємо вкладеність кожного кільця: парна глибина = тіло літери,
+    # непарна = дірка (counter). Будуємо Polygon(shell, holes).
+    indexed = sorted(rings, key=lambda g: g.area, reverse=True)
+    reps = [g.representative_point() for g in indexed]
+    depth = []
+    for i, g in enumerate(indexed):
+        d = 0
+        for j, q in enumerate(indexed):
+            if i == j:
+                continue
+            # q більший і містить точку g → g вкладений у q
+            if q.area > g.area and q.contains(reps[i]):
+                d += 1
+        depth.append(d)
+    result: list[BaseGeometry] = []
+    for si, shell in enumerate(indexed):
+        if depth[si] % 2 != 0:
+            continue  # це дірка — обробляється як hole свого shell
+        holes = []
+        for j, inner in enumerate(indexed):
+            if j == si:
+                continue
+            # пряма дірка цього shell: глибина+1 і міститься всередині
+            if depth[j] == depth[si] + 1 and shell.contains(reps[j]):
+                try:
+                    holes.append(list(inner.exterior.coords))
+                except Exception:
+                    pass
+        try:
+            poly = _Poly(list(shell.exterior.coords), holes)
+            if not poly.is_valid:
+                poly = poly.buffer(0)
+            if poly is not None and not poly.is_empty:
+                result.append(poly)
+        except Exception:
+            result.append(shell)
+    if not result:
         return rings
+    return result
 
 
 def build_keychain_label_mesh(
@@ -1040,10 +1106,33 @@ def build_keychain_label_mesh(
                 if min_stroke > 0:
                     natural_stroke = 0.16 * float(text_height_m)
                     grow = (min_stroke - natural_stroke) * 0.5
-                    # Не дилейтимо надміру: cap на 0.18 × cap height щоб літери не злипались.
-                    grow = min(max(grow, 0.0), 0.18 * float(text_height_m))
+                    # Не дилейтимо надміру: cap на 0.12 × cap height щоб counters не закрились.
+                    grow = min(max(grow, 0.0), 0.12 * float(text_height_m))
                     if grow > 1e-9:
+                        # COUNTER-SAFE дилейт: buffer(+grow) товщає штрихи, але
+                        # ЗАКРИВАЄ внутрішні дірки (counters A/P/R/O/B). Тому
+                        # після дилейту ПОВТОРНО прорізаємо counters (трохи
+                        # ерозовані), щоб вони лишались відкритими.
+                        from shapely.ops import unary_union as _uu2
+                        holes = []
+                        for g in (text_polygon.geoms if hasattr(text_polygon, "geoms") else [text_polygon]):
+                            try:
+                                for interior in g.interiors:
+                                    hp = Polygon(interior)
+                                    if hp.is_valid and not hp.is_empty:
+                                        holes.append(hp)
+                            except Exception:
+                                continue
                         thickened = text_polygon.buffer(grow, join_style=1, cap_style=1).buffer(0)
+                        if holes:
+                            try:
+                                holes_union = _uu2(holes)
+                                # Counter ерозуємо лише наполовину grow → лишається видимим.
+                                counters = holes_union.buffer(-grow * 0.5).buffer(0)
+                                if counters is not None and not counters.is_empty:
+                                    thickened = thickened.difference(counters).buffer(0)
+                            except Exception:
+                                pass
                         if thickened is not None and not thickened.is_empty:
                             text_polygon = thickened
             except Exception:
@@ -1421,6 +1510,10 @@ def run_flat_plate_pipeline(
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)
     keychain_mode = bool(getattr(request, "keychain_mode", False))
     if keychain_mode:
+        # DEFAULT база жетона = 1.5мм (міцна основа під рельєф). Юзер:
+        # «по дефолту довжину основи зроби 1.5мм». Поважаємо більше значення,
+        # якщо користувач явно задав товщу базу.
+        base_thickness_mm = max(base_thickness_mm, 1.5)
         # Збільшені товщини для видимого рельєфу на однокольоровому пластику.
         # Поступове наростання z для природної ієрархії:
         # water 0.45mm → parks 0.65mm → roads 0.75mm → buildings 1.5mm+
@@ -1899,12 +1992,34 @@ def run_flat_plate_pipeline(
         water_mask = getattr(bundle, "water_final", None)
         parks_mask = getattr(bundle, "parks_final", None)
 
-    # ВОДА FLUSH (на рівні землі, БЕЗ западини).
-    # Юзер: "вода не повинна врізатись всередину, має бути в один рівень із землею".
-    # Алгоритм keychain:
-    # 1) Перебудовуємо terrain (base) — вирізаємо water area з полігона (для кольору)
-    # 2) Water mesh заповнює дірку на ПОВНУ висоту бази (0 → base_top)
-    # Результат: верх води = верх землі (один рівень), відрізняється лише кольором.
+    # ОЧИЩЕННЯ КАРТИ ПІД ТЕКСТОМ: вирізаємо орієнтований label_clear_band з усіх
+    # map-шарів, щоб напис стояв на ЧИСТОМУ фоні (юзер: «обрізається карта вокруг
+    # текста»). Band слідує за позицією/кутом напису → коректно при move/rotate.
+    label_clear_band = None
+    if keychain_mode and keychain_layout is not None:
+        label_clear_band = keychain_layout.get("label_clear_band")
+        if label_clear_band is not None and not getattr(label_clear_band, "is_empty", True):
+            try:
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    road_mask = _subtract_geometry(road_mask, label_clear_band)
+                if parks_mask is not None and not getattr(parks_mask, "is_empty", True):
+                    parks_mask = _subtract_geometry(parks_mask, label_clear_band)
+                if water_mask is not None and not getattr(water_mask, "is_empty", True):
+                    water_mask = _subtract_geometry(water_mask, label_clear_band)
+                print("[KEYCHAIN] Map layers cleared under label band (clean text background)")
+            except Exception as exc:
+                print(f"[KEYCHAIN] Label band map-clear failed: {exc}")
+
+    # ВОДА = ОДИН ВЕРХНІЙ ШАР, врівень із землею (НЕ на всю глибину).
+    # Юзер: "вода важається до кінця моделі з іншої сторони — треба тільки один
+    # шар". Раніше water заповнювала 0 → base_top (вся товщина) і її було видно
+    # знизу/збоку наскрізь. Тепер:
+    #   • water_mesh (синій): тонкий ВЕРХНІЙ зріз (base_top - water_depth → base_top),
+    #     верх співпадає з землею → flush.
+    #   • water_plug_mesh (колір бази): заповнює НИЖНЮ частину вирізаної дірки
+    #     (0 → base_top - water_depth), щоб знизу був колір бази, а не вода.
+    # Результат: один шар води зверху, решта глибини — база.
+    water_plug_mesh: Optional[trimesh.Trimesh] = None
     water_depth_m = _model_mm_to_world_m(water_layer_mm, export_scale_factor)
     water_clipped = _clip_geometry(water_mask, content_area)
     # КРИТИЧНО: water_mask може мати ВЕЛИКІ полігони (Дніпро, озера) що
@@ -1917,18 +2032,29 @@ def run_flat_plate_pipeline(
             water_clipped = water_clipped.intersection(keychain_layout["content_area"]).buffer(0)
             if water_clipped.is_empty:
                 raise ValueError("water empty after strict clip")
-            # FLUSH: вода на повну висоту бази (0 → base_top), верх співпадає з землею.
+            water_bottom_m = max(base_top_m - water_depth_m, 0.0)
+            # Тонкий верхній шар води (flush з землею)
             water_mesh = build_flat_layer_mesh_from_mask(
                 water_clipped,
-                bottom_z_m=0.0,
-                thickness_m=base_top_m,
+                bottom_z_m=water_bottom_m,
+                thickness_m=base_top_m - water_bottom_m,
                 color=LAYER_COLORS["water"],
                 min_area_m2=min_area_m2,
             )
+            # Заглушка з кольором бази під водою (щоб не було наскрізної води)
+            if water_bottom_m > 1e-6:
+                water_plug_mesh = build_flat_layer_mesh_from_mask(
+                    water_clipped,
+                    bottom_z_m=0.0,
+                    thickness_m=water_bottom_m,
+                    color=LAYER_COLORS["base"],
+                    min_area_m2=min_area_m2,
+                )
         except Exception as exc:
-            print(f"[KEYCHAIN] Water flush build failed, fallback to layer: {exc}")
+            print(f"[KEYCHAIN] Water single-layer build failed, fallback: {exc}")
             water_mesh = build_flat_layer_mesh_from_mask(
-                water_clipped, bottom_z_m=0.0, thickness_m=base_top_m,
+                water_clipped, bottom_z_m=max(base_top_m - water_depth_m, 0.0),
+                thickness_m=min(water_depth_m, base_top_m),
                 color=LAYER_COLORS["water"], min_area_m2=min_area_m2,
             )
     else:
@@ -1998,7 +2124,16 @@ def run_flat_plate_pipeline(
                 print(f"[KEYCHAIN] Buildings transformed through unwrap: {len(gdf_buildings_local)} remaining")
             except Exception as exc:
                 print(f"[KEYCHAIN] Building unwrap failed (using source coords): {exc}")
-        gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, content_area)
+        # Будівлі також прибираємо з-під напису (clean text background).
+        building_clip_area = content_area
+        if keychain_mode and label_clear_band is not None and not getattr(label_clear_band, "is_empty", True):
+            try:
+                reduced = content_area.difference(label_clear_band).buffer(0)
+                if reduced is not None and not reduced.is_empty:
+                    building_clip_area = reduced
+            except Exception:
+                building_clip_area = content_area
+        gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, building_clip_area)
 
     if keychain_mode:
         try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
@@ -2139,6 +2274,7 @@ def run_flat_plate_pipeline(
                 ("Rim", keychain_rim_mesh),
                 ("Text", keychain_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
+                ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
             )
             if item[1] is not None
         ],

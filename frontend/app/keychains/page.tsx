@@ -40,24 +40,24 @@ const Preview3D = dynamic(
 );
 
 const CITIES: Record<string, { center: [number, number]; label: string; defaultText: string }> = {
-  Kyiv: { center: [50.4501, 30.5234], label: "Київ", defaultText: "KYIV MAP" },
-  Khmelnytskyi: { center: [49.42, 26.98], label: "Хмельницький", defaultText: "KHMEL MAP" },
-  Lviv: { center: [49.8397, 24.0297], label: "Львів", defaultText: "LVIV MAP" },
-  Odesa: { center: [46.4825, 30.7233], label: "Одеса", defaultText: "ODESA MAP" },
-  Dnipro: { center: [48.4647, 35.0462], label: "Дніпро", defaultText: "DNIPRO MAP" },
-  Kharkiv: { center: [49.9935, 36.2304], label: "Харків", defaultText: "KHARKIV MAP" },
+  Kyiv: { center: [50.4501, 30.5234], label: "Київ", defaultText: "KYIV" },
+  Khmelnytskyi: { center: [49.42, 26.98], label: "Хмельницький", defaultText: "KHMELNYTSKYI" },
+  Lviv: { center: [49.8397, 24.0297], label: "Львів", defaultText: "LVIV" },
+  Odesa: { center: [46.4825, 30.7233], label: "Одеса", defaultText: "ODESA" },
+  Dnipro: { center: [48.4647, 35.0462], label: "Дніпро", defaultText: "DNIPRO" },
+  Kharkiv: { center: [49.9935, 36.2304], label: "Харків", defaultText: "KHARKIV" },
   Vinnytsia: { center: [49.2331, 28.4682], label: "Вінниця", defaultText: "VINNYTSIA" },
   Ternopil: { center: [49.5535, 25.5948], label: "Тернопіль", defaultText: "TERNOPIL" },
-  IvanoFrankivsk: { center: [48.9226, 24.7111], label: "Івано-Франківськ", defaultText: "IF MAP" },
+  IvanoFrankivsk: { center: [48.9226, 24.7111], label: "Івано-Франківськ", defaultText: "IVANO-FRANKIVSK" },
   Chernihiv: { center: [51.4982, 31.2893], label: "Чернігів", defaultText: "CHERNIHIV" },
-  Manual: { center: [49.0, 31.0], label: "Інше / вручну", defaultText: "CITY MAP" },
+  Manual: { center: [49.0, 31.0], label: "Інше / вручну", defaultText: "CITY" },
 };
 
 type MobileTab = "map" | "settings" | "design";
 
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
-  const [label, setLabel] = useState("KYIV MAP");
+  const [label, setLabel] = useState("KYIV");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const [sidePreview, setSidePreview] = useState<"life" | "slicer" | "model3d">("life");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
@@ -149,7 +149,7 @@ export default function KeychainsPage() {
                   onChange={(event) => {
                     const nextKey = event.target.value;
                     setCurrentCityKey(nextKey);
-                    setLabel(CITIES[nextKey]?.defaultText ?? "CITY MAP");
+                    setLabel(CITIES[nextKey]?.defaultText ?? "CITY");
                   }}
                   className="mt-1 min-h-[32px] w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
                 >

@@ -150,7 +150,7 @@ export function KeychainLifePreview({
             fontWeight="800"
             transform={`rotate(${design.labelAngleDeg || 0} ${labelLeft} ${labelTop})`}
           >
-            {(label || "CITY MAP").slice(0, 28)}
+            {(label || "CITY").slice(0, 28)}
           </text>
         </g>
       </svg>

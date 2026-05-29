@@ -606,7 +606,9 @@ export function KeychainControlPanel({
   const centerLoop = () => {
     updateDesign({
       loopXMm: design.bodyWidthMm / 2,
-      loopYMm: -Math.max(design.loopOuterMm * 0.58, 3.2),
+      // ВТОПЛЕНА петля: центр на (outerR + 0.5)mm нижче верху → кільце повністю
+      // всередині тіла, отвір по центру зверху, нічого не стирчить.
+      loopYMm: Math.max(design.loopOuterMm + 0.5, 3.5),
       loopAngleDeg: 0,
     });
     setActiveSection("product");
@@ -1021,8 +1023,8 @@ export function KeychainControlPanel({
               cornerRadiusMm: 15,
               baseShape: "token",
               loopStyle: "round",
-              loopXMm: 4.5,
-              loopYMm: 15,
+              loopXMm: 27.5,
+              loopYMm: 5.0,
               loopOuterMm: 2.8,
               loopInnerMm: 1.5,
               mapXMm: 0,
@@ -1039,7 +1041,7 @@ export function KeychainControlPanel({
               rimWidthMm: 0.9,
               rimHeightMm: 0.35,
             })} />
-            <ChoiceButton label="Центр. вушко" active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && design.loopYMm < 0} onClick={centerLoop} />
+            <ChoiceButton label="Центр. вушко" active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && design.loopYMm > 0} onClick={centerLoop} />
             <ChoiceButton label="Side loop" active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
           </div>
           <div className="mt-4">
@@ -1120,7 +1122,7 @@ export function KeychainControlPanel({
           <input
             value={label}
             onChange={(event) => onLabelChange(event.target.value.toUpperCase().slice(0, 28))}
-            placeholder="KYIV MAP"
+            placeholder="KYIV"
             className="mt-4 w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
           />
           <div className="mt-4 grid grid-cols-3 gap-2">
