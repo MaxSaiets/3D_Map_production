@@ -1141,9 +1141,17 @@ def build_keychain_label_mesh(
             t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
             text_w = t_maxx - t_minx
             text_h = t_maxy - t_miny
-            # Якщо ширина переповнює — scale down щоб fit у max_width
+            # FIT у band по ОБОХ вимірах (ширина І висота), зберігаючи пропорції,
+            # ТІЛЬКИ зменшуємо. Без height-fit текст з великою висотою (або після
+            # повороту) вилазив за межі жетона і займав усю площу (юзер: «помилки
+            # із текстом» — напис гігантський). Тепер напис гарантовано вміщається
+            # у свою смугу, як у превʼю.
+            fit_scale = 1.0
             if text_w > max_width:
-                fit_scale = max_width / text_w
+                fit_scale = min(fit_scale, max_width / text_w)
+            if text_h > max_height:
+                fit_scale = min(fit_scale, max_height / text_h)
+            if fit_scale < 1.0:
                 text_polygon = affinity.scale(text_polygon, xfact=fit_scale, yfact=fit_scale, origin=(t_minx, t_miny))
                 t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
                 text_w = t_maxx - t_minx
