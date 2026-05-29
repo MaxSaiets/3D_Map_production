@@ -29,6 +29,13 @@ LAYER_COLORS = {
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
+# Мінімальна товщина штриха тексту для FDM 0.4мм сопла. Research (Mandarin3D,
+# JLC3DP, Bambu wiki): надійний друкований штрих ≥2× діаметра сопла = 0.8мм,
+# інакше тонкі частини літер не пропечатуються. Тонкі гліфи дилейтимо до цього.
+MIN_KEYCHAIN_TEXT_STROKE_MM = 0.8
+# Оптимальна висота піднятого (embossed) тексту = кратна висоті шару. 0.6мм =
+# 3 шари по 0.2мм — чисті межі зміни кольору в multi-color 3MF.
+KEYCHAIN_TEXT_RAISE_MM = 0.6
 
 
 _FONT_5X7 = {
@@ -1022,6 +1029,25 @@ def build_keychain_label_mesh(
         if ttf_polys:
             from shapely.ops import unary_union as _uu
             text_polygon = _uu(ttf_polys).buffer(0)
+            # STROKE THICKENING для FDM-друку: тонкі штрихи bold-гліфів можуть бути
+            # вужчими за надійний друкований мінімум (≥0.8мм при соплі 0.4мм).
+            # Природний штрих DejaVu Bold ≈ 0.16 × cap height. Якщо він менший за
+            # потрібний min_stroke — дилейтимо контур на половину різниці з кожного
+            # боку (round join), щоб довести тонкі частини до друкованого мінімуму,
+            # не зливаючи сусідні літери. Research: Mandarin3D / JLC3DP / Bambu wiki.
+            try:
+                min_stroke = float(min_stroke_m or 0.0)
+                if min_stroke > 0:
+                    natural_stroke = 0.16 * float(text_height_m)
+                    grow = (min_stroke - natural_stroke) * 0.5
+                    # Не дилейтимо надміру: cap на 0.18 × cap height щоб літери не злипались.
+                    grow = min(max(grow, 0.0), 0.18 * float(text_height_m))
+                    if grow > 1e-9:
+                        thickened = text_polygon.buffer(grow, join_style=1, cap_style=1).buffer(0)
+                        if thickened is not None and not thickened.is_empty:
+                            text_polygon = thickened
+            except Exception:
+                pass
             # Bbox тексту після рендеру
             t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
             text_w = t_maxx - t_minx
@@ -1859,11 +1885,12 @@ def run_flat_plate_pipeline(
         water_mask = getattr(bundle, "water_final", None)
         parks_mask = getattr(bundle, "parks_final", None)
 
-    # SPRINT 2: ВОДА ЯК ЗАПАДИНА (а не виступ над базою).
-    # Алгоритм: при keychain_mode рендеримо water як ЗАГЛИБЛЕННЯ
-    # 1) Перебудовуємо terrain (base) — вирізаємо water area з полігона
-    # 2) Water mesh заповнює дірку від низу до (base_top - water_depth)
-    # Результат: на моделі вода видна як заглиблений басейн глибиною water_depth_m.
+    # ВОДА FLUSH (на рівні землі, БЕЗ западини).
+    # Юзер: "вода не повинна врізатись всередину, має бути в один рівень із землею".
+    # Алгоритм keychain:
+    # 1) Перебудовуємо terrain (base) — вирізаємо water area з полігона (для кольору)
+    # 2) Water mesh заповнює дірку на ПОВНУ висоту бази (0 → base_top)
+    # Результат: верх води = верх землі (один рівень), відрізняється лише кольором.
     water_depth_m = _model_mm_to_world_m(water_layer_mm, export_scale_factor)
     water_clipped = _clip_geometry(water_mask, content_area)
     # КРИТИЧНО: water_mask може мати ВЕЛИКІ полігони (Дніпро, озера) що
@@ -1876,19 +1903,18 @@ def run_flat_plate_pipeline(
             water_clipped = water_clipped.intersection(keychain_layout["content_area"]).buffer(0)
             if water_clipped.is_empty:
                 raise ValueError("water empty after strict clip")
-            # NOTE: terrain rebuild відбувається ПІЗНІШЕ комбіновано з text engrave
-            # (інакше друга rebuild перезаписує першу). Тут лише будуємо water fill mesh.
+            # FLUSH: вода на повну висоту бази (0 → base_top), верх співпадає з землею.
             water_mesh = build_flat_layer_mesh_from_mask(
                 water_clipped,
                 bottom_z_m=0.0,
-                thickness_m=max(base_top_m - water_depth_m, 0.001),
+                thickness_m=base_top_m,
                 color=LAYER_COLORS["water"],
                 min_area_m2=min_area_m2,
             )
         except Exception as exc:
-            print(f"[KEYCHAIN] Water depression failed, fallback to layer: {exc}")
+            print(f"[KEYCHAIN] Water flush build failed, fallback to layer: {exc}")
             water_mesh = build_flat_layer_mesh_from_mask(
-                water_clipped, bottom_z_m=base_top_m, thickness_m=water_depth_m,
+                water_clipped, bottom_z_m=0.0, thickness_m=base_top_m,
                 color=LAYER_COLORS["water"], min_area_m2=min_area_m2,
             )
     else:
@@ -1972,7 +1998,7 @@ def run_flat_plate_pipeline(
     )
     if keychain_layout is not None:
         # RAISED TEXT — текст підіймається над базою як рельєф (попередня логіка).
-        text_raise_mm = float(getattr(request, "keychain_label_raise_mm", 0.5) or 0.5)
+        text_raise_mm = float(getattr(request, "keychain_label_raise_mm", KEYCHAIN_TEXT_RAISE_MM) or KEYCHAIN_TEXT_RAISE_MM)
         text_raise_m = _model_mm_to_world_m(text_raise_mm, export_scale_factor)
         keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),
@@ -1982,9 +2008,9 @@ def run_flat_plate_pipeline(
             thickness_m=text_raise_m,             # піднятий рельєф
             text_height_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8), export_scale_factor),
             color=LAYER_COLORS["text"],
-            stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_PRINT_FEATURE_MM) or MIN_KEYCHAIN_PRINT_FEATURE_MM), export_scale_factor),
+            stroke_width_m=_model_mm_to_world_m(float(getattr(request, "keychain_label_stroke_mm", MIN_KEYCHAIN_TEXT_STROKE_MM) or MIN_KEYCHAIN_TEXT_STROKE_MM), export_scale_factor),
             angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
-            min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_PRINT_FEATURE_MM, export_scale_factor),
+            min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
         )
         # Залишаємо тільки water depression carve (без text engrave)
@@ -2110,4 +2136,5 @@ def run_flat_plate_pipeline(
         include_print_package=False,
         completion_message="Пласка layered plate модель готова!",
         file_basename=file_basename,
+        repair_meshes=not keychain_mode,
     )

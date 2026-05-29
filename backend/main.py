@@ -493,10 +493,10 @@ class GenerationRequest(BaseModel):
     keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
     keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
-    keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
-    keychain_label_text_height_mm: float = Field(default=4.2, ge=1.0, le=12.0)
+    keychain_label_raise_mm: float = Field(default=0.6, ge=0.0, le=3.0)
+    keychain_label_text_height_mm: float = Field(default=4.2, ge=2.0, le=12.0)
     keychain_label_width_mm: float = Field(default=30.0, ge=4.0, le=180.0)
-    keychain_label_stroke_mm: float = Field(default=0.65, ge=0.4, le=3.0)
+    keychain_label_stroke_mm: float = Field(default=0.9, ge=0.8, le=3.0)
     keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
@@ -1375,10 +1375,10 @@ class ZoneGenerationRequest(BaseModel):
     keychain_loop_inner_radius_mm: float = Field(default=3.0, ge=1.5, le=12.0)
     keychain_corner_radius_mm: float = Field(default=4.0, ge=0.0, le=16.0)
     keychain_label_band_height_mm: float = Field(default=9.0, ge=0.0, le=30.0)
-    keychain_label_raise_mm: float = Field(default=0.45, ge=0.0, le=3.0)
-    keychain_label_text_height_mm: float = Field(default=4.2, ge=1.0, le=12.0)
+    keychain_label_raise_mm: float = Field(default=0.6, ge=0.0, le=3.0)
+    keychain_label_text_height_mm: float = Field(default=4.2, ge=2.0, le=12.0)
     keychain_label_width_mm: float = Field(default=30.0, ge=4.0, le=180.0)
-    keychain_label_stroke_mm: float = Field(default=0.65, ge=0.4, le=3.0)
+    keychain_label_stroke_mm: float = Field(default=0.9, ge=0.8, le=3.0)
     keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
@@ -1688,10 +1688,10 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
             keychain_loop_inner_radius_mm=float(getattr(request, "keychain_loop_inner_radius_mm", 3.0)),
             keychain_corner_radius_mm=float(getattr(request, "keychain_corner_radius_mm", 4.0)),
             keychain_label_band_height_mm=float(getattr(request, "keychain_label_band_height_mm", 9.0)),
-            keychain_label_raise_mm=float(getattr(request, "keychain_label_raise_mm", 0.45)),
+            keychain_label_raise_mm=float(getattr(request, "keychain_label_raise_mm", 0.6)),
             keychain_label_text_height_mm=float(getattr(request, "keychain_label_text_height_mm", 4.2)),
             keychain_label_width_mm=float(getattr(request, "keychain_label_width_mm", 30.0)),
-            keychain_label_stroke_mm=float(getattr(request, "keychain_label_stroke_mm", 0.65)),
+            keychain_label_stroke_mm=float(getattr(request, "keychain_label_stroke_mm", 0.9)),
             keychain_label_font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
             keychain_rim_width_mm=float(getattr(request, "keychain_rim_width_mm", 1.2)),
             keychain_rim_height_mm=float(getattr(request, "keychain_rim_height_mm", 0.45)),

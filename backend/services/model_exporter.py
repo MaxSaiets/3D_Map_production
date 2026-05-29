@@ -1341,12 +1341,12 @@ def export_stl(
         repair_meshes,
     )
 
-    if "roads" in parts:
+    if repair_meshes and "roads" in parts:
         try:
             parts["roads"] = repair_road_export_mesh(parts["roads"])
         except Exception:
             pass
-    
+
     result_files = {}
     
     # 1. Export Main Combined (Legacy behavior + convenience)
@@ -1431,7 +1431,10 @@ def export_3mf(
         repair_meshes,
     )
 
-    if "roads" in parts:
+    # Коли repair_meshes=False (keychain) — НЕ чіпаємо дороги, щоб геометрія
+    # фінального 3MF співпадала 1:1 з GLB-превʼю. repair_road_export_mesh робить
+    # fill_holes/quantize/merge_vertices — це зварює сусідні сегменти доріг.
+    if repair_meshes and "roads" in parts:
         try:
             parts["roads"] = repair_road_export_mesh(parts["roads"])
         except Exception:
@@ -1707,6 +1710,7 @@ def export_scene(
     preserve_xy: bool = False,
     rotate_to_ground: bool = True,  # Default True for vertical orientation
     extra_mesh_items: Optional[List[Tuple[str, trimesh.Trimesh]]] = None,
+    repair_meshes: bool = True,
 ):
 
     items: List[Tuple[str, trimesh.Trimesh]] = []
@@ -1793,6 +1797,7 @@ def export_scene(
             reference_xy_m,
             preserve_z,
             preserve_xy,
+            repair_meshes,
         )
 
     if format.lower() == "3mf":
@@ -1806,6 +1811,7 @@ def export_scene(
             reference_xy_m,
             preserve_z,
             preserve_xy,
+            repair_meshes,
         )
 
     if format.lower() == "glb":

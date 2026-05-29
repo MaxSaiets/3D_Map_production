@@ -114,8 +114,9 @@ function fitAfterBodyResize(next: KeychainDesignerConfig) {
   next.labelXMm = clamp(next.labelXMm, 4, Math.max(4, next.bodyWidthMm - 4));
   next.labelYMm = clamp(next.labelYMm, 4, Math.max(4, next.bodyHeightMm - 4));
   next.labelWidthMm = clamp(next.labelWidthMm, 6, next.bodyWidthMm);
-  next.labelTextHeightMm = clamp(next.labelTextHeightMm, 1.6, 8.5);
-  next.labelStrokeMm = clamp(next.labelStrokeMm, 0.4, 2.0);
+  // Print-safe мінімуми (FDM 0.4мм сопло): висота літер ≥2мм, штрих ≥0.8мм (2× сопла).
+  next.labelTextHeightMm = clamp(next.labelTextHeightMm, 2.0, 8.5);
+  next.labelStrokeMm = clamp(next.labelStrokeMm, 0.8, 2.0);
   clampLoopToBody(next);
   return next;
 }
@@ -144,7 +145,7 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   labelWidthMm: 30,
   labelBandMm: 5.0,   // мінімальна смуга (висота літер + 1.2мм padding)
   labelTextHeightMm: 3.2,
-  labelStrokeMm: 0.55,
+  labelStrokeMm: 0.9,  // print-safe штрих ≥0.8мм (2× сопла 0.4мм)
   labelFontStyle: "block",
   labelAngleDeg: 0,
   rimWidthMm: 1.2,
@@ -159,31 +160,31 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
     design: DEFAULT_KEYCHAIN_DESIGN,
   },
   {
-    id: "token-45",
-    name: "Token 45 x 26",
-    description: "Жетон з лівим отвором Ø3 мм і капсульною основою.",
+    id: "token-55",
+    name: "Token 55 x 30",
+    description: "Стандартний жетон 55×30 з лівим отвором Ø3 мм і капсульною основою.",
     design: {
       ...DEFAULT_KEYCHAIN_DESIGN,
-      bodyWidthMm: 45,
-      bodyHeightMm: 26,
-      cornerRadiusMm: 13,
+      bodyWidthMm: 55,
+      bodyHeightMm: 30,
+      cornerRadiusMm: 15,
       baseShape: "token",
       loopStyle: "round",
       loopXMm: 4.5,
-      loopYMm: 13,
+      loopYMm: 15,
       loopOuterMm: 2.8,
       loopInnerMm: 1.5,
       mapXMm: 0,
       mapYMm: 0,
-      mapWidthMm: 45,
-      mapHeightMm: 26,
+      mapWidthMm: 55,
+      mapHeightMm: 30,
       mapRotationDeg: 0,
-      labelXMm: 26,
-      labelYMm: 21.8,
-      labelWidthMm: 28,
+      labelXMm: 32,
+      labelYMm: 25.2,
+      labelWidthMm: 34,
       labelBandMm: 6,
-      labelTextHeightMm: 3.1,
-      labelStrokeMm: 0.7,
+      labelTextHeightMm: 3.2,
+      labelStrokeMm: 0.9,
       rimWidthMm: 0.9,
       rimHeightMm: 0.35,
     },

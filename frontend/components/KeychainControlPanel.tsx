@@ -259,8 +259,8 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
     // FDM 0.4мм друк може зробити текст 1.6мм висотою якщо stroke ≥ 0.4мм.
     // Користувач сам відповідальний за читабельність — попередження "warn",
     // але не блокуємо вибір.
-    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 1.6), 8.5),
-    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.4), 2.0),
+    labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 2.0), 8.5),
+    labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.8), 2.0),
     // labelBandMm не клампимо вище мінімуму 3мм — користувач може зробити
     // тонку смугу навколо тексту якщо хоче.
     labelBandMm: Math.min(Math.max(next.labelBandMm, 3), 18),
@@ -1015,26 +1015,27 @@ export function KeychainControlPanel({
           <div className="mt-4 grid grid-cols-2 gap-2">
             <ChoiceButton label="35 x 55" active={Math.round(design.bodyWidthMm) === 35 && Math.round(design.bodyHeightMm) === 55} onClick={resetToStandard} />
             <ChoiceButton label="Макс. карта" active={design.mapWidthMm >= design.bodyWidthMm - 5} onClick={maximizeMapArea} />
-            <ChoiceButton label="Жетон 45 x 26" active={design.baseShape === "token"} onClick={() => updateDesign({
-              bodyWidthMm: 45,
-              bodyHeightMm: 26,
-              cornerRadiusMm: 13,
+            <ChoiceButton label="Жетон 55 x 30" active={design.baseShape === "token"} onClick={() => updateDesign({
+              bodyWidthMm: 55,
+              bodyHeightMm: 30,
+              cornerRadiusMm: 15,
               baseShape: "token",
               loopStyle: "round",
               loopXMm: 4.5,
-              loopYMm: 13,
+              loopYMm: 15,
               loopOuterMm: 2.8,
               loopInnerMm: 1.5,
               mapXMm: 0,
               mapYMm: 0,
-              mapWidthMm: 45,
-              mapHeightMm: 26,
+              mapWidthMm: 55,
+              mapHeightMm: 30,
               mapRotationDeg: 0,
-              labelXMm: 26,
-              labelYMm: 21.8,
-              labelWidthMm: 28,
+              labelXMm: 32,
+              labelYMm: 25.2,
+              labelWidthMm: 34,
               labelBandMm: 6,
-              labelTextHeightMm: 3.1,
+              labelTextHeightMm: 3.2,
+              labelStrokeMm: 0.9,
               rimWidthMm: 0.9,
               rimHeightMm: 0.35,
             })} />

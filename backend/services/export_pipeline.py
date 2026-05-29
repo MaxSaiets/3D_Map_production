@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 import json
@@ -307,6 +307,7 @@ def export_generation_outputs(
     completion_message: str = "РњРѕРґРµР»СЊ РіРѕС‚РѕРІР°!",
     file_basename: Optional[str] = None,
     extra_mesh_items: Optional[list[Tuple[str, trimesh.Trimesh]]] = None,
+    repair_meshes: bool = True,
 ) -> ExportPipelineResult:
     primary_format = request.export_format.lower()
     # Descriptive filename: model_<grid>_<mm>_<row>_<col>.<ext>, fallback to task_id.
@@ -353,6 +354,7 @@ def export_generation_outputs(
         preserve_xy=preserve_xy,
         rotate_to_ground=False,
         extra_mesh_items=extra_mesh_items,
+        repair_meshes=repair_meshes,
     )
 
     if parts_from_main and isinstance(parts_from_main, dict) and primary_format == "stl":
@@ -381,6 +383,7 @@ def export_generation_outputs(
             preserve_xy=preserve_xy,
             rotate_to_ground=False,
             extra_mesh_items=extra_mesh_items,
+            repair_meshes=repair_meshes,
         )
         stl_parts_from_preview = stl_parts if isinstance(stl_parts, dict) else None
         if stl_parts and isinstance(stl_parts, dict):
