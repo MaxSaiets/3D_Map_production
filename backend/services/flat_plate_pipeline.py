@@ -659,9 +659,9 @@ def build_keychain_layout(
         body_w_mm + loop_margin_mm,
     )
     loop_center_y_mm_safe = min(
-        # DEFAULT: петля ВТОПЛЕНА в тіло (центр на outerR+0.5mm нижче верху),
-        # отвір по центру зверху. Раніше було -outerR*0.58 (стирчала назовні).
-        max(float(loop_center_y_mm if loop_center_y_mm is not None else (loop_outer_radius_mm + 0.5)), -loop_margin_mm),
+        # DEFAULT: стандартне вушко на 50% — центр петлі ТОЧНО на верхній грані
+        # (loop_center_y_mm=0) → половина кільця стирчить, половина в тілі.
+        max(float(loop_center_y_mm if loop_center_y_mm is not None else 0.0), -loop_margin_mm),
         body_h_mm + loop_margin_mm,
     )
     loop_center_x = loop_center_x_mm_safe * layout_scale_m_per_mm

@@ -607,9 +607,9 @@ export function KeychainControlPanel({
   const centerLoop = () => {
     updateDesign({
       loopXMm: design.bodyWidthMm / 2,
-      // ВТОПЛЕНА петля: центр на (outerR + 0.5)mm нижче верху → кільце повністю
-      // всередині тіла, отвір по центру зверху, нічого не стирчить.
-      loopYMm: Math.max(design.loopOuterMm + 0.5, 3.5),
+      // Стандартне вушко на 50%: центр на верхній грані → половина стирчить,
+      // половина в тілі. Отвір видно як наскрізну дірку.
+      loopYMm: 0,
       loopAngleDeg: 0,
     });
     setActiveSection("product");
@@ -1042,7 +1042,7 @@ export function KeychainControlPanel({
               rimWidthMm: 0.9,
               rimHeightMm: 0.35,
             })} />
-            <ChoiceButton label="Центр. вушко" active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && design.loopYMm > 0} onClick={centerLoop} />
+            <ChoiceButton label="Центр. вушко" active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && Math.abs(design.loopYMm) < 2} onClick={centerLoop} />
             <ChoiceButton label="Side loop" active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
           </div>
           <div className="mt-4">

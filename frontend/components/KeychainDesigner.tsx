@@ -132,10 +132,9 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
   loopStyle: "round",
   loopAngleDeg: 0,
   loopXMm: 17.5,
-  // loopYMm = 6.0: центр петлі 6mm НИЖЧЕ верху тіла → при outerR=4mm петля
-  // ПОВНІСТЮ всередині тіла (втоплена), отвір по центру зверху. Петля не
-  // стирчить назовні — кільце «впаяне» в модель (юзер: «втоплено посередину»).
-  loopYMm: 6.0,
+  // loopYMm = 0: центр петлі ТОЧНО на верхній грані тіла → 50% кільця стирчить
+  // назовні, 50% у тілі (стандартний вигляд вушка, юзер: «має виглядати на 50%»).
+  loopYMm: 0,
   loopOuterMm: 4.0,   // зовнішній радіус петлі (стандарт)
   loopInnerMm: 2.0,   // радіус отвору під кільце (стандарт)
   mapXMm: 0,
@@ -795,6 +794,34 @@ export function KeychainDesigner({
             mask={value.baseShape === "token" ? "url(#tokenBodyMask)" : undefined}
           />
           <TokenHolePreview value={value} />
+          {/* Отвір вушка малюємо ПОВЕРХ тіла, щоб він був видимий навіть коли
+              петля перекриває корпус (інакше body перекривав дірку і її «не
+              вирізало» у превʼю). Колір = темний фон → читається як наскрізна. */}
+          {value.baseShape !== "token" && (
+            <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`} pointerEvents="none">
+              {value.loopStyle === "slot" ? (
+                <rect
+                  x={value.loopXMm - value.loopInnerMm * 1.25}
+                  y={value.loopYMm - value.loopInnerMm * 0.58}
+                  width={value.loopInnerMm * 2.5}
+                  height={value.loopInnerMm * 1.16}
+                  rx={value.loopInnerMm * 0.58}
+                  fill="#050a18"
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth={0.25}
+                />
+              ) : (
+                <circle
+                  cx={value.loopXMm}
+                  cy={value.loopYMm}
+                  r={value.loopInnerMm}
+                  fill="#050a18"
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth={0.25}
+                />
+              )}
+            </g>
+          )}
           {value.rimWidthMm > 0 && (
             <path
               d={bodyPath(value)}
