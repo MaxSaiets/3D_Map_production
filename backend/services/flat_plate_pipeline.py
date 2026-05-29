@@ -1624,6 +1624,7 @@ def run_flat_plate_pipeline(
                 raw_water_source = _mask_union_from_geometries(gdf_water_local.geometry.values)
         except Exception:
             raw_water_source = None
+        raw_road_source_unmerged = None
         try:
             road_geometry = getattr(canonical_2d_stage, "road_geometry", None)
             if road_geometry is not None:
@@ -1631,6 +1632,10 @@ def run_flat_plate_pipeline(
                     getattr(road_geometry, "merged_roads_geom_local", None)
                     or getattr(road_geometry, "merged_roads_geom_local_raw", None)
                 )
+                # Truly UN-MERGED road polygons (ДО gap-fill / merge_close_road_gaps).
+                # Keychain використовує саме їх, щоб дороги залишались окремими
+                # стрічками як у live-превʼю (юзер прибрав логіку обʼєднання).
+                raw_road_source_unmerged = getattr(road_geometry, "merged_roads_geom_local_raw", None)
         except Exception:
             raw_road_source = None
         try:
@@ -1667,8 +1672,17 @@ def run_flat_plate_pipeline(
                 bundle_buildings = raw_buildings_source
         building_mask = _clip_geometry(_xform(bundle_buildings), content_area)
 
-        # Roads: bundle або raw (merged_roads_geom_local)
-        bundle_roads = getattr(bundle, "roads_final", None)
+        # Roads: для KEYCHAIN беремо НЕ-обʼєднану геометрію
+        # (merged_roads_geom_local_raw — ДО merge_close_road_gaps), щоб дороги
+        # залишались окремими стрічками точно як у live-превʼю. roads_final
+        # містить gap-fill, який злипає сусідні вулиці в суцільні блоби —
+        # саме цю «логіку обʼєднання» юзер просив прибрати.
+        bundle_roads = None
+        if keychain_mode and raw_road_source_unmerged is not None and not getattr(raw_road_source_unmerged, "is_empty", True):
+            bundle_roads = raw_road_source_unmerged
+            print("[KEYCHAIN] Using UN-MERGED roads (merged_roads_geom_local_raw) — no gap-fill merge, roads stay separate like preview")
+        if bundle_roads is None or getattr(bundle_roads, "is_empty", True):
+            bundle_roads = getattr(bundle, "roads_final", None)
         if bundle_roads is None or getattr(bundle_roads, "is_empty", True):
             if raw_road_source is not None and not getattr(raw_road_source, "is_empty", True):
                 print("[KEYCHAIN] Canonical roads empty; using raw clipped roads")
