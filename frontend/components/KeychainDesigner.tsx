@@ -117,6 +117,8 @@ function fitAfterBodyResize(next: KeychainDesignerConfig) {
   // Print-safe мінімуми (FDM 0.4мм сопло): висота літер ≥2мм, штрих ≥0.8мм (2× сопла).
   next.labelTextHeightMm = clamp(next.labelTextHeightMm, 2.0, 8.5);
   next.labelStrokeMm = clamp(next.labelStrokeMm, 0.8, 2.0);
+  // Смуга напису завжди ≥ висота літер + 1.4мм → бекенд не зменшує текст (WYSIWYG).
+  next.labelBandMm = clamp(Math.max(next.labelBandMm, next.labelTextHeightMm + 1.4), 3, 18);
   clampLoopToBody(next);
   return next;
 }

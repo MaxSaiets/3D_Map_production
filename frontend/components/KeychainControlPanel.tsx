@@ -261,9 +261,10 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
     // але не блокуємо вибір.
     labelTextHeightMm: Math.min(Math.max(next.labelTextHeightMm, 2.0), 8.5),
     labelStrokeMm: Math.min(Math.max(next.labelStrokeMm, 0.8), 2.0),
-    // labelBandMm не клампимо вище мінімуму 3мм — користувач може зробити
-    // тонку смугу навколо тексту якщо хоче.
-    labelBandMm: Math.min(Math.max(next.labelBandMm, 3), 18),
+    // Смуга напису ЗАВЖДИ ≥ висота літер + 1.4мм паддінг. Бекенд вписує текст у
+    // смугу — якщо смуга менша за текст, експорт зменшував би напис і він НЕ
+    // збігався б з превʼю. Тримаючи смугу ≥ тексту, WYSIWYG зберігається.
+    labelBandMm: Math.min(Math.max(next.labelBandMm, 3, Math.min(Math.max(next.labelTextHeightMm, 2.0), 8.5) + 1.4), 18),
     loopOuterMm,
     loopInnerMm,
     loopXMm: tokenMode
