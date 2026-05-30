@@ -256,6 +256,11 @@ def _normalize_request_base_thickness(request: "GenerationRequest", *, zone_pref
 from fastapi.staticfiles import StaticFiles
 # Mount output folder as static files
 app.mount("/files", StaticFiles(directory=OUTPUT_DIR), name="files")
+# Дзеркальний маунт під /api/files: nginx проксує ЛИШЕ /api/ -> :8000, тож коли
+# Firebase вимкнено і фронт резолвить локальний download_url як
+# `<API_BASE_URL>/files/...` (де API_BASE_URL=http://host/api), посилання має
+# бути доступним і через /api/files/... Без цього модель не качалась (404).
+app.mount("/api/files", StaticFiles(directory=OUTPUT_DIR), name="api_files")
 
 
 async def _ttl_cleanup_loop():
