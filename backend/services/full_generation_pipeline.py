@@ -1038,14 +1038,19 @@ def run_full_generation_pipeline(
             "water": water_mesh is not None,
             "buildings": bool(building_meshes),
         }
+        # NON-BLOCKING QA: на проді немає слайсера (PrusaSlicer/Bambu), тож
+        # require_slicer_validation=True давало slicer:not_found і гейт зривав
+        # КОЖНУ мапу (юзер: "не створюються як до цього"). Тепер гейт лише
+        # діагностичний; суворий режим вмикається через PRINT_QA_STRICT=1.
+        _qa_strict = os.environ.get("PRINT_QA_STRICT", "").lower() in ("1", "true", "yes", "on")
         print_acceptance_path = write_export_print_acceptance_report(
             task_id=task_id,
             output_dir=output_dir,
             parts_for_print=parts_for_print,
             expected_parts=expected_parts,
             printer_profile=printer_profile,
-            require_slicer_validation=True,
-            fail_on_slicer_warnings=True,
+            require_slicer_validation=_qa_strict,
+            fail_on_slicer_warnings=_qa_strict,
             rotate_x_deg=0,
         )
         task.set_output("print_acceptance", str(print_acceptance_path.resolve()))
@@ -1061,7 +1066,12 @@ def run_full_generation_pipeline(
                 initial_report=print_acceptance_report,
             )
         if print_acceptance_report.get("status") != "pass":
-            raise RuntimeError(summarize_export_print_failures(print_acceptance_report))
+            _qa_summary = summarize_export_print_failures(print_acceptance_report)
+            if _qa_strict:
+                raise RuntimeError(_qa_summary)
+            # НЕ-блокуюче: модель уже експортована (terrain+base+шари) — віддаємо
+            # її попри QA-зауваження, лише логуємо. Так мапи знову створюються.
+            print(f"[WARN] {zone_prefix}print_acceptance NOT passed (non-blocking): {_qa_summary}")
         _log_stage("print_acceptance", stage_start)
 
     stage_start = time.perf_counter()
