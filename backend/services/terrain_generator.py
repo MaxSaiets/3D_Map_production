@@ -2,6 +2,7 @@
 Оптимізований генератор рельєфу та основи.
 Фокус: максимальна якість mesh, відсутність багів, правильні трикутники.
 """
+import os
 import numpy as np
 import trimesh
 import time
@@ -299,7 +300,27 @@ def create_terrain_mesh(
         x = np.linspace(expanded_min_x, expanded_max_x, nx)
         y = np.linspace(expanded_min_y, expanded_max_y, ny)
 
-    X, Y = np.meshgrid(x, y) 
+    # RAM-SAFE cap (ЄДИНИЙ chokepoint для обох гілок). Heightfield nx*ny точок →
+    # solid terrain ~2*nx*ny трикутників. Без обмеження сітка виходила ~1500×1500
+    # → меш ~4.5M faces, і solidifier "cleaning up" з'їдав >3.9GB RAM, через що
+    # воркер падав з OOM (502) на етапі "Генерація рельєфу" — саме тому мапи не
+    # створювались. Обмежуємо к-сть точок по довшій осі (за замовч. 700 →
+    # ~1M faces) і пропорційно прорідимо сітку. Override: env TERRAIN_MAX_AXIS_CELLS.
+    try:
+        _max_axis = int(os.getenv("TERRAIN_MAX_AXIS_CELLS", "700"))
+    except Exception:
+        _max_axis = 700
+    _max_axis = max(64, min(_max_axis, 1500))
+    if max(nx, ny) > _max_axis:
+        _scale = _max_axis / float(max(nx, ny))
+        new_nx = max(2, int(round(nx * _scale)))
+        new_ny = max(2, int(round(ny * _scale)))
+        print(f"[TERRAIN] RAM-safe downsample: {nx}x{ny} -> {new_nx}x{new_ny} (cap {_max_axis}/axis)")
+        x = np.linspace(float(x[0]), float(x[-1]), new_nx)
+        y = np.linspace(float(y[0]), float(y[-1]), new_ny)
+        nx, ny = new_nx, new_ny
+
+    X, Y = np.meshgrid(x, y)
 
     # 2. Elevation Data
     X_fetch, Y_fetch = X, Y
