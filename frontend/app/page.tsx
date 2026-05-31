@@ -60,20 +60,6 @@ const CITIES: Record<
   Kropyvnytskyi:  { bounds: { north: 48.54, south: 48.47, east: 32.30, west: 32.20 }, center: [48.5132, 32.2597] },
 };
 
-function MobileDownloadButton({ url }: { url: string }) {
-  const API = process.env.NEXT_PUBLIC_API_URL || "";
-  const href = url.startsWith("http") ? url : API + url;
-  return (
-    <a
-      href={href}
-      download
-      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white active:scale-95 transition-transform"
-    >
-      <Download className="h-3.5 w-3.5" />
-      Завантажити 3MF
-    </a>
-  );
-}
 
 const CITY_LABELS: Record<string, string> = {
   Kyiv: "Київ", Khmelnytskyi: "Хмельницький", Lviv: "Львів", Odesa: "Одеса",
@@ -375,7 +361,14 @@ export default function Home() {
                 </div>
                 {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
                 {!isGenerating && downloadUrl && (
-                  <MobileDownloadButton url={downloadUrl} />
+                  <a
+                    href={downloadUrl}
+                    download
+                    className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
+                  >
+                    <Download size={14} />
+                    Завантажити 3MF
+                  </a>
                 )}
               </div>
 
