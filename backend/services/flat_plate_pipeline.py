@@ -1067,6 +1067,80 @@ def _ttf_text_polygons(text: str, height_m: float, font_family: str = "DejaVu Sa
     return result
 
 
+def _compute_text_letter_polygon(
+    *,
+    text: str,
+    body_geometry: BaseGeometry,
+    label_band_geometry: BaseGeometry,
+    text_height_m: float,
+    angle_deg: float,
+    min_stroke_m: float,
+    max_width: float,
+    max_height: float,
+) -> Optional[BaseGeometry]:
+    """Compute the 2D letter polygon (positioned, rotated, clipped to body) for
+    carving out of map layers before meshes are built.  Same math as the TTF
+    branch of build_keychain_label_mesh so the carve and the raised text align
+    perfectly."""
+    label = _normalize_label_text(text)
+    if not label or text_height_m <= 0:
+        return None
+    band_minx, band_miny, band_maxx, band_maxy = label_band_geometry.bounds
+    try:
+        ttf_polys = _ttf_text_polygons(label, height_m=text_height_m, font_family="DejaVu Sans")
+        if not ttf_polys:
+            return None
+        from shapely.ops import unary_union as _uup
+        text_polygon = _uup(ttf_polys).buffer(0)
+        # stroke thickening (counter-safe) — same as build_keychain_label_mesh
+        min_stroke = float(min_stroke_m or 0.0)
+        if min_stroke > 0:
+            natural_stroke = 0.16 * float(text_height_m)
+            grow = min(max((min_stroke - natural_stroke) * 0.5, 0.0), 0.12 * float(text_height_m))
+            if grow > 1e-9:
+                holes = []
+                for _g in (text_polygon.geoms if hasattr(text_polygon, "geoms") else [text_polygon]):
+                    try:
+                        for _i in _g.interiors:
+                            _hp = Polygon(_i)
+                            if _hp.is_valid and not _hp.is_empty:
+                                holes.append(_hp)
+                    except Exception:
+                        pass
+                thickened = text_polygon.buffer(grow, join_style=1, cap_style=1).buffer(0)
+                if holes:
+                    try:
+                        from shapely.ops import unary_union as _uu3
+                        counters = _uu3(holes).buffer(-grow * 0.5).buffer(0)
+                        if counters is not None and not counters.is_empty:
+                            thickened = thickened.difference(counters).buffer(0)
+                    except Exception:
+                        pass
+                if thickened is not None and not thickened.is_empty:
+                    text_polygon = thickened
+        # fit + center + rotate + clip
+        t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
+        text_w = t_maxx - t_minx; text_h = t_maxy - t_miny
+        fit_scale = 1.0
+        if text_w > max_width: fit_scale = min(fit_scale, max_width / text_w)
+        if text_h > max_height: fit_scale = min(fit_scale, max_height / text_h)
+        if fit_scale < 1.0:
+            text_polygon = affinity.scale(text_polygon, xfact=fit_scale, yfact=fit_scale, origin=(t_minx, t_miny))
+            t_minx, t_miny, t_maxx, t_maxy = text_polygon.bounds
+            text_w = t_maxx - t_minx; text_h = t_maxy - t_miny
+        cx = (band_minx + band_maxx) / 2; cy = (band_miny + band_maxy) / 2
+        text_polygon = affinity.translate(text_polygon, xoff=cx - (t_minx + text_w / 2), yoff=cy - (t_miny + text_h / 2))
+        if angle_deg:
+            text_polygon = affinity.rotate(text_polygon, float(angle_deg), origin=(cx, cy), use_radians=False)
+        text_polygon = text_polygon.intersection(body_geometry).buffer(0)
+        if text_polygon is None or text_polygon.is_empty:
+            return None
+        return text_polygon
+    except Exception as exc:
+        print(f"[KEYCHAIN] _compute_text_letter_polygon failed: {exc}")
+        return None
+
+
 def build_keychain_label_mesh(
     text: str,
     *,
@@ -1080,6 +1154,7 @@ def build_keychain_label_mesh(
     angle_deg: float = 0.0,
     min_stroke_m: float = 0.0,
     font_style: str = "block",
+    precomputed_polygon: Optional[BaseGeometry] = None,
 ) -> Optional[trimesh.Trimesh]:
     label = _normalize_label_text(text)
     if not label or thickness_m <= 0 or text_height_m <= 0:
@@ -1087,6 +1162,21 @@ def build_keychain_label_mesh(
     band_minx, band_miny, band_maxx, band_maxy = label_band_geometry.bounds
     max_width = max((band_maxx - band_minx) * 0.96, 1e-6)
     max_height = max((band_maxy - band_miny) * 0.92, 1e-6)
+
+    # SHORT-CIRCUIT: якщо полігон уже порахований вище (carve-pass), реюзаємо —
+    # уникаємо подвійного TTF-рендеру і гарантуємо повний збіг із вирізом.
+    if precomputed_polygon is not None and not getattr(precomputed_polygon, "is_empty", True):
+        try:
+            combined = build_flat_layer_mesh_from_mask(
+                precomputed_polygon, bottom_z_m=bottom_z_m, thickness_m=thickness_m,
+                color=color, min_area_m2=1e-12,
+            )
+            if combined is not None:
+                try: combined.metadata["text_polygon"] = precomputed_polygon
+                except Exception: pass
+                return _with_color(combined, color)
+        except Exception as exc:
+            print(f"[KEYCHAIN] precomputed polygon mesh build failed ({exc}); falling back to re-render")
 
     # ПРОПЕРНИЙ TTF РЕНДЕР через matplotlib — smooth glyphs замість 5×7 pixel art.
     # Cyrillic вже переведена в latin через _normalize_label_text.
@@ -2004,6 +2094,51 @@ def run_flat_plate_pipeline(
     # навколо напису НЕ очищається (юзер: «по дефолту вирізались тільки букви і
     # щоб область вокруг їх не вирізалась»). Прямокутна зона-підкладка під текст
     # вмикається лише явним прапором keychain_label_clear_band=true.
+    # ВИРІЗАННЯ ФОРМИ ЛІТЕР з усіх шарів карти + будівель, щоб текст не «накладався»
+    # поверх, а сидів у чистому слід-і власної форми (юзер: «вирізались тільки букви»,
+    # «будівлі вирізались під текст»). Полігон рахуємо ОДИН раз тут і передаємо
+    # у build_keychain_label_mesh → ідеальний збіг вирізу й напису.
+    text_letter_poly = None
+    if keychain_mode and keychain_layout is not None:
+        try:
+            _band = keychain_layout["label_band"]
+            _bminx, _bminy, _bmaxx, _bmaxy = _band.bounds
+            _max_w = max((_bmaxx - _bminx) * 0.96, 1e-6)
+            _max_h = max((_bmaxy - _bminy) * 0.92, 1e-6)
+            _label_text = str(getattr(request, "keychain_label", "") or "")
+            _label_angle = float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0)
+            _label_h_m = _model_mm_to_world_m(
+                float(getattr(request, "keychain_label_text_height_mm", 3.8) or 3.8),
+                export_scale_factor,
+            )
+            _min_stroke = _model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor)
+            text_letter_poly = _compute_text_letter_polygon(
+                text=_label_text,
+                body_geometry=keychain_layout["body"],
+                label_band_geometry=_band,
+                text_height_m=_label_h_m,
+                angle_deg=_label_angle,
+                min_stroke_m=_min_stroke,
+                max_width=_max_w,
+                max_height=_max_h,
+            )
+            if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True):
+                # 0.25mm зазор навколо літер для чистого контуру
+                _carve = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    try: road_mask = _subtract_geometry(road_mask, _carve)
+                    except Exception: pass
+                if parks_mask is not None and not getattr(parks_mask, "is_empty", True):
+                    try: parks_mask = _subtract_geometry(parks_mask, _carve)
+                    except Exception: pass
+                if water_mask is not None and not getattr(water_mask, "is_empty", True):
+                    try: water_mask = _subtract_geometry(water_mask, _carve)
+                    except Exception: pass
+                print(f"[KEYCHAIN] Letters carved from road/parks/water (angle={_label_angle}°, label='{_label_text}')")
+        except Exception as exc:
+            print(f"[KEYCHAIN] letter polygon compute failed: {exc}")
+            text_letter_poly = None
+
     label_clear_band = None
     if keychain_mode and keychain_layout is not None and bool(getattr(request, "keychain_label_clear_band", False)):
         label_clear_band = keychain_layout.get("label_clear_band")
