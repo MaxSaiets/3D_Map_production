@@ -2160,6 +2160,10 @@ def run_flat_plate_pipeline(
         # RAISED TEXT — текст підіймається над базою як рельєф (попередня логіка).
         text_raise_mm = float(getattr(request, "keychain_label_raise_mm", KEYCHAIN_TEXT_RAISE_MM) or KEYCHAIN_TEXT_RAISE_MM)
         text_raise_m = _model_mm_to_world_m(text_raise_mm, export_scale_factor)
+        _dbg_label = str(getattr(request, "keychain_label", "") or "")
+        _dbg_angle = float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0)
+        print(f"[KEYCHAIN TEXT] label='{_dbg_label}' angle_deg={_dbg_angle} "
+              f"text_height_mm={getattr(request, 'keychain_label_text_height_mm', None)}")
         keychain_text_mesh = build_keychain_label_mesh(
             str(getattr(request, "keychain_label", "") or ""),
             body_geometry=keychain_layout["body"],
