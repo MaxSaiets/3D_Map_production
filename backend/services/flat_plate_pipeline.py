@@ -731,7 +731,7 @@ def build_keychain_layout(
     if label_angle_deg:
         try:
             label_clear_band = affinity.rotate(
-                label_clear_band, float(label_angle_deg),
+                label_clear_band, -float(label_angle_deg),
                 origin=(label_center_x, label_center_y), use_radians=False,
             )
         except Exception:
@@ -1128,7 +1128,9 @@ def _compute_text_letter_polygon(
         cx = (band_minx + band_maxx) / 2; cy = (band_miny + band_maxy) / 2
         text_polygon = affinity.translate(text_polygon, xoff=cx - (t_minx + text_w / 2), yoff=cy - (t_miny + text_h / 2))
         if angle_deg:
-            text_polygon = affinity.rotate(text_polygon, float(angle_deg), origin=(cx, cy), use_radians=False)
+            # SVG Y-axis goes DOWN (positive rotation = clockwise), but shapely/model
+            # Y-axis goes UP (positive = counter-clockwise). Negate angle to match preview.
+            text_polygon = affinity.rotate(text_polygon, -float(angle_deg), origin=(cx, cy), use_radians=False)
         text_polygon = text_polygon.intersection(body_geometry).buffer(0)
         if text_polygon is None or text_polygon.is_empty:
             return None
@@ -1249,9 +1251,10 @@ def build_keychain_label_mesh(
             offset_x = cx - (t_minx + text_w / 2)
             offset_y = cy - (t_miny + text_h / 2)
             text_polygon = affinity.translate(text_polygon, xoff=offset_x, yoff=offset_y)
-            # Поворот
+            # Поворот: SVG Y-axis goes DOWN (positive = clockwise) but shapely
+            # Y-axis goes UP (positive = counter-clockwise), so negate to match preview.
             if angle_deg:
-                text_polygon = affinity.rotate(text_polygon, float(angle_deg), origin=(cx, cy), use_radians=False)
+                text_polygon = affinity.rotate(text_polygon, -float(angle_deg), origin=(cx, cy), use_radians=False)
             # Кліп до body щоб не вилазив
             text_polygon = text_polygon.intersection(body_geometry).buffer(0)
             if text_polygon is None or text_polygon.is_empty:
