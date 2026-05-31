@@ -1501,14 +1501,8 @@ def export_3mf(
     scene.export(filename)
     print(f"[3MF EXPORT] Exported scene with {len(parts)} parts to {filename}")
 
-    # POST-PROCESS: вшиваємо m:colorgroup у 3MF XML, щоб Bambu Studio / PrusaSlicer
-    # бачили кольори об'єктів без ручного призначення філаментів. trimesh не пише
-    # кольори у 3MF — робимо це самостійно через zipfile patch.
-    try:
-        _patch_3mf_colors(filename, COLOR_MAP)
-        print(f"[3MF EXPORT] Color groups patched into 3MF")
-    except Exception as _ce:
-        print(f"[3MF EXPORT] Color patch failed (non-fatal): {_ce}")
+    # NOTE: m:colorgroup patch прибрано — Bambu Studio призначає кольори через
+    # власні налаштування філаментів. Колір тексту задається user-ом у слайсері.
 
     return {"3mf": filename}
 

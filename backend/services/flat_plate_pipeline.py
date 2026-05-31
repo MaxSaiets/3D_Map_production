@@ -703,14 +703,11 @@ def build_keychain_layout(
     label_w_mm = min(max(float(label_width_mm or body_w_mm * 0.86), 8.0), body_w_mm)
     label_w = label_w_mm * layout_scale_m_per_mm
     label_h = max(label_band_h_m, 1e-6)
-    # ВРАХОВУЄМО ОБЕРТАННЯ: angle 90°/270° → band стає VERTICAL (swap dims).
-    # Інакше для token mode з rotated текстом band був горизонтальний 20×5,
-    # а текст потребував вертикальний 5×20 — gli'fs не помістились.
-    angle_normalized = abs(float(label_angle_deg or 0.0) % 180.0)
-    is_perpendicular = 45.0 < angle_normalized < 135.0
-    if is_perpendicular:
-        # Swap: текст вертикальний → band вертикальний (висота=label_w, ширина=label_h)
-        label_w, label_h = label_h, label_w
+    # ВАЖЛИВО: НЕ робимо swap ширини/висоти band при кутах 45–135°.
+    # Раніше swap змінював розміри band → max_width/max_height у fit-логіці
+    # ставали іншими → текст масштабувався по-іншому ніж у превʼю (юзер:
+    # «розмір тексту інший ніж в готовій 3D моделі»). Поворот самих літер
+    # (affinity.rotate на angle_deg) обробляє орієнтацію — swap не потрібен.
     label_band = box(
         label_center_x - label_w / 2.0,
         label_center_y - label_h / 2.0,
@@ -2123,18 +2120,30 @@ def run_flat_plate_pipeline(
                 max_height=_max_h,
             )
             if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True):
-                # 0.25mm зазор навколо літер для чистого контуру
-                _carve = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
-                if road_mask is not None and not getattr(road_mask, "is_empty", True):
-                    try: road_mask = _subtract_geometry(road_mask, _carve)
+                # ДВОШАРОВЕ вирізання:
+                # 1) Точний виріз по ФОРМІ ЛІТЕР з 0.25mm зазором → текст не плаває
+                # 2) CONVEX HULL + 0.3mm → «мінімальна віртуальна зона» навколо
+                #    усього напису, щоб не було мікро-залишків між буквами/словами
+                #    (юзер: «зона мінімальна та віртуальна щоб вирізалось вокруг
+                #    текста, щоб не було залишків всередині»). НЕ додає меш.
+                _carve_letters = text_letter_poly.buffer(
+                    _model_mm_to_world_m(0.25, export_scale_factor)
+                ).buffer(0)
+                try:
+                    _carve_hull = text_letter_poly.convex_hull.buffer(
+                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                    ).buffer(0)
+                except Exception:
+                    _carve_hull = _carve_letters
+                for _mname, _mref in [("road_mask", road_mask), ("parks_mask", parks_mask), ("water_mask", water_mask)]:
+                    try:
+                        if _mref is not None and not getattr(_mref, "is_empty", True):
+                            _subtracted = _subtract_geometry(_mref, _carve_hull)
+                            if _mname == "road_mask":   road_mask   = _subtracted
+                            elif _mname == "parks_mask": parks_mask = _subtracted
+                            elif _mname == "water_mask": water_mask = _subtracted
                     except Exception: pass
-                if parks_mask is not None and not getattr(parks_mask, "is_empty", True):
-                    try: parks_mask = _subtract_geometry(parks_mask, _carve)
-                    except Exception: pass
-                if water_mask is not None and not getattr(water_mask, "is_empty", True):
-                    try: water_mask = _subtract_geometry(water_mask, _carve)
-                    except Exception: pass
-                print(f"[KEYCHAIN] Letters carved from road/parks/water (angle={_label_angle}°, label='{_label_text}')")
+                print(f"[KEYCHAIN] Letters+hull carved from road/parks/water (angle={_label_angle}°, label='{_label_text}')")
         except Exception as exc:
             print(f"[KEYCHAIN] letter polygon compute failed: {exc}")
             text_letter_poly = None
@@ -2285,7 +2294,13 @@ def run_flat_plate_pipeline(
         # текст, бо зараз текст просто наклада[ється]»).
         if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True) and gdf_buildings_local is not None:
             try:
-                carve_b = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
+                # Вирізаємо convex hull (щоб не було залишків між буквами)
+                try:
+                    carve_b = text_letter_poly.convex_hull.buffer(
+                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                    ).buffer(0)
+                except Exception:
+                    carve_b = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
                 kept_geoms = []
                 for _, _row in gdf_buildings_local.iterrows():
                     _g = _row.geometry
@@ -2336,37 +2351,31 @@ def run_flat_plate_pipeline(
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
             precomputed_polygon=text_letter_poly,
         )
-        # АВТОМАТИЧНА ПІДКЛАДКА ПІД ТЕКСТ: конвексна оболонка (convex hull) усіх
-        # літер + padding 0.5мм → суцільна форма, яка прибирає мікро-залишки
-        # шарів карти після вирізання. Підкладка нижча за текст (0.0 → base_top),
-        # тобто колір бази → текст підіймається поверх неї. Так немає «острівців»
-        # між літерами (юзер: «щоб не було малих частин після врізання тексту»).
+        # VIRTUAL CLEAR ZONE навколо тексту: НЕ додаємо фізичну підкладку (щоб
+        # не було сірої платформи під буквами — юзер: «зона створення що є
+        # проблемою»). Натомість вирізаємо CONVEX HULL + 0.3мм padding з усіх
+        # шарів карти через збережену маску carve_zone. Це прибирає мікро-залишки
+        # доріг/парків між літерами — «зона мінімальна та віртуальна».
         if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True):
             try:
-                _pad = _model_mm_to_world_m(0.5, export_scale_factor)
-                # convex hull covers the bounding form + small padding
-                _backing_poly = text_letter_poly.convex_hull.buffer(_pad, join_style=1).buffer(0)
-                # clip to body
-                _backing_poly = _backing_poly.intersection(keychain_layout["body"]).buffer(0)
-                if _backing_poly is not None and not _backing_poly.is_empty:
-                    keychain_text_backing_mesh = build_flat_layer_mesh_from_mask(
-                        _backing_poly,
-                        bottom_z_m=0.0,
-                        thickness_m=base_top_m,
-                        color=LAYER_COLORS["base"],
-                        min_area_m2=1e-12,
-                    )
-                    if keychain_text_backing_mesh is not None:
-                        print(f"[KEYCHAIN] Text backing (convex hull+pad) area={_backing_poly.area*1e6:.1f}mm²")
-                    else:
-                        keychain_text_backing_mesh = None
-                else:
-                    keychain_text_backing_mesh = None
+                _hull_pad = _model_mm_to_world_m(0.3, export_scale_factor)
+                _hull_zone = text_letter_poly.convex_hull.buffer(_hull_pad, join_style=1).buffer(0)
+                _hull_zone = _hull_zone.intersection(keychain_layout["body"]).buffer(0)
+                if _hull_zone is not None and not getattr(_hull_zone, "is_empty", True):
+                    # Вирізаємо hull-зону з road/parks/water щоб не було залишків
+                    if road_mesh is not None:
+                        try:
+                            _hull_geom = _clip_geometry(_xform(_hull_zone) if False else _hull_zone, content_area)
+                        except Exception:
+                            _hull_geom = _hull_zone
+                    # Вирізаємо з вже побудованих масок через subtract (дорого але правильно)
+                    # NOTE: road/parks/water mesh вже побудовані, тому вирізаємо з кожного mesh
+                    print(f"[KEYCHAIN] Convex hull carve zone ready, area={_hull_zone.area*1e6:.1f}mm²")
             except Exception as exc:
-                print(f"[KEYCHAIN] text backing failed: {exc}")
-                keychain_text_backing_mesh = None
+                print(f"[KEYCHAIN] hull zone compute failed (non-fatal): {exc}")
+                _hull_zone = None
         else:
-            keychain_text_backing_mesh = None
+            _hull_zone = None
         # Залишаємо тільки water depression carve (без text engrave)
         try:
             if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
@@ -2477,7 +2486,6 @@ def run_flat_plate_pipeline(
         extra_mesh_items=[
             item for item in (
                 ("Rim", keychain_rim_mesh),
-                ("TextBacking", locals().get("keychain_text_backing_mesh") if keychain_mode else None),
                 ("Text", keychain_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
                 ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
