@@ -2000,11 +2000,12 @@ def run_flat_plate_pipeline(
         water_mask = getattr(bundle, "water_final", None)
         parks_mask = getattr(bundle, "parks_final", None)
 
-    # ОЧИЩЕННЯ КАРТИ ПІД ТЕКСТОМ: вирізаємо орієнтований label_clear_band з усіх
-    # map-шарів, щоб напис стояв на ЧИСТОМУ фоні (юзер: «обрізається карта вокруг
-    # текста»). Band слідує за позицією/кутом напису → коректно при move/rotate.
+    # ТЕКСТ: ЗА ЗАМОВЧУВАННЯМ вирізаються/підіймаються ТІЛЬКИ літери — карта
+    # навколо напису НЕ очищається (юзер: «по дефолту вирізались тільки букви і
+    # щоб область вокруг їх не вирізалась»). Прямокутна зона-підкладка під текст
+    # вмикається лише явним прапором keychain_label_clear_band=true.
     label_clear_band = None
-    if keychain_mode and keychain_layout is not None:
+    if keychain_mode and keychain_layout is not None and bool(getattr(request, "keychain_label_clear_band", False)):
         label_clear_band = keychain_layout.get("label_clear_band")
         if label_clear_band is not None and not getattr(label_clear_band, "is_empty", True):
             try:
@@ -2014,9 +2015,11 @@ def run_flat_plate_pipeline(
                     parks_mask = _subtract_geometry(parks_mask, label_clear_band)
                 if water_mask is not None and not getattr(water_mask, "is_empty", True):
                     water_mask = _subtract_geometry(water_mask, label_clear_band)
-                print("[KEYCHAIN] Map layers cleared under label band (clean text background)")
+                print("[KEYCHAIN] Map layers cleared under label band (opt-in clean text background)")
             except Exception as exc:
                 print(f"[KEYCHAIN] Label band map-clear failed: {exc}")
+        else:
+            label_clear_band = None
 
     # ВОДА = ОДИН ВЕРХНІЙ ШАР, врівень із землею (НЕ на всю глибину).
     # Юзер: "вода важається до кінця моделі з іншої сторони — треба тільки один
