@@ -965,9 +965,9 @@ export function KeychainDesigner({
             y={value.labelYMm}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill={previewSide === "back" ? "#050a18" : "#f1f5f9"}
-            stroke={previewSide === "back" ? "rgba(248,250,252,0.36)" : "rgba(248,250,252,0.58)"}
-            strokeWidth={previewSide === "back" ? Math.max(value.labelStrokeMm * 0.12, 0.08) : Math.max(value.labelStrokeMm * 0.08, 0.04)}
+            fill="#141414"
+            stroke="rgba(20,20,20,0.18)"
+            strokeWidth={Math.max(value.labelStrokeMm * 0.06, 0.03)}
             paintOrder="stroke"
             fontSize={Math.max(value.labelTextHeightMm / 0.7, 2.6)}
             fontWeight={700}

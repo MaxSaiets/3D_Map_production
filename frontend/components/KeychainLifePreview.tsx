@@ -141,9 +141,9 @@ export function KeychainLifePreview({
             y={labelTop}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill="#f8fafc"
-            stroke="#f8fafc"
-            strokeWidth={design.labelFontStyle === "wide" ? 1.1 : design.labelFontStyle === "condensed" ? 0.45 : 0.75}
+            fill="#141414"
+            stroke="rgba(20,20,20,0.12)"
+            strokeWidth={design.labelFontStyle === "wide" ? 0.4 : design.labelFontStyle === "condensed" ? 0.2 : 0.3}
             paintOrder="stroke"
             fontFamily={design.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : design.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
             fontSize={Math.max(10, design.labelTextHeightMm * 2.7)}

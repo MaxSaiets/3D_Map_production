@@ -25,7 +25,7 @@ LAYER_COLORS = {
     "water": [100, 150, 200, 255],
     "parks": [100, 150, 100, 255],
     "rim": [92, 80, 58, 255],
-    "text": [245, 245, 238, 255],
+    "text": [20, 20, 20, 255],       # чорний (юзер: «текст має бути чорним»)
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -2336,6 +2336,37 @@ def run_flat_plate_pipeline(
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
             precomputed_polygon=text_letter_poly,
         )
+        # АВТОМАТИЧНА ПІДКЛАДКА ПІД ТЕКСТ: конвексна оболонка (convex hull) усіх
+        # літер + padding 0.5мм → суцільна форма, яка прибирає мікро-залишки
+        # шарів карти після вирізання. Підкладка нижча за текст (0.0 → base_top),
+        # тобто колір бази → текст підіймається поверх неї. Так немає «острівців»
+        # між літерами (юзер: «щоб не було малих частин після врізання тексту»).
+        if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True):
+            try:
+                _pad = _model_mm_to_world_m(0.5, export_scale_factor)
+                # convex hull covers the bounding form + small padding
+                _backing_poly = text_letter_poly.convex_hull.buffer(_pad, join_style=1).buffer(0)
+                # clip to body
+                _backing_poly = _backing_poly.intersection(keychain_layout["body"]).buffer(0)
+                if _backing_poly is not None and not _backing_poly.is_empty:
+                    keychain_text_backing_mesh = build_flat_layer_mesh_from_mask(
+                        _backing_poly,
+                        bottom_z_m=0.0,
+                        thickness_m=base_top_m,
+                        color=LAYER_COLORS["base"],
+                        min_area_m2=1e-12,
+                    )
+                    if keychain_text_backing_mesh is not None:
+                        print(f"[KEYCHAIN] Text backing (convex hull+pad) area={_backing_poly.area*1e6:.1f}mm²")
+                    else:
+                        keychain_text_backing_mesh = None
+                else:
+                    keychain_text_backing_mesh = None
+            except Exception as exc:
+                print(f"[KEYCHAIN] text backing failed: {exc}")
+                keychain_text_backing_mesh = None
+        else:
+            keychain_text_backing_mesh = None
         # Залишаємо тільки water depression carve (без text engrave)
         try:
             if water_clipped is not None and not getattr(water_clipped, "is_empty", True):
@@ -2446,6 +2477,7 @@ def run_flat_plate_pipeline(
         extra_mesh_items=[
             item for item in (
                 ("Rim", keychain_rim_mesh),
+                ("TextBacking", locals().get("keychain_text_backing_mesh") if keychain_mode else None),
                 ("Text", keychain_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
                 ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
