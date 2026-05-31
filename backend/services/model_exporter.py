@@ -1501,10 +1501,104 @@ def export_3mf(
     scene.export(filename)
     print(f"[3MF EXPORT] Exported scene with {len(parts)} parts to {filename}")
 
-    # 3MF is a single container, so we just return the file
-    # But for consistency, maybe we could say we support parts?
-    # No, 3MF is one file internally containing parts.
+    # POST-PROCESS: вшиваємо m:colorgroup у 3MF XML, щоб Bambu Studio / PrusaSlicer
+    # бачили кольори об'єктів без ручного призначення філаментів. trimesh не пише
+    # кольори у 3MF — робимо це самостійно через zipfile patch.
+    try:
+        _patch_3mf_colors(filename, COLOR_MAP)
+        print(f"[3MF EXPORT] Color groups patched into 3MF")
+    except Exception as _ce:
+        print(f"[3MF EXPORT] Color patch failed (non-fatal): {_ce}")
+
     return {"3mf": filename}
+
+
+def _patch_3mf_colors(filename: str, color_map: dict) -> None:
+    """Reads the exported 3MF, injects m:colorgroup with one color per named object,
+    and writes the file back. This makes Bambu Studio / PrusaSlicer auto-assign
+    colors to each part without manual filament assignment.
+
+    Color encoding: #RRGGBBAA hex (3MF spec §8.1 m:colorgroup).
+    """
+    import zipfile, re, shutil, tempfile, os as _os
+
+    def rgb_to_hex(rgba):
+        r, g, b = int(rgba[0]), int(rgba[1]), int(rgba[2])
+        return f"#{r:02X}{g:02X}{b:02X}FF"
+
+    with zipfile.ZipFile(filename, "r") as zin:
+        model_xml = zin.read("3D/3dmodel.model").decode("utf-8")
+        other_files = {n: zin.read(n) for n in zin.namelist() if n != "3D/3dmodel.model"}
+
+    # Find all <object ... name="Foo" ...> and assign a color index
+    obj_pattern = re.compile(r'<object\s([^>]*)>', re.DOTALL)
+    name_pattern = re.compile(r'\bname="([^"]+)"')
+    id_pattern = re.compile(r'\bid="(\d+)"')
+
+    objects = []   # list of (obj_id, name, hex_color)
+    for m in obj_pattern.finditer(model_xml):
+        attrs = m.group(1)
+        nm = name_pattern.search(attrs)
+        oid = id_pattern.search(attrs)
+        if nm and oid:
+            name_lower = nm.group(1).lower()
+            rgba = color_map.get(name_lower, [150, 150, 150, 255])
+            objects.append((int(oid.group(1)), nm.group(1), rgb_to_hex(rgba)))
+
+    if not objects:
+        return
+
+    # Build m:colorgroup resource
+    color_id_map: dict[str, int] = {}   # hex_color -> index
+    unique_colors: list[str] = []
+    for _, _, hex_c in objects:
+        if hex_c not in color_id_map:
+            color_id_map[hex_c] = len(unique_colors)
+            unique_colors.append(hex_c)
+
+    # colorgroup id — pick one above existing object ids to avoid collision
+    max_id = max(o[0] for o in objects)
+    cg_id = max_id + 1
+
+    color_entries = "".join(f'<m:color color="{c}" />' for c in unique_colors)
+    colorgroup_xml = f'<m:colorgroup id="{cg_id}">{color_entries}</m:colorgroup>'
+
+    # Inject colorgroup into <resources> section
+    model_xml = model_xml.replace("<resources>", f"<resources>{colorgroup_xml}", 1)
+
+    # Add pid + p1 attrs to each <object> tag pointing to its color
+    def replace_object(m_obj):
+        attrs = m_obj.group(1)
+        nm = name_pattern.search(attrs)
+        oid = id_pattern.search(attrs)
+        if nm and oid:
+            name_lower = nm.group(1).lower()
+            rgba = color_map.get(name_lower, [150, 150, 150, 255])
+            hex_c = rgb_to_hex(rgba)
+            ci = color_id_map.get(hex_c, 0)
+            # Only add if not already present
+            if f'pid="{cg_id}"' not in attrs:
+                new_attrs = attrs + f' pid="{cg_id}" pindex="{ci}"'
+                return f"<object {new_attrs}>"
+        return m_obj.group(0)
+
+    model_xml = obj_pattern.sub(replace_object, model_xml)
+
+    # Ensure m: namespace declared on <model> root
+    if 'xmlns:m=' not in model_xml:
+        model_xml = model_xml.replace(
+            "<model ",
+            '<model xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02" ',
+            1,
+        )
+
+    # Write patched 3MF back
+    tmp = filename + ".tmp"
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        zout.writestr("3D/3dmodel.model", model_xml.encode("utf-8"))
+        for n, data in other_files.items():
+            zout.writestr(n, data)
+    _os.replace(tmp, filename)
 
 
 def _to_preview_trimesh(obj: Union[trimesh.Trimesh, trimesh.Scene]) -> Optional[trimesh.Trimesh]:
