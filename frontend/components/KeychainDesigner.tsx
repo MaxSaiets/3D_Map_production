@@ -45,6 +45,9 @@ export type KeychainDesignerConfig = {
   labelStrokeMm: number;
   labelFontStyle: KeychainLabelFontStyle;
   labelAngleDeg: number;
+  // Опційно: вирізати прямокутну зону карти під написом. За замовчуванням
+  // вимкнено — карта суцільна, підіймаються лише літери.
+  labelClearBand?: boolean;
   rimWidthMm: number;
   rimHeightMm: number;
 };
