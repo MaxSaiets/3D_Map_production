@@ -2145,6 +2145,29 @@ def run_flat_plate_pipeline(
             except Exception:
                 building_clip_area = content_area
         gdf_buildings_local = _clip_buildings_to_content(gdf_buildings_local, building_clip_area)
+        # ВИРІЗАЄМО ФОРМУ ЛІТЕР з footprint-ів будівель → текст не лежить ЗВЕРХУ
+        # будівлі, а сидить у вирізаному слід-у (юзер: «будівлі вирізались під
+        # текст, бо зараз текст просто наклада[ється]»).
+        if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True) and gdf_buildings_local is not None:
+            try:
+                carve_b = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
+                kept_geoms = []
+                for _, _row in gdf_buildings_local.iterrows():
+                    _g = _row.geometry
+                    if _g is None or getattr(_g, "is_empty", True):
+                        continue
+                    try:
+                        _g2 = _g.difference(carve_b)
+                        if _g2 is not None and not _g2.is_empty:
+                            _nr = _row.copy(); _nr.geometry = _g2
+                            kept_geoms.append(_nr)
+                    except Exception:
+                        kept_geoms.append(_row)
+                if kept_geoms:
+                    gdf_buildings_local = GeoDataFrame(kept_geoms, columns=gdf_buildings_local.columns, crs=getattr(gdf_buildings_local, "crs", None))
+                print("[KEYCHAIN] Letters carved out of building footprints (text recessed, not floating)")
+            except Exception as exc:
+                print(f"[KEYCHAIN] letter carve from buildings failed: {exc}")
 
     if keychain_mode:
         try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
@@ -2176,6 +2199,7 @@ def run_flat_plate_pipeline(
             angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
             min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
+            precomputed_polygon=text_letter_poly,
         )
         # Залишаємо тільки water depression carve (без text engrave)
         try:

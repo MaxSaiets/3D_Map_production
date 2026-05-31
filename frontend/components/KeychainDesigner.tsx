@@ -721,15 +721,19 @@ export function KeychainDesigner({
               height={value.mapHeightMm}
               fill="white"
             />
-            {/* Виключаємо label band (текст) — обернутий прямокутник */}
-            <rect
-              x={value.labelXMm - value.labelWidthMm / 2}
-              y={value.labelYMm - value.labelBandMm / 2}
-              width={value.labelWidthMm}
-              height={value.labelBandMm}
-              fill="black"
-              transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
-            />
+            {/* За замовчуванням карту під написом НЕ вирізаємо (текст лежить
+                поверх карти, підіймаються лише літери). Прямокутну зону-підкладку
+                вмикає лише опційний labelClearBand. */}
+            {value.labelClearBand ? (
+              <rect
+                x={value.labelXMm - value.labelWidthMm / 2}
+                y={value.labelYMm - value.labelBandMm / 2}
+                width={value.labelWidthMm}
+                height={value.labelBandMm}
+                fill="black"
+                transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+              />
+            ) : null}
             {/* Виключаємо token loop hole */}
             {value.baseShape === "token" && (
               <circle
@@ -834,19 +838,21 @@ export function KeychainDesigner({
               pointerEvents="none"
             />
           )}
-          <rect
-            x={value.labelXMm - value.labelWidthMm / 2}
-            y={value.labelYMm - value.labelBandMm / 2}
-            width={value.labelWidthMm}
-            height={value.labelBandMm}
-            rx={Math.min(2, value.labelBandMm / 2)}
-            fill={previewSide === "back" ? "rgba(5,10,24,0.16)" : "rgba(255,255,255,0.04)"}
-            stroke={previewSide === "back" ? "rgba(94,234,212,0.38)" : "rgba(255,255,255,0.28)"}
-            strokeDasharray="1.4 1.2"
-            strokeWidth={0.28}
-            transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
-            pointerEvents="none"
-          />
+          {value.labelClearBand ? (
+            <rect
+              x={value.labelXMm - value.labelWidthMm / 2}
+              y={value.labelYMm - value.labelBandMm / 2}
+              width={value.labelWidthMm}
+              height={value.labelBandMm}
+              rx={Math.min(2, value.labelBandMm / 2)}
+              fill={previewSide === "back" ? "rgba(5,10,24,0.16)" : "rgba(255,255,255,0.04)"}
+              stroke={previewSide === "back" ? "rgba(94,234,212,0.38)" : "rgba(255,255,255,0.28)"}
+              strokeDasharray="1.4 1.2"
+              strokeWidth={0.28}
+              transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+              pointerEvents="none"
+            />
+          ) : null}
 
           {previewSide === "front" ? (
             /* Preview обрізається по INNER BODY (форма тіла мінус rim).
