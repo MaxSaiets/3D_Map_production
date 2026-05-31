@@ -35,19 +35,38 @@ const CITIES: Record<
   string,
   { bounds: { north: number; south: number; east: number; west: number }; center: [number, number] }
 > = {
-  Kyiv: {
-    bounds: { north: 50.6, south: 50.2, east: 30.8, west: 30.2 },
-    center: [50.4501, 30.5234],
-  },
-  Khmelnytskyi: {
-    bounds: { north: 49.48, south: 49.36, east: 27.08, west: 26.88 },
-    center: [49.42, 26.98],
-  },
+  Kyiv:           { bounds: { north: 50.60, south: 50.20, east: 30.80, west: 30.20 }, center: [50.4501, 30.5234] },
+  Khmelnytskyi:   { bounds: { north: 49.48, south: 49.36, east: 27.08, west: 26.88 }, center: [49.42, 26.98] },
+  Lviv:           { bounds: { north: 49.90, south: 49.78, east: 24.11, west: 23.95 }, center: [49.8397, 24.0297] },
+  Odesa:          { bounds: { north: 46.56, south: 46.39, east: 30.83, west: 30.61 }, center: [46.4825, 30.7233] },
+  Dnipro:         { bounds: { north: 48.55, south: 48.37, east: 35.14, west: 34.95 }, center: [48.4647, 35.0462] },
+  Kharkiv:        { bounds: { north: 50.07, south: 49.92, east: 36.34, west: 36.12 }, center: [49.9935, 36.2304] },
+  Vinnytsia:      { bounds: { north: 49.28, south: 49.18, east: 28.53, west: 28.40 }, center: [49.2331, 28.4682] },
+  Zaporizhzhia:   { bounds: { north: 47.90, south: 47.78, east: 35.22, west: 35.07 }, center: [47.8388, 35.1396] },
+  Kryvyi_Rih:     { bounds: { north: 47.98, south: 47.85, east: 33.44, west: 33.28 }, center: [47.9105, 33.3918] },
+  Mykolaiv:       { bounds: { north: 46.99, south: 46.92, east: 32.08, west: 31.97 }, center: [46.9750, 32.0000] },
+  Poltava:        { bounds: { north: 49.64, south: 49.54, east: 34.61, west: 34.48 }, center: [49.5883, 34.5514] },
+  Cherkasy:       { bounds: { north: 49.47, south: 49.40, east: 32.11, west: 31.99 }, center: [49.4444, 32.0598] },
+  Chernihiv:      { bounds: { north: 51.54, south: 51.44, east: 31.32, west: 31.22 }, center: [51.4982, 31.2893] },
+  Ternopil:       { bounds: { north: 49.59, south: 49.52, east: 25.65, west: 25.53 }, center: [49.5535, 25.5948] },
+  IvanoFrankivsk: { bounds: { north: 48.96, south: 48.88, east: 24.76, west: 24.65 }, center: [48.9226, 24.7111] },
+  Zhytomyr:       { bounds: { north: 50.30, south: 50.23, east: 28.72, west: 28.61 }, center: [50.2547, 28.6587] },
+  Sumy:           { bounds: { north: 50.95, south: 50.88, east: 34.84, west: 34.74 }, center: [50.9077, 34.7981] },
+  Rivne:          { bounds: { north: 50.65, south: 50.57, east: 26.31, west: 26.18 }, center: [50.6199, 26.2516] },
+  Lutsk:          { bounds: { north: 50.80, south: 50.70, east: 25.38, west: 25.27 }, center: [50.7472, 25.3254] },
+  Uzhhorod:       { bounds: { north: 48.65, south: 48.60, east: 22.33, west: 22.26 }, center: [48.6238, 22.2947] },
+  Chernivtsi:     { bounds: { north: 48.33, south: 48.26, east: 25.99, west: 25.90 }, center: [48.2921, 25.9310] },
+  Kherson:        { bounds: { north: 46.67, south: 46.61, east: 32.67, west: 32.57 }, center: [46.6354, 32.6169] },
+  Kropyvnytskyi:  { bounds: { north: 48.54, south: 48.47, east: 32.30, west: 32.20 }, center: [48.5132, 32.2597] },
 };
 
 const CITY_LABELS: Record<string, string> = {
-  Kyiv: "Київ",
-  Khmelnytskyi: "Хмельницький",
+  Kyiv: "Київ", Khmelnytskyi: "Хмельницький", Lviv: "Львів", Odesa: "Одеса",
+  Dnipro: "Дніпро", Kharkiv: "Харків", Vinnytsia: "Вінниця", Zaporizhzhia: "Запоріжжя",
+  Kryvyi_Rih: "Кривий Ріг", Mykolaiv: "Миколаїв", Poltava: "Полтава", Cherkasy: "Черкаси",
+  Chernihiv: "Чернігів", Ternopil: "Тернопіль", IvanoFrankivsk: "Івано-Франківськ",
+  Zhytomyr: "Житомир", Sumy: "Суми", Rivne: "Рівне", Lutsk: "Луцьк",
+  Uzhhorod: "Ужгород", Chernivtsi: "Чернівці", Kherson: "Херсон", Kropyvnytskyi: "Кропивницький",
 };
 
 const WORKSPACE_TABS: Array<{ id: WorkspaceView; label: string; icon: typeof MapIcon }> = [
@@ -122,11 +141,10 @@ export default function Home() {
               </p>
               <div>
                 <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-                  Мобільний простір для генерації 3D-мап
+                  Генератор 3D-мап для друку
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-[15px]">
-                  Оберіть місто та ділянку, налаштуйте модель і переходьте між мапою,
-                  прев'ю та параметрами без перевантаженого інтерфейсу.
+                  Обери ділянку міста → налаштуй модель → завантаж готовий 3MF для Bambu Studio / PrusaSlicer.
                 </p>
               </div>
             </div>
@@ -150,7 +168,15 @@ export default function Home() {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Місто
                 </div>
-                <div className="mt-1 text-base font-semibold text-[var(--text-primary)]">{selectedCityLabel}</div>
+                <select
+                  value={currentCityKey}
+                  onChange={(e) => setCurrentCityKey(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
+                >
+                  {Object.keys(CITIES).map((key) => (
+                    <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
+                  ))}
+                </select>
               </div>
               <div className="rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.8)] px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -334,7 +360,14 @@ export default function Home() {
                 </div>
                 {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
                 {!isGenerating && downloadUrl && (
-                  <p className="mt-1 text-xs text-white/65">Відкрийте вкладку “Дії”, щоб завантажити файл.</p>
+                  <a
+                    href={downloadUrl.startsWith(“http”) ? downloadUrl : `${process.env.NEXT_PUBLIC_API_URL}${downloadUrl}`}
+                    download
+                    className=”mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-strong)] px-4 py-2 text-xs font-bold text-white shadow-[0_8px_20px_rgba(11,92,87,0.4)] active:scale-95 transition-transform”
+                  >
+                    <Download className=”h-3.5 w-3.5” />
+                    Завантажити 3MF
+                  </a>
                 )}
               </div>
 

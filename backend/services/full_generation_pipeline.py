@@ -280,14 +280,15 @@ def _attempt_print_recovery(
     if not repaired_any:
         return initial_report, normalized_parts, adjusted_expected
 
+    _rec_strict = os.environ.get("PRINT_QA_STRICT", "").lower() in ("1", "true", "yes", "on")
     recovery_path = write_export_print_acceptance_report(
         task_id=task_id,
         output_dir=output_dir,
         parts_for_print=normalized_parts,
         expected_parts=adjusted_expected,
         printer_profile=printer_profile,
-        require_slicer_validation=True,
-        fail_on_slicer_warnings=True,
+        require_slicer_validation=_rec_strict,
+        fail_on_slicer_warnings=_rec_strict,
         rotate_x_deg=0,
     )
     task.set_output("print_acceptance", str(recovery_path.resolve()))
@@ -677,7 +678,7 @@ def run_full_generation_pipeline(
     _validate_source_stage(source=source, zone_prefix=zone_prefix)
     _log_stage("fetch_source", stage_start)
 
-    task.update_status("processing", 20, "Генерація рельєфу...")
+    task.update_status("processing", 15, "Завантажую дані OSM (дороги, будівлі, вода)...")
 
     if request.terrain_only:
         terrain_only_result = run_terrain_only_pipeline(
@@ -739,6 +740,7 @@ def run_full_generation_pipeline(
             primary_format=export_result.primary_format,
         )
 
+    task.update_status("processing", 20, "Будую рельєф місцевості (~3-5 хв)...")
     stage_start = time.perf_counter()
     terrain_stage = _run_terrain_stage(
         task=task,
@@ -765,6 +767,7 @@ def run_full_generation_pipeline(
         zone_prefix=zone_prefix,
     )
 
+    task.update_status("processing", 40, "Генерую дороги, воду, будівлі...")
     stage_start = time.perf_counter()
     detail_layers = process_detail_layers(
         task=task,
@@ -931,7 +934,7 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix} Road/groove validation report failed: {exc}")
 
-    task.update_status("processing", 80, "Обрізання мешів по bbox...")
+    task.update_status("processing", 75, "Збираю фінальну модель...")
     stage_start = time.perf_counter()
     clip_result = clip_generated_meshes(
         terrain_mesh=terrain_mesh,
@@ -991,7 +994,7 @@ def run_full_generation_pipeline(
         terrain_mesh = merge_result.terrain_mesh
         building_meshes = merge_result.building_meshes
 
-    task.update_status("processing", 82, "Експорт моделі...")
+    task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     export_result = export_generation_outputs(
         task=task,

@@ -429,10 +429,26 @@ export function ControlPanel({
     if (!activeTaskId || !downloadUrl) return;
 
     try {
-      const fbUrl = taskStatuses[activeTaskId]?.firebase_url;
+      const status = taskStatuses[activeTaskId];
+      const fbUrl = status?.firebase_url;
       const isFormatMatch = fbUrl && fbUrl.toLowerCase().split("?")[0].endsWith(`.${exportFormat.toLowerCase()}`);
-      const blob =
-        fbUrl && isFormatMatch ? await api.downloadFile(fbUrl) : await api.downloadModel(activeTaskId, exportFormat);
+      // Priority: Firebase (if available + format match) → local /files/ direct link → /api/download endpoint
+      const localUrl = exportFormat === "3mf"
+        ? (status?.download_url_3mf ?? status?.download_url)
+        : (status?.download_url_stl ?? status?.download_url);
+      let blob: Blob;
+      if (fbUrl && isFormatMatch) {
+        blob = await api.downloadFile(fbUrl);
+      } else if (localUrl) {
+        // Direct local file download — fastest, no Firebase needed
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+        const fullUrl = localUrl.startsWith("http") ? localUrl : `${API_BASE}${localUrl}`;
+        const res = await fetch(fullUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        blob = await res.blob();
+      } else {
+        blob = await api.downloadModel(activeTaskId, exportFormat);
+      }
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -440,7 +456,6 @@ export function ControlPanel({
       // Read descriptive basename (model_<grid>_<mm>_<row>_<col>) from
       // backend's download_url instead of slicing the UUID — keeps the slicer
       // label aligned with the on-disk filename produced by the backend.
-      const status = taskStatuses[activeTaskId];
       const sources = [
         status?.download_url,
         status?.download_url_3mf,
