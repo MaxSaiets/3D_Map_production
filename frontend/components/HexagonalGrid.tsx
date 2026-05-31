@@ -128,7 +128,7 @@ export default function HexagonalGrid({
     setHexGrid(null); // Скидаємо попередню сітку
 
     try {
-      console.log("[HexagonalGrid] Запит генерації сітки з bounds:", bounds);
+
       const { api } = await import("@/lib/api");
 
       // Перевіряємо валідність bounds
@@ -136,7 +136,7 @@ export default function HexagonalGrid({
         throw new Error(`Невірні координати bounds: north=${bounds?.north}, south=${bounds?.south}, east=${bounds?.east}, west=${bounds?.west}`);
       }
 
-      console.log("[HexagonalGrid] Відправляємо запит до API з bounds:", bounds, "gridType:", gridType, "hexSizeM:", hexSizeM);
+
       const data = await api.generateHexagonalGrid({
         north: bounds.north,
         south: bounds.south,
@@ -146,7 +146,7 @@ export default function HexagonalGrid({
         grid_type: gridType,
       });
 
-      console.log("[HexagonalGrid] Отримано сітку:", data.hex_count, "шестикутників, is_valid:", data.is_valid);
+
 
       if (!data.geojson || !data.geojson.features || data.geojson.features.length === 0) {
         throw new Error("Сітка порожня або невалідна");
@@ -156,12 +156,7 @@ export default function HexagonalGrid({
       if (data.geojson.features.length > 0) {
         const firstFeature = data.geojson.features[0];
         const firstCoords = firstFeature?.geometry?.coordinates?.[0]?.[0];
-        console.log("[HexagonalGrid] Перший шестикутник:", {
-          id: firstFeature?.id,
-          type: firstFeature?.geometry?.type,
-          firstCoord: firstCoords,
-          coordsCount: firstFeature?.geometry?.coordinates?.[0]?.length
-        });
+        // Debug only in dev: console.log("[HexagonalGrid] first hex:", firstFeature?.id);
       }
 
       setHexGrid(data.geojson);
@@ -181,7 +176,6 @@ export default function HexagonalGrid({
     const zoneId = normalizeId(zoneIdRaw);
     const currentSelected = selectedZonesRef.current;
     const currentOrder = selectedOrderRef.current;
-    console.log(`[HexagonalGrid] handleZoneClick called for zoneId: ${zoneId}, current selected:`, Array.from(currentSelected));
 
     if (!zoneId) {
       console.error("[HexagonalGrid] zoneId is empty!");
@@ -195,12 +189,12 @@ export default function HexagonalGrid({
     if (nextSelected.has(zoneId)) {
       nextSelected.delete(zoneId);
       nextOrder = nextOrder.filter((id) => id !== zoneId);
-      console.log(`[HexagonalGrid] Zone ${zoneId} deselected. Total selected: ${nextSelected.size}`);
+
     } else {
       nextSelected.add(zoneId);
       // Add to the end to preserve click order
       if (!nextOrder.includes(zoneId)) nextOrder.push(zoneId);
-      console.log(`[HexagonalGrid] Zone ${zoneId} selected. Total selected: ${nextSelected.size}`);
+
     }
     // Sync refs immediately (so next click sees updated state even before React renders)
     selectedZonesRef.current = nextSelected;
@@ -217,7 +211,7 @@ export default function HexagonalGrid({
     }
     const selectedFeatures = nextOrder.map((id) => featureById.get(id)).filter(Boolean);
 
-    console.log(`[HexagonalGrid] Selected features count: ${selectedFeatures.length}`);
+
     onZonesSelectedRef.current(selectedFeatures);
   };
 
@@ -242,7 +236,7 @@ export default function HexagonalGrid({
     setSelectedZones(allZoneIds);
     setSelectedOrder(all.map((x: any) => x.id));
     onZonesSelectedRef.current(all.map((x: any) => x.feature));
-    console.log(`[HexagonalGrid] All ${allZoneIds.size} zones selected`);
+
   };
 
   const handleDeselectAll = () => {
@@ -251,7 +245,7 @@ export default function HexagonalGrid({
     setSelectedZones(new Set());
     setSelectedOrder([]);
     onZonesSelectedRef.current([]);
-    console.log("[HexagonalGrid] All zones deselected");
+
   };
 
   const handleZoneHover = (zoneId: string | null) => {
@@ -392,7 +386,7 @@ export default function HexagonalGrid({
                   return;
                 }
 
-                console.log(`[HexagonalGrid] Feature ${zoneId} added to map, feature.id=${feature?.id}, feature.properties.id=${feature?.properties?.id}`);
+
 
                 // Зберігаємо посилання на layer для оновлення стилю
                 (layer as any)._hexZoneId = zoneId;
@@ -401,7 +395,7 @@ export default function HexagonalGrid({
                   click: (e: L.LeafletMouseEvent) => {
                     e.originalEvent?.stopPropagation?.();
                     e.originalEvent?.preventDefault?.();
-                    console.log(`[HexagonalGrid] Zone ${zoneId} clicked, event:`, e);
+
                     // Apply immediate visual feedback based on ref state (no stale closures)
                     const willSelect = !selectedZonesRef.current.has(zoneId);
                     handleZoneClick(zoneId);

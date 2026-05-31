@@ -60,6 +60,21 @@ const CITIES: Record<
   Kropyvnytskyi:  { bounds: { north: 48.54, south: 48.47, east: 32.30, west: 32.20 }, center: [48.5132, 32.2597] },
 };
 
+function MobileDownloadButton({ url }: { url: string }) {
+  const API = process.env.NEXT_PUBLIC_API_URL || "";
+  const href = url.startsWith("http") ? url : API + url;
+  return (
+    <a
+      href={href}
+      download
+      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white active:scale-95 transition-transform"
+    >
+      <Download className="h-3.5 w-3.5" />
+      Завантажити 3MF
+    </a>
+  );
+}
+
 const CITY_LABELS: Record<string, string> = {
   Kyiv: "Київ", Khmelnytskyi: "Хмельницький", Lviv: "Львів", Odesa: "Одеса",
   Dnipro: "Дніпро", Kharkiv: "Харків", Vinnytsia: "Вінниця", Zaporizhzhia: "Запоріжжя",
@@ -144,7 +159,7 @@ export default function Home() {
                   Генератор 3D-мап для друку
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-[15px]">
-                  Обери ділянку міста → налаштуй модель → завантаж готовий 3MF для Bambu Studio / PrusaSlicer.
+                  Обери ділянку міста, налаштуй модель та завантаж готовий 3MF для Bambu Studio / PrusaSlicer.
                 </p>
               </div>
             </div>
@@ -360,14 +375,7 @@ export default function Home() {
                 </div>
                 {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
                 {!isGenerating && downloadUrl && (
-                  <a
-                    href={downloadUrl.startsWith(“http”) ? downloadUrl : `${process.env.NEXT_PUBLIC_API_URL}${downloadUrl}`}
-                    download
-                    className=”mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-strong)] px-4 py-2 text-xs font-bold text-white shadow-[0_8px_20px_rgba(11,92,87,0.4)] active:scale-95 transition-transform”
-                  >
-                    <Download className=”h-3.5 w-3.5” />
-                    Завантажити 3MF
-                  </a>
+                  <MobileDownloadButton url={downloadUrl} />
                 )}
               </div>
 

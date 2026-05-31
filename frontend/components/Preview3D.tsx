@@ -81,7 +81,7 @@ async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" 
   for (const [part, blob] of entries) {
     if (!blob) continue;
     const mesh = await loadStlAsMesh(blob, colors[part as string] ?? 0x888888);
-    console.log(`[Preview3D] Loaded part: ${part}, Vertices: ${mesh.geometry.attributes.position.count}, ByteLength: ${blob.size}`);
+// removed-debug-log
     // mark part type for later preview toggles (e.g. shading)
     (mesh as any).userData = { ...(mesh as any).userData, part };
     const mat = mesh.material as THREE.MeshStandardMaterial;
@@ -204,7 +204,7 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           return;
         }
 
-        console.log(`[Preview3D] Loaded local 3MF: meshes=${totalMeshes}, vertices=${totalVertices}`);
+// removed-debug-log
         resolve(group);
       },
       undefined,
@@ -271,7 +271,7 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           reject(new Error("GLB preview не містить вершин"));
           return;
         }
-        console.log(`[Preview3D] Loaded local GLB: meshes=${totalMeshes}, vertices=${totalVertices}`);
+// removed-debug-log
         resolve(group);
       },
       undefined,
@@ -335,13 +335,13 @@ function CameraController() {
           const distance = baseDistance * distanceMultiplier;
           cameraRef.current.position.set(distance, distance * 0.8, distance);
           cameraRef.current.lookAt(0, 0, 0);
-          console.log(`Камера налаштована для batch preview (${zoneCount} зон):`, cameraRef.current.position);
+// removed-debug-log
         } else {
           // Для однієї зони - стандартна відстань
           const distance = 300;
           cameraRef.current.position.set(distance, distance, distance);
           cameraRef.current.lookAt(0, 0, 0);
-          console.log("Камера налаштована для однієї зони:", cameraRef.current.position);
+// removed-debug-log
         }
         cameraRef.current.updateProjectionMatrix();
       }
@@ -737,13 +737,13 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     // Якщо модель вже завантажена для цього taskId, не перезавантажуємо
     const currentTaskId = (model as any)?.userData?.taskId;
     if (model && currentTaskId === activeTaskId) {
-      console.log("Модель вже завантажена для цього taskId, пропускаємо перезавантаження");
+// removed-debug-log
       return;
     }
 
     // Якщо завантажуємо нову модель, скидаємо попередню (якщо вона не тестова)
     if (model && !hasLoadedTestModel) {
-      console.log("Завантажуємо нову модель, скидаємо попередню");
+// removed-debug-log
       setModel(null);
     }
 
@@ -751,7 +751,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
       setLoading(true);
       setError(null);
       try {
-        console.log("[Preview3D] Loading local preview", { taskId: activeTaskId });
+// removed-debug-log
         const loadedModel = await loadPreviewModelForTask(activeTaskId);
 
         // Стабільні трансформації для превʼю:
@@ -766,8 +766,8 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
 
-        console.log("Розміри моделі до обробки:", size.x, size.y, size.z);
-        console.log("Максимальний розмір:", maxDim);
+// removed-debug-log
+// removed-debug-log
 
         if (maxDim === 0) {
           throw new Error("Модель має нульовий розмір");
@@ -791,9 +791,9 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
         const boxFinal = new THREE.Box3().setFromObject(loadedModel);
         const sizeAfter = boxFinal.getSize(new THREE.Vector3());
         const centerAfter = boxFinal.getCenter(new THREE.Vector3());
-        console.log("Розміри моделі після обробки:", sizeAfter.x, sizeAfter.y, sizeAfter.z);
-        console.log("Центр моделі після обробки:", centerAfter.x, centerAfter.y, centerAfter.z);
-        console.log("Модель успішно завантажена та оброблена");
+// removed-debug-log
+// removed-debug-log
+// removed-debug-log
 
         // Зберігаємо інформацію про модель для налаштування камери
         (loadedModel as any).userData = {
@@ -804,11 +804,11 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
           exportFormat: exportFormat
         };
 
-        console.log("✅ Модель готова до відображення, встановлюємо в state");
+// removed-debug-log
         fitCameraToObject(loadedModel);
         setModel(loadedModel);
         setLoading(false);
-        console.log("✅ Модель встановлена в state, має відображатися");
+// removed-debug-log
       } catch (error: any) {
         console.error("Помилка завантаження моделі:", error);
         setError(error.message || "Помилка завантаження моделі");
@@ -916,7 +916,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
   }
 
   if (!model) {
-    console.log("ModelLoader: модель не завантажена, показуємо placeholder");
+// removed-debug-log
     return (
       <>
         <ambientLight intensity={0.8} />
@@ -932,8 +932,8 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     );
   }
 
-  console.log("ModelLoader: відображаємо модель", model);
-  console.log("ModelLoader: downloadUrl:", downloadUrl, "taskId:", activeTaskId, "loading:", loading, "error:", error);
+// removed-debug-log
+// removed-debug-log
 
   // Перевіряємо, чи модель має геометрію
   let hasGeometry = false;
@@ -954,7 +954,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     }
   }
 
-  console.log("ModelLoader: модель має геометрію:", hasGeometry, "вершин:", vertexCount);
+// removed-debug-log
 
   if (!hasGeometry || vertexCount === 0) {
     console.warn("⚠️ Модель не містить геометрії або має 0 вершин!");
