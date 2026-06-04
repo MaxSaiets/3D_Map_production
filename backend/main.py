@@ -76,12 +76,26 @@ MIN_PRINTABLE_GAP_MM = 0.6  # Проміжки <0.6мм об'єднуються 
 
 
 
-# CORS РЅР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ РґР»СЏ С–РЅС‚РµРіСЂР°С†С–С— Р· frontend
+# CORS: restrict to known origins. Wildcard "*" + allow_credentials is invalid
+# and insecure. Frontend is same-origin (monadruk.com), so we allow that + local
+# dev. Override/extend via env CORS_ALLOW_ORIGINS (comma-separated).
+_default_origins = [
+    "https://monadruk.com",
+    "https://www.monadruk.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+_env_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+_allowed_origins = (
+    [o.strip() for o in _env_origins.split(",") if o.strip()]
+    if _env_origins
+    else _default_origins
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
