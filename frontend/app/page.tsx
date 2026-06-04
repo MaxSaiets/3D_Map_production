@@ -1,410 +1,439 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, X } from "lucide-react";
-import { Preview3D } from "@/components/Preview3D";
-import { ControlPanel } from "@/components/ControlPanel";
-import { useGenerationStore } from "@/store/generation-store";
+import { useState } from "react";
+import {
+  ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler, ShieldCheck,
+  Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck,
+} from "lucide-react";
+import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 
-type WorkspaceView = "map" | "preview" | "settings";
-
-const MapSelector = dynamic(
-  () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
-        Завантаження карти...
-      </div>
-    ),
-  },
-);
-
-const HexagonalGrid = dynamic(() => import("@/components/HexagonalGrid"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
-      Завантаження сітки...
-    </div>
-  ),
-});
-
-const CITIES: Record<
-  string,
-  { bounds: { north: number; south: number; east: number; west: number }; center: [number, number] }
-> = {
-  Kyiv:           { bounds: { north: 50.60, south: 50.20, east: 30.80, west: 30.20 }, center: [50.4501, 30.5234] },
-  Khmelnytskyi:   { bounds: { north: 49.48, south: 49.36, east: 27.08, west: 26.88 }, center: [49.42, 26.98] },
-  Lviv:           { bounds: { north: 49.90, south: 49.78, east: 24.11, west: 23.95 }, center: [49.8397, 24.0297] },
-  Odesa:          { bounds: { north: 46.56, south: 46.39, east: 30.83, west: 30.61 }, center: [46.4825, 30.7233] },
-  Dnipro:         { bounds: { north: 48.55, south: 48.37, east: 35.14, west: 34.95 }, center: [48.4647, 35.0462] },
-  Kharkiv:        { bounds: { north: 50.07, south: 49.92, east: 36.34, west: 36.12 }, center: [49.9935, 36.2304] },
-  Vinnytsia:      { bounds: { north: 49.28, south: 49.18, east: 28.53, west: 28.40 }, center: [49.2331, 28.4682] },
-  Zaporizhzhia:   { bounds: { north: 47.90, south: 47.78, east: 35.22, west: 35.07 }, center: [47.8388, 35.1396] },
-  Kryvyi_Rih:     { bounds: { north: 47.98, south: 47.85, east: 33.44, west: 33.28 }, center: [47.9105, 33.3918] },
-  Mykolaiv:       { bounds: { north: 46.99, south: 46.92, east: 32.08, west: 31.97 }, center: [46.9750, 32.0000] },
-  Poltava:        { bounds: { north: 49.64, south: 49.54, east: 34.61, west: 34.48 }, center: [49.5883, 34.5514] },
-  Cherkasy:       { bounds: { north: 49.47, south: 49.40, east: 32.11, west: 31.99 }, center: [49.4444, 32.0598] },
-  Chernihiv:      { bounds: { north: 51.54, south: 51.44, east: 31.32, west: 31.22 }, center: [51.4982, 31.2893] },
-  Ternopil:       { bounds: { north: 49.59, south: 49.52, east: 25.65, west: 25.53 }, center: [49.5535, 25.5948] },
-  IvanoFrankivsk: { bounds: { north: 48.96, south: 48.88, east: 24.76, west: 24.65 }, center: [48.9226, 24.7111] },
-  Zhytomyr:       { bounds: { north: 50.30, south: 50.23, east: 28.72, west: 28.61 }, center: [50.2547, 28.6587] },
-  Sumy:           { bounds: { north: 50.95, south: 50.88, east: 34.84, west: 34.74 }, center: [50.9077, 34.7981] },
-  Rivne:          { bounds: { north: 50.65, south: 50.57, east: 26.31, west: 26.18 }, center: [50.6199, 26.2516] },
-  Lutsk:          { bounds: { north: 50.80, south: 50.70, east: 25.38, west: 25.27 }, center: [50.7472, 25.3254] },
-  Uzhhorod:       { bounds: { north: 48.65, south: 48.60, east: 22.33, west: 22.26 }, center: [48.6238, 22.2947] },
-  Chernivtsi:     { bounds: { north: 48.33, south: 48.26, east: 25.99, west: 25.90 }, center: [48.2921, 25.9310] },
-  Kherson:        { bounds: { north: 46.67, south: 46.61, east: 32.67, west: 32.57 }, center: [46.6354, 32.6169] },
-  Kropyvnytskyi:  { bounds: { north: 48.54, south: 48.47, east: 32.30, west: 32.20 }, center: [48.5132, 32.2597] },
-};
-
-
-const CITY_LABELS: Record<string, string> = {
-  Kyiv: "Київ", Khmelnytskyi: "Хмельницький", Lviv: "Львів", Odesa: "Одеса",
-  Dnipro: "Дніпро", Kharkiv: "Харків", Vinnytsia: "Вінниця", Zaporizhzhia: "Запоріжжя",
-  Kryvyi_Rih: "Кривий Ріг", Mykolaiv: "Миколаїв", Poltava: "Полтава", Cherkasy: "Черкаси",
-  Chernihiv: "Чернігів", Ternopil: "Тернопіль", IvanoFrankivsk: "Івано-Франківськ",
-  Zhytomyr: "Житомир", Sumy: "Суми", Rivne: "Рівне", Lutsk: "Луцьк",
-  Uzhhorod: "Ужгород", Chernivtsi: "Чернівці", Kherson: "Херсон", Kropyvnytskyi: "Кропивницький",
-};
-
-const WORKSPACE_TABS: Array<{ id: WorkspaceView; label: string; icon: typeof MapIcon }> = [
-  { id: "map", label: "Мапа", icon: MapIcon },
-  { id: "preview", label: "Прев'ю", icon: Layers3 },
-  { id: "settings", label: "Налаштування", icon: Settings2 },
-];
-
-export default function Home() {
-  const [showHexGrid, setShowHexGrid] = useState(false);
-  const [selectedZones, setSelectedZones] = useState<any[]>([]);
-  const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
-  const [hexSizeM, setHexSizeM] = useState(300.0);
-  const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
-
-  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating } = useGenerationStore();
-
-  // Відновлюємо task_id з localStorage після refresh
-  useEffect(() => {
-    const savedGroupId = localStorage.getItem("3dmap_task_group_id");
-    const savedTaskIds = localStorage.getItem("3dmap_task_ids");
-    if (savedGroupId && !taskGroupId) {
-      const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
-      setTaskGroup(savedGroupId, ids);
-      setGenerating(true);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleCancelTask = async () => {
-    if (!taskGroupId) return;
-    try {
-      const { api } = await import("@/lib/api");
-      await api.cancelTask(taskGroupId);
-    } catch {/* ignore */}
-    setTaskGroup(null);
-    setGenerating(false);
-    localStorage.removeItem("3dmap_task_group_id");
-    localStorage.removeItem("3dmap_task_ids");
-  };
-
-  const currentCity = CITIES[currentCityKey];
-  const selectedCityLabel = CITY_LABELS[currentCityKey] ?? currentCityKey;
-  const hasMapSelection = Boolean(selectedArea);
-  const zoneCount = selectedZones.length;
-  const selectionLabel = showHexGrid
-    ? zoneCount > 0
-      ? `${zoneCount} зон готово`
-      : "Оберіть зони на мапі"
-    : hasMapSelection
-      ? "Ділянка готова до генерації"
-      : "Позначте одну ділянку";
-  const statusLabel = isGenerating
-    ? `${progress}% • ${status || "Генерація триває"}`
-    : downloadUrl
-      ? "Файл готовий до завантаження"
-      : "Готово до налаштування";
-
-  const mapPanelClasses = workspaceView === "map" ? "flex" : "hidden lg:flex";
-  const previewPanelClasses = workspaceView === "preview" ? "flex" : "hidden lg:flex";
-  const settingsPanelClasses = workspaceView === "settings" ? "flex" : "hidden";
-
+/* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
+function MapTile({ accent = "#2E4A3A", paper = "#EFE6D2" }: { accent?: string; paper?: string }) {
   return (
-    <div className="min-h-[100dvh] bg-transparent">
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
-        <header className="sticky top-0 z-30 rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.86)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:static lg:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
-                3D Map Workspace
-              </p>
-              <div>
-                <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-                  Генератор 3D-мап для друку
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-[15px]">
-                  Обери ділянку міста, налаштуй модель та завантаж готовий 3MF для Bambu Studio / PrusaSlicer.
-                </p>
-              </div>
-            </div>
+    <svg viewBox="0 0 200 160" className="h-full w-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="200" height="160" fill={paper} />
+      <g opacity="0.9">
+        <path d="M0 90 L80 50 L130 75 L70 110 Z" fill="#C9D9D4" opacity="0.5" />
+        <path d="M30 30 L60 15 L90 30 L60 45 Z" fill="#D6DDB5" opacity="0.7" />
+        {[...Array(7)].map((_, i) => (
+          <rect key={i} x={20 + i * 22} y={60 + (i % 3) * 8} width="14" height={18 + (i % 4) * 10}
+            fill={accent} opacity={0.18 + (i % 3) * 0.12} transform={`skewY(-12)`} />
+        ))}
+        <path d="M0 70 L200 40" stroke={accent} strokeWidth="2" opacity="0.25" />
+        <path d="M10 110 L180 80" stroke={accent} strokeWidth="3" opacity="0.2" />
+      </g>
+    </svg>
+  );
+}
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[360px]">
-              <Link
-                href="/keychains"
-                className="flex items-center gap-3 rounded-[22px] border border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] px-4 py-3 text-[var(--accent-strong)] transition hover:border-[rgba(11,92,87,0.36)] hover:bg-[rgba(15,118,110,0.12)] sm:col-span-2"
-              >
-                <span className="rounded-2xl bg-white/80 p-2">
-                  <KeyRound size={18} />
-                </span>
-                <span>
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
-                    Новий інструмент
-                  </span>
-                  <span className="mt-1 block text-sm font-semibold">Створити брелок з мапою</span>
-                </span>
-              </Link>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.8)] px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Місто
-                </div>
-                <select
-                  value={currentCityKey}
-                  onChange={(e) => setCurrentCityKey(e.target.value)}
-                  className="mt-1 w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
-                >
-                  {Object.keys(CITIES).map((key) => (
-                    <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.8)] px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Статус
-                </div>
-                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{selectionLabel}</div>
-              </div>
-            </div>
-          </div>
+function Eyebrow({ children, dot, light }: { children: React.ReactNode; dot?: boolean; light?: boolean }) {
+  return (
+    <div className={`eyebrow ${dot ? "eyebrow-dot" : ""}`} style={light ? { color: "rgba(244,239,228,.7)" } : undefined}>
+      {children}
+    </div>
+  );
+}
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-            {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => {
-              const isActive = workspaceView === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setWorkspaceView(id)}
-                  className={`flex min-w-fit items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    isActive
-                      ? "bg-[var(--accent-strong)] text-white shadow-[0_14px_30px_rgba(11,92,87,0.24)]"
-                      : "bg-white/75 text-[var(--text-secondary)]"
-                  }`}
-                >
-                  <Icon size={16} />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </header>
+export default function HomePage() {
+  return (
+    <div className="min-h-[100dvh]">
+      <SiteHeader />
+      <Hero />
+      <PathSelector />
+      <HowItWorks />
+      <TemplatesGallery />
+      <Craft />
+      <Testimonials />
+      <FinalCTA />
+      <SiteFooter />
+    </div>
+  );
+}
 
-        <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
-          <aside className="hidden min-h-0 lg:block">
-            <div className="h-full overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
-              <ControlPanel
-                showHexGrid={showHexGrid}
-                setShowHexGrid={setShowHexGrid}
-                selectedZones={selectedZones}
-                setSelectedZones={setSelectedZones}
-                gridType={gridType}
-                setGridType={setGridType}
-                hexSizeM={hexSizeM}
-                setHexSizeM={setHexSizeM}
-                availableCities={CITIES}
-                selectedCityKey={currentCityKey}
-                onCityChange={setCurrentCityKey}
-              />
-            </div>
-          </aside>
-
-          <section className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className={mapPanelClasses}>
-              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[440px]">
-                <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      {showHexGrid ? "Grid Selection" : "Single Selection"}
-                    </p>
-                    <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                      {showHexGrid ? "Оберіть зони для серії" : "Позначте ділянку на мапі"}
-                    </h2>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                      {showHexGrid
-                        ? "Працюйте з кількома зонами та швидко готуйте пакетний рендер."
-                        : "Виділіть одну ділянку, щоб швидко згенерувати модель і перейти до прев'ю."}
-                    </p>
-                  </div>
-
-                  <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      Режим
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                      {showHexGrid ? "Сітка зон" : "Одна ділянка"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
-                  {showHexGrid ? (
-                    <HexagonalGrid
-                      key={`hex-grid-${currentCityKey}`}
-                      bounds={currentCity.bounds}
-                      onZonesSelected={setSelectedZones}
-                      gridType={gridType}
-                      hexSizeM={hexSizeM}
-                    />
-                  ) : (
-                    <div className="h-full overflow-hidden rounded-[24px]">
-                      <MapSelector center={currentCity.center} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className={previewPanelClasses}>
-              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px]">
-                <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      3D Preview
-                    </p>
-                    <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                      Перевіряйте форму моделі ще до завантаження
-                    </h2>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                      На телефоні прев'ю винесене в окремий екран, щоб не конфліктувати з картою та налаштуваннями.
-                    </p>
-                  </div>
-
-                  <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      Стан
-                    </div>
-                    <div className="mt-1 flex items-center justify-end gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</span>
-                      {isGenerating && taskGroupId && (
-                        <button
-                          onClick={handleCancelTask}
-                          className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-200 transition-colors"
-                          title="Скасувати генерацію"
-                        >
-                          <X size={10} /> Скасувати
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-h-0 flex-1 p-2 sm:p-3">
-                  <div className="h-full overflow-hidden rounded-[24px] border border-[rgba(15,23,42,0.12)]">
-                    <Preview3D />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={settingsPanelClasses}>
-              <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
-                <ControlPanel
-                  showHexGrid={showHexGrid}
-                  setShowHexGrid={setShowHexGrid}
-                  selectedZones={selectedZones}
-                  setSelectedZones={setSelectedZones}
-                  gridType={gridType}
-                  setGridType={setGridType}
-                  hexSizeM={hexSizeM}
-                  setHexSizeM={setHexSizeM}
-                  availableCities={CITIES}
-                  selectedCityKey={currentCityKey}
-                  onCityChange={setCurrentCityKey}
-                />
-              </div>
-            </div>
-          </section>
+/* ---------- Header ---------- */
+function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
+        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-ink">
+          <Box size={22} className="text-forest" />
+          monadruk
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
+          <a href="#how" className="hover:text-ink">Як це працює</a>
+          <a href="#templates" className="hover:text-ink">Шаблони</a>
+          <Link href="/keychains" className="hover:text-ink">Брелки</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/keychains" className="btn btn-ghost btn-sm hidden sm:inline-flex">
+            <KeyRound size={15} /> Брелок
+          </Link>
+          <Link href="/create" className="btn btn-primary btn-sm">
+            Створити мапу <ArrowRight size={15} />
+          </Link>
         </div>
+      </div>
+    </header>
+  );
+}
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 lg:hidden">
-          <div className="pointer-events-auto rounded-[26px] border border-[rgba(255,255,255,0.55)] bg-[rgba(15,23,42,0.9)] px-4 py-3 text-white shadow-[0_22px_60px_rgba(15,23,42,0.3)] backdrop-blur">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
-                  Швидкий статус
-                </p>
-                <div className="mt-1 text-sm font-semibold">
-                  {isGenerating ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {status || "Генерація триває"}
-                    </span>
-                  ) : downloadUrl ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Download className="h-4 w-4" />
-                      Модель готова
-                    </span>
-                  ) : (
-                    selectionLabel
-                  )}
-                </div>
-                {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
-                {!isGenerating && downloadUrl && (
-                  <a
-                    href={downloadUrl}
-                    download
-                    className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
-                  >
-                    <Download size={14} />
-                    Завантажити 3MF
-                  </a>
-                )}
+/* ---------- Hero ---------- */
+function Hero() {
+  return (
+    <section className="border-b border-line-soft">
+      <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
+        <div className="fade-up">
+          <Eyebrow dot>Преміум 3D-мапи · Друк удома або на замовлення</Eyebrow>
+          <h1 className="mt-6 text-[clamp(44px,6vw,84px)] leading-[1.04]">
+            Твоє місто.<br />
+            <span className="italic text-forest">Виміряне</span> в 3D.
+          </h1>
+          <p className="mt-7 max-w-[520px] text-[17px] leading-relaxed text-ink-2">
+            Обери район, що для тебе щось значить — або будь-яку точку на Землі.
+            Ми перетворимо її на тактильну архітектурну мапу з висотами будинків,
+            парків і річок. Завантаж готовий 3D-файл і друкуй.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link href="/create" className="btn btn-primary btn-lg">
+              Створити свою мапу <ArrowRight size={16} />
+            </Link>
+            <Link href="/keychains" className="btn btn-ghost btn-lg">
+              <KeyRound size={16} /> Брелок з мапою
+            </Link>
+          </div>
+          <div className="mt-12 flex gap-9 border-t border-line-soft pt-8">
+            <Stat n="23" l="Міста України" />
+            <Stat n="0.4 мм" l="Деталізація друку" />
+            <Stat n="4.9" l="Рейтинг" star />
+          </div>
+        </div>
+        <div className="relative">
+          <div className="card card-paper overflow-hidden rounded-[20px] p-4 shadow-lift">
+            <div className="flex items-center justify-between px-2 pb-3 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="pulse h-2 w-2 rounded-full bg-forest" />
+                <span className="eyebrow">Жива демонстрація · Київ, Поділ</span>
               </div>
-
-              <div className="flex flex-wrap justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("map")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "map" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Мапа
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("preview")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "preview" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Прев'ю
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("settings")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "settings" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Дії
-                </button>
+              <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="aspect-[5/4] overflow-hidden rounded-[14px] border border-line-soft">
+                <MapTile />
+              </div>
+              <div className="aspect-[5/4] overflow-hidden rounded-[14px] border border-line-soft bg-bg-2">
+                <MapTile accent="#1F3328" paper="#E2D9C2" />
               </div>
             </div>
+            <div className="flex items-center justify-between px-1 pt-4">
+              <span className="text-[13px] text-ink-2">Зліва — карта, справа — 3D-результат</span>
+              <Link href="/create" className="btn btn-primary btn-sm">
+                Спробувати <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+          <FloatBadge cls="-right-3 -top-3"><Leaf size={14} className="text-forest" /> Eco PLA</FloatBadge>
+          <FloatBadge cls="-bottom-4 left-8"><Download size={14} className="text-forest" /> Готовий 3MF</FloatBadge>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ n, l, star }: { n: string; l: string; star?: boolean }) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 font-serif text-[30px] leading-none">
+        {n} {star && <Star size={17} className="text-bronze" fill="currentColor" />}
+      </div>
+      <div className="mt-2 text-[11px] uppercase tracking-[0.08em] text-ink-3">{l}</div>
+    </div>
+  );
+}
+
+function FloatBadge({ children, cls }: { children: React.ReactNode; cls: string }) {
+  return (
+    <div className={`absolute ${cls} inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 px-4 py-2.5 text-[13px] font-medium shadow-soft`}>
+      {children}
+    </div>
+  );
+}
+
+/* ---------- Two paths ---------- */
+function PathSelector() {
+  return (
+    <section className="mx-auto max-w-[1360px] px-5 py-16 lg:px-8 lg:py-20">
+      <div className="grid gap-5 md:grid-cols-2">
+        <PathCard
+          href="/create"
+          primary
+          eyebrow="Шлях 1 · Власна геометрія"
+          title="Створити свою мапу"
+          desc="Знайди будь-яке місце на Землі, окресли зону, обери стиль і розмір. 5 кроків — близько 3 хвилин."
+          cta="Запустити конструктор"
+          icon={<Sparkles size={22} />}
+        />
+        <PathCard
+          href="/keychains"
+          eyebrow="Шлях 2 · Аксесуар"
+          title="Брелок з мапою"
+          desc="Мініатюра твого району на ключах. Жетон 55×30, класичний або квадратний — з твоїм написом."
+          cta="Відкрити майстерню брелків"
+          icon={<KeyRound size={22} />}
+        />
+      </div>
+    </section>
+  );
+}
+
+function PathCard({ href, eyebrow, title, desc, cta, icon, primary }: {
+  href: string; eyebrow: string; title: string; desc: string; cta: string; icon: React.ReactNode; primary?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group relative flex min-h-[300px] flex-col gap-6 overflow-hidden rounded-[24px] border border-line p-9 transition-transform hover:-translate-y-1"
+      style={{ background: primary ? "var(--forest)" : "var(--paper)", color: primary ? "#F4EFE4" : "var(--ink)" }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="eyebrow" style={{ color: primary ? "rgba(244,239,228,.7)" : "var(--ink-3)" }}>{eyebrow}</div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ background: primary ? "rgba(244,239,228,.12)" : "var(--bg-2)", color: primary ? "#F4EFE4" : "var(--forest)" }}>
+          {icon}
+        </div>
+      </div>
+      <div className="mt-auto">
+        <h3 className="mb-3 text-[34px]" style={{ color: primary ? "#F4EFE4" : "var(--ink)" }}>{title}</h3>
+        <p className="max-w-[440px] text-[15px] leading-relaxed" style={{ color: primary ? "rgba(244,239,228,.78)" : "var(--ink-2)" }}>{desc}</p>
+      </div>
+      <div className="inline-flex items-center gap-2 text-sm font-semibold">
+        {cta} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
+}
+
+/* ---------- How it works ---------- */
+function HowItWorks() {
+  const steps = [
+    { n: "01", t: "Виділяєте зону", d: "Шукайте місто та перетягуйте рамку. Розміри в км — без координат." },
+    { n: "02", t: "Налаштовуєте", d: "Стиль, шари, розмір. Превʼю оновлюється в реальному часі." },
+    { n: "03", t: "Генеруємо", d: "Сервер будує точну 3D-модель з даних OpenStreetMap і висот." },
+    { n: "04", t: "Завантажуєте", d: "Готовий 3MF для Bambu Studio / PrusaSlicer. Друкуйте вдома." },
+  ];
+  return (
+    <section id="how" className="bg-ink py-20 text-[#E8E1CC] lg:py-28">
+      <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
+        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <Eyebrow dot light>Процес</Eyebrow>
+            <h2 className="mt-4 max-w-[600px] text-[clamp(32px,4vw,56px)] text-[#F4EFE4]">
+              Від точки на карті — до моделі у твоєму принтері
+            </h2>
+          </div>
+          <p className="max-w-[340px] text-[15px] leading-relaxed text-[#A8AC9F]">
+            Прозоро. Без технічного жаргону. Готовий файл для друку — за кілька хвилин.
+          </p>
+        </div>
+        <div className="grid gap-px border-t border-[#2A3830] md:grid-cols-4">
+          {steps.map((s, i) => (
+            <div key={i} className={`pt-9 ${i < 3 ? "md:border-r md:border-[#2A3830] md:pr-9" : ""}`}>
+              <div className="mb-7 font-mono text-[13px] text-bronze-2">{s.n}</div>
+              <h3 className="mb-3 text-[26px] text-[#F4EFE4]">{s.t}</h3>
+              <p className="text-[14px] leading-relaxed text-[#A8AC9F]">{s.d}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-14">
+          <Link href="/create" className="btn btn-bronze btn-lg">Почати <ArrowRight size={16} /></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Templates gallery ---------- */
+function TemplatesGallery() {
+  const accents = ["#2E4A3A", "#3F5B45", "#9A7242", "#5B5E5A"];
+  return (
+    <section id="templates" className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
+      <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <Eyebrow dot>Готові шаблони</Eyebrow>
+          <h2 className="mt-4 text-[clamp(30px,3.4vw,52px)]">Почни з відомого району</h2>
+          <p className="mt-3 max-w-[520px] text-[15px] text-ink-2">
+            Обери готовий пресет — він одразу відкриє конструктор з виставленою зоною. Або створи з нуля.
+          </p>
+        </div>
+        <Link href="/create" className="btn btn-ghost hidden sm:inline-flex">
+          Усі міста <ArrowRight size={14} />
+        </Link>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {MAP_TEMPLATES.slice(0, 9).map((t, i) => (
+          <Link
+            key={t.id}
+            href={{ pathname: "/create", query: { template: t.id } }}
+            className="group overflow-hidden rounded-[18px] border border-line-soft bg-paper transition-transform hover:-translate-y-1 hover:shadow-soft"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden">
+              <MapTile accent={accents[i % accents.length]} />
+              {t.tag && (
+                <span className="absolute left-3 top-3 rounded-full bg-paper-2/90 px-3 py-1 text-[11px] font-semibold text-forest">
+                  {t.tag}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between px-4 py-4">
+              <div>
+                <div className="font-serif text-[19px] leading-tight">{t.district}</div>
+                <div className="mt-0.5 text-[12px] text-ink-3">{t.city}</div>
+              </div>
+              <ArrowUpRight size={18} className="text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Style presets */}
+      <div className="mt-14">
+        <Eyebrow>Стилі готової мапи</Eyebrow>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MAP_STYLE_PRESETS.map((p) => (
+            <div key={p.id} className="rounded-[14px] border border-line bg-paper p-5">
+              <Layers3 size={20} className="text-forest" />
+              <div className="mt-3 font-semibold">{p.label}</div>
+              <div className="mt-1 text-[13px] text-ink-3">{p.blurb}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Craft / specs ---------- */
+function Craft() {
+  const specs = [
+    { icon: <Ruler size={18} />, t: "Точність 0.4 мм", d: "Оптимізовано під FDM-друк" },
+    { icon: <Leaf size={18} />, t: "PLA-біопластик", d: "Кукурудзяний крохмаль" },
+    { icon: <Layers3 size={18} />, t: "Реальні дані", d: "OpenStreetMap + висоти" },
+    { icon: <Download size={18} />, t: "Формат 3MF", d: "Bambu / Prusa готово" },
+  ];
+  return (
+    <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8">
+      <div className="grid items-center gap-16 lg:grid-cols-2">
+        <div>
+          <Eyebrow dot>Якість</Eyebrow>
+          <h2 className="mt-4 mb-6 text-[clamp(30px,3.4vw,52px)]">Не сувенір. <span className="italic">Документ.</span></h2>
+          <p className="mb-9 max-w-[520px] text-[16px] leading-relaxed text-ink-2">
+            Кожна мапа — це геодезичні дані OpenStreetMap і реальні висоти. Модель
+            автоматично спрощується для чистого FDM-друку: мінімальні товщини,
+            кольорові шари для багатоколірних принтерів (Bambu AMS).
+          </p>
+          <div className="grid grid-cols-2 gap-7">
+            {specs.map((s) => (
+              <div key={s.t} className="flex items-start gap-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-bg-2 text-forest">{s.icon}</div>
+                <div>
+                  <div className="text-[15px] font-semibold">{s.t}</div>
+                  <div className="text-[13px] text-ink-3">{s.d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#2E4A3A" paper="#EFE6D2" /></div>
+          <div className="flex flex-col gap-4">
+            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#3F5B45" paper="#E2D9C2" /></div>
+            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#9A7242" paper="#F4EFE4" /></div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+  );
+}
+
+/* ---------- Testimonials ---------- */
+function Testimonials() {
+  const items = [
+    { q: "Замовила мамі район дитинства — Поділ, де вона виросла. Маленька деталь — її будинок, як на долоні.", a: "Анна К.", c: "Подарунок · Поділ" },
+    { q: "Надрукував на своєму Bambu за вечір. Файл відкрився ідеально, кольорові шари самі стали на місце.", a: "Тарас М.", c: "Друк удома · Львів" },
+    { q: "Перевіряла кілька сервісів. Тут єдині, хто змогли зробити саме нашу вулицю, навіть із новобудовою.", a: "Олена Р.", c: "Річниця · Одеса" },
+  ];
+  return (
+    <section className="bg-bg-2 py-20 lg:py-28">
+      <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
+        <h2 className="mb-12 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">
+          «Це не сувенір. Це місце, до якого я повертаюсь поглядом.»
+        </h2>
+        <div className="grid gap-5 md:grid-cols-3">
+          {items.map((t, i) => (
+            <article key={i} className="card card-paper p-8">
+              <div className="mb-5 flex gap-1">
+                {[...Array(5)].map((_, k) => <Star key={k} size={14} className="text-bronze" fill="currentColor" />)}
+              </div>
+              <p className="mb-6 font-serif text-[19px] leading-snug">«{t.q}»</p>
+              <div className="flex items-center justify-between border-t border-line-soft pt-5">
+                <div>
+                  <div className="text-[14px] font-semibold">{t.a}</div>
+                  <div className="mt-0.5 text-[12px] text-ink-3">{t.c}</div>
+                </div>
+                <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">Відгук</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Final CTA ---------- */
+function FinalCTA() {
+  return (
+    <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
+      <div className="grid items-center gap-12 overflow-hidden rounded-[32px] bg-forest px-8 py-16 text-[#F4EFE4] lg:grid-cols-[1.4fr_1fr] lg:px-16">
+        <div>
+          <Eyebrow dot light>Готові почати?</Eyebrow>
+          <h2 className="mb-6 mt-4 max-w-[560px] text-[clamp(30px,3.4vw,52px)] text-[#F4EFE4]">
+            Створіть мапу місця, що значить більше за крапку на карті.
+          </h2>
+          <p className="mb-9 max-w-[480px] text-[16px] leading-relaxed text-[rgba(244,239,228,0.78)]">
+            5 кроків, близько 3 хвилин — і ви завантажуєте готовий 3D-файл для друку.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/create" className="btn btn-bronze btn-lg">Створити мапу <ArrowRight size={16} /></Link>
+            <Link href="/keychains" className="btn btn-ghost btn-lg" style={{ color: "#F4EFE4", borderColor: "rgba(244,239,228,0.4)" }}>
+              Брелок
+            </Link>
+          </div>
+        </div>
+        <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)]">
+          <MapTile accent="#1F3328" paper="#3A5446" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Footer ---------- */
+function SiteFooter() {
+  return (
+    <footer className="border-t border-line-soft py-12">
+      <div className="mx-auto flex max-w-[1360px] flex-col items-center justify-between gap-6 px-5 text-sm text-ink-3 md:flex-row lg:px-8">
+        <div className="flex items-center gap-2 font-serif text-lg text-ink">
+          <Box size={18} className="text-forest" /> monadruk
+        </div>
+        <div className="flex gap-6">
+          <Link href="/create" className="hover:text-ink">Створити мапу</Link>
+          <Link href="/keychains" className="hover:text-ink">Брелки</Link>
+          <a href="#how" className="hover:text-ink">Як це працює</a>
+        </div>
+        <div>© {new Date().getFullYear()} monadruk.com</div>
+      </div>
+    </footer>
   );
 }
