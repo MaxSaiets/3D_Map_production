@@ -1,0 +1,213 @@
+"""Order intake + Telegram CRM delivery.
+
+When a customer places an order we drop everything into the Telegram bot that
+already powers ops alerts: a formatted order card, then the model file (named
+<Name>_<date>_<id4>.3mf), then the screenshots of exactly what the customer
+designed (so we can verify text / framing before printing).
+
+Config (backend .env):
+    TG_BOT_TOKEN   — bot token (same bot as health alerts)
+    TG_CHAT_ID     — chat to receive orders (TG_ORDERS_CHAT_ID overrides if set)
+"""
+from __future__ import annotations
+
+import base64
+import json
+import os
+import random
+import re
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import requests
+
+OUTPUT_DIR = Path("output").resolve()
+ORDERS_LOG = OUTPUT_DIR / "orders.jsonl"
+_TG_API = "https://api.telegram.org/bot{token}/{method}"
+
+
+def _token() -> str:
+    return os.getenv("TG_BOT_TOKEN", "").strip()
+
+
+def _chat() -> str:
+    return (os.getenv("TG_ORDERS_CHAT_ID") or os.getenv("TG_CHAT_ID") or "").strip()
+
+
+def telegram_configured() -> bool:
+    return bool(_token() and _chat())
+
+
+def _sanitize_filename(name: str) -> str:
+    name = (name or "order").strip()
+    name = re.sub(r"[^\wЀ-ӿ \-]", "", name)  # keep latin/cyrillic/word/space/dash
+    name = re.sub(r"\s+", "_", name).strip("_")
+    return name[:40] or "order"
+
+
+def _existing_order_numbers() -> set[str]:
+    nums: set[str] = set()
+    try:
+        if ORDERS_LOG.exists():
+            for line in ORDERS_LOG.read_text(encoding="utf-8").splitlines():
+                try:
+                    nums.add(str(json.loads(line).get("order_number")))
+                except Exception:  # noqa: BLE001
+                    continue
+    except Exception:  # noqa: BLE001
+        pass
+    return nums
+
+
+def _new_order_number() -> str:
+    used = _existing_order_numbers()
+    for _ in range(50):
+        n = f"{random.randint(1000, 9999)}"
+        if n not in used:
+            return n
+    return f"{random.randint(1000, 9999)}"
+
+
+def _tg_post(method: str, **kwargs) -> bool:
+    try:
+        url = _TG_API.format(token=_token(), method=method)
+        files = kwargs.pop("files", None)
+        r = requests.post(url, data=kwargs, files=files, timeout=30)
+        ok = r.ok and r.json().get("ok", False)
+        if not ok:
+            print(f"[ORDER][TG] {method} failed: {r.status_code} {r.text[:200]}")
+        return ok
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER][TG] {method} error: {e}")
+        return False
+
+
+def _find_model_file(task_id: Optional[str], output_file: Optional[str]) -> Optional[Path]:
+    # explicit path from caller (task.output_files) wins
+    if output_file:
+        p = Path(output_file)
+        if p.exists():
+            return p
+    if not task_id:
+        return None
+    # match by task-id prefix or full id anywhere in the filename
+    short = task_id.replace("-", "")[:8]
+    candidates: List[Path] = []
+    for p in OUTPUT_DIR.glob("*.3mf"):
+        n = p.name
+        if "_layout" in n or "_print_acceptance" in n:
+            continue
+        if task_id in n or short in n:
+            candidates.append(p)
+    if candidates:
+        # newest, prefer the main model_ file
+        candidates.sort(key=lambda x: (("model_" not in x.name), -x.stat().st_mtime))
+        return candidates[0]
+    return None
+
+
+def _delivery_text(o: Dict[str, Any]) -> str:
+    method = (o.get("delivery_method") or "").lower()
+    city = o.get("delivery_city") or ""
+    branch = o.get("delivery_branch") or ""
+    addr = o.get("delivery_address") or ""
+    if method in ("nova", "np", "nova_poshta"):
+        return f"Нова Пошта — {city}, відділення/поштомат {branch}".strip(" ,")
+    if method in ("ukr", "ukrposhta", "ukr_poshta"):
+        return f"Укрпошта — індекс {branch}, {city} {addr}".strip(" ,")
+    if method in ("pickup", "self"):
+        return "Самовивіз"
+    return addr or city or branch or "—"
+
+
+def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Process an order: notify Telegram CRM with data + file + screenshots."""
+    order_number = _new_order_number()
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+
+    name = (payload.get("name") or "").strip() or "Без імені"
+    phone = (payload.get("phone") or "").strip()
+    product = payload.get("product_type") or "map"
+    product_label = "Брелок з мапою" if product == "keychain" else "3D-мапа"
+    summary = payload.get("summary") or {}
+    comment = (payload.get("comment") or "").strip()
+    task_id = payload.get("task_id")
+    output_file = payload.get("output_file")
+    screenshots: List[str] = payload.get("screenshots") or []
+
+    record = {
+        "order_number": order_number,
+        "created_at": now.isoformat(),
+        "status": "new",
+        **{k: payload.get(k) for k in (
+            "name", "phone", "product_type", "task_id",
+            "delivery_method", "delivery_city", "delivery_branch", "delivery_address", "comment",
+        )},
+        "summary": summary,
+    }
+    # persist CRM record (best-effort)
+    try:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        with open(ORDERS_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] log write failed: {e}")
+
+    if not telegram_configured():
+        print("[ORDER] Telegram not configured — order logged only.")
+        return {"order_number": order_number, "telegram": False}
+
+    # 1) order card
+    lines = [
+        f"🧾 <b>НОВЕ ЗАМОВЛЕННЯ #{order_number}</b>",
+        f"🗓 {now.strftime('%d.%m.%Y %H:%M')}",
+        "",
+        f"👤 <b>{name}</b>",
+        f"📞 {phone or '—'}",
+        f"📦 {product_label}",
+    ]
+    if summary.get("city") or summary.get("district"):
+        lines.append(f"📍 {summary.get('city','')} {summary.get('district','')}".strip())
+    if summary.get("label") or summary.get("text"):
+        lines.append(f"✍️ Текст: <b>{summary.get('label') or summary.get('text')}</b>")
+    if summary.get("size"):
+        lines.append(f"📐 Розмір: {summary.get('size')}")
+    lines.append(f"🚚 {_delivery_text(payload)}")
+    if comment:
+        lines.append(f"💬 {comment}")
+    lines.append("")
+    lines.append("⚠️ Оплата — узгодити з клієнтом (онлайн-оплата ще не підключена).")
+    _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML", text="\n".join(lines))
+
+    # 2) model file
+    model_path = _find_model_file(task_id, output_file)
+    if model_path and model_path.exists():
+        fname = f"{_sanitize_filename(name)}_{date_str}_{order_number}.3mf"
+        try:
+            with open(model_path, "rb") as fh:
+                _tg_post("sendDocument", chat_id=_chat(),
+                         caption=f"Модель замовлення #{order_number}",
+                         files={"document": (fname, fh, "model/3mf")})
+        except Exception as e:  # noqa: BLE001
+            print(f"[ORDER] sendDocument error: {e}")
+    else:
+        _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",
+                 text=f"⚠️ Файл моделі для #{order_number} не знайдено (task_id={task_id}).")
+
+    # 3) screenshots of what the customer designed
+    for idx, shot in enumerate(screenshots[:4], start=1):
+        try:
+            b64 = shot.split(",", 1)[1] if "," in shot else shot
+            data = base64.b64decode(b64)
+            if len(data) < 200:
+                continue
+            _tg_post("sendPhoto", chat_id=_chat(),
+                     caption=f"#{order_number} — прев'ю {idx}",
+                     files={"photo": (f"order_{order_number}_{idx}.png", data, "image/png")})
+        except Exception as e:  # noqa: BLE001
+            print(f"[ORDER] screenshot {idx} error: {e}")
+
+    return {"order_number": order_number, "telegram": True}

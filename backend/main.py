@@ -15,7 +15,7 @@ load_dotenv()
 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 import os
 import uuid
 from pathlib import Path
@@ -573,6 +573,45 @@ async def health():
         "ts": int(_time.time()),
         "checks": checks,
     }
+
+
+class OrderRequest(BaseModel):
+    name: str
+    phone: str = ""
+    product_type: str = "map"           # "map" | "keychain"
+    task_id: Optional[str] = None
+    delivery_method: str = ""           # "nova" | "ukr" | "pickup"
+    delivery_city: str = ""
+    delivery_branch: str = ""
+    delivery_address: str = ""
+    comment: str = ""
+    summary: Dict[str, Any] = {}
+    screenshots: List[str] = []         # data:image/png;base64,... (max 4 used)
+
+
+@app.post("/api/order")
+async def create_order_endpoint(order: OrderRequest):
+    """Accept a customer order and push it to the Telegram CRM (card + file + screenshots)."""
+    from services.order_service import create_order
+    if not (order.name or "").strip():
+        raise HTTPException(status_code=422, detail="Вкажіть ім'я")
+    payload = order.model_dump()
+    # Resolve the on-disk model file from the in-memory task if available.
+    try:
+        t = tasks.get(order.task_id) if order.task_id else None
+        if t is not None:
+            of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
+            if of:
+                payload["output_file"] = of
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        result = create_order(payload)
+        return {"status": "ok", **result}
+    except Exception as e:  # noqa: BLE001
+        print(f"[ERROR] order failed: {e}")
+        import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
 
 
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:
