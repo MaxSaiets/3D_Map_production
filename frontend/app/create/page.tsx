@@ -8,6 +8,7 @@ import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { WizardSteps } from "@/components/WizardSteps";
 
 type WorkspaceView = "map" | "preview" | "settings";
 
@@ -236,6 +237,18 @@ export default function Home() {
             })}
           </div>
         </header>
+
+        <div className="mt-3">
+          <WizardSteps
+            state={{
+              cityLabel: selectedCityLabel,
+              hasSelection: hasMapSelection || zoneCount > 0,
+              isGenerating,
+              hasDownload: Boolean(downloadUrl),
+              progress,
+            }}
+          />
+        </div>
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
           <aside className="hidden min-h-0 lg:block">
