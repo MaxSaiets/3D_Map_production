@@ -692,6 +692,7 @@ async def get_status(task_id: str):
                     "keychain_manifest": getattr(t, "keychain_manifest", None),
                     "download_url": download_url,
                     "firebase_url": getattr(t, "firebase_url", None),
+                    "print_quality": getattr(t, "print_quality", None),
                     "preview_3mf": to_static_url(output_files.get("preview_3mf")),
                     "firebase_preview_3mf": t.firebase_outputs.get("preview_3mf"),
                     "firebase_preview_parts": {
@@ -756,6 +757,7 @@ async def get_status(task_id: str):
         "message": task.message,
         "download_url": main_download_url,
         "firebase_url": task.firebase_url,
+        "print_quality": getattr(task, "print_quality", None),
         "download_url_stl": to_static_url(output_files.get("stl")),
         "download_url_3mf": to_static_url(output_files.get("3mf")),
         "keychain_manifest": getattr(task, "keychain_manifest", None),

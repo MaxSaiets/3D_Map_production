@@ -21,6 +21,9 @@ class GenerationTask:
     # Набір хмарних посилань: {"base_stl": "...", "3mf": "..."}
     firebase_outputs: Dict[str, str] = field(default_factory=dict)
     firebase_url: Optional[str] = None
+    # Print-quality / QA outcome surfaced to the client:
+    # {"status": "ok"|"warning", "warnings": [..], "report": "path"}
+    print_quality: Optional[Dict] = None
     error: Optional[str] = None
     # Скасування та TTL
     cancelled: bool = False

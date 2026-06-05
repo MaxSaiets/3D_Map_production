@@ -1068,13 +1068,21 @@ def run_full_generation_pipeline(
                 printer_profile=printer_profile,
                 initial_report=print_acceptance_report,
             )
+        _qa_report_path = str(print_acceptance_path.resolve())
         if print_acceptance_report.get("status") != "pass":
             _qa_summary = summarize_export_print_failures(print_acceptance_report)
             if _qa_strict:
+                if hasattr(task, "print_quality"):
+                    task.print_quality = {"status": "failed", "warnings": [_qa_summary], "report": _qa_report_path}
                 raise RuntimeError(_qa_summary)
             # НЕ-блокуюче: модель уже експортована (terrain+base+шари) — віддаємо
             # її попри QA-зауваження, лише логуємо. Так мапи знову створюються.
             print(f"[WARN] {zone_prefix}print_acceptance NOT passed (non-blocking): {_qa_summary}")
+            if hasattr(task, "print_quality"):
+                task.print_quality = {"status": "warning", "warnings": [_qa_summary], "report": _qa_report_path}
+        else:
+            if hasattr(task, "print_quality"):
+                task.print_quality = {"status": "ok", "warnings": [], "report": _qa_report_path}
         _log_stage("print_acceptance", stage_start)
 
     stage_start = time.perf_counter()
