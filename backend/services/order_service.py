@@ -122,6 +122,26 @@ def _delivery_text(o: Dict[str, Any]) -> str:
     return addr or city or branch or "—"
 
 
+def send_contact(name: str, phone: str, message: str, source: str = "") -> bool:
+    """Lightweight 'contact us / leave a request' → Telegram CRM."""
+    if not telegram_configured():
+        print("[CONTACT] Telegram not configured.")
+        return False
+    now = datetime.now().strftime("%d.%m.%Y %H:%M")
+    lines = [
+        "📨 <b>НОВЕ ЗВЕРНЕННЯ</b>",
+        f"🗓 {now}",
+        "",
+        f"👤 {name or '—'}",
+        f"📞 {phone or '—'}",
+    ]
+    if message:
+        lines.append(f"💬 {message}")
+    if source:
+        lines.append(f"\n<i>джерело: {source}</i>")
+    return _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML", text="\n".join(lines))
+
+
 def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Process an order: notify Telegram CRM with data + file + screenshots."""
     order_number = _new_order_number()

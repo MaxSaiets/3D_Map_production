@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ContactWidget } from "@/components/ContactWidget";
 
 export const metadata: Metadata = {
   title: {
@@ -83,7 +84,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <ContactWidget />
+      </body>
     </html>
   );
 }

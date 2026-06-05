@@ -614,6 +614,23 @@ async def create_order_endpoint(order: OrderRequest):
         raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
 
 
+class ContactRequest(BaseModel):
+    name: str = ""
+    phone: str
+    message: str = ""
+    source: str = ""
+
+
+@app.post("/api/contact")
+async def contact_endpoint(req: ContactRequest):
+    """Customer 'leave a request' → Telegram CRM."""
+    from services.order_service import send_contact
+    if not (req.phone or "").strip():
+        raise HTTPException(status_code=422, detail="Вкажіть телефон")
+    ok = send_contact(req.name, req.phone, req.message, req.source)
+    return {"status": "ok" if ok else "logged"}
+
+
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:
     """Auto-adjust keychain scale instead of erroring.
 

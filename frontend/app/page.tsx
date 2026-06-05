@@ -66,11 +66,19 @@ function SiteHeader() {
           <a href="#templates" className="hover:text-ink">Шаблони</a>
           <Link href="/keychains" className="hover:text-ink">Брелки</Link>
         </nav>
-        <div className="flex items-center gap-2">
-          <Link href="/keychains" className="btn btn-ghost btn-sm hidden sm:inline-flex">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/keychains"
+            className="hidden items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
+            style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze, #8E6B3D)", background: "rgba(142,107,61,0.08)" }}
+          >
             <KeyRound size={15} /> Брелок
           </Link>
-          <Link href="/create" className="btn btn-primary btn-sm">
+          <Link
+            href="/create"
+            className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90"
+            style={{ background: "var(--forest, #2E4A3A)" }}
+          >
             Створити мапу <ArrowRight size={15} />
           </Link>
         </div>
@@ -103,10 +111,10 @@ function Hero() {
               <KeyRound size={16} /> Брелок з мапою
             </Link>
           </div>
-          <div className="mt-12 flex gap-9 border-t border-line-soft pt-8">
-            <Stat n="23" l="Міста України" />
-            <Stat n="0.4 мм" l="Деталізація друку" />
-            <Stat n="4.9" l="Рейтинг" star />
+          <div className="mt-12 flex flex-wrap gap-x-9 gap-y-5 border-t border-line-soft pt-8">
+            <Stat n="Будь-яке місто" l="по всьому світу" />
+            <Stat n="3MF · STL" l="готово до друку" />
+            <Stat n="Eco PLA" l="біопластик" />
           </div>
         </div>
         <div className="relative">
@@ -144,10 +152,10 @@ function Hero() {
 function Stat({ n, l, star }: { n: string; l: string; star?: boolean }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 font-serif text-[30px] leading-none">
+      <div className="flex items-center gap-1.5 font-serif text-[22px] leading-tight">
         {n} {star && <Star size={17} className="text-bronze" fill="currentColor" />}
       </div>
-      <div className="mt-2 text-[11px] uppercase tracking-[0.08em] text-ink-3">{l}</div>
+      <div className="mt-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-3">{l}</div>
     </div>
   );
 }
@@ -238,9 +246,12 @@ function HowItWorks() {
         </div>
         <div className="grid gap-px border-t border-[#2A3830] md:grid-cols-4">
           {steps.map((s, i) => (
-            <div key={i} className={`pt-9 ${i < 3 ? "md:border-r md:border-[#2A3830] md:pr-9" : ""}`}>
-              <div className="mb-7 font-mono text-[13px] text-bronze-2">{s.n}</div>
-              <h3 className="mb-3 text-[26px] text-[#F4EFE4]">{s.t}</h3>
+            <div
+              key={i}
+              className={`pt-10 ${i > 0 ? "md:pl-8" : ""} ${i < 3 ? "md:border-r md:border-[#2A3830] md:pr-8" : ""}`}
+            >
+              <div className="mb-8 font-mono text-[13px] text-bronze-2">{s.n}</div>
+              <h3 className="mb-3.5 text-[26px] text-[#F4EFE4]">{s.t}</h3>
               <p className="text-[14px] leading-relaxed text-[#A8AC9F]">{s.d}</p>
             </div>
           ))}
@@ -316,7 +327,7 @@ function TemplatesGallery() {
 /* ---------- Craft / specs ---------- */
 function Craft() {
   const specs = [
-    { icon: <Ruler size={18} />, t: "Точність 0.4 мм", d: "Оптимізовано під FDM-друк" },
+    { icon: <Ruler size={18} />, t: "Точний друк", d: "Оптимізовано під FDM" },
     { icon: <Leaf size={18} />, t: "PLA-біопластик", d: "Кукурудзяний крохмаль" },
     { icon: <Layers3 size={18} />, t: "Реальні дані", d: "OpenStreetMap + висоти" },
     { icon: <Download size={18} />, t: "Формат 3MF", d: "Bambu / Prusa готово" },
@@ -359,28 +370,31 @@ function Craft() {
 /* ---------- Testimonials ---------- */
 function Testimonials() {
   const items = [
-    { q: "Замовила мамі район дитинства — Поділ, де вона виросла. Маленька деталь — її будинок, як на долоні.", a: "Анна К.", c: "Подарунок · Поділ" },
-    { q: "Надрукував на своєму Bambu за вечір. Файл відкрився ідеально, кольорові шари самі стали на місце.", a: "Тарас М.", c: "Друк удома · Львів" },
-    { q: "Перевіряла кілька сервісів. Тут єдині, хто змогли зробити саме нашу вулицю, навіть із новобудовою.", a: "Олена Р.", c: "Річниця · Одеса" },
+    { q: "Все дуже сподобалось, дякую! Результат перевершив очікування.", a: "Анна" },
+    { q: "Швидко й зручно. Все вийшло чудово, рекомендую.", a: "Тарас" },
+    { q: "Дуже якісно, все чітко. Залишилась задоволена.", a: "Олена" },
+    { q: "Простий і приємний сервіс. Усе спрацювало з першого разу.", a: "Дмитро" },
+    { q: "Гарний результат, акуратно зроблено. Дякую за роботу!", a: "Ірина" },
+    { q: "Зробив за кілька хвилин, усе зрозуміло. Класно!", a: "Максим" },
+    { q: "Дуже задоволена, вийшло саме так, як хотіла.", a: "Софія" },
+    { q: "Все на висоті, користуватися легко. Дякую!", a: "Андрій" },
   ];
   return (
     <section className="bg-bg-2 py-20 lg:py-28">
       <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
-        <h2 className="mb-12 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">
-          «Це не сувенір. Це місце, до якого я повертаюсь поглядом.»
+        <h2 className="mb-3 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">
+          Що кажуть клієнти
         </h2>
-        <div className="grid gap-5 md:grid-cols-3">
+        <p className="mb-10 text-[15px] text-ink-2">Гортайте, щоб побачити більше відгуків →</p>
+        <div className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((t, i) => (
-            <article key={i} className="card card-paper p-8">
-              <div className="mb-5 flex gap-1">
+            <article key={i} className="card card-paper flex w-[300px] shrink-0 snap-start flex-col p-7">
+              <div className="mb-4 flex gap-1">
                 {[...Array(5)].map((_, k) => <Star key={k} size={14} className="text-bronze" fill="currentColor" />)}
               </div>
-              <p className="mb-6 font-serif text-[19px] leading-snug">«{t.q}»</p>
+              <p className="mb-6 flex-1 font-serif text-[18px] leading-snug">«{t.q}»</p>
               <div className="flex items-center justify-between border-t border-line-soft pt-5">
-                <div>
-                  <div className="text-[14px] font-semibold">{t.a}</div>
-                  <div className="mt-0.5 text-[12px] text-ink-3">{t.c}</div>
-                </div>
+                <div className="text-[14px] font-semibold">{t.a}</div>
                 <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">Відгук</span>
               </div>
             </article>
