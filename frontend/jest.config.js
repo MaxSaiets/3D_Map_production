@@ -12,6 +12,7 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     // three/examples is ESM and Jest (CJS) can choke on it; map loaders to simple stubs for unit tests
+    '^three/examples/jsm/loaders/GLTFLoader(\\.js)?$': '<rootDir>/__tests__/stubs/GLTFLoader.js',
     '^three/examples/jsm/loaders/STLLoader(\\.js)?$': '<rootDir>/__tests__/stubs/STLLoader.js',
     '^three/examples/jsm/loaders/3MFLoader(\\.js)?$': '<rootDir>/__tests__/stubs/ThreeMFLoader.js',
   },

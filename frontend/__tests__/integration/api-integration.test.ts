@@ -36,7 +36,7 @@ describe('API Integration Tests', () => {
       export_format: '3mf' as const,
     }
 
-    const response = await api.generateModel(request)
+    const response = await api.generateModel(request as any)
 
     expect(response).toHaveProperty('task_id')
     expect(response).toHaveProperty('status')
@@ -56,7 +56,7 @@ describe('API Integration Tests', () => {
       export_format: 'stl' as const,
     }
 
-    const generateResponse = await api.generateModel(request)
+    const generateResponse = await api.generateModel(request as any)
     const taskId = generateResponse.task_id
 
     // Чекаємо трохи

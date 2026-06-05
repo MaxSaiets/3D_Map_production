@@ -10,20 +10,24 @@ export function setApiAuthTokenProvider(provider: TokenProvider) {
   _tokenProvider = provider;
 }
 
-axios.interceptors.request.use(async (config) => {
-  if (_tokenProvider) {
-    try {
-      const token = await _tokenProvider();
-      if (token) {
-        config.headers = config.headers ?? {};
-        config.headers["Authorization"] = `Bearer ${token}`;
+// Guard against mocked/partial axios in unit tests (auto-mock has no interceptors).
+// In production real axios always exposes interceptors, so this is a no-op there.
+if (axios?.interceptors?.request) {
+  axios.interceptors.request.use(async (config) => {
+    if (_tokenProvider) {
+      try {
+        const token = await _tokenProvider();
+        if (token) {
+          config.headers = config.headers ?? {};
+          config.headers["Authorization"] = `Bearer ${token}`;
+        }
+      } catch {
+        // ignore token errors
       }
-    } catch {
-      // ignore token errors
     }
-  }
-  return config;
-});
+    return config;
+  });
+}
 
 // ── Account types ─────────────────────────────────────────────────────────────
 export interface AccountModel {
