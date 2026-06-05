@@ -9,6 +9,7 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
+import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES } from "@/lib/templates";
 
 type WorkspaceView = "map" | "preview" | "settings";
@@ -86,6 +87,14 @@ export default function Home() {
   const [hexSizeM, setHexSizeM] = useState(300.0);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
+  const [proMode, setProMode] = useState(false);
+  useEffect(() => {
+    try { setProMode(localStorage.getItem("3dmap_pro_mode") === "1"); } catch {/* ignore */}
+  }, []);
+  const toggleProMode = (v: boolean) => {
+    setProMode(v);
+    try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
+  };
 
   const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea } = useGenerationStore();
 
@@ -305,20 +314,41 @@ export default function Home() {
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
           <aside className="hidden min-h-0 lg:block">
-            <div className="h-full overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
-              <ControlPanel
-                showHexGrid={showHexGrid}
-                setShowHexGrid={setShowHexGrid}
-                selectedZones={selectedZones}
-                setSelectedZones={setSelectedZones}
-                gridType={gridType}
-                setGridType={setGridType}
-                hexSizeM={hexSizeM}
-                setHexSizeM={setHexSizeM}
-                availableCities={CITIES}
-                selectedCityKey={currentCityKey}
-                onCityChange={setCurrentCityKey}
-              />
+            <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  {proMode ? "Експертний режим" : "Швидке створення"}
+                </span>
+                <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
+                  <button type="button" onClick={() => toggleProMode(false)}
+                    className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
+                  <button type="button" onClick={() => toggleProMode(true)}
+                    className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Про</button>
+                </div>
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {proMode ? (
+                  <ControlPanel
+                    showHexGrid={showHexGrid}
+                    setShowHexGrid={setShowHexGrid}
+                    selectedZones={selectedZones}
+                    setSelectedZones={setSelectedZones}
+                    gridType={gridType}
+                    setGridType={setGridType}
+                    hexSizeM={hexSizeM}
+                    setHexSizeM={setHexSizeM}
+                    availableCities={CITIES}
+                    selectedCityKey={currentCityKey}
+                    onCityChange={setCurrentCityKey}
+                  />
+                ) : (
+                  <SimpleControlPanel
+                    availableCities={CITIES}
+                    selectedCityKey={currentCityKey}
+                    onCityChange={setCurrentCityKey}
+                  />
+                )}
+              </div>
             </div>
           </aside>
 
@@ -412,19 +442,38 @@ export default function Home() {
 
             <div className={settingsPanelClasses}>
               <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
-                <ControlPanel
-                  showHexGrid={showHexGrid}
-                  setShowHexGrid={setShowHexGrid}
-                  selectedZones={selectedZones}
-                  setSelectedZones={setSelectedZones}
-                  gridType={gridType}
-                  setGridType={setGridType}
-                  hexSizeM={hexSizeM}
-                  setHexSizeM={setHexSizeM}
-                  availableCities={CITIES}
-                  selectedCityKey={currentCityKey}
-                  onCityChange={setCurrentCityKey}
-                />
+                <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    {proMode ? "Експертний режим" : "Швидке створення"}
+                  </span>
+                  <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
+                    <button type="button" onClick={() => toggleProMode(false)}
+                      className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
+                    <button type="button" onClick={() => toggleProMode(true)}
+                      className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Про</button>
+                  </div>
+                </div>
+                {proMode ? (
+                  <ControlPanel
+                    showHexGrid={showHexGrid}
+                    setShowHexGrid={setShowHexGrid}
+                    selectedZones={selectedZones}
+                    setSelectedZones={setSelectedZones}
+                    gridType={gridType}
+                    setGridType={setGridType}
+                    hexSizeM={hexSizeM}
+                    setHexSizeM={setHexSizeM}
+                    availableCities={CITIES}
+                    selectedCityKey={currentCityKey}
+                    onCityChange={setCurrentCityKey}
+                  />
+                ) : (
+                  <SimpleControlPanel
+                    availableCities={CITIES}
+                    selectedCityKey={currentCityKey}
+                    onCityChange={setCurrentCityKey}
+                  />
+                )}
               </div>
             </div>
           </section>
