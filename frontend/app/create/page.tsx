@@ -9,6 +9,7 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
+import { MAP_TEMPLATES } from "@/lib/templates";
 
 type WorkspaceView = "map" | "preview" | "settings";
 
@@ -86,7 +87,59 @@ export default function Home() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
 
-  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating } = useGenerationStore();
+  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea } = useGenerationStore();
+
+  // ── Capture mode (?capture=<templateId>): auto-select the district area and
+  // run a real preview generation through the site's own pipeline, so an
+  // automated screenshot of the 3D preview produces an authentic gallery image.
+  // Harmless for normal users (only triggers when the param is present).
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cap = params.get("capture");
+      if (!cap) return;
+      const tpl = MAP_TEMPLATES.find((t) => t.id === cap);
+      if (!tpl) return;
+      const [lat, lon] = tpl.center;
+      const s = tpl.span;
+      const lonPad = s / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
+      const north = lat + s, south = lat - s, east = lon + lonPad, west = lon - lonPad;
+      setWorkspaceView("preview");
+      (async () => {
+        const L = await import("leaflet");
+        const bounds = new L.LatLngBounds([south, west], [north, east]);
+        setSelectedArea(bounds as any);
+        const { api } = await import("@/lib/api");
+        const req: any = {
+          north, south, east, west,
+          road_width_multiplier: 0.8, road_height_mm: 0.5, road_embed_mm: 0.3,
+          building_min_height: 5.0, building_height_multiplier: 1.8,
+          building_foundation_mm: 0.6, building_embed_mm: 0.2,
+          water_depth: 2.0, terrain_enabled: true, terrain_z_scale: 1.0,
+          terrain_base_thickness_mm: 0.3, terrain_resolution: 180, terrarium_zoom: 15,
+          flatten_buildings_on_terrain: false, flatten_roads_on_terrain: false,
+          export_format: "3mf", model_size_mm: 80, context_padding_m: 400.0,
+          is_ams_mode: false, flat_plate_mode: false, preview_mode: true,
+          preview_include_base: true, preview_include_roads: true,
+          preview_include_buildings: true, preview_include_water: true, preview_include_parks: true,
+        };
+        setGenerating(true);
+        const r = await api.generateModel(req);
+        setTaskGroup(r.task_id, [r.task_id]);
+        setActiveTaskId(r.task_id);
+      })();
+    } catch {/* ignore */}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Expose a readiness flag for automated capture once the model is ready.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get("capture")) return;
+    (window as any).__captureReady = Boolean(downloadUrl);
+    if (downloadUrl) document.body.setAttribute("data-capture-ready", "1");
+  }, [downloadUrl]);
 
   // Preselect city from ?template= (links from landing-page template gallery)
   useEffect(() => {
