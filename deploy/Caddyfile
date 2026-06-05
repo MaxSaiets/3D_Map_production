@@ -1,0 +1,112 @@
+# ============================================================
+# monadruk.com — Caddy reverse proxy (behind Cloudflare)
+# SSL: Cloudflare Origin Certificate (Full Strict mode)
+# ============================================================
+
+{
+	# Global options
+	email saietsmax@gmail.com
+	# We use Cloudflare Origin Cert, not Caddy's auto-HTTPS ACME
+	auto_https disable_redirects
+	servers {
+		# Trust Cloudflare's forwarded client IP
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+	}
+}
+
+# Reusable security headers snippet
+(security_headers) {
+	header {
+		# HSTS — force HTTPS for 1 year incl. subdomains (also set at Cloudflare edge)
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# Block clickjacking
+		X-Frame-Options "SAMEORIGIN"
+		# Prevent MIME sniffing
+		X-Content-Type-Options "nosniff"
+		# Referrer privacy
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Limit powerful browser features
+		Permissions-Policy "geolocation=(self), microphone=(), camera=(), payment=()"
+		# Remove server fingerprint
+		-Server
+		-X-Powered-By
+	}
+}
+
+# ---- Main site: monadruk.com ----
+monadruk.com {
+	# Cloudflare Origin Cert + mTLS Authenticated Origin Pulls.
+	# client_auth requires Cloudflare's shared client cert (Global AOP enabled in
+	# CF dashboard) so the origin only accepts traffic that came through Cloudflare.
+	tls /etc/caddy/ssl/origin-cert.pem /etc/caddy/ssl/origin-key.pem {
+		client_auth {
+			mode require_and_verify
+			trust_pool file /etc/caddy/ssl/cloudflare-origin-pull-ca.pem
+		}
+	}
+
+	encode zstd gzip
+
+	import security_headers
+
+	# Backend API (FastAPI) — long timeout for 3D generation
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			transport http {
+				read_timeout 600s
+				write_timeout 600s
+			}
+		}
+	}
+
+	# Generated model files (FastAPI static mount)
+	handle /files/* {
+		reverse_proxy 127.0.0.1:8000 {
+			header_up Host {host}
+		}
+	}
+
+	# Responsible-disclosure contact (RFC 9116)
+	handle /.well-known/security.txt {
+		header Content-Type "text/plain"
+		respond "Contact: mailto:saietsmax@gmail.com
+Expires: 2027-01-01T00:00:00.000Z
+Preferred-Languages: uk, en
+" 200
+	}
+
+	# Frontend (Next.js)
+	handle {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Max upload (zone polygons / requests)
+	request_body {
+		max_size 50MB
+	}
+
+	log {
+		output file /var/log/caddy/monadruk.log {
+			roll_size 10MB
+			roll_keep 5
+		}
+	}
+}
+
+# ---- www → root redirect ----
+www.monadruk.com {
+	tls /etc/caddy/ssl/origin-cert.pem /etc/caddy/ssl/origin-key.pem
+	redir https://monadruk.com{uri} permanent
+}
+
+# ---- Plain HTTP (port 80) → HTTPS redirect (fallback; CF also redirects at edge) ----
+http://monadruk.com, http://www.monadruk.com {
+	redir https://monadruk.com{uri} permanent
+}
