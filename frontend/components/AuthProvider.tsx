@@ -121,6 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const value = useContext(AuthContext);
-  if (!value) throw new Error("useAuth must be used inside AuthProvider");
+  if (!value) {
+    // Safe fallback during SSR / when provider is absent (prevents prerender crash)
+    return {
+      user: null, loading: false, configured: false,
+      signInWithGoogle: async () => {}, signOut: async () => {},
+      openLogin: () => {}, getIdToken: async () => null,
+    } as any;
+  }
   return value;
 }
