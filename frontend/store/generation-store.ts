@@ -14,6 +14,7 @@ interface GenerationState {
   progress: number;
   status: string;
   downloadUrl: string | null;
+  printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
   showAllZones: boolean;
   // Batch preview: mapping taskId -> zone meta (so we can place tiles like on the map)
@@ -64,6 +65,7 @@ interface GenerationState {
   setBatchZoneMetaByTaskId: (value: Record<string, { zoneId: string; row?: number; col?: number }>) => void;
   updateProgress: (progress: number, status: string) => void;
   setDownloadUrl: (url: string | null) => void;
+  setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
   // Параметри
   setRoadWidthMultiplier: (value: number) => void;
@@ -105,6 +107,7 @@ const initialState = {
   progress: 0,
   status: "",
   downloadUrl: null,
+  printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
   showAllZones: false,
   batchZoneMetaByTaskId: {} as Record<string, { zoneId: string; row?: number; col?: number }>,
@@ -171,6 +174,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
         // при новій задачі скидаємо статуси і URL
         taskStatuses: {},
         downloadUrl: null,
+        printQuality: null,
         progress: 0,
         status: "waiting",
       };
@@ -181,6 +185,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setBatchZoneMetaByTaskId: (batchZoneMetaByTaskId) => set({ batchZoneMetaByTaskId }),
   updateProgress: (progress, status) => set({ progress, status }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
+  setPrintQuality: (pq) => set({ printQuality: pq }),
 
   setRoadWidthMultiplier: (value) => set({ roadWidthMultiplier: value }),
   setRoadHeightMm: (value) => set({ roadHeightMm: value }),

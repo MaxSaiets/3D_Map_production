@@ -210,6 +210,7 @@ export function ControlPanel({
     progress,
     status,
     downloadUrl,
+    printQuality,
     roadWidthMultiplier,
     roadHeightMm,
     roadEmbedMm,
@@ -264,6 +265,7 @@ export function ControlPanel({
     setShowAllZones,
     updateProgress,
     setDownloadUrl,
+    setPrintQuality,
   } = useGenerationStore();
 
   const [error, setError] = useState<string | null>(null);
@@ -330,6 +332,7 @@ export function ControlPanel({
             (activeTaskId ? nextStatuses[activeTaskId] : null) || (taskIds[0] ? nextStatuses[taskIds[0]] : null);
           if (active && active.status === "completed") {
             setDownloadUrl(active.download_url);
+            setPrintQuality(active.print_quality ?? null);
           }
 
           if (completed + failed >= total) {
@@ -351,6 +354,7 @@ export function ControlPanel({
         if (single.status === "completed") {
           setGenerating(false);
           setDownloadUrl(single.download_url);
+          setPrintQuality(single.print_quality ?? null);
           localStorage.removeItem("3dmap_task_group_id");
           localStorage.removeItem("3dmap_task_ids");
         } else if (single.status === "failed" || single.status === "cancelled") {
@@ -423,6 +427,17 @@ export function ControlPanel({
       setError(generateError.message || "Помилка генерації моделі");
       setGenerating(false);
     }
+  };
+
+  // Human-readable Ukrainian labels for QA warning codes from the backend gate.
+  const qaWarningLabel = (code: string): string => {
+    const map: Record<string, string> = {
+      "base:base_not_watertight": "основа не повністю герметична — слайсер усе одно надрукує, але краще перевірити модель",
+      "slicer:not_found": "слайсер недоступний на сервері — перевірку пропущено",
+    };
+    if (map[code]) return map[code];
+    if (code.includes("not_watertight")) return `${code.split(":")[0]}: шар не повністю герметичний`;
+    return code;
   };
 
   const handleDownload = async () => {
@@ -954,6 +969,22 @@ export function ControlPanel({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {downloadUrl && printQuality && printQuality.status === "ok" && (
+            <div className="rounded-[18px] border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800">
+              ✓ Перевірку друкопридатності пройдено
+            </div>
+          )}
+          {downloadUrl && printQuality && printQuality.status !== "ok" && (printQuality.warnings?.length ?? 0) > 0 && (
+            <div className="rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+              <p className="font-semibold">Модель готова, але є зауваження щодо друку:</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                {printQuality.warnings!.map((w, i) => (
+                  <li key={i}>{qaWarningLabel(w)}</li>
+                ))}
+              </ul>
             </div>
           )}
 

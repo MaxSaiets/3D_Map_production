@@ -195,6 +195,12 @@ export interface TaskStatus {
   download_url_stl?: string | null;
   download_url_3mf?: string | null;
   firebase_url?: string | null;
+  // QA / print-quality outcome from the backend gate (non-blocking)
+  print_quality?: {
+    status: "ok" | "warning" | "failed";
+    warnings?: string[];
+    report?: string | null;
+  } | null;
   preview_3mf?: string | null;  // Основне прев'ю в 3MF форматі
   firebase_preview_3mf?: string | null;  // Firebase URL для основного прев'ю
   preview_parts?: {
