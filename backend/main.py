@@ -718,6 +718,15 @@ async def get_status(task_id: str):
     """
     РћС‚СЂРёРјСѓС” СЃС‚Р°С‚СѓСЃ Р·Р°РґР°С‡С– РіРµРЅРµСЂР°С†С–С— Р°Р±Рѕ РјРЅРѕР¶РёРЅРЅРёС… Р·Р°РґР°С‡
     """
+    # Helper to build a static URL from an absolute path. Defined at the top so
+    # BOTH the batch branch and the single-task branch can use it (previously it
+    # was only defined in the single-task branch, so batch status 500'd with
+    # UnboundLocalError — breaking grid/zone generation polling).
+    def to_static_url(path_str):
+        if not path_str:
+            return None
+        return f"/files/{Path(path_str).name}"
+
     # РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё С†Рµ batch Р·Р°РїРёС‚ РЅР° РјРЅРѕР¶РёРЅРЅС– Р·Р°РґР°С‡С– (С„РѕСЂРјР°С‚: batch_<uuid>)
     if task_id.startswith("batch_"):
         all_task_ids_list = multiple_tasks_map.get(task_id)
@@ -791,10 +800,6 @@ async def get_status(task_id: str):
     
     task = tasks[task_id]
     output_files = getattr(task, "output_files", {}) or {}
-    # Helper to build static URL from absolute path
-    def to_static_url(path_str):
-        if not path_str: return None
-        return f"/files/{Path(path_str).name}"
 
     # Main download logic: prefer user requested format if available
     main_download_url = None
