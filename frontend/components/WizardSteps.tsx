@@ -18,8 +18,16 @@ type StepStatus = "done" | "current" | "todo";
  * through the natural flow and highlights the next actionable step, giving
  * a wizard-like guidance while keeping the proven map+controls layout.
  */
-export function WizardSteps({ state }: { state: WizardState }) {
+export function WizardSteps({
+  state,
+  variant = "map",
+}: {
+  state: WizardState;
+  variant?: "map" | "keychain";
+}) {
   const { cityLabel, hasSelection, isGenerating, hasDownload, progress } = state;
+  const settingsLabel = variant === "keychain" ? "Дизайн" : "Параметри";
+  const settingsHint = variant === "keychain" ? "Текст, петля, розмір" : "Розмір і шари (за бажанням)";
 
   // Derive per-step status from the real workspace state.
   const cityDone = Boolean(cityLabel);
@@ -46,8 +54,8 @@ export function WizardSteps({ state }: { state: WizardState }) {
     },
     {
       key: "settings",
-      label: "Параметри",
-      hint: "Розмір і шари (за бажанням)",
+      label: settingsLabel,
+      hint: settingsHint,
       icon: SlidersHorizontal,
       status: hasDownload ? "done" : hasSelection ? "current" : "todo",
     },

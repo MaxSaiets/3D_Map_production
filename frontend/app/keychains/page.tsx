@@ -14,6 +14,7 @@ import {
 } from "@/components/KeychainDesigner";
 import { useGenerationStore } from "@/store/generation-store";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { WizardSteps } from "@/components/WizardSteps";
 
 const MapSelector = dynamic(
   () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
@@ -191,6 +192,19 @@ export default function KeychainsPage() {
             </div>
           </div>
         </header>
+
+        <div className="mt-3">
+          <WizardSteps
+            variant="keychain"
+            state={{
+              cityLabel: CITIES[currentCityKey]?.label ?? currentCityKey,
+              hasSelection: Boolean(selectedArea),
+              isGenerating,
+              hasDownload: Boolean(downloadUrl),
+              progress,
+            }}
+          />
+        </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
           <div className={`${mapPanelClasses} order-1 min-h-[calc(100dvh-220px)] flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
