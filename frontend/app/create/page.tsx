@@ -227,9 +227,14 @@ export default function Home() {
         <header className="sticky top-0 z-30 rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.86)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:static lg:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-2">
-              <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
-                ← monadruk
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
+                  ← monadruk
+                </Link>
+                <Link href="/account" className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-strong)] transition hover:opacity-80">
+                  Кабінет →
+                </Link>
+              </div>
               <div>
                 <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
                   Конструктор 3D-мапи

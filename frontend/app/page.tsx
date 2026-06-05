@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler, ShieldCheck,
-  Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck,
+  Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck, User,
 } from "lucide-react";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
+import { useAuth } from "@/components/AuthProvider";
 
 /* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
 function MapTile({ accent = "#2E4A3A", paper = "#EFE6D2" }: { accent?: string; paper?: string }) {
@@ -53,7 +54,7 @@ export default function HomePage() {
 
 /* ---------- Header ---------- */
 function SiteHeader() {
-  const [open, setOpen] = useState(false);
+  const { user, configured } = useAuth();
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
@@ -67,6 +68,14 @@ function SiteHeader() {
           <Link href="/keychains" className="hover:text-ink">Брелки</Link>
         </nav>
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/account"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+            title={configured && user ? (user.email || user.phoneNumber || "Кабінет") : "Увійти"}
+          >
+            <User size={15} />
+            <span className="hidden sm:inline">{configured && user ? "Кабінет" : "Увійти"}</span>
+          </Link>
           <Link
             href="/keychains"
             className="hidden items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"

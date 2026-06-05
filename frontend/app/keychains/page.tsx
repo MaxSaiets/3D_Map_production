@@ -157,13 +157,21 @@ export default function KeychainsPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[500px]">
-              <Link
-                href="/"
-                className="flex min-h-[48px] items-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
-              >
-                <ArrowLeft size={17} />
-                До мап
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/"
+                  className="flex min-h-[48px] flex-1 items-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
+                >
+                  <ArrowLeft size={17} />
+                  До мап
+                </Link>
+                <Link
+                  href="/account"
+                  className="flex min-h-[48px] items-center justify-center rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
+                >
+                  Кабінет
+                </Link>
+              </div>
               <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Місто
