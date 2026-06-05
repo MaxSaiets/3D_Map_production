@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, SlidersHorizontal, Type } from "lucide-react";
+import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
+import { OrderDialog } from "@/components/OrderDialog";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
 import {
@@ -359,6 +360,7 @@ export function KeychainControlPanel({
   const [uniformBuildingHeight, setUniformBuildingHeight] = useState(false);
   const [activeSection, setActiveSection] = useState<PanelSection>("product");
   const [expertMode, setExpertMode] = useState(false);
+  const [orderOpen, setOrderOpen] = useState(false);
   const pollingInFlightRef = useRef(false);
   const printScale = useMemo(() => {
     const size = selectedAreaMeters(selectedArea);
@@ -1228,8 +1230,29 @@ export function KeychainControlPanel({
               <Download className="h-4 w-4" />
               Завантажити 3MF
             </button>
+            {downloadUrl && (
+              <button
+                type="button"
+                onClick={() => setOrderOpen(true)}
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Замовити друк
+              </button>
+            )}
           </div>
         </section>
+
+        <OrderDialog
+          open={orderOpen}
+          onClose={() => setOrderOpen(false)}
+          taskId={taskGroupId}
+          productType="keychain"
+          summary={{
+            label,
+            size: `${Math.round(design.bodyWidthMm)}×${Math.round(design.bodyHeightMm)} мм`,
+          }}
+        />
 
         <section className={sectionClass("advanced")}>
           <SectionHeader

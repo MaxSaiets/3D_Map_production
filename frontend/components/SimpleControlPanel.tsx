@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Play, Download, MapPin, Check, Sparkles } from "lucide-react";
+import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag } from "lucide-react";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES } from "@/lib/generation";
+import { OrderDialog } from "@/components/OrderDialog";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -37,6 +38,7 @@ export function SimpleControlPanel({
   const [styleId, setStyleId] = useState<string>("full");
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
 
   const cityKeys = availableCities ? Object.keys(availableCities) : [];
   const featured = MAP_TEMPLATES.filter((t) => t.cityKey === selectedCityKey);
@@ -297,13 +299,35 @@ export function SimpleControlPanel({
             <a
               href={downloadHref}
               download
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70"
             >
               <Download className="h-4 w-4" /> Завантажити 3MF
             </a>
           )}
+
+          {downloadUrl && (
+            <button
+              type="button"
+              onClick={() => setOrderOpen(true)}
+              className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(142,107,61,0.28)] transition hover:opacity-90"
+            >
+              <ShoppingBag className="h-4 w-4" /> Замовити друк
+            </button>
+          )}
         </div>
       </div>
+
+      <OrderDialog
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        taskId={taskGroupId}
+        productType="map"
+        summary={{
+          city: selectedCityKey,
+          district: MAP_TEMPLATES.find((t) => t.id === activeTemplate)?.district,
+          size: SIMPLE_SIZES.find((z) => Math.abs(modelSizeMm - z.mm) < 1)?.cm,
+        }}
+      />
     </div>
   );
 }
