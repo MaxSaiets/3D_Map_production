@@ -1032,7 +1032,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
   );
 }
 
-export function Preview3D() {
+export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   const {
     downloadUrl,
     isGenerating,
@@ -1052,15 +1052,15 @@ export function Preview3D() {
     setPreviewIncludeWater,
     setPreviewIncludeParks,
   } = useGenerationStore();
-  const [gridVisible, setGridVisible] = useState(true);
-  const [axesVisible, setAxesVisible] = useState(true);
+  const [gridVisible, setGridVisible] = useState(!capture);
+  const [axesVisible, setAxesVisible] = useState(!capture);
   const [rotateMode, setRotateMode] = useState<RotateMode>("camera");
   const [cameraMode, setCameraMode] = useState<CameraMode>("orbit");
   const [flySpeed, setFlySpeed] = useState<number>(120);
 
   return (
     <div className="relative h-full w-full bg-slate-950" style={{ minHeight: "100%" }}>
-      <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex justify-end">
+      {!capture && <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex justify-end">
         <div className="pointer-events-auto w-full max-w-[320px] rounded-[24px] border border-white/10 bg-[rgba(2,6,23,0.74)] px-3 py-3 text-white shadow-[0_20px_55px_rgba(2,6,23,0.45)] backdrop-blur">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -1270,8 +1270,8 @@ export function Preview3D() {
           </div>
         </div>
       </div>
-      </div>
-      {isGenerating && (
+      </div>}
+      {isGenerating && !capture && (
         <div className="absolute inset-0 flex items-center justify-center text-white z-10 pointer-events-none">
           <div className="text-center">
             <p className="text-lg mb-2">Генерація моделі...</p>
