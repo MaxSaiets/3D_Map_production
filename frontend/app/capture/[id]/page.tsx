@@ -17,7 +17,7 @@ import { MAP_TEMPLATES } from "@/lib/templates";
 export default function CapturePage() {
   const params = useParams();
   const id = String(params?.id || "");
-  const { downloadUrl, setTaskGroup, setActiveTaskId, setGenerating, setSelectedArea } = useGenerationStore();
+  const { downloadUrl, taskGroupId, setTaskGroup, setActiveTaskId, setGenerating, setSelectedArea, setDownloadUrl, setTaskStatuses, updateProgress } = useGenerationStore();
 
   useEffect(() => {
     const tpl = MAP_TEMPLATES.find((t) => t.id === id);
@@ -52,6 +52,31 @@ export default function CapturePage() {
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // This route has no ControlPanel, so it must poll task status itself and feed
+  // the store (downloadUrl) that Preview3D reads to load the generated model.
+  useEffect(() => {
+    if (!taskGroupId) return;
+    let stop = false;
+    const iv = setInterval(async () => {
+      try {
+        const { api } = await import("@/lib/api");
+        const s: any = await api.getStatus(taskGroupId);
+        if (stop) return;
+        setTaskStatuses({ [s.task_id]: s });
+        updateProgress(s.progress, s.message);
+        if (s.status === "completed") {
+          setDownloadUrl(s.download_url);
+          setGenerating(false);
+          clearInterval(iv);
+        } else if (s.status === "failed" || s.status === "cancelled") {
+          setGenerating(false);
+          clearInterval(iv);
+        }
+      } catch {/* ignore */}
+    }, 2500);
+    return () => { stop = true; clearInterval(iv); };
+  }, [taskGroupId, setDownloadUrl, setGenerating, setTaskStatuses, updateProgress]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
