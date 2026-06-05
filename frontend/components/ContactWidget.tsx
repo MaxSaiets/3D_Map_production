@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle, X, Loader2, CheckCircle2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -18,6 +18,19 @@ export function ContactWidget() {
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Allow any part of the app to open this widget (e.g. download-limit reached)
+  // via window.dispatchEvent(new CustomEvent("monadruk:open-contact", {detail:{message}})).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.message) setMessage(String(detail.message));
+      setDone(false);
+      setOpen(true);
+    };
+    window.addEventListener("monadruk:open-contact", handler as EventListener);
+    return () => window.removeEventListener("monadruk:open-contact", handler as EventListener);
+  }, []);
 
   const submit = async () => {
     if (!phone.trim()) { setError("Вкажіть телефон"); return; }

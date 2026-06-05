@@ -5,17 +5,24 @@ import {
   GoogleAuthProvider,
   getAuth,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
   signOut,
   type Auth,
+  type ConfirmationResult,
 } from "firebase/auth";
 
+// Public Firebase web config (safe to ship to the client). Env overrides allowed.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyD5xIX6JsD31XcbT5KXNnJfPjoeRVVum0o",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "monadruk.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "monadruk",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "monadruk.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "655484480222",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:655484480222:web:71d79bd33caacb1176704f",
 };
 
 function hasFirebaseConfig() {
@@ -32,19 +39,65 @@ export function isFirebaseAuthConfigured() {
 export function getFirebaseAuth() {
   if (!hasFirebaseConfig()) return null;
   if (!app) app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  if (!auth) auth = getAuth(app);
+  if (!auth) {
+    auth = getAuth(app);
+    try { auth.useDeviceLanguage(); } catch {/* ignore */}
+  }
   return auth;
 }
 
-export async function signInWithGoogle() {
-  const authInstance = getFirebaseAuth();
-  if (!authInstance) throw new Error("Firebase client config is missing");
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  return signInWithPopup(authInstance, provider);
+function requireAuth(): Auth {
+  const a = getFirebaseAuth();
+  if (!a) throw new Error("Firebase не налаштований");
+  return a;
 }
 
-export async function signOutFromGoogle() {
-  const authInstance = getFirebaseAuth();
-  if (authInstance) await signOut(authInstance);
+// ── Google ──
+export async function signInWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return signInWithPopup(requireAuth(), provider);
 }
+
+// ── Email / password ──
+export async function signInWithEmail(email: string, password: string) {
+  return signInWithEmailAndPassword(requireAuth(), email, password);
+}
+export async function signUpWithEmail(email: string, password: string) {
+  return createUserWithEmailAndPassword(requireAuth(), email, password);
+}
+export async function resetPassword(email: string) {
+  return sendPasswordResetEmail(requireAuth(), email);
+}
+
+// ── Phone ──
+let recaptcha: RecaptchaVerifier | null = null;
+export function getRecaptcha(containerId = "recaptcha-container"): RecaptchaVerifier {
+  const a = requireAuth();
+  if (!recaptcha) {
+    recaptcha = new RecaptchaVerifier(a, containerId, { size: "invisible" });
+  }
+  return recaptcha;
+}
+export function resetRecaptcha() {
+  try { recaptcha?.clear(); } catch {/* ignore */}
+  recaptcha = null;
+}
+export async function startPhoneSignIn(phoneE164: string, containerId = "recaptcha-container"): Promise<ConfirmationResult> {
+  return signInWithPhoneNumber(requireAuth(), phoneE164, getRecaptcha(containerId));
+}
+
+// ── common ──
+export async function signOutUser() {
+  const a = getFirebaseAuth();
+  if (a) await signOut(a);
+}
+export async function getIdToken(): Promise<string | null> {
+  const a = getFirebaseAuth();
+  const user = a?.currentUser;
+  if (!user) return null;
+  try { return await user.getIdToken(); } catch { return null; }
+}
+
+// back-compat alias
+export const signOutFromGoogle = signOutUser;

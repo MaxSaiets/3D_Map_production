@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
+import { useAuth } from "@/components/AuthProvider";
+import { gatedDownload } from "@/lib/download";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
 import {
@@ -361,6 +363,7 @@ export function KeychainControlPanel({
   const [activeSection, setActiveSection] = useState<PanelSection>("product");
   const [expertMode, setExpertMode] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
+  const { getIdToken, openLogin } = useAuth();
   const pollingInFlightRef = useRef(false);
   const printScale = useMemo(() => {
     const size = selectedAreaMeters(selectedArea);
@@ -826,22 +829,17 @@ export function KeychainControlPanel({
   };
 
   const handleDownload = async () => {
-    if (!activeTaskId || !downloadUrl) return;
-    try {
-      const blob = await api.downloadModel(activeTaskId, "3mf");
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const filename = taskStatuses[activeTaskId]?.download_url_3mf?.split(/[\\/]/).pop() || "map_keychain.3mf";
-      link.download = filename.endsWith(".3mf") ? filename : "map_keychain.3mf";
-      document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-    } catch (downloadError) {
-      console.error("[Keychain] download error", downloadError);
-      setError("Не вдалося завантажити 3MF");
-    }
+    if (!downloadUrl) return;
+    const res = await gatedDownload({
+      taskId: taskGroupId || activeTaskId,
+      downloadUrl: taskStatuses[activeTaskId || ""]?.download_url_3mf || downloadUrl,
+      meta: { title: label, product_type: "keychain" },
+      getIdToken, openLogin,
+      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
+        detail: { message: "Вичерпав 5 безкоштовних завантажень брелків. Хочу більше / друк — звʼяжіться зі мною." },
+      })),
+    });
+    if (res.status === "error") setError("Не вдалося завантажити 3MF");
   };
 
   const canGenerate = Boolean(selectedArea) && !isGenerating && blockingPrintIssues.length === 0;

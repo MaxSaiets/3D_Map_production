@@ -1,5 +1,5 @@
 import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -629,6 +629,84 @@ async def contact_endpoint(req: ContactRequest):
         raise HTTPException(status_code=422, detail="Вкажіть телефон")
     ok = send_contact(req.name, req.phone, req.message, req.source)
     return {"status": "ok" if ok else "logged"}
+
+
+# ── Account / auth (Firebase token verified without a service account) ──────────
+def _require_user(authorization: Optional[str]) -> Dict[str, Any]:
+    from services.auth_service import verify_token
+    user = verify_token(authorization or "")
+    if not user:
+        raise HTTPException(status_code=401, detail="Потрібен вхід")
+    return user
+
+
+@app.get("/api/account/quota")
+async def account_quota(authorization: Optional[str] = Header(default=None)):
+    from services.user_store import get_quota
+    u = _require_user(authorization)
+    return {"user": {"email": u.get("email"), "is_admin": u["is_admin"]},
+            "quota": get_quota(u["uid"], u.get("email") or "", u["is_admin"])}
+
+
+@app.get("/api/account/models")
+async def account_models(authorization: Optional[str] = Header(default=None)):
+    from services.user_store import list_models
+    u = _require_user(authorization)
+    return {"models": list_models(u["uid"])}
+
+
+class TrackModelRequest(BaseModel):
+    task_id: str
+    title: str = ""
+    city: str = ""
+    product_type: str = "map"
+    download_url: str = ""
+
+
+@app.post("/api/account/track")
+async def account_track(req: TrackModelRequest, authorization: Optional[str] = Header(default=None)):
+    """Associate a generated model with the signed-in user (for their history)."""
+    from services.user_store import add_model
+    u = _require_user(authorization)
+    add_model(u["uid"], u.get("email") or "", {
+        "task_id": req.task_id, "title": req.title, "city": req.city,
+        "product_type": req.product_type, "download_url": req.download_url,
+    })
+    return {"status": "ok"}
+
+
+class DownloadGrantRequest(BaseModel):
+    task_id: str
+    title: str = ""
+    city: str = ""
+    product_type: str = "map"
+    download_url: str = ""
+
+
+@app.post("/api/account/download")
+async def account_download(req: DownloadGrantRequest, authorization: Optional[str] = Header(default=None)):
+    """Quota-gated download grant. Increments the user's download counter; if the
+    free limit is reached (and not admin) returns 402 so the UI can show the
+    'contact us / pay' popup. Returns the file URL when allowed."""
+    from services.user_store import register_download, add_model
+    u = _require_user(authorization)
+    res = register_download(u["uid"], u.get("email") or "", u["is_admin"])
+    if not res["ok"]:
+        raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
+    # remember it in history
+    add_model(u["uid"], u.get("email") or "", {
+        "task_id": req.task_id, "title": req.title, "city": req.city,
+        "product_type": req.product_type, "download_url": req.download_url,
+    })
+    # resolve the file url
+    url = req.download_url
+    if not url:
+        t = tasks.get(req.task_id)
+        if t is not None:
+            of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
+            if of:
+                url = f"/files/{Path(of).name}"
+    return {"status": "ok", "url": url, "quota": res["quota"]}
 
 
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:

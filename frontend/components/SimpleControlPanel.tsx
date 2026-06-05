@@ -6,6 +6,8 @@ import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES } from "@/lib/generation";
 import { OrderDialog } from "@/components/OrderDialog";
+import { useAuth } from "@/components/AuthProvider";
+import { gatedDownload } from "@/lib/download";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -41,6 +43,21 @@ export function SimpleControlPanel({
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [dlBusy, setDlBusy] = useState(false);
+  const { getIdToken, openLogin } = useAuth();
+
+  const doGatedDownload = async () => {
+    setDlBusy(true);
+    await gatedDownload({
+      taskId: taskGroupId, downloadUrl,
+      meta: { city: selectedCityKey, product_type: "map" },
+      getIdToken, openLogin,
+      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
+        detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." },
+      })),
+    });
+    setDlBusy(false);
+  };
 
   const cityKeys = availableCities ? Object.keys(availableCities) : [];
   const featured = MAP_TEMPLATES.filter((t) => t.cityKey === selectedCityKey);
@@ -297,14 +314,15 @@ export function SimpleControlPanel({
             </div>
           )}
 
-          {downloadHref && (
-            <a
-              href={downloadHref}
-              download
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70"
+          {downloadUrl && (
+            <button
+              type="button"
+              onClick={doGatedDownload}
+              disabled={dlBusy}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70 disabled:opacity-60"
             >
-              <Download className="h-4 w-4" /> Завантажити 3MF
-            </a>
+              {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Завантажити 3MF
+            </button>
           )}
 
           {onAdvanced && (
