@@ -536,6 +536,45 @@ async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
 
 
+@app.get("/api/health")
+async def health():
+    """Lightweight health probe for monitoring/alerting.
+
+    Checks process liveness + that the output directory is writable.
+    Returns 200 with status="ok" when healthy; status="degraded" otherwise
+    (still HTTP 200 so probes can read the detail).
+    """
+    import time as _time
+    checks = {}
+    ok = True
+    # output dir writable
+    try:
+        _probe = os.path.join(OUTPUT_DIR, ".health_probe")
+        with open(_probe, "w") as _f:
+            _f.write("ok")
+        os.remove(_probe)
+        checks["output_writable"] = True
+    except Exception as _e:  # noqa: BLE001
+        checks["output_writable"] = False
+        checks["output_error"] = str(_e)
+        ok = False
+    # free disk space (GB) on output volume
+    try:
+        import shutil as _shutil
+        _free = _shutil.disk_usage(OUTPUT_DIR).free / (1024 ** 3)
+        checks["disk_free_gb"] = round(_free, 2)
+        if _free < 1.0:
+            ok = False
+    except Exception:  # noqa: BLE001
+        pass
+    return {
+        "status": "ok" if ok else "degraded",
+        "version": "1.0.0",
+        "ts": int(_time.time()),
+        "checks": checks,
+    }
+
+
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:
     """Auto-adjust keychain scale instead of erroring.
 
