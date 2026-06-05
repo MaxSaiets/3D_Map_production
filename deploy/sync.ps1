@@ -53,14 +53,19 @@ if ($DryRun) { Write-Host "`n[DryRun] Would copy files, commit, push, deploy. St
 # ── 2. Copy changed files to deploy repo
 Write-Step "Copying files to deploy repo"
 foreach ($rel in $allChanges) {
-    $src = Join-Path $LOCAL ($rel.Replace("/", "\"))
-    $dst = Join-Path $DEPLOY ($rel.Replace("/", "\"))
+    # Нормалізуємо trailing slash з git output (директорії часто йдуть як "app/keychains/")
+    $relClean = $rel.TrimEnd("/", "\")
+    $src = Join-Path $LOCAL ($relClean.Replace("/", "\"))
+    $dst = Join-Path $DEPLOY ($relClean.Replace("/", "\"))
     if (-not (Test-Path $src)) { continue }
-    $dstDir = Split-Path $dst -Parent
-    if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
     if (Test-Path $src -PathType Container) {
-        Copy-Item $src $dst -Recurse -Force
+        # КРИТИЧНО: для директорій копіюємо ВМІСТ у вже існуючу,
+        # а не саму папку (інакше створюється keychains/keychains/)
+        if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+        Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
     } else {
+        $dstDir = Split-Path $dst -Parent
+        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
         Copy-Item $src $dst -Force
     }
 }
@@ -110,12 +115,18 @@ Write-Ok "Server synced"
 $frontendTouched = $allChanges | Where-Object { $_ -match "^frontend/" }
 if ($frontendTouched -and -not $SkipBuild) {
     Write-Step "Frontend rebuild"
-    $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && rm -rf .next && npm run build 2>&1 | tail -5" 2>&1
+    # Build to a temp log, then gate the restart on .next/BUILD_ID existing.
+    # (Piping `next build` through `tail` previously swallowed the exit code, so
+    #  broken builds — ENOTEMPTY, MODULE_NOT_FOUND — slipped through and pm2
+    #  restarted onto a half-written .next, serving 500s.)
+    $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && rm -rf .next && node_modules/.bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
     Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
-    if ($buildOut -match "Failed to compile|error TS") {
-        Write-Err "Build FAILED"; exit 1
+    $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
+    if ($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") {
+        Write-Err "Build FAILED (.next/BUILD_ID=$buildId) — NOT restarting frontend. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
+        exit 1
     }
-    Write-Ok "Built"
+    Write-Ok "Built (BUILD_ID present)"
 }
 
 # ── 7. Restart PM2
