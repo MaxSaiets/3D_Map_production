@@ -145,6 +145,19 @@ foreach ($t in $restartTargets) {
 # Wait for services
 Start-Sleep -Seconds 10
 
+# ── 7b. Frontend self-heal: `next start` sometimes loses a compiled module on a
+# restart race right after a build (Cannot find module next/dist/compiled/cookie),
+# serving 500s. Re-check and restart once if needed.
+if ($frontendTouched) {
+    for ($i = 1; $i -le 2; $i++) {
+        $fe = & ssh @SSH "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/" 2>&1
+        if ($fe -eq "200") { break }
+        Write-Host "    Frontend returned $fe — restarting (attempt $i)" -ForegroundColor Yellow
+        & ssh @SSH "pm2 restart 3dmap-frontend --update-env" 2>&1 | Out-Null
+        Start-Sleep -Seconds 8
+    }
+}
+
 # ── 8. Verify endpoints
 Write-Step "Endpoint verification"
 $endpoints = @(
