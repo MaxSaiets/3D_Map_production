@@ -10,6 +10,7 @@ import {
   DEFAULT_KEYCHAIN_DESIGN,
   KeychainDesigner,
   KeychainTemplateStrip,
+  KEYCHAIN_TEMPLATES,
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
 import { useGenerationStore } from "@/store/generation-store";
@@ -204,6 +205,42 @@ export default function KeychainsPage() {
               progress,
             }}
           />
+        </div>
+
+        {/* Step 1: pick a keychain form template — the prominent first decision */}
+        <div className="mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
+          <div className="mb-2 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[10px] font-bold text-white">1</span>
+            Оберіть форму брелка
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {KEYCHAIN_TEMPLATES.map((t) => {
+              const active =
+                t.design.baseShape === design.baseShape &&
+                Math.round(t.design.bodyWidthMm) === Math.round(design.bodyWidthMm) &&
+                Math.round(t.design.bodyHeightMm) === Math.round(design.bodyHeightMm);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setDesign(t.design)}
+                  className={`min-w-[150px] shrink-0 rounded-[18px] border px-3 py-3 text-left transition ${
+                    active
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
+                      : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
+                    <span className="rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                      {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
+                    </span>
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
