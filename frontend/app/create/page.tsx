@@ -346,6 +346,7 @@ export default function Home() {
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onCityChange={setCurrentCityKey}
+                  onAdvanced={() => toggleProMode(true)}
                   />
                 )}
               </div>
@@ -472,6 +473,7 @@ export default function Home() {
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onCityChange={setCurrentCityKey}
+                  onAdvanced={() => toggleProMode(true)}
                   />
                 )}
               </div>

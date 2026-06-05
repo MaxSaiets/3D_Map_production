@@ -18,10 +18,12 @@ export function SimpleControlPanel({
   availableCities,
   selectedCityKey,
   onCityChange,
+  onAdvanced,
 }: {
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
   onCityChange?: (key: string) => void;
+  onAdvanced?: () => void;
 }) {
   const s = useGenerationStore();
   const {
@@ -303,6 +305,16 @@ export function SimpleControlPanel({
             >
               <Download className="h-4 w-4" /> Завантажити 3MF
             </a>
+          )}
+
+          {onAdvanced && (
+            <button
+              type="button"
+              onClick={onAdvanced}
+              className="w-full text-center text-[12px] text-[var(--text-secondary)] underline-offset-2 hover:underline"
+            >
+              Потрібна серія зон (гексагони / квадрати)? Відкрити режим «Про» →
+            </button>
           )}
 
           {downloadUrl && (
