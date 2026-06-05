@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   signInWithPhoneNumber,
   RecaptchaVerifier,
+  sendEmailVerification,
   signOut,
   type Auth,
   type ConfirmationResult,
@@ -64,7 +65,9 @@ export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(requireAuth(), email, password);
 }
 export async function signUpWithEmail(email: string, password: string) {
-  return createUserWithEmailAndPassword(requireAuth(), email, password);
+  const cred = await createUserWithEmailAndPassword(requireAuth(), email, password);
+  try { if (cred.user) await sendEmailVerification(cred.user); } catch {/* non-fatal */}
+  return cred;
 }
 export async function resetPassword(email: string) {
   return sendPasswordResetEmail(requireAuth(), email);

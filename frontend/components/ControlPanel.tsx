@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
+import { useAuth } from "@/components/AuthProvider";
+import { gatedDownload } from "@/lib/download";
 
 interface ControlPanelProps {
   showHexGrid?: boolean;
@@ -268,6 +270,7 @@ export function ControlPanel({
     setPrintQuality,
   } = useGenerationStore();
 
+  const { getIdToken, openLogin } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [internalShowHexGrid, setInternalShowHexGrid] = useState(false);
   const [internalSelectedZones, setInternalSelectedZones] = useState<any[]>([]);
@@ -441,63 +444,19 @@ export function ControlPanel({
   };
 
   const handleDownload = async () => {
-    if (!activeTaskId || !downloadUrl) return;
-
-    try {
-      const status = taskStatuses[activeTaskId];
-      const fbUrl = status?.firebase_url;
-      const isFormatMatch = fbUrl && fbUrl.toLowerCase().split("?")[0].endsWith(`.${exportFormat.toLowerCase()}`);
-      // Priority: Firebase (if available + format match) → local /files/ direct link → /api/download endpoint
-      const localUrl = exportFormat === "3mf"
-        ? (status?.download_url_3mf ?? status?.download_url)
-        : (status?.download_url_stl ?? status?.download_url);
-      let blob: Blob;
-      if (fbUrl && isFormatMatch) {
-        blob = await api.downloadFile(fbUrl);
-      } else if (localUrl) {
-        // Direct local file download — fastest, no Firebase needed
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const fullUrl = localUrl.startsWith("http") ? localUrl : `${API_BASE}${localUrl}`;
-        const res = await fetch(fullUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        blob = await res.blob();
-      } else {
-        blob = await api.downloadModel(activeTaskId, exportFormat);
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      // Read descriptive basename (model_<grid>_<mm>_<row>_<col>) from
-      // backend's download_url instead of slicing the UUID — keeps the slicer
-      // label aligned with the on-disk filename produced by the backend.
-      const sources = [
-        status?.download_url,
-        status?.download_url_3mf,
-        status?.download_url_stl,
-        status?.firebase_url,
-      ];
-      let exportBasename = `model_${activeTaskId.slice(0, 8)}`;
-      for (const src of sources) {
-        if (!src) continue;
-        const path = String(src).split("?")[0];
-        const filename = path.split(/[\\/]/).pop() || "";
-        const dotIdx = filename.lastIndexOf(".");
-        const stem = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
-        if (stem && stem !== activeTaskId) {
-          exportBasename = stem;
-          break;
-        }
-      }
-      link.download = `${exportBasename}.${exportFormat}`;
-      document.body.appendChild(link);
-      link.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-    } catch (downloadError) {
-      console.error("[Download Error]", downloadError);
-      setError("Помилка завантаження файлу");
-    }
+    if (!downloadUrl) return;
+    const status = activeTaskId ? taskStatuses[activeTaskId] : undefined;
+    const localUrl = status?.download_url_3mf ?? status?.download_url ?? downloadUrl;
+    const res = await gatedDownload({
+      taskId: activeTaskId || taskGroupId,
+      downloadUrl: localUrl,
+      meta: { city: selectedCityKey, product_type: "map" },
+      getIdToken, openLogin,
+      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
+        detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." },
+      })),
+    });
+    if (res.status === "error") setError("Помилка завантаження файлу");
   };
 
   const kyivBounds = {

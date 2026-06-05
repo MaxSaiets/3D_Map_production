@@ -30,14 +30,19 @@ export async function gatedDownload(opts: GatedDownloadOpts): Promise<GatedResul
       }),
     });
     if (res.status === 402) { opts.onLimit?.(); return { status: "limit" }; }
+    if (res.status === 401) { opts.openLogin(); return { status: "login" }; }
     if (!res.ok) return { status: "error", message: `HTTP ${res.status}` };
-    const data = await res.json();
-    const url = data.url ? (data.url.startsWith("http") ? data.url : `${API_BASE}${data.url}`) : null;
-    if (url) {
-      const a = document.createElement("a");
-      a.href = url; a.download = ""; document.body.appendChild(a); a.click(); a.remove();
-    }
-    return { status: "ok", quota: data.quota };
+    // The endpoint streams the full model file directly (auth-gated delivery).
+    const blob = await res.blob();
+    const remaining = res.headers.get("X-Quota-Remaining");
+    const cd = res.headers.get("Content-Disposition") || "";
+    const nameMatch = cd.match(/filename="?([^"]+)"?/);
+    const fname = nameMatch?.[1] || `monadruk_${opts.taskId || "model"}.3mf`;
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(blobUrl);
+    return { status: "ok", quota: remaining != null ? { remaining: Number(remaining) } : undefined };
   } catch (e: any) {
     return { status: "error", message: e?.message };
   }

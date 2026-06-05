@@ -683,30 +683,79 @@ class DownloadGrantRequest(BaseModel):
     download_url: str = ""
 
 
+def _resolve_model_path(req: "DownloadGrantRequest") -> Optional[Path]:
+    """Find the on-disk full model file for a download request."""
+    # from in-memory task
+    t = tasks.get(req.task_id) if req.task_id else None
+    if t is not None:
+        of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
+        if of and Path(of).exists():
+            return Path(of)
+    # from a provided /files/<name> url
+    if req.download_url:
+        name = req.download_url.split("/")[-1].split("?")[0]
+        p = OUTPUT_DIR / name
+        if p.exists():
+            return p
+    # by task-id on disk
+    if req.task_id:
+        p = _find_file_on_disk_by_task_id(req.task_id)
+        if p is not None:
+            return p
+    return None
+
+
 @app.post("/api/account/download")
 async def account_download(req: DownloadGrantRequest, authorization: Optional[str] = Header(default=None)):
-    """Quota-gated download grant. Increments the user's download counter; if the
-    free limit is reached (and not admin) returns 402 so the UI can show the
-    'contact us / pay' popup. Returns the file URL when allowed."""
+    """Quota-gated download. Verifies the Firebase token, enforces the free
+    limit (402 when exhausted for non-admins) and STREAMS the file so the full
+    model is only ever delivered through this authenticated path."""
+    from fastapi.responses import FileResponse
     from services.user_store import register_download, add_model
     u = _require_user(authorization)
+    path = _resolve_model_path(req)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Файл моделі не знайдено")
     res = register_download(u["uid"], u.get("email") or "", u["is_admin"])
     if not res["ok"]:
         raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
-    # remember it in history
     add_model(u["uid"], u.get("email") or "", {
         "task_id": req.task_id, "title": req.title, "city": req.city,
         "product_type": req.product_type, "download_url": req.download_url,
     })
-    # resolve the file url
-    url = req.download_url
-    if not url:
-        t = tasks.get(req.task_id)
-        if t is not None:
-            of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
-            if of:
-                url = f"/files/{Path(of).name}"
-    return {"status": "ok", "url": url, "quota": res["quota"]}
+    return FileResponse(
+        str(path), media_type="model/3mf", filename=path.name,
+        headers={"X-Quota-Remaining": str(res["quota"]["remaining"])},
+    )
+
+
+@app.get("/api/admin/orders")
+async def admin_orders(authorization: Optional[str] = Header(default=None)):
+    u = _require_user(authorization)
+    if not u["is_admin"]:
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    orders = []
+    log = OUTPUT_DIR / "orders.jsonl"
+    try:
+        if log.exists():
+            for line in log.read_text(encoding="utf-8").splitlines():
+                try:
+                    orders.append(json.loads(line))
+                except Exception:  # noqa: BLE001
+                    continue
+    except Exception:  # noqa: BLE001
+        pass
+    orders.reverse()
+    return {"orders": orders}
+
+
+@app.get("/api/admin/users")
+async def admin_users(authorization: Optional[str] = Header(default=None)):
+    from services.user_store import list_all_users
+    u = _require_user(authorization)
+    if not u["is_admin"]:
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    return {"users": list_all_users()}
 
 
 def _validate_keychain_print_scale(request: GenerationRequest) -> None:

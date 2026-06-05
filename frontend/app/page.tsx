@@ -441,10 +441,12 @@ function SiteFooter() {
         <div className="flex items-center gap-2 font-serif text-lg text-ink">
           <Box size={18} className="text-forest" /> monadruk
         </div>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           <Link href="/create" className="hover:text-ink">Створити мапу</Link>
           <Link href="/keychains" className="hover:text-ink">Брелки</Link>
-          <a href="#how" className="hover:text-ink">Як це працює</a>
+          <Link href="/account" className="hover:text-ink">Кабінет</Link>
+          <Link href="/privacy" className="hover:text-ink">Конфіденційність</Link>
+          <Link href="/terms" className="hover:text-ink">Умови</Link>
         </div>
         <div>© {new Date().getFullYear()} monadruk.com</div>
       </div>

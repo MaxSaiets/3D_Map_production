@@ -102,3 +102,20 @@ def add_model(uid: str, email: str, model: Dict[str, Any]) -> None:
 def list_models(uid: str) -> List[Dict[str, Any]]:
     with _lock:
         return list(_load().get(uid, {}).get("models", []))
+
+
+def list_all_users() -> List[Dict[str, Any]]:
+    """Admin view: every user with their email, download count and model count."""
+    with _lock:
+        data = _load()
+    out = []
+    for uid, u in data.items():
+        out.append({
+            "uid": uid,
+            "email": u.get("email", ""),
+            "downloads": int(u.get("downloads", 0)),
+            "models": len(u.get("models", [])),
+            "created_at": u.get("created_at"),
+        })
+    out.sort(key=lambda x: x.get("created_at") or 0, reverse=True)
+    return out
