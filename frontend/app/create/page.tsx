@@ -115,7 +115,7 @@ export default function Home() {
           road_width_multiplier: 0.8, road_height_mm: 0.5, road_embed_mm: 0.3,
           building_min_height: 5.0, building_height_multiplier: 1.8,
           building_foundation_mm: 0.6, building_embed_mm: 0.2,
-          water_depth: 2.0, terrain_enabled: true, terrain_z_scale: 1.0,
+          water_depth: 2.0, terrain_enabled: false, terrain_z_scale: 1.0,
           terrain_base_thickness_mm: 0.3, terrain_resolution: 180, terrarium_zoom: 15,
           flatten_buildings_on_terrain: false, flatten_roads_on_terrain: false,
           export_format: "3mf", model_size_mm: 80, context_padding_m: 400.0,
