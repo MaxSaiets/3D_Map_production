@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ContactWidget } from "@/components/ContactWidget";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -85,8 +86,10 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {children}
-        <ContactWidget />
+        <AuthProvider>
+          {children}
+          <ContactWidget />
+        </AuthProvider>
       </body>
     </html>
   );
