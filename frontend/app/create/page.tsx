@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, X } from "lucide-react";
+import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
@@ -227,14 +227,9 @@ export default function Home() {
         <header className="sticky top-0 z-30 rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.86)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:static lg:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
-                  ← monadruk
-                </Link>
-                <Link href="/account" className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-strong)] transition hover:opacity-80">
-                  Кабінет →
-                </Link>
-              </div>
+              <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
+                ← monadruk
+              </Link>
               <div>
                 <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
                   Конструктор 3D-мапи
@@ -246,6 +241,12 @@ export default function Home() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[360px]">
+              <Link
+                href="/account"
+                className="flex items-center justify-center gap-2 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)] sm:col-span-2"
+              >
+                <User size={16} /> Кабінет
+              </Link>
               <Link
                 href="/keychains"
                 className="flex items-center gap-3 rounded-[22px] border border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] px-4 py-3 text-[var(--accent-strong)] transition hover:border-[rgba(11,92,87,0.36)] hover:bg-[rgba(15,118,110,0.12)] sm:col-span-2"
