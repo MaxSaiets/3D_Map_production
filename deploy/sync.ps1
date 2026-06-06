@@ -115,18 +115,20 @@ Write-Ok "Server synced"
 $frontendTouched = $allChanges | Where-Object { $_ -match "^frontend/" }
 if ($frontendTouched -and -not $SkipBuild) {
     Write-Step "Frontend rebuild"
-    # Build to a temp log, then gate the restart on .next/BUILD_ID existing.
-    # (Piping `next build` through `tail` previously swallowed the exit code, so
-    #  broken builds — ENOTEMPTY, MODULE_NOT_FOUND — slipped through and pm2
-    #  restarted onto a half-written .next, serving 500s.)
-    $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && rm -rf .next && node_modules/.bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
+    # CRITICAL: STOP the running frontend before building. Building while
+    # `next start` is live corrupts .next (missing .next/server/app/*/page.js ->
+    # "ENOENT page.js" / "o is not a function" / unstyled 500s). Stop -> rm ->
+    # build -> (started after the BUILD_ID gate below).
+    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; cd /opt/3dmap/frontend && rm -rf .next && node_modules/.bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
     Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
     $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
     if ($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") {
-        Write-Err "Build FAILED (.next/BUILD_ID=$buildId) — NOT restarting frontend. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
+        Write-Err "Build FAILED (.next/BUILD_ID=$buildId) — frontend left stopped. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
         exit 1
     }
-    Write-Ok "Built (BUILD_ID present)"
+    # Build OK -> bring the frontend back up onto the fresh .next.
+    & ssh @SSH "pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 restart 3dmap-frontend --update-env >/dev/null 2>&1" 2>&1 | Out-Null
+    Write-Ok "Built (BUILD_ID present) + frontend started"
 }
 
 # ── 7. Restart PM2
