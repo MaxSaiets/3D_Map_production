@@ -5,20 +5,29 @@ import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Suspense, useMemo } from "react";
 import * as THREE from "three";
 
-function Model({ url }: { url: string }) {
+function Model({ url, mirror = true }: { url: string; mirror?: boolean }) {
   // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
-  // GLBs are un-mirrored at the geometry level in the bake, so no viewer mirror.
   const { scene } = useGLTF(url, true);
   const fixed = useMemo(() => {
     const s = scene.clone(true);
     s.traverse((o: any) => {
-      if (o.isMesh && o.material) {
-        const mats = Array.isArray(o.material) ? o.material : [o.material];
-        mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
+      if (o.isMesh) {
+        if (mirror && o.geometry) {
+          // Un-mirror trimesh's handedness flip at the GEOMETRY level (a scale
+          // on the <primitive>/Stage wrapper gets swallowed by <Stage>). Flipping
+          // X inverts winding, so DoubleSide keeps lighting correct.
+          o.geometry = o.geometry.clone();
+          o.geometry.scale(-1, 1, 1);
+          o.geometry.computeVertexNormals();
+        }
+        if (o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
+        }
       }
     });
     return s;
-  }, [scene]);
+  }, [scene, mirror]);
   return <primitive object={fixed} />;
 }
 
