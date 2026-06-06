@@ -308,63 +308,44 @@ export default function Home() {
         ]}
       />
       <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
-        <header className="sticky top-0 z-30 rounded-[28px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.86)] px-4 py-4 shadow-[0_18px_60px_rgba(31,41,55,0.08)] backdrop-blur lg:static lg:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
-                ← monadruk
-              </Link>
-              <div>
-                <h1 className="font-title text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-                  Конструктор 3D-мапи
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-[15px]">
-                  Обери ділянку міста, налаштуй модель та завантаж готовий 3MF для Bambu Studio / PrusaSlicer.
-                </p>
-              </div>
-            </div>
+        <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Brand + title (compact) */}
+            <Link href="/" className="hidden items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] sm:inline-flex">
+              ← monadruk
+            </Link>
+            <span className="hidden h-5 w-px bg-[var(--surface-border)] sm:block" />
+            <h1 className="font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:text-lg">
+              Конструктор 3D-мапи
+            </h1>
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[360px]">
-              <Link
-                href="/account"
-                className="flex items-center justify-center gap-2 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)] sm:col-span-2"
+            {/* Controls (compact toolbar, right-aligned) */}
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <select
+                value={currentCityKey}
+                onChange={(e) => setCurrentCityKey(e.target.value)}
+                className="rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
+                title="Місто"
               >
-                <User size={16} /> Кабінет
-              </Link>
+                {Object.keys(CITIES).map((key) => (
+                  <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
+                ))}
+              </select>
+              <span className="hidden rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] md:inline">
+                {selectionLabel}
+              </span>
               <Link
                 href="/keychains"
-                className="flex items-center gap-3 rounded-[22px] border border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] px-4 py-3 text-[var(--accent-strong)] transition hover:border-[rgba(11,92,87,0.36)] hover:bg-[rgba(15,118,110,0.12)] sm:col-span-2"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-1.5 text-[13px] font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
               >
-                <span className="rounded-2xl bg-white/80 p-2">
-                  <KeyRound size={18} />
-                </span>
-                <span>
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
-                    Новий інструмент
-                  </span>
-                  <span className="mt-1 block text-sm font-semibold">Створити брелок з мапою</span>
-                </span>
+                <KeyRound size={15} /> <span className="hidden sm:inline">Брелок</span>
               </Link>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.8)] px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Місто
-                </div>
-                <select
-                  value={currentCityKey}
-                  onChange={(e) => setCurrentCityKey(e.target.value)}
-                  className="mt-1 w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
-                >
-                  {Object.keys(CITIES).map((key) => (
-                    <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.8)] px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Статус
-                </div>
-                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{selectionLabel}</div>
-              </div>
+              <Link
+                href="/account"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              >
+                <User size={15} /> <span className="hidden sm:inline">Кабінет</span>
+              </Link>
             </div>
           </div>
 

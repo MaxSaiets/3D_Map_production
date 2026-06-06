@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
+import ModelModal, { type ModalModel } from "@/components/ModelModal";
 
 const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), {
   ssr: false,
@@ -14,12 +15,12 @@ const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), 
 });
 
 const VIEW_MODELS = [
-  { id: "keychain-home", label: "Брелок «HOME»", url: "/models/keychain-home.glb", kind: "key" },
-  { id: "keychain-city", label: "Щільний центр", url: "/models/keychain-city.glb", kind: "key" },
-  { id: "keychain-water", label: "Брелок з рікою", url: "/models/keychain-water.glb", kind: "key" },
-  { id: "keychain-bridge", label: "Брелок з мостами", url: "/models/keychain-bridge.glb", kind: "key" },
-  { id: "map-district", label: "3D-район", url: "/models/map-district.glb", kind: "map" },
-  { id: "map-dense", label: "Щільний квартал", url: "/models/map-dense.glb", kind: "map" },
+  { id: "keychain-home", label: "Брелок «HOME»", url: "/models/keychain-home.glb", kind: "key" as const },
+  { id: "keychain-city", label: "Щільний центр", url: "/models/keychain-city.glb", kind: "key" as const },
+  { id: "keychain-water", label: "Брелок з рікою", url: "/models/keychain-water.glb", kind: "key" as const },
+  { id: "keychain-bridge", label: "Брелок з мостами", url: "/models/keychain-bridge.glb", kind: "key" as const },
+  { id: "map-district", label: "3D-район", url: "/models/map-district.glb", kind: "map" as const },
+  { id: "map-dense", label: "Щільний квартал", url: "/models/map-dense.glb", kind: "map" as const },
 ];
 
 type Item = { src: string; kind: "key" | "map"; title: string; price: string };
@@ -28,14 +29,22 @@ const MAP_TITLES = ["Центральний район", "Біля води", "�
 
 const ITEMS: Item[] = [
   ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.png`, kind: "key" as const, title: KEY_TITLES[i] || "Брелок-мапа", price: "від 290 ₴" })),
-  ...Array.from({ length: 13 }, (_, i) => ({ src: `/showcase/map-${i + 1}.png`, kind: "map" as const, title: MAP_TITLES[i] || "3D-район", price: "від 690 ₴" })),
+  ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.png`, kind: "map" as const, title: MAP_TITLES[i] || "3D-район", price: "від 690 ₴" })),
 ];
+const WEB_KEY = ["/models/keychain-home.glb", "/models/keychain-city.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
+const WEB_MAP = ["/models/map-district.glb", "/models/map-dense.glb", "/models/map-block.glb"];
 
 export default function ShowcasePage() {
   const [filter, setFilter] = useState<"all" | "key" | "map">("all");
   const [active, setActive] = useState(VIEW_MODELS[0]);
+  const [modal, setModal] = useState<ModalModel | null>(null);
   const items = ITEMS.filter((it) => filter === "all" || it.kind === filter);
   const viewModels = VIEW_MODELS.filter((m) => filter === "all" || m.kind === filter);
+  let keyN = 0, mapN = 0;
+  const openItem = (it: Item) => {
+    if (it.kind === "key") setModal({ url: WEB_KEY[(keyN++) % WEB_KEY.length], label: it.title, kind: "key", price: it.price });
+    else setModal({ url: WEB_MAP[(mapN++) % WEB_MAP.length], label: it.title, kind: "map", price: it.price });
+  };
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[1280px] px-5 py-8 lg:px-8">
@@ -72,9 +81,13 @@ export default function ShowcasePage() {
 
       {/* 3D feature */}
       <div className="mt-8 grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
-        <div className="overflow-hidden rounded-[28px] border border-line bg-gradient-to-b from-[#f4efe3] to-[#e7ddc9] shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
+        <button
+          onClick={() => setModal({ url: active.url, label: active.label, kind: active.kind })}
+          className="overflow-hidden rounded-[28px] border border-line bg-gradient-to-b from-[#f4efe3] to-[#e7ddc9] shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
+          title="Відкрити на весь екран"
+        >
           <Model3DViewer url={active.url} height={440} />
-        </div>
+        </button>
         <div>
           <h2 className="font-serif text-2xl text-ink">{active.label}</h2>
           <p className="mt-2 text-[14px] text-ink-2">
@@ -107,24 +120,22 @@ export default function ShowcasePage() {
       {/* Gallery */}
       <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((it) => (
-          <div key={it.src} className="group overflow-hidden rounded-[20px] border border-line bg-paper">
+          <button key={it.src} onClick={() => openItem(it)} className="group overflow-hidden rounded-[20px] border border-line bg-paper text-left" title="Покрутити в 3D">
             <div className="relative aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={it.src} alt={it.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
+                <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">Покрутити в 3D ↻</span>
+              </span>
             </div>
             <div className="flex items-center justify-between gap-2 px-3 py-3">
               <div>
                 <div className="text-[13px] font-semibold text-ink">{it.title}</div>
                 <div className="text-[11px] text-ink-3">{it.kind === "key" ? "Брелок 55×30 мм" : "3D-район"}</div>
               </div>
-              <Link
-                href={it.kind === "key" ? "/keychains" : "/create"}
-                className="shrink-0 rounded-full bg-forest px-3 py-1.5 text-[11px] font-bold text-white hover:brightness-110"
-              >
-                {it.price}
-              </Link>
+              <span className="shrink-0 rounded-full bg-forest px-3 py-1.5 text-[11px] font-bold text-white">{it.price}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -135,6 +146,8 @@ export default function ShowcasePage() {
           Створити свою мапу →
         </Link>
       </div>
+
+      <ModelModal model={modal} onClose={() => setModal(null)} />
     </div>
   );
 }

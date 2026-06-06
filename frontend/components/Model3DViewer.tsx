@@ -2,16 +2,33 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
-import { Suspense } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import * as THREE from "three";
 
 function Model({ url }: { url: string }) {
   // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
   const { scene } = useGLTF(url, true);
-  return <primitive object={scene} />;
+  // The trimesh GLB export is handedness-mirrored (text reads backwards). Mirror
+  // back on X and make materials double-sided so the flipped winding stays lit.
+  const fixed = useMemo(() => {
+    const s = scene.clone(true);
+    s.scale.x = -1;
+    s.traverse((o: any) => {
+      if (o.isMesh && o.material) {
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
+      }
+    });
+    return s;
+  }, [scene]);
+  useEffect(() => () => { /* keep cached */ }, []);
+  return <primitive object={fixed} />;
 }
 
 /** Auto-rotating 3D viewer for a baked GLB (oriented, coloured). */
-export default function Model3DViewer({ url, height = 360 }: { url: string; height?: number }) {
+export default function Model3DViewer({
+  url, height = 360, allowZoom = false, autoRotate = true,
+}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean }) {
   return (
     <div style={{ height, width: "100%" }} className="touch-none">
       <Canvas
@@ -30,12 +47,12 @@ export default function Model3DViewer({ url, height = 360 }: { url: string; heig
             <Model url={url} />
           </Stage>
           <OrbitControls
-            autoRotate
-            autoRotateSpeed={2.0}
+            autoRotate={autoRotate}
+            autoRotateSpeed={1.8}
             enablePan={false}
-            enableZoom={false}
-            minPolarAngle={Math.PI / 6}
-            maxPolarAngle={Math.PI / 2.1}
+            enableZoom={allowZoom}
+            minPolarAngle={Math.PI / 7}
+            maxPolarAngle={Math.PI / 2.05}
           />
         </Suspense>
       </Canvas>

@@ -11,6 +11,7 @@ import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 
 const ShowcaseSection = dynamic(() => import("@/components/ShowcaseSection"), { ssr: false });
+const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), { ssr: false });
 
 /* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
 function MapTile({ accent = "#2E4A3A", paper = "#EFE6D2" }: { accent?: string; paper?: string }) {
@@ -140,16 +141,11 @@ function Hero() {
               </div>
               <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="aspect-[5/4] overflow-hidden rounded-[14px] border border-line-soft">
-                <MapTile />
-              </div>
-              <div className="aspect-[5/4] overflow-hidden rounded-[14px] border border-line-soft bg-bg-2">
-                <MapTile accent="#1F3328" paper="#E2D9C2" />
-              </div>
+            <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
+              <Model3DViewer url="/models/keychain-home.glb" height={300} />
             </div>
             <div className="flex items-center justify-between px-1 pt-4">
-              <span className="text-[13px] text-ink-2">Зліва — карта, справа — 3D-результат</span>
+              <span className="text-[13px] text-ink-2">Жива 3D-модель — потягни, щоб покрутити</span>
               <Link href="/create" className="btn btn-primary btn-sm">
                 Спробувати <ArrowRight size={14} />
               </Link>
@@ -453,8 +449,9 @@ function FinalCTA() {
             </Link>
           </div>
         </div>
-        <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)]">
-          <MapTile accent="#1F3328" paper="#3A5446" />
+        <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)] bg-[rgba(244,239,228,0.06)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/showcase/map-1.png" alt="3D-мапа міста" loading="lazy" className="h-full w-full object-cover" />
         </div>
       </div>
     </section>

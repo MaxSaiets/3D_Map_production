@@ -167,3 +167,12 @@ input[type="range"] {
 .fade-up { animation: fadeUp .4s ease both; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
 .pulse { animation: pulse 1.8s ease-in-out infinite; }
+
+/* Infinite marquee carousels (showcase): track holds the list twice, shifts 50%. */
+@keyframes marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.marquee { overflow: hidden; }
+.marquee-track { display: flex; width: max-content; gap: 0.75rem; will-change: transform; }
+.marquee-left .marquee-track { animation: marquee-left 48s linear infinite; }
+.marquee-right .marquee-track { animation: marquee-right 56s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
