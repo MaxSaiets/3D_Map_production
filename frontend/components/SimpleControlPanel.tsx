@@ -117,19 +117,29 @@ export function SimpleControlPanel({
     setError(null);
     setGenerating(true);
     try {
+      // Derive layer flags from the CURRENTLY SELECTED style preset, not from the
+      // store. The store can lag the visible selection (it isn't synced on mount),
+      // which previously sent terrain_enabled=false even when "З рельєфом" was
+      // highlighted → flat model. Reading the preset guarantees payload == UI.
+      const preset = MAP_STYLE_PRESETS.find((p) => p.id === styleId);
+      const layerTerrain = preset ? preset.layers.terrain : s.terrainEnabled;
+      const layerBuildings = preset ? preset.layers.buildings : s.previewIncludeBuildings;
+      const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
+      const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
+      const layerParks = preset ? preset.layers.parks : s.previewIncludeParks;
       const req = buildMapRequest({
         north: selectedArea.getNorth(), south: selectedArea.getSouth(),
         east: selectedArea.getEast(), west: selectedArea.getWest(),
         roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
         buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
         buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-        waterDepth: s.waterDepth, terrainEnabled: s.terrainEnabled, terrainZScale: s.terrainZScale,
+        waterDepth: s.waterDepth, terrainEnabled: layerTerrain, terrainZScale: s.terrainZScale,
         terrainBaseThicknessMm: s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
         terrariumZoom: s.terrariumZoom, exportFormat: s.exportFormat, modelSizeMm: s.modelSizeMm,
         isAmsMode: s.isAmsMode, flatPlateMode: s.flatPlateMode, previewMode: s.previewMode,
-        previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: s.previewIncludeRoads,
-        previewIncludeBuildings: s.previewIncludeBuildings, previewIncludeWater: s.previewIncludeWater,
-        previewIncludeParks: s.previewIncludeParks,
+        previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
+        previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
+        previewIncludeParks: layerParks,
       });
       const { api } = await import("@/lib/api");
       const r = await api.generateModel(req as any);
