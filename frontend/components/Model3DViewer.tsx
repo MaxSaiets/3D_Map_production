@@ -34,12 +34,19 @@ export default function Model3DViewer({
         camera={{ fov: 40, position: [0, 0.6, 2.4] }}
         gl={{ antialias: true, alpha: true }}
       >
+        {/* Explicit lights — no remote HDRI (drei's Environment CDN often fails,
+            leaving Suspense unresolved → blank canvas). environment={null}. */}
+        <ambientLight intensity={0.85} />
+        <hemisphereLight args={[0xffffff, 0x8d7a5a, 0.7]} />
+        <directionalLight position={[4, 6, 5]} intensity={1.7} castShadow />
+        <directionalLight position={[-5, 3, -4]} intensity={0.55} />
         <Suspense fallback={null}>
           <Stage
-            intensity={0.5}
-            environment="city"
+            intensity={0.4}
+            environment={null}
+            preset="rembrandt"
             adjustCamera={1.1}
-            shadows={{ type: "contact", opacity: 0.35, blur: 2.4 }}
+            shadows={{ type: "contact", opacity: 0.3, blur: 2.4 }}
           >
             <Model url={url} />
           </Stage>
