@@ -864,20 +864,48 @@ def fetch_city_data(
     gdf_bridges = gpd.GeoDataFrame()
     G_roads = None
 
+    # The local DuckDB is Ukraine-only. For a bbox it doesn't cover (e.g. a
+    # foreign city) it returns empty buildings/water and a None roads graph.
+    # Previously we kept those empty results → the model came out with roads but
+    # NO buildings (or failed entirely). Detect "no local coverage" and, more
+    # generally, fall back to Overpass PER LAYER for anything the local DB is
+    # missing, so cities worldwide work.
     if _LOCAL_DB_DATA is not None:
-        # ВСІ дані локально — Overpass не використовується
-        if _LOCAL_DB_DATA.get("buildings") is not None and not _LOCAL_DB_DATA["buildings"].empty:
-            gdf_buildings = _LOCAL_DB_DATA["buildings"]
-        if _LOCAL_DB_DATA.get("water") is not None and not _LOCAL_DB_DATA["water"].empty:
-            gdf_water = _LOCAL_DB_DATA["water"]
-        if _LOCAL_DB_DATA.get("bridges") is not None and not _LOCAL_DB_DATA["bridges"].empty:
-            gdf_bridges = _LOCAL_DB_DATA["bridges"]
-        if _LOCAL_DB_DATA.get("roads") is not None:
-            G_roads = _LOCAL_DB_DATA["roads"]
-            print(f"[LOCAL OSM DB] FULL local mode: all data from DuckDB (no Overpass calls)", flush=True)
+        _lb = _LOCAL_DB_DATA.get("buildings")
+        _lr = _LOCAL_DB_DATA.get("roads")
+        _local_has_buildings = _lb is not None and not _lb.empty
+        _local_has_roads = (
+            _lr is not None and hasattr(_lr, "edges") and len(list(_lr.edges())) > 0
+        )
+        if not _local_has_buildings and not _local_has_roads:
+            print("[LOCAL OSM DB] No local coverage for this bbox (likely outside "
+                  "Ukraine) — falling back to Overpass for ALL data", flush=True)
+            _LOCAL_DB_DATA = None
+
+    if _LOCAL_DB_DATA is not None:
+        # Hybrid: use local where present, Overpass for any missing layer.
+        _lb = _LOCAL_DB_DATA.get("buildings")
+        _lw = _LOCAL_DB_DATA.get("water")
+        _lbr = _LOCAL_DB_DATA.get("bridges")
+        _lr = _LOCAL_DB_DATA.get("roads")
+        if _lb is not None and not _lb.empty:
+            gdf_buildings = _lb
         else:
-            # Roads через Overpass якщо локально не побудувалось
-            print("[LOCAL OSM DB] Roads graph local fallback failed; using Overpass for roads", flush=True)
+            print("[LOCAL OSM DB] buildings empty locally — Overpass fallback", flush=True)
+            gdf_buildings = _fetch_buildings()
+        if _lw is not None and not _lw.empty:
+            gdf_water = _lw
+        else:
+            gdf_water = _fetch_water()
+        if _lbr is not None and not _lbr.empty:
+            gdf_bridges = _lbr
+        else:
+            gdf_bridges = _fetch_bridges()
+        if _lr is not None and hasattr(_lr, "edges") and len(list(_lr.edges())) > 0:
+            G_roads = _lr
+            print("[LOCAL OSM DB] roads from DuckDB", flush=True)
+        else:
+            print("[LOCAL OSM DB] roads empty locally — Overpass fallback", flush=True)
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 G_roads = executor.submit(_fetch_roads).result()
     else:

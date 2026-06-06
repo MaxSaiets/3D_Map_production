@@ -91,6 +91,13 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
     }).filter(Boolean);
     const water: Pts[] = (data.water || []).map((w: any) => parseWkt(w.wkt)).filter(Boolean) as Pts[];
     const parks: Pts[] = (data.parks || []).map((p: any) => parseWkt(p.wkt)).filter(Boolean) as Pts[];
+    // The local DuckDB only covers Ukraine. For a bbox it doesn't cover (a
+    // foreign city) it returns source="local" but with empty arrays — which
+    // would render a blank preview. Treat "no buildings AND no roads" as a
+    // miss so the caller falls back to the worldwide Overpass query.
+    if (buildings.length === 0 && roads.length === 0) {
+      return null;
+    }
     // CityData type вимагає plazas, fountains, trees, bridges — заповнюємо порожніми
     // (вони не друкуються у моделі і прибрані з рендеру у Sprint 3.5)
     return {

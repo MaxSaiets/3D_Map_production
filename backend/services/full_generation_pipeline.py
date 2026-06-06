@@ -124,11 +124,16 @@ def _validate_canonical_mask_handoff(
     _check_match("detail.water_final_vs_canonical_water_final", canonical_water, detail_water)
 
     if problems:
-        raise RuntimeError(
-            "Canonical 2D -> 3D handoff drift detected: " + "; ".join(problems[:8])
-        )
-
-    print(f"[INFO] {zone_prefix}Canonical 2D -> 3D handoff verified (mask parity: OK)")
+        msg = "Canonical 2D -> 3D handoff drift detected: " + "; ".join(problems[:8])
+        # Strict by default in production; can be relaxed for asset/showcase
+        # generation (e.g. flat preview maps) where minor 2D<->3D mask drift is
+        # cosmetic and must not abort the build. Set HANDOFF_DRIFT_STRICT=0.
+        import os as _os
+        if _os.getenv("HANDOFF_DRIFT_STRICT", "1") != "0":
+            raise RuntimeError(msg)
+        print(f"[WARN] {zone_prefix}{msg} (non-fatal: HANDOFF_DRIFT_STRICT=0)")
+    else:
+        print(f"[INFO] {zone_prefix}Canonical 2D -> 3D handoff verified (mask parity: OK)")
 
 
 def _is_printable_water_export_mesh(mesh: Any, *, min_face_count: int = 12) -> bool:
