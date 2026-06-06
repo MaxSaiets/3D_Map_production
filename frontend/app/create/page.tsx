@@ -129,6 +129,7 @@ export default function Home() {
   const { getIdToken } = useAuth();
   const [gridId, setGridId] = useState<string | null>(null);
   const [gridNotice, setGridNotice] = useState<string | null>(null);
+  const [gridArea, setGridArea] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
 
   // Load a saved grid from history (?grid=<id>): reproduces the same tiling so
   // the user can pick neighbouring cells and generate them.
@@ -142,6 +143,7 @@ export default function Home() {
       if (g.city && CITIES[g.city]) setCurrentCityKey(g.city);
       if (g.grid_type) setGridType(g.grid_type);
       if (g.hex_size_m) setHexSizeM(g.hex_size_m);
+      if (g.bounds) setGridArea(g.bounds);
       setGridId(g.id || id);
       setShowHexGrid(true);
       setGridNotice(`Завантажено сітку «${g.name || g.city || "сітка"}» — згенеровано ${(g.cells || []).length} комірок. Виберіть сусідні й згенеруйте.`);
@@ -159,7 +161,7 @@ export default function Home() {
       center: city?.center,
       grid_type: gridType,
       hex_size_m: hexSizeM,
-      bounds: city?.bounds,
+      bounds: gridArea || city?.bounds,
       rotation_deg: 0,
       cells: (selectedZones || []).map((z: any, i: number) => ({
         row: z?.row ?? z?.gridRow ?? i, col: z?.col ?? z?.gridCol ?? 0,
@@ -168,7 +170,7 @@ export default function Home() {
     });
     if (grid?.id) { setGridId(grid.id); setGridNotice("Сітку збережено в історію (кабінет → Мої сітки)."); }
     else setGridNotice("Не вдалося зберегти сітку.");
-  }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones]);
+  }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones, gridArea]);
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
   // run a real preview generation through the site's own pipeline, so an
@@ -484,6 +486,8 @@ export default function Home() {
                       onZonesSelected={setSelectedZones}
                       gridType={gridType}
                       hexSizeM={hexSizeM}
+                      onAreaChange={setGridArea}
+                      initialArea={gridArea}
                     />
                   ) : (
                     <div className="h-full overflow-hidden rounded-[24px]">

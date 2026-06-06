@@ -4,6 +4,39 @@ import { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-draw";
+
+type GBounds = { north: number; south: number; east: number; west: number };
+
+// Lets the user draw a rectangle to choose the AREA the grid fills (instead of
+// the whole city). On draw it reports the rectangle's bounds upward.
+function GridAreaDraw({ onArea }: { onArea: (b: GBounds) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const group = new L.FeatureGroup();
+    map.addLayer(group);
+    const control = new (L as any).Control.Draw({
+      position: "topright",
+      draw: { rectangle: { shapeOptions: { color: "#0f766e", weight: 2 } },
+        polygon: false, circle: false, marker: false, circlemarker: false, polyline: false },
+      edit: { featureGroup: group, remove: true },
+    });
+    map.addControl(control);
+    const onCreated = (e: any) => {
+      group.clearLayers();
+      group.addLayer(e.layer);
+      const b = e.layer.getBounds();
+      onArea({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() });
+    };
+    map.on((L as any).Draw.Event.CREATED, onCreated);
+    return () => {
+      map.off((L as any).Draw.Event.CREATED, onCreated);
+      try { map.removeControl(control); map.removeLayer(group); } catch { /* no-op */ }
+    };
+  }, [map, onArea]);
+  return null;
+}
 
 // Компонент для автоматичного fitBounds (тільки при першому завантаженні)
 function MapBounds({ bounds }: { bounds: { north: number; south: number; east: number; west: number } }) {
@@ -39,6 +72,10 @@ interface HexagonalGridProps {
   onZonesSelected: (zones: any[]) => void;
   gridType?: "hexagonal" | "square" | "circle";
   hexSizeM?: number;
+  /** Notifies the parent when the user draws/clears the grid area (large zone). */
+  onAreaChange?: (area: GBounds | null) => void;
+  /** Pre-set the grid area (e.g. when reopening a saved grid from history). */
+  initialArea?: GBounds | null;
 }
 
 // Стилі для шестикутників
@@ -70,6 +107,8 @@ export default function HexagonalGrid({
   onZonesSelected,
   gridType: externalGridType = "hexagonal",
   hexSizeM: externalHexSizeM = 300.0,
+  onAreaChange,
+  initialArea = null,
 }: HexagonalGridProps) {
   const normalizeId = (id: any): string => String(id ?? "");
   const [hexGrid, setHexGrid] = useState<any>(null);
@@ -78,6 +117,9 @@ export default function HexagonalGrid({
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // User-drawn area (large zone) the grid fills. Falls back to the city bounds.
+  const [drawnBounds, setDrawnBounds] = useState<GBounds | null>(null);
+  const drawnBoundsRef = useRef<GBounds | null>(null);
   const [isValid, setIsValid] = useState(true);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -131,17 +173,18 @@ export default function HexagonalGrid({
 
       const { api } = await import("@/lib/api");
 
-      // Перевіряємо валідність bounds
-      if (!bounds || bounds.north <= bounds.south || bounds.east <= bounds.west) {
-        throw new Error(`Невірні координати bounds: north=${bounds?.north}, south=${bounds?.south}, east=${bounds?.east}, west=${bounds?.west}`);
+      // Use the user-drawn area when present, otherwise the whole-city bounds.
+      const eb = drawnBoundsRef.current || bounds;
+      if (!eb || eb.north <= eb.south || eb.east <= eb.west) {
+        throw new Error(`Невірні координати bounds: north=${eb?.north}, south=${eb?.south}, east=${eb?.east}, west=${eb?.west}`);
       }
 
 
       const data = await api.generateHexagonalGrid({
-        north: bounds.north,
-        south: bounds.south,
-        east: bounds.east,
-        west: bounds.west,
+        north: eb.north,
+        south: eb.south,
+        east: eb.east,
+        west: eb.west,
         hex_size_m: hexSizeM,
         grid_type: gridType,
       });
@@ -289,6 +332,37 @@ export default function HexagonalGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bounds?.north, bounds?.south, bounds?.east, bounds?.west]);
 
+  const handleAreaDraw = (b: GBounds) => {
+    drawnBoundsRef.current = b;
+    setDrawnBounds(b);
+    onAreaChange?.(b);
+    setSelectedZones(new Set());
+    setSelectedOrder([]);
+    setHexGrid(null);
+    // regenerate the grid inside the drawn area
+    setTimeout(() => generateGrid(), 50);
+  };
+
+  const resetArea = () => {
+    drawnBoundsRef.current = null;
+    setDrawnBounds(null);
+    onAreaChange?.(null);
+    setHexGrid(null);
+    setTimeout(() => generateGrid(), 50);
+  };
+
+  // Apply a pre-set area (reopening a saved grid from history) once on mount.
+  const appliedInitialAreaRef = useRef(false);
+  useEffect(() => {
+    if (appliedInitialAreaRef.current || !initialArea) return;
+    appliedInitialAreaRef.current = true;
+    drawnBoundsRef.current = initialArea;
+    setDrawnBounds(initialArea);
+    setHexGrid(null);
+    setTimeout(() => generateGrid(), 80);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialArea]);
+
   const zoom = 11; // Оптимальний zoom для Києва
 
   return (
@@ -341,6 +415,19 @@ export default function HexagonalGrid({
               >
                 Очистити
               </button>
+              {drawnBounds ? (
+                <button
+                  onClick={resetArea}
+                  className="px-2 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                  title="Скинути намальовану зону — сітка знову на все місто"
+                >
+                  ⤢ Своя зона
+                </button>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] text-teal-700" title="Намалюйте прямокутник на карті (значок ▢ праворуч), щоб сітка будувалась лише в ньому">
+                  ▢ намалюйте зону
+                </span>
+              )}
             </div>
           </div>
         ) : (
@@ -363,6 +450,7 @@ export default function HexagonalGrid({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
           <MapBounds bounds={bounds} />
+          <GridAreaDraw onArea={handleAreaDraw} />
 
           {hexGrid && hexGrid.features && hexGrid.features.length > 0 && (
             <GeoJSON
