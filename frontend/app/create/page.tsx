@@ -151,14 +151,15 @@ export default function Home() {
   const handleSaveGrid = useCallback(async () => {
     const token = await getIdToken();
     if (!token) { setGridNotice("Увійдіть, щоб зберегти сітку в історію."); return; }
+    const city = CITIES[currentCityKey];
     const grid = await saveGrid(token, {
       id: gridId || undefined,
       name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridType === "square" ? "квадрати" : gridType === "circle" ? "кола" : "гексагони"}`,
       city: currentCityKey,
-      center: currentCity.center,
+      center: city?.center,
       grid_type: gridType,
       hex_size_m: hexSizeM,
-      bounds: currentCity.bounds,
+      bounds: city?.bounds,
       rotation_deg: 0,
       cells: (selectedZones || []).map((z: any, i: number) => ({
         row: z?.row ?? z?.gridRow ?? i, col: z?.col ?? z?.gridCol ?? 0,
@@ -167,7 +168,7 @@ export default function Home() {
     });
     if (grid?.id) { setGridId(grid.id); setGridNotice("Сітку збережено в історію (кабінет → Мої сітки)."); }
     else setGridNotice("Не вдалося зберегти сітку.");
-  }, [getIdToken, gridId, currentCityKey, currentCity, gridType, hexSizeM, selectedZones]);
+  }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones]);
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
   // run a real preview generation through the site's own pipeline, so an
