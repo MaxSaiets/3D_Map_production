@@ -364,8 +364,13 @@ def export_generation_outputs(
             task.set_output(f"{part_name}_stl", str(Path(path).resolve()))
 
     _preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    # The parallel STL is a SECOND full export (with its own slow "aggressive
+    # cleanup" mesh repair) on top of the primary 3MF. On big terrain meshes
+    # (~640k verts) it roughly DOUBLES the export stage for a format the site
+    # doesn't serve (download is 3MF). Off by default; enable with EXPORT_PARALLEL_STL=1.
+    _want_parallel_stl = os.environ.get("EXPORT_PARALLEL_STL", "").lower() in ("1", "true", "yes")
     stl_preview_abs: Optional[Path] = None
-    if primary_format == "3mf" and not _preview_mode and include_parallel_stl:
+    if primary_format == "3mf" and not _preview_mode and include_parallel_stl and _want_parallel_stl:
         stl_preview_abs = (output_dir / f"{basename}.stl").resolve()
         stl_parts = export_scene(
             terrain_mesh=terrain_mesh_for_export,
