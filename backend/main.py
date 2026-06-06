@@ -2147,23 +2147,43 @@ def generate_model_task(
         )
         print(f"[INFO] {zone_prefix}File basename: {file_basename}")
 
-        workflow_result = run_full_generation_pipeline(
-            task=task,
-            request=request,
-            task_id=task_id,
-            output_dir=OUTPUT_DIR,
-            global_center=global_center,
-            latlon_bbox=latlon_bbox,
-            zone_polygon_coords=zone_polygon_coords,
-            grid_bbox_latlon=grid_bbox_latlon,
-            zone_row=zone_row,
-            zone_col=zone_col,
-            hex_size_m=hex_size_m,
-            zone_prefix=zone_prefix,
-            min_printable_gap_mm=MIN_PRINTABLE_GAP_MM,
-            groove_clearance_mm=GROOVE_CLEARANCE_MM,
-            file_basename=file_basename,
-        )
+        # ── Memory-aware concurrency gate ──────────────────────────────
+        # Single process on a small VPS: a heavy terrain job must run alone,
+        # light jobs (flat maps / keychains) may run a few in parallel. This
+        # serializes the memory-heavy pipeline across ALL concurrent requests
+        # (multiple users or grid zones), preventing the OOM restarts that used
+        # to kill in-flight generations.
+        from services import gen_queue
+        _gen_weight = gen_queue.weight_for_request(request)
+        if gen_queue.would_block(_gen_weight):
+            task.update_status("queued", 0, "У черзі на генерацію — сервер зараз зайнятий…")
+            print(f"[QUEUE] {zone_prefix}Task {task_id} queued (weight={_gen_weight}, {gen_queue.stats()})")
+        _gen_wait = gen_queue.acquire(_gen_weight)
+        if _gen_wait > 0.5:
+            print(f"[QUEUE] {zone_prefix}Task {task_id} started after {_gen_wait:.0f}s wait ({gen_queue.stats()})")
+        try:
+            if task.cancelled:
+                print(f"[INFO] {zone_prefix}Task {task_id} cancelled while queued — skipping")
+                return
+            workflow_result = run_full_generation_pipeline(
+                task=task,
+                request=request,
+                task_id=task_id,
+                output_dir=OUTPUT_DIR,
+                global_center=global_center,
+                latlon_bbox=latlon_bbox,
+                zone_polygon_coords=zone_polygon_coords,
+                grid_bbox_latlon=grid_bbox_latlon,
+                zone_row=zone_row,
+                zone_col=zone_col,
+                hex_size_m=hex_size_m,
+                zone_prefix=zone_prefix,
+                min_printable_gap_mm=MIN_PRINTABLE_GAP_MM,
+                groove_clearance_mm=GROOVE_CLEARANCE_MM,
+                file_basename=file_basename,
+            )
+        finally:
+            gen_queue.release(_gen_weight)
         if workflow_result.terrain_only_result is not None:
             return
         print(f"[OK] Model generation completed. Task ID: {task_id}, Zone ID: {zone_id}, File: {workflow_result.output_file_abs}")
