@@ -640,9 +640,15 @@ def run_full_generation_pipeline(
     pipeline_start = time.perf_counter()
     stage_snapshot_collector = None
     stage_snapshot_manifest_path: Optional[Path] = None
-    # Preview mode: skip stage snapshot collection (~5-15s of debug PNGs).
+    # Stage snapshots are DEBUG artifacts (per-stage captures written to debug/).
+    # On real OSM data each capture is expensive (the clip-stage capture alone
+    # measured ~170s), so they are OFF by default and opt-in via PIPELINE_DEBUG=1.
+    # Always skipped in preview mode.
+    _pipeline_debug = os.environ.get("PIPELINE_DEBUG", "").lower() in ("1", "true", "yes")
     if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
         print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping stage snapshots")
+    elif not _pipeline_debug:
+        print(f"[INFO] {zone_prefix}Stage snapshots OFF (set PIPELINE_DEBUG=1 to enable)")
     else:
         try:
             stage_snapshot_collector = create_stage_snapshot_collector(
@@ -805,12 +811,17 @@ def run_full_generation_pipeline(
             stage_snapshot_collector.capture_detail_stage(detail_layers)
         except Exception as exc:
             print(f"[WARN] {zone_prefix}Stage snapshot failed at detail_layers: {exc}")
-    _validate_canonical_mask_handoff(
-        canonical_mask_bundle=canonical_mask_bundle,
-        terrain_stage=terrain_stage,
-        detail_layers=detail_layers,
-        zone_prefix=zone_prefix,
-    )
+    # Canonical 2D->3D handoff verification does heavy polygon symmetric-difference
+    # math (~170s on real OSM) purely to *check* mask parity — it does not change
+    # the model. Off by default; enable with PIPELINE_DEBUG=1 or HANDOFF_DRIFT_STRICT=1.
+    if (os.environ.get("PIPELINE_DEBUG", "").lower() in ("1", "true", "yes")
+            or os.environ.get("HANDOFF_DRIFT_STRICT", "").lower() in ("1", "true", "yes")):
+        _validate_canonical_mask_handoff(
+            canonical_mask_bundle=canonical_mask_bundle,
+            terrain_stage=terrain_stage,
+            detail_layers=detail_layers,
+            zone_prefix=zone_prefix,
+        )
     _validate_groove_stage(detail_layers=detail_layers, task=task, zone_prefix=zone_prefix)
 
     terrain_mesh = detail_layers.terrain_mesh
@@ -926,7 +937,10 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix}PREVIEW_MODE flatten_inlay failed: {exc}")
 
-    if not request.is_ams_mode and zone.scale_factor and zone.scale_factor > 0:
+    # Road/groove validation report is a DIAGNOSTIC print (~165s on real OSM) that
+    # doesn't alter the model. Off by default; enable with PIPELINE_DEBUG=1.
+    if (os.environ.get("PIPELINE_DEBUG", "").lower() in ("1", "true", "yes")
+            and not request.is_ams_mode and zone.scale_factor and zone.scale_factor > 0):
         try:
             print_road_groove_validation_report(
                 road_mesh=road_mesh,
