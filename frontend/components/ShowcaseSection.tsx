@@ -81,23 +81,32 @@ export default function ShowcaseSection() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {[...KEYCHAINS, ...MAPS].map((src, i) => (
-            <div
-              key={src}
-              className="group relative aspect-square overflow-hidden rounded-[20px] border border-line bg-gradient-to-b from-[#f6f1e6] to-[#e9e0cf]"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt={i < KEYCHAINS.length ? "Брелок-мапа міста" : "3D-район міста"}
-                loading="lazy"
-                className="h-full w-full object-contain p-2 transition duration-500 group-hover:scale-[1.06]"
-              />
-              <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-ink/75 px-2.5 py-1 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
-                {i < KEYCHAINS.length ? "Брелок 55×30" : "3D-район"}
-              </span>
-            </div>
-          ))}
+          {[...KEYCHAINS, ...MAPS].map((src, i) => {
+            const isKey = i < KEYCHAINS.length;
+            return (
+              <Link
+                key={src}
+                href={isKey ? "/keychains" : "/create"}
+                className="group relative aspect-square overflow-hidden rounded-[20px] border border-line"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={isKey ? "Брелок-мапа міста" : "3D-район міста"}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.07]"
+                />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-ink/70 to-transparent p-3 opacity-0 transition group-hover:opacity-100">
+                  <span className="text-[11px] font-semibold text-white">
+                    {isKey ? "Брелок 55×30 мм" : "3D-район міста"}
+                  </span>
+                  <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-ink">
+                    {isKey ? "від 290 ₴" : "від 690 ₴"}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
