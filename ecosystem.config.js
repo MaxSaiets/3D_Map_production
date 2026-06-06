@@ -44,8 +44,11 @@ module.exports = {
     {
       name: '3dmap-frontend',
       cwd: '/opt/3dmap/frontend',
-      script: 'npm',
-      args: 'run start',
+      // Run Next directly (not `npm run start`): npm intermittently lost the
+      // node_modules/.bin PATH on restart -> "sh: next: not found" crash loop.
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -p 3000',
+      interpreter: 'node',
       env: {
         NODE_ENV: 'production',
         PORT: '3000',
