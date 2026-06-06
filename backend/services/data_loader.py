@@ -909,14 +909,22 @@ def fetch_city_data(
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 G_roads = executor.submit(_fetch_roads).result()
     else:
-        # Fallback: усе через Overpass
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            future_buildings = executor.submit(_fetch_buildings)
+        # Fallback: усе через Overpass.
+        # IMPORTANT: 4 simultaneous Overpass requests from one IP get rate-limited
+        # (HTTP 429 / empty), which intermittently returned 0 buildings while roads
+        # still came through — producing road-only foreign-city models. Fetch the
+        # buildings FIRST on their own (the most important + heaviest layer), then
+        # the rest in parallel.
+        gdf_buildings = _fetch_buildings()
+        if gdf_buildings is None or gdf_buildings.empty:
+            # One sequential retry — covers a transient rate-limit on the first hit.
+            print("[OVERPASS] buildings empty on first try — retrying once", flush=True)
+            gdf_buildings = _fetch_buildings()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             future_water = executor.submit(_fetch_water)
             future_roads = executor.submit(_fetch_roads)
             future_bridges = executor.submit(_fetch_bridges)
 
-            gdf_buildings = future_buildings.result()
             gdf_water = future_water.result()
             G_roads = future_roads.result()
             gdf_bridges = future_bridges.result()
@@ -952,16 +960,18 @@ def fetch_city_data(
     except Exception as e:
         print(f"[WARN] Footprints integration skipped: {e}")
     
-    # Save to cache logic remains unchanged...
     # Save to cache logic
     if source not in ("pbf", "geofabrik", "local"):
-        if _cache_enabled():
+        # Guard against poisoning the cache with a partial/rate-limited fetch:
+        # if we got roads but ZERO buildings (an urban bbox almost always has
+        # buildings), that's almost certainly an Overpass throttle, not reality —
+        # don't persist it, so the next request retries cleanly.
+        _buildings_empty = gdf_buildings is None or getattr(gdf_buildings, "empty", True)
+        _roads_present = G_roads is not None and hasattr(G_roads, "edges") and len(list(G_roads.edges())) > 0
+        if _buildings_empty and _roads_present:
+            print("[CACHE] Skip save: roads present but 0 buildings (likely rate-limited fetch) — not caching to allow retry", flush=True)
+        elif _cache_enabled():
             print(f"[CACHE] Збереження даних в кеш...")
-            # TODO: We might want to save the CRS used in cache key? 
-            # Current cache implementation assumes data is valid for the bbox.
-            # If we project to different zones, we might get different Coordinates for same BBox key.
-            # BUT: _save_to_cache saves parquet. Parquet preserves CRS.
-            # So next load will have correct CRS.
             _save_to_cache(target_north, target_south, target_east, target_west, padding, gdf_buildings, gdf_water, G_roads)
         else:
             print("[CACHE] Кешування вимкнено, дані не збережено в кеш")
