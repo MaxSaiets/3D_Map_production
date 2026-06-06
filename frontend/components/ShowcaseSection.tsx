@@ -18,6 +18,8 @@ const MODELS = [
   { id: "keychain-city", label: "Щільний центр", url: "/models/keychain-city.glb" },
   { id: "keychain-water", label: "З рікою", url: "/models/keychain-water.glb" },
   { id: "keychain-bridge", label: "З мостами", url: "/models/keychain-bridge.glb" },
+  { id: "map-district", label: "3D-район", url: "/models/map-district.glb" },
+  { id: "map-dense", label: "Щільний квартал", url: "/models/map-dense.glb" },
 ];
 
 // Curated render gallery (transparent PNGs in /public/showcase).
@@ -76,8 +78,8 @@ export default function ShowcaseSection() {
       <div className="mt-16">
         <div className="mb-5 flex items-end justify-between">
           <h3 className="font-serif text-2xl text-ink">Галерея надрукованих</h3>
-          <Link href="/create" className="text-sm font-semibold text-forest hover:underline">
-            Зробити свою мапу →
+          <Link href="/showcase" className="text-sm font-semibold text-forest hover:underline">
+            Вся галерея →
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

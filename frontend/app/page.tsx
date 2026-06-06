@@ -68,6 +68,7 @@ function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
           <a href="#how" className="hover:text-ink">Як це працює</a>
+          <Link href="/showcase" className="hover:text-ink">Галерея</Link>
           <a href="#templates" className="hover:text-ink">Шаблони</a>
           <Link href="/keychains" className="hover:text-ink">Брелки</Link>
         </nav>

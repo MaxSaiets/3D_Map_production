@@ -5,7 +5,8 @@ import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Suspense } from "react";
 
 function Model({ url }: { url: string }) {
-  const { scene } = useGLTF(url);
+  // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
+  const { scene } = useGLTF(url, true);
   return <primitive object={scene} />;
 }
 
