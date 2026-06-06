@@ -808,25 +808,40 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
-        # ── Smart zone guard ───────────────────────────────────────────
-        # Safety net against accidental huge/dense zones that would take many
-        # minutes (or OOM). Generous cap — normal maps/keychains are well under
-        # it. Override with MAX_ZONE_SPAN_M. 0 disables the guard.
+        # ── Zone size guard (fixed 1:5000 scale) ────────────────────────
+        # Max real-world zone scales with the model size at a constant 1:5000
+        # scale (0.2 mm/m): 80mm model ↔ 400m zone, and +50m per +1cm. This keeps
+        # printable detail consistent and generation fast.
+        #   max_zone_m = model_size_mm * ZONE_M_PER_MODEL_MM   (default 5.0)
+        # An absolute hard ceiling MAX_ZONE_SPAN_M still applies (0 = none).
         try:
-            _max_span = float(os.getenv("MAX_ZONE_SPAN_M", "2200"))
+            _m_per_mm = float(os.getenv("ZONE_M_PER_MODEL_MM", "5.0"))
         except Exception:
-            _max_span = 2200.0
+            _m_per_mm = 5.0
+        try:
+            _model_mm = float(getattr(request, "model_size_mm", None) or 80.0)
+        except Exception:
+            _model_mm = 80.0
+        _max_span = _model_mm * _m_per_mm if _m_per_mm > 0 else 0.0
+        try:
+            _hard_ceiling = float(os.getenv("MAX_ZONE_SPAN_M", "0"))
+        except Exception:
+            _hard_ceiling = 0.0
+        if _hard_ceiling > 0:
+            _max_span = min(_max_span, _hard_ceiling) if _max_span > 0 else _hard_ceiling
         if _max_span > 0:
             import math as _m
             _clat = (float(request.north) + float(request.south)) * 0.5
             _ns_m = abs(float(request.north) - float(request.south)) * 111_320.0
             _ew_m = abs(float(request.east) - float(request.west)) * 111_320.0 * max(0.05, _m.cos(_m.radians(_clat)))
-            if _ns_m > _max_span or _ew_m > _max_span:
+            # small tolerance so a ~400.0m selection isn't rejected by rounding
+            _tol = _max_span * 1.02 + 5.0
+            if _ns_m > _tol or _ew_m > _tol:
                 raise HTTPException(
                     status_code=400,
-                    detail=(f"Вибрана зона завелика ({_ns_m:.0f}×{_ew_m:.0f} м). "
-                            f"Максимум ~{_max_span:.0f} м зі сторони — виберіть меншу ділянку "
-                            f"для якісної та швидкої генерації."),
+                    detail=(f"Зона завелика для моделі {_model_mm/10:.0f} см: "
+                            f"{_ns_m:.0f}×{_ew_m:.0f} м, максимум ~{_max_span:.0f} м зі сторони "
+                            f"(масштаб 1:5000). Виберіть меншу ділянку або більший розмір моделі."),
                 )
         _validate_keychain_print_scale(request)
         
