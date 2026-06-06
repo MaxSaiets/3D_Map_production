@@ -631,7 +631,18 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
         const centers = models.map((m) => new THREE.Box3().setFromObject(m.obj).getCenter(new THREE.Vector3()));
         const mean = centers.reduce((acc, c) => acc.add(c), new THREE.Vector3()).multiplyScalar(1 / Math.max(1, centers.length));
         const spread = centers.reduce((acc, c) => acc + c.clone().sub(mean).length(), 0) / Math.max(1, centers.length);
-        const looksGlobal = spread > 1.0; // >1 unit spread => not all centered at origin
+        // Treat tiles as already globally-positioned ONLY if their centres are
+        // spread far apart relative to a tile's own size. Otherwise (tiles all
+        // near origin) they would overlap into one stacked blob — so fall through
+        // to an explicit non-overlapping grid layout.
+        const maxTileDim = Math.max(
+          1,
+          ...models.map((m) => {
+            const s = new THREE.Box3().setFromObject(m.obj).getSize(new THREE.Vector3());
+            return Math.max(s.x, s.z);
+          }),
+        );
+        const looksGlobal = spread > maxTileDim * 0.6;
 
         if (!looksGlobal) {
           // Legacy layout fallback (keep previous behavior)
