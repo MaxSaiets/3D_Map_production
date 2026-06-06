@@ -803,6 +803,26 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
+        # ── Smart zone guard ───────────────────────────────────────────
+        # Safety net against accidental huge/dense zones that would take many
+        # minutes (or OOM). Generous cap — normal maps/keychains are well under
+        # it. Override with MAX_ZONE_SPAN_M. 0 disables the guard.
+        try:
+            _max_span = float(os.getenv("MAX_ZONE_SPAN_M", "2200"))
+        except Exception:
+            _max_span = 2200.0
+        if _max_span > 0:
+            import math as _m
+            _clat = (float(request.north) + float(request.south)) * 0.5
+            _ns_m = abs(float(request.north) - float(request.south)) * 111_320.0
+            _ew_m = abs(float(request.east) - float(request.west)) * 111_320.0 * max(0.05, _m.cos(_m.radians(_clat)))
+            if _ns_m > _max_span or _ew_m > _max_span:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(f"Вибрана зона завелика ({_ns_m:.0f}×{_ew_m:.0f} м). "
+                            f"Максимум ~{_max_span:.0f} м зі сторони — виберіть меншу ділянку "
+                            f"для якісної та швидкої генерації."),
+                )
         _validate_keychain_print_scale(request)
         
         # Calculate grid_step_m if not provided (for Single Mode consistency)
@@ -2165,6 +2185,13 @@ def generate_model_task(
             if task.cancelled:
                 print(f"[INFO] {zone_prefix}Task {task_id} cancelled while queued — skipping")
                 return
+            # Optional CPU profile of the whole pipeline (PIPELINE_PROFILE=1):
+            # dumps top cumulative-time functions so we can target real hot spots.
+            _profiler = None
+            if os.environ.get("PIPELINE_PROFILE", "").lower() in ("1", "true", "yes"):
+                import cProfile
+                _profiler = cProfile.Profile()
+                _profiler.enable()
             workflow_result = run_full_generation_pipeline(
                 task=task,
                 request=request,
@@ -2182,6 +2209,12 @@ def generate_model_task(
                 groove_clearance_mm=GROOVE_CLEARANCE_MM,
                 file_basename=file_basename,
             )
+            if _profiler is not None:
+                import pstats, io as _io
+                _profiler.disable()
+                _s = _io.StringIO()
+                pstats.Stats(_profiler, stream=_s).sort_stats("cumulative").print_stats(30)
+                print(f"[PROFILE] {zone_prefix}Top functions by cumulative time:\n" + _s.getvalue())
         finally:
             gen_queue.release(_gen_weight)
         if workflow_result.terrain_only_result is not None:
