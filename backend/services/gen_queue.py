@@ -10,8 +10,18 @@ run concurrently). Concurrent FastAPI background tasks — whether from differen
 users or a multi-zone grid — all pass through this gate, which prevents the
 out-of-memory restarts that previously killed in-flight generations.
 
+IMPORTANT — why the default is serial (CAPACITY=1):
+The generation pipeline is CPU-bound *Python* running as threads inside a single
+process, so the GIL pins it to one core regardless of how many jobs we start.
+Running two at once just halves each one's speed (and doubles memory) — net
+throughput is no better and latency is worse. Measured on the 2-vCPU VPS: two
+concurrent jobs both stalled. So we default to a strict FIFO queue: one job at a
+time at full speed (its core + the Blender boolean subprocess on the second
+core), the rest wait as "queued". This also makes OOM impossible.
+Bump GEN_CAPACITY only on a box with more cores AND RAM headroom.
+
 All knobs are env-overridable:
-  GEN_CAPACITY      total slots                 (default 2)
+  GEN_CAPACITY      total slots                 (default 1 → strict serial)
   GEN_HEAVY_WEIGHT  slots a terrain job takes    (default = CAPACITY → alone)
   GEN_LIGHT_WEIGHT  slots a light job takes      (default 1)
 """
@@ -21,7 +31,7 @@ import os
 import threading
 import time
 
-CAPACITY = max(1, int(os.getenv("GEN_CAPACITY", "2")))
+CAPACITY = max(1, int(os.getenv("GEN_CAPACITY", "1")))
 HEAVY_WEIGHT = max(1, int(os.getenv("GEN_HEAVY_WEIGHT", str(CAPACITY))))
 LIGHT_WEIGHT = max(1, int(os.getenv("GEN_LIGHT_WEIGHT", "1")))
 
