@@ -15,12 +15,12 @@ const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), 
 });
 
 const VIEW_MODELS = [
+  { id: "keychain-fea", label: "Брелок-мапа", url: "/models/keychain-fea.glb", kind: "key" as const },
   { id: "keychain-home", label: "Брелок «HOME»", url: "/models/keychain-home.glb", kind: "key" as const },
-  { id: "keychain-city", label: "Щільний центр", url: "/models/keychain-city.glb", kind: "key" as const },
   { id: "keychain-water", label: "Брелок з рікою", url: "/models/keychain-water.glb", kind: "key" as const },
   { id: "keychain-bridge", label: "Брелок з мостами", url: "/models/keychain-bridge.glb", kind: "key" as const },
-  { id: "map-district", label: "3D-район", url: "/models/map-district.glb", kind: "map" as const },
-  { id: "map-dense", label: "Щільний квартал", url: "/models/map-dense.glb", kind: "map" as const },
+  { id: "map-block", label: "Район міста", url: "/models/map-block.glb", kind: "map" as const },
+  { id: "map-district", label: "3D-квартал", url: "/models/map-district.glb", kind: "map" as const },
 ];
 
 type Item = { src: string; kind: "key" | "map"; title: string; price: string };
@@ -31,8 +31,8 @@ const ITEMS: Item[] = [
   ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.png`, kind: "key" as const, title: KEY_TITLES[i] || "Брелок-мапа", price: "від 290 ₴" })),
   ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.png`, kind: "map" as const, title: MAP_TITLES[i] || "3D-район", price: "від 690 ₴" })),
 ];
-const WEB_KEY = ["/models/keychain-home.glb", "/models/keychain-city.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
-const WEB_MAP = ["/models/map-district.glb", "/models/map-dense.glb", "/models/map-block.glb"];
+const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
+const WEB_MAP = ["/models/map-block.glb", "/models/map-district.glb", "/models/map-dense.glb"];
 
 export default function ShowcasePage() {
   const [filter, setFilter] = useState<"all" | "key" | "map">("all");

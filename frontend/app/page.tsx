@@ -142,7 +142,7 @@ function Hero() {
               <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
             </div>
             <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
-              <Model3DViewer url="/models/keychain-home.glb" height={300} />
+              <Model3DViewer url="/models/keychain-fea.glb" height={300} />
             </div>
             <div className="flex items-center justify-between px-1 pt-4">
               <span className="text-[13px] text-ink-2">Жива 3D-модель — потягни, щоб покрутити</span>

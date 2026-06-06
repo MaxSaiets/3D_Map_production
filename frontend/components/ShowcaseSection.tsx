@@ -13,16 +13,16 @@ const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), {
 });
 
 const MODELS = [
+  { id: "keychain-fea", label: "Брелок-мапа", url: "/models/keychain-fea.glb", kind: "key" as const },
   { id: "keychain-home", label: "Брелок «HOME»", url: "/models/keychain-home.glb", kind: "key" as const },
-  { id: "keychain-city", label: "Щільний центр", url: "/models/keychain-city.glb", kind: "key" as const },
   { id: "keychain-water", label: "З рікою", url: "/models/keychain-water.glb", kind: "key" as const },
   { id: "keychain-bridge", label: "З мостами", url: "/models/keychain-bridge.glb", kind: "key" as const },
-  { id: "map-district", label: "3D-район", url: "/models/map-district.glb", kind: "map" as const },
-  { id: "map-dense", label: "Щільний квартал", url: "/models/map-dense.glb", kind: "map" as const },
+  { id: "map-block", label: "Район міста", url: "/models/map-block.glb", kind: "map" as const },
+  { id: "map-district", label: "3D-квартал", url: "/models/map-district.glb", kind: "map" as const },
 ];
 
-const WEB_KEY = ["/models/keychain-home.glb", "/models/keychain-city.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
-const WEB_MAP = ["/models/map-district.glb", "/models/map-dense.glb", "/models/map-block.glb"];
+const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
+const WEB_MAP = ["/models/map-block.glb", "/models/map-district.glb", "/models/map-dense.glb"];
 
 const KEYCHAINS = Array.from({ length: 8 }, (_, i) => `/showcase/keychain-${i + 1}.png`);
 const MAPS = Array.from({ length: 11 }, (_, i) => `/showcase/map-${i + 1}.png`);
@@ -120,7 +120,7 @@ export default function ShowcaseSection() {
       {/* Dual infinite carousels */}
       <div className="mt-16">
         <div className="mb-5 flex items-end justify-between">
-          <h3 className="font-serif text-2xl text-ink">Галерея надрукованих</h3>
+          <h3 className="font-serif text-2xl text-ink">Галерея 3D-моделей для друку</h3>
           <Link href="/showcase" className="text-sm font-semibold text-forest hover:underline">Вся галерея →</Link>
         </div>
         <div className="space-y-3">

@@ -2,17 +2,15 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import * as THREE from "three";
 
 function Model({ url }: { url: string }) {
   // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
+  // GLBs are un-mirrored at the geometry level in the bake, so no viewer mirror.
   const { scene } = useGLTF(url, true);
-  // The trimesh GLB export is handedness-mirrored (text reads backwards). Mirror
-  // back on X and make materials double-sided so the flipped winding stays lit.
   const fixed = useMemo(() => {
     const s = scene.clone(true);
-    s.scale.x = -1;
     s.traverse((o: any) => {
       if (o.isMesh && o.material) {
         const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -21,7 +19,6 @@ function Model({ url }: { url: string }) {
     });
     return s;
   }, [scene]);
-  useEffect(() => () => { /* keep cached */ }, []);
   return <primitive object={fixed} />;
 }
 
@@ -48,11 +45,11 @@ export default function Model3DViewer({
           </Stage>
           <OrbitControls
             autoRotate={autoRotate}
-            autoRotateSpeed={1.8}
+            autoRotateSpeed={1.6}
             enablePan={false}
             enableZoom={allowZoom}
-            minPolarAngle={Math.PI / 7}
-            maxPolarAngle={Math.PI / 2.05}
+            minPolarAngle={0}
+            maxPolarAngle={Math.PI}
           />
         </Suspense>
       </Canvas>
