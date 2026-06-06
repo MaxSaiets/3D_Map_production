@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
+import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -18,17 +19,24 @@ export default function AccountPage() {
   const [models, setModels] = useState<AccModel[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [grids, setGrids] = useState<CityGrid[]>([]);
 
   const load = useCallback(async () => {
     const token = await getIdToken();
     if (!token) return;
     try {
-      const [q, m] = await Promise.all([
+      const [q, m, g] = await Promise.all([
         fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
         fetch(`${API_BASE}/api/account/models`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
+        listGrids(token),
       ]);
-      setQuota(q.quota); setModels(m.models || []);
+      setQuota(q.quota); setModels(m.models || []); setGrids(g || []);
     } catch {/* ignore */}
+  }, [getIdToken]);
+
+  const removeGrid = useCallback(async (id: string) => {
+    const token = await getIdToken();
+    if (await deleteGrid(token, id)) setGrids((gs) => gs.filter((x) => x.id !== id));
   }, [getIdToken]);
 
   useEffect(() => { if (user) load(); }, [user, load]);
@@ -123,6 +131,37 @@ export default function AccountPage() {
                     className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />} Завантажити
                   </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <h3 className="mb-3 mt-10 font-serif text-xl text-ink">Мої сітки міста</h3>
+          {grids.length === 0 ? (
+            <div className="rounded-[18px] border border-dashed border-line bg-paper px-4 py-10 text-center text-sm text-ink-3">
+              Поки немає збережених сіток. У конструкторі ввімкніть «Сітка зон», створіть сітку й натисніть «Зберегти сітку» — потім зможете догенерувати сусідні комірки.
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {grids.map((g) => (
+                <div key={g.id} className="flex flex-col rounded-[16px] border border-line bg-paper p-4">
+                  <div className="font-serif text-[17px] text-ink">{g.name || g.city || "Сітка"}</div>
+                  <div className="text-[12px] text-ink-3">
+                    {g.grid_type === "square" ? "Квадрати" : g.grid_type === "circle" ? "Кола" : "Гексагони"}
+                    {g.hex_size_m ? ` · ${Math.round(g.hex_size_m)} м` : ""}
+                    {` · ${(g.cells || []).length} комірок`}
+                    {g.updated_at ? ` · ${new Date(g.updated_at * 1000).toLocaleDateString("uk")}` : ""}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <Link href={`/create?grid=${g.id}`}
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-semibold text-white">
+                      Відкрити
+                    </Link>
+                    <button onClick={() => g.id && removeGrid(g.id)}
+                      className="inline-flex min-h-10 items-center justify-center rounded-full border border-line px-3 text-sm font-semibold text-ink-2 hover:bg-bg-2">
+                      Видалити
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

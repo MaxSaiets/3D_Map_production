@@ -11,6 +11,8 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES } from "@/lib/templates";
+import { useAuth } from "@/components/AuthProvider";
+import { saveGrid, getGrid } from "@/lib/grids";
 
 type WorkspaceView = "map" | "preview" | "settings";
 
@@ -122,6 +124,50 @@ export default function Home() {
   useEffect(() => {
     if (showHexGrid) { setZonePolygonCoords(null); setCropRotationDeg(0); }
   }, [showHexGrid, setZonePolygonCoords, setCropRotationDeg]);
+
+  // ── Personal city grids ─────────────────────────────────────────────
+  const { getIdToken } = useAuth();
+  const [gridId, setGridId] = useState<string | null>(null);
+  const [gridNotice, setGridNotice] = useState<string | null>(null);
+
+  // Load a saved grid from history (?grid=<id>): reproduces the same tiling so
+  // the user can pick neighbouring cells and generate them.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("grid");
+    if (!id) return;
+    (async () => {
+      const token = await getIdToken();
+      const g = await getGrid(token, id);
+      if (!g) return;
+      if (g.city && CITIES[g.city]) setCurrentCityKey(g.city);
+      if (g.grid_type) setGridType(g.grid_type);
+      if (g.hex_size_m) setHexSizeM(g.hex_size_m);
+      setGridId(g.id || id);
+      setShowHexGrid(true);
+      setGridNotice(`Завантажено сітку «${g.name || g.city || "сітка"}» — згенеровано ${(g.cells || []).length} комірок. Виберіть сусідні й згенеруйте.`);
+    })();
+  }, [getIdToken]);
+
+  const handleSaveGrid = useCallback(async () => {
+    const token = await getIdToken();
+    if (!token) { setGridNotice("Увійдіть, щоб зберегти сітку в історію."); return; }
+    const grid = await saveGrid(token, {
+      id: gridId || undefined,
+      name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridType === "square" ? "квадрати" : gridType === "circle" ? "кола" : "гексагони"}`,
+      city: currentCityKey,
+      center: currentCity.center,
+      grid_type: gridType,
+      hex_size_m: hexSizeM,
+      bounds: currentCity.bounds,
+      rotation_deg: 0,
+      cells: (selectedZones || []).map((z: any, i: number) => ({
+        row: z?.row ?? z?.gridRow ?? i, col: z?.col ?? z?.gridCol ?? 0,
+        task_id: z?.task_id, ...(z?.id ? { zone_id: z.id } : {}),
+      })),
+    });
+    if (grid?.id) { setGridId(grid.id); setGridNotice("Сітку збережено в історію (кабінет → Мої сітки)."); }
+    else setGridNotice("Не вдалося зберегти сітку.");
+  }, [getIdToken, gridId, currentCityKey, currentCity, gridType, hexSizeM, selectedZones]);
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
   // run a real preview generation through the site's own pipeline, so an
@@ -402,15 +448,32 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      Режим
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                        Режим
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {showHexGrid ? "Сітка зон" : "Одна ділянка"}
+                      </div>
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                      {showHexGrid ? "Сітка зон" : "Одна ділянка"}
-                    </div>
+                    {showHexGrid && (
+                      <button
+                        type="button"
+                        onClick={handleSaveGrid}
+                        className="rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
+                      >
+                        💾 Зберегти сітку
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {gridNotice && (
+                  <div className="mx-4 mt-3 rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[rgba(15,118,110,0.08)] px-3 py-2 text-[12px] text-[var(--text-primary)]">
+                    {gridNotice}
+                  </div>
+                )}
 
                 <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
                   {showHexGrid ? (
