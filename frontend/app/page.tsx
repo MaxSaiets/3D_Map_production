@@ -301,8 +301,14 @@ function TemplatesGallery() {
             href={{ pathname: "/create", query: { template: t.id } }}
             className="group overflow-hidden rounded-[18px] border border-line-soft bg-paper transition-transform hover:-translate-y-1 hover:shadow-soft"
           >
-            <div className="relative aspect-[16/10] overflow-hidden">
-              <MapTile accent={accents[i % accents.length]} />
+            <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-b from-[#f6f1e6] to-[#e9e0cf]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/showcase/map-${(i % 13) + 1}.png`}
+                alt={`${t.district}, ${t.city} — 3D-мапа`}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-contain p-1.5 transition-transform duration-500 group-hover:scale-[1.06]"
+              />
               {t.tag && (
                 <span className="absolute left-3 top-3 rounded-full bg-paper-2/90 px-3 py-1 text-[11px] font-semibold text-forest">
                   {t.tag}
@@ -369,11 +375,19 @@ function Craft() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#2E4A3A" paper="#EFE6D2" /></div>
-          <div className="flex flex-col gap-4">
-            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#3F5B45" paper="#E2D9C2" /></div>
-            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft"><MapTile accent="#9A7242" paper="#F4EFE4" /></div>
+          {/* eslint-disable @next/next/no-img-element */}
+          <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft bg-gradient-to-b from-[#f1ead9] to-[#e3d9c3]">
+            <img src="/showcase/keychain-1.png" alt="Брелок-мапа міста" loading="lazy" className="h-full w-full object-contain p-3" />
           </div>
+          <div className="flex flex-col gap-4">
+            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft bg-gradient-to-b from-[#f1ead9] to-[#e3d9c3]">
+              <img src="/showcase/map-2.png" alt="3D-район міста" loading="lazy" className="h-full w-full object-contain p-2" />
+            </div>
+            <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft bg-gradient-to-b from-[#f1ead9] to-[#e3d9c3]">
+              <img src="/showcase/keychain-5.png" alt="Брелок-мапа міста" loading="lazy" className="h-full w-full object-contain p-2" />
+            </div>
+          </div>
+          {/* eslint-enable @next/next/no-img-element */}
         </div>
       </div>
     </section>
