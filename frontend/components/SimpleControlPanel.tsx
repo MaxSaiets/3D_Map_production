@@ -140,6 +140,7 @@ export function SimpleControlPanel({
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
         previewIncludeParks: layerParks,
+        zonePolygonCoords: s.zonePolygonCoords,
       });
       const { api } = await import("@/lib/api");
       const r = await api.generateModel(req as any);

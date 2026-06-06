@@ -37,6 +37,11 @@ interface GenerationState {
   exportFormat: "stl" | "3mf";
   modelSizeMm: number; // Розмір моделі в міліметрах
 
+  // Single-figure rotation (NOT grid mode): rotated rectangle corners [lon,lat]
+  // sent to the backend as zone_polygon_coords so OSM is cropped to the figure.
+  zonePolygonCoords: Array<[number, number]> | null;
+  cropRotationDeg: number;
+
   // Preview only
   // Preview only
   terrainSmoothShading: boolean;
@@ -57,6 +62,8 @@ interface GenerationState {
 
   // Actions
   setSelectedArea: (area: LatLngBounds | null) => void;
+  setZonePolygonCoords: (coords: Array<[number, number]> | null) => void;
+  setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[]) => void;
   setActiveTaskId: (taskId: string | null) => void;
@@ -132,6 +139,8 @@ const initialState = {
   terrariumZoom: 15,
   exportFormat: "3mf" as const,
   modelSizeMm: 80.0, // 80мм = 8см за замовчуванням
+  zonePolygonCoords: null,
+  cropRotationDeg: 0,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
@@ -150,6 +159,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   ...initialState,
 
   setSelectedArea: (area) => set({ selectedArea: area }),
+  setZonePolygonCoords: (coords) => set({ zonePolygonCoords: coords }),
+  setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds) =>
     set((s) => {

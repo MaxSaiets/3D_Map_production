@@ -26,6 +26,9 @@ export interface MapRequestParams {
   previewIncludeBuildings?: boolean;
   previewIncludeWater?: boolean;
   previewIncludeParks?: boolean;
+  /** Rotated-rectangle corners [lon,lat] for a single figure (not grid). When
+   *  set, the backend crops OSM to this polygon instead of the axis-aligned bbox. */
+  zonePolygonCoords?: Array<[number, number]> | null;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -57,6 +60,9 @@ export function buildMapRequest(p: MapRequestParams) {
     preview_include_buildings: p.previewIncludeBuildings ?? true,
     preview_include_water: p.previewIncludeWater ?? true,
     preview_include_parks: p.previewIncludeParks ?? true,
+    ...(p.zonePolygonCoords && p.zonePolygonCoords.length >= 3
+      ? { zone_polygon_coords: p.zonePolygonCoords }
+      : {}),
   };
 }
 

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
@@ -96,7 +96,32 @@ export default function Home() {
     try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
   };
 
-  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea } = useGenerationStore();
+  const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea,
+    modelSizeMm, cropRotationDeg, setCropRotationDeg, setZonePolygonCoords } = useGenerationStore();
+
+  // Rotatable single-figure selector (only when NOT in grid mode). Reuses the
+  // proven keychain crop overlay as a plain rotatable rectangle; its rotated
+  // corners flow to the store as zone_polygon_coords so the backend crops OSM to
+  // the figure. Sized by the 1:10000 model-size rule (mapWidthMm * 10 m).
+  const handleMapRotation = useCallback((deg: number) => setCropRotationDeg(((deg % 360) + 360) % 360), [setCropRotationDeg]);
+  const mapCrop = useMemo(() => (showHexGrid ? undefined : {
+    aspectRatio: 1,
+    maxMetersPerMm: 10,
+    targetMetersPerMm: 6,
+    mapWidthMm: modelSizeMm || 80,
+    mapHeightMm: modelSizeMm || 80,
+    baseShape: "rounded" as const,
+    cornerRadiusMm: 0,
+    rotationDeg: cropRotationDeg,
+    onRotationChange: handleMapRotation,
+    onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),
+  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords]);
+
+  // Clear the rotated polygon when switching INTO grid mode (grid has its own
+  // zone logic) so a stale figure crop can't leak into grid generation.
+  useEffect(() => {
+    if (showHexGrid) { setZonePolygonCoords(null); setCropRotationDeg(0); }
+  }, [showHexGrid, setZonePolygonCoords, setCropRotationDeg]);
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
   // run a real preview generation through the site's own pipeline, so an
@@ -398,7 +423,7 @@ export default function Home() {
                     />
                   ) : (
                     <div className="h-full overflow-hidden rounded-[24px]">
-                      <MapSelector center={currentCity.center} />
+                      <MapSelector center={currentCity.center} keychainCrop={mapCrop} />
                     </div>
                   )}
                 </div>

@@ -236,6 +236,7 @@ export function ControlPanel({
     previewIncludeBuildings,
     previewIncludeWater,
     previewIncludeParks,
+    zonePolygonCoords,
     setRoadWidthMultiplier,
     setRoadHeightMm,
     setRoadEmbedMm,
@@ -420,6 +421,10 @@ export function ControlPanel({
         preview_include_buildings: previewIncludeBuildings,
         preview_include_water: previewIncludeWater,
         preview_include_parks: previewIncludeParks,
+        // Single rotated figure (not grid): crop OSM to the rotated rectangle.
+        ...(zonePolygonCoords && zonePolygonCoords.length >= 3
+          ? { zone_polygon_coords: zonePolygonCoords }
+          : {}),
       };
 
       const response = await api.generateModel(request);
