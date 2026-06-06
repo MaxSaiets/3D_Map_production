@@ -660,6 +660,80 @@ async def account_models(authorization: Optional[str] = Header(default=None)):
     return {"models": list_models(u["uid"])}
 
 
+# ── Per-user city grids (save / history / generate neighbouring cells) ──────────
+class GridCellModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    row: int
+    col: int
+    task_id: Optional[str] = None
+    download_url: Optional[str] = None
+
+
+class GridSaveRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    id: Optional[str] = None
+    name: str = ""
+    city: str = ""
+    center: Optional[list] = None
+    grid_type: str = "hexagonal"
+    hex_size_m: float = 300.0
+    bounds: Optional[dict] = None
+    rotation_deg: float = 0.0
+    cells: Optional[list] = None
+
+
+@app.get("/api/account/grids")
+async def account_grids_list(authorization: Optional[str] = Header(default=None)):
+    from services.user_store import list_grids
+    u = _require_user(authorization)
+    return {"grids": list_grids(u["uid"])}
+
+
+@app.post("/api/account/grids")
+async def account_grids_save(req: GridSaveRequest, authorization: Optional[str] = Header(default=None)):
+    from services.user_store import save_grid
+    u = _require_user(authorization)
+    grid = save_grid(u["uid"], u.get("email") or "", req.model_dump(exclude_none=True))
+    return {"ok": True, "grid": grid}
+
+
+@app.get("/api/account/grids/{grid_id}")
+async def account_grid_get(grid_id: str, authorization: Optional[str] = Header(default=None)):
+    from services.user_store import get_grid
+    u = _require_user(authorization)
+    g = get_grid(u["uid"], grid_id)
+    if not g:
+        raise HTTPException(status_code=404, detail="Сітку не знайдено")
+    return {"grid": g}
+
+
+@app.delete("/api/account/grids/{grid_id}")
+async def account_grid_delete(grid_id: str, authorization: Optional[str] = Header(default=None)):
+    from services.user_store import delete_grid
+    u = _require_user(authorization)
+    return {"ok": delete_grid(u["uid"], grid_id)}
+
+
+class GridCellMarkRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    row: int
+    col: int
+    task_id: Optional[str] = None
+    download_url: Optional[str] = None
+
+
+@app.post("/api/account/grids/{grid_id}/cells")
+async def account_grid_mark_cell(grid_id: str, req: GridCellMarkRequest,
+                                 authorization: Optional[str] = Header(default=None)):
+    """Record a generated cell within a saved grid (so history shows progress)."""
+    from services.user_store import mark_grid_cell
+    u = _require_user(authorization)
+    g = mark_grid_cell(u["uid"], grid_id, req.model_dump(exclude_none=True))
+    if not g:
+        raise HTTPException(status_code=404, detail="Сітку не знайдено")
+    return {"ok": True, "grid": g}
+
+
 class TrackModelRequest(BaseModel):
     task_id: str
     title: str = ""
