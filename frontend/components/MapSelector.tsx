@@ -16,10 +16,33 @@ if (typeof window !== "undefined") {
   });
 }
 
+// Fixed 1:5000 scale: max real-world zone = model size (mm) * 5 meters.
+// 80mm(8cm) -> 400m, +50m per +1cm, up to 200mm(20cm) -> 1000m.
+const ZONE_M_PER_MODEL_MM = 5.0;
+
+/** Clamp a bounds to a max side length in meters, keeping its centre. */
+function clampBoundsToMaxMeters(bounds: L.LatLngBounds, maxSpanM: number): { bounds: L.LatLngBounds; clamped: boolean } {
+  const center = bounds.getCenter();
+  const nsM = bounds.getNorth() - bounds.getSouth();
+  const ewM = bounds.getEast() - bounds.getWest();
+  const latM = Math.abs(nsM) * 111320;
+  const lonM = Math.abs(ewM) * 111320 * Math.max(0.05, Math.cos((center.lat * Math.PI) / 180));
+  if (latM <= maxSpanM && lonM <= maxSpanM) return { bounds, clamped: false };
+  const halfLatDeg = Math.min(latM, maxSpanM) / 2 / 111320;
+  const halfLonDeg = Math.min(lonM, maxSpanM) / 2 / (111320 * Math.max(0.05, Math.cos((center.lat * Math.PI) / 180)));
+  return {
+    bounds: L.latLngBounds(
+      L.latLng(center.lat - halfLatDeg, center.lng - halfLonDeg),
+      L.latLng(center.lat + halfLatDeg, center.lng + halfLonDeg),
+    ),
+    clamped: true,
+  };
+}
+
 function DrawControl() {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
-  const { setSelectedArea } = useGenerationStore();
+  const { setSelectedArea, modelSizeMm } = useGenerationStore();
 
   useEffect(() => {
     if (!map) return;
@@ -59,28 +82,42 @@ function DrawControl() {
 
     map.addControl(drawControl);
 
+    const maxSpanM = () => Math.max(50, (modelSizeMm || 80) * ZONE_M_PER_MODEL_MM);
+
+    const applyBounds = (layer: any) => {
+      if (!("getBounds" in layer) || typeof layer.getBounds !== "function") {
+        console.warn("Draw created layer does not support getBounds:", layer);
+        return;
+      }
+      const raw = layer.getBounds() as L.LatLngBounds;
+      const { bounds, clamped } = clampBoundsToMaxMeters(raw, maxSpanM());
+      if (clamped) {
+        // Shrink the visible rectangle to the allowed size and tell the user why.
+        if (typeof layer.setBounds === "function") {
+          try { layer.setBounds(bounds); } catch { /* polygon/circle: visual stays */ }
+        }
+        const cm = Math.round((modelSizeMm || 80) / 10);
+        const mx = Math.round(maxSpanM());
+        try {
+          window.dispatchEvent(new CustomEvent("monadruk:toast", {
+            detail: { type: "warn", message: `Зона обмежена до ~${mx} м (макс. для моделі ${cm} см, масштаб 1:5000). Для більшої зони збільште розмір моделі.` },
+          }));
+        } catch { /* no-op */ }
+        console.warn(`[zone] clamped to ${mx}m for ${cm}cm model`);
+      }
+      setSelectedArea(bounds);
+    };
+
     const handleDrawCreated = (e: any) => {
       const layer = e.layer;
       drawnItemsRef.current.addLayer(layer);
-
-      // Отримуємо bounds обраної області
-      if ("getBounds" in (layer as any) && typeof (layer as any).getBounds === "function") {
-        const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
-        setSelectedArea(bounds);
-      } else {
-        // На випадок неочікуваних layer типів
-        console.warn("Draw created layer does not support getBounds:", layer);
-      }
+      applyBounds(layer);
     };
 
     const handleDrawEdited = () => {
       const layers = drawnItemsRef.current.getLayers();
       if (layers.length > 0) {
-        const layer = layers[0] as L.Layer;
-        if ("getBounds" in layer) {
-          const bounds = (layer as L.Rectangle | L.Polygon | L.Circle).getBounds();
-          setSelectedArea(bounds);
-        }
+        applyBounds(layers[0] as L.Layer);
       }
     };
 
@@ -98,7 +135,7 @@ function DrawControl() {
       map.off(L.Draw.Event.DELETED, handleDrawDeleted);
       map.removeControl(drawControl);
     };
-  }, [map, setSelectedArea]);
+  }, [map, setSelectedArea, modelSizeMm]);
 
   return null;
 }
