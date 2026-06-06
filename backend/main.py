@@ -438,9 +438,14 @@ class GenerationRequest(BaseModel):
     terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
     # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
     # - terrain_resolution: РєС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РїРѕ РѕСЃС– (mesh РґРµС‚Р°Р»СЊ). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, РїРѕРІС–Р»СЊРЅС–С€Рµ.
-    terrain_resolution: int = Field(default=350, ge=40, le=600)  # Висока деталізація для максимально плавного рельєфу
-    # Subdivision: РґРѕРґР°С‚РєРѕРІР° РґРµС‚Р°Р»С–Р·Р°С†С–СЏ mesh РїС–СЃР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ (РґР»СЏ С‰Рµ РїР»Р°РІРЅС–С€РѕРіРѕ СЂРµР»СЊС”С„Сѓ)
-    terrain_subdivide: bool = Field(default=True, description="Р—Р°СЃС‚РѕСЃСѓРІР°С‚Рё subdivision РґР»СЏ РїР»Р°РІРЅС–С€РѕРіРѕ mesh")
+    # Default 200 (was 350): 350×350 + subdivide gave ~640k vertices on a ~500m
+    # zone = ~0.1mm/vertex on the printed model, ~16× finer than the 0.4mm nozzle
+    # can print. Pure waste that slowed terrain build / grooves / repair / export.
+    # 200 ≈ 2.5m/vertex (printable resolution) and keeps relief smooth.
+    terrain_resolution: int = Field(default=200, ge=40, le=600)
+    # Subdivision quadruples vertex count to add SUB-printable smoothness — off by
+    # default (200 res is already smooth enough for print). Enable for hero renders.
+    terrain_subdivide: bool = Field(default=False, description="Subdivision для ще плавнішого mesh (×4 вершини)")
     terrain_subdivide_levels: int = Field(default=1, ge=0, le=2, description="Р С–РІРЅС– subdivision (0-2, Р±С–Р»СЊС€Рµ = РїР»Р°РІРЅС–С€Рµ Р°Р»Рµ РїРѕРІС–Р»СЊРЅС–С€Рµ)")
     # - terrarium_zoom: Р·СѓРј DEM tiles (Terrarium). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, Р°Р»Рµ Р±С–Р»СЊС€Рµ С‚Р°Р№Р»С–РІ.
     terrarium_zoom: int = Field(default=15, ge=10, le=16)

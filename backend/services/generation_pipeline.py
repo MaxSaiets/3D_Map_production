@@ -129,6 +129,20 @@ def process_generation_stage(
                 _grid_step = _flat_step
             _terr_res = min(_terr_res, 60.0)
             _z_scale = 0.0  # guarantee a flat base (no elevation displacement)
+        else:
+            # Terrain ON: cap the grid to PRINTABLE resolution. Detail finer than
+            # the ~0.4mm nozzle can't print, so tessellating finer only bloats the
+            # mesh (was ~640k verts) and slows every stage. Relief is large-scale,
+            # so a printable-resolution grid keeps it smooth. world_step = nozzle/scale.
+            try:
+                _nozzle_mm = float(os.getenv("PRINT_NOZZLE_MM", "0.4"))
+                if scale_factor and float(scale_factor) > 0:
+                    _print_step_m = _nozzle_mm / float(scale_factor)
+                    if _grid_step is None or _grid_step < _print_step_m:
+                        _grid_step = _print_step_m
+                        print(f"[PERF] {zone_prefix}Terrain grid capped to printable step={_print_step_m:.2f}m (nozzle {_nozzle_mm}mm)")
+            except Exception as _exc:
+                print(f"[WARN] {zone_prefix}terrain grid cap skipped: {_exc}")
             print(f"[PERF] {zone_prefix}Flat map: coarse base grid step={_grid_step}m (skip dense terrain build)")
         terrain_mesh, terrain_provider = create_terrain_mesh(
             bbox_meters,
