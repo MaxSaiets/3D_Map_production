@@ -1,7 +1,21 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ContactWidget } from "@/components/ContactWidget";
 import { AuthProvider } from "@/components/AuthProvider";
+
+// Self-hosted via next/font: no render-blocking external stylesheet, no CLS.
+const serif = Cormorant_Garamond({
+  subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"],
+  variable: "--font-serif", display: "swap",
+});
+const sans = Manrope({
+  subsets: ["latin", "cyrillic"], weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans", display: "swap",
+});
+const mono = JetBrains_Mono({
+  subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -52,8 +66,10 @@ const jsonLd = {
       name: "Monadruk",
       url: "https://monadruk.com",
       logo: "https://monadruk.com/icon",
+      image: "https://monadruk.com/opengraph-image",
       description: "Тактильні 3D-мапи та брелки з мапою твого міста для друку.",
       areaServed: "UA",
+      sameAs: ["https://t.me/monadruk"],
     },
     {
       "@type": "WebSite",
@@ -62,6 +78,34 @@ const jsonLd = {
       name: "Monadruk",
       inLanguage: "uk-UA",
       publisher: { "@id": "https://monadruk.com/#org" },
+    },
+    {
+      "@type": "Service",
+      "@id": "https://monadruk.com/#service",
+      name: "3D-мапи та брелки міст на замовлення",
+      serviceType: "Виготовлення 3D-мап і брелків міст для 3D-друку",
+      provider: { "@id": "https://monadruk.com/#org" },
+      areaServed: { "@type": "Country", name: "Україна" },
+      description:
+        "Створення 3D-мапи будь-якого міста світу: завантаження готового 3MF/STL або друк на замовлення з Eco PLA. Персональні брелки-мапи.",
+      offers: [
+        {
+          "@type": "Offer",
+          name: "Брелок з картою міста",
+          priceCurrency: "UAH",
+          price: "290",
+          url: "https://monadruk.com/keychains",
+          availability: "https://schema.org/InStock",
+        },
+        {
+          "@type": "Offer",
+          name: "3D-мапа району міста",
+          priceCurrency: "UAH",
+          price: "690",
+          url: "https://monadruk.com/create",
+          availability: "https://schema.org/InStock",
+        },
+      ],
     },
   ],
 };
@@ -72,14 +116,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk">
+    <html lang="uk" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

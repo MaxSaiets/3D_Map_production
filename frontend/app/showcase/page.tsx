@@ -48,7 +48,7 @@ export default function ShowcasePage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[1280px] px-5 py-8 lg:px-8">
-      <Link href="/" className="mb-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-2 hover:text-ink">
+      <Link href="/" className="mb-6 inline-flex min-h-[40px] items-center gap-1.5 py-2 text-[13px] font-semibold text-ink-2 hover:text-ink">
         <ArrowLeft size={15} /> На головну
       </Link>
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler, ShieldCheck,
   Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck, User,
+  Menu, X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
@@ -40,6 +41,70 @@ function Eyebrow({ children, dot, light }: { children: React.ReactNode; dot?: bo
   );
 }
 
+/* ---------- FAQ (visible + FAQPage structured data for rich results) ---------- */
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "Що таке 3D-мапа міста і чим вона відрізняється від звичайної карти?",
+    a: "3D-мапа міста — це тривимірна тактильна модель району з реальними висотами будинків, парками й річками за даними OpenStreetMap. На відміну від пласкої карти, її можна потримати в руках, поставити на полицю чи подарувати.",
+  },
+  {
+    q: "Чи можна зробити 3D-мапу будь-якого міста світу?",
+    a: "Так. У конструкторі Monadruk можна обрати будь-яку точку на Землі — від Києва та Львова до Нью-Йорка чи Парижа — і за пару хвилин створити 3D-мапу району цього міста.",
+  },
+  {
+    q: "У якому форматі я отримаю файл для 3D-друку?",
+    a: "Ти завантажуєш готовий файл 3MF (а також STL) — він одразу відкривається в Bambu Studio чи PrusaSlicer і готовий до друку вдома. Нічого додатково моделювати не треба.",
+  },
+  {
+    q: "Скільки коштує брелок з картою міста або 3D-мапа?",
+    a: "Брелок-мапа міста — від 290 ₴, 3D-мапа району — від 690 ₴ за друк на замовлення. Якщо друкуєш сам — завантаження готового 3D-файлу для власного друку безкоштовне в межах ліміту.",
+  },
+  {
+    q: "Чи можна замовити друк, якщо в мене немає 3D-принтера?",
+    a: "Так. Ми надрукуємо твою 3D-мапу або брелок з екологічного біопластику Eco PLA та надішлемо готовий виріб. Достатньо створити модель онлайн і залишити заявку.",
+  },
+  {
+    q: "Чи можна додати власний напис на брелок-мапу?",
+    a: "Так — на брелок-мапу 55×30 мм можна додати назву міста чи власний текст, який друкується рельєфом поверх карти району.",
+  },
+];
+
+function Faq() {
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEMS.map((it) => ({
+      "@type": "Question",
+      name: it.q,
+      acceptedAnswer: { "@type": "Answer", text: it.a },
+    })),
+  };
+  return (
+    <section className="border-t border-line-soft" aria-labelledby="faq-title">
+      <div className="mx-auto max-w-[820px] px-5 py-16 lg:py-24">
+        <div className="text-center">
+          <Eyebrow dot>Питання та відповіді</Eyebrow>
+          <h2 id="faq-title" className="mt-4 text-[clamp(28px,4vw,46px)] leading-tight">
+            Часті запитання про 3D-мапи й брелки
+          </h2>
+        </div>
+        <div className="mt-9 divide-y divide-line-soft">
+          {FAQ_ITEMS.map((it, i) => (
+            <details key={i} className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[16px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                {it.q}
+                <ArrowRight size={16} className="shrink-0 text-ink-3 transition group-open:rotate-90" />
+              </summary>
+              <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{it.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+    </section>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="min-h-[100dvh]">
@@ -51,6 +116,7 @@ export default function HomePage() {
       <TemplatesGallery />
       <Craft />
       <Testimonials />
+      <Faq />
       <FinalCTA />
       <SiteFooter />
     </div>
@@ -60,6 +126,7 @@ export default function HomePage() {
 /* ---------- Header ---------- */
 function SiteHeader() {
   const { user, configured } = useAuth();
+  const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
@@ -76,7 +143,7 @@ function SiteHeader() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/account"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
             title={configured && user ? (user.email || user.phoneNumber || "Кабінет") : "Увійти"}
           >
             <User size={15} />
@@ -84,20 +151,65 @@ function SiteHeader() {
           </Link>
           <Link
             href="/keychains"
-            className="hidden items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
+            className="hidden min-h-[44px] items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
             style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze, #8E6B3D)", background: "rgba(142,107,61,0.08)" }}
           >
             <KeyRound size={15} /> Брелок
           </Link>
           <Link
             href="/create"
-            className="inline-flex items-center gap-1.5 rounded-full bg-forest px-5 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-4 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
             style={{ background: "var(--forest, #2E4A3A)" }}
           >
-            Створити мапу <ArrowRight size={15} />
+            <span className="sm:hidden">Мапа</span>
+            <span className="hidden sm:inline">Створити мапу</span>
+            <ArrowRight size={15} />
           </Link>
+          {/* Mobile menu toggle */}
+          <button
+            type="button"
+            aria-label={open ? "Закрити меню" : "Відкрити меню"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink md:hidden"
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown nav */}
+      {open && (
+        <nav className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
+          <ul className="flex flex-col">
+            {[
+              { href: "/#how", label: "Як це працює" },
+              { href: "/showcase", label: "Галерея" },
+              { href: "/#templates", label: "Шаблони" },
+              { href: "/keychains", label: "Брелки" },
+              { href: "/account", label: configured && user ? "Кабінет" : "Увійти" },
+            ].map((it) => (
+              <li key={it.href}>
+                <Link
+                  href={it.href}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-[48px] items-center border-b border-line-soft/60 text-[15px] font-semibold text-ink-2 transition hover:text-ink"
+                >
+                  {it.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link href="/keychains" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 text-sm font-semibold" style={{ color: "var(--bronze, #8E6B3D)" }}>
+              <KeyRound size={15} /> Брелок
+            </Link>
+            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
+              Створити мапу <ArrowRight size={15} />
+            </Link>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
@@ -141,12 +253,12 @@ function Hero() {
               </div>
               <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
-                <Model3DViewer url="/models/keychain-fea.glb" height={300} />
+                <Model3DViewer url="/models/keychain-fea.glb" height={260} label="Брелок-мапа міста" />
               </div>
               <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
-                <Model3DViewer url="/models/map-block.glb" height={300} />
+                <Model3DViewer url="/models/map-block.glb" height={260} label="3D-район міста" />
               </div>
             </div>
             <div className="flex items-center justify-between px-1 pt-4">

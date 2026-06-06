@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 function Model({ url, mirror = true }: { url: string; mirror?: boolean }) {
@@ -31,47 +31,78 @@ function Model({ url, mirror = true }: { url: string; mirror?: boolean }) {
   return <primitive object={fixed} />;
 }
 
-/** Auto-rotating 3D viewer for a baked GLB (oriented, coloured). */
+/** Auto-rotating 3D viewer for a baked GLB. Mounts the WebGL canvas only when
+ *  scrolled near the viewport (saves battery/CPU on mobile & speeds first paint). */
 export default function Model3DViewer({
-  url, height = 360, allowZoom = false, autoRotate = true,
-}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean }) {
+  url, height = 360, allowZoom = false, autoRotate = true, label,
+}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (mounted || typeof IntersectionObserver === "undefined") { setMounted(true); return; }
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries.some((e) => e.isIntersecting)) { setMounted(true); io.disconnect(); } },
+      { rootMargin: "250px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [mounted]);
+
   return (
-    <div style={{ height, width: "100%" }} className="touch-none">
-      <Canvas
-        dpr={[1, 2]}
-        shadows
-        camera={{ fov: 40, position: [0, 0.6, 2.4] }}
-        gl={{ antialias: true, alpha: true }}
-      >
-        {/* Explicit lights — no remote HDRI (drei's Environment CDN often fails,
-            leaving Suspense unresolved → blank canvas). environment={null}. */}
-        <ambientLight intensity={0.85} />
-        <hemisphereLight args={[0xffffff, 0x8d7a5a, 0.7]} />
-        <directionalLight position={[4, 6, 5]} intensity={1.7} castShadow />
-        <directionalLight position={[-5, 3, -4]} intensity={0.55} />
-        <Suspense fallback={null}>
-          <Stage
-            intensity={0.4}
-            environment={null}
-            preset="rembrandt"
-            adjustCamera={1.1}
-            shadows={{ type: "contact", opacity: 0.3, blur: 2.4 }}
-          >
-            <Model url={url} />
-          </Stage>
-          <OrbitControls
-            autoRotate={autoRotate}
-            autoRotateSpeed={1.6}
-            enablePan={false}
-            enableZoom={allowZoom}
-            minPolarAngle={0}
-            maxPolarAngle={Math.PI}
-          />
-        </Suspense>
-      </Canvas>
+    <div
+      ref={ref}
+      style={{ height, width: "100%" }}
+      className="relative touch-none"
+      role="img"
+      aria-label={label ? `3D-модель: ${label}` : "Інтерактивна 3D-модель"}
+    >
+      {label && <span className="sr-only">{label}</span>}
+      {mounted ? (
+        <Canvas
+          dpr={[1, 1.5]}
+          shadows
+          camera={{ fov: 40, position: [0, 0.6, 2.4] }}
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        >
+          {/* Explicit lights — no remote HDRI (drei's Environment CDN often fails,
+              leaving Suspense unresolved → blank canvas). environment={null}. */}
+          <ambientLight intensity={0.85} />
+          <hemisphereLight args={[0xffffff, 0x8d7a5a, 0.7]} />
+          <directionalLight position={[4, 6, 5]} intensity={1.7} castShadow />
+          <directionalLight position={[-5, 3, -4]} intensity={0.55} />
+          <Suspense fallback={null}>
+            <Stage
+              intensity={0.4}
+              environment={null}
+              preset="rembrandt"
+              adjustCamera={1.1}
+              shadows={{ type: "contact", opacity: 0.3, blur: 2.4 }}
+            >
+              <Model url={url} />
+            </Stage>
+            <OrbitControls
+              autoRotate={autoRotate}
+              autoRotateSpeed={1.6}
+              enablePan={false}
+              enableZoom={allowZoom}
+              minPolarAngle={0}
+              maxPolarAngle={Math.PI}
+            />
+          </Suspense>
+        </Canvas>
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-ink-3">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-forest" /> 3D
+          </span>
+        </div>
+      )}
     </div>
   );
 }
 
-// Preload the hero model for snappy first paint.
-useGLTF.preload("/models/keychain-home.glb");
+// Preload the hero models for snappy first paint.
+useGLTF.preload("/models/keychain-fea.glb");
