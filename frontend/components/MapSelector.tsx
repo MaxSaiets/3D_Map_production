@@ -16,9 +16,9 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Fixed 1:5000 scale: max real-world zone = model size (mm) * 5 meters.
-// 80mm(8cm) -> 400m, +50m per +1cm, up to 200mm(20cm) -> 1000m.
-const ZONE_M_PER_MODEL_MM = 5.0;
+// Fixed 1:10000 scale: max real-world zone = model size (mm) * 10 meters.
+// 80mm(8cm) -> 800m, +100m per +1cm, up to 200mm(20cm) -> 2000m.
+const ZONE_M_PER_MODEL_MM = 10.0;
 
 /** Clamp a bounds to a max side length in meters, keeping its centre. */
 function clampBoundsToMaxMeters(bounds: L.LatLngBounds, maxSpanM: number): { bounds: L.LatLngBounds; clamped: boolean } {
@@ -100,7 +100,7 @@ function DrawControl() {
         const mx = Math.round(maxSpanM());
         try {
           window.dispatchEvent(new CustomEvent("monadruk:toast", {
-            detail: { type: "warn", message: `Зона обмежена до ~${mx} м (макс. для моделі ${cm} см, масштаб 1:5000). Для більшої зони збільште розмір моделі.` },
+            detail: { type: "warn", message: `Зона обмежена до ~${mx} м (макс. для моделі ${cm} см, масштаб 1:10000). Для більшої зони збільште розмір моделі.` },
           }));
         } catch { /* no-op */ }
         console.warn(`[zone] clamped to ${mx}m for ${cm}cm model`);

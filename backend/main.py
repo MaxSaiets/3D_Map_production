@@ -808,16 +808,16 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
-        # ── Zone size guard (fixed 1:5000 scale) ────────────────────────
-        # Max real-world zone scales with the model size at a constant 1:5000
-        # scale (0.2 mm/m): 80mm model ↔ 400m zone, and +50m per +1cm. This keeps
+        # ── Zone size guard (fixed 1:10000 scale) ───────────────────────
+        # Max real-world zone scales with the model size at a constant 1:10000
+        # scale (0.1 mm/m): 80mm model ↔ 800m zone, and +100m per +1cm. This keeps
         # printable detail consistent and generation fast.
-        #   max_zone_m = model_size_mm * ZONE_M_PER_MODEL_MM   (default 5.0)
+        #   max_zone_m = model_size_mm * ZONE_M_PER_MODEL_MM   (default 10.0)
         # An absolute hard ceiling MAX_ZONE_SPAN_M still applies (0 = none).
         try:
-            _m_per_mm = float(os.getenv("ZONE_M_PER_MODEL_MM", "5.0"))
+            _m_per_mm = float(os.getenv("ZONE_M_PER_MODEL_MM", "10.0"))
         except Exception:
-            _m_per_mm = 5.0
+            _m_per_mm = 10.0
         try:
             _model_mm = float(getattr(request, "model_size_mm", None) or 80.0)
         except Exception:
@@ -841,7 +841,7 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
                     status_code=400,
                     detail=(f"Зона завелика для моделі {_model_mm/10:.0f} см: "
                             f"{_ns_m:.0f}×{_ew_m:.0f} м, максимум ~{_max_span:.0f} м зі сторони "
-                            f"(масштаб 1:5000). Виберіть меншу ділянку або більший розмір моделі."),
+                            f"(масштаб 1:10000). Виберіть меншу ділянку або більший розмір моделі."),
                 )
         _validate_keychain_print_scale(request)
         
