@@ -123,6 +123,7 @@ export default function Home() {
     mapHeightMm: modelSizeMm || 80,
     baseShape: figureShape as any,
     cornerRadiusMm: figureShape === "rounded" ? 6 : 0,
+    cropToShape: true,
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),

@@ -149,6 +149,10 @@ type KeychainCropSpec = {
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
   baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart";
+  /** When true, the polygon sent to the backend is the actual (rotated) SHAPE
+   *  outline, not the axis-aligned bbox — so the model is cut to that shape
+   *  (heart/circle/…). Keychains keep bbox (their base shape is separate). */
+  cropToShape?: boolean;
   /** Радіус заокруглення кутів (для visual shape). */
   cornerRadiusMm?: number;
   rotationDeg?: number;
@@ -358,6 +362,12 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const { selectedArea, setSelectedArea } = useGenerationStore();
   const initialSelectedAreaRef = useRef(selectedArea);
   const shapeRef = useRef<L.Polygon | null>(null);
+  // Current shape kind + corner fraction kept in refs so the drag handler
+  // (created once in the setup effect) always draws the CURRENT shape instead of
+  // the one captured when the effect first ran (which caused moving to revert
+  // the figure to the initial rectangle).
+  const shapeKindRef = useRef<string>(spec.baseShape || "rounded");
+  const cornerFracRef = useRef<number>(0.15);
   const resizeHandleRef = useRef<L.Marker | null>(null);
   const rotateHandleRef = useRef<L.Marker | null>(null);
   const labelRef = useRef<L.Marker | null>(null);
@@ -388,13 +398,17 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     // Visual shape outline (oval for token, rounded rect etc)
     const shapeKind = spec.baseShape || "rounded";
     const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    shapeKindRef.current = shapeKind;
+    cornerFracRef.current = cornerFrac;
     const visualPoints = rotatedShapePoints(center, size.widthM, size.heightM, rotationDeg, shapeKind, cornerFrac);
     shape.setLatLngs(visualPoints);
-    // Polygon для backend = 4 кути axis-aligned bbox (без shape деталей)
-    const corners = rotatedCropCorners(center, size.widthM, size.heightM, rotationDeg);
     resizeHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, size.widthM / 2, -size.heightM / 2));
     rotateHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, rotationDeg, 0, size.heightM / 2 + 42));
-    spec.onPolygonChange?.(corners.map((c) => [c.lng, c.lat]));
+    // Polygon for backend: the actual shape outline (cropToShape) or bbox corners.
+    const backendPoly = spec.cropToShape
+      ? visualPoints.map((p) => [p.lng, p.lat] as [number, number])
+      : rotatedCropCorners(center, size.widthM, size.heightM, rotationDeg).map((c) => [c.lng, c.lat] as [number, number]);
+    spec.onPolygonChange?.(backendPoly);
   }, [rotationDeg, spec.onPolygonChange, spec.baseShape, spec.cornerRadiusMm, spec.mapWidthMm, spec.mapHeightMm]);
 
   useEffect(() => {
@@ -418,6 +432,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const cropSize = { widthM, heightM };
     const shapeKind = spec.baseShape || "rounded";
     const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    shapeKindRef.current = shapeKind;
+    cornerFracRef.current = cornerFrac;
     const shape = L.polygon(rotatedShapePoints(existingCenter, cropSize.widthM, cropSize.heightM, rotationRef.current, shapeKind, cornerFrac), {
       color: "#14b8a6",
       weight: 2,
@@ -473,8 +489,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const syncDecorations = (bounds: L.LatLngBounds, nextRotationDeg = rotationRef.current) => {
       const center = bounds.getCenter();
       const size = boundsSizeMeters(bounds);
-      // Visual: показуємо форму брелка (oval/rect/тощо)
-      shape.setLatLngs(rotatedShapePoints(center, size.widthM, size.heightM, nextRotationDeg, shapeKind, cornerFrac));
+      // Visual: показуємо ПОТОЧНУ форму (через ref, не зафіксовану в замиканні)
+      shape.setLatLngs(rotatedShapePoints(center, size.widthM, size.heightM, nextRotationDeg, shapeKindRef.current, cornerFracRef.current));
       resizeHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, nextRotationDeg, size.widthM / 2, -size.heightM / 2));
       rotateHandleRef.current?.setLatLng(rotatedControlPoint(center, size.widthM, size.heightM, nextRotationDeg, 0, size.heightM / 2 + 42));
       labelRef.current?.setLatLng(northCenter(bounds));
@@ -489,8 +505,10 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       if (spec.onPolygonChange) {
         const center = bounds.getCenter();
         const size = boundsSizeMeters(bounds);
-        const corners = rotatedCropCorners(center, size.widthM, size.heightM, rotationRef.current);
-        spec.onPolygonChange(corners.map((c) => [c.lng, c.lat]));
+        const poly = spec.cropToShape
+          ? rotatedShapePoints(center, size.widthM, size.heightM, rotationRef.current, shapeKindRef.current, cornerFracRef.current).map((p) => [p.lng, p.lat] as [number, number])
+          : rotatedCropCorners(center, size.widthM, size.heightM, rotationRef.current).map((c) => [c.lng, c.lat] as [number, number]);
+        spec.onPolygonChange(poly);
       }
     };
 
