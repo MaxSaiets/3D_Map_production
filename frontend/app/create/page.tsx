@@ -112,6 +112,7 @@ export default function Home() {
     { id: "hexagon", label: "⬡ Шестикутник" },
     { id: "octagon", label: "⯃ Восьмикутник" },
     { id: "capsule", label: "▢ Капсула" },
+    { id: "heart", label: "♥ Серце" },
   ] as const;
   const [figureShape, setFigureShape] = useState<string>("rounded");
   const mapCrop = useMemo(() => (showHexGrid ? undefined : {

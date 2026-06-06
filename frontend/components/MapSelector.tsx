@@ -148,7 +148,7 @@ type KeychainCropSpec = {
   mapWidthMm: number;
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
-  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon";
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart";
   /** Радіус заокруглення кутів (для visual shape). */
   cornerRadiusMm?: number;
   rotationDeg?: number;
@@ -239,6 +239,21 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
       const a = (2 * Math.PI * i) / N;
       pts.push({ x: Math.cos(a) * r, y: Math.sin(a) * r });
     }
+  } else if (shape === "heart") {
+    // Classic heart curve, normalised to fit the box (tip pointing down).
+    const raw: Array<{ x: number; y: number }> = [];
+    const N = 64;
+    for (let i = 0; i < N; i++) {
+      const t = (2 * Math.PI * i) / N;
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      raw.push({ x, y });
+    }
+    const xs = raw.map((p) => p.x), ys = raw.map((p) => p.y);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+    const s = Math.min(w / (maxx - minx), h / (maxy - miny));
+    const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
+    for (const p of raw) pts.push({ x: (p.x - cx) * s, y: (p.y - cy) * s });
   } else if (shape === "hexagon") {
     // Flat-top hexagon inscribed in the box
     const rx = w / 2, ry = h / 2;
