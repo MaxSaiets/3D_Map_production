@@ -32,8 +32,12 @@ module.exports = {
       error_file: '/var/log/3dmap/backend.err.log',
       merge_logs: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      // 3D generation has short memory spikes during terrain solidification/booleans.
-      max_memory_restart: '3200M',
+      // 3D generation has memory spikes during terrain heightmap build +
+      // solidification. On the 3.8GB VPS the old 3200M limit killed terrain maps
+      // mid-run (graceful pm2 restart → lost task). Box has 4GB swap, so allow
+      // up to 4500M: peak briefly touches swap (a little slower) instead of
+      // aborting. Still far below RAM+swap (~7.8GB) so no kernel OOM.
+      max_memory_restart: '4500M',
     },
 
     // ─── Frontend (Next.js) ────────────────────────────────
