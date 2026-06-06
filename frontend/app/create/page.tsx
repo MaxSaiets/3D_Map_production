@@ -106,18 +106,26 @@ export default function Home() {
   // corners flow to the store as zone_polygon_coords so the backend crops OSM to
   // the figure. Sized by the 1:10000 model-size rule (mapWidthMm * 10 m).
   const handleMapRotation = useCallback((deg: number) => setCropRotationDeg(((deg % 360) + 360) % 360), [setCropRotationDeg]);
+  const FIGURE_SHAPES = [
+    { id: "rounded", label: "▭ Прямокутник" },
+    { id: "circle", label: "⬤ Коло" },
+    { id: "hexagon", label: "⬡ Шестикутник" },
+    { id: "octagon", label: "⯃ Восьмикутник" },
+    { id: "capsule", label: "▢ Капсула" },
+  ] as const;
+  const [figureShape, setFigureShape] = useState<string>("rounded");
   const mapCrop = useMemo(() => (showHexGrid ? undefined : {
     aspectRatio: 1,
     maxMetersPerMm: 10,
     targetMetersPerMm: 6,
     mapWidthMm: modelSizeMm || 80,
     mapHeightMm: modelSizeMm || 80,
-    baseShape: "rounded" as const,
-    cornerRadiusMm: 0,
+    baseShape: figureShape as any,
+    cornerRadiusMm: figureShape === "rounded" ? 6 : 0,
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),
-  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords]);
+  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape]);
 
   // Clear the rotated polygon when switching INTO grid mode (grid has its own
   // zone logic) so a stale figure crop can't leak into grid generation.
@@ -475,6 +483,27 @@ export default function Home() {
                 {gridNotice && (
                   <div className="mx-4 mt-3 rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[rgba(15,118,110,0.08)] px-3 py-2 text-[12px] text-[var(--text-primary)]">
                     {gridNotice}
+                  </div>
+                )}
+
+                {!showHexGrid && (
+                  <div className="mx-4 mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Форма:</span>
+                    {FIGURE_SHAPES.map((sh) => (
+                      <button
+                        key={sh.id}
+                        type="button"
+                        onClick={() => setFigureShape(sh.id)}
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                          figureShape === sh.id
+                            ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.14)] text-[var(--text-primary)]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                        }`}
+                      >
+                        {sh.label}
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] text-[var(--text-secondary)]">· клік на карті = поставити точково · ⟳ = обертати</span>
                   </div>
                 )}
 

@@ -148,7 +148,7 @@ type KeychainCropSpec = {
   mapWidthMm: number;
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
-  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token";
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon";
   /** Радіус заокруглення кутів (для visual shape). */
   cornerRadiusMm?: number;
   rotationDeg?: number;
@@ -230,6 +230,21 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
         const a = Math.PI + (Math.PI * i / (N / 2));
         pts.push({ x: Math.cos(a) * r, y: -straight / 2 + Math.sin(a) * r });
       }
+    }
+  } else if (shape === "circle") {
+    // Perfect circle (radius = half of the smaller dimension)
+    const r = Math.min(w, h) / 2;
+    const N = 40;
+    for (let i = 0; i < N; i++) {
+      const a = (2 * Math.PI * i) / N;
+      pts.push({ x: Math.cos(a) * r, y: Math.sin(a) * r });
+    }
+  } else if (shape === "hexagon") {
+    // Flat-top hexagon inscribed in the box
+    const rx = w / 2, ry = h / 2;
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i + Math.PI / 6; // pointy offset
+      pts.push({ x: Math.cos(a) * rx, y: Math.sin(a) * ry });
     }
   } else if (shape === "octagon") {
     const r = Math.min(w, h) / 2 * 0.4;  // зрізаний кут
