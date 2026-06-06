@@ -6,8 +6,11 @@ import {
   ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler, ShieldCheck,
   Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck, User,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
+
+const ShowcaseSection = dynamic(() => import("@/components/ShowcaseSection"), { ssr: false });
 
 /* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
 function MapTile({ accent = "#2E4A3A", paper = "#EFE6D2" }: { accent?: string; paper?: string }) {
@@ -42,6 +45,7 @@ export default function HomePage() {
       <SiteHeader />
       <Hero />
       <PathSelector />
+      <ShowcaseSection />
       <HowItWorks />
       <TemplatesGallery />
       <Craft />
