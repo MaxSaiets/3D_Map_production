@@ -633,21 +633,25 @@ def fetch_city_data(
                 except Exception:
                     pass
             
-            # Проекція в метричну систему (UTM автоматично) - після обрізки
+            # Проекція в метричну систему (UTM автоматично) - після обрізки.
+            # osmnx 2.x перейменував ox.project_gdf -> ox.projection.project_gdf;
+            # без fallback це падало AttributeError → 0 будівель для закордону
+            # (Україна йде з локальної БД і цей шлях не зачіпає).
+            def _project_gdf(_g):
+                if target_crs:
+                    return _g.to_crs(target_crs)
+                try:
+                    return ox.project_gdf(_g)
+                except AttributeError:
+                    return ox.projection.project_gdf(_g)
             if not gdf_b.empty:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", DeprecationWarning)
-                    if target_crs:
-                         gdf_b = gdf_b.to_crs(target_crs)
-                    else:
-                         gdf_b = ox.project_gdf(gdf_b)
+                    gdf_b = _project_gdf(gdf_b)
             if not gdf_p.empty:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", DeprecationWarning)
-                    if target_crs:
-                        gdf_p = gdf_p.to_crs(target_crs)
-                    else:
-                        gdf_p = ox.project_gdf(gdf_p)
+                    gdf_p = _project_gdf(gdf_p)
 
             # Позначаємо parts і додаємо до buildings тільки ті, що мають висотні теги
             if not gdf_p.empty:
