@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -112,10 +113,27 @@ def process_generation_stage(
                 zone_prefix=zone_prefix,
             )
 
+        # ── Flat-map fast path ──────────────────────────────────────────
+        # When terrain is OFF the base is a flat plate with no elevation detail
+        # to represent. The default fine grid (~2m step → ~700k vertices) cost
+        # ~230s here in per-vertex building/road flattening for a surface that is
+        # visually flat — the groove booleans add the crisp cut edges regardless.
+        # Use a coarse plate; massive speedup, no visible quality change.
+        _terr_res = max(float(request.terrain_resolution), 1.0) if request.terrain_resolution is not None else 1.0
+        _grid_step = getattr(request, "grid_step_m", None)
+        _terrain_on = bool(getattr(request, "terrain_enabled", True))
+        _z_scale = request.terrain_z_scale
+        if not _terrain_on:
+            _flat_step = float(os.getenv("FLAT_BASE_STEP_M", "8"))
+            if _grid_step is None or _grid_step < _flat_step:
+                _grid_step = _flat_step
+            _terr_res = min(_terr_res, 60.0)
+            _z_scale = 0.0  # guarantee a flat base (no elevation displacement)
+            print(f"[PERF] {zone_prefix}Flat map: coarse base grid step={_grid_step}m (skip dense terrain build)")
         terrain_mesh, terrain_provider = create_terrain_mesh(
             bbox_meters,
-            z_scale=request.terrain_z_scale,
-            resolution=max(float(request.terrain_resolution), 1.0) if request.terrain_resolution is not None else 1.0,
+            z_scale=_z_scale,
+            resolution=_terr_res,
             latlon_bbox=latlon_bbox,
             source_crs=source_crs,
             terrarium_zoom=request.terrarium_zoom,
@@ -134,7 +152,7 @@ def process_generation_stage(
             subdivide=bool(request.terrain_subdivide),
             subdivide_levels=int(request.terrain_subdivide_levels),
             zone_polygon=zone_polygon_local,
-            grid_step_m=getattr(request, "grid_step_m", None),
+            grid_step_m=_grid_step,
             road_polygons_for_cutting=None,
         )
 
