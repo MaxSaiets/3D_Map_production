@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, MapPin, Crop, SlidersHorizontal, Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface WizardState {
   cityLabel: string;
@@ -25,9 +26,10 @@ export function WizardSteps({
   state: WizardState;
   variant?: "map" | "keychain";
 }) {
+  const t = useTranslations("wizard");
   const { cityLabel, hasSelection, isGenerating, hasDownload, progress } = state;
-  const settingsLabel = variant === "keychain" ? "Дизайн" : "Параметри";
-  const settingsHint = variant === "keychain" ? "Текст, петля, розмір" : "Розмір і шари (за бажанням)";
+  const settingsLabel = variant === "keychain" ? t("settingsKeychain") : t("settingsMap");
+  const settingsHint = variant === "keychain" ? t("hintKeychain") : t("hintMap");
 
   // Derive per-step status from the real workspace state.
   const cityDone = Boolean(cityLabel);
@@ -40,15 +42,15 @@ export function WizardSteps({
   }> = [
     {
       key: "city",
-      label: "Місто",
-      hint: cityLabel ? cityLabel : "Оберіть місто",
+      label: t("city"),
+      hint: cityLabel ? cityLabel : t("cityPrompt"),
       icon: MapPin,
       status: cityDone ? "done" : "current",
     },
     {
       key: "area",
-      label: "Ділянка",
-      hint: hasSelection ? "Виділено" : "Намалюйте прямокутник на мапі",
+      label: t("area"),
+      hint: hasSelection ? t("areaDone") : t("areaPrompt"),
       icon: Crop,
       status: hasSelection ? "done" : cityDone ? "current" : "todo",
     },
@@ -61,12 +63,12 @@ export function WizardSteps({
     },
     {
       key: "result",
-      label: "Готово",
+      label: t("done"),
       hint: isGenerating
-        ? `Генерація ${progress}%`
+        ? t("generating", { progress })
         : hasDownload
-          ? "Завантажте 3MF"
-          : "Згенеруйте модель",
+          ? t("downloadReady")
+          : t("generatePrompt"),
       icon: Download,
       status: hasDownload ? "current" : "todo",
     },
@@ -74,7 +76,7 @@ export function WizardSteps({
 
   return (
     <nav
-      aria-label="Кроки створення"
+      aria-label={t("aria")}
       className="flex items-stretch gap-1.5 overflow-x-auto rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.7)] p-1.5 backdrop-blur sm:gap-2"
     >
       {steps.map((step, i) => {
@@ -105,7 +107,7 @@ export function WizardSteps({
             </span>
             <span className="min-w-0">
               <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
-                Крок {i + 1}
+                {t("step", { n: i + 1 })}
               </span>
               <span className="block truncate text-[13px] font-semibold leading-tight">{step.label}</span>
               <span

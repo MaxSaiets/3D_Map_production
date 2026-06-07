@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES } from "@/lib/generation";
@@ -27,6 +28,7 @@ export function SimpleControlPanel({
   onCityChange?: (key: string) => void;
   onAdvanced?: () => void;
 }) {
+  const t = useTranslations("simple");
   const s = useGenerationStore();
   const {
     selectedArea, setSelectedArea,
@@ -53,7 +55,7 @@ export function SimpleControlPanel({
       meta: { city: selectedCityKey, product_type: "map" },
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-        detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." },
+        detail: { message: t("limitMsg") },
       })),
     });
     setDlBusy(false);
@@ -80,7 +82,7 @@ export function SimpleControlPanel({
           clearInterval(iv);
         } else if (r.status === "failed" || r.status === "cancelled") {
           setGenerating(false);
-          if (r.status === "failed") setError(r.message || "Помилка генерації");
+          if (r.status === "failed") setError(r.message || t("errGen"));
           clearInterval(iv);
         }
       } catch {/* ignore */}
@@ -113,7 +115,7 @@ export function SimpleControlPanel({
   };
 
   const handleGenerate = async () => {
-    if (!selectedArea) { setError("Оберіть район або намалюйте ділянку на мапі"); return; }
+    if (!selectedArea) { setError(t("errSelectArea")); return; }
     setError(null);
     setGenerating(true);
     try {
@@ -147,7 +149,7 @@ export function SimpleControlPanel({
       setTaskGroup(r.task_id, [r.task_id]);
       setActiveTaskId(r.task_id);
     } catch (e: any) {
-      setError(e?.message || "Помилка генерації");
+      setError(e?.message || t("errGen"));
       setGenerating(false);
     }
   };
@@ -163,7 +165,7 @@ export function SimpleControlPanel({
         {cityKeys.length > 0 && onCityChange && (
           <div>
             <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-              <MapPin size={14} /> Крок 1 · Місто
+              <MapPin size={14} /> {t("step1city")}
             </div>
             <select
               value={selectedCityKey}
@@ -171,7 +173,7 @@ export function SimpleControlPanel({
               className="w-full rounded-2xl border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.35)]"
             >
               {cityKeys.map((k) => (
-                <option key={k} value={k}>{k === "Kyiv" ? "Київ" : k === "Khmelnytskyi" ? "Хмельницький" : k}</option>
+                <option key={k} value={k}>{k === "Kyiv" ? t("kyiv") : k === "Khmelnytskyi" ? t("khmel") : k}</option>
               ))}
             </select>
           </div>
@@ -181,9 +183,9 @@ export function SimpleControlPanel({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-              <Sparkles size={14} /> Крок 2 · Готові райони
+              <Sparkles size={14} /> {t("step2districts")}
             </div>
-            <span className="text-[11px] text-[var(--text-secondary)]">або намалюйте на мапі</span>
+            <span className="text-[11px] text-[var(--text-secondary)]">{t("orDraw")}</span>
           </div>
           {featured.length > 0 ? (
             <div className="grid grid-cols-1 gap-2">
@@ -223,18 +225,18 @@ export function SimpleControlPanel({
             </div>
           ) : (
             <div className="rounded-[18px] border border-dashed border-[var(--surface-border)] bg-white/60 px-4 py-4 text-center text-xs text-[var(--text-secondary)]">
-              Для цього міста ще немає готових районів — намалюйте ділянку прямокутником на мапі.
+              {t("noDistricts")}
             </div>
           )}
           <div className="mt-2 text-[11px] text-[var(--text-secondary)]">
-            {selectedArea ? "✓ Ділянку вибрано" : "Ділянку ще не вибрано"}
+            {selectedArea ? t("areaSelected") : t("areaNotSelected")}
           </div>
         </div>
 
         {/* 3. Style */}
         <div>
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            Крок 3 · Стиль
+            {t("step3style")}
           </div>
           <div className="grid grid-cols-2 gap-2">
             {MAP_STYLE_PRESETS.map((p) => {
@@ -261,7 +263,7 @@ export function SimpleControlPanel({
         {/* 4. Size */}
         <div>
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            Крок 4 · Розмір
+            {t("step4size")}
           </div>
           <div className="grid grid-cols-4 gap-2">
             {SIMPLE_SIZES.map((sz) => {
@@ -294,7 +296,7 @@ export function SimpleControlPanel({
               disabled={isGenerating}
               className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${previewMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
             >
-              Швидке прев'ю
+              {t("quickPreview")}
             </button>
             <button
               type="button"
@@ -302,7 +304,7 @@ export function SimpleControlPanel({
               disabled={isGenerating}
               className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${!previewMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
             >
-              Для друку
+              {t("forPrint")}
             </button>
           </div>
 
@@ -312,7 +314,7 @@ export function SimpleControlPanel({
             disabled={!selectedArea || isGenerating}
             className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {isGenerating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Генерація… {progress}%</>) : (<><Play className="h-4 w-4" /> Згенерувати модель</>)}
+            {isGenerating ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>) : (<><Play className="h-4 w-4" /> {t("generate")}</>)}
           </button>
 
           {error && (
@@ -321,7 +323,7 @@ export function SimpleControlPanel({
 
           {downloadUrl && printQuality && printQuality.status !== "ok" && (printQuality.warnings?.length ?? 0) > 0 && (
             <div className="rounded-[16px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
-              Модель готова, але є зауваження щодо друку. Деталі — у режимі «Про».
+              {t("qualityWarn")}
             </div>
           )}
 
@@ -332,7 +334,7 @@ export function SimpleControlPanel({
               disabled={dlBusy}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70 disabled:opacity-60"
             >
-              {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Завантажити 3MF
+              {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {t("downloadFile")}
             </button>
           )}
 
@@ -342,7 +344,7 @@ export function SimpleControlPanel({
               onClick={onAdvanced}
               className="w-full text-center text-[12px] text-[var(--text-secondary)] underline-offset-2 hover:underline"
             >
-              Потрібна серія зон (гексагони / квадрати)? Відкрити режим «Про» →
+              {t("advancedHint")}
             </button>
           )}
 
@@ -352,7 +354,7 @@ export function SimpleControlPanel({
               onClick={() => setOrderOpen(true)}
               className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(142,107,61,0.28)] transition hover:opacity-90"
             >
-              <ShoppingBag className="h-4 w-4" /> Замовити друк
+              <ShoppingBag className="h-4 w-4" /> {t("orderPrint")}
             </button>
           )}
         </div>
