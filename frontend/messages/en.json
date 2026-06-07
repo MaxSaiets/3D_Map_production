@@ -192,5 +192,11 @@
     "mBridge": "Bridges keychain",
     "mBlock": "City district",
     "mDistrict": "3D block"
+  },
+  "consent": {
+    "text": "We use cookies for analytics and to improve the site.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "more": "Learn more"
   }
 }

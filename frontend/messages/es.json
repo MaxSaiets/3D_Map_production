@@ -192,5 +192,11 @@
     "mBridge": "Llavero puentes",
     "mBlock": "Distrito",
     "mDistrict": "Bloque 3D"
+  },
+  "consent": {
+    "text": "Usamos cookies para análisis y para mejorar el sitio.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "more": "Más información"
   }
 }

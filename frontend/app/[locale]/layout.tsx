@@ -6,6 +6,7 @@ import { setRequestLocale, getMessages, getTranslations } from "next-intl/server
 import "../globals.css";
 import { ContactWidget } from "@/components/ContactWidget";
 import { AuthProvider } from "@/components/AuthProvider";
+import SiteAnalytics from "@/components/SiteAnalytics";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 
 const BASE = "https://monadruk.com";
@@ -134,6 +135,7 @@ export default async function LocaleLayout({
           <AuthProvider>
             {children}
             <ContactWidget />
+            <SiteAnalytics />
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

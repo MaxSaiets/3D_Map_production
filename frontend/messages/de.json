@@ -192,5 +192,11 @@
     "mBridge": "Brücken-Anhänger",
     "mBlock": "Stadtviertel",
     "mDistrict": "3D-Block"
+  },
+  "consent": {
+    "text": "Wir verwenden Cookies für Analysen und zur Verbesserung der Website.",
+    "accept": "Akzeptieren",
+    "decline": "Ablehnen",
+    "more": "Mehr erfahren"
   }
 }

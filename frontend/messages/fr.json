@@ -192,5 +192,11 @@
     "mBridge": "Porte-clés ponts",
     "mBlock": "Quartier",
     "mDistrict": "Bloc 3D"
+  },
+  "consent": {
+    "text": "Nous utilisons des cookies pour l'analyse et l'amélioration du site.",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "more": "En savoir plus"
   }
 }

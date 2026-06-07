@@ -192,5 +192,11 @@
     "mBridge": "Brelok z mostami",
     "mBlock": "Dzielnica miasta",
     "mDistrict": "Kwartał 3D"
+  },
+  "consent": {
+    "text": "Używamy plików cookie do analiz i ulepszania witryny.",
+    "accept": "Akceptuję",
+    "decline": "Odrzuć",
+    "more": "Więcej"
   }
 }
