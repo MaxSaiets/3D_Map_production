@@ -3,16 +3,17 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Package, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function AdminPage() {
   const { user, loading, configured, signIn, getIdToken } = useAuth();
-  const [tab, setTab] = useState<"orders" | "users">("orders");
+  const [tab, setTab] = useState<"stats" | "orders" | "users">("stats");
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -25,11 +26,12 @@ export default function AdminPage() {
       const admin = Boolean(q?.quota?.is_admin);
       setIsAdmin(admin);
       if (admin) {
-        const [o, us] = await Promise.all([
+        const [o, us, st] = await Promise.all([
           fetch(`${API_BASE}/api/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
           fetch(`${API_BASE}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
+          fetch(`${API_BASE}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => null),
         ]);
-        setOrders(o.orders || []); setUsers(us.users || []);
+        setOrders(o.orders || []); setUsers(us.users || []); setStats(st || null);
       }
     } catch {/* ignore */} finally { setBusy(false); }
   }, [getIdToken]);
@@ -63,10 +65,58 @@ export default function AdminPage() {
 
       {user && isAdmin && (
         <>
-          <div className="mt-5 flex gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button onClick={() => setTab("stats")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "stats" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><BarChart3 size={15} /> Статистика</button>
             <button onClick={() => setTab("orders")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "orders" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><Package size={15} /> Замовлення ({orders.length})</button>
             <button onClick={() => setTab("users")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "users" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><Users size={15} /> Користувачі ({users.length})</button>
           </div>
+
+          {tab === "stats" && (
+            <div className="mt-5">
+              {!stats ? <p className="text-ink-3">Поки немає даних аналітики.</p> : (
+                <>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {[
+                      ["Унікальні відвідувачі", stats.totals?.uniqueVisitors],
+                      ["Перегляди сторінок", stats.totals?.pageviews],
+                      ["Усього подій", stats.totals?.events],
+                    ].map(([label, val]) => (
+                      <div key={label as string} className="rounded-[14px] border border-line bg-paper p-4">
+                        <div className="font-serif text-[28px] text-ink">{val ?? 0}</div>
+                        <div className="text-[12px] text-ink-3">{label as string}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {(stats.byDay?.length > 0) && (
+                    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+                      <div className="mb-3 text-[13px] font-semibold text-ink-2">Перегляди за днями</div>
+                      <div className="flex items-end gap-1.5" style={{ height: 120 }}>
+                        {stats.byDay.map((d: any) => {
+                          const max = Math.max(...stats.byDay.map((x: any) => x.pageviews || 0), 1);
+                          return (
+                            <div key={d.day} className="flex flex-1 flex-col items-center justify-end" title={`${d.day}: ${d.pageviews} переглядів, ${d.visitors} відвідувачів`}>
+                              <div className="w-full rounded-t bg-forest/80" style={{ height: `${Math.round(((d.pageviews || 0) / max) * 100)}%`, minHeight: d.pageviews ? 3 : 0 }} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-1.5 flex justify-between text-[10px] text-ink-3">
+                        <span>{stats.byDay[0]?.day}</span><span>{stats.byDay[stats.byDay.length - 1]?.day}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    <StatList title="Топ сторінок" rows={stats.topPaths} />
+                    <StatList title="Події" rows={stats.topEvents} />
+                    <StatList title="Мови" rows={stats.byLocale} />
+                  </div>
+                  <p className="mt-4 text-[12px] text-ink-3">Власна аналітика на сервері · без cookie-стеження · IP не зберігається (лише денний хеш).</p>
+                </>
+              )}
+            </div>
+          )}
 
           {tab === "orders" && (
             <div className="mt-5 space-y-3">
@@ -107,6 +157,29 @@ export default function AdminPage() {
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+function StatList({ title, rows }: { title: string; rows?: [string, number][] }) {
+  const data = rows || [];
+  const max = Math.max(...data.map((r) => r[1] || 0), 1);
+  return (
+    <div className="rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-2 text-[13px] font-semibold text-ink-2">{title}</div>
+      {data.length === 0 ? <p className="text-[12px] text-ink-3">—</p> : (
+        <ul className="space-y-1.5">
+          {data.map(([label, count]) => (
+            <li key={label} className="text-[12px]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-ink-2" title={label || "/"}>{label || "/"}</span>
+                <span className="shrink-0 font-semibold text-ink">{count}</span>
+              </div>
+              <div className="mt-0.5 h-1 rounded bg-bg-2"><div className="h-1 rounded bg-forest/70" style={{ width: `${Math.round((count / max) * 100)}%` }} /></div>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
