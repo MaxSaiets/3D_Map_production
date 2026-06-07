@@ -198,5 +198,10 @@
     "accept": "Accept",
     "decline": "Decline",
     "more": "Learn more"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "It may have been moved or removed. Head back home and create your 3D map.",
+    "home": "Back home"
   }
 }

@@ -198,5 +198,10 @@
     "accept": "Akzeptieren",
     "decline": "Ablehnen",
     "more": "Mehr erfahren"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "text": "Sie wurde möglicherweise verschoben oder gelöscht. Zurück zur Startseite und erstelle deine 3D-Karte.",
+    "home": "Zur Startseite"
   }
 }

@@ -198,5 +198,10 @@
     "accept": "Accepter",
     "decline": "Refuser",
     "more": "En savoir plus"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "text": "Elle a peut-être été déplacée ou supprimée. Reviens à l'accueil et crée ta carte 3D.",
+    "home": "Accueil"
   }
 }

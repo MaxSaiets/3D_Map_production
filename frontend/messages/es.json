@@ -198,5 +198,10 @@
     "accept": "Aceptar",
     "decline": "Rechazar",
     "more": "Más información"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "text": "Puede que se haya movido o eliminado. Vuelve al inicio y crea tu mapa 3D.",
+    "home": "Inicio"
   }
 }

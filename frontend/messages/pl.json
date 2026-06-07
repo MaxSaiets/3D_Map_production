@@ -198,5 +198,10 @@
     "accept": "Akceptuję",
     "decline": "Odrzuć",
     "more": "Więcej"
+  },
+  "notFound": {
+    "title": "Nie znaleziono strony",
+    "text": "Mogła zostać przeniesiona lub usunięta. Wróć na stronę główną i stwórz swoją mapę 3D.",
+    "home": "Strona główna"
   }
 }
