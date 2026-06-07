@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MessageCircle, X, Loader2, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -11,6 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
  * Mounted globally so it's available on every page.
  */
 export function ContactWidget() {
+  const t = useTranslations("contact");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,7 +35,7 @@ export function ContactWidget() {
   }, []);
 
   const submit = async () => {
-    if (!phone.trim()) { setError("Вкажіть телефон"); return; }
+    if (!phone.trim()) { setError(t("errPhone")); return; }
     setError(null);
     setSending(true);
     try {
@@ -48,7 +50,7 @@ export function ContactWidget() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setDone(true);
     } catch {
-      setError("Не вдалося відправити. Спробуйте ще раз.");
+      setError(t("sendFail"));
     } finally {
       setSending(false);
     }
@@ -66,28 +68,28 @@ export function ContactWidget() {
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                 <CheckCircle2 size={26} />
               </div>
-              <h4 className="font-serif text-lg text-[var(--ink,#1B2A22)]">Дякуємо!</h4>
-              <p className="mt-1 text-sm text-[var(--ink-2,#4b5a50)]">Ми зв'яжемося з вами найближчим часом.</p>
+              <h4 className="font-serif text-lg text-[var(--ink,#1B2A22)]">{t("thanks")}</h4>
+              <p className="mt-1 text-sm text-[var(--ink-2,#4b5a50)]">{t("thanksText")}</p>
               <button onClick={() => { setOpen(false); setDone(false); setName(""); setPhone(""); setMessage(""); }}
-                className="mt-4 w-full rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-2.5 text-sm font-semibold text-white">Закрити</button>
+                className="mt-4 w-full rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-2.5 text-sm font-semibold text-white">{t("close")}</button>
             </div>
           ) : (
             <>
               <div className="mb-3 flex items-start justify-between">
                 <div>
-                  <h4 className="font-serif text-lg text-[var(--ink,#1B2A22)]">Звʼязатися з нами</h4>
-                  <p className="text-[12px] text-[var(--ink-3,#7c887f)]">Залиште телефон — ми напишемо вам.</p>
+                  <h4 className="font-serif text-lg text-[var(--ink,#1B2A22)]">{t("title")}</h4>
+                  <p className="text-[12px] text-[var(--ink-3,#7c887f)]">{t("subtitle")}</p>
                 </div>
                 <button onClick={() => setOpen(false)} className="rounded-lg p-1 text-[var(--ink-3,#7c887f)] hover:bg-black/5"><X size={18} /></button>
               </div>
               <div className="space-y-2.5">
-                <input className={fieldCls} placeholder="Ім'я (необовʼязково)" value={name} onChange={(e) => setName(e.target.value)} />
-                <input className={fieldCls} placeholder="Телефон (+380…)" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
-                <textarea className={`${fieldCls} min-h-[70px] resize-none`} placeholder="Повідомлення (необовʼязково)" value={message} onChange={(e) => setMessage(e.target.value)} />
+                <input className={fieldCls} placeholder={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
+                <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+                <textarea className={`${fieldCls} min-h-[70px] resize-none`} placeholder={t("phMessage")} value={message} onChange={(e) => setMessage(e.target.value)} />
                 {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
                 <button onClick={submit} disabled={sending}
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60">
-                  {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> Надсилаємо…</>) : "Надіслати"}
+                  {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("sending")}</>) : t("send")}
                 </button>
               </div>
             </>
@@ -98,7 +100,7 @@ export function ContactWidget() {
       {/* Floating button */}
       <button
         type="button"
-        aria-label="Звʼязатися з нами"
+        aria-label={t("title")}
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-5 right-4 z-[90] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(46,74,58,0.4)] transition hover:scale-105"
         style={{ background: "var(--forest, #2E4A3A)" }}
