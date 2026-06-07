@@ -16,7 +16,7 @@ const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), 
 });
 
 const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
-const WEB_MAP = ["/models/map-block.glb", "/models/map-district.glb", "/models/map-dense.glb"];
+const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 export default function ShowcasePage() {
   const t = useTranslations("showcase");
@@ -28,7 +28,7 @@ export default function ShowcasePage() {
     { id: "keychain-home", label: t("mHome"), url: "/models/keychain-home.glb", kind: "key" as const },
     { id: "keychain-water", label: t("mWater"), url: "/models/keychain-water.glb", kind: "key" as const },
     { id: "keychain-bridge", label: t("mBridge"), url: "/models/keychain-bridge.glb", kind: "key" as const },
-    { id: "map-block", label: t("mBlock"), url: "/models/map-block.glb", kind: "map" as const },
+    { id: "map-dense", label: t("mBlock"), url: "/models/map-dense.glb", kind: "map" as const },
     { id: "map-district", label: t("mDistrict"), url: "/models/map-district.glb", kind: "map" as const },
   ];
   const [active, setActive] = useState(VIEW_MODELS[0]);

@@ -17,12 +17,12 @@ const MODELS = [
   { id: "keychain-home", label: "Брелок «HOME»", url: "/models/keychain-home.glb", kind: "key" as const },
   { id: "keychain-water", label: "З рікою", url: "/models/keychain-water.glb", kind: "key" as const },
   { id: "keychain-bridge", label: "З мостами", url: "/models/keychain-bridge.glb", kind: "key" as const },
-  { id: "map-block", label: "Район міста", url: "/models/map-block.glb", kind: "map" as const },
+  { id: "map-dense", label: "Район міста", url: "/models/map-dense.glb", kind: "map" as const },
   { id: "map-district", label: "3D-квартал", url: "/models/map-district.glb", kind: "map" as const },
 ];
 
 const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
-const WEB_MAP = ["/models/map-block.glb", "/models/map-district.glb", "/models/map-dense.glb"];
+const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 const KEYCHAINS = Array.from({ length: 8 }, (_, i) => `/showcase/keychain-${i + 1}.png`);
 const MAPS = Array.from({ length: 11 }, (_, i) => `/showcase/map-${i + 1}.png`);
