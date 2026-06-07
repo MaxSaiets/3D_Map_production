@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import {
   ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler, ShieldCheck,
   Sparkles, KeyRound, MapPin, Download, Star, Search, Box, Truck, User,
-  Menu, X,
+  Menu, X, Globe,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { useLocale } from "next-intl";
+import { locales, localeMeta } from "@/i18n/routing";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -42,38 +45,13 @@ function Eyebrow({ children, dot, light }: { children: React.ReactNode; dot?: bo
 }
 
 /* ---------- FAQ (visible + FAQPage structured data for rich results) ---------- */
-const FAQ_ITEMS: { q: string; a: string }[] = [
-  {
-    q: "Що таке 3D-мапа міста і чим вона відрізняється від звичайної карти?",
-    a: "3D-мапа міста — це тривимірна тактильна модель району з реальними висотами будинків, парками й річками за даними OpenStreetMap. На відміну від пласкої карти, її можна потримати в руках, поставити на полицю чи подарувати.",
-  },
-  {
-    q: "Чи можна зробити 3D-мапу будь-якого міста світу?",
-    a: "Так. У конструкторі Monadruk можна обрати будь-яку точку на Землі — від Києва та Львова до Нью-Йорка чи Парижа — і за пару хвилин створити 3D-мапу району цього міста.",
-  },
-  {
-    q: "У якому форматі я отримаю файл для 3D-друку?",
-    a: "Ти завантажуєш готовий файл 3MF (а також STL) — він одразу відкривається в Bambu Studio чи PrusaSlicer і готовий до друку вдома. Нічого додатково моделювати не треба.",
-  },
-  {
-    q: "Скільки коштує брелок з картою міста або 3D-мапа?",
-    a: "Брелок-мапа міста — від 290 ₴, 3D-мапа району — від 690 ₴ за друк на замовлення. Якщо друкуєш сам — завантаження готового 3D-файлу для власного друку безкоштовне в межах ліміту.",
-  },
-  {
-    q: "Чи можна замовити друк, якщо в мене немає 3D-принтера?",
-    a: "Так. Ми надрукуємо твою 3D-мапу або брелок з екологічного біопластику Eco PLA та надішлемо готовий виріб. Достатньо створити модель онлайн і залишити заявку.",
-  },
-  {
-    q: "Чи можна додати власний напис на брелок-мапу?",
-    a: "Так — на брелок-мапу 55×30 мм можна додати назву міста чи власний текст, який друкується рельєфом поверх карти району.",
-  },
-];
-
 function Faq() {
+  const t = useTranslations("home.faq");
+  const items = [1, 2, 3, 4, 5, 6].map((i) => ({ q: t(`q${i}`), a: t(`a${i}`) }));
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQ_ITEMS.map((it) => ({
+    mainEntity: items.map((it) => ({
       "@type": "Question",
       name: it.q,
       acceptedAnswer: { "@type": "Answer", text: it.a },
@@ -83,13 +61,13 @@ function Faq() {
     <section className="border-t border-line-soft" aria-labelledby="faq-title">
       <div className="mx-auto max-w-[820px] px-5 py-16 lg:py-24">
         <div className="text-center">
-          <Eyebrow dot>Питання та відповіді</Eyebrow>
+          <Eyebrow dot>{t("eyebrow")}</Eyebrow>
           <h2 id="faq-title" className="mt-4 text-[clamp(28px,4vw,46px)] leading-tight">
-            Часті запитання про 3D-мапи й брелки
+            {t("title")}
           </h2>
         </div>
         <div className="mt-9 divide-y divide-line-soft">
-          {FAQ_ITEMS.map((it, i) => (
+          {items.map((it, i) => (
             <details key={i} className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[16px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
                 {it.q}
@@ -123,9 +101,52 @@ export default function HomePage() {
   );
 }
 
+/* ---------- Language switcher ---------- */
+function LanguageSwitcher({ compact }: { compact?: boolean }) {
+  const t = useTranslations("nav");
+  const locale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label={t("language")}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+      >
+        <Globe size={15} />
+        <span className="uppercase">{locale}</span>
+      </button>
+      {open && (
+        <>
+          <button aria-hidden className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
+          <ul className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper p-1 shadow-lift">
+            {locales.map((l) => (
+              <li key={l}>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); router.replace(pathname, { locale: l }); }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-bg-2 ${l === locale ? "font-bold text-forest" : "text-ink-2"}`}
+                >
+                  {localeMeta[l].label}
+                  <span className="text-[11px] uppercase text-ink-3">{l}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ---------- Header ---------- */
 function SiteHeader() {
   const { user, configured } = useAuth();
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
@@ -135,40 +156,41 @@ function SiteHeader() {
           monadruk
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
-          <a href="#how" className="hover:text-ink">Як це працює</a>
-          <Link href="/showcase" className="hover:text-ink">Галерея</Link>
-          <a href="#templates" className="hover:text-ink">Шаблони</a>
-          <Link href="/keychains" className="hover:text-ink">Брелки</Link>
+          <Link href="/#how" className="hover:text-ink">{t("how")}</Link>
+          <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
+          <Link href="/#templates" className="hover:text-ink">{t("templates")}</Link>
+          <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
         </nav>
         <div className="flex items-center gap-2.5">
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
           <Link
             href="/account"
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
-            title={configured && user ? (user.email || user.phoneNumber || "Кабінет") : "Увійти"}
+            title={configured && user ? (user.email || user.phoneNumber || t("account")) : t("login")}
           >
             <User size={15} />
-            <span className="hidden sm:inline">{configured && user ? "Кабінет" : "Увійти"}</span>
+            <span className="hidden sm:inline">{configured && user ? t("account") : t("login")}</span>
           </Link>
           <Link
             href="/keychains"
             className="hidden min-h-[44px] items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
             style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze, #8E6B3D)", background: "rgba(142,107,61,0.08)" }}
           >
-            <KeyRound size={15} /> Брелок
+            <KeyRound size={15} /> {t("keychain")}
           </Link>
           <Link
             href="/create"
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-4 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
             style={{ background: "var(--forest, #2E4A3A)" }}
           >
-            <span className="sm:hidden">Мапа</span>
-            <span className="hidden sm:inline">Створити мапу</span>
+            <span className="sm:hidden">{t("mapShort")}</span>
+            <span className="hidden sm:inline">{t("createMap")}</span>
             <ArrowRight size={15} />
           </Link>
           {/* Mobile menu toggle */}
           <button
             type="button"
-            aria-label={open ? "Закрити меню" : "Відкрити меню"}
+            aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink md:hidden"
@@ -183,11 +205,11 @@ function SiteHeader() {
         <nav className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
           <ul className="flex flex-col">
             {[
-              { href: "/#how", label: "Як це працює" },
-              { href: "/showcase", label: "Галерея" },
-              { href: "/#templates", label: "Шаблони" },
-              { href: "/keychains", label: "Брелки" },
-              { href: "/account", label: configured && user ? "Кабінет" : "Увійти" },
+              { href: "/#how", label: t("how") },
+              { href: "/showcase", label: t("gallery") },
+              { href: "/#templates", label: t("templates") },
+              { href: "/keychains", label: t("keychains") },
+              { href: "/account", label: configured && user ? t("account") : t("login") },
             ].map((it) => (
               <li key={it.href}>
                 <Link
@@ -200,14 +222,15 @@ function SiteHeader() {
               </li>
             ))}
           </ul>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Link href="/keychains" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 text-sm font-semibold" style={{ color: "var(--bronze, #8E6B3D)" }}>
-              <KeyRound size={15} /> Брелок
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <Link href="/keychains" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 text-sm font-semibold" style={{ color: "var(--bronze, #8E6B3D)" }}>
+              <KeyRound size={15} /> {t("keychain")}
             </Link>
-            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
-              Створити мапу <ArrowRight size={15} />
+            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
+              {t("createMap")} <ArrowRight size={15} />
             </Link>
           </div>
+          <div className="mt-3 border-t border-line-soft/60 pt-3"><LanguageSwitcher /></div>
         </nav>
       )}
     </header>
@@ -216,32 +239,31 @@ function SiteHeader() {
 
 /* ---------- Hero ---------- */
 function Hero() {
+  const t = useTranslations("home.hero");
   return (
     <section className="border-b border-line-soft">
       <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
         <div className="fade-up">
-          <Eyebrow dot>Преміум 3D-мапи · Друк удома або на замовлення</Eyebrow>
+          <Eyebrow dot>{t("eyebrow")}</Eyebrow>
           <h1 className="mt-6 text-[clamp(44px,6vw,84px)] leading-[1.04]">
-            Твоє місто.<br />
-            <span className="italic text-forest">Виміряне</span> в 3D.
+            {t("title1")}<br />
+            <span className="italic text-forest">{t("titleItalic")}</span> {t("title2")}
           </h1>
           <p className="mt-7 max-w-[520px] text-[17px] leading-relaxed text-ink-2">
-            Обери район, що для тебе щось значить — або будь-яку точку на Землі.
-            Ми перетворимо її на тактильну архітектурну мапу з висотами будинків,
-            парків і річок. Завантаж готовий 3D-файл і друкуй.
+            {t("desc")}
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/create" className="btn btn-primary btn-lg">
-              Створити свою мапу <ArrowRight size={16} />
+              {t("ctaCreate")} <ArrowRight size={16} />
             </Link>
             <Link href="/keychains" className="btn btn-ghost btn-lg">
-              <KeyRound size={16} /> Брелок з мапою
+              <KeyRound size={16} /> {t("ctaKeychain")}
             </Link>
           </div>
           <div className="mt-12 flex flex-wrap gap-x-9 gap-y-5 border-t border-line-soft pt-8">
-            <Stat n="Будь-яке місто" l="по всьому світу" />
-            <Stat n="3MF · STL" l="готово до друку" />
-            <Stat n="Eco PLA" l="біопластик" />
+            <Stat n={t("stat1n")} l={t("stat1l")} />
+            <Stat n={t("stat2n")} l={t("stat2l")} />
+            <Stat n={t("stat3n")} l={t("stat3l")} />
           </div>
         </div>
         <div className="relative">
@@ -249,27 +271,27 @@ function Hero() {
             <div className="flex items-center justify-between px-2 pb-3 pt-1">
               <div className="flex items-center gap-2">
                 <span className="pulse h-2 w-2 rounded-full bg-forest" />
-                <span className="eyebrow">Жива демонстрація · Київ, Поділ</span>
+                <span className="eyebrow">{t("demoLabel")}</span>
               </div>
               <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
-                <Model3DViewer url="/models/keychain-fea.glb" height={260} label="Брелок-мапа міста" />
+                <Model3DViewer url="/models/keychain-fea.glb" height={260} label={t("viewerKeychain")} />
               </div>
               <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
-                <Model3DViewer url="/models/map-block.glb" height={260} label="3D-район міста" />
+                <Model3DViewer url="/models/map-block.glb" height={260} label={t("viewerMap")} />
               </div>
             </div>
             <div className="flex items-center justify-between px-1 pt-4">
-              <span className="text-[13px] text-ink-2">Живі 3D-моделі — потягни, щоб покрутити</span>
+              <span className="text-[13px] text-ink-2">{t("dragHint")}</span>
               <Link href="/create" className="btn btn-primary btn-sm">
-                Спробувати <ArrowRight size={14} />
+                {t("try")} <ArrowRight size={14} />
               </Link>
             </div>
           </div>
-          <FloatBadge cls="-right-3 -top-3"><Leaf size={14} className="text-forest" /> Eco PLA</FloatBadge>
-          <FloatBadge cls="-bottom-4 left-8"><Download size={14} className="text-forest" /> Готовий 3MF</FloatBadge>
+          <FloatBadge cls="-right-3 -top-3"><Leaf size={14} className="text-forest" /> {t("badgeEco")}</FloatBadge>
+          <FloatBadge cls="-bottom-4 left-8"><Download size={14} className="text-forest" /> {t("badgeReady")}</FloatBadge>
         </div>
       </div>
     </section>
@@ -297,24 +319,25 @@ function FloatBadge({ children, cls }: { children: React.ReactNode; cls: string 
 
 /* ---------- Two paths ---------- */
 function PathSelector() {
+  const t = useTranslations("home.path");
   return (
     <section className="mx-auto max-w-[1360px] px-5 py-16 lg:px-8 lg:py-20">
       <div className="grid gap-5 md:grid-cols-2">
         <PathCard
           href="/create"
           primary
-          eyebrow="Шлях 1 · Власна геометрія"
-          title="Створити свою мапу"
-          desc="Знайди будь-яке місце на Землі, окресли зону, обери стиль і розмір. 5 кроків — близько 3 хвилин."
-          cta="Запустити конструктор"
+          eyebrow={t("eyebrow1")}
+          title={t("title1")}
+          desc={t("desc1")}
+          cta={t("cta1")}
           icon={<Sparkles size={22} />}
         />
         <PathCard
           href="/keychains"
-          eyebrow="Шлях 2 · Аксесуар"
-          title="Брелок з мапою"
-          desc="Мініатюра твого району на ключах. Жетон 55×30, класичний або квадратний — з твоїм написом."
-          cta="Відкрити майстерню брелків"
+          eyebrow={t("eyebrow2")}
+          title={t("title2")}
+          desc={t("desc2")}
+          cta={t("cta2")}
           icon={<KeyRound size={22} />}
         />
       </div>
@@ -351,24 +374,25 @@ function PathCard({ href, eyebrow, title, desc, cta, icon, primary }: {
 
 /* ---------- How it works ---------- */
 function HowItWorks() {
+  const t = useTranslations("home.how");
   const steps = [
-    { n: "01", t: "Виділяєте зону", d: "Шукайте місто та перетягуйте рамку. Розміри в км — без координат." },
-    { n: "02", t: "Налаштовуєте", d: "Стиль, шари, розмір. Превʼю оновлюється в реальному часі." },
-    { n: "03", t: "Генеруємо", d: "Сервер будує точну 3D-модель з даних OpenStreetMap і висот." },
-    { n: "04", t: "Завантажуєте", d: "Готовий 3MF для Bambu Studio / PrusaSlicer. Друкуйте вдома." },
+    { n: "01", t: t("s1t"), d: t("s1d") },
+    { n: "02", t: t("s2t"), d: t("s2d") },
+    { n: "03", t: t("s3t"), d: t("s3d") },
+    { n: "04", t: t("s4t"), d: t("s4d") },
   ];
   return (
     <section id="how" className="bg-ink py-20 text-[#E8E1CC] lg:py-28">
       <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
         <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <Eyebrow dot light>Процес</Eyebrow>
+            <Eyebrow dot light>{t("eyebrow")}</Eyebrow>
             <h2 className="mt-4 max-w-[600px] text-[clamp(32px,4vw,56px)] text-[#F4EFE4]">
-              Від точки на карті — до моделі у твоєму принтері
+              {t("title")}
             </h2>
           </div>
           <p className="max-w-[340px] text-[15px] leading-relaxed text-[#A8AC9F]">
-            Прозоро. Без технічного жаргону. Готовий файл для друку — за кілька хвилин.
+            {t("sub")}
           </p>
         </div>
         <div className="grid gap-px border-t border-[#2A3830] md:grid-cols-4">
@@ -384,7 +408,7 @@ function HowItWorks() {
           ))}
         </div>
         <div className="mt-14">
-          <Link href="/create" className="btn btn-bronze btn-lg">Почати <ArrowRight size={16} /></Link>
+          <Link href="/create" className="btn btn-bronze btn-lg">{t("cta")} <ArrowRight size={16} /></Link>
         </div>
       </div>
     </section>
@@ -393,19 +417,19 @@ function HowItWorks() {
 
 /* ---------- Templates gallery ---------- */
 function TemplatesGallery() {
-  const accents = ["#2E4A3A", "#3F5B45", "#9A7242", "#5B5E5A"];
+  const t = useTranslations("home.templates");
   return (
     <section id="templates" className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <Eyebrow dot>Готові шаблони</Eyebrow>
-          <h2 className="mt-4 text-[clamp(30px,3.4vw,52px)]">Почни з відомого району</h2>
+          <Eyebrow dot>{t("eyebrow")}</Eyebrow>
+          <h2 className="mt-4 text-[clamp(30px,3.4vw,52px)]">{t("title")}</h2>
           <p className="mt-3 max-w-[520px] text-[15px] text-ink-2">
-            Обери готовий пресет — він одразу відкриє конструктор з виставленою зоною. Або створи з нуля.
+            {t("desc")}
           </p>
         </div>
         <Link href="/create" className="btn btn-ghost hidden sm:inline-flex">
-          Усі міста <ArrowRight size={14} />
+          {t("all")} <ArrowRight size={14} />
         </Link>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -442,7 +466,7 @@ function TemplatesGallery() {
 
       {/* Style presets */}
       <div className="mt-14">
-        <Eyebrow>Стилі готової мапи</Eyebrow>
+        <Eyebrow>{t("stylesEyebrow")}</Eyebrow>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MAP_STYLE_PRESETS.map((p) => (
             <div key={p.id} className="rounded-[14px] border border-line bg-paper p-5">
@@ -459,22 +483,21 @@ function TemplatesGallery() {
 
 /* ---------- Craft / specs ---------- */
 function Craft() {
+  const t = useTranslations("home.craft");
   const specs = [
-    { icon: <Ruler size={18} />, t: "Точний друк", d: "Оптимізовано під FDM" },
-    { icon: <Leaf size={18} />, t: "PLA-біопластик", d: "Кукурудзяний крохмаль" },
-    { icon: <Layers3 size={18} />, t: "Реальні дані", d: "OpenStreetMap + висоти" },
-    { icon: <Download size={18} />, t: "Формат 3MF", d: "Bambu / Prusa готово" },
+    { icon: <Ruler size={18} />, t: t("spec1t"), d: t("spec1d") },
+    { icon: <Leaf size={18} />, t: t("spec2t"), d: t("spec2d") },
+    { icon: <Layers3 size={18} />, t: t("spec3t"), d: t("spec3d") },
+    { icon: <Download size={18} />, t: t("spec4t"), d: t("spec4d") },
   ];
   return (
     <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8">
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div>
-          <Eyebrow dot>Якість</Eyebrow>
-          <h2 className="mt-4 mb-6 text-[clamp(30px,3.4vw,52px)]">Не сувенір. <span className="italic">Документ.</span></h2>
+          <Eyebrow dot>{t("eyebrow")}</Eyebrow>
+          <h2 className="mt-4 mb-6 text-[clamp(30px,3.4vw,52px)]">{t("title")} <span className="italic">{t("titleItalic")}</span></h2>
           <p className="mb-9 max-w-[520px] text-[16px] leading-relaxed text-ink-2">
-            Кожна мапа — це геодезичні дані OpenStreetMap і реальні висоти. Модель
-            автоматично спрощується для чистого FDM-друку: мінімальні товщини,
-            кольорові шари для багатоколірних принтерів (Bambu AMS).
+            {t("desc")}
           </p>
           <div className="grid grid-cols-2 gap-7">
             {specs.map((s) => (
@@ -510,23 +533,23 @@ function Craft() {
 
 /* ---------- Testimonials ---------- */
 function Testimonials() {
+  const t = useTranslations("home.testimonials");
   const items = [
-    { q: "Все дуже сподобалось, дякую! Результат перевершив очікування.", a: "Анна" },
-    { q: "Швидко й зручно. Все вийшло чудово, рекомендую.", a: "Тарас" },
-    { q: "Дуже якісно, все чітко. Залишилась задоволена.", a: "Олена" },
-    { q: "Простий і приємний сервіс. Усе спрацювало з першого разу.", a: "Дмитро" },
-    { q: "Гарний результат, акуратно зроблено. Дякую за роботу!", a: "Ірина" },
-    { q: "Зробив за кілька хвилин, усе зрозуміло. Класно!", a: "Максим" },
-    { q: "Дуже задоволена, вийшло саме так, як хотіла.", a: "Софія" },
-    { q: "Все на висоті, користуватися легко. Дякую!", a: "Андрій" },
+    { q: t("q1"), a: "Anna" },
+    { q: t("q2"), a: "Taras" },
+    { q: t("q3"), a: "Olena" },
+    { q: t("q4"), a: "Dmytro" },
+    { q: t("q5"), a: "Iryna" },
+    { q: t("q6"), a: "Maksym" },
   ];
+  const tBadge = t("badge");
   return (
     <section className="bg-bg-2 py-20 lg:py-28">
       <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
         <h2 className="mb-3 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">
-          Що кажуть клієнти
+          {t("title")}
         </h2>
-        <p className="mb-10 text-[15px] text-ink-2">Гортайте, щоб побачити більше відгуків →</p>
+        <p className="mb-10 text-[15px] text-ink-2">{t("sub")}</p>
         <div className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((t, i) => (
             <article key={i} className="card card-paper flex w-[300px] shrink-0 snap-start flex-col p-7">
@@ -536,7 +559,7 @@ function Testimonials() {
               <p className="mb-6 flex-1 font-serif text-[18px] leading-snug">«{t.q}»</p>
               <div className="flex items-center justify-between border-t border-line-soft pt-5">
                 <div className="text-[14px] font-semibold">{t.a}</div>
-                <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">Відгук</span>
+                <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">{tBadge}</span>
               </div>
             </article>
           ))}
@@ -548,21 +571,22 @@ function Testimonials() {
 
 /* ---------- Final CTA ---------- */
 function FinalCTA() {
+  const t = useTranslations("home.cta");
   return (
     <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="grid items-center gap-12 overflow-hidden rounded-[32px] bg-forest px-8 py-16 text-[#F4EFE4] lg:grid-cols-[1.4fr_1fr] lg:px-16">
         <div>
-          <Eyebrow dot light>Готові почати?</Eyebrow>
+          <Eyebrow dot light>{t("eyebrow")}</Eyebrow>
           <h2 className="mb-6 mt-4 max-w-[560px] text-[clamp(30px,3.4vw,52px)] text-[#F4EFE4]">
-            Створіть мапу місця, що значить більше за крапку на карті.
+            {t("title")}
           </h2>
           <p className="mb-9 max-w-[480px] text-[16px] leading-relaxed text-[rgba(244,239,228,0.78)]">
-            5 кроків, близько 3 хвилин — і ви завантажуєте готовий 3D-файл для друку.
+            {t("desc")}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/create" className="btn btn-bronze btn-lg">Створити мапу <ArrowRight size={16} /></Link>
+            <Link href="/create" className="btn btn-bronze btn-lg">{t("create")} <ArrowRight size={16} /></Link>
             <Link href="/keychains" className="btn btn-ghost btn-lg" style={{ color: "#F4EFE4", borderColor: "rgba(244,239,228,0.4)" }}>
-              Брелок
+              {t("keychain")}
             </Link>
           </div>
         </div>
@@ -577,6 +601,7 @@ function FinalCTA() {
 
 /* ---------- Footer ---------- */
 function SiteFooter() {
+  const t = useTranslations("home.footer");
   return (
     <footer className="border-t border-line-soft py-12">
       <div className="mx-auto flex max-w-[1360px] flex-col items-center justify-between gap-6 px-5 text-sm text-ink-3 md:flex-row lg:px-8">
@@ -584,11 +609,11 @@ function SiteFooter() {
           <Box size={18} className="text-forest" /> monadruk
         </div>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-          <Link href="/create" className="hover:text-ink">Створити мапу</Link>
-          <Link href="/keychains" className="hover:text-ink">Брелки</Link>
-          <Link href="/account" className="hover:text-ink">Кабінет</Link>
-          <Link href="/privacy" className="hover:text-ink">Конфіденційність</Link>
-          <Link href="/terms" className="hover:text-ink">Умови</Link>
+          <Link href="/create" className="hover:text-ink">{t("create")}</Link>
+          <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
+          <Link href="/account" className="hover:text-ink">{t("account")}</Link>
+          <Link href="/privacy" className="hover:text-ink">{t("privacy")}</Link>
+          <Link href="/terms" className="hover:text-ink">{t("terms")}</Link>
         </div>
         <div>© {new Date().getFullYear()} monadruk.com</div>
       </div>

@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "homeTitle": "Monadruk — 3D-Karten deiner Stadt zum Drucken",
+    "homeDescription": "Wähle ein Viertel deiner Stadt, passe das Modell an und lade eine druckfertige 3D-Datei herunter. Taktile Architekturkarten mit echten Gebäudehöhen, Parks und Flüssen. Schlüsselanhänger mit Stadtkarte auf Bestellung.",
+    "ogTitle": "Monadruk — 3D-Karten deiner Stadt",
+    "ogDescription": "Verwandle jeden Ort der Erde in eine taktile 3D-Karte zum Drucken.",
+    "keywords": "3D-Karte, 3D-Druck, Stadtkarte, 3MF, Schlüsselanhänger Karte, taktile Karte, Souvenir, Bambu Studio, PrusaSlicer",
+    "orgDescription": "Taktile 3D-Karten und Schlüsselanhänger mit Stadtkarte zum Drucken.",
+    "serviceName": "3D-Stadtkarten und Schlüsselanhänger auf Bestellung",
+    "serviceType": "Herstellung von 3D-Stadtkarten und Schlüsselanhängern für den 3D-Druck",
+    "serviceDescription": "Erstelle eine 3D-Karte jeder Stadt der Welt: lade eine fertige 3MF/STL-Datei herunter oder bestelle den Druck in Eco PLA. Personalisierte Karten-Schlüsselanhänger.",
+    "offerKeychain": "Schlüsselanhänger mit Stadtkarte",
+    "offerMap": "3D-Karte eines Stadtviertels"
+  },
+  "nav": {
+    "how": "So funktioniert's",
+    "gallery": "Galerie",
+    "templates": "Vorlagen",
+    "keychains": "Anhänger",
+    "account": "Konto",
+    "login": "Anmelden",
+    "createMap": "Karte erstellen",
+    "mapShort": "Karte",
+    "keychain": "Anhänger",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "language": "Sprache"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Premium 3D-Karten · Zuhause drucken oder bestellen",
+      "title1": "Deine Stadt.",
+      "titleItalic": "Vermessen",
+      "title2": "in 3D.",
+      "desc": "Wähle ein Viertel, das dir etwas bedeutet — oder jeden Punkt der Erde. Wir verwandeln es in eine taktile Architekturkarte mit echten Gebäude-, Park- und Flusshöhen. Lade eine fertige 3D-Datei herunter und drucke.",
+      "ctaCreate": "Karte erstellen",
+      "ctaKeychain": "Karten-Anhänger",
+      "stat1n": "Jede Stadt", "stat1l": "weltweit",
+      "stat2n": "3MF · STL", "stat2l": "druckfertig",
+      "stat3n": "Eco PLA", "stat3l": "Biokunststoff",
+      "demoLabel": "Live-Demo · Kyjiw, Podil",
+      "viewerKeychain": "Schlüsselanhänger mit Stadtkarte",
+      "viewerMap": "3D-Stadtviertel",
+      "dragHint": "Live-3D-Modelle — zum Drehen ziehen",
+      "try": "Ausprobieren",
+      "badgeEco": "Eco PLA",
+      "badgeReady": "Fertige 3MF"
+    },
+    "path": {
+      "eyebrow1": "Weg 1 · Eigene Geometrie",
+      "title1": "Karte erstellen",
+      "desc1": "Finde jeden Ort der Erde, umreiße den Bereich, wähle Stil und Größe. 5 Schritte — etwa 3 Minuten.",
+      "cta1": "Konfigurator starten",
+      "eyebrow2": "Weg 2 · Accessoire",
+      "title2": "Karten-Anhänger",
+      "desc2": "Eine Miniatur deines Viertels am Schlüssel. Ein 55×30-Plättchen, klassisch oder quadratisch — mit deinem Text.",
+      "cta2": "Anhänger-Werkstatt öffnen"
+    },
+    "how": {
+      "eyebrow": "Ablauf",
+      "title": "Vom Punkt auf der Karte — zum Modell in deinem Drucker",
+      "sub": "Klar. Ohne Fachjargon. Eine druckfertige Datei in wenigen Minuten.",
+      "s1t": "Bereich wählen", "s1d": "Suche eine Stadt und zieh den Rahmen. Größen in km — ohne Koordinaten.",
+      "s2t": "Anpassen", "s2d": "Stil, Ebenen, Größe. Die Vorschau aktualisiert sich in Echtzeit.",
+      "s3t": "Wir generieren", "s3d": "Der Server baut ein präzises 3D-Modell aus OpenStreetMap-Daten und Höhen.",
+      "s4t": "Herunterladen", "s4d": "Fertige 3MF für Bambu Studio / PrusaSlicer. Drucke zuhause.",
+      "cta": "Loslegen"
+    },
+    "templates": {
+      "eyebrow": "Fertige Vorlagen",
+      "title": "Beginne mit einem bekannten Viertel",
+      "desc": "Wähle ein fertiges Preset — es öffnet den Konfigurator mit eingestelltem Bereich. Oder starte von Grund auf.",
+      "all": "Alle Städte",
+      "stylesEyebrow": "Kartenstile"
+    },
+    "craft": {
+      "eyebrow": "Qualität",
+      "title": "Kein Souvenir.",
+      "titleItalic": "Ein Dokument.",
+      "desc": "Jede Karte basiert auf OpenStreetMap-Geodaten und echten Höhen. Das Modell wird automatisch für sauberen FDM-Druck vereinfacht: minimale Wandstärken, Farbebenen für Mehrfarbdrucker (Bambu AMS).",
+      "spec1t": "Präziser Druck", "spec1d": "Für FDM optimiert",
+      "spec2t": "PLA-Biokunststoff", "spec2d": "Aus Maisstärke",
+      "spec3t": "Echte Daten", "spec3d": "OpenStreetMap + Höhen",
+      "spec4t": "3MF-Format", "spec4d": "Bambu / Prusa bereit"
+    },
+    "testimonials": {
+      "title": "Was Kunden sagen",
+      "sub": "Wische, um mehr Bewertungen zu sehen →",
+      "badge": "Bewertung",
+      "q1": "Hat mir sehr gefallen, danke! Das Ergebnis übertraf meine Erwartungen.",
+      "q2": "Schnell und einfach. Es ist toll geworden, sehr empfehlenswert.",
+      "q3": "Tolle Qualität, alles scharf. Sehr zufrieden.",
+      "q4": "Einfacher, angenehmer Service. Hat beim ersten Mal geklappt.",
+      "q5": "Schönes Ergebnis, sauber gemacht. Danke für die Arbeit!",
+      "q6": "In wenigen Minuten fertig, alles klar. Klasse!"
+    },
+    "faq": {
+      "eyebrow": "Fragen & Antworten",
+      "title": "Häufige Fragen zu 3D-Karten und Anhängern",
+      "q1": "Was ist eine 3D-Stadtkarte und wie unterscheidet sie sich von einer normalen Karte?",
+      "a1": "Eine 3D-Stadtkarte ist ein dreidimensionales taktiles Modell eines Viertels mit echten Gebäudehöhen, Parks und Flüssen aus OpenStreetMap-Daten. Anders als eine flache Karte kann man sie anfassen, ins Regal stellen oder verschenken.",
+      "q2": "Könnt ihr eine 3D-Karte jeder Stadt der Welt machen?",
+      "a2": "Ja. Im Monadruk-Konfigurator kannst du jeden Punkt der Erde wählen — von Kyjiw und Lwiw bis New York oder Paris — und in Minuten eine 3D-Karte dieses Viertels erstellen.",
+      "q3": "In welchem Format erhalte ich die Datei für den 3D-Druck?",
+      "a3": "Du lädst eine fertige 3MF-Datei herunter (auch STL) — sie öffnet sich direkt in Bambu Studio oder PrusaSlicer und ist druckfertig.",
+      "q4": "Was kostet ein Schlüsselanhänger mit Stadtkarte oder eine 3D-Karte?",
+      "a4": "Ein Karten-Anhänger ab 7 €, eine 3D-Viertelkarte ab 17 € für den Druck auf Bestellung. Druckst du selbst, ist der Download der fertigen Datei im Rahmen deines Limits kostenlos.",
+      "q5": "Kann ich den Druck bestellen, wenn ich keinen 3D-Drucker habe?",
+      "a5": "Ja. Wir drucken deine 3D-Karte oder deinen Anhänger aus umweltfreundlichem Eco-PLA-Biokunststoff und versenden das fertige Produkt.",
+      "q6": "Kann ich eigenen Text auf den Karten-Anhänger setzen?",
+      "a6": "Ja — auf einen 55×30-mm-Karten-Anhänger kannst du einen Stadtnamen oder eigenen Text setzen, der als Relief über der Viertelkarte gedruckt wird."
+    },
+    "cta": {
+      "eyebrow": "Bereit anzufangen?",
+      "title": "Erstelle eine Karte von einem Ort, der mehr bedeutet als ein Punkt.",
+      "desc": "5 Schritte, etwa 3 Minuten — und du lädst eine druckfertige 3D-Datei herunter.",
+      "create": "Karte erstellen",
+      "keychain": "Anhänger"
+    },
+    "footer": {
+      "create": "Karte erstellen",
+      "keychains": "Anhänger",
+      "account": "Konto",
+      "privacy": "Datenschutz",
+      "terms": "AGB"
+    }
+  }
+}

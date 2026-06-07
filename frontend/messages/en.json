@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "homeTitle": "Monadruk — 3D maps of your city for printing",
+    "homeDescription": "Pick a district of your city, tune the model and download a print-ready 3D file. Tactile architectural maps with real building heights, parks and rivers. Custom city-map keychains.",
+    "ogTitle": "Monadruk — 3D maps of your city",
+    "ogDescription": "Turn any place on Earth into a tactile 3D map ready to print.",
+    "keywords": "3D map, 3D printing, city map, 3MF, map keychain, tactile map, souvenir, Bambu Studio, PrusaSlicer",
+    "orgDescription": "Tactile 3D maps and city-map keychains ready for printing.",
+    "serviceName": "Custom 3D city maps and keychains",
+    "serviceType": "Making 3D city maps and keychains for 3D printing",
+    "serviceDescription": "Create a 3D map of any city in the world: download a ready 3MF/STL file or order printing in Eco PLA. Personalised map keychains.",
+    "offerKeychain": "City map keychain",
+    "offerMap": "3D city district map"
+  },
+  "nav": {
+    "how": "How it works",
+    "gallery": "Gallery",
+    "templates": "Templates",
+    "keychains": "Keychains",
+    "account": "Account",
+    "login": "Sign in",
+    "createMap": "Create a map",
+    "mapShort": "Map",
+    "keychain": "Keychain",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Premium 3D maps · Print at home or order",
+      "title1": "Your city.",
+      "titleItalic": "Measured",
+      "title2": "in 3D.",
+      "desc": "Pick a district that means something to you — or any point on Earth. We turn it into a tactile architectural map with real building, park and river heights. Download a ready 3D file and print.",
+      "ctaCreate": "Create your map",
+      "ctaKeychain": "Map keychain",
+      "stat1n": "Any city", "stat1l": "worldwide",
+      "stat2n": "3MF · STL", "stat2l": "print-ready",
+      "stat3n": "Eco PLA", "stat3l": "bioplastic",
+      "demoLabel": "Live demo · Kyiv, Podil",
+      "viewerKeychain": "City map keychain",
+      "viewerMap": "3D city district",
+      "dragHint": "Live 3D models — drag to rotate",
+      "try": "Try it",
+      "badgeEco": "Eco PLA",
+      "badgeReady": "Ready 3MF"
+    },
+    "path": {
+      "eyebrow1": "Path 1 · Your own geometry",
+      "title1": "Create your map",
+      "desc1": "Find any place on Earth, outline the area, choose a style and size. 5 steps — about 3 minutes.",
+      "cta1": "Launch the builder",
+      "eyebrow2": "Path 2 · Accessory",
+      "title2": "Map keychain",
+      "desc2": "A miniature of your district on your keys. A 55×30 tag, classic or square — with your text.",
+      "cta2": "Open the keychain studio"
+    },
+    "how": {
+      "eyebrow": "Process",
+      "title": "From a point on the map — to a model in your printer",
+      "sub": "Clear. No technical jargon. A print-ready file in a few minutes.",
+      "s1t": "Select an area", "s1d": "Search for a city and drag the frame. Sizes in km — no coordinates.",
+      "s2t": "Customise", "s2d": "Style, layers, size. The preview updates in real time.",
+      "s3t": "We generate", "s3d": "Our server builds a precise 3D model from OpenStreetMap data and elevations.",
+      "s4t": "Download", "s4d": "A ready 3MF for Bambu Studio / PrusaSlicer. Print at home.",
+      "cta": "Get started"
+    },
+    "templates": {
+      "eyebrow": "Ready templates",
+      "title": "Start with a known district",
+      "desc": "Pick a ready preset — it opens the builder with the area already set. Or start from scratch.",
+      "all": "All cities",
+      "stylesEyebrow": "Map styles"
+    },
+    "craft": {
+      "eyebrow": "Quality",
+      "title": "Not a souvenir.",
+      "titleItalic": "A document.",
+      "desc": "Every map is OpenStreetMap geodata and real elevations. The model is automatically simplified for clean FDM printing: minimal wall thickness, colour layers for multi-colour printers (Bambu AMS).",
+      "spec1t": "Precise print", "spec1d": "Optimised for FDM",
+      "spec2t": "PLA bioplastic", "spec2d": "Made from corn starch",
+      "spec3t": "Real data", "spec3d": "OpenStreetMap + elevation",
+      "spec4t": "3MF format", "spec4d": "Bambu / Prusa ready"
+    },
+    "testimonials": {
+      "title": "What customers say",
+      "sub": "Swipe to see more reviews →",
+      "badge": "Review",
+      "q1": "Loved it, thank you! The result exceeded my expectations.",
+      "q2": "Fast and easy. It turned out great, highly recommend.",
+      "q3": "Great quality, all crisp. Very happy with it.",
+      "q4": "Simple and pleasant service. Worked on the first try.",
+      "q5": "Lovely result, neatly made. Thanks for the work!",
+      "q6": "Done in a few minutes, all clear. Awesome!"
+    },
+    "faq": {
+      "eyebrow": "Questions & answers",
+      "title": "Frequently asked questions about 3D maps and keychains",
+      "q1": "What is a 3D city map and how is it different from a regular map?",
+      "a1": "A 3D city map is a three-dimensional tactile model of a district with real building heights, parks and rivers from OpenStreetMap data. Unlike a flat map, you can hold it, put it on a shelf or give it as a gift.",
+      "q2": "Can you make a 3D map of any city in the world?",
+      "a2": "Yes. In the Monadruk builder you can pick any point on Earth — from Kyiv and Lviv to New York or Paris — and create a 3D map of that district in minutes.",
+      "q3": "In what format do I get the file for 3D printing?",
+      "a3": "You download a ready 3MF file (and STL too) — it opens straight away in Bambu Studio or PrusaSlicer and is ready to print at home.",
+      "q4": "How much does a city map keychain or a 3D map cost?",
+      "a4": "A city map keychain starts at €7, a 3D district map from €17 for made-to-order printing. If you print yourself, downloading the ready file is free within your limit.",
+      "q5": "Can I order printing if I don't have a 3D printer?",
+      "a5": "Yes. We print your 3D map or keychain in eco-friendly Eco PLA bioplastic and ship the finished item.",
+      "q6": "Can I add my own text to the map keychain?",
+      "a6": "Yes — on a 55×30 mm map keychain you can add a city name or custom text printed in relief over the district map."
+    },
+    "cta": {
+      "eyebrow": "Ready to start?",
+      "title": "Make a map of a place that means more than a dot on a map.",
+      "desc": "5 steps, about 3 minutes — and you download a print-ready 3D file.",
+      "create": "Create a map",
+      "keychain": "Keychain"
+    },
+    "footer": {
+      "create": "Create a map",
+      "keychains": "Keychains",
+      "account": "Account",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    }
+  }
+}

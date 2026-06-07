@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "homeTitle": "Monadruk — mapy 3D Twojego miasta do druku",
+    "homeDescription": "Wybierz dzielnicę swojego miasta, dostosuj model i pobierz gotowy plik 3D do druku. Dotykowe mapy architektoniczne z realnymi wysokościami budynków, parków i rzek. Breloki z mapą miasta na zamówienie.",
+    "ogTitle": "Monadruk — mapy 3D Twojego miasta",
+    "ogDescription": "Zamień dowolne miejsce na Ziemi w dotykową mapę 3D gotową do druku.",
+    "keywords": "mapa 3D, druk 3D, mapa miasta, 3MF, brelok z mapą, mapa dotykowa, pamiątka, Bambu Studio, PrusaSlicer",
+    "orgDescription": "Dotykowe mapy 3D i breloki z mapą miasta gotowe do druku.",
+    "serviceName": "Mapy 3D miast i breloki na zamówienie",
+    "serviceType": "Tworzenie map 3D miast i breloków do druku 3D",
+    "serviceDescription": "Stwórz mapę 3D dowolnego miasta na świecie: pobierz gotowy plik 3MF/STL lub zamów druk w Eco PLA. Spersonalizowane breloki z mapą.",
+    "offerKeychain": "Brelok z mapą miasta",
+    "offerMap": "Mapa 3D dzielnicy miasta"
+  },
+  "nav": {
+    "how": "Jak to działa",
+    "gallery": "Galeria",
+    "templates": "Szablony",
+    "keychains": "Breloki",
+    "account": "Konto",
+    "login": "Zaloguj się",
+    "createMap": "Stwórz mapę",
+    "mapShort": "Mapa",
+    "keychain": "Brelok",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "language": "Język"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Premium mapy 3D · Druk w domu lub na zamówienie",
+      "title1": "Twoje miasto.",
+      "titleItalic": "Zmierzone",
+      "title2": "w 3D.",
+      "desc": "Wybierz dzielnicę, która coś dla Ciebie znaczy — lub dowolny punkt na Ziemi. Zamienimy go w dotykową mapę architektoniczną z realnymi wysokościami budynków, parków i rzek. Pobierz gotowy plik 3D i drukuj.",
+      "ctaCreate": "Stwórz swoją mapę",
+      "ctaKeychain": "Brelok z mapą",
+      "stat1n": "Dowolne miasto", "stat1l": "na całym świecie",
+      "stat2n": "3MF · STL", "stat2l": "gotowe do druku",
+      "stat3n": "Eco PLA", "stat3l": "biotworzywo",
+      "demoLabel": "Demo na żywo · Kijów, Podił",
+      "viewerKeychain": "Brelok z mapą miasta",
+      "viewerMap": "Dzielnica 3D",
+      "dragHint": "Modele 3D na żywo — przeciągnij, aby obrócić",
+      "try": "Wypróbuj",
+      "badgeEco": "Eco PLA",
+      "badgeReady": "Gotowy 3MF"
+    },
+    "path": {
+      "eyebrow1": "Ścieżka 1 · Własna geometria",
+      "title1": "Stwórz swoją mapę",
+      "desc1": "Znajdź dowolne miejsce na Ziemi, zaznacz obszar, wybierz styl i rozmiar. 5 kroków — około 3 minut.",
+      "cta1": "Uruchom kreator",
+      "eyebrow2": "Ścieżka 2 · Akcesorium",
+      "title2": "Brelok z mapą",
+      "desc2": "Miniatura Twojej dzielnicy przy kluczach. Blaszka 55×30, klasyczna lub kwadratowa — z Twoim napisem.",
+      "cta2": "Otwórz pracownię breloków"
+    },
+    "how": {
+      "eyebrow": "Proces",
+      "title": "Od punktu na mapie — do modelu w Twojej drukarce",
+      "sub": "Przejrzyście. Bez technicznego żargonu. Gotowy plik do druku w kilka minut.",
+      "s1t": "Zaznacz obszar", "s1d": "Wyszukaj miasto i przeciągnij ramkę. Rozmiary w km — bez współrzędnych.",
+      "s2t": "Dostosuj", "s2d": "Styl, warstwy, rozmiar. Podgląd aktualizuje się na bieżąco.",
+      "s3t": "Generujemy", "s3d": "Serwer buduje dokładny model 3D z danych OpenStreetMap i wysokości.",
+      "s4t": "Pobierz", "s4d": "Gotowy 3MF do Bambu Studio / PrusaSlicer. Drukuj w domu.",
+      "cta": "Zacznij"
+    },
+    "templates": {
+      "eyebrow": "Gotowe szablony",
+      "title": "Zacznij od znanej dzielnicy",
+      "desc": "Wybierz gotowy preset — otworzy kreator z ustawionym obszarem. Albo zacznij od zera.",
+      "all": "Wszystkie miasta",
+      "stylesEyebrow": "Style mapy"
+    },
+    "craft": {
+      "eyebrow": "Jakość",
+      "title": "Nie pamiątka.",
+      "titleItalic": "Dokument.",
+      "desc": "Każda mapa to geodane OpenStreetMap i realne wysokości. Model jest automatycznie upraszczany do czystego druku FDM: minimalne grubości, warstwy kolorów dla drukarek wielokolorowych (Bambu AMS).",
+      "spec1t": "Precyzyjny druk", "spec1d": "Zoptymalizowane pod FDM",
+      "spec2t": "Biotworzywo PLA", "spec2d": "Ze skrobi kukurydzianej",
+      "spec3t": "Realne dane", "spec3d": "OpenStreetMap + wysokości",
+      "spec4t": "Format 3MF", "spec4d": "Gotowe dla Bambu / Prusa"
+    },
+    "testimonials": {
+      "title": "Co mówią klienci",
+      "sub": "Przewiń, aby zobaczyć więcej opinii →",
+      "badge": "Opinia",
+      "q1": "Bardzo mi się podobało, dziękuję! Efekt przerósł oczekiwania.",
+      "q2": "Szybko i wygodnie. Wyszło świetnie, polecam.",
+      "q3": "Bardzo dobra jakość, wszystko wyraźne. Jestem zadowolona.",
+      "q4": "Prosta i przyjemna usługa. Zadziałało za pierwszym razem.",
+      "q5": "Ładny efekt, starannie wykonane. Dziękuję za pracę!",
+      "q6": "Zrobione w kilka minut, wszystko jasne. Super!"
+    },
+    "faq": {
+      "eyebrow": "Pytania i odpowiedzi",
+      "title": "Najczęstsze pytania o mapy 3D i breloki",
+      "q1": "Czym jest mapa 3D miasta i czym różni się od zwykłej mapy?",
+      "a1": "Mapa 3D miasta to trójwymiarowy dotykowy model dzielnicy z realnymi wysokościami budynków, parkami i rzekami z danych OpenStreetMap. W odróżnieniu od płaskiej mapy możesz ją wziąć do ręki, postawić na półce lub podarować.",
+      "q2": "Czy można zrobić mapę 3D dowolnego miasta na świecie?",
+      "a2": "Tak. W kreatorze Monadruk możesz wybrać dowolny punkt na Ziemi — od Kijowa i Lwowa po Nowy Jork czy Paryż — i w kilka minut stworzyć mapę 3D tej dzielnicy.",
+      "q3": "W jakim formacie otrzymam plik do druku 3D?",
+      "a3": "Pobierasz gotowy plik 3MF (oraz STL) — otwiera się od razu w Bambu Studio lub PrusaSlicer i jest gotowy do druku w domu.",
+      "q4": "Ile kosztuje brelok z mapą miasta lub mapa 3D?",
+      "a4": "Brelok z mapą od 7 €, mapa 3D dzielnicy od 17 € za druk na zamówienie. Jeśli drukujesz sam, pobranie gotowego pliku jest bezpłatne w ramach limitu.",
+      "q5": "Czy mogę zamówić druk, jeśli nie mam drukarki 3D?",
+      "a5": "Tak. Wydrukujemy Twoją mapę 3D lub brelok z ekologicznego biotworzywa Eco PLA i wyślemy gotowy produkt.",
+      "q6": "Czy mogę dodać własny napis na brelok z mapą?",
+      "a6": "Tak — na breloku z mapą 55×30 mm możesz dodać nazwę miasta lub własny tekst drukowany reliefowo na mapie dzielnicy."
+    },
+    "cta": {
+      "eyebrow": "Gotowy, by zacząć?",
+      "title": "Stwórz mapę miejsca, które znaczy więcej niż punkt na mapie.",
+      "desc": "5 kroków, około 3 minut — i pobierasz gotowy plik 3D do druku.",
+      "create": "Stwórz mapę",
+      "keychain": "Brelok"
+    },
+    "footer": {
+      "create": "Stwórz mapę",
+      "keychains": "Breloki",
+      "account": "Konto",
+      "privacy": "Prywatność",
+      "terms": "Regulamin"
+    }
+  }
+}
