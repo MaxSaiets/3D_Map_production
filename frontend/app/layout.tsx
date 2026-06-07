@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Monadruk" }],
   creator: "Monadruk",
   alternates: { canonical: "/" },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   robots: {
     index: true,
     follow: true,
