@@ -656,7 +656,7 @@ async def track_event(
 ):
     """Append a privacy-friendly analytics event. No raw IP is stored — only a
     daily salted hash, so we can count unique visitors without tracking people."""
-    import hashlib
+    import hashlib, json
     from datetime import datetime, timezone
     try:
         day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -679,8 +679,8 @@ async def track_event(
                 pass
         with ANALYTICS_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-    except Exception as e:  # noqa: BLE001
-        return {"status": "err", "e": repr(e), "log": str(ANALYTICS_LOG)}
+    except Exception:  # noqa: BLE001
+        pass
     return {"status": "ok"}
 
 
@@ -690,6 +690,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     u = _require_user(authorization)
     if not u["is_admin"]:
         raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    import json
     from collections import Counter
     totals = {"events": 0, "pageviews": 0, "uniqueVisitors": 0}
     by_day: Dict[str, Dict[str, Any]] = {}
