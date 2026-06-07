@@ -35,9 +35,12 @@
       "desc": "Wähle ein Viertel, das dir etwas bedeutet — oder jeden Punkt der Erde. Wir verwandeln es in eine taktile Architekturkarte mit echten Gebäude-, Park- und Flusshöhen. Lade eine fertige 3D-Datei herunter und drucke.",
       "ctaCreate": "Karte erstellen",
       "ctaKeychain": "Karten-Anhänger",
-      "stat1n": "Jede Stadt", "stat1l": "weltweit",
-      "stat2n": "3MF · STL", "stat2l": "druckfertig",
-      "stat3n": "Eco PLA", "stat3l": "Biokunststoff",
+      "stat1n": "Jede Stadt",
+      "stat1l": "weltweit",
+      "stat2n": "3MF · STL",
+      "stat2l": "druckfertig",
+      "stat3n": "Eco PLA",
+      "stat3l": "Biokunststoff",
       "demoLabel": "Live-Demo · Kyjiw, Podil",
       "viewerKeychain": "Schlüsselanhänger mit Stadtkarte",
       "viewerMap": "3D-Stadtviertel",
@@ -60,10 +63,14 @@
       "eyebrow": "Ablauf",
       "title": "Vom Punkt auf der Karte — zum Modell in deinem Drucker",
       "sub": "Klar. Ohne Fachjargon. Eine druckfertige Datei in wenigen Minuten.",
-      "s1t": "Bereich wählen", "s1d": "Suche eine Stadt und zieh den Rahmen. Größen in km — ohne Koordinaten.",
-      "s2t": "Anpassen", "s2d": "Stil, Ebenen, Größe. Die Vorschau aktualisiert sich in Echtzeit.",
-      "s3t": "Wir generieren", "s3d": "Der Server baut ein präzises 3D-Modell aus OpenStreetMap-Daten und Höhen.",
-      "s4t": "Herunterladen", "s4d": "Fertige 3MF für Bambu Studio / PrusaSlicer. Drucke zuhause.",
+      "s1t": "Bereich wählen",
+      "s1d": "Suche eine Stadt und zieh den Rahmen. Größen in km — ohne Koordinaten.",
+      "s2t": "Anpassen",
+      "s2d": "Stil, Ebenen, Größe. Die Vorschau aktualisiert sich in Echtzeit.",
+      "s3t": "Wir generieren",
+      "s3d": "Der Server baut ein präzises 3D-Modell aus OpenStreetMap-Daten und Höhen.",
+      "s4t": "Herunterladen",
+      "s4d": "Fertige 3MF für Bambu Studio / PrusaSlicer. Drucke zuhause.",
       "cta": "Loslegen"
     },
     "templates": {
@@ -78,10 +85,14 @@
       "title": "Kein Souvenir.",
       "titleItalic": "Ein Dokument.",
       "desc": "Jede Karte basiert auf OpenStreetMap-Geodaten und echten Höhen. Das Modell wird automatisch für sauberen FDM-Druck vereinfacht: minimale Wandstärken, Farbebenen für Mehrfarbdrucker (Bambu AMS).",
-      "spec1t": "Präziser Druck", "spec1d": "Für FDM optimiert",
-      "spec2t": "PLA-Biokunststoff", "spec2d": "Aus Maisstärke",
-      "spec3t": "Echte Daten", "spec3d": "OpenStreetMap + Höhen",
-      "spec4t": "3MF-Format", "spec4d": "Bambu / Prusa bereit"
+      "spec1t": "Präziser Druck",
+      "spec1d": "Für FDM optimiert",
+      "spec2t": "PLA-Biokunststoff",
+      "spec2d": "Aus Maisstärke",
+      "spec3t": "Echte Daten",
+      "spec3d": "OpenStreetMap + Höhen",
+      "spec4t": "3MF-Format",
+      "spec4d": "Bambu / Prusa bereit"
     },
     "testimonials": {
       "title": "Was Kunden sagen",
@@ -124,5 +135,62 @@
       "privacy": "Datenschutz",
       "terms": "AGB"
     }
+  },
+  "createMeta": {
+    "title": "3D-Stadtkarten-Konfigurator — online erstellen",
+    "description": "Erstelle online eine 3D-Karte jeder Stadt: wähle ein Viertel, passe Gebäude-, Park- und Flusshöhen an und lade eine fertige 3MF/STL zum Drucken herunter.",
+    "keywords": "3d stadtkarte erstellen, 3d karten konfigurator, 3MF karte herunterladen, STL stadtkarte"
+  },
+  "keychainsMeta": {
+    "title": "Schlüsselanhänger mit Stadtkarte — individuell",
+    "description": "Ein Karten-Anhänger deiner Stadt: ein persönlicher 3D-Anhänger 55×30 mm mit Straßen, Gebäuden und Text. Online erstellen und 3MF laden oder Eco-PLA-Druck bestellen.",
+    "keywords": "schlüsselanhänger stadtkarte, karten anhänger, 3d anhänger stadt, individueller anhänger"
+  },
+  "showcaseMeta": {
+    "title": "Galerie von 3D-Stadtkarten und Anhängern — Beispiele",
+    "description": "Eine Galerie gedruckter 3D-Karten und Anhänger von Städten weltweit. Drehe die Modelle in 3D, wähle ein Viertel und bestelle den Druck.",
+    "keywords": "3d stadtkarten galerie, 3d druck karten beispiele, gedruckte stadtkarten, 3d stadtmodell"
+  },
+  "privacyMeta": {
+    "title": "Datenschutzerklärung",
+    "description": "Datenschutzerklärung von Monadruk: wie wir deine Daten verarbeiten und schützen."
+  },
+  "termsMeta": {
+    "title": "Nutzungsbedingungen",
+    "description": "Nutzungsbedingungen von Monadruk."
+  },
+  "create": {
+    "backHome": "Startseite",
+    "title": "3D-Karten-Konfigurator",
+    "keychain": "Anhänger",
+    "account": "Konto"
+  },
+  "showcase": {
+    "back": "Startseite",
+    "eyebrow": "Galerie",
+    "title": "Gedruckte Karten & Anhänger",
+    "subtitle": "Echte Modelle aus Städten der Ukraine und der Welt. In 3D drehen, auswählen — und Druck bestellen.",
+    "all": "Alle",
+    "keys": "Anhänger",
+    "maps": "3D-Karten",
+    "viewerDesc": "Eine präzise 3D-Karte: Straßen, Gebäude, Parks und Wasser maßstabsgetreu. Ziehen, um von allen Seiten zu sehen.",
+    "createKeychain": "Anhänger erstellen",
+    "makeMap": "Karte erstellen",
+    "rotate3d": "In 3D drehen",
+    "keychainSize": "Anhänger 55×30 mm",
+    "district": "3D-Viertel",
+    "keyItem": "Schlüsselanhänger mit Stadtkarte",
+    "mapItem": "3D-Stadtviertel",
+    "keyPrice": "ab 7 €",
+    "mapPrice": "ab 17 €",
+    "ctaTitle": "Deine Stadt nicht gefunden?",
+    "ctaDesc": "Erstelle in wenigen Minuten eine Karte jeder Stadt der Welt.",
+    "ctaButton": "Karte erstellen",
+    "mKey": "Karten-Anhänger",
+    "mHome": "„HOME“-Anhänger",
+    "mWater": "Fluss-Anhänger",
+    "mBridge": "Brücken-Anhänger",
+    "mBlock": "Stadtviertel",
+    "mDistrict": "3D-Block"
   }
 }

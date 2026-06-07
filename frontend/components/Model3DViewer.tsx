@@ -5,29 +5,29 @@ import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-function Model({ url, mirror = true }: { url: string; mirror?: boolean }) {
+function Model({ url, mirror = true, lieFlat = false }: { url: string; mirror?: boolean; lieFlat?: boolean }) {
   // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
   const { scene } = useGLTF(url, true);
   const fixed = useMemo(() => {
     const s = scene.clone(true);
     s.traverse((o: any) => {
-      if (o.isMesh) {
-        if (mirror && o.geometry) {
-          // Un-mirror trimesh's handedness flip at the GEOMETRY level (a scale
-          // on the <primitive>/Stage wrapper gets swallowed by <Stage>). Flipping
-          // X inverts winding, so DoubleSide keeps lighting correct.
-          o.geometry = o.geometry.clone();
-          o.geometry.scale(-1, 1, 1);
-          o.geometry.computeVertexNormals();
-        }
-        if (o.material) {
-          const mats = Array.isArray(o.material) ? o.material : [o.material];
-          mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
-        }
+      if (o.isMesh && o.geometry) {
+        o.geometry = o.geometry.clone();
+        // Un-mirror trimesh's handedness flip at the GEOMETRY level (a scale on
+        // the <primitive>/Stage wrapper gets swallowed by <Stage>).
+        if (mirror) o.geometry.scale(-1, 1, 1);
+        // City maps come in standing vertical (their long axis is up). Tip them
+        // back so the map lies flat with buildings pointing up.
+        if (lieFlat) o.geometry.rotateX(-Math.PI / 2);
+        o.geometry.computeVertexNormals();
+      }
+      if (o.isMesh && o.material) {
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
       }
     });
     return s;
-  }, [scene, mirror]);
+  }, [scene, mirror, lieFlat]);
   return <primitive object={fixed} />;
 }
 
@@ -91,7 +91,7 @@ export default function Model3DViewer({
               adjustCamera={1.1}
               shadows={{ type: "contact", opacity: 0.3, blur: 2.4 }}
             >
-              <Model url={url} />
+              <Model url={url} lieFlat={isMap} />
             </Stage>
             <OrbitControls
               autoRotate={autoRotate}

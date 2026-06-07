@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "Політика конфіденційності" };
+export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+  return pageMetadata({ locale: params.locale, path: "/privacy", ns: "privacyMeta" });
+}
 
 export default function PrivacyPage() {
   return (

@@ -35,9 +35,12 @@
       "desc": "Elige un distrito que signifique algo para ti — o cualquier punto de la Tierra. Lo convertimos en un mapa arquitectónico táctil con alturas reales de edificios, parques y ríos. Descarga un archivo 3D listo e imprime.",
       "ctaCreate": "Crear tu mapa",
       "ctaKeychain": "Llavero con mapa",
-      "stat1n": "Cualquier ciudad", "stat1l": "en todo el mundo",
-      "stat2n": "3MF · STL", "stat2l": "listo para imprimir",
-      "stat3n": "Eco PLA", "stat3l": "bioplástico",
+      "stat1n": "Cualquier ciudad",
+      "stat1l": "en todo el mundo",
+      "stat2n": "3MF · STL",
+      "stat2l": "listo para imprimir",
+      "stat3n": "Eco PLA",
+      "stat3l": "bioplástico",
       "demoLabel": "Demo en vivo · Kyiv, Podil",
       "viewerKeychain": "Llavero con mapa de ciudad",
       "viewerMap": "Distrito en 3D",
@@ -60,10 +63,14 @@
       "eyebrow": "Proceso",
       "title": "De un punto en el mapa — a un modelo en tu impresora",
       "sub": "Claro. Sin jerga técnica. Un archivo listo para imprimir en pocos minutos.",
-      "s1t": "Selecciona una zona", "s1d": "Busca una ciudad y arrastra el marco. Tamaños en km — sin coordenadas.",
-      "s2t": "Personaliza", "s2d": "Estilo, capas, tamaño. La vista previa se actualiza en tiempo real.",
-      "s3t": "Generamos", "s3d": "El servidor crea un modelo 3D preciso con datos de OpenStreetMap y elevaciones.",
-      "s4t": "Descarga", "s4d": "Un 3MF listo para Bambu Studio / PrusaSlicer. Imprime en casa.",
+      "s1t": "Selecciona una zona",
+      "s1d": "Busca una ciudad y arrastra el marco. Tamaños en km — sin coordenadas.",
+      "s2t": "Personaliza",
+      "s2d": "Estilo, capas, tamaño. La vista previa se actualiza en tiempo real.",
+      "s3t": "Generamos",
+      "s3d": "El servidor crea un modelo 3D preciso con datos de OpenStreetMap y elevaciones.",
+      "s4t": "Descarga",
+      "s4d": "Un 3MF listo para Bambu Studio / PrusaSlicer. Imprime en casa.",
       "cta": "Empezar"
     },
     "templates": {
@@ -78,10 +85,14 @@
       "title": "No es un recuerdo.",
       "titleItalic": "Un documento.",
       "desc": "Cada mapa son geodatos de OpenStreetMap y elevaciones reales. El modelo se simplifica automáticamente para una impresión FDM limpia: grosores mínimos, capas de color para impresoras multicolor (Bambu AMS).",
-      "spec1t": "Impresión precisa", "spec1d": "Optimizado para FDM",
-      "spec2t": "Bioplástico PLA", "spec2d": "De almidón de maíz",
-      "spec3t": "Datos reales", "spec3d": "OpenStreetMap + elevaciones",
-      "spec4t": "Formato 3MF", "spec4d": "Listo para Bambu / Prusa"
+      "spec1t": "Impresión precisa",
+      "spec1d": "Optimizado para FDM",
+      "spec2t": "Bioplástico PLA",
+      "spec2d": "De almidón de maíz",
+      "spec3t": "Datos reales",
+      "spec3d": "OpenStreetMap + elevaciones",
+      "spec4t": "Formato 3MF",
+      "spec4d": "Listo para Bambu / Prusa"
     },
     "testimonials": {
       "title": "Lo que dicen los clientes",
@@ -124,5 +135,62 @@
       "privacy": "Privacidad",
       "terms": "Términos"
     }
+  },
+  "createMeta": {
+    "title": "Configurador de mapa 3D — crear en línea",
+    "description": "Crea en línea un mapa 3D de cualquier ciudad: elige un distrito, ajusta alturas de edificios, parques y ríos y descarga un 3MF/STL listo para imprimir.",
+    "keywords": "crear mapa 3d ciudad, configurador mapa 3d, descargar mapa 3MF, mapa STL ciudad"
+  },
+  "keychainsMeta": {
+    "title": "Llavero con mapa de ciudad — 3D personalizado",
+    "description": "Un llavero con el mapa de tu ciudad: un llavero 3D personal 55×30 mm con calles, edificios y texto. Crea en línea y descarga el 3MF o pide impresión en Eco PLA.",
+    "keywords": "llavero mapa ciudad, llavero mapa, llavero 3d ciudad, llavero personalizado"
+  },
+  "showcaseMeta": {
+    "title": "Galería de mapas 3D y llaveros de ciudades — ejemplos",
+    "description": "Una galería de mapas 3D y llaveros impresos de ciudades de todo el mundo. Gira los modelos en 3D, elige un distrito y pide la impresión.",
+    "keywords": "galería mapas 3d ciudades, ejemplos impresión 3d mapa, mapas de ciudades impresos, modelo 3d ciudad"
+  },
+  "privacyMeta": {
+    "title": "Política de privacidad",
+    "description": "Política de privacidad de Monadruk: cómo procesamos y protegemos tus datos."
+  },
+  "termsMeta": {
+    "title": "Términos de uso",
+    "description": "Términos de uso de Monadruk."
+  },
+  "create": {
+    "backHome": "Inicio",
+    "title": "Configurador de mapa 3D",
+    "keychain": "Llavero",
+    "account": "Cuenta"
+  },
+  "showcase": {
+    "back": "Inicio",
+    "eyebrow": "Galería",
+    "title": "Mapas y llaveros impresos",
+    "subtitle": "Modelos reales de ciudades de Ucrania y el mundo. Gira en 3D, elige — y pide la impresión.",
+    "all": "Todo",
+    "keys": "Llaveros",
+    "maps": "Mapas 3D",
+    "viewerDesc": "Un mapa 3D preciso: calles, edificios, parques y agua a escala. Arrastra para verlo desde todos los lados.",
+    "createKeychain": "Crear un llavero",
+    "makeMap": "Hacer un mapa",
+    "rotate3d": "Girar en 3D",
+    "keychainSize": "Llavero 55×30 mm",
+    "district": "Distrito 3D",
+    "keyItem": "Llavero con mapa de ciudad",
+    "mapItem": "Distrito 3D",
+    "keyPrice": "desde 7 €",
+    "mapPrice": "desde 17 €",
+    "ctaTitle": "¿No encontraste tu ciudad?",
+    "ctaDesc": "Crea el mapa de cualquier ciudad del mundo en un par de minutos.",
+    "ctaButton": "Crear tu mapa",
+    "mKey": "Llavero mapa",
+    "mHome": "Llavero «HOME»",
+    "mWater": "Llavero río",
+    "mBridge": "Llavero puentes",
+    "mBlock": "Distrito",
+    "mDistrict": "Bloque 3D"
   }
 }

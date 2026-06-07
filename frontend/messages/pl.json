@@ -35,9 +35,12 @@
       "desc": "Wybierz dzielnicę, która coś dla Ciebie znaczy — lub dowolny punkt na Ziemi. Zamienimy go w dotykową mapę architektoniczną z realnymi wysokościami budynków, parków i rzek. Pobierz gotowy plik 3D i drukuj.",
       "ctaCreate": "Stwórz swoją mapę",
       "ctaKeychain": "Brelok z mapą",
-      "stat1n": "Dowolne miasto", "stat1l": "na całym świecie",
-      "stat2n": "3MF · STL", "stat2l": "gotowe do druku",
-      "stat3n": "Eco PLA", "stat3l": "biotworzywo",
+      "stat1n": "Dowolne miasto",
+      "stat1l": "na całym świecie",
+      "stat2n": "3MF · STL",
+      "stat2l": "gotowe do druku",
+      "stat3n": "Eco PLA",
+      "stat3l": "biotworzywo",
       "demoLabel": "Demo na żywo · Kijów, Podił",
       "viewerKeychain": "Brelok z mapą miasta",
       "viewerMap": "Dzielnica 3D",
@@ -60,10 +63,14 @@
       "eyebrow": "Proces",
       "title": "Od punktu na mapie — do modelu w Twojej drukarce",
       "sub": "Przejrzyście. Bez technicznego żargonu. Gotowy plik do druku w kilka minut.",
-      "s1t": "Zaznacz obszar", "s1d": "Wyszukaj miasto i przeciągnij ramkę. Rozmiary w km — bez współrzędnych.",
-      "s2t": "Dostosuj", "s2d": "Styl, warstwy, rozmiar. Podgląd aktualizuje się na bieżąco.",
-      "s3t": "Generujemy", "s3d": "Serwer buduje dokładny model 3D z danych OpenStreetMap i wysokości.",
-      "s4t": "Pobierz", "s4d": "Gotowy 3MF do Bambu Studio / PrusaSlicer. Drukuj w domu.",
+      "s1t": "Zaznacz obszar",
+      "s1d": "Wyszukaj miasto i przeciągnij ramkę. Rozmiary w km — bez współrzędnych.",
+      "s2t": "Dostosuj",
+      "s2d": "Styl, warstwy, rozmiar. Podgląd aktualizuje się na bieżąco.",
+      "s3t": "Generujemy",
+      "s3d": "Serwer buduje dokładny model 3D z danych OpenStreetMap i wysokości.",
+      "s4t": "Pobierz",
+      "s4d": "Gotowy 3MF do Bambu Studio / PrusaSlicer. Drukuj w domu.",
       "cta": "Zacznij"
     },
     "templates": {
@@ -78,10 +85,14 @@
       "title": "Nie pamiątka.",
       "titleItalic": "Dokument.",
       "desc": "Każda mapa to geodane OpenStreetMap i realne wysokości. Model jest automatycznie upraszczany do czystego druku FDM: minimalne grubości, warstwy kolorów dla drukarek wielokolorowych (Bambu AMS).",
-      "spec1t": "Precyzyjny druk", "spec1d": "Zoptymalizowane pod FDM",
-      "spec2t": "Biotworzywo PLA", "spec2d": "Ze skrobi kukurydzianej",
-      "spec3t": "Realne dane", "spec3d": "OpenStreetMap + wysokości",
-      "spec4t": "Format 3MF", "spec4d": "Gotowe dla Bambu / Prusa"
+      "spec1t": "Precyzyjny druk",
+      "spec1d": "Zoptymalizowane pod FDM",
+      "spec2t": "Biotworzywo PLA",
+      "spec2d": "Ze skrobi kukurydzianej",
+      "spec3t": "Realne dane",
+      "spec3d": "OpenStreetMap + wysokości",
+      "spec4t": "Format 3MF",
+      "spec4d": "Gotowe dla Bambu / Prusa"
     },
     "testimonials": {
       "title": "Co mówią klienci",
@@ -124,5 +135,62 @@
       "privacy": "Prywatność",
       "terms": "Regulamin"
     }
+  },
+  "createMeta": {
+    "title": "Kreator mapy 3D miasta — stwórz online",
+    "description": "Stwórz online mapę 3D dowolnego miasta: wybierz dzielnicę, dostosuj wysokości budynków, parków i rzek i pobierz gotowy plik 3MF/STL do druku.",
+    "keywords": "stwórz mapę 3d miasta, kreator map 3d, pobierz mapę 3MF, mapa STL miasta"
+  },
+  "keychainsMeta": {
+    "title": "Brelok z mapą miasta — spersonalizowany 3D",
+    "description": "Brelok z mapą Twojego miasta: osobisty brelok 3D 55×30 mm z ulicami, budynkami i napisem. Stwórz online i pobierz 3MF lub zamów druk z Eco PLA.",
+    "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d miasto, spersonalizowany brelok"
+  },
+  "showcaseMeta": {
+    "title": "Galeria map 3D i breloków miast — przykłady druku",
+    "description": "Galeria wydrukowanych map 3D i breloków miast z całego świata. Obróć modele w 3D, wybierz dzielnicę i zamów druk.",
+    "keywords": "galeria map 3d miast, przykłady druku 3d map, wydrukowane mapy miast, model 3d miasta"
+  },
+  "privacyMeta": {
+    "title": "Polityka prywatności",
+    "description": "Polityka prywatności Monadruk: jak przetwarzamy i chronimy Twoje dane."
+  },
+  "termsMeta": {
+    "title": "Regulamin",
+    "description": "Regulamin korzystania z Monadruk."
+  },
+  "create": {
+    "backHome": "Strona główna",
+    "title": "Kreator mapy 3D",
+    "keychain": "Brelok",
+    "account": "Konto"
+  },
+  "showcase": {
+    "back": "Strona główna",
+    "eyebrow": "Galeria",
+    "title": "Wydrukowane mapy i breloki",
+    "subtitle": "Prawdziwe modele z miast Ukrainy i świata. Obróć w 3D, wybierz — i zamów druk.",
+    "all": "Wszystko",
+    "keys": "Breloki",
+    "maps": "Mapy 3D",
+    "viewerDesc": "Dokładna mapa 3D: ulice, budynki, parki i woda w skali. Przeciągnij, aby obejrzeć ze wszystkich stron.",
+    "createKeychain": "Stwórz brelok",
+    "makeMap": "Zrób mapę",
+    "rotate3d": "Obróć w 3D",
+    "keychainSize": "Brelok 55×30 mm",
+    "district": "Dzielnica 3D",
+    "keyItem": "Brelok z mapą miasta",
+    "mapItem": "Dzielnica 3D miasta",
+    "keyPrice": "od 7 €",
+    "mapPrice": "od 17 €",
+    "ctaTitle": "Nie znalazłeś swojego miasta?",
+    "ctaDesc": "Stwórz mapę dowolnego miasta na świecie w kilka minut.",
+    "ctaButton": "Stwórz swoją mapę",
+    "mKey": "Brelok-mapa",
+    "mHome": "Brelok „HOME”",
+    "mWater": "Brelok z rzeką",
+    "mBridge": "Brelok z mostami",
+    "mBlock": "Dzielnica miasta",
+    "mDistrict": "Kwartał 3D"
   }
 }

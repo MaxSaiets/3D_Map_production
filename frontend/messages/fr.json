@@ -35,9 +35,12 @@
       "desc": "Choisis un quartier qui compte pour toi — ou n'importe quel point de la Terre. Nous le transformons en carte architecturale tactile avec les hauteurs réelles des bâtiments, parcs et rivières. Télécharge un fichier 3D prêt et imprime.",
       "ctaCreate": "Créer ta carte",
       "ctaKeychain": "Porte-clés carte",
-      "stat1n": "Toute ville", "stat1l": "dans le monde",
-      "stat2n": "3MF · STL", "stat2l": "prêt à imprimer",
-      "stat3n": "Eco PLA", "stat3l": "bioplastique",
+      "stat1n": "Toute ville",
+      "stat1l": "dans le monde",
+      "stat2n": "3MF · STL",
+      "stat2l": "prêt à imprimer",
+      "stat3n": "Eco PLA",
+      "stat3l": "bioplastique",
       "demoLabel": "Démo en direct · Kyiv, Podil",
       "viewerKeychain": "Porte-clés carte de ville",
       "viewerMap": "Quartier en 3D",
@@ -60,10 +63,14 @@
       "eyebrow": "Processus",
       "title": "D'un point sur la carte — à un modèle dans ton imprimante",
       "sub": "Clair. Sans jargon technique. Un fichier prêt à imprimer en quelques minutes.",
-      "s1t": "Sélectionne une zone", "s1d": "Cherche une ville et déplace le cadre. Tailles en km — sans coordonnées.",
-      "s2t": "Personnalise", "s2d": "Style, couches, taille. L'aperçu se met à jour en temps réel.",
-      "s3t": "Nous générons", "s3d": "Le serveur construit un modèle 3D précis à partir des données OpenStreetMap et des altitudes.",
-      "s4t": "Télécharge", "s4d": "Un 3MF prêt pour Bambu Studio / PrusaSlicer. Imprime chez toi.",
+      "s1t": "Sélectionne une zone",
+      "s1d": "Cherche une ville et déplace le cadre. Tailles en km — sans coordonnées.",
+      "s2t": "Personnalise",
+      "s2d": "Style, couches, taille. L'aperçu se met à jour en temps réel.",
+      "s3t": "Nous générons",
+      "s3d": "Le serveur construit un modèle 3D précis à partir des données OpenStreetMap et des altitudes.",
+      "s4t": "Télécharge",
+      "s4d": "Un 3MF prêt pour Bambu Studio / PrusaSlicer. Imprime chez toi.",
       "cta": "Commencer"
     },
     "templates": {
@@ -78,10 +85,14 @@
       "title": "Pas un souvenir.",
       "titleItalic": "Un document.",
       "desc": "Chaque carte repose sur les géodonnées OpenStreetMap et des altitudes réelles. Le modèle est automatiquement simplifié pour une impression FDM propre : épaisseurs minimales, couches de couleur pour imprimantes multicolores (Bambu AMS).",
-      "spec1t": "Impression précise", "spec1d": "Optimisé pour le FDM",
-      "spec2t": "Bioplastique PLA", "spec2d": "À base d'amidon de maïs",
-      "spec3t": "Données réelles", "spec3d": "OpenStreetMap + altitudes",
-      "spec4t": "Format 3MF", "spec4d": "Prêt pour Bambu / Prusa"
+      "spec1t": "Impression précise",
+      "spec1d": "Optimisé pour le FDM",
+      "spec2t": "Bioplastique PLA",
+      "spec2d": "À base d'amidon de maïs",
+      "spec3t": "Données réelles",
+      "spec3d": "OpenStreetMap + altitudes",
+      "spec4t": "Format 3MF",
+      "spec4d": "Prêt pour Bambu / Prusa"
     },
     "testimonials": {
       "title": "Ce que disent les clients",
@@ -124,5 +135,62 @@
       "privacy": "Confidentialité",
       "terms": "Conditions"
     }
+  },
+  "createMeta": {
+    "title": "Configurateur de carte 3D — créer en ligne",
+    "description": "Crée en ligne une carte 3D de n'importe quelle ville : choisis un quartier, règle les hauteurs des bâtiments, parcs et rivières et télécharge un 3MF/STL prêt à imprimer.",
+    "keywords": "créer carte 3d ville, configurateur carte 3d, télécharger carte 3MF, carte STL ville"
+  },
+  "keychainsMeta": {
+    "title": "Porte-clés carte de ville — 3D personnalisé",
+    "description": "Un porte-clés carte de ta ville : un porte-clés 3D personnel 55×30 mm avec rues, bâtiments et texte. Crée en ligne et télécharge le 3MF ou commande l'impression Eco PLA.",
+    "keywords": "porte-clés carte ville, porte-clés carte, porte-clés 3d ville, porte-clés personnalisé"
+  },
+  "showcaseMeta": {
+    "title": "Galerie de cartes 3D et porte-clés de villes — exemples",
+    "description": "Une galerie de cartes 3D et porte-clés imprimés de villes du monde entier. Fais tourner les modèles en 3D, choisis un quartier et commande l'impression.",
+    "keywords": "galerie cartes 3d villes, exemples impression 3d carte, cartes de villes imprimées, modèle 3d ville"
+  },
+  "privacyMeta": {
+    "title": "Politique de confidentialité",
+    "description": "Politique de confidentialité de Monadruk : comment nous traitons et protégeons tes données."
+  },
+  "termsMeta": {
+    "title": "Conditions d'utilisation",
+    "description": "Conditions d'utilisation de Monadruk."
+  },
+  "create": {
+    "backHome": "Accueil",
+    "title": "Configurateur de carte 3D",
+    "keychain": "Porte-clés",
+    "account": "Compte"
+  },
+  "showcase": {
+    "back": "Accueil",
+    "eyebrow": "Galerie",
+    "title": "Cartes & porte-clés imprimés",
+    "subtitle": "De vrais modèles de villes d'Ukraine et du monde. Tourne en 3D, choisis — et commande l'impression.",
+    "all": "Tout",
+    "keys": "Porte-clés",
+    "maps": "Cartes 3D",
+    "viewerDesc": "Une carte 3D précise : rues, bâtiments, parcs et eau à l'échelle. Fais glisser pour voir sous tous les angles.",
+    "createKeychain": "Créer un porte-clés",
+    "makeMap": "Faire une carte",
+    "rotate3d": "Tourner en 3D",
+    "keychainSize": "Porte-clés 55×30 mm",
+    "district": "Quartier 3D",
+    "keyItem": "Porte-clés carte de ville",
+    "mapItem": "Quartier 3D",
+    "keyPrice": "dès 7 €",
+    "mapPrice": "dès 17 €",
+    "ctaTitle": "Tu n'as pas trouvé ta ville ?",
+    "ctaDesc": "Crée la carte de n'importe quelle ville du monde en quelques minutes.",
+    "ctaButton": "Créer ta carte",
+    "mKey": "Porte-clés carte",
+    "mHome": "Porte-clés « HOME »",
+    "mWater": "Porte-clés rivière",
+    "mBridge": "Porte-clés ponts",
+    "mBlock": "Quartier",
+    "mDistrict": "Bloc 3D"
   }
 }

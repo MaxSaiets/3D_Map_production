@@ -35,9 +35,12 @@
       "desc": "Pick a district that means something to you — or any point on Earth. We turn it into a tactile architectural map with real building, park and river heights. Download a ready 3D file and print.",
       "ctaCreate": "Create your map",
       "ctaKeychain": "Map keychain",
-      "stat1n": "Any city", "stat1l": "worldwide",
-      "stat2n": "3MF · STL", "stat2l": "print-ready",
-      "stat3n": "Eco PLA", "stat3l": "bioplastic",
+      "stat1n": "Any city",
+      "stat1l": "worldwide",
+      "stat2n": "3MF · STL",
+      "stat2l": "print-ready",
+      "stat3n": "Eco PLA",
+      "stat3l": "bioplastic",
       "demoLabel": "Live demo · Kyiv, Podil",
       "viewerKeychain": "City map keychain",
       "viewerMap": "3D city district",
@@ -60,10 +63,14 @@
       "eyebrow": "Process",
       "title": "From a point on the map — to a model in your printer",
       "sub": "Clear. No technical jargon. A print-ready file in a few minutes.",
-      "s1t": "Select an area", "s1d": "Search for a city and drag the frame. Sizes in km — no coordinates.",
-      "s2t": "Customise", "s2d": "Style, layers, size. The preview updates in real time.",
-      "s3t": "We generate", "s3d": "Our server builds a precise 3D model from OpenStreetMap data and elevations.",
-      "s4t": "Download", "s4d": "A ready 3MF for Bambu Studio / PrusaSlicer. Print at home.",
+      "s1t": "Select an area",
+      "s1d": "Search for a city and drag the frame. Sizes in km — no coordinates.",
+      "s2t": "Customise",
+      "s2d": "Style, layers, size. The preview updates in real time.",
+      "s3t": "We generate",
+      "s3d": "Our server builds a precise 3D model from OpenStreetMap data and elevations.",
+      "s4t": "Download",
+      "s4d": "A ready 3MF for Bambu Studio / PrusaSlicer. Print at home.",
       "cta": "Get started"
     },
     "templates": {
@@ -78,10 +85,14 @@
       "title": "Not a souvenir.",
       "titleItalic": "A document.",
       "desc": "Every map is OpenStreetMap geodata and real elevations. The model is automatically simplified for clean FDM printing: minimal wall thickness, colour layers for multi-colour printers (Bambu AMS).",
-      "spec1t": "Precise print", "spec1d": "Optimised for FDM",
-      "spec2t": "PLA bioplastic", "spec2d": "Made from corn starch",
-      "spec3t": "Real data", "spec3d": "OpenStreetMap + elevation",
-      "spec4t": "3MF format", "spec4d": "Bambu / Prusa ready"
+      "spec1t": "Precise print",
+      "spec1d": "Optimised for FDM",
+      "spec2t": "PLA bioplastic",
+      "spec2d": "Made from corn starch",
+      "spec3t": "Real data",
+      "spec3d": "OpenStreetMap + elevation",
+      "spec4t": "3MF format",
+      "spec4d": "Bambu / Prusa ready"
     },
     "testimonials": {
       "title": "What customers say",
@@ -124,5 +135,62 @@
       "privacy": "Privacy",
       "terms": "Terms"
     }
+  },
+  "createMeta": {
+    "title": "3D city map builder — create online",
+    "description": "Create a 3D map of any city online: pick a district, tune building, park and river heights and download a ready 3MF/STL for printing.",
+    "keywords": "create 3d city map, 3d map builder, download 3MF map, STL city map, 3d print map"
+  },
+  "keychainsMeta": {
+    "title": "City map keychain — custom 3D keychain",
+    "description": "A map keychain of your city: a personal 3D keychain 55×30 mm with streets, buildings and text. Create online and download 3MF or order Eco PLA printing.",
+    "keywords": "city map keychain, map keychain, 3d city keychain, custom keychain, personalised keychain"
+  },
+  "showcaseMeta": {
+    "title": "Gallery of 3D city maps and keychains — print examples",
+    "description": "A gallery of printed 3D maps and keychains of cities worldwide. Rotate the models in 3D, pick a district and order printing.",
+    "keywords": "3d city maps gallery, 3d print map examples, printed city maps, 3d city model"
+  },
+  "privacyMeta": {
+    "title": "Privacy Policy",
+    "description": "Monadruk privacy policy: how we process and protect your data."
+  },
+  "termsMeta": {
+    "title": "Terms of Service",
+    "description": "Terms of service for Monadruk."
+  },
+  "create": {
+    "backHome": "Home",
+    "title": "3D map builder",
+    "keychain": "Keychain",
+    "account": "Account"
+  },
+  "showcase": {
+    "back": "Home",
+    "eyebrow": "Gallery",
+    "title": "Printed maps & keychains",
+    "subtitle": "Real models from cities across Ukraine and the world. Rotate in 3D, pick one — and order printing.",
+    "all": "All",
+    "keys": "Keychains",
+    "maps": "3D maps",
+    "viewerDesc": "A precise 3D map: streets, buildings, parks and water to scale. Drag to view from any side.",
+    "createKeychain": "Create a keychain",
+    "makeMap": "Make a map",
+    "rotate3d": "Rotate in 3D",
+    "keychainSize": "Keychain 55×30 mm",
+    "district": "3D district",
+    "keyItem": "City map keychain",
+    "mapItem": "3D city district",
+    "keyPrice": "from €7",
+    "mapPrice": "from €17",
+    "ctaTitle": "Didn't find your city?",
+    "ctaDesc": "Create a map of any city in the world in a couple of minutes.",
+    "ctaButton": "Create your map",
+    "mKey": "Map keychain",
+    "mHome": "“HOME” keychain",
+    "mWater": "River keychain",
+    "mBridge": "Bridges keychain",
+    "mBlock": "City district",
+    "mDistrict": "3D block"
   }
 }

@@ -13,6 +13,7 @@ import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
+import { useTranslations } from "next-intl";
 
 type WorkspaceView = "map" | "preview" | "settings";
 
@@ -83,6 +84,7 @@ const WORKSPACE_TABS: Array<{ id: WorkspaceView; label: string; icon: typeof Map
 ];
 
 export default function Home() {
+  const tc = useTranslations("create");
   const [showHexGrid, setShowHexGrid] = useState(false);
   const [selectedZones, setSelectedZones] = useState<any[]>([]);
   const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
@@ -316,11 +318,11 @@ export default function Home() {
               title="На головну"
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.35)] hover:text-[var(--text-primary)]"
             >
-              <HomeIcon size={15} /> <span className="hidden sm:inline">На головну</span>
+              <HomeIcon size={15} /> <span className="hidden sm:inline">{tc("backHome")}</span>
             </Link>
             <span className="hidden h-5 w-px bg-[var(--surface-border)] sm:block" />
             <h1 className="font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:text-lg">
-              Конструктор 3D-мапи
+              {tc("title")}
             </h1>
 
             {/* Controls (compact toolbar, right-aligned) */}
@@ -342,13 +344,13 @@ export default function Home() {
                 href="/keychains"
                 className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-1.5 text-[13px] font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
               >
-                <KeyRound size={15} /> <span className="hidden sm:inline">Брелок</span>
+                <KeyRound size={15} /> <span className="hidden sm:inline">{tc("keychain")}</span>
               </Link>
               <Link
                 href="/account"
                 className="inline-flex items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
-                <User size={15} /> <span className="hidden sm:inline">Кабінет</span>
+                <User size={15} /> <span className="hidden sm:inline">{tc("account")}</span>
               </Link>
             </div>
           </div>

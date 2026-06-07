@@ -1,53 +1,54 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { pageMetadata, BASE, localeUrl } from "@/i18n/metadata";
+import { localeMeta, routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Брелок з картою міста — 3D-брелок на замовлення",
-  description:
-    "Брелок-мапа твого міста: персональний 3D-брелок 55×30 мм із вулицями, будинками та написом. Створи онлайн і завантаж 3MF для друку або замов виготовлення з Eco PLA.",
-  keywords: [
-    "брелок з картою міста", "брелок мапа", "3d брелок місто", "брелок на замовлення",
-    "персональний брелок", "брелок з мапою києва", "брелок 3д друк", "сувенір брелок місто",
-  ],
-  alternates: { canonical: "/keychains" },
-  openGraph: {
-    title: "Брелок з картою міста — Monadruk",
-    description: "Персональний 3D-брелок із мапою твого міста. Створи онлайн і замов друк.",
-    url: "https://monadruk.com/keychains",
-    type: "website",
-    locale: "uk_UA",
-  },
-};
+export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+  return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta" });
+}
 
-const ld = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Product",
-      name: "Брелок з картою міста",
-      description:
-        "Персональний 3D-брелок-мапа 55×30 мм із вулицями, будинками та власним написом. Друк з Eco PLA або готовий 3MF для самостійного друку.",
-      image: "https://monadruk.com/showcase/keychain-5.png",
-      brand: { "@type": "Brand", name: "Monadruk" },
-      category: "Сувеніри / Брелки",
-      offers: {
-        "@type": "Offer",
-        priceCurrency: "UAH",
-        price: "290",
-        availability: "https://schema.org/InStock",
-        url: "https://monadruk.com/keychains",
+export default async function KeychainsLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  const locale = ((routing.locales as readonly string[]).includes(params.locale)
+    ? params.locale
+    : defaultLocale) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "keychainsMeta" });
+  const tm = await getTranslations({ locale, namespace: "meta" });
+  const nav = await getTranslations({ locale, namespace: "nav" });
+  const isUA = locale === "uk";
+
+  const ld = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Product",
+        name: tm("offerKeychain"),
+        description: t("description"),
+        image: `${BASE}/showcase/keychain-5.png`,
+        brand: { "@type": "Brand", name: "Monadruk" },
+        offers: {
+          "@type": "Offer",
+          priceCurrency: isUA ? "UAH" : "EUR",
+          price: isUA ? "290" : "7",
+          availability: "https://schema.org/InStock",
+          url: localeUrl(locale, "/keychains"),
+        },
       },
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Головна", item: "https://monadruk.com" },
-        { "@type": "ListItem", position: 2, name: "Брелки", item: "https://monadruk.com/keychains" },
-      ],
-    },
-  ],
-};
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: nav("createMap"), item: localeUrl(locale, "/") },
+          { "@type": "ListItem", position: 2, name: nav("keychains"), item: localeUrl(locale, "/keychains") },
+        ],
+      },
+    ],
+  };
 
-export default function KeychainsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
