@@ -679,8 +679,8 @@ async def track_event(
                 pass
         with ANALYTICS_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as e:  # noqa: BLE001
+        print(f"[track] write failed: {e!r}")
     return {"status": "ok"}
 
 
