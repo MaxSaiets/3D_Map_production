@@ -191,7 +191,14 @@
     "mWater": "Brelok z rzeką",
     "mBridge": "Brelok z mostami",
     "mBlock": "Dzielnica miasta",
-    "mDistrict": "Kwartał 3D"
+    "mDistrict": "Kwartał 3D",
+    "hEyebrow": "Gotowe modele",
+    "hTitle": "Obróć w dłoniach — przed drukiem",
+    "hSubtitle": "Prawdziwe modele wydrukowane z Twojej mapy. Obróć w 3D, wybierz dzielnicę — i zamów.",
+    "galleryTitle": "Galeria modeli 3D do druku",
+    "allGallery": "Cała galeria",
+    "viewerDescHome": "Dokładna mapa 3D: ulice, budynki, parki i woda w skali. Kliknij model, aby otworzyć na pełnym ekranie, obracaj i przybliżaj.",
+    "createOwn": "Stwórz swój brelok"
   },
   "consent": {
     "text": "Używamy plików cookie do analiz i ulepszania witryny.",

@@ -191,7 +191,14 @@
     "mWater": "Fluss-Anhänger",
     "mBridge": "Brücken-Anhänger",
     "mBlock": "Stadtviertel",
-    "mDistrict": "3D-Block"
+    "mDistrict": "3D-Block",
+    "hEyebrow": "Fertige Modelle",
+    "hTitle": "Dreh es in den Händen — vor dem Druck",
+    "hSubtitle": "Echte Modelle, gedruckt aus deiner Karte. In 3D drehen, ein Viertel wählen — und bestellen.",
+    "galleryTitle": "Galerie von 3D-Modellen zum Drucken",
+    "allGallery": "Ganze Galerie",
+    "viewerDescHome": "Eine präzise 3D-Karte: Straßen, Gebäude, Parks und Wasser maßstabsgetreu. Tippe auf das Modell für Vollbild, drehen und zoomen.",
+    "createOwn": "Anhänger erstellen"
   },
   "consent": {
     "text": "Wir verwenden Cookies für Analysen und zur Verbesserung der Website.",

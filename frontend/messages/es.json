@@ -191,7 +191,14 @@
     "mWater": "Llavero río",
     "mBridge": "Llavero puentes",
     "mBlock": "Distrito",
-    "mDistrict": "Bloque 3D"
+    "mDistrict": "Bloque 3D",
+    "hEyebrow": "Modelos listos",
+    "hTitle": "Gíralo en tus manos — antes de imprimir",
+    "hSubtitle": "Modelos reales impresos desde tu mapa. Gira en 3D, elige un distrito — y pide.",
+    "galleryTitle": "Galería de modelos 3D para imprimir",
+    "allGallery": "Galería completa",
+    "viewerDescHome": "Un mapa 3D preciso: calles, edificios, parques y agua a escala. Toca el modelo para pantalla completa, gira y acerca.",
+    "createOwn": "Crea tu llavero"
   },
   "consent": {
     "text": "Usamos cookies para análisis y para mejorar el sitio.",

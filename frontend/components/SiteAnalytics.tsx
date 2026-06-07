@@ -29,6 +29,26 @@ export default function SiteAnalytics() {
   // Page-view tracking (only fires once consent is granted; track() self-guards).
   useEffect(() => { if (consent === "granted") track("pageview"); }, [consent, pathname]);
 
+  // Free self-hosted error monitoring (Sentry alternative): report uncaught JS
+  // errors to /api/track. No PII, throttled. Visible in /admin → topEvents.
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL || "";
+    let sent = 0;
+    const report = (msg: string, src?: string) => {
+      if (sent >= 10) return; sent++;
+      try {
+        const body = JSON.stringify({ event: "js_error", path: location.pathname, locale: document.documentElement.lang || "", props: { msg: String(msg).slice(0, 200), src: String(src || "").slice(0, 120) } });
+        if (navigator.sendBeacon) navigator.sendBeacon(`${API}/api/track`, new Blob([body], { type: "application/json" }));
+        else fetch(`${API}/api/track`, { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+      } catch { /* ignore */ }
+    };
+    const onErr = (e: ErrorEvent) => report(e.message, `${e.filename}:${e.lineno}`);
+    const onRej = (e: PromiseRejectionEvent) => report(`unhandledrejection: ${e.reason}`);
+    window.addEventListener("error", onErr);
+    window.addEventListener("unhandledrejection", onRej);
+    return () => { window.removeEventListener("error", onErr); window.removeEventListener("unhandledrejection", onRej); };
+  }, []);
+
   const decide = (v: "granted" | "denied") => { setConsent(v); setConsentState(v); };
 
   return (

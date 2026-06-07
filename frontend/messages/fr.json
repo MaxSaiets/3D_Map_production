@@ -191,7 +191,14 @@
     "mWater": "Porte-clés rivière",
     "mBridge": "Porte-clés ponts",
     "mBlock": "Quartier",
-    "mDistrict": "Bloc 3D"
+    "mDistrict": "Bloc 3D",
+    "hEyebrow": "Modèles prêts",
+    "hTitle": "Fais-le tourner — avant l'impression",
+    "hSubtitle": "De vrais modèles imprimés à partir de ta carte. Tourne en 3D, choisis un quartier — et commande.",
+    "galleryTitle": "Galerie de modèles 3D à imprimer",
+    "allGallery": "Toute la galerie",
+    "viewerDescHome": "Une carte 3D précise : rues, bâtiments, parcs et eau à l'échelle. Touche le modèle pour le plein écran, tourne et zoome.",
+    "createOwn": "Créer ton porte-clés"
   },
   "consent": {
     "text": "Nous utilisons des cookies pour l'analyse et l'amélioration du site.",

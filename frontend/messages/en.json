@@ -191,7 +191,14 @@
     "mWater": "River keychain",
     "mBridge": "Bridges keychain",
     "mBlock": "City district",
-    "mDistrict": "3D block"
+    "mDistrict": "3D block",
+    "hEyebrow": "Ready models",
+    "hTitle": "Spin it in your hands — before printing",
+    "hSubtitle": "Real models printed from your map. Rotate in 3D, pick a district — and order.",
+    "galleryTitle": "Gallery of 3D models for printing",
+    "allGallery": "Full gallery",
+    "viewerDescHome": "A precise 3D map: streets, buildings, parks and water to scale. Tap the model to open it full-screen, rotate and zoom.",
+    "createOwn": "Create your keychain"
   },
   "consent": {
     "text": "We use cookies for analytics and to improve the site.",
