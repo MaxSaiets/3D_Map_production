@@ -34,10 +34,15 @@ function Model({ url, mirror = true }: { url: string; mirror?: boolean }) {
 /** Auto-rotating 3D viewer for a baked GLB. Mounts the WebGL canvas only when
  *  scrolled near the viewport (saves battery/CPU on mobile & speeds first paint). */
 export default function Model3DViewer({
-  url, height = 360, allowZoom = false, autoRotate = true, label,
-}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string }) {
+  url, height = 360, allowZoom = false, autoRotate = true, label, onActivate,
+}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void }) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const down = useRef<{ x: number; y: number } | null>(null);
   const [mounted, setMounted] = useState(false);
+  // City maps lie flat (thin axis up) — a low camera shows them edge-on like a
+  // vertical slab. Look down at a 3/4 angle instead. Keychains stay front-on.
+  const isMap = /\/map-/.test(url);
+  const camPos: [number, number, number] = isMap ? [0, 2.5, 2.1] : [0, 0.6, 2.4];
 
   useEffect(() => {
     if (mounted || typeof IntersectionObserver === "undefined") { setMounted(true); return; }
@@ -54,17 +59,22 @@ export default function Model3DViewer({
   return (
     <div
       ref={ref}
-      style={{ height, width: "100%" }}
+      style={{ height, width: "100%", cursor: onActivate ? "pointer" : undefined }}
       className="relative touch-none"
-      role="img"
+      role={onActivate ? "button" : "img"}
       aria-label={label ? `3D-модель: ${label}` : "Інтерактивна 3D-модель"}
+      onPointerDown={onActivate ? (e) => { down.current = { x: e.clientX, y: e.clientY }; } : undefined}
+      onPointerUp={onActivate ? (e) => {
+        const d = down.current; down.current = null;
+        if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) onActivate();
+      } : undefined}
     >
       {label && <span className="sr-only">{label}</span>}
       {mounted ? (
         <Canvas
           dpr={[1, 1.5]}
           shadows
-          camera={{ fov: 40, position: [0, 0.6, 2.4] }}
+          camera={{ fov: 40, position: camPos }}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         >
           {/* Explicit lights — no remote HDRI (drei's Environment CDN often fails,

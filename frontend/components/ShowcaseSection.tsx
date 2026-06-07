@@ -85,13 +85,16 @@ export default function ShowcaseSection() {
 
       {/* Interactive 3D */}
       <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_1fr]">
-        <button
-          onClick={() => setModal({ url: active.url, label: active.label, kind: active.kind })}
+        <div
           className="overflow-hidden rounded-[28px] border border-line bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3] shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
           title="Відкрити на весь екран"
         >
-          <Model3DViewer url={active.url} height={420} />
-        </button>
+          <Model3DViewer
+            url={active.url}
+            height={420}
+            onActivate={() => setModal({ url: active.url, label: active.label, kind: active.kind })}
+          />
+        </div>
         <div>
           <h3 className="font-serif text-2xl text-ink">{active.label}</h3>
           <p className="mt-2 text-[14px] text-ink-2">

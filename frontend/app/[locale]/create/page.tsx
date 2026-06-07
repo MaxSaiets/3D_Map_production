@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X } from "lucide-react";
+import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X, Home as HomeIcon } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
@@ -310,9 +310,13 @@ export default function Home() {
       <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
         <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Brand + title (compact) */}
-            <Link href="/" className="hidden items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] sm:inline-flex">
-              ← monadruk
+            {/* Back to home (prominent, always visible) */}
+            <Link
+              href="/"
+              title="На головну"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.35)] hover:text-[var(--text-primary)]"
+            >
+              <HomeIcon size={15} /> <span className="hidden sm:inline">На головну</span>
             </Link>
             <span className="hidden h-5 w-px bg-[var(--surface-border)] sm:block" />
             <h1 className="font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:text-lg">
