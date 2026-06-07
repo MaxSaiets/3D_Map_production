@@ -636,6 +636,107 @@ async def contact_endpoint(req: ContactRequest):
     return {"status": "ok" if ok else "logged"}
 
 
+# ── Self-hosted analytics (free, no third party; data stays on this server) ─────
+class TrackEvent(BaseModel):
+    event: str = "pageview"
+    path: str = ""
+    locale: str = ""
+    ref: str = ""
+    props: Optional[Dict[str, Any]] = None
+
+
+ANALYTICS_LOG = OUTPUT_DIR / "analytics.jsonl"
+
+
+@app.post("/api/track")
+async def track_event(
+    ev: TrackEvent,
+    x_forwarded_for: Optional[str] = Header(default=None),
+    user_agent: Optional[str] = Header(default=None),
+):
+    """Append a privacy-friendly analytics event. No raw IP is stored — only a
+    daily salted hash, so we can count unique visitors without tracking people."""
+    import hashlib
+    from datetime import datetime, timezone
+    try:
+        day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        ip = (x_forwarded_for or "").split(",")[0].strip()
+        salt = os.getenv("SECRET_KEY", "monadruk")
+        visitor = hashlib.sha256(f"{ip}|{user_agent or ''}|{day}|{salt}".encode()).hexdigest()[:16]
+        rec = {
+            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "day": day,
+            "event": (ev.event or "pageview")[:64],
+            "path": (ev.path or "")[:200],
+            "locale": (ev.locale or "")[:8],
+            "ref": (ev.ref or "")[:200],
+            "visitor": visitor,
+        }
+        if ev.props:
+            try:
+                rec["props"] = {str(k)[:40]: str(v)[:120] for k, v in list(ev.props.items())[:10]}
+            except Exception:  # noqa: BLE001
+                pass
+        with ANALYTICS_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:  # noqa: BLE001
+        pass
+    return {"status": "ok"}
+
+
+@app.get("/api/admin/stats")
+async def admin_stats(authorization: Optional[str] = Header(default=None), days: int = 30):
+    """Aggregate analytics.jsonl for the admin dashboard (free, self-hosted)."""
+    u = _require_user(authorization)
+    if not u["is_admin"]:
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    from collections import Counter
+    totals = {"events": 0, "pageviews": 0, "uniqueVisitors": 0}
+    by_day: Dict[str, Dict[str, Any]] = {}
+    ev_counter: Counter = Counter()
+    path_counter: Counter = Counter()
+    locale_counter: Counter = Counter()
+    visitors: set = set()
+    day_visitors: Dict[str, set] = {}
+    try:
+        if ANALYTICS_LOG.exists():
+            for line in ANALYTICS_LOG.read_text(encoding="utf-8").splitlines():
+                try:
+                    r = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                totals["events"] += 1
+                ev = r.get("event", "")
+                ev_counter[ev] += 1
+                if ev == "pageview":
+                    totals["pageviews"] += 1
+                    path_counter[r.get("path", "")] += 1
+                    if r.get("locale"):
+                        locale_counter[r["locale"]] += 1
+                d = r.get("day", "")
+                vis = r.get("visitor", "")
+                if vis:
+                    visitors.add(vis)
+                    day_visitors.setdefault(d, set()).add(vis)
+                bd = by_day.setdefault(d, {"day": d, "events": 0, "pageviews": 0})
+                bd["events"] += 1
+                if ev == "pageview":
+                    bd["pageviews"] += 1
+    except Exception:  # noqa: BLE001
+        pass
+    totals["uniqueVisitors"] = len(visitors)
+    series = sorted(by_day.values(), key=lambda x: x["day"])[-days:]
+    for s in series:
+        s["visitors"] = len(day_visitors.get(s["day"], set()))
+    return {
+        "totals": totals,
+        "byDay": series,
+        "topEvents": ev_counter.most_common(15),
+        "topPaths": path_counter.most_common(15),
+        "byLocale": locale_counter.most_common(10),
+    }
+
+
 # ── Account / auth (Firebase token verified without a service account) ──────────
 def _require_user(authorization: Optional[str]) -> Dict[str, Any]:
     from services.auth_service import verify_token

@@ -2,9 +2,10 @@
 
 import Script from "next/script";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, getConsent, setConsent } from "@/lib/analytics";
+import { GA_ID, getConsent, setConsent, track } from "@/lib/analytics";
 
 /**
  * GDPR-friendly analytics: shows a localized consent banner; Google Analytics
@@ -13,6 +14,7 @@ import { GA_ID, getConsent, setConsent } from "@/lib/analytics";
  */
 export default function SiteAnalytics() {
   const t = useTranslations("consent");
+  const pathname = usePathname();
   const [consent, setConsentState] = useState<"granted" | "denied" | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -23,6 +25,9 @@ export default function SiteAnalytics() {
     window.addEventListener("mnd:consent", onChange);
     return () => window.removeEventListener("mnd:consent", onChange);
   }, []);
+
+  // Page-view tracking (only fires once consent is granted; track() self-guards).
+  useEffect(() => { if (consent === "granted") track("pageview"); }, [consent, pathname]);
 
   const decide = (v: "granted" | "denied") => { setConsent(v); setConsentState(v); };
 

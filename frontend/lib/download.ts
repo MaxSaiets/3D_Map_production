@@ -42,6 +42,7 @@ export async function gatedDownload(opts: GatedDownloadOpts): Promise<GatedResul
     const a = document.createElement("a");
     a.href = blobUrl; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(blobUrl);
+    try { const { track } = await import("./analytics"); track("download_model"); } catch { /* ignore */ }
     return { status: "ok", quota: remaining != null ? { remaining: Number(remaining) } : undefined };
   } catch (e: any) {
     return { status: "error", message: e?.message };

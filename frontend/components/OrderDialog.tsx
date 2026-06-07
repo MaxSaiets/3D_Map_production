@@ -84,6 +84,7 @@ export function OrderDialog({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setOrderNumber(String(data.order_number));
+      try { const { track } = await import("@/lib/analytics"); track("order", { product: productType, delivery }); } catch { /* ignore */ }
     } catch (e: any) {
       setError("Не вдалося відправити замовлення. Спробуйте ще раз.");
     } finally {
