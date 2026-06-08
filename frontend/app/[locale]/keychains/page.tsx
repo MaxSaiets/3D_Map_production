@@ -124,10 +124,15 @@ export default function KeychainsPage() {
         ? "Ділянка вибрана"
         : "Оберіть ділянку";
 
-  // Mobile-tabs visibility classes
-  const mapPanelClasses = mobileTab === "map" ? "flex" : "hidden lg:flex";
-  const settingsPanelClasses = mobileTab === "settings" ? "block" : "hidden lg:block";
-  const designPanelClasses = mobileTab === "design" ? "flex" : "hidden lg:flex";
+  // Mobile = single scroll: every panel is visible and stacked (no tab juggling).
+  // The bottom bar just smooth-scrolls to a section. Desktop keeps the 3-col grid.
+  const mapPanelClasses = "flex";
+  const settingsPanelClasses = "block";
+  const designPanelClasses = "flex";
+  const scrollTo = (id: string) => {
+    setMobileTab(id === "kc-map" ? "map" : id === "kc-settings" ? "settings" : "design");
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
@@ -251,7 +256,7 @@ export default function KeychainsPage() {
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
-          <div className={`${mapPanelClasses} order-1 min-h-[calc(100dvh-220px)] flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[54dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
             <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
               <div>
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -261,7 +266,7 @@ export default function KeychainsPage() {
                 <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
                   Поставте форму брелка на карту
                 </h2>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] sm:text-sm">
+                <p className="mt-1 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block sm:text-sm">
                   Бірюзова рамка повторює пропорції області карти з превю і не дає вибрати crop, який дрібніший за 0.4 мм у друці.
                 </p>
               </div>
@@ -314,7 +319,7 @@ export default function KeychainsPage() {
             </div>
           </div>
 
-          <aside className={`${settingsPanelClasses} order-2 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
+          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -325,7 +330,7 @@ export default function KeychainsPage() {
             />
           </aside>
 
-          <section className={`${designPanelClasses} order-3 min-h-[calc(100dvh-220px)] flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -335,7 +340,7 @@ export default function KeychainsPage() {
                   <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
                     Розмір, зона карти, вушко і підпис
                   </h2>
-                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] sm:text-sm">
+                  <p className="mt-1 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block sm:text-sm">
                     Підбери форму брелка локально, потім встав обрану ділянку карти в пунктирну область.
                   </p>
                 </div>
@@ -426,11 +431,19 @@ export default function KeychainsPage() {
         <div className="mx-auto grid max-w-md grid-cols-3 gap-1.5">
           <button
             type="button"
-            onClick={() => setMobileTab("map")}
+            onClick={() => scrollTo("kc-design")}
             className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "map"
-                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
-                : "text-[var(--text-secondary)]"
+              mobileTab === "design" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
+            }`}
+          >
+            <Layers3 size={18} />
+            Превʼю
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollTo("kc-map")}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
+              mobileTab === "map" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
             }`}
           >
             <MapIcon size={18} />
@@ -438,27 +451,13 @@ export default function KeychainsPage() {
           </button>
           <button
             type="button"
-            onClick={() => setMobileTab("settings")}
+            onClick={() => scrollTo("kc-settings")}
             className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "settings"
-                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
-                : "text-[var(--text-secondary)]"
+              mobileTab === "settings" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
             }`}
           >
             <Settings2 size={18} />
-            Налаштування
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("design")}
-            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "design"
-                ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]"
-                : "text-[var(--text-secondary)]"
-            }`}
-          >
-            <Layers3 size={18} />
-            Дизайн
+            Створити
           </button>
         </div>
       </nav>

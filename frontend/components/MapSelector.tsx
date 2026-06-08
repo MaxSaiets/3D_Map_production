@@ -827,7 +827,7 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           className="pointer-events-none absolute inset-x-3 bottom-3 grid gap-2 sm:inset-x-auto sm:right-3 sm:w-[280px]"
           style={{ zIndex: 10_000 }}
         >
-          <div className="rounded-[18px] border border-white/45 bg-[#050a18]/86 px-3 py-2 text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur">
+          <div className="hidden rounded-[18px] border border-white/45 bg-[#050a18]/86 px-3 py-2 text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur sm:block">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">Область друку</div>
             <div className="mt-1 text-xs font-semibold">
               Клік ставить рамку. Бірюзовий квадрат змінює розмір, кругла ручка ⟳ крутить форму.
