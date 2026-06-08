@@ -281,59 +281,14 @@ export default function KeychainsPage() {
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
           <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[54dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
-                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                  <MapIcon size={14} />
-                  Map Crop
-                </p>
-                <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
-                  Поставте форму брелка на карту
+                <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
+                  <MapIcon size={16} /> Постав форму на карту
                 </h2>
-                <p className="mt-1 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block sm:text-sm">
-                  Бірюзова рамка повторює пропорції області карти з превю і не дає вибрати crop, який дрібніший за 0.4 мм у друці.
+                <p className="mt-0.5 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block">
+                  Перетягни рамку; ручка ⟳ на карті — обертання. Бірюзова рамка тримає пропорції з превʼю.
                 </p>
-              </div>
-              <div className="flex shrink-0 overflow-hidden rounded-full border border-[var(--surface-border)] bg-white/85 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
-                <button
-                  type="button"
-                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) - 15 + 360) % 360)}
-                  className="min-h-[40px] px-2 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-black/5"
-                  aria-label="−15 градусів"
-                  title="−15°"
-                >
-                  ⟲⟲
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) - 1 + 360) % 360)}
-                  className="min-h-[40px] px-3 text-base font-black text-[var(--text-primary)] transition hover:bg-black/5"
-                  aria-label="−1 градус"
-                  title="−1°"
-                >
-                  ↺
-                </button>
-                <div className="grid min-w-[54px] place-items-center px-1 text-sm font-bold text-[var(--accent-strong)] tabular-nums">
-                  {Math.round(cropRotationDeg || 0)}°
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 1) % 360)}
-                  className="min-h-[40px] px-3 text-base font-black text-[var(--text-primary)] transition hover:bg-black/5"
-                  aria-label="+1 градус"
-                  title="+1°"
-                >
-                  ↻
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCropRotationChange(((cropRotationDeg || 0) + 15) % 360)}
-                  className="min-h-[40px] px-2 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-black/5"
-                  aria-label="+15 градусів"
-                  title="+15°"
-                >
-                  ⟳⟳
-                </button>
               </div>
             </div>
             <div className="min-h-[56dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
@@ -394,7 +349,7 @@ export default function KeychainsPage() {
                   </div>
                   <KeychainTemplateStrip value={design} label={label} onSelect={setDesign} />
                 </div>
-                <div className="hidden min-h-[360px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] 2xl:block">
+                <div className="block min-h-[300px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[360px]">
                   <div className="relative h-full">
                     <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/45 p-1 backdrop-blur">
                       <button

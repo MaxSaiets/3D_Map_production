@@ -13,6 +13,7 @@ import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
+import { gatedDownload } from "@/lib/download";
 import { useTranslations } from "next-intl";
 
 type WorkspaceView = "map" | "preview" | "settings";
@@ -138,7 +139,7 @@ export default function Home() {
   }, [showHexGrid, setZonePolygonCoords, setCropRotationDeg]);
 
   // ── Personal city grids ─────────────────────────────────────────────
-  const { getIdToken } = useAuth();
+  const { getIdToken, openLogin } = useAuth();
   const [gridId, setGridId] = useState<string | null>(null);
   const [gridNotice, setGridNotice] = useState<string | null>(null);
   const [gridArea, setGridArea] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
@@ -622,14 +623,19 @@ export default function Home() {
                 </div>
                 {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
                 {!isGenerating && downloadUrl && (
-                  <a
-                    href={downloadUrl}
-                    download
+                  <button
+                    type="button"
+                    onClick={() => gatedDownload({
+                      taskId: taskGroupId, downloadUrl,
+                      meta: { city: currentCityKey, product_type: "map" },
+                      getIdToken, openLogin,
+                      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." } })),
+                    })}
                     className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
                   >
                     <Download size={14} />
                     Завантажити 3MF
-                  </a>
+                  </button>
                 )}
               </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
 import { useGenerationStore } from "@/store/generation-store";
@@ -739,9 +739,11 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         key={mapInstanceKey}
         center={center} // Initial center
         zoom={13}
+        zoomControl={false}
         style={{ height: "100%", width: "100%", minHeight: "100%" }}
         className="w-full h-full"
       >
+        <ZoomControl position="bottomleft" />
         {tileMode === "satellite" ? (
           <TileLayer
             attribution='Tiles &copy; Esri'
@@ -758,67 +760,47 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         <InvalidateOnResize />
       </MapContainer>
       <div
-        className="pointer-events-auto absolute left-3 top-3 flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-1 shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur"
+        className="pointer-events-auto absolute left-2 top-2 flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur"
         style={{ zIndex: 10_000 }}
       >
         <button
           type="button"
           onClick={() => setTileMode("map")}
-          className={`min-h-[44px] rounded-full px-4 text-xs font-semibold transition ${tileMode === "map" ? "bg-white text-[#050a18]" : "text-white/80"}`}
+          className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "map" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
           Карта
         </button>
         <button
           type="button"
           onClick={() => setTileMode("satellite")}
-          className={`min-h-[44px] rounded-full px-4 text-xs font-semibold transition ${tileMode === "satellite" ? "bg-white text-[#050a18]" : "text-white/80"}`}
+          className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "satellite" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
           Супутник
         </button>
       </div>
       {keychainCrop ? (
         <div
-          className="pointer-events-auto absolute right-3 top-3 flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-1 shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur"
+          className="pointer-events-auto absolute right-2 top-2 flex items-center overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur"
           style={{ zIndex: 10_000 }}
         >
           <button
             type="button"
             onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) - 15))}
-            className="min-h-[44px] px-2 text-[11px] font-black text-white/80 transition hover:bg-white/10"
-            aria-label="−15 градусів"
-            title="−15°"
-          >
-            ⟲⟲
-          </button>
-          <button
-            type="button"
-            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) - 1))}
-            className="min-h-[44px] px-3 text-base font-black text-white/95 transition hover:bg-white/10"
-            aria-label="−1 градус"
-            title="−1°"
+            className="min-h-[30px] px-2 text-sm font-black text-white/90 transition hover:bg-white/10"
+            aria-label="−15°" title="−15°"
           >
             ↺
           </button>
-          <div className="grid min-w-[58px] place-items-center px-1 text-xs font-bold text-white tabular-nums">
+          <div className="grid min-w-[40px] place-items-center px-0.5 text-[11px] font-bold text-white tabular-nums">
             {normalizeAngle(keychainCrop.rotationDeg || 0)}°
           </div>
           <button
             type="button"
-            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 1))}
-            className="min-h-[44px] px-3 text-base font-black text-white/95 transition hover:bg-white/10"
-            aria-label="+1 градус"
-            title="+1°"
+            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 15))}
+            className="min-h-[30px] px-2 text-sm font-black text-white/90 transition hover:bg-white/10"
+            aria-label="+15°" title="+15°"
           >
             ↻
-          </button>
-          <button
-            type="button"
-            onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 15))}
-            className="min-h-[44px] px-2 text-[11px] font-black text-white/80 transition hover:bg-white/10"
-            aria-label="+15 градусів"
-            title="+15°"
-          >
-            ⟳⟳
           </button>
         </div>
       ) : null}
