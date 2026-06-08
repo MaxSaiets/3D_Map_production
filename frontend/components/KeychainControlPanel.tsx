@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
@@ -364,7 +364,23 @@ export function KeychainControlPanel({
   const [expertMode, setExpertMode] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const { getIdToken, openLogin } = useAuth();
+  const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
   const pollingInFlightRef = useRef(false);
+
+  // Free-download counter (login + 5 free, then order). Refreshed after each download.
+  const refreshQuota = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      if (!token) { setQuota(null); return; }
+      const API = process.env.NEXT_PUBLIC_API_URL || "";
+      const r = await fetch(`${API}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return;
+      const d = await r.json();
+      const q = d?.quota || d;
+      if (q) setQuota({ remaining: Number(q.remaining ?? 0), limit: Number(q.limit ?? 5), isAdmin: Boolean(q.is_admin) });
+    } catch { /* ignore */ }
+  }, [getIdToken]);
+  useEffect(() => { refreshQuota(); }, [refreshQuota]);
   const printScale = useMemo(() => {
     const size = selectedAreaMeters(selectedArea);
     if (!size) return null;
@@ -840,6 +856,13 @@ export function KeychainControlPanel({
       })),
     });
     if (res.status === "error") setError("Не вдалося завантажити 3MF");
+    if (res.status === "ok") {
+      if (res.quota && typeof res.quota.remaining === "number") {
+        setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
+      } else {
+        refreshQuota();
+      }
+    }
   };
 
   const canGenerate = Boolean(selectedArea) && !isGenerating && blockingPrintIssues.length === 0;
@@ -916,11 +939,11 @@ export function KeychainControlPanel({
           <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
             Спочатку форма, потім карта
           </h2>
-          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
-            Мінімальний потік: шаблон, ділянка карти, підпис, генерація. Точні числа заховані нижче.
+          <p className="mt-1 hidden text-sm leading-5 text-[var(--text-secondary)] sm:block">
+            Мінімальний потік: шаблон, ділянка карти, підпис, генерація.
           </p>
 
-          <div className={`mt-4 rounded-[22px] border px-4 py-3 ${
+          <div className={`mt-3 rounded-[22px] border px-4 py-3 ${
             readyTone === "good"
               ? "border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.1)] text-[var(--accent-strong)]"
               : readyTone === "warn"
@@ -936,42 +959,32 @@ export function KeychainControlPanel({
             </div>
           </div>
 
-          <div className="mt-4">
-            <PrintabilityCard {...printability} />
-          </div>
-          <div className="mt-3 rounded-[18px] border border-[var(--surface-border)] bg-white/65 p-2">
-            <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-              Друкованість
+          <details className="group mt-3 rounded-[18px] border border-[var(--surface-border)] bg-white/55">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] [&::-webkit-details-marker]:hidden">
+              Деталі друку та швидкі дії
+              <span className="text-[var(--text-secondary)] transition group-open:rotate-180">▾</span>
+            </summary>
+            <div className="space-y-3 px-2 pb-3">
+              <PrintabilityCard {...printability} />
+              <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/65 p-2">
+                <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                  Друкованість
+                </div>
+                <div className="grid gap-2">
+                  {printChecks.slice(0, 3).map((check) => (
+                    <PrintCheckRow key={check.id} ok={check.ok} tone={check.tone} label={check.label} detail={check.detail} />
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <QuickActionButton onClick={resetToStandard}><RotateCcw size={15} />35 x 55</QuickActionButton>
+                <QuickActionButton onClick={centerMap}><MapIcon size={15} />Карта по центру</QuickActionButton>
+                <QuickActionButton onClick={centerLabel}><AlignCenter size={15} />Текст по центру</QuickActionButton>
+                <QuickActionButton onClick={centerLoop}><KeyRound size={15} />Вушко зверху</QuickActionButton>
+                <QuickActionButton onClick={repairForPrint}><CheckCircle2 size={15} />Авто-виправити</QuickActionButton>
+              </div>
             </div>
-            <div className="grid gap-2">
-              {printChecks.slice(0, 3).map((check) => (
-                <PrintCheckRow key={check.id} ok={check.ok} tone={check.tone} label={check.label} detail={check.detail} />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <QuickActionButton onClick={resetToStandard}>
-              <RotateCcw size={15} />
-              35 x 55
-            </QuickActionButton>
-            <QuickActionButton onClick={centerMap}>
-              <MapIcon size={15} />
-              Карта по центру
-            </QuickActionButton>
-            <QuickActionButton onClick={centerLabel}>
-              <AlignCenter size={15} />
-              Текст по центру
-            </QuickActionButton>
-            <QuickActionButton onClick={centerLoop}>
-              <KeyRound size={15} />
-              Вушко зверху
-            </QuickActionButton>
-            <QuickActionButton onClick={repairForPrint}>
-              <CheckCircle2 size={15} />
-              Авто-виправити
-            </QuickActionButton>
-          </div>
+          </details>
 
           <button
             type="button"
@@ -1228,6 +1241,13 @@ export function KeychainControlPanel({
               <Download className="h-4 w-4" />
               Завантажити 3MF
             </button>
+            {downloadUrl && quota && !quota.isAdmin && (
+              <div className={`-mt-1 text-center text-[12px] font-medium ${quota.remaining > 0 ? "text-[var(--text-secondary)]" : "text-amber-700"}`}>
+                {quota.remaining > 0
+                  ? `Залишилось ${quota.remaining} з ${quota.limit} безкоштовних завантажень`
+                  : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
+              </div>
+            )}
             {downloadUrl && (
               <button
                 type="button"
@@ -1235,7 +1255,7 @@ export function KeychainControlPanel({
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
               >
                 <ShoppingBag className="h-4 w-4" />
-                Замовити друк
+                Купити / замовити друк
               </button>
             )}
           </div>

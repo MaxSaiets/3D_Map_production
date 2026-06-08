@@ -71,6 +71,27 @@ const CITIES: Record<string, { center: [number, number]; label: string; defaultT
 
 type MobileTab = "map" | "settings" | "design";
 
+/** Tiny visual silhouette of a keychain form (shape + loop) for the template cards. */
+function ShapeThumb({ w, h, shape }: { w: number; h: number; shape?: string }) {
+  const maxW = 38, maxH = 44;
+  const ar = w / Math.max(h, 1);
+  let bw = maxW, bh = maxW / ar;
+  if (bh > maxH) { bh = maxH; bw = maxH * ar; }
+  const isToken = shape === "token";
+  const rx = isToken ? Math.min(bw, bh) * 0.28 : Math.min(bw, bh) * 0.18;
+  const loopR = Math.max(2.4, bw * 0.12);
+  return (
+    <svg width={maxW + 6} height={maxH + 10} viewBox={`0 0 ${maxW + 6} ${maxH + 10}`} className="shrink-0">
+      <g transform={`translate(${(maxW + 6 - bw) / 2}, ${maxH + 6 - bh})`}>
+        <circle cx={bw / 2} cy={-loopR * 0.2} r={loopR} fill="none" stroke="#2E4A3A" strokeWidth="1.6" />
+        <rect x="0" y="0" width={bw} height={bh} rx={rx} ry={rx} fill="#EDE4D0" stroke="#2E4A3A" strokeWidth="1.4" />
+        {isToken && <circle cx={bw / 2} cy={bh * 0.34} r={loopR * 0.7} fill="#fff" stroke="#2E4A3A" strokeWidth="1.2" />}
+        <rect x={bw * 0.18} y={bh * (isToken ? 0.6 : 0.42)} width={bw * 0.64} height={Math.max(3, bh * 0.14)} rx="1.5" fill="#8E6B3D" opacity="0.55" />
+      </g>
+    </svg>
+  );
+}
+
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV");
@@ -236,19 +257,22 @@ export default function KeychainsPage() {
                   key={t.id}
                   type="button"
                   onClick={() => setDesign(t.design)}
-                  className={`min-w-[150px] shrink-0 rounded-[18px] border px-3 py-3 text-left transition ${
+                  className={`flex min-w-[168px] shrink-0 items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition ${
                     active
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
                       : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
-                    <span className="rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
-                      {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
+                  <ShapeThumb w={t.design.bodyWidthMm} h={t.design.bodyHeightMm} shape={t.design.baseShape} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
+                      <span className="shrink-0 rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                        {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
+                      </span>
                     </span>
-                  </div>
-                  <div className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</div>
+                    <span className="mt-1 line-clamp-2 block text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</span>
+                  </span>
                 </button>
               );
             })}
