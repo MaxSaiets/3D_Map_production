@@ -688,6 +688,23 @@ function MapViewUpdater({ center }: { center: [number, number] }) {
   return null;
 }
 
+/** Keeps Leaflet sized correctly when its container changes (mobile tab
+ *  switches map↔preview↔settings hide/show the map → stale 0/small size →
+ *  grey/half-loaded tiles). ResizeObserver + a couple of delayed nudges fix it. */
+function InvalidateOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    const fix = () => map.invalidateSize({ animate: false });
+    const ro = new ResizeObserver(fix);
+    ro.observe(el);
+    const t1 = setTimeout(fix, 150);
+    const t2 = setTimeout(fix, 600);
+    return () => { ro.disconnect(); clearTimeout(t1); clearTimeout(t2); };
+  }, [map]);
+  return null;
+}
+
 interface MapSelectorProps {
   center?: [number, number];
   keychainCrop?: KeychainCropSpec;
@@ -738,6 +755,7 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         )}
         {keychainCrop ? <KeychainCropOverlay spec={keychainCrop} /> : <DrawControl />}
         <MapViewUpdater center={center} />
+        <InvalidateOnResize />
       </MapContainer>
       <div
         className="pointer-events-auto absolute left-3 top-3 flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-1 shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur"

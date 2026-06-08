@@ -441,14 +441,14 @@ export default function Home() {
                     <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
                       {showHexGrid ? "Оберіть зони для серії" : "Позначте ділянку на мапі"}
                     </h2>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    <p className="mt-1 hidden text-sm text-[var(--text-secondary)] sm:block">
                       {showHexGrid
                         ? "Працюйте з кількома зонами та швидко готуйте пакетний рендер."
                         : "Виділіть одну ділянку, щоб швидко згенерувати модель і перейти до прев'ю."}
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="hidden flex-col items-end gap-2 sm:flex">
                     <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                         Режим
@@ -496,7 +496,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="min-h-0 flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3">
+                <div className="min-h-[58dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       key={`hex-grid-${currentCityKey}`}
@@ -550,7 +550,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="min-h-0 flex-1 p-2 sm:p-3">
+                <div className="min-h-[52dvh] flex-1 p-2 sm:p-3 lg:min-h-0">
                   <div className="h-full overflow-hidden rounded-[24px] border border-[rgba(15,23,42,0.12)]">
                     <Preview3D />
                   </div>
