@@ -4,16 +4,12 @@ import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
 
 // Three.js + Overpass fetch — lazy load to avoid SSR + keep designer bundle light
-const LiveCity3D = dynamic(
-  () => import("@/components/LiveCity3D").then((m) => ({ default: m.LiveCity3D })),
-  {
-    ssr: false,
-    loading: () => (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
-        Завантаження 3D…
-      </div>
-    ),
-  },
+// SVG-LAYER (нативні шляхи у батьківському SVG). НЕ foreignObject — інакше на
+// iOS/Safari прев'ю карти вилазить у лівий верхній кут (WebKit bug #23113).
+// loading повертає null бо рендеримось усередині <svg> (div там недопустимий).
+const LiveCitySvgPaths = dynamic(
+  () => import("@/components/LiveCity3D").then((m) => ({ default: m.LiveCitySvgPaths })),
+  { ssr: false, loading: () => null },
 );
 
 export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token";
@@ -866,41 +862,31 @@ export function KeychainDesigner({
               >
                 <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
                 {mapBounds ? (
-                  /* Реальний 3D перегляд: фетчимо OSM (buildings+roads) для
-                     обраної ділянки і рендеримо як 3D-екструзії (Three.js).
-                     Це показує саме те, що буде на брелку у фінальному 3MF —
-                     не плоска картинка, а реальна 3D-мапа. */
-                  <foreignObject
-                    x={value.mapXMm}
-                    y={value.mapYMm}
-                    width={value.mapWidthMm}
-                    height={value.mapHeightMm}
-                    pointerEvents="none"
-                  >
-                    {/* @ts-ignore xmlns required for foreignObject children */}
-                    <div xmlns="http://www.w3.org/1999/xhtml" style={{ width: "100%", height: "100%" }}>
-                      <LiveCity3D
-                        bounds={mapBounds}
-                        cropRotationDeg={cropRotationDeg}
-                        cropPolygon={cropPolygon}
-                        design={{
-                          bodyWidthMm: value.bodyWidthMm,
-                          bodyHeightMm: value.bodyHeightMm,
-                          cornerRadiusMm: value.cornerRadiusMm,
-                          mapXMm: value.mapXMm,
-                          mapYMm: value.mapYMm,
-                          mapWidthMm: value.mapWidthMm,
-                          mapHeightMm: value.mapHeightMm,
-                          loopXMm: value.loopXMm,
-                          loopYMm: value.loopYMm,
-                          loopOuterMm: value.loopOuterMm,
-                          loopInnerMm: value.loopInnerMm,
-                          rimWidthMm: value.rimWidthMm,
-                          baseShape: value.baseShape as any,
-                        }}
-                      />
-                    </div>
-                  </foreignObject>
+                  /* Реальний перегляд OSM (buildings/roads/water/parks) обраної
+                     ділянки як НАТИВНІ SVG-шляхи у спільній мм-системі координат.
+                     Раніше було через <foreignObject> → на iOS/Safari прев'ю
+                     вилазило у лівий верхній кут (WebKit #23113). Тепер коректно
+                     скрізь і успадковує mapRotation/clip/mask батька. */
+                  <LiveCitySvgPaths
+                    bounds={mapBounds}
+                    cropRotationDeg={cropRotationDeg}
+                    cropPolygon={cropPolygon}
+                    design={{
+                      bodyWidthMm: value.bodyWidthMm,
+                      bodyHeightMm: value.bodyHeightMm,
+                      cornerRadiusMm: value.cornerRadiusMm,
+                      mapXMm: value.mapXMm,
+                      mapYMm: value.mapYMm,
+                      mapWidthMm: value.mapWidthMm,
+                      mapHeightMm: value.mapHeightMm,
+                      loopXMm: value.loopXMm,
+                      loopYMm: value.loopYMm,
+                      loopOuterMm: value.loopOuterMm,
+                      loopInnerMm: value.loopInnerMm,
+                      rimWidthMm: value.rimWidthMm,
+                      baseShape: value.baseShape as any,
+                    }}
+                  />
                 ) : (
                   /* Fallback — generic stripes якщо ще не обрано ділянку */
                   <>

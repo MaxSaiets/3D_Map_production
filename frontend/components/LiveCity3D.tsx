@@ -329,15 +329,7 @@ function polylineToPath(pts: Pts): string {
   return "M" + pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" L");
 }
 
-/** Чистий 2D preview ділянки — рендериться тими ж SVG-координатами як map area.
- *  Показує ТІЛЬКИ те, що буде роздруковано: будівлі, дороги, воду, парки.
- *  Без OSM-міток, іконок, POI — чисто схематично, як у фінальному 3MF. */
-export function LiveCity3D({
-  bounds,
-  design,
-  cropRotationDeg = 0,
-  cropPolygon = null,
-}: {
+type LiveCityProps = {
   bounds: Bounds;
   design: DesignShape;
   /** Поворот рамки на карті — preview обертає контент на -кут щоб ділянка
@@ -346,7 +338,11 @@ export function LiveCity3D({
   /** 4 кути обернутого rect [[lon, lat], ...]. Preview clipує OSM по цьому
    *  полігону — показує ТІЛЬКИ те що буде на готовому 3MF, нічого зайвого. */
   cropPolygon?: Array<[number, number]> | null;
-}) {
+};
+
+/** Спільна логіка: fetch OSM → проєкція lon/lat у мм слота → фільтр друкованих
+ *  фіч. Повертає готові до рендеру шляхи у мм-координатах батьківського SVG. */
+function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = null }: LiveCityProps) {
   const [data, setData] = useState<CityData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -505,82 +501,109 @@ export function LiveCity3D({
     return { buildings, roads, water, parks, plazas, bridges, fountains, trees };
   }, [data, project]);
 
-  // Розміри viewBox матчать map area (мм)
+  return { printable, loading, error, hasData: !!data };
+}
+
+/** Феатур-шляхи міста як набір SVG-елементів (parks/water/roads/bridges/buildings)
+ *  у мм-координатах слота. Вже спроектовані — рендеряться прямо у батьківському
+ *  SVG. Окрема функція, щоб однаково використати і в standalone, і в layer. */
+function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityPrintable>["printable"] }) {
+  return (
+    <>
+      {printable.parks.map((pts, i) => (
+        <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
+      ))}
+      {printable.water.map((pts, i) => (
+        <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
+      ))}
+      {printable.roads.map((r, i) => (
+        <path
+          key={`r-${i}`}
+          d={r.path}
+          stroke={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
+          strokeWidth={r.widthMm}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
+      {printable.bridges.map((br, i) => (
+        <path
+          key={`br-${i}`}
+          d={br.path}
+          stroke="#2a2a2a"
+          strokeWidth={br.widthMm}
+          fill="none"
+          strokeLinecap="butt"
+          strokeLinejoin="round"
+        />
+      ))}
+      {printable.buildings.map((pts, i) => (
+        <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
+      ))}
+    </>
+  );
+}
+
+/**
+ * SVG-LAYER варіант: повертає лише <g> з нативними SVG-шляхами для ВБУДОВУВАННЯ
+ * у батьківський SVG (KeychainDesigner). Це КЛЮЧОВО для iOS/Safari: попередній
+ * варіант через <foreignObject> на Safari ігнорував x/y/transform і малював
+ * прев'ю у лівому верхньому куті (WebKit bug #23113). Нативні шляхи у спільній
+ * мм-системі координат позиціонуються правильно скрізь і успадковують поворот/кліп.
+ */
+export function LiveCitySvgPaths(props: LiveCityProps) {
+  const { printable, loading, error, hasData } = useCityPrintable(props);
+  const { design } = props;
+  const cx = design.mapXMm + design.mapWidthMm / 2;
+  const cy = design.mapYMm + design.mapHeightMm / 2;
+  return (
+    <g>
+      <CityFeaturePaths printable={printable} />
+      {loading && (
+        <g pointerEvents="none">
+          <circle cx={cx} cy={cy} r={Math.min(design.mapWidthMm, design.mapHeightMm) * 0.09} fill="none" stroke="#0f766e" strokeWidth={0.6} strokeDasharray="2 1.4">
+            <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="0.9s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      )}
+      {error && (
+        <text x={cx} y={design.mapYMm + design.mapHeightMm - 1.5} textAnchor="middle" fontSize={1.8} fill="#b91c1c">
+          {error.slice(0, 28)}
+        </text>
+      )}
+      {!hasData && !loading && !error && (
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={2.2} fontWeight={700} fill="#6a5d44">
+          Оберіть ділянку на карті
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** Чистий 2D preview ділянки (standalone div+svg). Зберігається для можливого
+ *  окремого використання; на брелку застосовується LiveCitySvgPaths. */
+export function LiveCity3D(props: LiveCityProps) {
+  const { printable, loading, error, hasData } = useCityPrintable(props);
+  const { design } = props;
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
-
-  // Slot-shape clip — щоб контент який виходить за межі слота не вилазив.
   const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
-
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
-      <svg
-        viewBox={vb}
-        preserveAspectRatio="xMidYMid meet"
-        style={{ width: "100%", height: "100%", display: "block" }}
-      >
+      <svg viewBox={vb} preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
         <defs>
           <clipPath id={clipId}>
-            <rect
-              x={design.mapXMm}
-              y={design.mapYMm}
-              width={design.mapWidthMm}
-              height={design.mapHeightMm}
-            />
+            <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} />
           </clipPath>
         </defs>
-        {/* Базова бежева плита на весь слот */}
-        <rect
-          x={design.mapXMm}
-          y={design.mapYMm}
-          width={design.mapWidthMm}
-          height={design.mapHeightMm}
-          fill="#e0d4b5"
-        />
-        {/* Контент уже спроектований так що повернута зона = слот.
-            Slot-clip обрізає випадковий overshoot за межами слота. */}
+        <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#e0d4b5" />
         <g clipPath={`url(#${clipId})`}>
-          {printable.parks.map((pts, i) => (
-            <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
-          ))}
-          {printable.water.map((pts, i) => (
-            <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
-          ))}
-          {printable.roads.map((r, i) => (
-            <path
-              key={`r-${i}`}
-              d={r.path}
-              stroke={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
-              strokeWidth={r.widthMm}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
-          {/* Мости — поверх води/доріг, темно-сірі */}
-          {printable.bridges.map((br, i) => (
-            <path
-              key={`br-${i}`}
-              d={br.path}
-              stroke="#2a2a2a"
-              strokeWidth={br.widthMm}
-              fill="none"
-              strokeLinecap="butt"
-              strokeLinejoin="round"
-            />
-          ))}
-          {printable.buildings.map((pts, i) => (
-            <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
-          ))}
-          {/* Прибрано: дерева, фонтани, плази — не друкуються у 3MF.
-              Превʼю показує тільки те що буде в моделі. */}
+          <CityFeaturePaths printable={printable} />
         </g>
       </svg>
       {loading && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-[#0f766e]"
-            aria-label="Завантаження"
-          />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-[#0f766e]" aria-label="Завантаження" />
         </div>
       )}
       {error && (
@@ -588,7 +611,7 @@ export function LiveCity3D({
           {error.slice(0, 40)}
         </div>
       )}
-      {!data && !loading && !error && (
+      {!hasData && !loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center text-[10px] text-[#6a5d44]">
           Оберіть ділянку
         </div>

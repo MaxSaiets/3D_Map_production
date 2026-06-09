@@ -1248,16 +1248,14 @@ export function KeychainControlPanel({
                   : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
               </div>
             )}
-            {downloadUrl && (
-              <button
-                type="button"
-                onClick={() => setOrderOpen(true)}
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Купити / замовити друк
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setOrderOpen(true)}
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
+            </button>
           </div>
         </section>
 
@@ -1427,6 +1425,14 @@ export function KeychainControlPanel({
             <Download className="h-4 w-4" />
             Завантажити 3MF
           </button>
+          <button
+            type="button"
+            onClick={() => setOrderOpen(true)}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
+          </button>
         </div>
 
         <div className="sticky bottom-3 z-30 rounded-[26px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] px-4 py-3 shadow-[0_-14px_34px_rgba(15,23,42,0.16)] backdrop-blur lg:hidden">
@@ -1441,7 +1447,7 @@ export function KeychainControlPanel({
               {Math.round(design.bodyWidthMm)} x {Math.round(design.bodyHeightMm)} мм
             </div>
           </div>
-          <div className="grid grid-cols-[1fr,auto] gap-2">
+          <div className="grid grid-cols-[1fr,auto,auto] gap-2">
             <button
               type="button"
               onClick={handleGenerate}
@@ -1455,10 +1461,18 @@ export function KeychainControlPanel({
               type="button"
               onClick={handleDownload}
               disabled={!downloadUrl || !activeTaskId}
-              className="inline-flex min-h-[48px] min-w-[56px] items-center justify-center rounded-[20px] border border-[var(--surface-border)] bg-white/85 px-4 py-3 text-[var(--text-primary)] transition disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex min-h-[48px] min-w-[52px] items-center justify-center rounded-[20px] border border-[var(--surface-border)] bg-white/85 px-3 py-3 text-[var(--text-primary)] transition disabled:cursor-not-allowed disabled:opacity-45"
               aria-label="Завантажити 3MF"
             >
               <Download className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setOrderOpen(true)}
+              className="inline-flex min-h-[48px] min-w-[52px] items-center justify-center gap-1.5 rounded-[20px] bg-[var(--bronze,#8E6B3D)] px-3 py-3 text-white shadow-[0_12px_26px_rgba(142,107,61,0.3)] transition hover:opacity-90"
+              aria-label="Замовити друк"
+            >
+              <ShoppingBag className="h-5 w-5" />
             </button>
           </div>
         </div>
