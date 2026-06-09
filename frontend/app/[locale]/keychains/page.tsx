@@ -9,7 +9,7 @@ import { KeychainLifePreview, KeychainSlicerPreview } from "@/components/Keychai
 import {
   DEFAULT_KEYCHAIN_DESIGN,
   KeychainDesigner,
-  KeychainTemplateStrip,
+  TemplateMiniature,
   KEYCHAIN_TEMPLATES,
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
@@ -71,27 +71,6 @@ const CITIES: Record<string, { center: [number, number]; label: string; defaultT
 
 type MobileTab = "map" | "settings" | "design";
 
-/** Tiny visual silhouette of a keychain form (shape + loop) for the template cards. */
-function ShapeThumb({ w, h, shape }: { w: number; h: number; shape?: string }) {
-  const maxW = 38, maxH = 44;
-  const ar = w / Math.max(h, 1);
-  let bw = maxW, bh = maxW / ar;
-  if (bh > maxH) { bh = maxH; bw = maxH * ar; }
-  const isToken = shape === "token";
-  const rx = isToken ? Math.min(bw, bh) * 0.28 : Math.min(bw, bh) * 0.18;
-  const loopR = Math.max(2.4, bw * 0.12);
-  return (
-    <svg width={maxW + 6} height={maxH + 10} viewBox={`0 0 ${maxW + 6} ${maxH + 10}`} className="shrink-0">
-      <g transform={`translate(${(maxW + 6 - bw) / 2}, ${maxH + 6 - bh})`}>
-        <circle cx={bw / 2} cy={-loopR * 0.2} r={loopR} fill="none" stroke="#2E4A3A" strokeWidth="1.6" />
-        <rect x="0" y="0" width={bw} height={bh} rx={rx} ry={rx} fill="#EDE4D0" stroke="#2E4A3A" strokeWidth="1.4" />
-        {isToken && <circle cx={bw / 2} cy={bh * 0.34} r={loopR * 0.7} fill="#fff" stroke="#2E4A3A" strokeWidth="1.2" />}
-        <rect x={bw * 0.18} y={bh * (isToken ? 0.6 : 0.42)} width={bw * 0.64} height={Math.max(3, bh * 0.14)} rx="1.5" fill="#8E6B3D" opacity="0.55" />
-      </g>
-    </svg>
-  );
-}
-
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV");
@@ -121,6 +100,12 @@ export default function KeychainsPage() {
   }, [mapAspectRatio]);
   const handleCropRotationChange = useCallback((rotationDeg: number) => {
     setCropRotationDeg(rotationDeg);
+  }, []);
+  // Застосувати готовий шаблон: міняємо весь дизайн І скидаємо поворот карти,
+  // щоб новий шаблон ставав чисто (інакше лишався старий кут від попередньої форми).
+  const applyTemplate = useCallback((next: KeychainDesignerConfig) => {
+    setCropRotationDeg(0);
+    setDesign(next);
   }, []);
   const keychainCrop = useMemo(
     () => ({
@@ -242,11 +227,14 @@ export default function KeychainsPage() {
 
         {/* Step 1: pick a keychain form template — the prominent first decision */}
         <div className="mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
-          <div className="mb-2 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[10px] font-bold text-white">1</span>
             Оберіть форму брелка
+            <span className="ml-auto rounded-full bg-[rgba(46,74,58,0.07)] px-2 py-0.5 text-[10px] normal-case tracking-normal text-[var(--accent-strong)]">
+              Натисніть приклад — форма застосується
+            </span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2.5 overflow-x-auto pb-1">
             {KEYCHAIN_TEMPLATES.map((t) => {
               const active =
                 t.design.baseShape === design.baseShape &&
@@ -256,27 +244,31 @@ export default function KeychainsPage() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setDesign(t.design)}
-                  className={`flex min-w-[168px] shrink-0 items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition ${
+                  onClick={() => applyTemplate(t.design)}
+                  aria-pressed={active}
+                  className={`flex min-w-[150px] max-w-[170px] shrink-0 flex-col gap-2 rounded-[18px] border p-2.5 text-left transition ${
                     active
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
+                      ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
                       : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                   }`}
                 >
-                  <ShapeThumb w={t.design.bodyWidthMm} h={t.design.bodyHeightMm} shape={t.design.baseShape} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
-                      <span className="shrink-0 rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
-                        {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
-                      </span>
-                    </span>
-                    <span className="mt-1 line-clamp-2 block text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</span>
+                  <span className="block w-full overflow-hidden rounded-[12px]">
+                    <TemplateMiniature design={t.design} label={label} active={active} />
                   </span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
+                    <span className="shrink-0 rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
+                      {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
+                    </span>
+                  </span>
+                  <span className="line-clamp-2 block text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</span>
                 </button>
               );
             })}
           </div>
+          <p className="mt-2 px-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+            Далі: перетягуйте карту, напис і вушко прямо в прев'ю. Карту й напис можна <span className="font-semibold text-[var(--accent-strong)]">обертати</span> — тягніть кутову ручку <span className="font-semibold">⟳</span> на карті або зелену ручку <span className="font-semibold">↻</span> над написом.
+          </p>
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
@@ -347,7 +339,6 @@ export default function KeychainsPage() {
                       } : null}
                     />
                   </div>
-                  <KeychainTemplateStrip value={design} label={label} onSelect={setDesign} />
                 </div>
                 <div className="block min-h-[300px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[360px]">
                   <div className="relative h-full">
