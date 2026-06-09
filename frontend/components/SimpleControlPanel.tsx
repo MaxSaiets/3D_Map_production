@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
@@ -47,10 +47,25 @@ export function SimpleControlPanel({
   const [orderOpen, setOrderOpen] = useState(false);
   const [dlBusy, setDlBusy] = useState(false);
   const { getIdToken, openLogin } = useAuth();
+  const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
+
+  // Лічильник безкоштовних завантажень (вхід + 5 безкоштовних, далі замовлення).
+  const refreshQuota = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      if (!token) { setQuota(null); return; }
+      const r = await fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return;
+      const d = await r.json();
+      const q = d?.quota || d;
+      if (q) setQuota({ remaining: Number(q.remaining ?? 0), limit: Number(q.limit ?? 5), isAdmin: Boolean(q.is_admin) });
+    } catch { /* ignore */ }
+  }, [getIdToken]);
+  useEffect(() => { refreshQuota(); }, [refreshQuota]);
 
   const doGatedDownload = async () => {
     setDlBusy(true);
-    await gatedDownload({
+    const res = await gatedDownload({
       taskId: taskGroupId, downloadUrl,
       meta: { city: selectedCityKey, product_type: "map" },
       getIdToken, openLogin,
@@ -58,6 +73,11 @@ export function SimpleControlPanel({
         detail: { message: t("limitMsg") },
       })),
     });
+    if (res.quota && typeof res.quota.remaining === "number") {
+      setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
+    } else if (res.status === "ok") {
+      refreshQuota();
+    }
     setDlBusy(false);
   };
 
@@ -336,6 +356,14 @@ export function SimpleControlPanel({
             >
               {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {t("downloadFile")}
             </button>
+          )}
+
+          {downloadUrl && quota && !quota.isAdmin && (
+            <div className={`-mt-1 text-center text-[12px] font-medium ${quota.remaining > 0 ? "text-[var(--text-secondary)]" : "text-amber-700"}`}>
+              {quota.remaining > 0
+                ? `Залишилось ${quota.remaining} з ${quota.limit} безкоштовних завантажень`
+                : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
+            </div>
           )}
 
           {onAdvanced && (

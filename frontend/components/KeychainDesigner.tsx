@@ -396,7 +396,7 @@ function TokenHolePreview({ value }: { value: KeychainDesignerConfig }) {
   );
 }
 
-function TemplateMiniature({ design, label, active }: { design: KeychainDesignerConfig; label: string; active: boolean }) {
+export function TemplateMiniature({ design, label, active }: { design: KeychainDesignerConfig; label: string; active: boolean }) {
   const pad = Math.max(design.loopOuterMm * 2.2, 12);
   const view = {
     x: -pad,
