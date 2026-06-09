@@ -354,7 +354,7 @@ export function KeychainControlPanel({
   } = useGenerationStore();
 
   const [error, setError] = useState<string | null>(null);
-  const [baseThicknessMm, setBaseThicknessMm] = useState(2.0);
+  const [baseThicknessMm, setBaseThicknessMm] = useState(1.5);
   const [roadLayerMm, setRoadLayerMm] = useState(0.44);
   const [parkLayerMm, setParkLayerMm] = useState(0.34);
   const [waterLayerMm, setWaterLayerMm] = useState(0.28);
