@@ -750,22 +750,25 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
     };
   }, [keychainCrop, selectedArea]);
 
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const [isFs, setIsFs] = useState(false);
+  // CSS-розгортання на весь екран. НЕ Fullscreen API — на iPhone Safari
+  // requestFullscreen працює лише для <video>, тож для звичайного блоку він
+  // нічого не робить. position:fixed inset:0 працює СКРІЗЬ. ResizeObserver
+  // (InvalidateOnResize) сам перерахує розмір Leaflet.
+  const [expanded, setExpanded] = useState(false);
   useEffect(() => {
-    const onFs = () => setIsFs(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
-  const toggleFullscreen = () => {
-    const el = rootRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) document.exitFullscreen?.();
-    else (el.requestFullscreen?.() as Promise<void> | undefined)?.catch(() => {});
-  };
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [expanded]);
 
   return (
-    <div ref={rootRef} className="relative h-full w-full bg-[#050a18]" style={{ minHeight: '100%' }}>
+    <div
+      className={expanded
+        ? "fixed inset-0 z-[9999] bg-[#050a18]"
+        : "relative h-full w-full bg-[#050a18]"}
+      style={expanded ? undefined : { minHeight: '100%' }}
+    >
       <MapContainer
         key={mapInstanceKey}
         center={center} // Initial center
@@ -812,12 +815,12 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
       {/* Карта на весь екран — зручно вибирати ділянку точно на телефоні */}
       <button
         type="button"
-        onClick={toggleFullscreen}
-        className="pointer-events-auto absolute left-2 top-[46px] flex min-h-[30px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/85 px-2.5 text-[11px] font-semibold text-white shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur transition hover:bg-[#050a18]"
+        onClick={() => setExpanded((v) => !v)}
+        className="pointer-events-auto absolute left-2 top-[46px] flex min-h-[32px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/90 px-3 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(15,23,42,0.3)] backdrop-blur transition hover:bg-[#050a18]"
         style={{ zIndex: 10_000 }}
         title="На весь екран"
       >
-        {isFs ? "✕ Згорнути" : "⤢ На весь екран"}
+        {expanded ? "✕ Згорнути" : "⤢ На весь екран"}
       </button>
       {keychainCrop ? (
         <div

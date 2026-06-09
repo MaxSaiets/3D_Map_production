@@ -1068,27 +1068,22 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   const [rotateMode, setRotateMode] = useState<RotateMode>("camera");
   const [cameraMode, setCameraMode] = useState<CameraMode>("orbit");
   const [flySpeed, setFlySpeed] = useState<number>(120);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const [isFs, setIsFs] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
-
+  // CSS-розгортання (працює на iPhone, на відміну від Fullscreen API).
   useEffect(() => {
-    const onFs = () => setIsFs(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
-  const toggleFullscreen = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-    } else {
-      (el.requestFullscreen?.() as Promise<void> | undefined)?.catch(() => {});
-    }
-  };
+    if (!isFs) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [isFs]);
+  const toggleFullscreen = () => setIsFs((v) => !v);
 
   return (
-    <div ref={containerRef} className="relative h-full w-full bg-slate-950" style={{ minHeight: "100%" }}>
+    <div
+      className={isFs ? "fixed inset-0 z-[9999] bg-slate-950" : "relative h-full w-full bg-slate-950"}
+      style={isFs ? undefined : { minHeight: "100%" }}
+    >
       {/* Компактна панель: на весь екран + (опційно) інструменти. За замовчуванням
           інструменти приховані — щоб було видно саму модель. */}
       {!capture && (
