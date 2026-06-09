@@ -61,7 +61,11 @@ module.exports = {
       error_file: '/var/log/3dmap/frontend.err.log',
       merge_logs: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      max_memory_restart: '512M',
+      // 512M was far too low for Next.js `next start` — pm2 killed+restarted the
+      // frontend constantly, and a restart landing inside a deploy's build window
+      // made it boot a half-written .next (stale-chunk flip-flop → map broke).
+      // 1536M comfortably fits a steady-state next-server on this box (~4GB+swap).
+      max_memory_restart: '1536M',
     },
   ],
 };

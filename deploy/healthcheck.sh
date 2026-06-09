@@ -104,30 +104,41 @@ check "frontend" "$FRONTEND_URL" "3dmap-frontend"
 # frontend is up (so it never races a deploy that intentionally stopped it).
 check_frontend_assets() {
   local cfile="$STATE_DIR/fail_frontend_assets"
-  # process up? (/ returns 200) — else skip, the "frontend" check owns downtime
+  local chunks_dir="/opt/3dmap/frontend/.next/static/chunks"
+  # process up? (/ returns 200) — else skip, the "frontend" check owns downtime.
+  # During a deploy the frontend is intentionally stopped → "/" is down → we skip,
+  # so we NEVER restart mid-build (that was the cause of build flip-flop).
   local up; up=$(curl -s --max-time 12 -o /dev/null -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null)
   [ "$up" = "200" ] || return 0
-  local ref code
-  ref=$(curl -s --max-time 12 "http://127.0.0.1:3000/keychains" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
+  # Which webpack chunk does the SERVED html reference?
+  local ref; ref=$(curl -s --max-time 12 "http://127.0.0.1:3000/keychains" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
   [ -n "$ref" ] || return 0
-  code=$(curl -s --max-time 12 -o /dev/null -w "%{http_code}" "http://127.0.0.1:3000/_next/static/chunks/$ref" 2>/dev/null)
-  if [ "$code" = "200" ]; then
+  # PRECISE check (no HTTP flakiness): does that chunk FILE exist on disk?
+  # If yes → the running process matches the on-disk build → healthy. A transient
+  # HTTP 400/500 during a pm2 memory-restart no longer triggers a false restart.
+  if [ -f "$chunks_dir/$ref" ]; then
     rm -f "$cfile" 2>/dev/null
     clear_alert "frontend_assets"
     return 0
   fi
-  # stale chunk confirmed — restart immediately (low-risk: just reloads disk build)
-  log "STALE CHUNK frontend ($ref http=$code) — restarting 3dmap-frontend to re-sync"
+  # REAL desync: served html references a chunk that is NOT on disk. Require TWO
+  # consecutive detections (~the cron interval apart) so a single deploy-window
+  # blip can't trigger it.
+  local n; n=$(( $(cat "$cfile" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$cfile"
+  log "FRONTEND DESYNC: served ref $ref absent on disk [$n/2]"
+  [ "$n" -lt 2 ] && return 0
+  rm -f "$cfile" 2>/dev/null
+  log "STALE BUILD confirmed ($ref not on disk) — restarting 3dmap-frontend to re-sync"
   pm2 restart 3dmap-frontend --update-env >/dev/null 2>&1
   sleep 8
   ref=$(curl -s --max-time 12 "http://127.0.0.1:3000/keychains" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
-  code=$(curl -s --max-time 12 -o /dev/null -w "%{http_code}" "http://127.0.0.1:3000/_next/static/chunks/$ref" 2>/dev/null)
-  if [ "$code" = "200" ]; then
-    log "RECOVERED frontend assets after restart ($ref)"
-    notify "✅ <b>Фронтенд</b>: застарілий чанк виявлено й авто-перезапущено (карта/вхід відновлено)." "frontend_assets"
+  if [ -n "$ref" ] && [ -f "$chunks_dir/$ref" ]; then
+    log "RECOVERED frontend after restart ($ref)"
+    notify "✅ <b>Фронтенд</b>: застарілий білд виявлено й авто-перезапущено (карта/вхід відновлено)." "frontend_assets"
   else
-    log "STILL STALE frontend assets ($ref http=$code) after restart"
-    notify "❌ <b>Фронтенд</b>: чанк досі $code після перезапуску — потрібна увага (rebuild)." "frontend_assets"
+    log "STILL STALE frontend ($ref) after restart — needs rebuild"
+    notify "❌ <b>Фронтенд</b>: білд досі неузгоджений після перезапуску — потрібен rebuild." "frontend_assets"
   fi
 }
 check_frontend_assets
