@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
@@ -20,6 +20,13 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [grids, setGrids] = useState<CityGrid[]>([]);
+  // Safety: ніколи не лишаємо вічний спінер. Якщо Firebase не відповів за 3.5с
+  // (повільний клієнт / не гідратувалось) — показуємо екран входу, а не крутилку.
+  const [gracePassed, setGracePassed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setGracePassed(true), 3500);
+    return () => clearTimeout(t);
+  }, []);
 
   const load = useCallback(async () => {
     const token = await getIdToken();
@@ -77,19 +84,54 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Not logged in */}
-      {configured && !user && !loading && (
-        <div className="mt-10 flex flex-col items-center rounded-[24px] border border-line bg-paper py-16 text-center">
-          <Sparkles className="mb-3 text-forest" />
-          <h2 className="font-serif text-2xl text-ink">Увійдіть, щоб бачити моделі</h2>
-          <p className="mt-2 max-w-[420px] text-sm text-ink-2">Кабінет зберігає історію генерацій. 5 безкоштовних завантажень повної моделі.</p>
-          <button onClick={signIn} className="mt-5 inline-flex items-center gap-2 rounded-full bg-forest px-5 py-3 text-sm font-bold text-white">
-            Увійти / Зареєструватися
-          </button>
+      {/* Not logged in — гарний екран входу + коротко про сайт + плюси (один екран) */}
+      {configured && !user && (loading && !gracePassed ? (
+        <div className="mt-16 flex justify-center"><Loader2 className="animate-spin text-forest" /></div>
+      ) : (
+        <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-2">
+          {/* Ліворуч: вхід */}
+          <div className="flex flex-col justify-center rounded-[24px] border border-line bg-paper p-6 text-center sm:p-8">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-forest/10 text-forest">
+              <KeyRound size={22} />
+            </div>
+            <h2 className="font-serif text-2xl text-ink">Увійдіть у кабінет</h2>
+            <p className="mx-auto mt-2 max-w-[360px] text-sm text-ink-2">
+              Зберігаємо ваші моделі та сітки міста. <b>5 безкоштовних</b> завантажень повної 3MF-моделі.
+            </p>
+            <button onClick={signIn} className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-sm font-bold text-white transition hover:opacity-90" style={{ background: "var(--forest,#2E4A3A)" }}>
+              Увійти / Зареєструватися
+            </button>
+            <p className="mt-3 text-[12px] text-ink-3">Email, телефон або Google — за кілька секунд.</p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Link href="/create" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-4 text-sm font-semibold text-ink-2 hover:text-ink">
+                <MapIcon size={15} /> Створити мапу
+              </Link>
+              <Link href="/keychains" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm font-semibold" style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze,#8E6B3D)" }}>
+                <KeyRound size={15} /> Брелок
+              </Link>
+            </div>
+          </div>
+          {/* Праворуч: коротко про сайт + плюси */}
+          <div className="rounded-[24px] border border-line bg-paper p-6 sm:p-8">
+            <h3 className="font-serif text-xl text-ink">monadruk — 3D-мапи й брелки</h3>
+            <p className="mt-1 text-sm text-ink-2">Перетвори будь-яке місце Землі на 3D-сувенір. Усе у браузері, готове до друку.</p>
+            <ul className="mt-4 space-y-2.5">
+              {[
+                "Будь-яке місто світу — 3D-мапа за ~3 хвилини",
+                "Брелки-жетони з вашим районом і написом",
+                "5 безкоштовних завантажень 3MF (повна модель)",
+                "Готово до 3D-друку (FDM 0.4 мм) — або замовте друк у нас",
+                "Історія моделей і збережені сітки міста в кабінеті",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-2.5 text-sm text-ink-2">
+                  <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-forest" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      )}
-
-      {loading && <div className="mt-10 flex justify-center"><Loader2 className="animate-spin text-forest" /></div>}
+      ))}
 
       {/* Logged in */}
       {user && (

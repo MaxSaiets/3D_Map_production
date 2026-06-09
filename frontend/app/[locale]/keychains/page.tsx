@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, Settings2, User } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
-import { KeychainLifePreview, KeychainSlicerPreview } from "@/components/KeychainLifePreview";
+import { KeychainSlicerPreview } from "@/components/KeychainLifePreview";
 import {
   DEFAULT_KEYCHAIN_DESIGN,
   KeychainDesigner,
@@ -75,7 +75,7 @@ export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
-  const [sidePreview, setSidePreview] = useState<"life" | "slicer" | "model3d">("life");
+  const [sidePreview, setSidePreview] = useState<"slicer" | "model3d">("model3d");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const [cropPolygon, setCropPolygon] = useState<Array<[number, number]> | null>(null);
@@ -272,7 +272,7 @@ export default function KeychainsPage() {
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
-          <div id="kc-map" className={`${mapPanelClasses} order-1 min-h-[54dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[54dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
@@ -290,7 +290,7 @@ export default function KeychainsPage() {
             </div>
           </div>
 
-          <aside id="kc-settings" className={`${settingsPanelClasses} order-2 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
+          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -301,7 +301,7 @@ export default function KeychainsPage() {
             />
           </aside>
 
-          <section id="kc-design" className={`${designPanelClasses} order-3 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -345,13 +345,6 @@ export default function KeychainsPage() {
                     <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/45 p-1 backdrop-blur">
                       <button
                         type="button"
-                        onClick={() => setSidePreview("life")}
-                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "life" ? "bg-white text-[#111827]" : "text-white/76"}`}
-                      >
-                        У житті
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setSidePreview("model3d")}
                         className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold relative ${sidePreview === "model3d" ? "bg-white text-[#111827]" : "text-white/76"}`}
                       >
@@ -368,7 +361,6 @@ export default function KeychainsPage() {
                         Шари
                       </button>
                     </div>
-                    {sidePreview === "life" && <KeychainLifePreview design={design} label={label} />}
                     {sidePreview === "slicer" && <KeychainSlicerPreview design={design} label={label} />}
                     {sidePreview === "model3d" && (
                       downloadUrl ? (
