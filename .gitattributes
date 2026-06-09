@@ -1,0 +1,4 @@
+# Shell scripts MUST use LF — they run on Linux (cron/bash). CRLF breaks the
+# shebang ("bad interpreter") and silently disables the healthcheck.
+*.sh text eol=lf
+deploy/*.sh text eol=lf
