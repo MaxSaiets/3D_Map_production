@@ -497,7 +497,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="min-h-[58dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
+                <div className="min-h-[460px] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       key={`hex-grid-${currentCityKey}`}
@@ -551,7 +551,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="min-h-[52dvh] flex-1 p-2 sm:p-3 lg:min-h-0">
+                <div className="min-h-[420px] flex-1 p-2 sm:p-3 lg:min-h-0">
                   <div className="h-full overflow-hidden rounded-[24px] border border-[rgba(15,23,42,0.12)]">
                     <Preview3D />
                   </div>
