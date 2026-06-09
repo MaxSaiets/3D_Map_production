@@ -272,7 +272,7 @@ export default function KeychainsPage() {
         </div>
 
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-20 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:pb-0">
-          <div id="kc-map" className={`${mapPanelClasses} order-1 min-h-[64dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[64dvh] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
@@ -290,7 +290,7 @@ export default function KeychainsPage() {
             </div>
           </div>
 
-          <aside id="kc-settings" className={`${settingsPanelClasses} order-2 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
+          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -301,7 +301,8 @@ export default function KeychainsPage() {
             />
           </aside>
 
-          <section id="kc-design" className={`${designPanelClasses} order-3 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
+          {/* PRODUCT LAYOUT — редактор форми. Перед картою (order-1). */}
+          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-[calc(100dvh-150px)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -322,7 +323,7 @@ export default function KeychainsPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid min-h-0 flex-1 gap-3 p-2 sm:p-3 2xl:grid-cols-[minmax(0,1fr),300px]">
+              <div className="grid min-h-0 flex-1 gap-3 p-2 sm:p-3">
                 <div className="flex min-h-[380px] flex-col overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[460px] lg:min-h-0">
                   <div className="min-h-[280px] flex-1 sm:min-h-[340px]">
                     <KeychainDesigner
@@ -340,48 +341,54 @@ export default function KeychainsPage() {
                     />
                   </div>
                 </div>
-                <div className="block min-h-[300px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)] sm:min-h-[360px]">
-                  <div className="relative h-full">
-                    <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/20 bg-black/45 p-1 backdrop-blur">
-                      <button
-                        type="button"
-                        onClick={() => setSidePreview("model3d")}
-                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold relative ${sidePreview === "model3d" ? "bg-white text-[#111827]" : "text-white/76"}`}
-                      >
-                        3D
-                        {downloadUrl ? (
-                          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 align-middle" title="Модель готова" />
-                        ) : null}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSidePreview("slicer")}
-                        className={`min-h-[34px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "slicer" ? "bg-white text-[#111827]" : "text-white/76"}`}
-                      >
-                        Шари
-                      </button>
-                    </div>
-                    {sidePreview === "slicer" && <KeychainSlicerPreview design={design} label={label} />}
-                    {sidePreview === "model3d" && (
-                      downloadUrl ? (
-                        <Preview3D />
-                      ) : (
-                        <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 rounded-[22px] bg-[#0f172a] p-6 text-center text-white/85">
-                          <KeyRound size={32} className="text-[#5eead4]" />
-                          <div className="font-title text-lg">3D модель з'явиться після генерації</div>
-                          <div className="text-sm leading-6 text-white/55">
-                            Натисніть «Створити брелок» — з'явиться реальний 3D перегляд згенерованого 3MF з усіма шарами.
-                          </div>
-                          {isGenerating && (
-                            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
-                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                              Генерація: {progress}%
-                            </div>
-                          )}
+              </div>
+          </section>
+
+          {/* 3D-ВІДОБРАЖЕННЯ — окремо, ПІСЛЯ кнопки «Створити» (order-4). */}
+          <section id="kc-preview3d" className={`${designPanelClasses} order-4 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-4 lg:col-start-3 lg:row-start-2`}>
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
+                <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
+                  <Layers3 size={16} /> 3D-перегляд готового брелка
+                </h2>
+                <div className="flex overflow-hidden rounded-full border border-[var(--surface-border)] bg-white/70 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setSidePreview("model3d")}
+                    className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "model3d" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
+                  >
+                    3D{downloadUrl ? " ●" : ""}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSidePreview("slicer")}
+                    className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "slicer" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
+                  >
+                    Шари
+                  </button>
+                </div>
+              </div>
+              <div className="min-h-[360px] flex-1 p-2 sm:p-3">
+                <div className="relative h-full min-h-[340px] overflow-hidden rounded-[22px] border border-[rgba(15,23,42,0.12)]">
+                  {sidePreview === "slicer" && <KeychainSlicerPreview design={design} label={label} />}
+                  {sidePreview === "model3d" && (
+                    downloadUrl ? (
+                      <Preview3D />
+                    ) : (
+                      <div className="flex h-full min-h-[340px] flex-col items-center justify-center gap-2 rounded-[22px] bg-[#0f172a] p-6 text-center text-white/85">
+                        <KeyRound size={32} className="text-[#5eead4]" />
+                        <div className="font-title text-lg">3D модель з'явиться після створення</div>
+                        <div className="text-sm leading-6 text-white/55">
+                          Натисніть «Створити 3MF» — і тут зʼявиться реальний 3D-перегляд з усіма шарами.
                         </div>
-                      )
-                    )}
-                  </div>
+                        {isGenerating && (
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                            Генерація: {progress}%
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
           </section>
