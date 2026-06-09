@@ -7,6 +7,8 @@ export interface GatedDownloadOpts {
   taskId: string | null;
   downloadUrl?: string | null;
   meta?: { title?: string; city?: string; product_type?: "map" | "keychain" };
+  /** Optional small PNG data-URL thumbnail saved with the model in account history. */
+  preview?: string | null;
   getIdToken: () => Promise<string | null>;
   openLogin: () => void;
   onLimit?: () => void;
@@ -27,6 +29,7 @@ export async function gatedDownload(opts: GatedDownloadOpts): Promise<GatedResul
         title: opts.meta?.title || "",
         city: opts.meta?.city || "",
         product_type: opts.meta?.product_type || "map",
+        preview: opts.preview || "",
       }),
     });
     if (res.status === 402) { opts.onLimit?.(); return { status: "limit" }; }

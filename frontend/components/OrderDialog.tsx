@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Loader2, CheckCircle2, Truck, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { capturePreviewImages } from "@/lib/capturePreview";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -46,22 +47,6 @@ export function OrderDialog({
 
   if (!open) return null;
 
-  const captureScreenshots = (): string[] => {
-    const shots: string[] = [];
-    try {
-      const canvases = Array.from(document.querySelectorAll("canvas")) as HTMLCanvasElement[];
-      // largest canvases first (the 3D preview is the big one)
-      canvases.sort((a, b) => b.width * b.height - a.width * a.height);
-      for (const c of canvases.slice(0, 2)) {
-        try {
-          const url = c.toDataURL("image/png");
-          if (url && url.length > 5000) shots.push(url);
-        } catch {/* tainted canvas — skip */}
-      }
-    } catch {/* ignore */}
-    return shots;
-  };
-
   const submit = async () => {
     if (!name.trim()) { setError(t("errName")); return; }
     if (!phone.trim()) { setError(t("errPhone")); return; }
@@ -72,7 +57,9 @@ export function OrderDialog({
     setError(null);
     setSending(true);
     try {
-      const screenshots = captureScreenshots();
+      // Захоплюємо превʼю (SVG-дизайнер брелка + 3D-canvas) — оператор у Telegram
+      // побачить ТОЧНО що замовив клієнт (текст, розташування) ще до друку.
+      const screenshots = await capturePreviewImages();
       const res = await fetch(`${API_BASE}/api/order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

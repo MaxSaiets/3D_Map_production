@@ -67,7 +67,7 @@ export function SimpleControlPanel({
     setDlBusy(true);
     const res = await gatedDownload({
       taskId: taskGroupId, downloadUrl,
-      meta: { city: selectedCityKey, product_type: "map" },
+      meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
         detail: { message: t("limitMsg") },

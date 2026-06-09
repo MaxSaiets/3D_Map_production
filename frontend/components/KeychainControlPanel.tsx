@@ -6,6 +6,7 @@ import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, 
 import { OrderDialog } from "@/components/OrderDialog";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
+import { getKeychainDesignerSvg, svgToPngDataUrl } from "@/lib/capturePreview";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
 import {
@@ -846,10 +847,15 @@ export function KeychainControlPanel({
 
   const handleDownload = async () => {
     if (!downloadUrl) return;
+    // Невелике превʼю того, що згенеровано — зберігається у кабінет (картка моделі).
+    let preview = "";
+    const svg = getKeychainDesignerSvg();
+    if (svg) preview = (await svgToPngDataUrl(svg, { scale: 1 })) || "";
     const res = await gatedDownload({
       taskId: taskGroupId || activeTaskId,
       downloadUrl: taskStatuses[activeTaskId || ""]?.download_url_3mf || downloadUrl,
       meta: { title: label, product_type: "keychain" },
+      preview,
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
         detail: { message: "Вичерпав 5 безкоштовних завантажень брелків. Хочу більше / друк — звʼяжіться зі мною." },

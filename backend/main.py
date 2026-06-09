@@ -862,6 +862,7 @@ class DownloadGrantRequest(BaseModel):
     city: str = ""
     product_type: str = "map"
     download_url: str = ""
+    preview: str = ""   # optional small PNG data-URL thumbnail for the account history
 
 
 def _resolve_model_path(req: "DownloadGrantRequest") -> Optional[Path]:
@@ -903,6 +904,8 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     add_model(u["uid"], u.get("email") or "", {
         "task_id": req.task_id, "title": req.title, "city": req.city,
         "product_type": req.product_type, "download_url": req.download_url,
+        # cap thumbnail size so users.json stays small (~a small PNG data-URL)
+        "preview": (req.preview or "")[:200000],
     })
     return FileResponse(
         str(path), media_type="model/3mf", filename=path.name,

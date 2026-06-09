@@ -11,7 +11,7 @@ import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Quota { downloads: number; limit: number; remaining: number; is_admin: boolean; can_download: boolean }
-interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number }
+interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string }
 
 export default function AccountPage() {
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
@@ -165,14 +165,24 @@ export default function AccountPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {models.map((m) => (
-                <div key={m.task_id} className="flex flex-col rounded-[16px] border border-line bg-paper p-4">
-                  <div className="flex items-center gap-2 text-forest"><Box size={18} /></div>
-                  <div className="mt-2 font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? "Брелок" : "3D-мапа")}</div>
+                <div key={m.task_id} className="flex flex-col overflow-hidden rounded-[16px] border border-line bg-paper">
+                  {/* Превʼю того, що було згенеровано (зберігається при завантаженні) */}
+                  <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#0b1020]">
+                    {m.preview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.preview} alt={m.title || m.city || "превʼю"} className="h-full w-full object-contain" loading="lazy" />
+                    ) : (
+                      <Box size={26} className="text-white/30" />
+                    )}
+                  </div>
+                  <div className="p-4 pt-3">
+                  <div className="font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? "Брелок" : "3D-мапа")}</div>
                   <div className="text-[12px] text-ink-3">{m.product_type === "keychain" ? "Брелок" : "Мапа"}{m.ts ? ` · ${new Date(m.ts * 1000).toLocaleDateString("uk")}` : ""}</div>
                   <button onClick={() => download(m)} disabled={busy}
                     className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />} Завантажити
                   </button>
+                  </div>
                 </div>
               ))}
             </div>
