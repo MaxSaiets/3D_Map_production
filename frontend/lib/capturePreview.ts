@@ -11,14 +11,20 @@
 /** Serialize one SVG element to a PNG data-URL. Returns null on failure. */
 export async function svgToPngDataUrl(
   svg: SVGSVGElement,
-  opts: { scale?: number; background?: string } = {},
+  opts: { scale?: number; background?: string; maxWidth?: number } = {},
 ): Promise<string | null> {
-  const scale = opts.scale ?? 2;
   const background = opts.background ?? "#050a18";
   try {
     const rect = svg.getBoundingClientRect();
-    const w = Math.max(Math.round(rect.width) || 0, 1);
-    const h = Math.max(Math.round(rect.height) || 0, 1);
+    const rw = Math.max(Math.round(rect.width) || 0, 1);
+    const rh = Math.max(Math.round(rect.height) || 0, 1);
+    // Effective scale: honour `scale`, but if a maxWidth is given (thumbnails),
+    // downscale so the output never exceeds it — keeps the data-URL small enough
+    // for the account-history store (backend caps the field length).
+    let scale = opts.scale ?? 2;
+    if (opts.maxWidth && rw * scale > opts.maxWidth) scale = opts.maxWidth / rw;
+    const w = rw;
+    const h = rh;
     // Clone so we can pin explicit width/height (some browsers need it to raster).
     const clone = svg.cloneNode(true) as SVGSVGElement;
     clone.setAttribute("width", String(w));
@@ -86,7 +92,7 @@ export async function capturePreviewImages(): Promise<string[]> {
   const shots: string[] = [];
   const svg = getKeychainDesignerSvg();
   if (svg) {
-    const png = await svgToPngDataUrl(svg);
+    const png = await svgToPngDataUrl(svg, { maxWidth: 1200 });
     if (png && png.length > 5000) shots.push(png);
   }
   shots.push(...captureCanvases(2));

@@ -850,7 +850,7 @@ export function KeychainControlPanel({
     // Невелике превʼю того, що згенеровано — зберігається у кабінет (картка моделі).
     let preview = "";
     const svg = getKeychainDesignerSvg();
-    if (svg) preview = (await svgToPngDataUrl(svg, { scale: 1 })) || "";
+    if (svg) preview = (await svgToPngDataUrl(svg, { maxWidth: 360 })) || "";
     const res = await gatedDownload({
       taskId: taskGroupId || activeTaskId,
       downloadUrl: taskStatuses[activeTaskId || ""]?.download_url_3mf || downloadUrl,
