@@ -121,7 +121,7 @@ export function OrderDialog({
               <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
 
               <div className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                {([["nova", t("nova")], ["ukr", t("ukr")], ["pickup", t("pickup")]] as [Delivery, string][]).map(([k, lbl]) => (
+                {([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][]).map(([k, lbl]) => (
                   <button key={k} type="button" onClick={() => setDelivery(k)}
                     className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                     {lbl}

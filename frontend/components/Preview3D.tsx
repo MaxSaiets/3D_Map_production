@@ -1063,15 +1063,55 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
     setPreviewIncludeWater,
     setPreviewIncludeParks,
   } = useGenerationStore();
-  const [gridVisible, setGridVisible] = useState(!capture);
-  const [axesVisible, setAxesVisible] = useState(!capture);
+  const [gridVisible, setGridVisible] = useState(false);
+  const [axesVisible, setAxesVisible] = useState(false);
   const [rotateMode, setRotateMode] = useState<RotateMode>("camera");
   const [cameraMode, setCameraMode] = useState<CameraMode>("orbit");
   const [flySpeed, setFlySpeed] = useState<number>(120);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isFs, setIsFs] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+
+  useEffect(() => {
+    const onFs = () => setIsFs(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+  const toggleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      (el.requestFullscreen?.() as Promise<void> | undefined)?.catch(() => {});
+    }
+  };
 
   return (
-    <div className="relative h-full w-full bg-slate-950" style={{ minHeight: "100%" }}>
-      {!capture && <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex justify-end">
+    <div ref={containerRef} className="relative h-full w-full bg-slate-950" style={{ minHeight: "100%" }}>
+      {/* Компактна панель: на весь екран + (опційно) інструменти. За замовчуванням
+          інструменти приховані — щоб було видно саму модель. */}
+      {!capture && (
+        <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="flex h-10 items-center gap-1.5 rounded-full border border-white/15 bg-[rgba(2,6,23,0.7)] px-3 text-[12px] font-semibold text-white backdrop-blur transition hover:bg-[rgba(2,6,23,0.9)]"
+            title="На весь екран"
+          >
+            {isFs ? "✕ Згорнути" : "⤢ На весь екран"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setToolsOpen((v) => !v)}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/15 backdrop-blur transition ${toolsOpen ? "bg-white text-[#0b1020]" : "bg-[rgba(2,6,23,0.7)] text-white hover:bg-[rgba(2,6,23,0.9)]"}`}
+            title="Інструменти перегляду"
+          >
+            ⚙
+          </button>
+        </div>
+      )}
+      {!capture && toolsOpen && <div className="pointer-events-none absolute inset-x-3 top-16 z-20 flex justify-end">
         <div className="pointer-events-auto w-full max-w-[320px] rounded-[24px] border border-white/10 bg-[rgba(2,6,23,0.74)] px-3 py-3 text-white shadow-[0_20px_55px_rgba(2,6,23,0.45)] backdrop-blur">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>

@@ -377,10 +377,12 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const handleInteractionTimerRef = useRef<number | null>(null);
   const dragStateRef = useRef<{
     startPoint: L.Point;
+    startClient: { x: number; y: number };
     startCenter: L.LatLng;
     widthM: number;
     heightM: number;
   } | null>(null);
+  const rectDragCleanupRef = useRef<(() => void) | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
   const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
@@ -548,36 +550,57 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       }
     };
 
+    // Drag-move зони РУКОЮ. Раніше через Leaflet touch-події — на iOS вони
+    // ненадійні, тому працював лише tap (re-center). Тепер тягнемо через нативні
+    // pointer-події на window (як у дизайнері) — стабільно на телефоні й мишею.
+    const clientXY = (oe: any): { x: number; y: number } => {
+      if (oe && oe.touches && oe.touches[0]) return { x: oe.touches[0].clientX, y: oe.touches[0].clientY };
+      return { x: oe?.clientX ?? 0, y: oe?.clientY ?? 0 };
+    };
+
     const handleRectangleDown = (event: L.LeafletMouseEvent) => {
       const bounds = currentBoundsRef.current ?? initialBounds;
       const size = boundsSizeMeters(bounds);
+      const start = clientXY(event.originalEvent);
       dragStateRef.current = {
         startPoint: map.latLngToContainerPoint(event.latlng),
+        startClient: start,
         startCenter: bounds.getCenter(),
         widthM: size.widthM,
         heightM: size.heightM,
       };
       map.dragging.disable();
       L.DomEvent.stop(event);
-    };
 
-    const handleMove = (event: L.LeafletMouseEvent) => {
-      const state = dragStateRef.current;
-      if (!state) return;
-      const point = map.latLngToContainerPoint(event.latlng);
-      const startCenterPoint = map.latLngToContainerPoint(state.startCenter);
-      const nextCenter = map.containerPointToLatLng([
-        startCenterPoint.x + point.x - state.startPoint.x,
-        startCenterPoint.y + point.y - state.startPoint.y,
-      ]);
-      updateBounds(boundsFromCenterMeters(nextCenter, state.widthM, state.heightM));
-    };
-
-    const handleEnd = () => {
-      if (!dragStateRef.current) return;
-      dragStateRef.current = null;
-      blockMapPlacement();
-      map.dragging.enable();
+      const onWinMove = (pe: PointerEvent | TouchEvent) => {
+        const state = dragStateRef.current;
+        if (!state) return;
+        const c = clientXY((pe as TouchEvent).touches ? pe : (pe as PointerEvent));
+        if ((pe as any).cancelable) pe.preventDefault();
+        const startCenterPoint = map.latLngToContainerPoint(state.startCenter);
+        const nextCenter = map.containerPointToLatLng([
+          startCenterPoint.x + (c.x - state.startClient.x),
+          startCenterPoint.y + (c.y - state.startClient.y),
+        ]);
+        updateBounds(boundsFromCenterMeters(nextCenter, state.widthM, state.heightM));
+      };
+      const onWinUp = () => {
+        dragStateRef.current = null;
+        blockMapPlacement();
+        map.dragging.enable();
+        rectDragCleanupRef.current?.();
+        rectDragCleanupRef.current = null;
+      };
+      window.addEventListener("pointermove", onWinMove, { passive: false });
+      window.addEventListener("pointerup", onWinUp);
+      window.addEventListener("touchmove", onWinMove, { passive: false });
+      window.addEventListener("touchend", onWinUp);
+      rectDragCleanupRef.current = () => {
+        window.removeEventListener("pointermove", onWinMove as any);
+        window.removeEventListener("pointerup", onWinUp);
+        window.removeEventListener("touchmove", onWinMove as any);
+        window.removeEventListener("touchend", onWinUp);
+      };
     };
 
     const handleResize = () => {
@@ -619,10 +642,6 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     shape.on("mousedown", handleRectangleDown);
     shape.on("touchstart", handleRectangleDown as any);
-    map.on("mousemove", handleMove);
-    map.on("touchmove", handleMove as any);
-    map.on("mouseup", handleEnd);
-    map.on("touchend", handleEnd);
     map.on("click", handleMapClick);
     handle.on("mousedown", beginHandleInteraction);
     handle.on("touchstart", beginHandleInteraction);
@@ -648,11 +667,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       }
       shape.off("mousedown", handleRectangleDown);
       shape.off("touchstart", handleRectangleDown as any);
-      map.off("mousemove", handleMove);
-      map.off("touchmove", handleMove as any);
-      map.off("mouseup", handleEnd);
-      map.off("touchend", handleEnd);
       map.off("click", handleMapClick);
+      rectDragCleanupRef.current?.();
+      rectDragCleanupRef.current = null;
       handle.off("mousedown", beginHandleInteraction);
       handle.off("touchstart", beginHandleInteraction);
       handle.off("mouseup", endHandleInteraction);
