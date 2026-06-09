@@ -750,8 +750,22 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
     };
   }, [keychainCrop, selectedArea]);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [isFs, setIsFs] = useState(false);
+  useEffect(() => {
+    const onFs = () => setIsFs(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+  const toggleFullscreen = () => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else (el.requestFullscreen?.() as Promise<void> | undefined)?.catch(() => {});
+  };
+
   return (
-    <div className="relative h-full w-full" style={{ minHeight: '100%' }}>
+    <div ref={rootRef} className="relative h-full w-full bg-[#050a18]" style={{ minHeight: '100%' }}>
       <MapContainer
         key={mapInstanceKey}
         center={center} // Initial center
@@ -795,6 +809,16 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           Супутник
         </button>
       </div>
+      {/* Карта на весь екран — зручно вибирати ділянку точно на телефоні */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className="pointer-events-auto absolute left-2 top-[46px] flex min-h-[30px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/85 px-2.5 text-[11px] font-semibold text-white shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur transition hover:bg-[#050a18]"
+        style={{ zIndex: 10_000 }}
+        title="На весь екран"
+      >
+        {isFs ? "✕ Згорнути" : "⤢ На весь екран"}
+      </button>
       {keychainCrop ? (
         <div
           className="pointer-events-auto absolute right-2 top-2 flex items-center overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur"

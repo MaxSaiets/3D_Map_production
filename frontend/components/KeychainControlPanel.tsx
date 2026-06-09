@@ -1238,6 +1238,15 @@ export function KeychainControlPanel({
               {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {isGenerating ? "Генерація..." : "Створити 3MF"}
             </button>
+            {/* «Замовити» — одразу після «Створити», на видному місці (бронзова) */}
+            <button
+              type="button"
+              onClick={() => setOrderOpen(true)}
+              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
+            </button>
             <button
               type="button"
               onClick={handleDownload}
@@ -1254,14 +1263,6 @@ export function KeychainControlPanel({
                   : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => setOrderOpen(true)}
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
-            </button>
           </div>
         </section>
 

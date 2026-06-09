@@ -337,6 +337,15 @@ export function SimpleControlPanel({
             {isGenerating ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>) : (<><Play className="h-4 w-4" /> {t("generate")}</>)}
           </button>
 
+          {/* «Замовити друк» — одразу після «Створити», завжди на видному місці */}
+          <button
+            type="button"
+            onClick={() => setOrderOpen(true)}
+            className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+          >
+            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")}
+          </button>
+
           {error && (
             <div className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">{error}</div>
           )}
@@ -376,15 +385,6 @@ export function SimpleControlPanel({
             </button>
           )}
 
-          {downloadUrl && (
-            <button
-              type="button"
-              onClick={() => setOrderOpen(true)}
-              className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(142,107,61,0.28)] transition hover:opacity-90"
-            >
-              <ShoppingBag className="h-4 w-4" /> {t("orderPrint")}
-            </button>
-          )}
         </div>
       </div>
 
