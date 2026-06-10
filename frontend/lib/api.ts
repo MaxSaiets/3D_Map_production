@@ -147,7 +147,7 @@ export interface GenerationRequest {
   flat_uniform_building_height?: boolean;
   keychain_mode?: boolean;
   keychain_label?: string;
-  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token";
+  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";
   keychain_layout_rotation_deg?: number;
   keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
   keychain_loop_angle_deg?: number;

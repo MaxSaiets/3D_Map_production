@@ -148,7 +148,7 @@ type KeychainCropSpec = {
   mapWidthMm: number;
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
-  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart";
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart" | "house";
   /** When true, the polygon sent to the backend is the actual (rotated) SHAPE
    *  outline, not the axis-aligned bbox — so the model is cut to that shape
    *  (heart/circle/…). Keychains keep bbox (their base shape is separate). */
@@ -258,6 +258,14 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     const s = Math.min(w / (maxx - minx), h / (maxy - miny));
     const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
     for (const p of raw) pts.push({ x: (p.x - cx) * s, y: (p.y - cy) * s });
+  } else if (shape === "house") {
+    // Силует будиночка: вершина даху зверху, стіни донизу (як у дизайнері).
+    const roofH = h * 0.38;
+    pts.push({ x: 0, y: -h / 2 });            // вершина даху
+    pts.push({ x: w / 2, y: -h / 2 + roofH }); // правий край даху
+    pts.push({ x: w / 2, y: h / 2 });          // правий низ
+    pts.push({ x: -w / 2, y: h / 2 });         // лівий низ
+    pts.push({ x: -w / 2, y: -h / 2 + roofH }); // лівий край даху
   } else if (shape === "hexagon") {
     // Flat-top hexagon inscribed in the box
     const rx = w / 2, ry = h / 2;

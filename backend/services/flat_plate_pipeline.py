@@ -529,6 +529,44 @@ def _keychain_body_shape(
                 (minx, miny + cut),
             ]
         ).buffer(0)
+    if shape_name == "heart":
+        # Класична параметрична крива серця, нормалізована в bbox тіла.
+        # У цій системі координат maxy = ВЕРХ брелка (бік петлі, див. loop_center_y
+        # = body_maxy - y_mm*scale нижче по файлу) → лоби серця до maxy,
+        # вістря до miny. Та сама крива у designer-SVG (shapePath) з y-фліпом.
+        import math
+        n = 96
+        raw = []
+        for i in range(n):
+            t = 2.0 * math.pi * i / n
+            hx = 16.0 * math.sin(t) ** 3
+            hy = 13.0 * math.cos(t) - 5.0 * math.cos(2.0 * t) - 2.0 * math.cos(3.0 * t) - math.cos(4.0 * t)
+            raw.append((hx, hy))
+        xs = [p[0] for p in raw]
+        ys = [p[1] for p in raw]
+        x0, x1 = min(xs), max(xs)
+        y0, y1 = min(ys), max(ys)
+        pts = [
+            (
+                minx + (px - x0) / (x1 - x0) * width,
+                miny + (py - y0) / (y1 - y0) * height,  # лоби (py=max) до maxy = бік петлі
+            )
+            for px, py in raw
+        ]
+        return Polygon(pts).buffer(0)
+    if shape_name == "house":
+        # Силует будиночка: вершина даху зверху (maxy, бік петлі), стіни донизу.
+        roof_h = height * 0.38
+        cx = (minx + maxx) / 2.0
+        return Polygon(
+            [
+                (cx, maxy),
+                (maxx, maxy - roof_h),
+                (maxx, miny),
+                (minx, miny),
+                (minx, maxy - roof_h),
+            ]
+        ).buffer(0)
     return _rounded_rect(minx, miny, maxx, maxy, radius_m)
 
 

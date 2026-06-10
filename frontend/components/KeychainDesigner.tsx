@@ -12,7 +12,7 @@ const LiveCitySvgPaths = dynamic(
   { ssr: false, loading: () => null },
 );
 
-export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token";
+export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
 export type KeychainLabelFontStyle = "block" | "wide" | "condensed";
 
@@ -192,6 +192,58 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
     },
   },
   {
+    id: "heart-46",
+    name: "Серце 46 × 42",
+    description: "Мапа місця, що в серці — подарунок для двох.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 46,
+      bodyHeightMm: 42,
+      cornerRadiusMm: 0,
+      baseShape: "heart",
+      loopStyle: "round",
+      loopXMm: 23,
+      loopYMm: 1.5,
+      loopOuterMm: 4,
+      loopInnerMm: 2,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 46,
+      mapHeightMm: 42,
+      labelXMm: 23,
+      labelYMm: 27,
+      labelWidthMm: 22,
+      labelBandMm: 5,
+      labelTextHeightMm: 3.0,
+    },
+  },
+  {
+    id: "house-44",
+    name: "Будиночок 44 × 48",
+    description: "Дім — там, де твоя вулиця. Дах з вушком зверху.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 44,
+      bodyHeightMm: 48,
+      cornerRadiusMm: 0,
+      baseShape: "house",
+      loopStyle: "round",
+      loopXMm: 22,
+      loopYMm: 1,
+      loopOuterMm: 4,
+      loopInnerMm: 2,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 44,
+      mapHeightMm: 48,
+      labelXMm: 22,
+      labelYMm: 43.5,
+      labelWidthMm: 30,
+      labelBandMm: 5,
+      labelTextHeightMm: 3.2,
+    },
+  },
+  {
     id: "right-loop",
     name: "Side Loop",
     description: "Петля справа, зручно для широкої карти.",
@@ -283,6 +335,35 @@ function shapePath(
   if (value.baseShape === "octagon") {
     const cut = Math.min(w, h) * 0.13;
     return `M ${minX + cut} ${minY} H ${maxX - cut} L ${maxX} ${minY + cut} V ${maxY - cut} L ${maxX - cut} ${maxY} H ${minX + cut} L ${minX} ${maxY - cut} V ${minY + cut} Z`;
+  }
+  if (value.baseShape === "heart") {
+    // Та сама параметрична крива, що на беку (_keychain_body_shape "heart");
+    // SVG має y-вниз → фліп, щоб лоби були зверху (бік петлі), вістря знизу.
+    const n = 96;
+    const raw: Array<[number, number]> = [];
+    for (let i = 0; i < n; i++) {
+      const t = (2 * Math.PI * i) / n;
+      const hx = 16 * Math.sin(t) ** 3;
+      const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      raw.push([hx, hy]);
+    }
+    const xs = raw.map((p) => p[0]);
+    const ys = raw.map((p) => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs);
+    const y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const d = raw
+      .map(([px, py], i) => {
+        const sx = minX + ((px - x0) / (x1 - x0)) * w;
+        const sy = minY + ((y1 - py) / (y1 - y0)) * h;
+        return `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`;
+      })
+      .join(" ");
+    return `${d} Z`;
+  }
+  if (value.baseShape === "house") {
+    const roofH = h * 0.38;
+    const cx = minX + w / 2;
+    return `M ${cx} ${minY} L ${maxX} ${minY + roofH} V ${maxY} H ${minX} V ${minY + roofH} Z`;
   }
   return `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`;
 }

@@ -98,6 +98,13 @@ export interface KeychainTemplateDef {
 
 export const KEYCHAIN_TEMPLATES: KeychainTemplateDef[] = [
   {
+    id: "heart-46",
+    label: "Серце 46 × 42",
+    blurb: "Мапа місця, що в серці — подарунок для двох.",
+    tag: "Новинка",
+    config: { baseShape: "heart", bodyWidthMm: 46, bodyHeightMm: 42, cornerRadiusMm: 0, mapWidthMm: 46, mapHeightMm: 42, loopXMm: 23, loopYMm: 1.5, loopOuterMm: 4, loopInnerMm: 2, labelXMm: 23, labelYMm: 27, labelWidthMm: 22, labelBandMm: 5, labelTextHeightMm: 3.0, labelStrokeMm: 0.9 },
+  },
+  {
     id: "token-55",
     label: "Жетон 55 × 30",
     blurb: "Класичний жетон з отвором — як монета на ключі.",

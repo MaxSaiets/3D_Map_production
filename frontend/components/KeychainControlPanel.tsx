@@ -1339,6 +1339,8 @@ export function KeychainControlPanel({
                   ["capsule", "Капсула"],
                   ["tag", "Tag"],
                   ["octagon", "Октагон"],
+                  ["heart", "Серце ♥"],
+                  ["house", "Будиночок"],
                 ] as Array<[KeychainBaseShape, string]>).map(([shape, text]) => (
                   <ChoiceButton key={shape} label={text} active={design.baseShape === shape} onClick={() => updateDesign({ baseShape: shape })} />
                 ))}
