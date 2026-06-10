@@ -5,29 +5,49 @@ import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-function Model({ url, mirror = true, lieFlat = false }: { url: string; mirror?: boolean; lieFlat?: boolean }) {
+/** Heavy per-model prep (geometry clone + mirror + normals) done ONCE per URL and
+ *  cached at module level — re-mounts reuse geometries via a cheap hierarchy clone.
+ *  Re-running this on every mount blocked the main thread for seconds per viewer. */
+const preparedSceneCache = new Map<string, THREE.Object3D>();
+
+function prepareScene(scene: THREE.Object3D, mirror: boolean, lieFlat: boolean) {
+  const s = scene.clone(true);
+  s.traverse((o: any) => {
+    if (o.isMesh && o.geometry) {
+      o.geometry = o.geometry.clone();
+      // Un-mirror trimesh's handedness flip at the GEOMETRY level (a scale on
+      // the <primitive>/Stage wrapper gets swallowed by <Stage>).
+      if (mirror) o.geometry.scale(-1, 1, 1);
+      // City maps come in standing vertical (their long axis is up). Tip them
+      // back so the map lies flat with buildings pointing up.
+      if (lieFlat) o.geometry.rotateX(-Math.PI / 2);
+      // scale()/rotateX() already transform existing normals via the normal
+      // matrix; only compute when the GLB ships without them.
+      if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+    }
+    if (o.isMesh && o.material) {
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
+    }
+  });
+  return s;
+}
+
+function Model({ url, mirror = true, lieFlat = false, onReady }: { url: string; mirror?: boolean; lieFlat?: boolean; onReady?: () => void }) {
   // Draco-enabled loader (maps are Draco-compressed); decoder from gstatic CDN.
   const { scene } = useGLTF(url, true);
   const fixed = useMemo(() => {
-    const s = scene.clone(true);
-    s.traverse((o: any) => {
-      if (o.isMesh && o.geometry) {
-        o.geometry = o.geometry.clone();
-        // Un-mirror trimesh's handedness flip at the GEOMETRY level (a scale on
-        // the <primitive>/Stage wrapper gets swallowed by <Stage>).
-        if (mirror) o.geometry.scale(-1, 1, 1);
-        // City maps come in standing vertical (their long axis is up). Tip them
-        // back so the map lies flat with buildings pointing up.
-        if (lieFlat) o.geometry.rotateX(-Math.PI / 2);
-        o.geometry.computeVertexNormals();
-      }
-      if (o.isMesh && o.material) {
-        const mats = Array.isArray(o.material) ? o.material : [o.material];
-        mats.forEach((m: any) => { m.side = THREE.DoubleSide; m.needsUpdate = true; });
-      }
-    });
-    return s;
-  }, [scene, mirror, lieFlat]);
+    const key = `${url}|${mirror}|${lieFlat}`;
+    let base = preparedSceneCache.get(key);
+    if (!base) {
+      base = prepareScene(scene, mirror, lieFlat);
+      preparedSceneCache.set(key, base);
+    }
+    // Object3D.clone shares geometries/materials — each mounted viewer gets its
+    // own hierarchy (an object can live in one scene at a time) at near-zero cost.
+    return base.clone(true);
+  }, [scene, mirror, lieFlat, url]);
+  useEffect(() => { onReady?.(); }, [onReady]);
   return <primitive object={fixed} />;
 }
 
@@ -39,6 +59,9 @@ export default function Model3DViewer({
   const ref = useRef<HTMLDivElement | null>(null);
   const down = useRef<{ x: number; y: number } | null>(null);
   const [mounted, setMounted] = useState(false);
+  // True once the GLB is decoded and the model is in the scene — until then a
+  // skeleton overlay covers the (transparent) canvas so users never see a blank box.
+  const [ready, setReady] = useState(false);
   // City maps lie flat (thin axis up) — a low camera shows them edge-on like a
   // vertical slab. Look down at a 3/4 angle instead. Keychains stay front-on.
   const isMap = /\/map-/.test(url);
@@ -50,7 +73,7 @@ export default function Model3DViewer({
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => { if (entries.some((e) => e.isIntersecting)) { setMounted(true); io.disconnect(); } },
-      { rootMargin: "250px" },
+      { rootMargin: "120px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -89,9 +112,9 @@ export default function Model3DViewer({
               environment={null}
               preset="rembrandt"
               adjustCamera={1.1}
-              shadows={{ type: "contact", opacity: 0.3, blur: 2.4 }}
+              shadows={{ type: "contact", opacity: 0.3, blur: 2.4, frames: 1 }}
             >
-              <Model url={url} lieFlat={isMap} />
+              <Model url={url} lieFlat={isMap} onReady={() => setReady(true)} />
             </Stage>
             <OrbitControls
               autoRotate={autoRotate}
@@ -103,10 +126,16 @@ export default function Model3DViewer({
             />
           </Suspense>
         </Canvas>
-      ) : (
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-ink-3">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-forest" /> 3D
+      ) : null}
+      {!ready && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-black/[0.05] via-transparent to-black/[0.07]" />
+          <span className="relative inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-ink-3 shadow-sm">
+            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity=".25" />
+              <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            3D
           </span>
         </div>
       )}

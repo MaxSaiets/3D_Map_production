@@ -401,7 +401,7 @@ export default function Home() {
                   <button type="button" onClick={() => toggleProMode(false)}
                     className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
                   <button type="button" onClick={() => toggleProMode(true)}
-                    className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Про</button>
+                    className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Профі</button>
                 </div>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
@@ -437,7 +437,7 @@ export default function Home() {
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      {showHexGrid ? "Grid Selection" : "Single Selection"}
+                      {showHexGrid ? "Вибір серії зон" : "Одна ділянка"}
                     </p>
                     <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
                       {showHexGrid ? "Оберіть зони для серії" : "Позначте ділянку на мапі"}
@@ -522,7 +522,7 @@ export default function Home() {
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      3D Preview
+                      3D-превʼю
                     </p>
                     <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
                       Перевіряйте форму моделі ще до завантаження
@@ -569,7 +569,7 @@ export default function Home() {
                     <button type="button" onClick={() => toggleProMode(false)}
                       className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
                     <button type="button" onClick={() => toggleProMode(true)}
-                      className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Про</button>
+                      className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Профі</button>
                   </div>
                 </div>
                 {proMode ? (

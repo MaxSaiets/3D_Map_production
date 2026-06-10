@@ -413,6 +413,16 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
   // Результат: повернута зона ЗАВЖДИ ідеально лягає на слот, content обертається
   // разом з нею. Зона «розгортається», вміст «крутиться у середині», слот завжди
   // прямокутний і повністю заповнений.
+  // Стабільний ключ полігона: bounds/cropPolygon приходять новими обʼєктами на
+  // кожен рендер батька — без цього project (і вся проєкція printable) перераховувалися
+  // б на КОЖЕН ре-рендер, навіть коли геометрія не змінилась (drag тексту, введення напису).
+  const cropKey = cropPolygon && cropPolygon.length >= 3
+    ? cropPolygon.map((p) => `${p[0].toFixed(7)},${p[1].toFixed(7)}`).join(";")
+    : "";
+
+  /* eslint-disable react-hooks/exhaustive-deps -- bounds/cropPolygon навмисно
+     представлені примітивними deps (числа bbox + cropKey), щоб уникнути
+     перерахунку через нову ідентичність обʼєктів. */
   const project = useMemo(() => {
     // Центр зони — від cropPolygon (точно) або з bounds (fallback)
     let cLon: number, cLat: number;
@@ -448,7 +458,8 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
       },
       mmPerM,
     };
-  }, [bounds, cropPolygon, cropRotationDeg, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
+  }, [bounds.north, bounds.south, bounds.east, bounds.west, cropKey, cropRotationDeg, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {

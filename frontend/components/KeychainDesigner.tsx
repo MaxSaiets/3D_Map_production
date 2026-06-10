@@ -637,11 +637,24 @@ export function KeychainDesigner({
       // Pointer capture is a nicety; dragging still works through the SVG move handler.
     }
 
+    // rAF-throttle: pointermove фірить 100+ разів/с, а кожен updateFromClient —
+    // це повний ре-рендер SVG-дизайнера. Оновлюємо стан максимум раз на кадр.
+    let pendingMove: { x: number; y: number } | null = null;
+    let moveRaf: number | null = null;
     const handleMove = (moveEvent: PointerEvent) => {
       moveEvent.preventDefault();
-      updateFromClient(moveEvent.clientX, moveEvent.clientY);
+      pendingMove = { x: moveEvent.clientX, y: moveEvent.clientY };
+      if (moveRaf == null) {
+        moveRaf = requestAnimationFrame(() => {
+          moveRaf = null;
+          if (pendingMove && dragSessionRef.current) updateFromClient(pendingMove.x, pendingMove.y);
+        });
+      }
     };
     const handleEnd = () => {
+      if (moveRaf != null) { cancelAnimationFrame(moveRaf); moveRaf = null; }
+      if (pendingMove && dragSessionRef.current) updateFromClient(pendingMove.x, pendingMove.y);
+      pendingMove = null;
       dragCleanupRef.current?.();
       dragCleanupRef.current = null;
       dragSessionRef.current = null;

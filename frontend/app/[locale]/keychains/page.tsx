@@ -155,7 +155,7 @@ export default function KeychainsPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
-                Keychain Studio
+                Конструктор брелків
               </p>
               <div>
                 <h1 className="font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl">
