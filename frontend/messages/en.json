@@ -238,6 +238,8 @@
     "pickup": "Pickup",
     "regionUa": "Ukraine",
     "regionEu": "Europe (EU)",
+    "payNow": "Pay now",
+    "payLater": "Pay right away or after the operator confirms — whichever suits you. Your order is already registered.",
     "phCountry": "Country",
     "phBranchEu": "Nova Post branch #",
     "phAddressEu": "Address (street, house, ZIP)",

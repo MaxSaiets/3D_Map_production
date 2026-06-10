@@ -238,6 +238,8 @@
     "pickup": "Retrait",
     "regionUa": "Ukraine",
     "regionEu": "Europe (UE)",
+    "payNow": "Payer maintenant",
+    "payLater": "Paie tout de suite ou après confirmation de l'opérateur — comme tu préfères. Ta commande est déjà enregistrée.",
     "phCountry": "Pays",
     "phBranchEu": "N° d'agence Nova Post",
     "phAddressEu": "Adresse (rue, numéro, code postal)",

@@ -12,6 +12,15 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Quota { downloads: number; limit: number; remaining: number; is_admin: boolean; can_download: boolean }
 interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string }
+interface AccOrder {
+  order_number?: string | number; created_at?: string; status?: string; product_type?: string;
+  est_price?: string; delivery_country?: string; delivery_city?: string;
+  summary?: { city?: string; district?: string; label?: string; size?: string };
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  new: "Прийнято", paid: "Оплачено", printed: "Надруковано", shipped: "Відправлено", done: "Виконано",
+};
 
 export default function AccountPage() {
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
@@ -20,6 +29,7 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [grids, setGrids] = useState<CityGrid[]>([]);
+  const [orders, setOrders] = useState<AccOrder[]>([]);
   // Safety: ніколи не лишаємо вічний спінер. Якщо Firebase не відповів за 3.5с
   // (повільний клієнт / не гідратувалось) — показуємо екран входу, а не крутилку.
   const [gracePassed, setGracePassed] = useState(false);
@@ -32,12 +42,13 @@ export default function AccountPage() {
     const token = await getIdToken();
     if (!token) return;
     try {
-      const [q, m, g] = await Promise.all([
+      const [q, m, g, o] = await Promise.all([
         fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
         fetch(`${API_BASE}/api/account/models`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
         listGrids(token),
+        fetch(`${API_BASE}/api/account/orders`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ orders: [] })),
       ]);
-      setQuota(q.quota); setModels(m.models || []); setGrids(g || []);
+      setQuota(q.quota); setModels(m.models || []); setGrids(g || []); setOrders(o.orders || []);
     } catch {/* ignore */}
   }, [getIdToken]);
 
@@ -156,6 +167,35 @@ export default function AccountPage() {
           </div>
 
           {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{notice}</div>}
+
+          {orders.length > 0 && (
+            <>
+              <h3 className="mb-3 mt-8 font-serif text-xl text-ink">Мої замовлення</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {orders.map((o, i) => (
+                  <div key={`${o.order_number}-${i}`} className="rounded-[16px] border border-line bg-paper p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-serif text-[17px] text-ink">#{o.order_number}</div>
+                      <span className="rounded-full bg-[rgba(15,118,110,0.10)] px-2.5 py-1 text-[11px] font-semibold text-forest">
+                        {ORDER_STATUS_LABELS[o.status || "new"] || o.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[12px] text-ink-3">
+                      {o.product_type === "keychain" ? "Брелок" : "3D-мапа"}
+                      {o.summary?.size ? ` · ${o.summary.size}` : ""}
+                      {o.created_at ? ` · ${new Date(o.created_at).toLocaleDateString("uk")}` : ""}
+                    </div>
+                    {(o.summary?.city || o.summary?.label) && (
+                      <div className="mt-1 truncate text-[12px] text-ink-2">
+                        {[o.summary?.city, o.summary?.district, o.summary?.label].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                    <div className="mt-2 text-[13px] font-semibold text-ink">{o.est_price || ""}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <h3 className="mb-3 mt-8 font-serif text-xl text-ink">Мої моделі</h3>
           {models.length === 0 ? (

@@ -108,6 +108,29 @@ def _find_model_file(task_id: Optional[str], output_file: Optional[str]) -> Opti
     return None
 
 
+def list_orders_for_uid(uid: str, limit: int = 20) -> List[Dict[str, Any]]:
+    """Замовлення користувача з журналу (новіші перші), лише безпечні поля."""
+    if not uid or not ORDERS_LOG.exists():
+        return []
+    out: List[Dict[str, Any]] = []
+    try:
+        for line in ORDERS_LOG.read_text(encoding="utf-8").splitlines():
+            try:
+                r = json.loads(line)
+            except Exception:  # noqa: BLE001
+                continue
+            if r.get("uid") != uid:
+                continue
+            out.append({k: r.get(k) for k in (
+                "order_number", "created_at", "status", "product_type",
+                "est_price", "delivery_method", "delivery_country", "delivery_city", "summary",
+            )})
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] list_orders_for_uid failed: {e}")
+    out.reverse()
+    return out[:limit]
+
+
 def _delivery_text(o: Dict[str, Any]) -> str:
     method = (o.get("delivery_method") or "").lower()
     country = o.get("delivery_country") or ""
@@ -170,7 +193,7 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
         **{k: payload.get(k) for k in (
             "name", "phone", "product_type", "task_id",
             "delivery_method", "delivery_country", "delivery_city", "delivery_branch",
-            "delivery_address", "comment", "est_price",
+            "delivery_address", "comment", "est_price", "uid", "user_email", "payment_url",
         )},
         "summary": summary,
     }
@@ -207,8 +230,13 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
         lines.append(f"💰 Орієнтовно з сайту: <b>{est_price}</b> (без доставки)")
     if comment:
         lines.append(f"💬 {comment}")
+    if payload.get("user_email"):
+        lines.append(f"👥 Акаунт: {payload['user_email']}")
     lines.append("")
-    lines.append("⚠️ Оплата — узгодити з клієнтом (онлайн-оплата ще не підключена).")
+    if payload.get("payment_url"):
+        lines.append("💳 Клієнту показано кнопку «Оплатити зараз» — перевір надходження перед друком.")
+    else:
+        lines.append("⚠️ Оплата — узгодити з клієнтом (онлайн-оплата ще не підключена).")
     _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML", text="\n".join(lines))
 
     # 2) model file

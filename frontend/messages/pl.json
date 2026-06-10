@@ -238,6 +238,8 @@
     "pickup": "Odbiór osobisty",
     "regionUa": "Ukraina",
     "regionEu": "Europa (UE)",
+    "payNow": "Zapłać teraz",
+    "payLater": "Zapłać od razu lub po potwierdzeniu przez operatora — jak wolisz. Zamówienie jest już zarejestrowane.",
     "phCountry": "Kraj",
     "phBranchEu": "Nr oddziału Nova Post",
     "phAddressEu": "Adres (ulica, dom, kod pocztowy)",

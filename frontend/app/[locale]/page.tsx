@@ -614,12 +614,13 @@ function SiteFooter() {
         <div className="flex items-center gap-2 font-serif text-lg text-ink">
           <Box size={18} className="text-forest" /> monadruk
         </div>
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-          <Link href="/create" className="hover:text-ink">{t("create")}</Link>
-          <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
-          <Link href="/account" className="hover:text-ink">{t("account")}</Link>
-          <Link href="/privacy" className="hover:text-ink">{t("privacy")}</Link>
-          <Link href="/terms" className="hover:text-ink">{t("terms")}</Link>
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+          {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
+          <Link href="/create" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("create")}</Link>
+          <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("keychains")}</Link>
+          <Link href="/account" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("account")}</Link>
+          <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("privacy")}</Link>
+          <Link href="/terms" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("terms")}</Link>
         </div>
         <div>© {new Date().getFullYear()} monadruk.com</div>
       </div>

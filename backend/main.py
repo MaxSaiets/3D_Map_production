@@ -645,12 +645,27 @@ class OrderRequest(BaseModel):
 
 
 @app.post("/api/order")
-async def create_order_endpoint(order: OrderRequest):
+async def create_order_endpoint(order: OrderRequest, authorization: Optional[str] = Header(default=None)):
     """Accept a customer order and push it to the Telegram CRM (card + file + screenshots)."""
     from services.order_service import create_order
     if not (order.name or "").strip():
         raise HTTPException(status_code=422, detail="Вкажіть ім'я")
     payload = order.model_dump()
+    # Мʼяка привʼязка до акаунта: якщо клієнт залогінений — замовлення видно в кабінеті.
+    try:
+        from services.auth_service import verify_token
+        user = verify_token(authorization or "")
+        if user:
+            payload["uid"] = user.get("uid")
+            payload["user_email"] = user.get("email")
+    except Exception:  # noqa: BLE001
+        pass
+    # Посилання на оплату з конфігу (pricing.json → payment.url). Якщо задано —
+    # клієнт побачить кнопку «Оплатити зараз», оператор — позначку в картці.
+    pay = (_load_pricing().get("payment") or {})
+    pay_url = (pay.get("url") or "").strip()
+    if pay_url:
+        payload["payment_url"] = pay_url
     # Resolve the on-disk model file from the in-memory task if available.
     try:
         t = tasks.get(order.task_id) if order.task_id else None
@@ -662,11 +677,21 @@ async def create_order_endpoint(order: OrderRequest):
         pass
     try:
         result = create_order(payload)
+        if pay_url:
+            result["payment"] = {"url": pay_url, "label": pay.get("label_uk") or "Оплатити зараз"}
         return {"status": "ok", **result}
     except Exception as e:  # noqa: BLE001
         print(f"[ERROR] order failed: {e}")
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
+
+
+@app.get("/api/account/orders")
+async def account_orders(authorization: Optional[str] = Header(default=None)):
+    """Замовлення поточного користувача (з orders-журналу, новіші перші)."""
+    from services.order_service import list_orders_for_uid
+    u = _require_user(authorization)
+    return {"orders": list_orders_for_uid(u["uid"])}
 
 
 class ContactRequest(BaseModel):

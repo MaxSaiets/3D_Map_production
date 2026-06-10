@@ -238,6 +238,8 @@
     "pickup": "Recogida",
     "regionUa": "Ucrania",
     "regionEu": "Europa (UE)",
+    "payNow": "Pagar ahora",
+    "payLater": "Paga ahora o tras la confirmación del operador — como prefieras. Tu pedido ya está registrado.",
     "phCountry": "País",
     "phBranchEu": "N.º de sucursal Nova Post",
     "phAddressEu": "Dirección (calle, número, CP)",

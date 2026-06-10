@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Loader2, CheckCircle2, Truck, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { capturePreviewImages } from "@/lib/capturePreview";
+import { useAuth } from "@/components/AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -57,6 +58,8 @@ export function OrderDialog({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const { getIdToken } = useAuth();
 
   if (!open) return null;
 
@@ -78,9 +81,12 @@ export function OrderDialog({
       // Захоплюємо превʼю (SVG-дизайнер брелка + 3D-canvas) — оператор у Telegram
       // побачить ТОЧНО що замовив клієнт (текст, розташування) ще до друку.
       const screenshots = await capturePreviewImages();
+      // Якщо клієнт залогінений — замовлення привʼяжеться до акаунта (видно в кабінеті).
+      let token: string | null = null;
+      try { token = await getIdToken(); } catch { /* ignore */ }
       const res = await fetch(`${API_BASE}/api/order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           name, phone, product_type: productType, task_id: taskId,
           delivery_method: delivery,
@@ -94,6 +100,7 @@ export function OrderDialog({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setOrderNumber(String(data.order_number));
+      setPaymentUrl(data.payment?.url || null);
       try { const { track } = await import("@/lib/analytics"); track("order", { product: productType, delivery }); } catch { /* ignore */ }
     } catch (e: any) {
       setError(t("sendFail"));
@@ -122,6 +129,19 @@ export function OrderDialog({
               {t("orderNo")} <b className="text-[var(--text-primary)]">#{orderNumber}</b>.<br />
               {t("acceptedText")}
             </p>
+            {paymentUrl && (
+              <>
+                <a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+                >
+                  {t("payNow")} · {priceText || ""}
+                </a>
+                <p className="mt-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t("payLater")}</p>
+              </>
+            )}
             <button onClick={onClose} className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--accent-strong)] px-5 py-3 text-sm font-semibold text-white">
               {t("doneBtn")}
             </button>

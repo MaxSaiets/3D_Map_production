@@ -238,6 +238,8 @@
     "pickup": "Selbstabholung",
     "regionUa": "Ukraine",
     "regionEu": "Europa (EU)",
+    "payNow": "Jetzt bezahlen",
+    "payLater": "Sofort oder nach Bestätigung durch den Operator bezahlen — wie es dir passt. Deine Bestellung ist bereits registriert.",
     "phCountry": "Land",
     "phBranchEu": "Nova-Post-Filiale Nr.",
     "phAddressEu": "Adresse (Straße, Haus, PLZ)",
