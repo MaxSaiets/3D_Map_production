@@ -264,6 +264,7 @@
     "send": "Enviar"
   },
   "wizard": {
+    "place": "Lugar",
     "settingsMap": "Ajustes",
     "settingsKeychain": "Diseño",
     "hintMap": "Tamaño y capas (opcional)",

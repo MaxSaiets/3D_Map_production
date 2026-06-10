@@ -264,6 +264,7 @@
     "send": "Wyślij"
   },
   "wizard": {
+    "place": "Miejsce",
     "settingsMap": "Ustawienia",
     "settingsKeychain": "Projekt",
     "hintMap": "Rozmiar i warstwy (opcjonalnie)",

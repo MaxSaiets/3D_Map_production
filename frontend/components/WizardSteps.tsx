@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MapPin, Crop, SlidersHorizontal, Download } from "lucide-react";
+import { Check, MapPin, SlidersHorizontal, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface WizardState {
@@ -11,6 +11,8 @@ export interface WizardState {
   progress: number;
 }
 
+export type WizardStepKey = "place" | "settings" | "result";
+
 type StepStatus = "done" | "current" | "todo";
 
 /**
@@ -18,13 +20,17 @@ type StepStatus = "done" | "current" | "todo";
  * It does NOT rebuild the workspace — it reflects the user's real progress
  * through the natural flow and highlights the next actionable step, giving
  * a wizard-like guidance while keeping the proven map+controls layout.
+ * 3 кроки = 3 рішення: Місце → Вигляд → Результат. Клік по кроку (якщо
+ * передано onStepClick) веде до відповідної зони конструктора.
  */
 export function WizardSteps({
   state,
   variant = "map",
+  onStepClick,
 }: {
   state: WizardState;
   variant?: "map" | "keychain";
+  onStepClick?: (key: WizardStepKey) => void;
 }) {
   const t = useTranslations("wizard");
   const { cityLabel, hasSelection, isGenerating, hasDownload, progress } = state;
@@ -34,25 +40,22 @@ export function WizardSteps({
   // Derive per-step status from the real workspace state.
   const cityDone = Boolean(cityLabel);
   const steps: Array<{
-    key: string;
+    key: WizardStepKey;
     label: string;
     hint: string;
     icon: typeof MapPin;
     status: StepStatus;
   }> = [
     {
-      key: "city",
-      label: t("city"),
-      hint: cityLabel ? cityLabel : t("cityPrompt"),
+      key: "place",
+      label: t("place"),
+      hint: !cityDone
+        ? t("cityPrompt")
+        : hasSelection
+          ? `${cityLabel} · ${t("areaDone")}`
+          : t("areaPrompt"),
       icon: MapPin,
-      status: cityDone ? "done" : "current",
-    },
-    {
-      key: "area",
-      label: t("area"),
-      hint: hasSelection ? t("areaDone") : t("areaPrompt"),
-      icon: Crop,
-      status: hasSelection ? "done" : cityDone ? "current" : "todo",
+      status: hasSelection ? "done" : "current",
     },
     {
       key: "settings",
@@ -70,7 +73,7 @@ export function WizardSteps({
           ? t("downloadReady")
           : t("generatePrompt"),
       icon: Download,
-      status: hasDownload ? "current" : "todo",
+      status: hasDownload ? "current" : isGenerating ? "current" : "todo",
     },
   ];
 
@@ -83,10 +86,14 @@ export function WizardSteps({
         const Icon = step.icon;
         const isDone = step.status === "done";
         const isCurrent = step.status === "current";
+        const Tag: any = onStepClick ? "button" : "div";
         return (
-          <div
+          <Tag
             key={step.key}
-            className={`flex min-w-fit flex-1 items-center gap-2.5 rounded-[16px] px-3 py-2 transition ${
+            {...(onStepClick ? { type: "button", onClick: () => onStepClick(step.key) } : {})}
+            className={`flex min-w-fit flex-1 items-center gap-2.5 rounded-[16px] px-3 py-2 text-left transition ${
+              onStepClick ? "cursor-pointer hover:opacity-90" : ""
+            } ${
               isCurrent
                 ? "bg-[var(--accent-strong,#2E4A3A)] text-white shadow-[0_10px_24px_rgba(11,92,87,0.22)]"
                 : isDone
@@ -118,7 +125,7 @@ export function WizardSteps({
                 {step.hint}
               </span>
             </span>
-          </div>
+          </Tag>
         );
       })}
     </nav>

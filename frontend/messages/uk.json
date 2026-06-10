@@ -264,6 +264,7 @@
     "send": "Надіслати"
   },
   "wizard": {
+    "place": "Місце",
     "settingsMap": "Параметри",
     "settingsKeychain": "Дизайн",
     "hintMap": "Розмір і шари (за бажанням)",

@@ -91,6 +91,28 @@ export default function KeychainsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Чернетка дизайну: форма/напис/місто переживають перезавантаження сторінки.
+  // Зону карти навмисно НЕ відновлюємо (див. ефект вище — стартуємо з чистої).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("monadruk:draft:keychain");
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.design) setDesign({ ...DEFAULT_KEYCHAIN_DESIGN, ...d.design });
+      if (typeof d.label === "string" && d.label) setLabel(d.label);
+      if (d.cityKey && CITIES[d.cityKey]) setCurrentCityKey(d.cityKey);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem("monadruk:draft:keychain", JSON.stringify({ design, label, cityKey: currentCityKey }));
+      } catch { /* ignore */ }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [design, label, currentCityKey]);
+
   // Якщо користувач змінює шаблон (Token 45×26, 35×55, тощо) — мапа має інший
   // aspect ratio для карти. Скидаємо crop щоб MapSelector перерахував його під
   // новий aspect (вертикальний vs горизонтальний). Інакше залишається стара форма.
@@ -221,6 +243,10 @@ export default function KeychainsPage() {
               isGenerating,
               hasDownload: Boolean(downloadUrl),
               progress,
+            }}
+            onStepClick={(key) => {
+              const id = key === "place" ? "kc-map" : key === "settings" ? "kc-design" : "kc-preview3d";
+              document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           />
         </div>

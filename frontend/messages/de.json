@@ -264,6 +264,7 @@
     "send": "Senden"
   },
   "wizard": {
+    "place": "Ort",
     "settingsMap": "Einstellungen",
     "settingsKeychain": "Design",
     "hintMap": "Größe und Ebenen (optional)",

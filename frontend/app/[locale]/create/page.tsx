@@ -387,11 +387,20 @@ export default function Home() {
               hasDownload: Boolean(downloadUrl),
               progress,
             }}
+            onStepClick={(key) => {
+              // Мобайл: перемикаємо відповідний таб; десктоп: мʼякий скрол до панелі.
+              const view = key === "place" ? "map" : key === "settings" ? "settings" : "preview";
+              setWorkspaceView(view as typeof workspaceView);
+              const target = document.getElementById(
+                key === "place" ? "panel-map" : key === "settings" ? "panel-settings" : "panel-preview",
+              );
+              target?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
           />
         </div>
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
-          <aside className="hidden min-h-0 lg:block">
+          <aside id="panel-settings" className="hidden min-h-0 lg:block">
             <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -432,7 +441,7 @@ export default function Home() {
           </aside>
 
           <section className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className={mapPanelClasses}>
+            <div id="panel-map" className={mapPanelClasses}>
               <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[440px]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
@@ -517,7 +526,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={previewPanelClasses}>
+            <div id="panel-preview" className={previewPanelClasses}>
               <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>

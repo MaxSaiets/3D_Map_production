@@ -134,6 +134,28 @@ export function SimpleControlPanel({
     setTerrainEnabled(preset.layers.terrain);
   };
 
+  // Чернетка конструктора: зона/стиль/розмір переживають перезавантаження.
+  // Відновлюємо РАЗ при маунті; зберігаємо з debounce при змінах.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("monadruk:draft:create");
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.styleId && MAP_STYLE_PRESETS.some((p) => p.id === d.styleId)) applyStyle(d.styleId);
+      if (typeof d.modelSizeMm === "number" && d.modelSizeMm >= 40) setModelSizeMm(d.modelSizeMm);
+      if (!selectedArea && d.selectedArea && typeof d.selectedArea === "object") setSelectedArea(d.selectedArea);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem("monadruk:draft:create", JSON.stringify({ selectedArea, styleId, modelSizeMm }));
+      } catch { /* ignore */ }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [selectedArea, styleId, modelSizeMm]);
+
   const pickTemplate = async (id: string) => {
     const tpl = MAP_TEMPLATES.find((t) => t.id === id);
     if (!tpl) return;
