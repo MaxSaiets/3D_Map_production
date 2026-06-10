@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
+import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
+import { fetchQuote, type Quote } from "@/lib/pricing";
 import { getKeychainDesignerSvg, svgToPngDataUrl } from "@/lib/capturePreview";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
@@ -355,7 +357,15 @@ export function KeychainControlPanel({
   } = useGenerationStore();
 
   const [error, setError] = useState<string | null>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [baseThicknessMm, setBaseThicknessMm] = useState(1.5);
+
+  // Жива орієнтовна ціна брелка (одна базова — розмір на неї не впливає).
+  useEffect(() => {
+    let alive = true;
+    fetchQuote("keychain").then((q) => { if (alive) setQuote(q); });
+    return () => { alive = false; };
+  }, []);
   const [roadLayerMm, setRoadLayerMm] = useState(0.44);
   const [parkLayerMm, setParkLayerMm] = useState(0.34);
   const [waterLayerMm, setWaterLayerMm] = useState(0.28);
@@ -1245,7 +1255,7 @@ export function KeychainControlPanel({
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
             >
               <ShoppingBag className="h-5 w-5" />
-              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
+              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}{quote ? ` · ${quote.formatted}` : ""}
             </button>
             <button
               type="button"
@@ -1271,10 +1281,22 @@ export function KeychainControlPanel({
           onClose={() => setOrderOpen(false)}
           taskId={taskGroupId}
           productType="keychain"
+          priceText={quote?.formatted}
           summary={{
             label,
             size: `${Math.round(design.bodyWidthMm)}×${Math.round(design.bodyHeightMm)} мм`,
           }}
+        />
+
+        {/* Мобільний sticky-бар: ціна завжди видима + головна дія стану */}
+        <div className="h-20 lg:hidden" aria-hidden="true" />
+        <StickyActionBar
+          priceLabel="Орієнтовна вартість"
+          price={quote?.formatted ?? null}
+          actionLabel={downloadUrl ? "Замовити друк" : isGenerating ? `Генерація… ${progress}%` : "Створити брелок"}
+          busy={isGenerating}
+          disabled={!downloadUrl && !canGenerate}
+          onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
         />
 
         <section className={sectionClass("advanced")}>

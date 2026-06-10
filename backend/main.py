@@ -541,6 +541,54 @@ async def root():
     return {"message": "3D Map Generator API", "version": "1.0.0"}
 
 
+_PRICING_CACHE: Dict[str, Any] = {"mtime": 0.0, "data": None}
+_PRICING_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pricing.json")
+
+
+def _load_pricing() -> Dict[str, Any]:
+    """pricing.json з mtime-кешем — правиться на сервері без рестарту."""
+    import json
+    try:
+        mtime = os.path.getmtime(_PRICING_PATH)
+        if _PRICING_CACHE["data"] is None or mtime != _PRICING_CACHE["mtime"]:
+            with open(_PRICING_PATH, "r", encoding="utf-8") as f:
+                _PRICING_CACHE["data"] = json.load(f)
+            _PRICING_CACHE["mtime"] = mtime
+    except Exception as e:  # noqa: BLE001
+        print(f"[PRICING] load failed: {e}")
+        if _PRICING_CACHE["data"] is None:
+            _PRICING_CACHE["data"] = {
+                "currency": "UAH", "currency_symbol": "₴",
+                "map": {"sizes_mm": {"55": 690}, "relief_addon": 0, "from": 690},
+                "keychain": {"base": 290, "from": 290},
+            }
+    return _PRICING_CACHE["data"]
+
+
+@app.get("/api/quote")
+async def get_quote(product: str = "map", size_mm: Optional[float] = None, relief: bool = False):
+    """Орієнтовна ціна для UI (sticky-bar, форма замовлення). НЕ оферта."""
+    p = _load_pricing()
+    sym = p.get("currency_symbol", "₴")
+    if product == "keychain":
+        price = int(p.get("keychain", {}).get("base", 290))
+    else:
+        sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 690}).items()}
+        if size_mm:
+            nearest = min(sizes.keys(), key=lambda k: abs(k - float(size_mm)))
+            price = sizes[nearest]
+        else:
+            price = int(p.get("map", {}).get("from", min(sizes.values())))
+        if relief:
+            price += int(p.get("map", {}).get("relief_addon", 0))
+    return {
+        "currency": p.get("currency", "UAH"),
+        "price": price,
+        "formatted": f"≈ {price} {sym}",
+        "approx": True,
+    }
+
+
 @app.get("/api/health")
 async def health():
     """Lightweight health probe for monitoring/alerting.
@@ -585,11 +633,13 @@ class OrderRequest(BaseModel):
     phone: str = ""
     product_type: str = "map"           # "map" | "keychain"
     task_id: Optional[str] = None
-    delivery_method: str = ""           # "nova" | "ukr" | "pickup"
+    delivery_method: str = ""           # "nova" | "ukr" | "pickup" | "novapost_eu" | "meest"
+    delivery_country: str = ""          # "Україна" або країна ЄС
     delivery_city: str = ""
     delivery_branch: str = ""
     delivery_address: str = ""
     comment: str = ""
+    est_price: str = ""                 # орієнтовна ціна, ПОКАЗАНА клієнту на сайті (інформаційно)
     summary: Dict[str, Any] = {}
     screenshots: List[str] = []         # data:image/png;base64,... (max 4 used)
 

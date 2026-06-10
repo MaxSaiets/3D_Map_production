@@ -110,6 +110,7 @@ def _find_model_file(task_id: Optional[str], output_file: Optional[str]) -> Opti
 
 def _delivery_text(o: Dict[str, Any]) -> str:
     method = (o.get("delivery_method") or "").lower()
+    country = o.get("delivery_country") or ""
     city = o.get("delivery_city") or ""
     branch = o.get("delivery_branch") or ""
     addr = o.get("delivery_address") or ""
@@ -117,9 +118,13 @@ def _delivery_text(o: Dict[str, Any]) -> str:
         return f"Нова Пошта — {city}, відділення/поштомат {branch}".strip(" ,")
     if method in ("ukr", "ukrposhta", "ukr_poshta"):
         return f"Укрпошта — індекс {branch}, {city} {addr}".strip(" ,")
+    if method in ("novapost_eu", "nova_eu"):
+        return f"Nova Post (EU) — {country}, {city}, відділення {branch}".strip(" ,")
+    if method == "meest":
+        return f"Meest — {country}, {city}, {addr or branch}".strip(" ,")
     if method in ("pickup", "self"):
         return "Самовивіз"
-    return addr or city or branch or "—"
+    return " ".join(x for x in (country, city, branch, addr) if x) or "—"
 
 
 def send_contact(name: str, phone: str, message: str, source: str = "") -> bool:
@@ -164,7 +169,8 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "new",
         **{k: payload.get(k) for k in (
             "name", "phone", "product_type", "task_id",
-            "delivery_method", "delivery_city", "delivery_branch", "delivery_address", "comment",
+            "delivery_method", "delivery_country", "delivery_city", "delivery_branch",
+            "delivery_address", "comment", "est_price",
         )},
         "summary": summary,
     }
@@ -196,6 +202,9 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     if summary.get("size"):
         lines.append(f"📐 Розмір: {summary.get('size')}")
     lines.append(f"🚚 {_delivery_text(payload)}")
+    est_price = (payload.get("est_price") or "").strip()
+    if est_price:
+        lines.append(f"💰 Орієнтовно з сайту: <b>{est_price}</b> (без доставки)")
     if comment:
         lines.append(f"💬 {comment}")
     lines.append("")

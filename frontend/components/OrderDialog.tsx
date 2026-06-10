@@ -8,7 +8,14 @@ import { capturePreviewImages } from "@/lib/capturePreview";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-type Delivery = "nova" | "ukr" | "pickup";
+type Delivery = "nova" | "ukr" | "pickup" | "novapost_eu" | "meest";
+type Region = "ua" | "eu";
+
+/** Рідні назви — впізнавані і для місцевих, і для українців за кордоном; не потребують перекладу. */
+const EU_COUNTRIES = [
+  "Polska", "Deutschland", "Česko", "Slovensko", "Österreich", "Italia", "España",
+  "France", "Nederland", "België", "Lietuva", "Latvija", "Eesti", "Portugal", "România",
+];
 
 export interface OrderSummary {
   city?: string;
@@ -27,16 +34,21 @@ export function OrderDialog({
   taskId,
   productType,
   summary,
+  priceText,
 }: {
   open: boolean;
   onClose: () => void;
   taskId: string | null;
   productType: "map" | "keychain";
   summary: OrderSummary;
+  /** Жива орієнтовна ціна з /api/quote; без неї — статичний i18n-fallback. */
+  priceText?: string;
 }) {
   const t = useTranslations("order");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [region, setRegion] = useState<Region>("ua");
+  const [euCountry, setEuCountry] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nova");
   const [city, setCity] = useState("");
   const [branch, setBranch] = useState("");
@@ -51,7 +63,12 @@ export function OrderDialog({
   const submit = async () => {
     if (!name.trim()) { setError(t("errName")); return; }
     if (!phone.trim()) { setError(t("errPhone")); return; }
-    if (delivery !== "pickup" && (!city.trim() || !branch.trim())) {
+    if (region === "eu") {
+      if (!euCountry || !city.trim() || (!branch.trim() && !address.trim())) {
+        setError(t("errEu"));
+        return;
+      }
+    } else if (delivery !== "pickup" && (!city.trim() || !branch.trim())) {
       setError(delivery === "nova" ? t("errNova") : t("errUkr"));
       return;
     }
@@ -66,8 +83,11 @@ export function OrderDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name, phone, product_type: productType, task_id: taskId,
-          delivery_method: delivery, delivery_city: city,
+          delivery_method: delivery,
+          delivery_country: region === "ua" ? "Україна" : euCountry,
+          delivery_city: city,
           delivery_branch: branch, delivery_address: address, comment,
+          est_price: priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap")),
           summary, screenshots,
         }),
       });
@@ -124,7 +144,20 @@ export function OrderDialog({
               <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
 
               <div className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                {([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][]).map(([k, lbl]) => (
+                {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
+                  <button key={k} type="button"
+                    onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
+                    className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+                {(region === "ua"
+                  ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
+                  : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
+                ).map(([k, lbl]) => (
                   <button key={k} type="button" onClick={() => setDelivery(k)}
                     className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                     {lbl}
@@ -132,12 +165,27 @@ export function OrderDialog({
                 ))}
               </div>
 
+              {region === "eu" && (
+                <select className={fieldCls} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
+                  <option value="">{t("phCountry")}</option>
+                  {EU_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              )}
+
               {delivery !== "pickup" && (
                 <>
                   <input className={fieldCls} placeholder={t("phCity")} value={city} onChange={(e) => setCity(e.target.value)} />
-                  <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} value={branch} onChange={(e) => setBranch(e.target.value)} />
-                  {delivery === "ukr" && (
-                    <input className={fieldCls} placeholder={t("phAddress")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                  {region === "ua" ? (
+                    <>
+                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                      {delivery === "ukr" && (
+                        <input className={fieldCls} placeholder={t("phAddress")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                      )}
+                    </>
+                  ) : delivery === "novapost_eu" ? (
+                    <input className={fieldCls} placeholder={t("phBranchEu")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                  ) : (
+                    <input className={fieldCls} placeholder={t("phAddressEu")} value={address} onChange={(e) => setAddress(e.target.value)} />
                   )}
                 </>
               )}
@@ -146,7 +194,7 @@ export function OrderDialog({
 
               <div className="flex items-center justify-between rounded-2xl bg-[rgba(176,141,87,0.12)] px-4 py-2.5 text-sm">
                 <span className="text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
-                <b className="text-[var(--text-primary)]">{productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap")}</b>
+                <b className="text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
               </div>
 
               <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">

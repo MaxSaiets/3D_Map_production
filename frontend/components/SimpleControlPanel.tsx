@@ -7,8 +7,10 @@ import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES } from "@/lib/generation";
 import { OrderDialog } from "@/components/OrderDialog";
+import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
+import { fetchQuote, type Quote } from "@/lib/pricing";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -29,6 +31,7 @@ export function SimpleControlPanel({
   onAdvanced?: () => void;
 }) {
   const t = useTranslations("simple");
+  const tOrder = useTranslations("order");
   const s = useGenerationStore();
   const {
     selectedArea, setSelectedArea,
@@ -42,6 +45,7 @@ export function SimpleControlPanel({
   } = s;
 
   const [styleId, setStyleId] = useState<string>("full");
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
@@ -62,6 +66,14 @@ export function SimpleControlPanel({
     } catch { /* ignore */ }
   }, [getIdToken]);
   useEffect(() => { refreshQuota(); }, [refreshQuota]);
+
+  // Жива орієнтовна ціна — оновлюється при зміні розміру/стилю (relief = +надбавка).
+  useEffect(() => {
+    let alive = true;
+    const relief = MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain ?? false;
+    fetchQuote("map", modelSizeMm, relief).then((q) => { if (alive) setQuote(q); });
+    return () => { alive = false; };
+  }, [modelSizeMm, styleId]);
 
   const doGatedDownload = async () => {
     setDlBusy(true);
@@ -343,7 +355,7 @@ export function SimpleControlPanel({
             onClick={() => setOrderOpen(true)}
             className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
           >
-            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")}
+            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")}{quote ? ` · ${quote.formatted}` : ""}
           </button>
 
           {error && (
@@ -393,11 +405,29 @@ export function SimpleControlPanel({
         onClose={() => setOrderOpen(false)}
         taskId={taskGroupId}
         productType="map"
+        priceText={quote?.formatted}
         summary={{
           city: selectedCityKey,
           district: MAP_TEMPLATES.find((t) => t.id === activeTemplate)?.district,
           size: SIMPLE_SIZES.find((z) => Math.abs(modelSizeMm - z.mm) < 1)?.cm,
         }}
+      />
+
+      {/* Мобільний sticky-бар: ціна завжди на екрані + головна дія стану */}
+      <div className="h-20 lg:hidden" aria-hidden="true" />
+      <StickyActionBar
+        priceLabel={tOrder("estPriceLabel")}
+        price={quote?.formatted ?? null}
+        actionLabel={
+          downloadUrl
+            ? t("orderPrint")
+            : isGenerating
+              ? `${t("generating")} ${progress}%`
+              : t("generate")
+        }
+        busy={isGenerating}
+        disabled={!downloadUrl && (!selectedArea || isGenerating)}
+        onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
       />
     </div>
   );
