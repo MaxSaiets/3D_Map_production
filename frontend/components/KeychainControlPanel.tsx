@@ -358,6 +358,8 @@ export function KeychainControlPanel({
 
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [label2, setLabel2] = useState("");
+  const [backLabel, setBackLabel] = useState("");
   const [baseThicknessMm, setBaseThicknessMm] = useState(1.5);
 
   // Жива орієнтовна ціна брелка (одна базова — розмір на неї не впливає).
@@ -795,6 +797,8 @@ export function KeychainControlPanel({
         flat_plate_mode: true,
         keychain_mode: true,
         keychain_label: label,
+        keychain_label2: label2,
+        keychain_back_label: backLabel,
         keychain_base_shape: design.baseShape,
         keychain_layout_rotation_deg: design.layoutRotationDeg,
         keychain_loop_style: design.loopStyle,
@@ -1188,6 +1192,43 @@ export function KeychainControlPanel({
             <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
             <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
             <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+          </div>
+
+          <div className="mt-5">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Другий рядок · дата чи координати</div>
+            <div className="flex gap-2">
+              <input
+                value={label2}
+                onChange={(event) => setLabel2(event.target.value.toUpperCase().slice(0, 28))}
+                placeholder="12.06.2026"
+                className="min-w-0 flex-1 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
+              />
+              <button
+                type="button"
+                title="Вставити координати центру зони"
+                disabled={!selectedArea}
+                onClick={() => {
+                  if (!selectedArea) return;
+                  const c = selectedArea.getCenter();
+                  setLabel2(`${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`);
+                }}
+                className="shrink-0 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-3 text-lg transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                📍
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">Менший кегль одразу під основним написом. 📍 підставляє координати вибраної зони.</p>
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Напис на звороті · гравіювання</div>
+            <input
+              value={backLabel}
+              onChange={(event) => setBackLabel(event.target.value.toUpperCase().slice(0, 28))}
+              placeholder="ІМʼЯ · ДАТА"
+              className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
+            />
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">Гравіюється у нижню грань на 0.5 мм (дзеркально — читається, коли брелок перевернуто). Видно після генерації у 3D.</p>
           </div>
         </section>
 

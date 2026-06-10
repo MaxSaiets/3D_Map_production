@@ -148,6 +148,11 @@ export interface GenerationRequest {
   keychain_mode?: boolean;
   keychain_label?: string;
   keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";
+  keychain_label2?: string;
+  keychain_label2_text_height_mm?: number;
+  keychain_back_label?: string;
+  keychain_back_text_height_mm?: number;
+  keychain_back_engrave_mm?: number;
   keychain_layout_rotation_deg?: number;
   keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
   keychain_loop_angle_deg?: number;

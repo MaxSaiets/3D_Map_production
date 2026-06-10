@@ -1426,6 +1426,55 @@ def _rotate_meshes_for_keychain_layout(
             mesh.apply_transform(matrix)
 
 
+def _build_keychain_base_parts(
+    base_mask: BaseGeometry,
+    *,
+    base_top_m: float,
+    back_text_poly: Optional[BaseGeometry],
+    engrave_m: float,
+    min_area_m2: float = 0.001,
+) -> tuple[Optional[trimesh.Trimesh], Optional[trimesh.Trimesh]]:
+    """База брелка. Без напису на звороті — одна суцільна плита (як раніше).
+    З написом — ДВА чистих watertight-екструди замість 3D-boolean:
+    нижній шар (0..engrave) з масти `base − дзеркальні літери` (гравіювання
+    видно знизу) + верхній суцільний шар (engrave..top). Слайсер зливає їх у
+    одне тіло; мікро-місточки над літерами ~0.5мм друкуються штатно."""
+    if (
+        back_text_poly is None
+        or getattr(back_text_poly, "is_empty", True)
+        or engrave_m <= 1e-9
+        or engrave_m >= base_top_m - 1e-9
+    ):
+        return (
+            build_flat_layer_mesh_from_mask(
+                base_mask, bottom_z_m=0.0, thickness_m=base_top_m,
+                color=LAYER_COLORS["base"], min_area_m2=min_area_m2,
+            ),
+            None,
+        )
+    try:
+        bottom_mask = base_mask.difference(back_text_poly).buffer(0)
+        lower = build_flat_layer_mesh_from_mask(
+            bottom_mask, bottom_z_m=0.0, thickness_m=engrave_m,
+            color=LAYER_COLORS["base"], min_area_m2=1e-12,
+        )
+        upper = build_flat_layer_mesh_from_mask(
+            base_mask, bottom_z_m=engrave_m, thickness_m=base_top_m - engrave_m,
+            color=LAYER_COLORS["base"], min_area_m2=min_area_m2,
+        )
+        if lower is not None and upper is not None:
+            return upper, lower
+    except Exception as exc:
+        print(f"[KEYCHAIN] back engrave base split failed ({exc}); solid base fallback")
+    return (
+        build_flat_layer_mesh_from_mask(
+            base_mask, bottom_z_m=0.0, thickness_m=base_top_m,
+            color=LAYER_COLORS["base"], min_area_m2=min_area_m2,
+        ),
+        None,
+    )
+
+
 def build_keychain_rim_mesh(
     *,
     base_geometry: BaseGeometry,
@@ -1662,6 +1711,10 @@ def run_flat_plate_pipeline(
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
     keychain_rim_mesh: Optional[trimesh.Trimesh] = None
     keychain_text_mesh: Optional[trimesh.Trimesh] = None
+    keychain_text2_mesh: Optional[trimesh.Trimesh] = None
+    keychain_base_bottom_mesh: Optional[trimesh.Trimesh] = None
+    keychain_back_poly: Optional[BaseGeometry] = None
+    keychain_back_engrave_m: float = 0.0
     source_bounds: Optional[tuple[float, float, float, float]] = None
     target_bounds: Optional[tuple[float, float, float, float]] = None
     if keychain_mode:
@@ -1710,6 +1763,54 @@ def run_flat_plate_pipeline(
             except Exception:
                 pass
 
+        # НАПИС НА ЗВОРОТІ: рахуємо дзеркальний полігон літер ДО побудови бази —
+        # база розщепиться на нижній шар з гравіюванням + верхній суцільний.
+        _back_text = str(getattr(request, "keychain_back_label", "") or "").strip()
+        if _back_text:
+            try:
+                keychain_back_engrave_m = _model_mm_to_world_m(
+                    min(
+                        max(float(getattr(request, "keychain_back_engrave_mm", 0.5) or 0.5), 0.2),
+                        max(base_thickness_mm - 0.8, 0.2),
+                    ),
+                    export_scale_factor,
+                )
+                _base_b = keychain_layout["base"].bounds
+                _bw = _base_b[2] - _base_b[0]
+                _bh = _base_b[3] - _base_b[1]
+                _cx = (_base_b[0] + _base_b[2]) / 2.0
+                _cy = (_base_b[1] + _base_b[3]) / 2.0
+                _band_h = min(_model_mm_to_world_m(10.0, export_scale_factor), _bh * 0.5)
+                from shapely.geometry import box as _shp_box
+                _back_band = _shp_box(
+                    _base_b[0] + _bw * 0.08, _cy - _band_h / 2.0,
+                    _base_b[2] - _bw * 0.08, _cy + _band_h / 2.0,
+                )
+                _poly = _compute_text_letter_polygon(
+                    text=_back_text,
+                    body_geometry=keychain_layout["base"],
+                    label_band_geometry=_back_band,
+                    text_height_m=_model_mm_to_world_m(
+                        float(getattr(request, "keychain_back_text_height_mm", 5.0) or 5.0),
+                        export_scale_factor,
+                    ),
+                    angle_deg=0.0,
+                    min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
+                    max_width=(_back_band.bounds[2] - _back_band.bounds[0]) * 0.96,
+                    max_height=(_back_band.bounds[3] - _back_band.bounds[1]) * 0.92,
+                )
+                if _poly is not None and not getattr(_poly, "is_empty", True):
+                    # Дзеркало по X: текст читається, коли брелок перевернуто.
+                    _mirrored = affinity.scale(_poly, xfact=-1.0, yfact=1.0, origin=(_cx, _cy))
+                    _safe_zone = keychain_layout["base"].buffer(
+                        -_model_mm_to_world_m(1.0, export_scale_factor), join_style=1,
+                    )
+                    keychain_back_poly = _mirrored.intersection(_safe_zone).buffer(0)
+                    print(f"[KEYCHAIN] Back engrave ready: '{_back_text}'")
+            except Exception as exc:
+                print(f"[KEYCHAIN] back label failed (non-fatal): {exc}")
+                keychain_back_poly = None
+
     preclip_result = getattr(canonical_2d_stage, "preclip_result", None)
     gdf_buildings_local = getattr(preclip_result, "gdf_buildings_local", None)
     if gdf_buildings_local is None:
@@ -1735,11 +1836,19 @@ def run_flat_plate_pipeline(
             print(f"[FLAT PLATE] Building preclip fallback failed: {exc}")
             gdf_buildings_local = None
 
-    terrain_mesh = build_flat_zone_base_mesh(
-        keychain_layout["base"] if keychain_layout else zone.zone_polygon_local,
-        bbox_meters=zone.bbox_meters,
-        thickness_m=base_top_m,
-    )
+    if keychain_layout is not None:
+        terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
+            keychain_layout["base"],
+            base_top_m=base_top_m,
+            back_text_poly=keychain_back_poly,
+            engrave_m=keychain_back_engrave_m,
+        )
+    else:
+        terrain_mesh = build_flat_zone_base_mesh(
+            zone.zone_polygon_local,
+            bbox_meters=zone.bbox_meters,
+            thickness_m=base_top_m,
+        )
     if keychain_layout is not None and terrain_mesh is not None:
         rim_width_mm = float(getattr(request, "keychain_rim_width_mm", 0.0) or 0.0)
         rim_height_mm = float(getattr(request, "keychain_rim_height_mm", 0.0) or 0.0)
@@ -2187,6 +2296,57 @@ def run_flat_plate_pipeline(
                 print(f"[KEYCHAIN] Letters+hull carved from road/parks/water (angle={_label_angle}°, label='{_label_text}')")
         except Exception as exc:
             print(f"[KEYCHAIN] letter polygon compute failed: {exc}")
+
+    # ДРУГИЙ РЯДОК (дата/координати): власна смуга одразу ПІД основною,
+    # менший кегль; той самий двошаровий виріз із шарів карти.
+    text2_letter_poly = None
+    if keychain_mode and keychain_layout is not None:
+        _label2_text = str(getattr(request, "keychain_label2", "") or "").strip()
+        if _label2_text:
+            try:
+                _band = keychain_layout["label_band"]
+                _b = _band.bounds
+                _band_h2 = (_b[3] - _b[1])
+                # maxy = верх брелка → «нижче» = менший y. Зсуваємо band вниз.
+                _band2 = affinity.translate(_band, yoff=-_band_h2 * 0.95)
+                _band2 = _band2.intersection(keychain_layout["body"]).buffer(0)
+                if _band2 is not None and not getattr(_band2, "is_empty", True):
+                    keychain_layout["label_band2"] = _band2
+                    _b2 = _band2.bounds
+                    text2_letter_poly = _compute_text_letter_polygon(
+                        text=_label2_text,
+                        body_geometry=keychain_layout["body"],
+                        label_band_geometry=_band2,
+                        text_height_m=_model_mm_to_world_m(
+                            float(getattr(request, "keychain_label2_text_height_mm", 2.4) or 2.4),
+                            export_scale_factor,
+                        ),
+                        angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
+                        min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
+                        max_width=max((_b2[2] - _b2[0]) * 0.96, 1e-6),
+                        max_height=max((_b2[3] - _b2[1]) * 0.92, 1e-6),
+                    )
+                if text2_letter_poly is not None and not getattr(text2_letter_poly, "is_empty", True):
+                    _carve_hull2 = text2_letter_poly.convex_hull.buffer(
+                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                    ).buffer(0)
+                    for _mname2 in ("road_mask", "parks_mask", "water_mask"):
+                        try:
+                            _mref2 = {"road_mask": road_mask, "parks_mask": parks_mask, "water_mask": water_mask}[_mname2]
+                            if _mref2 is not None and not getattr(_mref2, "is_empty", True):
+                                _sub2 = _subtract_geometry(_mref2, _carve_hull2)
+                                if _mname2 == "road_mask":
+                                    road_mask = _sub2
+                                elif _mname2 == "parks_mask":
+                                    parks_mask = _sub2
+                                else:
+                                    water_mask = _sub2
+                        except Exception:
+                            pass
+                    print(f"[KEYCHAIN] Label2 carved: '{_label2_text}'")
+            except Exception as exc:
+                print(f"[KEYCHAIN] label2 polygon failed (non-fatal): {exc}")
+                text2_letter_poly = None
             text_letter_poly = None
 
     label_clear_band = None
@@ -2392,6 +2552,24 @@ def run_flat_plate_pipeline(
             font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
             precomputed_polygon=text_letter_poly,
         )
+        # Другий рядок — той самий механізм, полігон уже порахований у carve-блоці.
+        if text2_letter_poly is not None and keychain_layout.get("label_band2") is not None:
+            keychain_text2_mesh = build_keychain_label_mesh(
+                str(getattr(request, "keychain_label2", "") or ""),
+                body_geometry=keychain_layout["body"],
+                label_band_geometry=keychain_layout["label_band2"],
+                bottom_z_m=base_top_m,
+                thickness_m=text_raise_m,
+                text_height_m=_model_mm_to_world_m(
+                    float(getattr(request, "keychain_label2_text_height_mm", 2.4) or 2.4),
+                    export_scale_factor,
+                ),
+                color=LAYER_COLORS["text"],
+                angle_deg=float(getattr(request, "keychain_label_angle_deg", 0.0) or 0.0),
+                min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
+                font_style=str(getattr(request, "keychain_label_font_style", "block") or "block"),
+                precomputed_polygon=text2_letter_poly,
+            )
         # VIRTUAL CLEAR ZONE навколо тексту: НЕ додаємо фізичну підкладку (щоб
         # не було сірої платформи під буквами — юзер: «зона створення що є
         # проблемою»). Натомість вирізаємо CONVEX HULL + 0.3мм padding з усіх
@@ -2429,15 +2607,15 @@ def run_flat_plate_pipeline(
                             print(f"[KEYCHAIN] Base fragments cleanup: dropped {n_dropped} tiny pieces")
                         base_poly_combined = largest
                 if base_poly_combined is not None and not base_poly_combined.is_empty:
-                    new_terrain = build_flat_layer_mesh_from_mask(
+                    new_terrain, new_bottom = _build_keychain_base_parts(
                         base_poly_combined,
-                        bottom_z_m=0.0,
-                        thickness_m=base_top_m,
-                        color=LAYER_COLORS["base"],
-                        min_area_m2=0.001,
+                        base_top_m=base_top_m,
+                        back_text_poly=keychain_back_poly,
+                        engrave_m=keychain_back_engrave_m,
                     )
                     if new_terrain is not None:
                         terrain_mesh = new_terrain
+                        keychain_base_bottom_mesh = new_bottom
                         print(f"[KEYCHAIN] Base rebuilt with water depression ({water_layer_mm:.2f}mm)")
         except Exception as exc:
             print(f"[KEYCHAIN] Water carve failed: {exc}")
@@ -2448,7 +2626,7 @@ def run_flat_plate_pipeline(
             try:
                 minx, miny, maxx, maxy = keychain_layout["body"].bounds
                 _rotate_meshes_for_keychain_layout(
-                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh],
+                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh],
                     building_meshes=building_meshes,
                     angle_deg=layout_rotation_deg,
                     origin_xy=((minx + maxx) * 0.5, (miny + maxy) * 0.5),
@@ -2528,6 +2706,8 @@ def run_flat_plate_pipeline(
             item for item in (
                 ("Rim", keychain_rim_mesh),
                 ("Text", keychain_text_mesh),
+                ("Text2", keychain_text2_mesh),
+                ("BaseBack", keychain_base_bottom_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
                 ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
             )

@@ -524,6 +524,13 @@ class GenerationRequest(BaseModel):
     keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
+    # Другий рядок напису (дата/координати) — менший кегль, під основним.
+    keychain_label2: str = Field(default="", max_length=64)
+    keychain_label2_text_height_mm: float = Field(default=2.4, ge=1.5, le=8.0)
+    # Напис на ЗВОРОТІ: гравіюється у нижню грань (дзеркально — читається при перевороті).
+    keychain_back_label: str = Field(default="", max_length=64)
+    keychain_back_text_height_mm: float = Field(default=5.0, ge=2.5, le=14.0)
+    keychain_back_engrave_mm: float = Field(default=0.5, ge=0.2, le=1.2)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -1924,6 +1931,13 @@ class ZoneGenerationRequest(BaseModel):
     keychain_label_font_style: str = Field(default="block", max_length=24)
     keychain_rim_width_mm: float = Field(default=1.2, ge=0.0, le=6.0)
     keychain_rim_height_mm: float = Field(default=0.45, ge=0.0, le=3.0)
+    # Другий рядок напису (дата/координати) — менший кегль, під основним.
+    keychain_label2: str = Field(default="", max_length=64)
+    keychain_label2_text_height_mm: float = Field(default=2.4, ge=1.5, le=8.0)
+    # Напис на ЗВОРОТІ: гравіюється у нижню грань (дзеркально — читається при перевороті).
+    keychain_back_label: str = Field(default="", max_length=64)
+    keychain_back_text_height_mm: float = Field(default=5.0, ge=2.5, le=14.0)
+    keychain_back_engrave_mm: float = Field(default=0.5, ge=0.2, le=1.2)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
