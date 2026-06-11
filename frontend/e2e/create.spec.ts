@@ -84,6 +84,16 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/4 плиток з ідеальними швами/).first()).toBeVisible();
   });
 
+  test("share-сторінка: og:image з /api/og, noindex, CTA", async ({ page }) => {
+    await page.goto("/uk/share/test-task-12345");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Моя 3D-мапа");
+    const og = await page.locator('meta[property="og:image"]').getAttribute("content");
+    expect(og).toContain("/api/og/test-task-12345");
+    const robots = await page.locator('meta[name="robots"]').getAttribute("content");
+    expect(robots).toContain("noindex");
+    await expect(page.getByRole("link", { name: /Створити свою 3D-мапу/ })).toBeVisible();
+  });
+
   test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
     const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });

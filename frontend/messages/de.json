@@ -332,7 +332,9 @@
     "panelTiles": "Kacheln",
     "panelZip": "Kachel-Archiv herunterladen (zip)",
     "panelHint": "Eine Serie nahtloser 3D-Kacheln, 2×2 oder 3×3 — eine große Wandkarte aus Teilen.",
-    "panelHintOn": "Der Bereich wird in {tiles} Kacheln mit perfekten Nähten geteilt. Im Archiv: alle Dateien + Legeplan."
+    "panelHintOn": "Der Bereich wird in {tiles} Kacheln mit perfekten Nähten geteilt. Im Archiv: alle Dateien + Legeplan.",
+    "shareBtn": "Modell teilen",
+    "shareCopied": "Link kopiert ✓"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",
@@ -349,5 +351,12 @@
     "ctaKeychain": "{city}-Karten-Schlüsselanhänger",
     "others": "Weitere Städte",
     "breadcrumb": "Stadtkarten"
+  },
+  "share": {
+    "title": "Meine 3D-Karte auf Monadruk",
+    "description": "Eine dreidimensionale Karte eines echten Ortes — Straßen, Gebäude und Flüsse, bereit für den 3D-Druck. Erstelle deine in Minuten.",
+    "imageAlt": "3D-Modell-Render des Nutzers",
+    "ctaMap": "Eigene 3D-Karte erstellen",
+    "ctaKeychain": "Karten-Schlüsselanhänger"
   }
 }

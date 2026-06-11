@@ -332,7 +332,9 @@
     "panelTiles": "Tuiles",
     "panelZip": "Télécharger l'archive des tuiles (zip)",
     "panelHint": "Une série de tuiles 3D assemblées, 2×2 ou 3×3 — une grande carte murale en plusieurs parties.",
-    "panelHintOn": "La zone se divise en {tiles} tuiles aux jointures parfaites. L'archive contient tous les fichiers + un plan de pose."
+    "panelHintOn": "La zone se divise en {tiles} tuiles aux jointures parfaites. L'archive contient tous les fichiers + un plan de pose.",
+    "shareBtn": "Partager le modèle",
+    "shareCopied": "Lien copié ✓"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
@@ -349,5 +351,12 @@
     "ctaKeychain": "Porte-clés carte de {city}",
     "others": "Autres villes",
     "breadcrumb": "Cartes des villes"
+  },
+  "share": {
+    "title": "Ma carte 3D sur Monadruk",
+    "description": "Une carte en trois dimensions d'un lieu réel — rues, bâtiments et rivières, prête pour l'impression 3D. Créez la vôtre en quelques minutes.",
+    "imageAlt": "Rendu du modèle 3D de l'utilisateur",
+    "ctaMap": "Créer ma carte 3D",
+    "ctaKeychain": "Porte-clés carte"
   }
 }

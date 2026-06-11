@@ -52,6 +52,35 @@ export function SimpleControlPanel({
   const [gpxName, setGpxName] = useState<string | null>(null);
   // D3 ПАННО: 0 = одна плитка, 2 = 2×2, 3 = 3×3 (зшиті плитки + zip)
   const [panelMode, setPanelMode] = useState<0 | 2 | 3>(0);
+  // E4 ШЕРИНГ: рендер моделі → /share/{task} з og:image
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const doShare = async () => {
+    if (!taskGroupId) return;
+    setShareBusy(true);
+    try {
+      const { capturePreviewImages } = await import("@/lib/capturePreview");
+      const shots = await capturePreviewImages();
+      const png = shots.find((s) => s.startsWith("data:image/png"));
+      if (png) {
+        await fetch(`${API_BASE}/api/share/preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task_id: taskGroupId, image: png }),
+        });
+      }
+      const url = `${window.location.origin}/share/${taskGroupId}`;
+      if (typeof navigator.share === "function") {
+        await navigator.share({ url, title: "Monadruk" }).catch(() => {});
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2500);
+      }
+    } catch { /* ignore */ }
+    setShareBusy(false);
+  };
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -569,6 +598,18 @@ export function SimpleControlPanel({
             >
               {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{" "}
               {downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}
+            </button>
+          )}
+
+          {downloadUrl && !downloadUrl.includes("/download_all") && (
+            <button
+              type="button"
+              onClick={doShare}
+              disabled={shareBusy}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/70 px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white disabled:opacity-60"
+            >
+              {shareBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <span aria-hidden>🔗</span>}{" "}
+              {shareCopied ? t("shareCopied") : t("shareBtn")}
             </button>
           )}
 

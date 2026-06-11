@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Optional, List, Tuple, Dict, Any
 import os
+import re
 import uuid
 from pathlib import Path
 import trimesh
@@ -1293,6 +1294,55 @@ async def get_status(task_id: str):
             "parks": task.firebase_outputs.get("parks_3mf"),
         },
     }
+
+
+class SharePreviewRequest(BaseModel):
+    task_id: str
+    image: str = Field(max_length=3_000_000)  # PNG data-URL, ~2МБ після base64
+
+
+_SHARE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+@app.post("/api/share/preview")
+async def share_preview(req: SharePreviewRequest):
+    """E4: зберігає рендер моделі користувача для OG-шерингу (/share/{task})."""
+    import base64
+
+    if not _SHARE_ID_RE.match(req.task_id or ""):
+        raise HTTPException(status_code=400, detail="Невалідний task_id")
+    # Задача має існувати (в памʼяті або файлом на диску) — анти-сміття
+    if req.task_id not in tasks and _find_file_on_disk_by_task_id(req.task_id) is None:
+        raise HTTPException(status_code=404, detail="Модель не знайдено")
+    prefix = "data:image/png;base64,"
+    if not req.image.startswith(prefix):
+        raise HTTPException(status_code=400, detail="Очікую PNG data-URL")
+    try:
+        raw = base64.b64decode(req.image[len(prefix):], validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Битий base64")
+    if len(raw) > 2_000_000 or not raw.startswith(b"\x89PNG"):
+        raise HTTPException(status_code=400, detail="Не PNG або завеликий (макс 2МБ)")
+    previews_dir = OUTPUT_DIR / "previews"
+    previews_dir.mkdir(parents=True, exist_ok=True)
+    (previews_dir / f"{req.task_id}.png").write_bytes(raw)
+    print(f"[SHARE] preview saved: {req.task_id} ({len(raw)} bytes)")
+    return {"status": "ok", "share_path": f"/share/{req.task_id}"}
+
+
+@app.get("/api/og/{task_id}")
+async def og_image(task_id: str):
+    """E4: OG-картинка для /share/{task} — реальний рендер моделі користувача."""
+    if not _SHARE_ID_RE.match(task_id or ""):
+        raise HTTPException(status_code=400, detail="Невалідний task_id")
+    p = OUTPUT_DIR / "previews" / f"{task_id}.png"
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="Превʼю не знайдено")
+    return FileResponse(
+        str(p),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.get("/api/zones/{batch_id}/download_all")

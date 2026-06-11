@@ -332,7 +332,9 @@
     "panelTiles": "Kafelki",
     "panelZip": "Pobierz archiwum kafelków (zip)",
     "panelHint": "Seria zszytych kafelków 3D, 2×2 lub 3×3 — duża mapa na ścianę z części.",
-    "panelHintOn": "Obszar podzieli się na {tiles} kafelków z idealnymi szwami. W archiwum: wszystkie pliki + schemat układania."
+    "panelHintOn": "Obszar podzieli się na {tiles} kafelków z idealnymi szwami. W archiwum: wszystkie pliki + schemat układania.",
+    "shareBtn": "Udostępnij model",
+    "shareCopied": "Link skopiowany ✓"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
@@ -349,5 +351,12 @@
     "ctaKeychain": "Brelok z mapą miasta {city}",
     "others": "Inne miasta",
     "breadcrumb": "Mapy miast"
+  },
+  "share": {
+    "title": "Moja mapa 3D na Monadruk",
+    "description": "Trójwymiarowa mapa prawdziwego miejsca — ulice, budynki i rzeki, gotowe do druku 3D. Stwórz swoją w kilka minut.",
+    "imageAlt": "Render modelu 3D użytkownika",
+    "ctaMap": "Stwórz własną mapę 3D",
+    "ctaKeychain": "Brelok z mapą"
   }
 }

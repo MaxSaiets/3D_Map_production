@@ -332,7 +332,9 @@
     "panelTiles": "Tiles",
     "panelZip": "Download tile archive (zip)",
     "panelHint": "A series of stitched 3D tiles, 2×2 or 3×3 — a large wall map assembled from parts.",
-    "panelHintOn": "The area splits into {tiles} tiles with perfect seams. The archive has all files + a layout sheet."
+    "panelHintOn": "The area splits into {tiles} tiles with perfect seams. The archive has all files + a layout sheet.",
+    "shareBtn": "Share the model",
+    "shareCopied": "Link copied ✓"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",
@@ -349,5 +351,12 @@
     "ctaKeychain": "{city} map keychain",
     "others": "Other cities",
     "breadcrumb": "City maps"
+  },
+  "share": {
+    "title": "My 3D map on Monadruk",
+    "description": "A three-dimensional map of a real place — streets, buildings and rivers, ready for 3D printing. Make yours in minutes.",
+    "imageAlt": "User's 3D model render",
+    "ctaMap": "Create your own 3D map",
+    "ctaKeychain": "Map keychain"
   }
 }

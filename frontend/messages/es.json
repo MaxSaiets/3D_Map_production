@@ -332,7 +332,9 @@
     "panelTiles": "Piezas",
     "panelZip": "Descargar archivo de piezas (zip)",
     "panelHint": "Una serie de piezas 3D unidas, 2×2 o 3×3 — un gran mapa de pared por partes.",
-    "panelHintOn": "La zona se divide en {tiles} piezas con uniones perfectas. El archivo incluye todo + un esquema de montaje."
+    "panelHintOn": "La zona se divide en {tiles} piezas con uniones perfectas. El archivo incluye todo + un esquema de montaje.",
+    "shareBtn": "Compartir el modelo",
+    "shareCopied": "Enlace copiado ✓"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
@@ -349,5 +351,12 @@
     "ctaKeychain": "Llavero con el mapa de {city}",
     "others": "Otras ciudades",
     "breadcrumb": "Mapas de ciudades"
+  },
+  "share": {
+    "title": "Mi mapa 3D en Monadruk",
+    "description": "Un mapa tridimensional de un lugar real — calles, edificios y ríos, listo para impresión 3D. Crea el tuyo en minutos.",
+    "imageAlt": "Render del modelo 3D del usuario",
+    "ctaMap": "Crear mi mapa 3D",
+    "ctaKeychain": "Llavero con mapa"
   }
 }
