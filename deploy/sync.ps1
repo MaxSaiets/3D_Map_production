@@ -51,24 +51,40 @@ $allChanges | ForEach-Object { Write-Host "      $_" -ForegroundColor DarkGray }
 if ($DryRun) { Write-Host "`n[DryRun] Would copy files, commit, push, deploy. Stopping." -ForegroundColor Yellow; exit 0 }
 
 # ── 2. Copy changed files to deploy repo
+# КРИТИЧНО: шляхи типу app\[locale]\keychains містять дужки, які PowerShell
+# трактує як wildcard. Тому ВСЮДИ -LiteralPath, а для тек — robocopy (він не
+# робить glob і коректно працює з [ ]). Інакше бракетні файли мовчки НЕ копіюються.
 Write-Step "Copying files to deploy repo"
+$copyErrors = 0
 foreach ($rel in $allChanges) {
+    # git показує перейменування як "old -> new" — беремо НОВИЙ шлях.
+    $relPath = $rel
+    if ($relPath -match " -> ") {
+        $relPath = ($relPath -split " -> ")[-1].Trim()
+        # відновлюємо префікс репо (frontend/ чи backend/) якщо git його прибрав
+        if ($rel -match "^(frontend|backend)/" -and $relPath -notmatch "^(frontend|backend)/") {
+            $relPath = "$($matches[1])/$relPath"
+        }
+    }
     # Нормалізуємо trailing slash з git output (директорії часто йдуть як "app/keychains/")
-    $relClean = $rel.TrimEnd("/", "\")
+    $relClean = $relPath.TrimEnd("/", "\")
     $src = Join-Path $LOCAL ($relClean.Replace("/", "\"))
     $dst = Join-Path $DEPLOY ($relClean.Replace("/", "\"))
-    if (-not (Test-Path $src)) { continue }
-    if (Test-Path $src -PathType Container) {
-        # КРИТИЧНО: для директорій копіюємо ВМІСТ у вже існуючу,
-        # а не саму папку (інакше створюється keychains/keychains/)
-        if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
-        Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+    if (-not (Test-Path -LiteralPath $src)) { continue }
+    if (Test-Path -LiteralPath $src -PathType Container) {
+        # Копіюємо ВМІСТ теки у відповідну теку deploy (robocopy /E = з підтеками).
+        # .NET CreateDirectory — bracket-safe (New-Item -Path робить glob).
+        [System.IO.Directory]::CreateDirectory($dst) | Out-Null
+        robocopy $src $dst /E /NFL /NDL /NJH /NJS /NP /XD node_modules .next __pycache__ /XF "*.pyc" | Out-Null
+        if ($LASTEXITCODE -ge 8) { Write-Err "robocopy failed for $relClean (code $LASTEXITCODE)"; $copyErrors++ }
+        $global:LASTEXITCODE = 0
     } else {
-        $dstDir = Split-Path $dst -Parent
-        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-        Copy-Item $src $dst -Force
+        $dstDir = [System.IO.Path]::GetDirectoryName($dst)
+        [System.IO.Directory]::CreateDirectory($dstDir) | Out-Null
+        Copy-Item -LiteralPath $src -Destination $dst -Force
     }
 }
+if ($copyErrors -gt 0) { Write-Err "$copyErrors copy error(s) — aborting"; exit 1 }
 Write-Ok "Copied"
 
 # ── 3. Quick syntax check for any .py files changed
@@ -119,16 +135,32 @@ if ($frontendTouched -and -not $SkipBuild) {
     # `next start` is live corrupts .next (missing .next/server/app/*/page.js ->
     # "ENOENT page.js" / "o is not a function" / unstyled 500s). Stop -> rm ->
     # build -> (started after the BUILD_ID gate below).
-    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; cd /opt/3dmap/frontend && rm -rf .next && node_modules/.bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
+    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; cd /opt/3dmap/frontend && npm install --no-audit --no-fund > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
     Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
     $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
+    # Авто-відновлення: пошкоджений node_modules (бракує next/dist/... модулів)
+    # валить білд на etапі type-check. `npm install` цього не лікує — потрібен
+    # повний `npm ci`. Робимо один раз і перебілдимо.
+    if (($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") -and
+        ($buildOut -match "Cannot find module|MODULE_NOT_FOUND|require stack")) {
+        Write-Host "    Corrupted node_modules detected — npm ci + rebuild..." -ForegroundColor Yellow
+        $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && npm ci > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
+        Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
+        $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
+    }
     if ($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") {
         Write-Err "Build FAILED (.next/BUILD_ID=$buildId) — frontend left stopped. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
         exit 1
     }
-    # Build OK -> bring the frontend back up onto the fresh .next.
-    & ssh @SSH "pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 restart 3dmap-frontend --update-env >/dev/null 2>&1" 2>&1 | Out-Null
-    Write-Ok "Built (BUILD_ID present) + frontend started"
+    # Build OK -> bring the frontend back up onto the fresh .next, then WARM UP:
+    # the first request after a cold start intermittently hits Next's lazy
+    # `next/dist/compiled/cookie` require race (-> a one-off 500). We consume
+    # that ourselves by curling origin until it returns 200, so real users
+    # (via Cloudflare) never see it.
+    # ВАЖЛИВО: одинарні лапки PS → bash отримує $(seq) і $c буквально (інакше
+    # PowerShell сам обчислює $(seq 1 20) і падає "seq not recognized").
+    & ssh @SSH 'pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 restart 3dmap-frontend --update-env >/dev/null 2>&1; for i in $(seq 1 25); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1 | Out-Null
+    Write-Ok "Built + started + warmed up"
 }
 
 # ── 7. Restart PM2
@@ -160,12 +192,46 @@ if ($frontendTouched) {
     }
 }
 
+# ── 7c. Build-integrity guard (stale/partial-chunk → 400 → карта+вхід падають).
+# Перевіряємо, що webpack-чанк, на який посилається ВІДДАНИЙ HTML, реально є на
+# диску і повертає 200. Якщо ні — один чистий ребілд (rm .next + build + restart).
+if ($frontendTouched) {
+    Write-Step "Build integrity (stale-chunk guard)"
+    # WAIT for the frontend to actually be up (pm2 restart may still be settling),
+    # THEN compare the served HTML's webpack ref against the on-disk file (file
+    # existence, not HTTP — avoids false MISMATCH on a transient 500/000 mid-restart).
+    $intCmd = 'cd /opt/3dmap/frontend; for i in $(seq 1 20); do up=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$up" = "200" ] && break; sleep 1; done; html=$(curl -s http://127.0.0.1:3000/keychains | grep -oE "webpack-[a-z0-9]+\.js" | head -1); if [ -z "$html" ]; then echo "MISMATCH up=$up html=empty"; elif [ -f ".next/static/chunks/$html" ]; then echo "MATCH $html"; else echo "MISMATCH html=$html not-on-disk"; fi'
+    $check = (& ssh @SSH $intCmd 2>&1 | Out-String).Trim()
+    Write-Host "    $check" -ForegroundColor DarkGray
+    if ($check -notmatch '^MATCH') {
+        Write-Host "    Stale/partial build — clean rebuild (with npm ci fallback)..." -ForegroundColor Yellow
+        # Clean rebuild; if the build dies on a corrupted node_modules
+        # (MODULE_NOT_FOUND / 'No such file'), restore with npm ci and rebuild.
+        $rb = & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_rebuild.log 2>&1; ec=$?; if [ $ec -ne 0 ] && grep -qiE "Cannot find module|No such file|MODULE_NOT_FOUND" /tmp/3dmap_rebuild.log; then echo "npm ci recovery..."; npm ci >> /tmp/3dmap_rebuild.log 2>&1; node_modules/next/dist/bin/next build >> /tmp/3dmap_rebuild.log 2>&1; ec=$?; fi; echo EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1
+        Write-Host ($rb | Out-String).Trim() -ForegroundColor DarkGray
+        $check2 = (& ssh @SSH $intCmd 2>&1 | Out-String).Trim()
+        Write-Host "    $check2" -ForegroundColor DarkGray
+        if ($check2 -notmatch '^MATCH') {
+            Write-Err "Build integrity STILL failing after clean rebuild. Log: ssh $SERVER 'cat /tmp/3dmap_rebuild.log'"
+            exit 1
+        }
+        Write-Ok "Recovered via clean rebuild"
+    } else {
+        Write-Ok "Served HTML chunk exists on disk"
+    }
+}
+
 # ── 8. Verify endpoints
 Write-Step "Endpoint verification"
 $endpoints = @(
     @{ Name = "Backend API";   Url = "http://127.0.0.1:8000/" },
     @{ Name = "Frontend /";    Url = "http://127.0.0.1:3000/" },
+    @{ Name = "Frontend /create";    Url = "http://127.0.0.1:3000/create" },
     @{ Name = "Frontend /keychains"; Url = "http://127.0.0.1:3000/keychains" },
+    # sitemap.xml ловить битий СЕРВЕРНИЙ білд (missing .next/server/chunks/N.js →
+    # 500 на SSR-роутах, тоді як клієнтський 7c-guard цього не бачить; 2026-06-11)
+    @{ Name = "Frontend sitemap.xml"; Url = "http://127.0.0.1:3000/sitemap.xml" },
+    @{ Name = "Frontend /de/maps/kyiv (SSR locale)"; Url = "http://127.0.0.1:3000/de/maps/kyiv" },
     @{ Name = "Public (nginx)";   Url = "http://209.38.210.197/" }
 )
 $allOk = $true
