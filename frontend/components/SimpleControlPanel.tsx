@@ -133,14 +133,19 @@ export function SimpleControlPanel({
   const featured = MAP_TEMPLATES.filter((t) => t.cityKey === selectedCityKey);
 
   // Poll task status (this panel can be the only one mounted).
+  // UX-FIX: термінальні стани (cancelled/зниклий task після рестарту сервера)
+  // ОБОВʼЯЗКОВО розблоковують UI — інакше «Генерація N%» висіла назавжди
+  // і переживала перезавантаження сторінки (taskGroupId у localStorage).
   useEffect(() => {
     if (!taskGroupId) return;
     let stop = false;
+    let pollFails = 0;
     const iv = setInterval(async () => {
       try {
         const { api } = await import("@/lib/api");
         const r: any = await api.getStatus(taskGroupId);
         if (stop) return;
+        pollFails = 0;
         setTaskStatuses({ [r.task_id]: r });
         // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,
         // даємо посилання на zip-архів з усіма плитками + layout.png
@@ -152,12 +157,19 @@ export function SimpleControlPanel({
             ? Math.round(subTasks.reduce((acc, st) => acc + Number(st.progress || 0), 0) / subTasks.length)
             : 0;
           updateProgress(avg, `${t("panelTiles")}: ${done}/${total}`);
+          const allTerminal = subTasks.length > 0 && subTasks.every(
+            (st) => st.status === "completed" || st.status === "failed" || st.status === "cancelled",
+          );
           if (subTasks.some((st) => st.status === "failed")) {
             setGenerating(false);
             setError(t("errGen"));
             clearInterval(iv);
           } else if (total > 0 && done === total) {
             setDownloadUrl(`/api/zones/${taskGroupId}/download_all`);
+            setGenerating(false);
+            clearInterval(iv);
+          } else if (allTerminal) {
+            // Скасований batch: тихо розблоковуємо — юзер може почати заново
             setGenerating(false);
             clearInterval(iv);
           }
@@ -174,11 +186,39 @@ export function SimpleControlPanel({
           if (r.status === "failed") setError(r.message || t("errGen"));
           clearInterval(iv);
         }
-      } catch {/* ignore */}
+      } catch {
+        // 404/мережа: 4 поспіль (~10с) = задача зникла (рестарт сервера) —
+        // розблоковуємо UI замість вічного спінера
+        pollFails += 1;
+        if (pollFails >= 4 && !stop) {
+          setGenerating(false);
+          setError(t("errStale"));
+          clearInterval(iv);
+        }
+      }
     }, 2500);
     return () => { stop = true; clearInterval(iv); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskGroupId]);
+
+  // UX-FIX: «Замовити друк» зі сторонніх місць (Швидкий статус на мобілці)
+  // відкриває OrderDialog цієї панелі через глобальну подію.
+  useEffect(() => {
+    const open = () => setOrderOpen(true);
+    window.addEventListener("monadruk:open-order", open);
+    return () => window.removeEventListener("monadruk:open-order", open);
+  }, []);
+
+  // UX-FIX: явне скасування генерації — DELETE на бек + миттєве розблокування
+  const cancelGeneration = async () => {
+    try {
+      const { api } = await import("@/lib/api");
+      if (taskGroupId) await api.cancelTask(taskGroupId).catch(() => {});
+    } finally {
+      setGenerating(false);
+      updateProgress(0, "");
+    }
+  };
 
   const applyStyle = (id: string) => {
     const preset = MAP_STYLE_PRESETS.find((p) => p.id === id);
@@ -567,8 +607,29 @@ export function SimpleControlPanel({
             disabled={!selectedArea || isGenerating}
             className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {isGenerating ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>) : (<><Play className="h-4 w-4" /> {t("generate")}</>)}
+            {isGenerating ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>
+            ) : panelMode > 0 ? (
+              <><Play className="h-4 w-4" /> {t("generateTiles", { tiles: panelMode * panelMode })}</>
+            ) : (
+              <><Play className="h-4 w-4" /> {t("generate")}</>
+            )}
           </button>
+          {/* UX: чесне очікування — час генерації відомий заздалегідь */}
+          {!isGenerating && (
+            <p className="-mt-1 text-center text-[11px] text-[var(--text-secondary)]">
+              {panelMode > 0 ? t("etaTiles", { tiles: panelMode * panelMode }) : t("etaSingle")}
+            </p>
+          )}
+          {isGenerating && (
+            <button
+              type="button"
+              onClick={cancelGeneration}
+              className="-mt-1 inline-flex w-full items-center justify-center gap-1 text-[12px] font-semibold text-red-700 underline-offset-2 hover:underline"
+            >
+              {t("cancelGen")}
+            </button>
+          )}
 
           {/* «Замовити друк» — одразу після «Створити», завжди на видному місці */}
           <button

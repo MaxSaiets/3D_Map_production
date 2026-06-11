@@ -261,7 +261,8 @@
     "estPriceMap": "dès 690 ₴",
     "paymentNote": "Le paiement est convenu après confirmation de la commande. Ton design et ton modèle sont joints automatiquement.",
     "sending": "Envoi…",
-    "submit": "Commander"
+    "submit": "Commander",
+    "leadTime": "Impression & expédition : 2–4 jours ouvrés"
   },
   "contact": {
     "errPhone": "Indique un numéro de téléphone",
@@ -293,7 +294,8 @@
     "downloadReady": "Télécharger 3MF",
     "generatePrompt": "Générer le modèle",
     "aria": "Étapes de création",
-    "step": "Étape {n}"
+    "step": "Étape {n}",
+    "areaReady": "cadre prêt — déplacez-le ou générez"
   },
   "simple": {
     "step1city": "Ville",
@@ -334,7 +336,12 @@
     "panelHint": "Une série de tuiles 3D assemblées, 2×2 ou 3×3 — une grande carte murale en plusieurs parties.",
     "panelHintOn": "La zone se divise en {tiles} tuiles aux jointures parfaites. L'archive contient tous les fichiers + un plan de pose.",
     "shareBtn": "Partager le modèle",
-    "shareCopied": "Lien copié ✓"
+    "shareCopied": "Lien copié ✓",
+    "generateTiles": "Générer {tiles} tuiles du panneau",
+    "etaSingle": "≈ 1–3 min · l'aperçu 3D apparaît automatiquement",
+    "etaTiles": "≈ 2 min par tuile · environ {tiles} × 2 min au total",
+    "cancelGen": "Annuler la génération",
+    "errStale": "Lien avec la tâche perdu (redémarrage du serveur ?). Veuillez régénérer."
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

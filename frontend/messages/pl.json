@@ -261,7 +261,8 @@
     "estPriceMap": "od 690 ₴",
     "paymentNote": "Płatność ustalana po potwierdzeniu zamówienia. Twój projekt i model dołączane są automatycznie.",
     "sending": "Wysyłanie…",
-    "submit": "Złóż zamówienie"
+    "submit": "Złóż zamówienie",
+    "leadTime": "Druk i wysyłka: 2–4 dni robocze"
   },
   "contact": {
     "errPhone": "Podaj numer telefonu",
@@ -293,7 +294,8 @@
     "downloadReady": "Pobierz 3MF",
     "generatePrompt": "Wygeneruj model",
     "aria": "Kroki tworzenia",
-    "step": "Krok {n}"
+    "step": "Krok {n}",
+    "areaReady": "ramka gotowa — przesuń lub generuj"
   },
   "simple": {
     "step1city": "Miasto",
@@ -334,7 +336,12 @@
     "panelHint": "Seria zszytych kafelków 3D, 2×2 lub 3×3 — duża mapa na ścianę z części.",
     "panelHintOn": "Obszar podzieli się na {tiles} kafelków z idealnymi szwami. W archiwum: wszystkie pliki + schemat układania.",
     "shareBtn": "Udostępnij model",
-    "shareCopied": "Link skopiowany ✓"
+    "shareCopied": "Link skopiowany ✓",
+    "generateTiles": "Wygeneruj {tiles} kafelków panelu",
+    "etaSingle": "≈ 1–3 min · podgląd 3D pojawi się automatycznie",
+    "etaTiles": "≈ 2 min na kafelek · łącznie ok. {tiles} × 2 min",
+    "cancelGen": "Anuluj generowanie",
+    "errStale": "Utracono kontakt z zadaniem (restart serwera?). Wygeneruj ponownie."
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

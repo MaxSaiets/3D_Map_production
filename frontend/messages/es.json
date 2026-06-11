@@ -261,7 +261,8 @@
     "estPriceMap": "desde 690 ₴",
     "paymentNote": "El pago se acuerda tras confirmar el pedido. Tu diseño y modelo se adjuntan automáticamente.",
     "sending": "Enviando…",
-    "submit": "Hacer pedido"
+    "submit": "Hacer pedido",
+    "leadTime": "Impresión y envío: 2–4 días laborables"
   },
   "contact": {
     "errPhone": "Indica un teléfono",
@@ -293,7 +294,8 @@
     "downloadReady": "Descargar 3MF",
     "generatePrompt": "Genera el modelo",
     "aria": "Pasos de creación",
-    "step": "Paso {n}"
+    "step": "Paso {n}",
+    "areaReady": "marco listo — muévelo o genera"
   },
   "simple": {
     "step1city": "Ciudad",
@@ -334,7 +336,12 @@
     "panelHint": "Una serie de piezas 3D unidas, 2×2 o 3×3 — un gran mapa de pared por partes.",
     "panelHintOn": "La zona se divide en {tiles} piezas con uniones perfectas. El archivo incluye todo + un esquema de montaje.",
     "shareBtn": "Compartir el modelo",
-    "shareCopied": "Enlace copiado ✓"
+    "shareCopied": "Enlace copiado ✓",
+    "generateTiles": "Generar {tiles} piezas del panel",
+    "etaSingle": "≈ 1–3 min · la vista 3D aparece automáticamente",
+    "etaTiles": "≈ 2 min por pieza · unas {tiles} × 2 min en total",
+    "cancelGen": "Cancelar la generación",
+    "errStale": "Se perdió el contacto con la tarea (¿reinicio del servidor?). Genera de nuevo."
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

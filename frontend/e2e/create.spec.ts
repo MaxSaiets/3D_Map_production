@@ -7,6 +7,19 @@ test.describe("Конструктор мап /create", () => {
     await page.evaluate(() => localStorage.removeItem("monadruk:draft:create"));
   });
 
+  test("UX: чесний степер (рамка готова) + ETA генерації + жодних hydration-помилок", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("console", (msg) => { if (msg.type() === "error") errors.push(msg.text()); });
+    await page.goto("/uk/create");
+    // Степер не бреше «Виділено» — каже що рамка дефолтна і її можна пересунути
+    await expect(page.getByText(/рамка готова — пересунь або генеруй/).first()).toBeVisible();
+    // Чесне очікування: час генерації видно ДО кліку
+    await expect(page.getByText(/≈ 1–3 хв/).first()).toBeAttached();
+    // StickyActionBar більше не ламає гідрацію (раніше was: server HTML mismatch)
+    await page.waitForTimeout(1500);
+    expect(errors.filter((e) => /hydration|Expected server HTML/i.test(e))).toHaveLength(0);
+  });
+
   test("майстер: 3 клікабельні кроки Місце/Параметри/Готово", async ({ page }) => {
     const steps = page.locator('nav[aria-label] > button');
     await expect(steps).toHaveCount(3);

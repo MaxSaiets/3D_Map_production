@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X, Home as HomeIcon } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
@@ -279,6 +279,16 @@ export default function Home() {
     localStorage.removeItem("3dmap_task_ids");
   };
 
+  // UX: момент успіху — щойно модель готова, на мобілці самі показуємо 3D
+  // (раніше юзер лишався на «Мапі» і мусив здогадатися перемкнути таб).
+  const prevDownloadRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (downloadUrl && !prevDownloadRef.current && typeof window !== "undefined" && window.innerWidth < 1024) {
+      setWorkspaceView("preview");
+    }
+    prevDownloadRef.current = downloadUrl ?? null;
+  }, [downloadUrl]);
+
   const currentCity = CITIES[currentCityKey];
   const selectedCityLabel = CITY_LABELS[currentCityKey] ?? currentCityKey;
   const hasMapSelection = Boolean(selectedArea);
@@ -302,14 +312,18 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
-      <OnboardingTour
-        storageKey="onb_create_v1"
-        steps={[
-          { title: "Оберіть місто", body: "Виберіть місто зі списку у панелі зліва — карта одразу перенесеться туди." },
-          { title: "Виділіть ділянку", body: "Намалюйте прямокутник на карті — це і буде ваша 3D-мапа. Оптимально 0.5–4 км²." },
-          { title: "Налаштуйте та згенеруйте", body: "Оберіть розмір і шари, тоді натисніть «Згенерувати». За кілька хвилин завантажте готовий 3MF." },
-        ]}
-      />
+      {/* UX: тур лише ДО першої генерації — інакше перекривав 3D-результат
+          і прогрес. Текст без «панелі зліва» (на мобілці її нема — там таби). */}
+      {!isGenerating && !downloadUrl && (
+        <OnboardingTour
+          storageKey="onb_create_v1"
+          steps={[
+            { title: "Оберіть місто", body: "Виберіть місто зі списку вгорі — карта одразу перенесеться туди." },
+            { title: "Пересуньте рамку", body: "Рамка на карті — це майбутня 3D-мапа. Клік переносить її, бірюзовий квадрат змінює розмір. Оптимально 0.5–4 км²." },
+            { title: "Згенеруйте", body: "Натисніть «Згенерувати модель» — за 1–3 хвилини отримаєте 3D-превʼю і готовий файл для друку." },
+          ]}
+        />
+      )}
       <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
         <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -632,19 +646,29 @@ export default function Home() {
                 </div>
                 {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
                 {!isGenerating && downloadUrl && (
-                  <button
-                    type="button"
-                    onClick={() => gatedDownload({
-                      taskId: taskGroupId, downloadUrl,
-                      meta: { city: currentCityKey, product_type: "map" },
-                      getIdToken, openLogin,
-                      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." } })),
-                    })}
-                    className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
-                  >
-                    <Download size={14} />
-                    Завантажити 3MF
-                  </button>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {/* UX: primary CTA = замовлення (гроші), secondary = файл */}
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-order"))}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-4 py-2 text-xs font-extrabold text-white"
+                    >
+                      🛒 Замовити друк
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => gatedDownload({
+                        taskId: taskGroupId, downloadUrl,
+                        meta: { city: currentCityKey, product_type: "map" },
+                        getIdToken, openLogin,
+                        onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." } })),
+                      })}
+                      className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
+                    >
+                      <Download size={14} />
+                      Завантажити 3MF
+                    </button>
+                  </div>
                 )}
               </div>
 

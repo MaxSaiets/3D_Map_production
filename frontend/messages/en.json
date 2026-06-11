@@ -261,7 +261,8 @@
     "estPriceMap": "from 690 ₴",
     "paymentNote": "Payment is arranged after the order is confirmed. Your design and model are attached automatically.",
     "sending": "Sending…",
-    "submit": "Place order"
+    "submit": "Place order",
+    "leadTime": "Printing & dispatch: 2–4 business days"
   },
   "contact": {
     "errPhone": "Enter a phone number",
@@ -293,7 +294,8 @@
     "downloadReady": "Download 3MF",
     "generatePrompt": "Generate the model",
     "aria": "Creation steps",
-    "step": "Step {n}"
+    "step": "Step {n}",
+    "areaReady": "frame ready — move it or generate"
   },
   "simple": {
     "step1city": "City",
@@ -334,7 +336,12 @@
     "panelHint": "A series of stitched 3D tiles, 2×2 or 3×3 — a large wall map assembled from parts.",
     "panelHintOn": "The area splits into {tiles} tiles with perfect seams. The archive has all files + a layout sheet.",
     "shareBtn": "Share the model",
-    "shareCopied": "Link copied ✓"
+    "shareCopied": "Link copied ✓",
+    "generateTiles": "Generate {tiles} panel tiles",
+    "etaSingle": "≈ 1–3 min · the 3D preview appears automatically",
+    "etaTiles": "≈ 2 min per tile · about {tiles} × 2 min total",
+    "cancelGen": "Cancel generation",
+    "errStale": "Lost track of the task (the server may have restarted). Please generate again."
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

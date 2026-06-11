@@ -261,7 +261,8 @@
     "estPriceMap": "ab 690 ₴",
     "paymentNote": "Die Zahlung wird nach Bestätigung der Bestellung vereinbart. Dein Design und Modell werden automatisch angehängt.",
     "sending": "Senden…",
-    "submit": "Bestellen"
+    "submit": "Bestellen",
+    "leadTime": "Druck & Versand: 2–4 Werktage"
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -293,7 +294,8 @@
     "downloadReady": "3MF herunterladen",
     "generatePrompt": "Modell generieren",
     "aria": "Erstellungsschritte",
-    "step": "Schritt {n}"
+    "step": "Schritt {n}",
+    "areaReady": "Rahmen bereit — verschieben oder generieren"
   },
   "simple": {
     "step1city": "Stadt",
@@ -334,7 +336,12 @@
     "panelHint": "Eine Serie nahtloser 3D-Kacheln, 2×2 oder 3×3 — eine große Wandkarte aus Teilen.",
     "panelHintOn": "Der Bereich wird in {tiles} Kacheln mit perfekten Nähten geteilt. Im Archiv: alle Dateien + Legeplan.",
     "shareBtn": "Modell teilen",
-    "shareCopied": "Link kopiert ✓"
+    "shareCopied": "Link kopiert ✓",
+    "generateTiles": "{tiles} Paneel-Kacheln generieren",
+    "etaSingle": "≈ 1–3 Min · die 3D-Vorschau erscheint automatisch",
+    "etaTiles": "≈ 2 Min pro Kachel · insgesamt ca. {tiles} × 2 Min",
+    "cancelGen": "Generierung abbrechen",
+    "errStale": "Verbindung zur Aufgabe verloren (Server-Neustart?). Bitte erneut generieren."
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

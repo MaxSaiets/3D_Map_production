@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Loader2 } from "lucide-react";
 
@@ -23,6 +24,13 @@ export function StickyActionBar({
   disabled?: boolean;
   busy?: boolean;
 }) {
+  // HYDRATION-FIX: на сервері порталу нема (document undefined), а клієнт
+  // рендерив його одразу при гідрації → React-warning «server HTML mismatch»
+  // на КОЖНОМУ завантаженні /create і /keychains. Монтуємо портал лише після
+  // mount-ефекту — перший клієнтський рендер збігається з серверним (null).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Портал у <body>: предки з backdrop-filter/transform стають containing block
   // для position:fixed і «приклеюють» бар до панелі замість вьюпорта.
   const bar = (
@@ -48,6 +56,6 @@ export function StickyActionBar({
     </div>
   );
 
-  if (typeof document === "undefined") return null;
+  if (!mounted || typeof document === "undefined") return null;
   return createPortal(bar, document.body);
 }

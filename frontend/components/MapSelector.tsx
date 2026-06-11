@@ -444,23 +444,26 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
     shapeKindRef.current = shapeKind;
     cornerFracRef.current = cornerFrac;
+    // UX-FIX: рамка була майже невидима на строкатій карті (weight 2 + бліда
+    // заливка), а суцільний 44px квадрат-ручка домінував і читався як маркер.
+    // Тепер: товстіша суцільна межа + помітніша заливка.
     const shape = L.polygon(rotatedShapePoints(existingCenter, cropSize.widthM, cropSize.heightM, rotationRef.current, shapeKind, cornerFrac), {
-      color: "#14b8a6",
-      weight: 2,
+      color: "#0d9488",
+      weight: 3,
       fillColor: "#14b8a6",
-      fillOpacity: 0.14,
-      dashArray: "8 6",
+      fillOpacity: 0.22,
       interactive: true,
     }).addTo(map);
     shapeRef.current = shape;
     currentBoundsRef.current = initialBounds;
     setSelectedArea(initialBounds);
 
+    // Ручка ресайзу: менша, зі стрілкою ⤡ — читається як «потягни», не як маркер
     const handleIcon = L.divIcon({
       className: "",
-      html: '<div style="width:44px;height:44px;border-radius:14px;background:#14b8a6;border:4px solid white;box-shadow:0 10px 24px rgba(15,23,42,.25);"></div>',
-      iconSize: [44, 44],
-      iconAnchor: [22, 22],
+      html: '<div style="width:32px;height:32px;border-radius:10px;background:#0d9488;border:3px solid white;box-shadow:0 8px 20px rgba(15,23,42,.3);display:grid;place-items:center;color:white;font:900 15px/1 system-ui;">⤡</div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
     const labelIcon = L.divIcon({
       className: "",
