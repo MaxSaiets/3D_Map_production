@@ -16,8 +16,8 @@ const customJestConfig = {
     '^three/examples/jsm/loaders/STLLoader(\\.js)?$': '<rootDir>/__tests__/stubs/STLLoader.js',
     '^three/examples/jsm/loaders/3MFLoader(\\.js)?$': '<rootDir>/__tests__/stubs/ThreeMFLoader.js',
   },
-  // Do not treat helper/mocks as test suites
-  testPathIgnorePatterns: ['<rootDir>/__tests__/__mocks__/', '<rootDir>/__tests__/stubs/'],
+  // Do not treat helper/mocks as test suites; e2e — це Playwright, не Jest
+  testPathIgnorePatterns: ['<rootDir>/__tests__/__mocks__/', '<rootDir>/__tests__/stubs/', '<rootDir>/e2e/'],
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'lib/**/*.{js,jsx,ts,tsx}',
