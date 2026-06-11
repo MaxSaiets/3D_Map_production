@@ -4,7 +4,7 @@
     "homeDescription": "Wähle ein Viertel deiner Stadt, passe das Modell an und lade eine druckfertige 3D-Datei herunter. Taktile Architekturkarten mit echten Gebäudehöhen, Parks und Flüssen. Schlüsselanhänger mit Stadtkarte auf Bestellung.",
     "ogTitle": "Monadruk — 3D-Karten deiner Stadt",
     "ogDescription": "Verwandle jeden Ort der Erde in eine taktile 3D-Karte zum Drucken.",
-    "keywords": "3D-Karte, 3D-Druck, Stadtkarte, 3MF, Schlüsselanhänger Karte, taktile Karte, Souvenir, Bambu Studio, PrusaSlicer",
+    "keywords": "3D Stadtkarte, Stadtplan 3D Druck, Stadtkarte drucken, Schlüsselanhänger Stadtkarte, personalisierter Schlüsselanhänger Karte, STL Stadtplan, 3MF Karte, topografische Karte 3D, Reliefkarte Druck, Kühlschrankmagnet Stadtkarte, personalisiertes Geschenk Karte, Jahrestagsgeschenk Karte, taktile Karte, Bambu Studio, PrusaSlicer",
     "orgDescription": "Taktile 3D-Karten und Schlüsselanhänger mit Stadtkarte zum Drucken.",
     "serviceName": "3D-Stadtkarten und Schlüsselanhänger auf Bestellung",
     "serviceType": "Herstellung von 3D-Stadtkarten und Schlüsselanhängern für den 3D-Druck",
@@ -121,7 +121,13 @@
       "q5": "Kann ich den Druck bestellen, wenn ich keinen 3D-Drucker habe?",
       "a5": "Ja. Wir drucken deine 3D-Karte oder deinen Anhänger aus umweltfreundlichem Eco-PLA-Biokunststoff und versenden das fertige Produkt.",
       "q6": "Kann ich eigenen Text auf den Karten-Anhänger setzen?",
-      "a6": "Ja — auf einen 55×30-mm-Karten-Anhänger kannst du einen Stadtnamen oder eigenen Text setzen, der als Relief über der Viertelkarte gedruckt wird."
+      "a6": "Ja — auf einen 55×30-mm-Karten-Anhänger kannst du einen Stadtnamen oder eigenen Text setzen, der als Relief über der Viertelkarte gedruckt wird.",
+      "q7": "Gibt es einen Anhänger mit Gebirgsrelief statt Straßenkarte?",
+      "a7": "Ja — der Topo-Anhänger. Aktiviere im Konfigurator den Modus „Höhenrelief“, und das echte Geländerelief des Ortes wird aus Satelliten-Höhendaten gedruckt: Alpen, Karpaten, Fjorde oder Küstenlinien. Gipfel und Täler sind mit den Fingern fühlbar.",
+      "q8": "Versendet ihr Anhänger und Karten nach Europa?",
+      "a8": "Ja. Wir drucken und versenden innerhalb der Ukraine sowie in 15 EU-Länder über Nova Post EU und Meest: Deutschland, Polen, Tschechien, Spanien, Italien, Frankreich und weitere.",
+      "q9": "Was ist ein Stadtkarten-Kühlschrankmagnet?",
+      "a9": "Ein flacher 3D-gedruckter Magnet von ca. 60 mm mit der Karte deines Viertels: Straßen, Parks und Flüsse als Relief, hinten eine Tasche für einen Neodym-Magneten. Ein günstiges persönliches Andenken an einen besonderen Ort."
     },
     "cta": {
       "eyebrow": "Bereit anzufangen?",
@@ -136,22 +142,27 @@
       "account": "Konto",
       "privacy": "Datenschutz",
       "terms": "AGB"
+    },
+    "seo": {
+      "title": "3D-Stadtkarten und personalisierte Anhänger — was wir machen",
+      "p1": "Monadruk verwandelt jeden Ort der Erde in ein druckbares 3D-Modell: eine 3D-Stadtkarte mit echten Gebäudehöhen, Parks und Flüssen aus OpenStreetMap-Daten, einen Karten-Schlüsselanhänger mit eigenem Text, einen topografischen Anhänger mit echtem Gebirgsrelief aus Satelliten-Höhendaten oder einen Stadtkarten-Magneten. Die 3MF- und STL-Dateien öffnen sich direkt in Bambu Studio und PrusaSlicer.",
+      "p2": "Kein 3D-Drucker? Wir drucken für dich in umweltfreundlichem Eco PLA und liefern in die Ukraine und in die EU. Eine 3D-Karte von Berlin, München, Kyjiw oder New York, das Relief der Alpen, ein personalisierter Anhänger zum Jahrestag — wähle einen Ort auf der Karte, und das Modell ist in Minuten fertig."
     }
   },
   "createMeta": {
     "title": "3D-Stadtkarten-Konfigurator — online erstellen",
     "description": "Erstelle online eine 3D-Karte jeder Stadt: wähle ein Viertel, passe Gebäude-, Park- und Flusshöhen an und lade eine fertige 3MF/STL zum Drucken herunter.",
-    "keywords": "3d stadtkarte erstellen, 3d karten konfigurator, 3MF karte herunterladen, STL stadtkarte"
+    "keywords": "3D Stadtkarte erstellen, Stadtkarten Generator online, 3MF Karte herunterladen, STL Stadtplan Download, Stadtkarte 3D drucken, Karte mit Gebäudehöhen, Stadtkarte Magnet, eigene Stadtkarte erstellen, 3D Karte Berlin, 3D Karte München"
   },
   "keychainsMeta": {
     "title": "Schlüsselanhänger mit Stadtkarte — individuell",
-    "description": "Ein Karten-Anhänger deiner Stadt: ein persönlicher 3D-Anhänger 55×30 mm mit Straßen, Gebäuden und Text. Online erstellen und 3MF laden oder Eco-PLA-Druck bestellen.",
-    "keywords": "schlüsselanhänger stadtkarte, karten anhänger, 3d anhänger stadt, individueller anhänger"
+    "description": "Ein Karten-Schlüsselanhänger deiner Stadt: persönlicher 3D-Anhänger mit Straßen, Gebäuden und eigenem Text — oder ein Topo-Anhänger mit echtem Gebirgsrelief (Alpen, Karpaten). Online erstellen, 3MF herunterladen oder Druck in Eco PLA bestellen.",
+    "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
     "title": "Galerie von 3D-Stadtkarten und Anhängern — Beispiele",
     "description": "Eine Galerie gedruckter 3D-Karten und Anhänger von Städten weltweit. Drehe die Modelle in 3D, wähle ein Viertel und bestelle den Druck.",
-    "keywords": "3d stadtkarten galerie, 3d druck karten beispiele, gedruckte stadtkarten, 3d stadtmodell"
+    "keywords": "3D Stadtkarten Galerie, Beispiele Stadtkarte 3D Druck, gedruckte Stadtkarten, 3D Stadtmodell Beispiele, Schlüsselanhänger Karte Beispiele, Topo Anhänger Beispiel, Karten Magnet Beispiel"
   },
   "privacyMeta": {
     "title": "Datenschutzerklärung",

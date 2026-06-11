@@ -47,7 +47,7 @@ function Eyebrow({ children, dot, light }: { children: React.ReactNode; dot?: bo
 /* ---------- FAQ (visible + FAQPage structured data for rich results) ---------- */
 function Faq() {
   const t = useTranslations("home.faq");
-  const items = [1, 2, 3, 4, 5, 6].map((i) => ({ q: t(`q${i}`), a: t(`a${i}`) }));
+  const items = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => ({ q: t(`q${i}`), a: t(`a${i}`) }));
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -83,6 +83,23 @@ function Faq() {
   );
 }
 
+/* ---------- SEO text block: видимий локалізований опис із пошуковими
+   фразами (3D-мапа міста, брелок з картою, топо-рельєф, магніт) ---------- */
+function SeoTextBlock() {
+  const t = useTranslations("home.seo");
+  return (
+    <section className="border-t border-line-soft" aria-labelledby="seo-title">
+      <div className="mx-auto max-w-[820px] px-5 py-12 lg:py-16">
+        <h2 id="seo-title" className="text-[clamp(20px,2.6vw,28px)] leading-snug">
+          {t("title")}
+        </h2>
+        <p className="mt-4 text-[14.5px] leading-relaxed text-ink-2">{t("p1")}</p>
+        <p className="mt-3 text-[14.5px] leading-relaxed text-ink-2">{t("p2")}</p>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="min-h-[100dvh]">
@@ -95,6 +112,7 @@ export default function HomePage() {
       <Craft />
       <Testimonials />
       <Faq />
+      <SeoTextBlock />
       <FinalCTA />
       <SiteFooter />
     </div>

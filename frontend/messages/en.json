@@ -4,7 +4,7 @@
     "homeDescription": "Pick a district of your city, tune the model and download a print-ready 3D file. Tactile architectural maps with real building heights, parks and rivers. Custom city-map keychains.",
     "ogTitle": "Monadruk — 3D maps of your city",
     "ogDescription": "Turn any place on Earth into a tactile 3D map ready to print.",
-    "keywords": "3D map, 3D printing, city map, 3MF, map keychain, tactile map, souvenir, Bambu Studio, PrusaSlicer",
+    "keywords": "3d printed city map, city map 3d print, custom city map, map keychain, personalized map keychain, 3d city map model, stl city map, 3mf map, topographic map 3d print, terrain relief keychain, city map fridge magnet, map wall art, personalized map gift, anniversary map gift, tactile map, Bambu Studio, PrusaSlicer",
     "orgDescription": "Tactile 3D maps and city-map keychains ready for printing.",
     "serviceName": "Custom 3D city maps and keychains",
     "serviceType": "Making 3D city maps and keychains for 3D printing",
@@ -121,7 +121,13 @@
       "q5": "Can I order printing if I don't have a 3D printer?",
       "a5": "Yes. We print your 3D map or keychain in eco-friendly Eco PLA bioplastic and ship the finished item.",
       "q6": "Can I add my own text to the map keychain?",
-      "a6": "Yes — on a 55×30 mm map keychain you can add a city name or custom text printed in relief over the district map."
+      "a6": "Yes — on a 55×30 mm map keychain you can add a city name or custom text printed in relief over the district map.",
+      "q7": "Can I get a keychain with mountain relief instead of streets?",
+      "a7": "Yes — that's the topo keychain. Switch on the “Terrain relief” mode in the builder and the token is printed with the real elevation relief of the place from satellite height data: the Alps, the Carpathians, fjords or a coastline. Peaks and valleys are readable with your fingers.",
+      "q8": "Do you ship keychains and maps across Europe?",
+      "a8": "Yes. We print and ship within Ukraine (Nova Poshta, Ukrposhta) and to 15 EU countries via Nova Post EU and Meest: Poland, Germany, Czechia, Spain, Italy, France and more.",
+      "q9": "What is a city-map fridge magnet?",
+      "a9": "A flat 3D-printed magnet of about 60 mm with the map of your neighbourhood: streets, parks and rivers in relief, with a pocket for a neodymium magnet on the back. A budget-friendly personal souvenir of a memorable place."
     },
     "cta": {
       "eyebrow": "Ready to start?",
@@ -136,22 +142,27 @@
       "account": "Account",
       "privacy": "Privacy",
       "terms": "Terms"
+    },
+    "seo": {
+      "title": "3D city maps and personalised keychains — what we make",
+      "p1": "Monadruk turns any place on Earth into a printable 3D model: a 3D map of a city district with real building heights, parks and rivers from OpenStreetMap data, a city map keychain with your own text, a topographic keychain with real mountain relief from satellite elevation data, or a city-map fridge magnet. The 3MF and STL files open straight in Bambu Studio and PrusaSlicer, ready to print at home.",
+      "p2": "No 3D printer? We print for you in eco-friendly Eco PLA and ship across Ukraine and the EU. A 3D map of London, Berlin, Kyiv or New York, the relief of the Alps or Hoverla, a personalised anniversary keychain — pick a spot on the map and the model is ready in minutes."
     }
   },
   "createMeta": {
     "title": "3D city map builder — create online",
     "description": "Create a 3D map of any city online: pick a district, tune building, park and river heights and download a ready 3MF/STL for printing.",
-    "keywords": "create 3d city map, 3d map builder, download 3MF map, STL city map, 3d print map"
+    "keywords": "create 3d city map, 3d map maker online, 3d map generator, download 3mf map, stl city map download, 3d print city map, building heights map, city map magnet, custom map of my city, 3d map of London, 3d map of Berlin"
   },
   "keychainsMeta": {
     "title": "City map keychain — custom 3D keychain",
-    "description": "A map keychain of your city: a personal 3D keychain 55×30 mm with streets, buildings and text. Create online and download 3MF or order Eco PLA printing.",
-    "keywords": "city map keychain, map keychain, 3d city keychain, custom keychain, personalised keychain"
+    "description": "A map keychain of your city: a personal 3D keychain with streets, buildings and custom text — or a topographic keychain with real mountain relief (Alps, Carpathians). Create online and download 3MF or order Eco PLA printing.",
+    "keywords": "city map keychain, map keychain, custom 3d keychain, keychain with name, engraved keychain, topographic keychain, mountain relief keychain, heart map keychain, house keychain, gift for him, gift for her, anniversary gift, couple keychain"
   },
   "showcaseMeta": {
     "title": "Gallery of 3D city maps and keychains — print examples",
     "description": "A gallery of printed 3D maps and keychains of cities worldwide. Rotate the models in 3D, pick a district and order printing.",
-    "keywords": "3d city maps gallery, 3d print map examples, printed city maps, 3d city model"
+    "keywords": "3d printed map gallery, city map print examples, printed city maps, 3d city model examples, map keychain examples, topographic keychain example, map magnet example"
   },
   "privacyMeta": {
     "title": "Privacy Policy",

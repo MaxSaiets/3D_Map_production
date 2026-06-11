@@ -7,7 +7,8 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         // Workspace/account routes have no SEO value and shouldn't be indexed.
-        disallow: ["/api/", "/account", "/admin"],
+        // Wildcard-варіанти покривають локалізовані префікси (/en/account тощо).
+        disallow: ["/api/", "/account", "/admin", "/*/account", "/*/admin", "/capture", "/*/capture"],
       },
     ],
     sitemap: "https://monadruk.com/sitemap.xml",

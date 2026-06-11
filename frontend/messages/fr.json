@@ -4,7 +4,7 @@
     "homeDescription": "Choisis un quartier de ta ville, règle le modèle et télécharge un fichier 3D prêt à imprimer. Cartes architecturales tactiles avec hauteurs réelles des bâtiments, parcs et rivières. Porte-clés carte de ville sur commande.",
     "ogTitle": "Monadruk — cartes 3D de ta ville",
     "ogDescription": "Transforme n'importe quel lieu de la Terre en carte 3D tactile prête à imprimer.",
-    "keywords": "carte 3D, impression 3D, plan de ville, 3MF, porte-clés carte, carte tactile, souvenir, Bambu Studio, PrusaSlicer",
+    "keywords": "carte de ville 3D, impression 3D carte de ville, plan de ville 3D, porte-clés carte de ville, porte-clés personnalisé carte, carte STL, carte 3MF, carte topographique 3D, porte-clés relief, magnet frigo carte de ville, cadeau carte personnalisé, cadeau anniversaire couple, carte tactile, Bambu Studio, PrusaSlicer",
     "orgDescription": "Cartes 3D tactiles et porte-clés carte de ville prêts à imprimer.",
     "serviceName": "Cartes 3D de villes et porte-clés sur commande",
     "serviceType": "Création de cartes 3D de villes et de porte-clés pour l'impression 3D",
@@ -121,7 +121,13 @@
       "q5": "Puis-je commander l'impression si je n'ai pas d'imprimante 3D ?",
       "a5": "Oui. Nous imprimons ta carte 3D ou ton porte-clés en bioplastique Eco PLA écologique et expédions le produit fini.",
       "q6": "Puis-je ajouter mon propre texte sur le porte-clés carte ?",
-      "a6": "Oui — sur un porte-clés carte 55×30 mm, tu peux ajouter un nom de ville ou un texte personnalisé imprimé en relief sur la carte du quartier."
+      "a6": "Oui — sur un porte-clés carte 55×30 mm, tu peux ajouter un nom de ville ou un texte personnalisé imprimé en relief sur la carte du quartier.",
+      "q7": "Peut-on avoir un porte-clés avec le relief des montagnes au lieu des rues ?",
+      "a7": "Oui — c'est le porte-clés topo. Activez le mode « Relief du terrain » dans le configurateur, et le vrai relief du lieu est imprimé à partir des données satellite d'altitude : Alpes, Carpates, fjords ou littoral. Les sommets et vallées se lisent du bout des doigts.",
+      "q8": "Livrez-vous les porte-clés et cartes en Europe ?",
+      "a8": "Oui. Nous imprimons et expédions en Ukraine ainsi que dans 15 pays de l'UE via Nova Post EU et Meest : France, Allemagne, Pologne, Espagne, Italie et plus encore.",
+      "q9": "Qu'est-ce qu'un magnet frigo carte de ville ?",
+      "a9": "Un magnet plat imprimé en 3D d'environ 60 mm avec la carte de votre quartier : rues, parcs et rivières en relief, avec une poche au dos pour un aimant néodyme. Un souvenir personnel et abordable d'un lieu mémorable."
     },
     "cta": {
       "eyebrow": "Prêt à commencer ?",
@@ -136,22 +142,27 @@
       "account": "Compte",
       "privacy": "Confidentialité",
       "terms": "Conditions"
+    },
+    "seo": {
+      "title": "Cartes de villes 3D et porte-clés personnalisés — ce que nous faisons",
+      "p1": "Monadruk transforme n'importe quel endroit de la Terre en modèle 3D imprimable : une carte 3D de quartier avec les vraies hauteurs des bâtiments, parcs et rivières issues d'OpenStreetMap, un porte-clés carte de ville avec votre texte, un porte-clés topographique avec le vrai relief des montagnes issu des données satellite d'altitude, ou un magnet frigo carte. Les fichiers 3MF et STL s'ouvrent directement dans Bambu Studio et PrusaSlicer.",
+      "p2": "Pas d'imprimante 3D ? Nous imprimons pour vous en Eco PLA écologique et livrons en Ukraine et dans l'UE. Une carte 3D de Paris, Lyon, Kyiv ou New York, le relief des Alpes, un porte-clés personnalisé pour un anniversaire — choisissez un lieu sur la carte et le modèle est prêt en quelques minutes."
     }
   },
   "createMeta": {
     "title": "Configurateur de carte 3D — créer en ligne",
     "description": "Crée en ligne une carte 3D de n'importe quelle ville : choisis un quartier, règle les hauteurs des bâtiments, parcs et rivières et télécharge un 3MF/STL prêt à imprimer.",
-    "keywords": "créer carte 3d ville, configurateur carte 3d, télécharger carte 3MF, carte STL ville"
+    "keywords": "créer carte de ville 3D, générateur de carte 3D en ligne, télécharger carte 3MF, carte STL à télécharger, imprimer carte de ville 3D, carte avec hauteurs des bâtiments, magnet carte de ville, carte personnalisée de ma ville, carte 3D de Paris, carte 3D de Lyon"
   },
   "keychainsMeta": {
     "title": "Porte-clés carte de ville — 3D personnalisé",
-    "description": "Un porte-clés carte de ta ville : un porte-clés 3D personnel 55×30 mm avec rues, bâtiments et texte. Crée en ligne et télécharge le 3MF ou commande l'impression Eco PLA.",
-    "keywords": "porte-clés carte ville, porte-clés carte, porte-clés 3d ville, porte-clés personnalisé"
+    "description": "Un porte-clés carte de votre ville : un porte-clés 3D personnel avec rues, bâtiments et texte personnalisé — ou un porte-clés topographique avec le vrai relief des montagnes (Alpes, Carpates). Créez en ligne et téléchargez le 3MF ou commandez l'impression en Eco PLA.",
+    "keywords": "porte-clés carte de ville, porte-clés carte, porte-clés 3D personnalisé, porte-clés avec prénom, porte-clés gravé, porte-clés topographique, porte-clés relief montagne, porte-clés cœur carte, porte-clés maison, cadeau pour lui, cadeau pour elle, cadeau d'anniversaire, porte-clés couple"
   },
   "showcaseMeta": {
     "title": "Galerie de cartes 3D et porte-clés de villes — exemples",
     "description": "Une galerie de cartes 3D et porte-clés imprimés de villes du monde entier. Fais tourner les modèles en 3D, choisis un quartier et commande l'impression.",
-    "keywords": "galerie cartes 3d villes, exemples impression 3d carte, cartes de villes imprimées, modèle 3d ville"
+    "keywords": "galerie cartes 3D de villes, exemples impression 3D carte, cartes de villes imprimées, modèle 3D de ville, exemples porte-clés carte, porte-clés topo exemple, magnet carte exemple"
   },
   "privacyMeta": {
     "title": "Politique de confidentialité",

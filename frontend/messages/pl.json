@@ -4,7 +4,7 @@
     "homeDescription": "Wybierz dzielnicę swojego miasta, dostosuj model i pobierz gotowy plik 3D do druku. Dotykowe mapy architektoniczne z realnymi wysokościami budynków, parków i rzek. Breloki z mapą miasta na zamówienie.",
     "ogTitle": "Monadruk — mapy 3D Twojego miasta",
     "ogDescription": "Zamień dowolne miejsce na Ziemi w dotykową mapę 3D gotową do druku.",
-    "keywords": "mapa 3D, druk 3D, mapa miasta, 3MF, brelok z mapą, mapa dotykowa, pamiątka, Bambu Studio, PrusaSlicer",
+    "keywords": "mapa miasta 3d, wydruk 3d mapy miasta, mapa miasta do druku 3d, brelok z mapą miasta, personalizowany brelok mapa, mapa stl, mapa 3mf, mapa topograficzna 3d, brelok z rzeźbą terenu, magnes na lodówkę mapa miasta, prezent z mapą, prezent na rocznicę, mapa dotykowa, Bambu Studio, PrusaSlicer",
     "orgDescription": "Dotykowe mapy 3D i breloki z mapą miasta gotowe do druku.",
     "serviceName": "Mapy 3D miast i breloki na zamówienie",
     "serviceType": "Tworzenie map 3D miast i breloków do druku 3D",
@@ -121,7 +121,13 @@
       "q5": "Czy mogę zamówić druk, jeśli nie mam drukarki 3D?",
       "a5": "Tak. Wydrukujemy Twoją mapę 3D lub brelok z ekologicznego biotworzywa Eco PLA i wyślemy gotowy produkt.",
       "q6": "Czy mogę dodać własny napis na brelok z mapą?",
-      "a6": "Tak — na breloku z mapą 55×30 mm możesz dodać nazwę miasta lub własny tekst drukowany reliefowo na mapie dzielnicy."
+      "a6": "Tak — na breloku z mapą 55×30 mm możesz dodać nazwę miasta lub własny tekst drukowany reliefowo na mapie dzielnicy.",
+      "q7": "Czy można zrobić brelok z rzeźbą gór zamiast mapy ulic?",
+      "a7": "Tak — to brelok topo. Włącz tryb „Rzeźba terenu” w kreatorze, a na żetonie zostanie wydrukowana prawdziwa rzeźba terenu z satelitarnych danych wysokości: Tatry, Alpy, Karpaty, fiordy czy wybrzeże. Szczyty i doliny czuć pod palcami.",
+      "q8": "Czy wysyłacie breloki i mapy po Europie?",
+      "a8": "Tak. Drukujemy i wysyłamy po Ukrainie oraz do 15 krajów UE przez Nova Post EU i Meest: Polska, Niemcy, Czechy, Hiszpania, Włochy, Francja i inne.",
+      "q9": "Czym jest magnes na lodówkę z mapą miasta?",
+      "a9": "To płaski magnes 3D ok. 60 mm z mapą twojej okolicy: ulice, parki i rzeki w reliefie, z tyłu kieszeń na magnes neodymowy. Budżetowa, osobista pamiątka wyjątkowego miejsca."
     },
     "cta": {
       "eyebrow": "Gotowy, by zacząć?",
@@ -136,22 +142,27 @@
       "account": "Konto",
       "privacy": "Prywatność",
       "terms": "Regulamin"
+    },
+    "seo": {
+      "title": "Mapy miast 3D i personalizowane breloki — co robimy",
+      "p1": "Monadruk zamienia dowolne miejsce na Ziemi w model 3D do druku: mapę dzielnicy z prawdziwymi wysokościami budynków, parkami i rzekami z danych OpenStreetMap, brelok z mapą miasta z własnym napisem, brelok topograficzny z rzeźbą gór z satelitarnych danych wysokości albo magnes na lodówkę z mapą. Pliki 3MF i STL otwierają się w Bambu Studio i PrusaSlicer.",
+      "p2": "Nie masz drukarki 3D? Wydrukujemy za ciebie z ekologicznego Eco PLA i wyślemy po Ukrainie i UE. Mapa 3D Warszawy, Krakowa, Kijowa czy Nowego Jorku, rzeźba Tatr lub Howerli, imienny brelok na rocznicę — wybierz miejsce na mapie, a model będzie gotowy w kilka minut."
     }
   },
   "createMeta": {
     "title": "Kreator mapy 3D miasta — stwórz online",
     "description": "Stwórz online mapę 3D dowolnego miasta: wybierz dzielnicę, dostosuj wysokości budynków, parków i rzek i pobierz gotowy plik 3MF/STL do druku.",
-    "keywords": "stwórz mapę 3d miasta, kreator map 3d, pobierz mapę 3MF, mapa STL miasta"
+    "keywords": "stwórz mapę miasta 3d, generator map 3d online, pobierz mapę 3mf, mapa stl do pobrania, druk 3d mapy miasta, mapa z wysokościami budynków, magnes z mapą miasta, własna mapa miasta, mapa 3d Warszawy, mapa 3d Krakowa"
   },
   "keychainsMeta": {
     "title": "Brelok z mapą miasta — spersonalizowany 3D",
-    "description": "Brelok z mapą Twojego miasta: osobisty brelok 3D 55×30 mm z ulicami, budynkami i napisem. Stwórz online i pobierz 3MF lub zamów druk z Eco PLA.",
-    "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d miasto, spersonalizowany brelok"
+    "description": "Brelok-mapa twojego miasta: osobisty brelok 3D z ulicami, budynkami i własnym napisem — albo brelok topo z prawdziwą rzeźbą gór (Tatry, Alpy, Karpaty). Stwórz online i pobierz 3MF lub zamów druk z Eco PLA.",
+    "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d personalizowany, brelok z imieniem, brelok z grawerem, brelok topograficzny, brelok z rzeźbą gór, brelok serce z mapą, brelok domek, prezent dla niego, prezent dla niej, prezent na rocznicę, brelok dla pary"
   },
   "showcaseMeta": {
     "title": "Galeria map 3D i breloków miast — przykłady druku",
     "description": "Galeria wydrukowanych map 3D i breloków miast z całego świata. Obróć modele w 3D, wybierz dzielnicę i zamów druk.",
-    "keywords": "galeria map 3d miast, przykłady druku 3d map, wydrukowane mapy miast, model 3d miasta"
+    "keywords": "galeria map 3d miast, przykłady druku 3d mapy, wydrukowane mapy miast, model 3d miasta, przykłady breloków z mapą, brelok topo przykład, magnes mapa przykład"
   },
   "privacyMeta": {
     "title": "Polityka prywatności",
