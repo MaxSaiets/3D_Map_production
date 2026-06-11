@@ -148,6 +148,8 @@ export interface GenerationRequest {
   magnet_pocket?: boolean;
   magnet_pocket_diameter_mm?: number;
   magnet_pocket_depth_mm?: number;
+  map_label?: string;
+  map_label_text_height_mm?: number;
   keychain_mode?: boolean;
   keychain_label?: string;
   keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";

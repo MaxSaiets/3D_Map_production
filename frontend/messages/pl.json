@@ -302,6 +302,7 @@
     "errGen": "Błąd generowania",
     "qualityWarn": "Model gotowy, ale są uwagi do druku. Szczegóły w trybie „Pro”.",
     "downloadFile": "Pobierz 3MF",
+    "mapLabelPh": "Napis na magnesie (np. KYIV) — opcjonalnie",
     "magnetToggle": "Magnes na lodówkę",
     "magnetHint": "Płaski format 6 cm z kieszenią na magnes Ø10×2 mm w spodzie. Magnes wkleja się po druku.",
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",

@@ -31,6 +31,8 @@ export interface MapRequestParams {
   zonePolygonCoords?: Array<[number, number]> | null;
   /** Мапа-магніт: плаский режим + кишеня під магніт Ø10×2мм у центрі дна. */
   magnetPocket?: boolean;
+  /** Підпис на плоскій мапі/магніті (рельєфний текст у смузі внизу). */
+  mapLabel?: string;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -66,6 +68,7 @@ export function buildMapRequest(p: MapRequestParams) {
       ? { zone_polygon_coords: p.zonePolygonCoords }
       : {}),
     ...(p.magnetPocket ? { magnet_pocket: true } : {}),
+    ...(p.mapLabel && p.mapLabel.trim() ? { map_label: p.mapLabel.trim() } : {}),
   };
 }
 

@@ -302,6 +302,7 @@
     "errGen": "Generierungsfehler",
     "qualityWarn": "Das Modell ist fertig, aber es gibt Druckhinweise. Details im „Pro“-Modus.",
     "downloadFile": "3MF herunterladen",
+    "mapLabelPh": "Beschriftung auf dem Magneten (z. B. KYIV) — optional",
     "magnetToggle": "Kühlschrankmagnet",
     "magnetHint": "Flaches 6-cm-Format mit Ø10×2-mm-Magnettasche im Boden. Magnet nach dem Druck einkleben.",
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",

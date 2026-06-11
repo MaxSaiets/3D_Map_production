@@ -1713,6 +1713,7 @@ def run_flat_plate_pipeline(
     keychain_text_mesh: Optional[trimesh.Trimesh] = None
     keychain_text2_mesh: Optional[trimesh.Trimesh] = None
     keychain_base_bottom_mesh: Optional[trimesh.Trimesh] = None
+    map_text_mesh: Optional[trimesh.Trimesh] = None
     keychain_back_poly: Optional[BaseGeometry] = None
     keychain_back_engrave_m: float = 0.0
     source_bounds: Optional[tuple[float, float, float, float]] = None
@@ -2327,6 +2328,62 @@ def run_flat_plate_pipeline(
         except Exception as exc:
             print(f"[KEYCHAIN] letter polygon compute failed: {exc}")
 
+    # ПІДПИС НА ПЛОСКІЙ МАПІ/МАГНІТІ (не-keychain): смуга внизу плити,
+    # той самий механізм літер + виріз hull із шарів карти.
+    map_label_letter_poly = None
+    map_label_band = None
+    if not keychain_mode:
+        _map_label = str(getattr(request, "map_label", "") or "").strip()
+        if _map_label:
+            try:
+                _zone_poly = zone.zone_polygon_local
+                _zb = _zone_poly.bounds
+                _zw = _zb[2] - _zb[0]
+                _zh = _zb[3] - _zb[1]
+                _txt_h_m = _model_mm_to_world_m(
+                    float(getattr(request, "map_label_text_height_mm", 5.0) or 5.0),
+                    export_scale_factor,
+                )
+                _band_h = min(_txt_h_m * 1.7, _zh * 0.25)
+                from shapely.geometry import box as _map_box
+                map_label_band = _map_box(
+                    _zb[0] + _zw * 0.05, _zb[1] + _zh * 0.03,
+                    _zb[2] - _zw * 0.05, _zb[1] + _zh * 0.03 + _band_h,
+                ).intersection(_zone_poly).buffer(0)
+                if map_label_band is not None and not map_label_band.is_empty:
+                    _mb = map_label_band.bounds
+                    map_label_letter_poly = _compute_text_letter_polygon(
+                        text=_map_label,
+                        body_geometry=_zone_poly,
+                        label_band_geometry=map_label_band,
+                        text_height_m=_txt_h_m,
+                        angle_deg=0.0,
+                        min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
+                        max_width=max((_mb[2] - _mb[0]) * 0.96, 1e-6),
+                        max_height=max((_mb[3] - _mb[1]) * 0.92, 1e-6),
+                    )
+                if map_label_letter_poly is not None and not getattr(map_label_letter_poly, "is_empty", True):
+                    _hull_ml = map_label_letter_poly.convex_hull.buffer(
+                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                    ).buffer(0)
+                    for _nm in ("road_mask", "parks_mask", "water_mask"):
+                        try:
+                            _ref = {"road_mask": road_mask, "parks_mask": parks_mask, "water_mask": water_mask}[_nm]
+                            if _ref is not None and not getattr(_ref, "is_empty", True):
+                                _s = _subtract_geometry(_ref, _hull_ml)
+                                if _nm == "road_mask":
+                                    road_mask = _s
+                                elif _nm == "parks_mask":
+                                    parks_mask = _s
+                                else:
+                                    water_mask = _s
+                        except Exception:
+                            pass
+                    print(f"[MAP LABEL] Carved + ready: '{_map_label}'")
+            except Exception as exc:
+                print(f"[MAP LABEL] failed (non-fatal): {exc}")
+                map_label_letter_poly = None
+
     # ДРУГИЙ РЯДОК (дата/координати): власна смуга одразу ПІД основною,
     # менший кегль; той самий двошаровий виріз із шарів карти.
     text2_letter_poly = None
@@ -2650,6 +2707,23 @@ def run_flat_plate_pipeline(
         except Exception as exc:
             print(f"[KEYCHAIN] Water carve failed: {exc}")
 
+    # Підпис на плоскій мапі/магніті (не-keychain): рельєф 0.8мм на верхній грані бази.
+    if not keychain_mode and map_label_letter_poly is not None and map_label_band is not None:
+        map_text_mesh = build_keychain_label_mesh(
+            str(getattr(request, "map_label", "") or ""),
+            body_geometry=zone.zone_polygon_local,
+            label_band_geometry=map_label_band,
+            bottom_z_m=base_top_m,
+            thickness_m=_model_mm_to_world_m(0.8, export_scale_factor),
+            text_height_m=_model_mm_to_world_m(
+                float(getattr(request, "map_label_text_height_mm", 5.0) or 5.0),
+                export_scale_factor,
+            ),
+            color=LAYER_COLORS["text"],
+            min_stroke_m=_model_mm_to_world_m(MIN_KEYCHAIN_TEXT_STROKE_MM, export_scale_factor),
+            precomputed_polygon=map_label_letter_poly,
+        )
+
     if keychain_layout is not None:
         layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)
         if layout_rotation_deg:
@@ -2738,6 +2812,7 @@ def run_flat_plate_pipeline(
                 ("Text", keychain_text_mesh),
                 ("Text2", keychain_text2_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),
+                ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
                 ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
             )

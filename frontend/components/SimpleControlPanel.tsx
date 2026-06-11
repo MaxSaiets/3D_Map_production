@@ -46,6 +46,7 @@ export function SimpleControlPanel({
 
   const [styleId, setStyleId] = useState<string>("full");
   const [magnetMode, setMagnetMode] = useState(false);
+  const [mapLabel, setMapLabel] = useState("");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -198,6 +199,7 @@ export function SimpleControlPanel({
         flatPlateMode: magnetMode ? true : s.flatPlateMode,
         previewMode: magnetMode ? false : s.previewMode,
         magnetPocket: magnetMode,
+        mapLabel: magnetMode ? mapLabel : "",
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
         previewIncludeParks: layerParks,
@@ -362,6 +364,14 @@ export function SimpleControlPanel({
           </span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("magnetHint")}</span>
         </button>
+        {magnetMode && (
+          <input
+            value={mapLabel}
+            onChange={(e) => setMapLabel(e.target.value.toUpperCase().slice(0, 24))}
+            placeholder={t("mapLabelPh")}
+            className="w-full rounded-[18px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.4)]"
+          />
+        )}
 
         {/* Generate */}
         <div className="space-y-3">

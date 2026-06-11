@@ -499,6 +499,9 @@ class GenerationRequest(BaseModel):
     magnet_pocket: bool = False
     magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)
     magnet_pocket_depth_mm: float = Field(default=2.0, ge=1.0, le=4.0)
+    # Підпис на плоскій мапі/магніті: рельєфний текст у смузі внизу плити.
+    map_label: str = Field(default="", max_length=40)
+    map_label_text_height_mm: float = Field(default=5.0, ge=2.5, le=12.0)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -1910,6 +1913,9 @@ class ZoneGenerationRequest(BaseModel):
     magnet_pocket: bool = False
     magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)
     magnet_pocket_depth_mm: float = Field(default=2.0, ge=1.0, le=4.0)
+    # Підпис на плоскій мапі/магніті: рельєфний текст у смузі внизу плити.
+    map_label: str = Field(default="", max_length=40)
+    map_label_text_height_mm: float = Field(default=5.0, ge=2.5, le=12.0)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
