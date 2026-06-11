@@ -302,6 +302,8 @@
     "errGen": "Generation error",
     "qualityWarn": "The model is ready, but there are print remarks. Details in “Pro” mode.",
     "downloadFile": "Download 3MF",
+    "magnetToggle": "Fridge magnet",
+    "magnetHint": "Flat 6 cm format with a Ø10×2 mm magnet pocket in the bottom. Glue the magnet in after printing.",
     "advancedHint": "Need a series of zones (hexagons / squares)? Open “Pro” mode →",
     "orderPrint": "Order printing",
     "limitMsg": "I've used all 5 free downloads. I'd like more / printing — please contact me."

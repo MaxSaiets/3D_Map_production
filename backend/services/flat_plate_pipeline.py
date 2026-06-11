@@ -1843,6 +1843,36 @@ def run_flat_plate_pipeline(
             back_text_poly=keychain_back_poly,
             engrave_m=keychain_back_engrave_m,
         )
+    elif bool(getattr(request, "magnet_pocket", False)):
+        # МАПА-МАГНІТ: кругла кишеня під магніт у центрі дна. Той самий прийом,
+        # що й гравіювання звороту брелка — два watertight-екструди без булевих.
+        try:
+            from shapely.geometry import Point as _Pt
+            _pocket_d_mm = float(getattr(request, "magnet_pocket_diameter_mm", 10.4) or 10.4)
+            _pocket_depth_mm = float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0)
+            # Гарантуємо ≥0.8мм стінку над кишенею
+            _pocket_depth_mm = min(_pocket_depth_mm, max(base_thickness_mm - 0.8, 0.0))
+            _pocket_depth_m = _model_mm_to_world_m(_pocket_depth_mm, export_scale_factor)
+            _pocket_r_m = _model_mm_to_world_m(_pocket_d_mm / 2.0, export_scale_factor)
+            _c = zone.zone_polygon_local.centroid
+            _pocket = _Pt(_c.x, _c.y).buffer(_pocket_r_m, resolution=48)
+            terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
+                zone.zone_polygon_local,
+                base_top_m=base_top_m,
+                back_text_poly=_pocket if _pocket_depth_m > 1e-9 else None,
+                engrave_m=_pocket_depth_m,
+            )
+            if keychain_base_bottom_mesh is not None:
+                print(f"[MAGNET] Pocket Ø{_pocket_d_mm}×{_pocket_depth_mm}mm carved into base bottom")
+            else:
+                print("[MAGNET] Base too thin for pocket — solid base fallback")
+        except Exception as exc:
+            print(f"[MAGNET] pocket failed (non-fatal): {exc}")
+            terrain_mesh = build_flat_zone_base_mesh(
+                zone.zone_polygon_local,
+                bbox_meters=zone.bbox_meters,
+                thickness_m=base_top_m,
+            )
     else:
         terrain_mesh = build_flat_zone_base_mesh(
             zone.zone_polygon_local,

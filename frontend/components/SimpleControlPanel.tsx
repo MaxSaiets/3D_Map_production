@@ -45,6 +45,7 @@ export function SimpleControlPanel({
   } = s;
 
   const [styleId, setStyleId] = useState<string>("full");
+  const [magnetMode, setMagnetMode] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -189,10 +190,14 @@ export function SimpleControlPanel({
         roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
         buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
         buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-        waterDepth: s.waterDepth, terrainEnabled: layerTerrain, terrainZScale: s.terrainZScale,
-        terrainBaseThicknessMm: s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
-        terrariumZoom: s.terrariumZoom, exportFormat: s.exportFormat, modelSizeMm: s.modelSizeMm,
-        isAmsMode: s.isAmsMode, flatPlateMode: s.flatPlateMode, previewMode: s.previewMode,
+        waterDepth: s.waterDepth, terrainEnabled: magnetMode ? false : layerTerrain, terrainZScale: s.terrainZScale,
+        terrainBaseThicknessMm: magnetMode ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
+        terrariumZoom: s.terrariumZoom, exportFormat: s.exportFormat,
+        modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
+        isAmsMode: s.isAmsMode,
+        flatPlateMode: magnetMode ? true : s.flatPlateMode,
+        previewMode: magnetMode ? false : s.previewMode,
+        magnetPocket: magnetMode,
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
         previewIncludeParks: layerParks,
@@ -340,6 +345,23 @@ export function SimpleControlPanel({
             })}
           </div>
         </div>
+
+        {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
+        <button
+          type="button"
+          onClick={() => setMagnetMode((v) => !v)}
+          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+            magnetMode
+              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+          }`}
+        >
+          <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+            🧲 {t("magnetToggle")}
+            {magnetMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("magnetHint")}</span>
+        </button>
 
         {/* Generate */}
         <div className="space-y-3">

@@ -145,6 +145,9 @@ export interface GenerationRequest {
   flat_parks_layer_mm?: number;
   flat_max_building_height_mm?: number;
   flat_uniform_building_height?: boolean;
+  magnet_pocket?: boolean;
+  magnet_pocket_diameter_mm?: number;
+  magnet_pocket_depth_mm?: number;
   keychain_mode?: boolean;
   keychain_label?: string;
   keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";

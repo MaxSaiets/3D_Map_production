@@ -302,6 +302,8 @@
     "errGen": "Erreur de génération",
     "qualityWarn": "Le modèle est prêt, mais il y a des remarques d'impression. Détails en mode « Pro ».",
     "downloadFile": "Télécharger 3MF",
+    "magnetToggle": "Magnet de frigo",
+    "magnetHint": "Format plat de 6 cm avec logement pour aimant Ø10×2 mm au dos. L'aimant se colle après l'impression.",
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
     "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi."

@@ -302,6 +302,8 @@
     "errGen": "Błąd generowania",
     "qualityWarn": "Model gotowy, ale są uwagi do druku. Szczegóły w trybie „Pro”.",
     "downloadFile": "Pobierz 3MF",
+    "magnetToggle": "Magnes na lodówkę",
+    "magnetHint": "Płaski format 6 cm z kieszenią na magnes Ø10×2 mm w spodzie. Magnes wkleja się po druku.",
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
     "orderPrint": "Zamów druk",
     "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt."

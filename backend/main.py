@@ -495,6 +495,10 @@ class GenerationRequest(BaseModel):
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
     flat_uniform_building_height: bool = False
+    # Мапа-магніт: кругла кишеня під магніт у центрі дна (плаский режим).
+    magnet_pocket: bool = False
+    magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)
+    magnet_pocket_depth_mm: float = Field(default=2.0, ge=1.0, le=4.0)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -1902,6 +1906,10 @@ class ZoneGenerationRequest(BaseModel):
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
     flat_uniform_building_height: bool = False
+    # Мапа-магніт: кругла кишеня під магніт у центрі дна (плаский режим).
+    magnet_pocket: bool = False
+    magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)
+    magnet_pocket_depth_mm: float = Field(default=2.0, ge=1.0, le=4.0)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)

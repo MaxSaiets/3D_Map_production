@@ -29,6 +29,8 @@ export interface MapRequestParams {
   /** Rotated-rectangle corners [lon,lat] for a single figure (not grid). When
    *  set, the backend crops OSM to this polygon instead of the axis-aligned bbox. */
   zonePolygonCoords?: Array<[number, number]> | null;
+  /** Мапа-магніт: плаский режим + кишеня під магніт Ø10×2мм у центрі дна. */
+  magnetPocket?: boolean;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -63,6 +65,7 @@ export function buildMapRequest(p: MapRequestParams) {
     ...(p.zonePolygonCoords && p.zonePolygonCoords.length >= 3
       ? { zone_polygon_coords: p.zonePolygonCoords }
       : {}),
+    ...(p.magnetPocket ? { magnet_pocket: true } : {}),
   };
 }
 
