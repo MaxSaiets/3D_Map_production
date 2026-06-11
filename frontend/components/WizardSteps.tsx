@@ -49,12 +49,12 @@ export function WizardSteps({
     {
       key: "place",
       label: t("place"),
-      // UX: на мапі рамка стоїть ЗА ЗАМОВЧУВАННЯМ — «Виділено» брехало юзеру,
-      // що він уже щось зробив. Чесний текст: рамка готова, можна пересунути.
+      // UX: рамка стоїть ЗА ЗАМОВЧУВАННЯМ (і на мапі, і на брелку) — «Виділено»
+      // брехало юзеру, що він уже щось зробив. Чесний текст: рамка готова.
       hint: !cityDone
         ? t("cityPrompt")
         : hasSelection
-          ? `${cityLabel} · ${variant === "keychain" ? t("areaDone") : t("areaReady")}`
+          ? `${cityLabel} · ${t("areaReady")}`
           : t("areaPrompt"),
       icon: MapPin,
       status: hasSelection ? "done" : "current",

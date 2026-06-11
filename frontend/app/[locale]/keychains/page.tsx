@@ -164,14 +164,17 @@ export default function KeychainsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
-      <OnboardingTour
-        storageKey="onb_keychain_v1"
-        steps={[
-          { title: "Оберіть місто та район", body: "Виберіть місто й точку на карті — це буде мапа на вашому брелку." },
-          { title: "Оберіть шаблон", body: "Жетон 55×30, класичний чи квадратний — натисніть, і розміри виставляться автоматично." },
-          { title: "Додайте напис", body: "Введіть текст (напр. назву міста), посуньте чи поверніть його. Тоді натисніть «Згенерувати»." },
-        ]}
-      />
+      {/* UX: тур лише до першої генерації — не перекриває прогрес/3D-результат */}
+      {!isGenerating && !downloadUrl && (
+        <OnboardingTour
+          storageKey="onb_keychain_v1"
+          steps={[
+            { title: "Оберіть місто та район", body: "Виберіть місто й точку на карті — це буде мапа на вашому брелку." },
+            { title: "Оберіть шаблон", body: "Жетон 55×30, класичний чи квадратний — натисніть, і розміри виставляться автоматично." },
+            { title: "Додайте напис", body: "Введіть текст (напр. назву міста), посуньте чи поверніть його. Тоді натисніть «Згенерувати»." },
+          ]}
+        />
+      )}
       <div className="mx-auto flex min-h-[100dvh] max-w-[1800px] flex-col px-2 pb-4 pt-2 sm:px-4 lg:px-5">
         <header className="rounded-[24px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-4 py-3 shadow-[0_12px_40px_rgba(31,41,55,0.07)] backdrop-blur lg:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

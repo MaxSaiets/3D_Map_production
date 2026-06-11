@@ -457,6 +457,17 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     shapeRef.current = shape;
     currentBoundsRef.current = initialBounds;
     setSelectedArea(initialBounds);
+    // UX-FIX: на міському зумі дефолтна рамка (особливо брелкова ~150м) була
+    // мікроскопічною цяткою — юзер її просто не бачив. Наближаємо карту так,
+    // щоб рамка займала помітну частину екрана, з контекстом довкола.
+    // setTimeout: при маунті контейнер Leaflet ще буває 0-розмірним (мобільні
+    // таби/гідрація) і fitBounds рахує сміття — даємо layout-у влягтися.
+    const fitTimer = setTimeout(() => {
+      try {
+        map.invalidateSize();
+        map.fitBounds(initialBounds.pad(1.6), { animate: false, maxZoom: 16 });
+      } catch { /* ignore */ }
+    }, 150);
 
     // Ручка ресайзу: менша, зі стрілкою ⤡ — читається як «потягни», не як маркер
     const handleIcon = L.divIcon({
@@ -701,6 +712,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       handle.remove();
       rotateHandle.remove();
       label.remove();
+      clearTimeout(fitTimer);
     };
   }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange]);
 
@@ -710,7 +722,15 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
 function MapViewUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
+  const firstRunRef = useRef(true);
   useEffect(() => {
+    // UX-FIX: перший рендер НЕ перелітає на zoom 13 — інакше він перебивав
+    // fitBounds дефолтної рамки (зона виглядала мікроскопічною цяткою).
+    // flyTo лишається тільки для ЗМІНИ міста користувачем.
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+      return;
+    }
     map.flyTo(center, 13);
   }, [center, map]);
   return null;
