@@ -319,7 +319,14 @@
     "magnetHint": "Flat 6 cm format with a Ø10×2 mm magnet pocket in the bottom. Glue the magnet in after printing.",
     "advancedHint": "Need a series of zones (hexagons / squares)? Open “Pro” mode →",
     "orderPrint": "Order printing",
-    "limitMsg": "I've used all 5 free downloads. I'd like more / printing — please contact me."
+    "limitMsg": "I've used all 5 free downloads. I'd like more / printing — please contact me.",
+    "gpxUpload": "GPX route on the map",
+    "gpxChoose": "Choose file",
+    "gpxReplace": "Replace",
+    "gpxClear": "Remove",
+    "gpxPoints": "points",
+    "gpxErr": "Could not read the GPX file",
+    "gpxHint": "Upload a run or hike track (.gpx) — the route is printed as a raised line over the map."
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

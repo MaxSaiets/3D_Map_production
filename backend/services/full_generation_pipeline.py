@@ -1013,6 +1013,26 @@ def run_full_generation_pipeline(
         terrain_mesh = merge_result.terrain_mesh
         building_meshes = merge_result.building_meshes
 
+    # D4 GPX-ТРЕК: маршрут користувача як шапка по рельєфу ПОВЕРХ моделі
+    # (без булевих врізань — перекриття з терейном зварює слайсер).
+    gpx_mesh = None
+    if getattr(request, "gpx_track", None):
+        try:
+            from services.gpx_track import build_gpx_track_mesh_on_terrain
+
+            gpx_mesh = build_gpx_track_mesh_on_terrain(
+                gpx_track=request.gpx_track,
+                global_center=global_center,
+                zone_polygon_local=zone.zone_polygon_local,
+                terrain_provider=getattr(terrain_stage, "terrain_provider", None),
+                scale_factor=float(zone.scale_factor or 1.0),
+                width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
+                raise_mm=float(getattr(request, "gpx_raise_mm", 0.6) or 0.6),
+            )
+        except Exception as exc:
+            print(f"[GPX] {zone_prefix}track build failed (non-fatal): {exc}")
+            gpx_mesh = None
+
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     export_result = export_generation_outputs(
@@ -1025,6 +1045,7 @@ def run_full_generation_pipeline(
         building_meshes=building_meshes,
         water_mesh=water_mesh,
         parks_mesh=parks_mesh,
+        extra_mesh_items=[("Track", gpx_mesh)] if gpx_mesh is not None else None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,
     )

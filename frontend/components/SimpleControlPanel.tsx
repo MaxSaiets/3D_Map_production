@@ -47,6 +47,9 @@ export function SimpleControlPanel({
   const [styleId, setStyleId] = useState<string>("full");
   const [magnetMode, setMagnetMode] = useState(false);
   const [mapLabel, setMapLabel] = useState("");
+  // D4 GPX-трек: маршрут користувача поверх мапи
+  const [gpxTrack, setGpxTrack] = useState<Array<[number, number]> | null>(null);
+  const [gpxName, setGpxName] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -218,6 +221,7 @@ export function SimpleControlPanel({
         previewMode: magnetMode ? false : s.previewMode,
         magnetPocket: magnetMode,
         mapLabel: magnetMode ? mapLabel : "",
+        gpxTrack,
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
         previewIncludeParks: layerParks,
@@ -390,6 +394,45 @@ export function SimpleControlPanel({
             className="w-full rounded-[18px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.4)]"
           />
         )}
+
+        {/* D4 GPX-трек: маршрут (біг/похід/вело) як підвищений шар поверх мапи */}
+        <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
+          <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-[var(--text-primary)]">
+            <span>🏃 {t("gpxUpload")}</span>
+            <input
+              type="file"
+              accept=".gpx,application/gpx+xml"
+              data-testid="gpx-input"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                try {
+                  const { parseGpx } = await import("@/lib/gpx");
+                  const parsed = parseGpx(await file.text());
+                  if (!parsed) { setGpxName(null); setGpxTrack(null); setError(t("gpxErr")); return; }
+                  setError(null);
+                  setGpxTrack(parsed.points);
+                  setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
+                } catch { setError(t("gpxErr")); }
+              }}
+            />
+            <span className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
+              {gpxTrack ? t("gpxReplace") : t("gpxChoose")}
+            </span>
+          </label>
+          {gpxTrack ? (
+            <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
+              <span className="truncate">✓ {gpxName} · {gpxTrack.length} {t("gpxPoints")}</span>
+              <button type="button" onClick={() => { setGpxTrack(null); setGpxName(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">
+                {t("gpxClear")}
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpxHint")}</p>
+          )}
+        </div>
 
         {/* Generate */}
         <div className="space-y-3">

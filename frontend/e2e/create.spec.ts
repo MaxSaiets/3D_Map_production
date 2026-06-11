@@ -57,6 +57,23 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Something went wrong|getNorth is not a function/)).toHaveCount(0);
   });
 
+  test("GPX: завантаження треку показує назву і кількість точок", async ({ page }) => {
+    // Панель рендериться двічі (desktop sidebar + mobile tabs) — беремо першу
+    await expect(page.getByText(/GPX-маршрут на мапі/).first()).toBeVisible();
+    const gpx = `<?xml version="1.0"?><gpx><trk><name>Ранкова пробіжка</name><trkseg>${Array.from(
+      { length: 30 },
+      (_, i) => `<trkpt lat="${50.45 + i * 0.0002}" lon="${30.52 + i * 0.0002}"/>`,
+    ).join("")}</trkseg></trk></gpx>`;
+    await page.locator('[data-testid="gpx-input"]').first().setInputFiles({
+      name: "run.gpx",
+      mimeType: "application/gpx+xml",
+      buffer: Buffer.from(gpx, "utf-8"),
+    });
+    await expect(page.getByText(/Ранкова пробіжка · 30 точок/).first()).toBeVisible();
+    await page.getByRole("button", { name: "Прибрати" }).first().click();
+    await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
+  });
+
   test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
     const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });

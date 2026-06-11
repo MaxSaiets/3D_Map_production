@@ -33,6 +33,8 @@ export interface MapRequestParams {
   magnetPocket?: boolean;
   /** Підпис на плоскій мапі/магніті (рельєфний текст у смузі внизу). */
   mapLabel?: string;
+  /** D4 GPX-трек [[lon,lat],...] — підвищений шар-маршрут поверх мапи. */
+  gpxTrack?: Array<[number, number]> | null;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -69,6 +71,7 @@ export function buildMapRequest(p: MapRequestParams) {
       : {}),
     ...(p.magnetPocket ? { magnet_pocket: true } : {}),
     ...(p.mapLabel && p.mapLabel.trim() ? { map_label: p.mapLabel.trim() } : {}),
+    ...(p.gpxTrack && p.gpxTrack.length >= 2 ? { gpx_track: p.gpxTrack } : {}),
   };
 }
 

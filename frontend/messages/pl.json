@@ -319,7 +319,14 @@
     "magnetHint": "Płaski format 6 cm z kieszenią na magnes Ø10×2 mm w spodzie. Magnes wkleja się po druku.",
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
     "orderPrint": "Zamów druk",
-    "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt."
+    "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt.",
+    "gpxUpload": "Trasa GPX na mapie",
+    "gpxChoose": "Wybierz plik",
+    "gpxReplace": "Zamień",
+    "gpxClear": "Usuń",
+    "gpxPoints": "punktów",
+    "gpxErr": "Nie udało się odczytać pliku GPX",
+    "gpxHint": "Wgraj trasę biegu lub wędrówki (.gpx) — zostanie wydrukowana jako wypukła linia na mapie."
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

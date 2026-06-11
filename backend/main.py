@@ -543,6 +543,11 @@ class GenerationRequest(BaseModel):
     # висота рельєфу над базою.
     keychain_topo_mode: bool = False
     keychain_relief_mm: float = Field(default=2.2, ge=0.6, le=4.0)
+    # D4 GPX-ТРЕК: маршрут [[lon,lat],...] як підвищений шар поверх мапи
+    # (фронт парсить .gpx сам). Ріжеться по зоні; на рельєфі — шапка по терейну.
+    gpx_track: Optional[List[List[float]]] = Field(default=None, max_length=8000)
+    gpx_width_mm: float = Field(default=1.2, ge=0.6, le=3.0)
+    gpx_raise_mm: float = Field(default=0.6, ge=0.2, le=1.5)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 

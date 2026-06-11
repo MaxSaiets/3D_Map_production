@@ -319,7 +319,14 @@
     "magnetHint": "Format plat de 6 cm avec logement pour aimant Ø10×2 mm au dos. L'aimant se colle après l'impression.",
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
-    "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi."
+    "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi.",
+    "gpxUpload": "Itinéraire GPX sur la carte",
+    "gpxChoose": "Choisir un fichier",
+    "gpxReplace": "Remplacer",
+    "gpxClear": "Retirer",
+    "gpxPoints": "points",
+    "gpxErr": "Impossible de lire le fichier GPX",
+    "gpxHint": "Téléversez une trace de course ou de rando (.gpx) — l'itinéraire est imprimé en ligne surélevée sur la carte."
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

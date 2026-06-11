@@ -12,7 +12,7 @@ const LiveCitySvgPaths = dynamic(
   { ssr: false, loading: () => null },
 );
 
-export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house";
+export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
 export type KeychainLabelFontStyle = "block" | "wide" | "condensed";
 
@@ -244,6 +244,54 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
     },
   },
   {
+    id: "puzzle-left",
+    name: "Пазл L · 40 × 42",
+    description: "Половинка пари: твоє місто. Виступ праворуч зʼєднується з половинкою R.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 40,
+      bodyHeightMm: 42,
+      cornerRadiusMm: 5,
+      baseShape: "puzzle-l",
+      loopStyle: "round",
+      loopXMm: 20,
+      loopYMm: 0,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 40,
+      mapHeightMm: 42,
+      labelXMm: 20,
+      labelYMm: 37.5,
+      labelWidthMm: 30,
+      labelBandMm: 6,
+      labelTextHeightMm: 3.2,
+    },
+  },
+  {
+    id: "puzzle-right",
+    name: "Пазл R · 40 × 42",
+    description: "Половинка пари: місто близької людини. Паз ліворуч приймає половинку L.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 40,
+      bodyHeightMm: 42,
+      cornerRadiusMm: 5,
+      baseShape: "puzzle-r",
+      loopStyle: "round",
+      loopXMm: 20,
+      loopYMm: 0,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 40,
+      mapHeightMm: 42,
+      labelXMm: 20,
+      labelYMm: 37.5,
+      labelWidthMm: 30,
+      labelBandMm: 6,
+      labelTextHeightMm: 3.2,
+    },
+  },
+  {
     id: "right-loop",
     name: "Side Loop",
     description: "Петля справа, зручно для широкої карти.",
@@ -364,6 +412,32 @@ function shapePath(
     const roofH = h * 0.38;
     const cx = minX + w / 2;
     return `M ${cx} ${minY} L ${maxX} ${minY + roofH} V ${maxY} H ${minX} V ${minY + roofH} Z`;
+  }
+  if (value.baseShape === "puzzle-l" || value.baseShape === "puzzle-r") {
+    // Та сама геометрія, що на беку (_keychain_body_shape puzzle-l/r):
+    // knob k=0.13·min(w,h), шийка nw=0.62k, центр головки на 0.95k від грані.
+    // Вертикально центрована → y-фліп превʼю не впливає.
+    const k = Math.min(w, h) * 0.13;
+    const nw = k * 0.62;
+    const cy = minY + h / 2;
+    const xInt = Math.sqrt(k * k - nw * nw); // зміщення точки входу шийки в коло
+    if (value.baseShape === "puzzle-l") {
+      const cx0 = maxX + 0.95 * k;
+      const xi = cx0 - xInt;
+      return (
+        `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} ` +
+        `V ${cy - nw} L ${xi.toFixed(2)} ${cy - nw} A ${k} ${k} 0 1 1 ${xi.toFixed(2)} ${cy + nw} L ${maxX} ${cy + nw} ` +
+        `V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`
+      );
+    }
+    const cxn = minX + 0.95 * k;
+    const xi = cxn - xInt;
+    return (
+      `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} ` +
+      `Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} ` +
+      `V ${cy + nw} L ${xi.toFixed(2)} ${cy + nw} A ${k} ${k} 0 1 0 ${xi.toFixed(2)} ${cy - nw} L ${minX} ${cy - nw} ` +
+      `V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`
+    );
   }
   return `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`;
 }

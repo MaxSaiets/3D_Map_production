@@ -51,5 +51,26 @@ test.describe("Майстерня брелків /keychains", () => {
     await page.getByRole("button", { name: /Показати додаткові налаштування/ }).click();
     await expect(page.getByRole("button", { name: "Серце ♥" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Будиночок", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Пазл L 🧩" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Пазл R 🧩" })).toBeVisible();
+  });
+
+  test("пазл-пара: шаблони L/R застосовують контур із виступом/пазом", async ({ page }) => {
+    await page.getByRole("button", { name: /Пазл L · 40 × 42/ }).click();
+    // Контур L містить дугу головки (sweep=1) за межами тіла
+    await expect
+      .poll(async () => {
+        const ds = await page.locator("svg path").evaluateAll((els) => els.map((e) => e.getAttribute("d") || ""));
+        return ds.some((d) => / A [\d.]+ [\d.]+ 0 1 1 /.test(d));
+      }, { timeout: 10_000 })
+      .toBe(true);
+    await page.getByRole("button", { name: /Пазл R · 40 × 42/ }).click();
+    // Контур R містить дугу паза (sweep=0)
+    await expect
+      .poll(async () => {
+        const ds = await page.locator("svg path").evaluateAll((els) => els.map((e) => e.getAttribute("d") || ""));
+        return ds.some((d) => / A [\d.]+ [\d.]+ 0 1 0 /.test(d));
+      }, { timeout: 10_000 })
+      .toBe(true);
   });
 });

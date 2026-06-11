@@ -319,7 +319,14 @@
     "magnetHint": "Flaches 6-cm-Format mit Ø10×2-mm-Magnettasche im Boden. Magnet nach dem Druck einkleben.",
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",
     "orderPrint": "Druck bestellen",
-    "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich."
+    "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich.",
+    "gpxUpload": "GPX-Route auf der Karte",
+    "gpxChoose": "Datei wählen",
+    "gpxReplace": "Ersetzen",
+    "gpxClear": "Entfernen",
+    "gpxPoints": "Punkte",
+    "gpxErr": "GPX-Datei konnte nicht gelesen werden",
+    "gpxHint": "Lade einen Lauf- oder Wandertrack (.gpx) hoch — die Route wird als erhabene Linie über der Karte gedruckt."
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

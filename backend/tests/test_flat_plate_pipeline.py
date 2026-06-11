@@ -395,3 +395,77 @@ def test_keychain_topo_base_flat_terrain_falls_back_to_none(monkeypatch):
     )
     # Рівнина (range < 0.5м) → None → пайплайн лишає стандартну плоску базу
     assert topo is None and bottom is None
+
+
+# ===== C2 ПАЗЛ-ПАРА: L-виступ входить у R-паз із клиренсом =====
+
+def test_puzzle_pair_tab_fits_into_notch_with_clearance():
+    from shapely.affinity import translate
+    from shapely.geometry import box as _box
+    from services.flat_plate_pipeline import _keychain_body_shape
+
+    bbox = (0.0, 0.0, 35.0, 42.0)
+    rect = _box(*bbox)
+    left = _keychain_body_shape(*bbox, radius_m=4.0, shape="puzzle-l")
+    right = _keychain_body_shape(*bbox, radius_m=4.0, shape="puzzle-r")
+
+    # L: виступ додає площу і стирчить за праву грань
+    assert left.area > rect.area * 0.99
+    assert left.bounds[2] > 35.0 + 1.0
+    # R: паз зменшує площу, лівий край body не покриває зону паза
+    assert right.area < left.area
+    k = 35.0 * 0.13
+    from shapely.geometry import Point as _Pt
+    assert not right.covers(_Pt(0.95 * k, 21.0))
+
+    # Сполучність: tab (частина L за межами rect), перенесений впритул
+    # (L.maxx → R.minx), мусить ПОВНІСТЮ влізти в паз (R його не перекриває)
+    tab = left.difference(rect).buffer(0)
+    assert tab.area > 1.0
+    tab_moved = translate(tab, xoff=-35.0)
+    overlap = tab_moved.intersection(right).area
+    assert overlap < tab.area * 0.01, f"tab перетинає тіло R на {overlap:.3f}мм² — клиренсу нема"
+
+
+# ===== D4 GPX: трек → буферизований полігон у локальних метрах =====
+
+class _FakeGC:
+    # API як у GlobalCenter: lon/lat → to_utm → to_local (НЕ to_local(lon,lat)!)
+    def to_utm(self, lon, lat):
+        return ((lon - 30.0) * 100000.0, (lat - 50.0) * 100000.0)
+
+    def to_local(self, x_utm, y_utm):
+        return (x_utm, y_utm)
+
+
+def test_gpx_track_polygon_buffers_and_clips_to_zone():
+    from services.gpx_track import build_gpx_track_polygon
+
+    zone = _square(0, 0, 1000, 1000)
+    # Горизонтальна лінія y=500, x 0..1200 (хвіст 200м за зоною — обрізається)
+    track = [[30.0 + 0.012 * i / 39, 50.005] for i in range(40)]
+    poly = build_gpx_track_polygon(
+        gpx_track=track, global_center=_FakeGC(), zone_polygon_local=zone,
+        scale_factor=0.1, width_mm=1.2,
+    )
+    assert poly is not None
+    # Ширина 1.2мм при 0.1мм/м = 12м; довжина в зоні 1000м → ~12000м²
+    assert 10000 < poly.area < 14000
+    minx, miny, maxx, maxy = poly.bounds
+    assert maxx <= 1000.0 + 1e-6 and minx >= -1e-6
+    assert abs((miny + maxy) / 2 - 500.0) < 1.0
+
+
+def test_gpx_track_gps_gap_splits_segments_but_still_builds():
+    from services.gpx_track import build_gpx_track_polygon
+
+    track = [[30.000, 50.001], [30.001, 50.001], [30.010, 50.009], [30.011, 50.009]]
+    # стрибок (30.001,50.001)→(30.010,50.009) ≈ 1200м > 500м → 2 сегменти
+    poly = build_gpx_track_polygon(
+        gpx_track=track, global_center=_FakeGC(),
+        zone_polygon_local=_square(-100, -100, 1500, 1500),
+        scale_factor=0.1, width_mm=1.2,
+    )
+    assert poly is not None
+    parts = list(poly.geoms) if hasattr(poly, "geoms") else [poly]
+    assert len(parts) == 2

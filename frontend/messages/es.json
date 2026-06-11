@@ -319,7 +319,14 @@
     "magnetHint": "Formato plano de 6 cm con hueco para imán Ø10×2 mm en la base. El imán se pega tras la impresión.",
     "advancedHint": "¿Necesitas una serie de zonas (hexágonos / cuadrados)? Abre el modo «Pro» →",
     "orderPrint": "Pedir impresión",
-    "limitMsg": "He usado mis 5 descargas gratuitas. Quiero más / impresión — contáctame, por favor."
+    "limitMsg": "He usado mis 5 descargas gratuitas. Quiero más / impresión — contáctame, por favor.",
+    "gpxUpload": "Ruta GPX en el mapa",
+    "gpxChoose": "Elegir archivo",
+    "gpxReplace": "Reemplazar",
+    "gpxClear": "Quitar",
+    "gpxPoints": "puntos",
+    "gpxErr": "No se pudo leer el archivo GPX",
+    "gpxHint": "Sube una ruta de carrera o senderismo (.gpx): se imprime como línea en relieve sobre el mapa."
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

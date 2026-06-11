@@ -556,6 +556,29 @@ def _keychain_body_shape(
             for px, py in raw
         ]
         return Polygon(pts).buffer(0)
+    if shape_name in {"puzzle-l", "puzzle-r"}:
+        # C2 ПАЗЛ-ПАРА: два брелки, що зʼєднуються (long-distance подарунок).
+        # L має ВИСТУП (knob) на правій грані, R — ПАЗ на лівій з клиренсом
+        # ~0.25мм (масштаб-інваріантно: 0.8% від min-сторони ≈ 0.28мм на 35мм).
+        # Геометрія вертикально центрована → дзеркальний y-фліп превʼю не впливає.
+        k = min(width, height) * 0.13          # радіус головки
+        nw = k * 0.62                           # півширина шийки
+        cy = (miny + maxy) / 2.0
+        rect = _rounded_rect(minx, miny, maxx, maxy, radius_m)
+        if shape_name == "puzzle-l":
+            knob_cx = maxx + k * 0.95
+            tab = unary_union([
+                Point(knob_cx, cy).buffer(k, resolution=48),
+                box(maxx - k * 0.2, cy - nw, knob_cx, cy + nw),
+            ])
+            return unary_union([rect, tab]).buffer(0)
+        clearance = min(width, height) * 0.008
+        knob_cx = minx + k * 0.95
+        notch = unary_union([
+            Point(knob_cx, cy).buffer(k, resolution=48),
+            box(minx - k * 0.2, cy - nw, knob_cx, cy + nw),
+        ]).buffer(clearance, join_style=1)
+        return rect.difference(notch).buffer(0)
     if shape_name == "house":
         # Силует будиночка: вершина даху зверху (maxy, бік петлі), стіни донизу.
         roof_h = height * 0.38
@@ -2878,6 +2901,38 @@ def run_flat_plate_pipeline(
         min_area_m2=min_area_m2,
     )
 
+    # D4 GPX-ТРЕК: маршрут користувача — підвищений шар ПОВЕРХ карти
+    # (на 0.2мм вище доріг, теракотовий). Для брелка проходить той самий
+    # unwrap-трансформ, що й дороги.
+    gpx_track_mesh: Optional[trimesh.Trimesh] = None
+    if getattr(request, "gpx_track", None) and not topo_mode:
+        try:
+            from services.gpx_track import TRACK_COLOR, build_gpx_track_polygon
+
+            _gpx_poly = build_gpx_track_polygon(
+                gpx_track=request.gpx_track,
+                global_center=global_center,
+                zone_polygon_local=zone.zone_polygon_local,
+                scale_factor=scale_factor,
+                width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
+            )
+            if _gpx_poly is not None and keychain_layout is not None and source_bounds and target_bounds:
+                _gpx_poly = _xform(_gpx_poly)
+            if _gpx_poly is not None:
+                gpx_track_mesh = build_flat_layer_mesh_from_mask(
+                    _clip_geometry(_gpx_poly, content_area),
+                    bottom_z_m=base_top_m,
+                    thickness_m=_model_mm_to_world_m(
+                        roads_layer_mm + 0.2, export_scale_factor
+                    ),
+                    color=TRACK_COLOR,
+                    min_area_m2=max(_model_mm_to_world_m(0.3, export_scale_factor) ** 2, 1e-12),
+                )
+                if gpx_track_mesh is not None:
+                    print(f"[GPX] Flat track layer built ({roads_layer_mm + 0.2:.2f}mm, above roads)")
+        except Exception as exc:
+            print(f"[GPX] flat track failed (non-fatal): {exc}")
+
     if keychain_mode:
         # КРИТИЧНО: тільки ОДИН transform — _xform (новий unwrap). Старий
         # _orient_then_stretch_gdf_into_bounds ВИДАЛЕНО, бо він робив подвійну
@@ -3190,6 +3245,7 @@ def run_flat_plate_pipeline(
                 ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),
                 ("WaterBase", locals().get("water_plug_mesh") if keychain_mode else None),
+                ("Track", locals().get("gpx_track_mesh")),
             )
             if item[1] is not None
         ],
