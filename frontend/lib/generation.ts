@@ -73,9 +73,10 @@ export function buildMapRequest(p: MapRequestParams) {
 }
 
 // Curated size options for the simple flow (mm + estimated price in ₴).
+// price = fallback, узгоджено з backend/pricing.json (живу ціну дає /api/quote).
 export const SIMPLE_SIZES = [
-  { key: "s",  label: "S", mm: 55,  cm: "5.5 см", price: 1990 },
-  { key: "m",  label: "M", mm: 80,  cm: "8 см",   price: 2890 },
-  { key: "l",  label: "L", mm: 110, cm: "11 см",  price: 4290 },
-  { key: "xl", label: "XL", mm: 150, cm: "15 см", price: 6490 },
+  { key: "s",  label: "S", mm: 55,  cm: "5.5 см", price: 690 },
+  { key: "m",  label: "M", mm: 80,  cm: "8 см",   price: 890 },
+  { key: "l",  label: "L", mm: 110, cm: "11 см",  price: 1290 },
+  { key: "xl", label: "XL", mm: 150, cm: "15 см", price: 1790 },
 ] as const;

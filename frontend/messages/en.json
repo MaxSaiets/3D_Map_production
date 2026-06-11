@@ -141,7 +141,8 @@
       "keychains": "Keychains",
       "account": "Account",
       "privacy": "Privacy",
-      "terms": "Terms"
+      "terms": "Terms",
+      "maps": "City maps"
     },
     "seo": {
       "title": "3D city maps and personalised keychains — what we make",
@@ -319,5 +320,21 @@
     "advancedHint": "Need a series of zones (hexagons / squares)? Open “Pro” mode →",
     "orderPrint": "Order printing",
     "limitMsg": "I've used all 5 free downloads. I'd like more / printing — please contact me."
+  },
+  "mapsMeta": {
+    "title": "3D city maps of Ukraine — pick your city",
+    "description": "Ready 3D city maps of Ukraine for printing: Kyiv, Lviv, Odesa, Kharkiv, Dnipro and 18 more cities. Pick a city and create a tactile 3D district model or a map keychain.",
+    "keywords": "3d maps of ukrainian cities, 3d city map ukraine, city map for 3d printing, ukrainian city map keychain"
+  },
+  "cityPages": {
+    "title": "3D map of {city} — print it or get a map keychain",
+    "description": "Create a 3D map of {city}: pick a district, tune the model and download a 3MF/STL for printing — or order a printed map or a {city} map keychain.",
+    "h1": "3D map of {city}",
+    "p1": "Turn {city} into a tactile three-dimensional model: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
+    "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine and to the EU. A perfect gift for anyone who loves their city.",
+    "ctaMap": "Create a 3D map of {city}",
+    "ctaKeychain": "{city} map keychain",
+    "others": "Other cities",
+    "breadcrumb": "City maps"
   }
 }

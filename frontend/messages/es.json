@@ -141,7 +141,8 @@
       "keychains": "Llaveros",
       "account": "Cuenta",
       "privacy": "Privacidad",
-      "terms": "Términos"
+      "terms": "Términos",
+      "maps": "Mapas de ciudades"
     },
     "seo": {
       "title": "Mapas 3D de ciudades y llaveros personalizados — qué hacemos",
@@ -319,5 +320,21 @@
     "advancedHint": "¿Necesitas una serie de zonas (hexágonos / cuadrados)? Abre el modo «Pro» →",
     "orderPrint": "Pedir impresión",
     "limitMsg": "He usado mis 5 descargas gratuitas. Quiero más / impresión — contáctame, por favor."
+  },
+  "mapsMeta": {
+    "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
+    "description": "Mapas 3D listos de ciudades ucranianas para imprimir: Kyiv, Lviv, Odesa, Kharkiv, Dnipro y 18 más. Elige una ciudad y crea un modelo 3D táctil o un llavero con mapa.",
+    "keywords": "mapas 3d ciudades ucrania, mapa 3d ciudad ucraniana, mapa de ciudad impresión 3d, llavero ciudad ucraniana"
+  },
+  "cityPages": {
+    "title": "Mapa 3D de {city} — imprímelo o pide un llavero",
+    "description": "Crea un mapa 3D de {city}: elige un barrio, ajusta el modelo y descarga el 3MF/STL para imprimir — o pide un mapa impreso o un llavero con el mapa de {city}.",
+    "h1": "Mapa 3D de {city}",
+    "p1": "Convierte {city} en un modelo tridimensional táctil: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
+    "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un regalo perfecto para quien ama su ciudad.",
+    "ctaMap": "Crear el mapa 3D de {city}",
+    "ctaKeychain": "Llavero con el mapa de {city}",
+    "others": "Otras ciudades",
+    "breadcrumb": "Mapas de ciudades"
   }
 }

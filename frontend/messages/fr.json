@@ -141,7 +141,8 @@
       "keychains": "Porte-clés",
       "account": "Compte",
       "privacy": "Confidentialité",
-      "terms": "Conditions"
+      "terms": "Conditions",
+      "maps": "Cartes des villes"
     },
     "seo": {
       "title": "Cartes de villes 3D et porte-clés personnalisés — ce que nous faisons",
@@ -319,5 +320,21 @@
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
     "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi."
+  },
+  "mapsMeta": {
+    "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
+    "description": "Cartes 3D prêtes des villes ukrainiennes à imprimer : Kyiv, Lviv, Odessa, Kharkiv, Dnipro et 18 autres. Choisissez une ville et créez un modèle 3D tactile ou un porte-clés carte.",
+    "keywords": "cartes 3d villes ukraine, carte 3d ville ukrainienne, carte de ville impression 3d, porte-clés ville ukrainienne"
+  },
+  "cityPages": {
+    "title": "Carte 3D de {city} — à imprimer ou en porte-clés",
+    "description": "Créez une carte 3D de {city} : choisissez un quartier, ajustez le modèle et téléchargez le 3MF/STL — ou commandez une carte imprimée ou un porte-clés carte de {city}.",
+    "h1": "Carte 3D de {city}",
+    "p1": "Transformez {city} en modèle tridimensionnel tactile : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
+    "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine et dans l'UE. Un cadeau parfait pour qui aime sa ville.",
+    "ctaMap": "Créer la carte 3D de {city}",
+    "ctaKeychain": "Porte-clés carte de {city}",
+    "others": "Autres villes",
+    "breadcrumb": "Cartes des villes"
   }
 }

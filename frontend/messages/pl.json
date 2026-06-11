@@ -141,7 +141,8 @@
       "keychains": "Breloki",
       "account": "Konto",
       "privacy": "Prywatność",
-      "terms": "Regulamin"
+      "terms": "Regulamin",
+      "maps": "Mapy miast"
     },
     "seo": {
       "title": "Mapy miast 3D i personalizowane breloki — co robimy",
@@ -319,5 +320,21 @@
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
     "orderPrint": "Zamów druk",
     "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt."
+  },
+  "mapsMeta": {
+    "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
+    "description": "Gotowe mapy 3D ukraińskich miast do druku: Kijów, Lwów, Odessa, Charków, Dniepr i 18 innych. Wybierz miasto i stwórz dotykowy model 3D dzielnicy albo brelok z mapą.",
+    "keywords": "mapy 3d miast ukrainy, mapa 3d miasta ukraina, mapa miasta do druku 3d, brelok z mapą ukraińskiego miasta"
+  },
+  "cityPages": {
+    "title": "Mapa 3D miasta {city} — wydrukuj lub zamów brelok",
+    "description": "Stwórz mapę 3D miasta {city}: wybierz dzielnicę, dostosuj model i pobierz 3MF/STL do druku — albo zamów wydrukowaną mapę lub brelok z mapą miasta {city}.",
+    "h1": "Mapa 3D miasta {city}",
+    "p1": "Zamień {city} w dotykowy trójwymiarowy model: ulice, budynki z prawdziwymi wysokościami, parki i rzeki z danych OpenStreetMap. Wybierz dowolną dzielnicę miasta {city} w kreatorze — model będzie gotowy w kilka minut jako 3MF lub STL dla Bambu Studio czy PrusaSlicer.",
+    "p2": "Nie masz drukarki 3D? Wydrukujemy mapę lub brelok z mapą miasta {city} z ekologicznego Eco PLA i wyślemy po Ukrainie i do UE. Idealny prezent dla każdego, kto kocha swoje miasto.",
+    "ctaMap": "Stwórz mapę 3D miasta {city}",
+    "ctaKeychain": "Brelok z mapą miasta {city}",
+    "others": "Inne miasta",
+    "breadcrumb": "Mapy miast"
   }
 }

@@ -636,6 +636,7 @@ function SiteFooter() {
           {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
           <Link href="/create" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("create")}</Link>
           <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("keychains")}</Link>
+          <Link href="/maps" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("maps")}</Link>
           <Link href="/account" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("account")}</Link>
           <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("privacy")}</Link>
           <Link href="/terms" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("terms")}</Link>

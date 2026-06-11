@@ -141,7 +141,8 @@
       "keychains": "Anhänger",
       "account": "Konto",
       "privacy": "Datenschutz",
-      "terms": "AGB"
+      "terms": "AGB",
+      "maps": "Stadtkarten"
     },
     "seo": {
       "title": "3D-Stadtkarten und personalisierte Anhänger — was wir machen",
@@ -319,5 +320,21 @@
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",
     "orderPrint": "Druck bestellen",
     "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich."
+  },
+  "mapsMeta": {
+    "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",
+    "description": "Fertige 3D-Stadtkarten ukrainischer Städte zum Drucken: Kiew, Lemberg, Odessa, Charkiw, Dnipro und 18 weitere. Wähle eine Stadt und erstelle ein taktiles 3D-Modell oder einen Karten-Schlüsselanhänger.",
+    "keywords": "3d stadtkarten ukraine, 3d karte ukrainische stadt, stadtkarte 3d druck, schlüsselanhänger ukrainische stadt"
+  },
+  "cityPages": {
+    "title": "3D-Karte von {city} — drucken oder als Schlüsselanhänger",
+    "description": "Erstelle eine 3D-Karte von {city}: Viertel wählen, Modell anpassen und 3MF/STL herunterladen — oder eine gedruckte Karte bzw. einen {city}-Schlüsselanhänger bestellen.",
+    "h1": "3D-Karte von {city}",
+    "p1": "Verwandle {city} in ein taktiles dreidimensionales Modell: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
+    "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern in die Ukraine und in die EU. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",
+    "ctaMap": "3D-Karte von {city} erstellen",
+    "ctaKeychain": "{city}-Karten-Schlüsselanhänger",
+    "others": "Weitere Städte",
+    "breadcrumb": "Stadtkarten"
   }
 }
