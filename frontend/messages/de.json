@@ -326,7 +326,13 @@
     "gpxClear": "Entfernen",
     "gpxPoints": "Punkte",
     "gpxErr": "GPX-Datei konnte nicht gelesen werden",
-    "gpxHint": "Lade einen Lauf- oder Wandertrack (.gpx) hoch — die Route wird als erhabene Linie über der Karte gedruckt."
+    "gpxHint": "Lade einen Lauf- oder Wandertrack (.gpx) hoch — die Route wird als erhabene Linie über der Karte gedruckt.",
+    "panelToggle": "Wandpaneel",
+    "panelOff": "Aus",
+    "panelTiles": "Kacheln",
+    "panelZip": "Kachel-Archiv herunterladen (zip)",
+    "panelHint": "Eine Serie nahtloser 3D-Kacheln, 2×2 oder 3×3 — eine große Wandkarte aus Teilen.",
+    "panelHintOn": "Der Bereich wird in {tiles} Kacheln mit perfekten Nähten geteilt. Im Archiv: alle Dateien + Legeplan."
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

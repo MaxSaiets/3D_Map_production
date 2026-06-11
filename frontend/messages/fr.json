@@ -326,7 +326,13 @@
     "gpxClear": "Retirer",
     "gpxPoints": "points",
     "gpxErr": "Impossible de lire le fichier GPX",
-    "gpxHint": "Téléversez une trace de course ou de rando (.gpx) — l'itinéraire est imprimé en ligne surélevée sur la carte."
+    "gpxHint": "Téléversez une trace de course ou de rando (.gpx) — l'itinéraire est imprimé en ligne surélevée sur la carte.",
+    "panelToggle": "Panneau mural",
+    "panelOff": "Off",
+    "panelTiles": "Tuiles",
+    "panelZip": "Télécharger l'archive des tuiles (zip)",
+    "panelHint": "Une série de tuiles 3D assemblées, 2×2 ou 3×3 — une grande carte murale en plusieurs parties.",
+    "panelHintOn": "La zone se divise en {tiles} tuiles aux jointures parfaites. L'archive contient tous les fichiers + un plan de pose."
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

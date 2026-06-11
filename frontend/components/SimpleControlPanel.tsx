@@ -50,6 +50,8 @@ export function SimpleControlPanel({
   // D4 GPX-трек: маршрут користувача поверх мапи
   const [gpxTrack, setGpxTrack] = useState<Array<[number, number]> | null>(null);
   const [gpxName, setGpxName] = useState<string | null>(null);
+  // D3 ПАННО: 0 = одна плитка, 2 = 2×2, 3 = 3×3 (зшиті плитки + zip)
+  const [panelMode, setPanelMode] = useState<0 | 2 | 3>(0);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -111,6 +113,27 @@ export function SimpleControlPanel({
         const r: any = await api.getStatus(taskGroupId);
         if (stop) return;
         setTaskStatuses({ [r.task_id]: r });
+        // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,
+        // даємо посилання на zip-архів з усіма плитками + layout.png
+        if (r.status === "multiple") {
+          const total = Number(r.total || 0);
+          const done = Number(r.completed || 0);
+          const subTasks: any[] = r.tasks || [];
+          const avg = subTasks.length
+            ? Math.round(subTasks.reduce((acc, st) => acc + Number(st.progress || 0), 0) / subTasks.length)
+            : 0;
+          updateProgress(avg, `${t("panelTiles")}: ${done}/${total}`);
+          if (subTasks.some((st) => st.status === "failed")) {
+            setGenerating(false);
+            setError(t("errGen"));
+            clearInterval(iv);
+          } else if (total > 0 && done === total) {
+            setDownloadUrl(`/api/zones/${taskGroupId}/download_all`);
+            setGenerating(false);
+            clearInterval(iv);
+          }
+          return;
+        }
         updateProgress(r.progress, r.message);
         if (r.status === "completed") {
           setDownloadUrl(r.download_url);
@@ -217,10 +240,11 @@ export function SimpleControlPanel({
         terrariumZoom: s.terrariumZoom, exportFormat: s.exportFormat,
         modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
         isAmsMode: s.isAmsMode,
-        flatPlateMode: magnetMode ? true : s.flatPlateMode,
-        previewMode: magnetMode ? false : s.previewMode,
-        magnetPocket: magnetMode,
-        mapLabel: magnetMode ? mapLabel : "",
+        // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово
+        flatPlateMode: panelMode > 0 ? false : magnetMode ? true : s.flatPlateMode,
+        previewMode: panelMode > 0 || magnetMode ? false : s.previewMode,
+        magnetPocket: panelMode > 0 ? false : magnetMode,
+        mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
         gpxTrack,
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
@@ -228,6 +252,33 @@ export function SimpleControlPanel({
         zonePolygonCoords: s.zonePolygonCoords,
       });
       const { api } = await import("@/lib/api");
+      // D3 ПАННО: ділимо зону на R×C плиток (row 0 = ПІВНІЧ, col 0 = захід)
+      // і шлемо batch у /api/generate-zones — бек гарантує ідеальні шви
+      // (preserve_global_xy + спільний elevation_ref + grid_step).
+      if (panelMode > 0) {
+        const N = selectedArea.getNorth(), S = selectedArea.getSouth();
+        const E = selectedArea.getEast(), W = selectedArea.getWest();
+        const G = panelMode;
+        const zones: any[] = [];
+        for (let r = 0; r < G; r++) {
+          for (let c = 0; c < G; c++) {
+            const zn = N - (r * (N - S)) / G;
+            const zs = N - ((r + 1) * (N - S)) / G;
+            const zw = W + (c * (E - W)) / G;
+            const ze = W + ((c + 1) * (E - W)) / G;
+            zones.push({
+              id: `tile_${r}_${c}`,
+              geometry: { type: "Polygon", coordinates: [[[zw, zs], [ze, zs], [ze, zn], [zw, zn], [zw, zs]]] },
+              properties: { row: r, col: c },
+            });
+          }
+        }
+        const batch = await api.generateZones(zones, req as any);
+        const ids = batch.all_task_ids?.length ? batch.all_task_ids : [batch.task_id];
+        setTaskGroup(batch.task_id, ids);
+        setActiveTaskId(ids[0] ?? null);
+        return;
+      }
       const r = await api.generateModel(req as any);
       setTaskGroup(r.task_id, [r.task_id]);
       setActiveTaskId(r.task_id);
@@ -434,6 +485,32 @@ export function SimpleControlPanel({
           )}
         </div>
 
+        {/* D3 ПАННО: серія зшитих плиток 2×2/3×3 + zip зі схемою розкладки */}
+        <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
+          <div className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
+            <span>🖼 {t("panelToggle")}</span>
+            <div className="flex gap-1.5" data-testid="panel-chips">
+              {([[0, t("panelOff")], [2, "2×2"], [3, "3×3"]] as Array<[0 | 2 | 3, string]>).map(([mode, label]) => (
+                <button
+                  key={`panel-${mode}`}
+                  type="button"
+                  onClick={() => setPanelMode(mode)}
+                  className={`rounded-full border px-3 py-1 text-[12px] font-semibold transition ${
+                    panelMode === mode
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
+                      : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+            {panelMode > 0 ? t("panelHintOn", { tiles: panelMode * panelMode }) : t("panelHint")}
+          </p>
+        </div>
+
         {/* Generate */}
         <div className="space-y-3">
           <div className="flex items-center justify-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-1 text-xs">
@@ -490,7 +567,8 @@ export function SimpleControlPanel({
               disabled={dlBusy}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70 disabled:opacity-60"
             >
-              {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {t("downloadFile")}
+              {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{" "}
+              {downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}
             </button>
           )}
 

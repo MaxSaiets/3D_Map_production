@@ -74,6 +74,16 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });
 
+  test("панно: чипи Вимк/2×2/3×3 + підказка з кількістю плиток", async ({ page }) => {
+    const chips = page.locator('[data-testid="panel-chips"]').first();
+    await expect(chips).toBeVisible();
+    await expect(chips.getByRole("button", { name: "2×2" })).toBeVisible();
+    await chips.getByRole("button", { name: "3×3" }).click();
+    await expect(page.getByText(/9 плиток з ідеальними швами/).first()).toBeVisible();
+    await chips.getByRole("button", { name: "2×2" }).click();
+    await expect(page.getByText(/4 плиток з ідеальними швами/).first()).toBeVisible();
+  });
+
   test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
     const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });

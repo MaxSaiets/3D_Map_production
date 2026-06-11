@@ -1295,6 +1295,89 @@ async def get_status(task_id: str):
     }
 
 
+@app.get("/api/zones/{batch_id}/download_all")
+async def download_all_zones(batch_id: str):
+    """D3 ПАННО: zip з усіма плитками batch-генерації + layout.png (схема
+    розкладки R×C з іменами файлів). 409 — поки не всі плитки готові."""
+    import io
+    import zipfile
+
+    task_ids_list = multiple_tasks_map.get(batch_id)
+    if not task_ids_list:
+        raise HTTPException(status_code=404, detail="Batch не знайдено (можливо, сервер перезапускався — згенеруйте панно знову)")
+
+    items = []  # (row, col, filename, path)
+    pending = 0
+    for tid in task_ids_list:
+        t = tasks.get(tid)
+        if t is None or t.status != "completed":
+            pending += 1
+            continue
+        output_files = getattr(t, "output_files", {}) or {}
+        # 3MF пріоритетний (друкований формат); preview-задачі мають .glb primary
+        path_str = output_files.get("3mf") or t.output_file
+        if not path_str or not Path(path_str).exists():
+            pending += 1
+            continue
+        p = Path(path_str)
+        items.append((getattr(t, "zone_row", None), getattr(t, "zone_col", None), p.name, p))
+    if pending > 0:
+        raise HTTPException(status_code=409, detail=f"Готово {len(items)}/{len(task_ids_list)} плиток — зачекайте завершення генерації")
+    if not items:
+        raise HTTPException(status_code=404, detail="Файли плиток не знайдено")
+
+    # layout.png — схема розкладки: сітка з підписами row/col + імʼя файлу
+    layout_png: Optional[bytes] = None
+    try:
+        from PIL import Image, ImageDraw
+
+        rows = sorted({r for r, c, n, p in items if r is not None})
+        cols = sorted({c for r, c, n, p in items if c is not None})
+        if rows and cols:
+            cell_w, cell_h, pad = 300, 200, 20
+            img = Image.new("RGB", (pad * 2 + cell_w * len(cols), pad * 2 + cell_h * len(rows) + 40), "#F4EFE4")
+            draw = ImageDraw.Draw(img)
+            draw.text((pad, 8), f"Monadruk · панно {len(rows)}x{len(cols)} — розкладка плиток (вид зверху, північ вгорі)", fill="#2E4A3A")
+            for r, c, name, _p in items:
+                if r is None or c is None:
+                    continue
+                # row 0 = ПІВНІЧ (верх); col 0 = захід (ліво)
+                x0 = pad + cols.index(c) * cell_w
+                y0 = pad + 40 + rows.index(r) * cell_h
+                draw.rectangle([x0, y0, x0 + cell_w - 4, y0 + cell_h - 4], outline="#2E4A3A", width=3, fill="#FFFFFF")
+                draw.text((x0 + 12, y0 + 12), f"ряд {r} · кол {c}", fill="#2E4A3A")
+                draw.text((x0 + 12, y0 + 40), name, fill="#6B6B5E")
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            layout_png = buf.getvalue()
+    except Exception as exc:
+        print(f"[PANNO] layout.png failed (non-fatal): {exc}")
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for r, c, name, p in items:
+            arcname = f"tile_r{r}_c{c}_{name}" if (r is not None and c is not None) else name
+            zf.write(p, arcname=arcname)
+        if layout_png:
+            zf.writestr("layout.png", layout_png)
+        zf.writestr(
+            "README.txt",
+            "Monadruk — настінне панно з 3D-плиток\n"
+            f"Плиток: {len(items)}. Схема розкладки: layout.png (північ вгорі).\n"
+            "Друкуйте кожну плитку окремо; шви состиковано на бекенді (<0.1мм).\n",
+        )
+    zip_buf.seek(0)
+    short = batch_id.replace("batch_", "")[:8]
+    from fastapi.responses import StreamingResponse
+
+    print(f"[PANNO] zip ready: {len(items)} tiles, batch={batch_id}")
+    return StreamingResponse(
+        zip_buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="monadruk_panno_{short}.zip"'},
+    )
+
+
 @app.delete("/api/task/{task_id}")
 async def cancel_task(task_id: str):
     """Cancel a generation task or batch."""
@@ -2296,6 +2379,12 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
         zone_row = props.get("row")
         zone_col = props.get("col")
         task = GenerationTask(task_id=task_id, request=zone_request)
+        # row/col на задачі — для схеми розкладки панно (download_all + layout.png)
+        try:
+            task.zone_row = int(zone_row) if zone_row is not None else None
+            task.zone_col = int(zone_col) if zone_col is not None else None
+        except Exception:
+            task.zone_row = task.zone_col = None
         tasks[task_id] = task
         
         # Р—Р±РµСЂС–РіР°С”РјРѕ С„РѕСЂРјСѓ Р·РѕРЅРё (РїРѕР»С–РіРѕРЅ) РґР»СЏ РѕР±СЂС–Р·Р°РЅРЅСЏ РјРµС€С–РІ

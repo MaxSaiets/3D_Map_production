@@ -326,7 +326,13 @@
     "gpxClear": "Usuń",
     "gpxPoints": "punktów",
     "gpxErr": "Nie udało się odczytać pliku GPX",
-    "gpxHint": "Wgraj trasę biegu lub wędrówki (.gpx) — zostanie wydrukowana jako wypukła linia na mapie."
+    "gpxHint": "Wgraj trasę biegu lub wędrówki (.gpx) — zostanie wydrukowana jako wypukła linia na mapie.",
+    "panelToggle": "Panel ścienny",
+    "panelOff": "Wył",
+    "panelTiles": "Kafelki",
+    "panelZip": "Pobierz archiwum kafelków (zip)",
+    "panelHint": "Seria zszytych kafelków 3D, 2×2 lub 3×3 — duża mapa na ścianę z części.",
+    "panelHintOn": "Obszar podzieli się na {tiles} kafelków z idealnymi szwami. W archiwum: wszystkie pliki + schemat układania."
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

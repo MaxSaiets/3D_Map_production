@@ -326,7 +326,13 @@
     "gpxClear": "Quitar",
     "gpxPoints": "puntos",
     "gpxErr": "No se pudo leer el archivo GPX",
-    "gpxHint": "Sube una ruta de carrera o senderismo (.gpx): se imprime como línea en relieve sobre el mapa."
+    "gpxHint": "Sube una ruta de carrera o senderismo (.gpx): se imprime como línea en relieve sobre el mapa.",
+    "panelToggle": "Panel de pared",
+    "panelOff": "Off",
+    "panelTiles": "Piezas",
+    "panelZip": "Descargar archivo de piezas (zip)",
+    "panelHint": "Una serie de piezas 3D unidas, 2×2 o 3×3 — un gran mapa de pared por partes.",
+    "panelHintOn": "La zona se divide en {tiles} piezas con uniones perfectas. El archivo incluye todo + un esquema de montaje."
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

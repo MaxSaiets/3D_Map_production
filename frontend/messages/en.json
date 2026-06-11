@@ -326,7 +326,13 @@
     "gpxClear": "Remove",
     "gpxPoints": "points",
     "gpxErr": "Could not read the GPX file",
-    "gpxHint": "Upload a run or hike track (.gpx) — the route is printed as a raised line over the map."
+    "gpxHint": "Upload a run or hike track (.gpx) — the route is printed as a raised line over the map.",
+    "panelToggle": "Wall panel",
+    "panelOff": "Off",
+    "panelTiles": "Tiles",
+    "panelZip": "Download tile archive (zip)",
+    "panelHint": "A series of stitched 3D tiles, 2×2 or 3×3 — a large wall map assembled from parts.",
+    "panelHintOn": "The area splits into {tiles} tiles with perfect seams. The archive has all files + a layout sheet."
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",
