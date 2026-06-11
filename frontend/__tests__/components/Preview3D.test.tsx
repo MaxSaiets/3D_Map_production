@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useThree } from "@react-three/fiber";
 import { Preview3D } from "@/components/Preview3D";
 
@@ -59,6 +59,8 @@ describe("Preview3D", () => {
     render(<Preview3D />);
 
     expect(screen.getByTestId("canvas")).toBeInTheDocument();
+    // Тулзи сховані за ⚙ («Інструменти перегляду») — спершу відкриваємо панель
+    fireEvent.click(screen.getByTitle(/Інструменти перегляду/i));
     expect(screen.getByText(/Швидке керування сценою/i)).toBeInTheDocument();
   });
 

@@ -158,6 +158,9 @@ export interface GenerationRequest {
   keychain_back_label?: string;
   keychain_back_text_height_mm?: number;
   keychain_back_engrave_mm?: number;
+  // C3 ТОПО-БРЕЛОК: рельєф висот замість карти
+  keychain_topo_mode?: boolean;
+  keychain_relief_mm?: number;
   keychain_layout_rotation_deg?: number;
   keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
   keychain_loop_angle_deg?: number;

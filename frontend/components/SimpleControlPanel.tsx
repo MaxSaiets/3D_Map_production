@@ -145,7 +145,25 @@ export function SimpleControlPanel({
       const d = JSON.parse(raw);
       if (d.styleId && MAP_STYLE_PRESETS.some((p) => p.id === d.styleId)) applyStyle(d.styleId);
       if (typeof d.modelSizeMm === "number" && d.modelSizeMm >= 40) setModelSizeMm(d.modelSizeMm);
-      if (!selectedArea && d.selectedArea && typeof d.selectedArea === "object") setSelectedArea(d.selectedArea);
+      // КРИТИЧНО: JSON.parse повертає plain object, НЕ Leaflet LatLngBounds —
+      // прямий setSelectedArea(d.selectedArea) валив /create і /keychains
+      // («getNorth/getCenter is not a function», store спільний між роутами).
+      // Реконструюємо справжній L.LatLngBounds з координат чернетки.
+      if (!selectedArea && d.selectedArea && typeof d.selectedArea === "object") {
+        const sw = d.selectedArea._southWest;
+        const ne = d.selectedArea._northEast;
+        if (
+          sw && ne &&
+          typeof sw.lat === "number" && typeof sw.lng === "number" &&
+          typeof ne.lat === "number" && typeof ne.lng === "number"
+        ) {
+          import("leaflet")
+            .then((L) => {
+              setSelectedArea(new L.LatLngBounds([sw.lat, sw.lng], [ne.lat, ne.lng]) as any);
+            })
+            .catch(() => { /* ignore */ });
+        }
+      }
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

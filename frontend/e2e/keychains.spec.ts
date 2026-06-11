@@ -37,6 +37,16 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect(page.getByText(/Гравіюється у нижню грань/)).toBeVisible();
   });
 
+  test("топо-режим: перемикач «Рельєф висот» у табі Карта + слайдер висоти", async ({ page }) => {
+    await page.getByRole("button", { name: "2. Карта" }).click();
+    const toggle = page.getByText(/Рельєф висот \(топо\)/);
+    await expect(toggle).toBeVisible();
+    // Вмикаємо — зʼявляється слайдер висоти рельєфу
+    await page.locator("label", { hasText: "Рельєф висот (топо)" }).locator('input[type="checkbox"]').check();
+    await expect(page.getByText("Висота рельєфу")).toBeVisible();
+    await expect(page.getByText(/Гори замість вулиць/)).toBeVisible();
+  });
+
   test("чипи форм містять Серце ♥ і Будиночок (додаткові налаштування)", async ({ page }) => {
     await page.getByRole("button", { name: /Показати додаткові налаштування/ }).click();
     await expect(page.getByRole("button", { name: "Серце ♥" })).toBeVisible();

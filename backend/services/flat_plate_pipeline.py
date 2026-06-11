@@ -1553,6 +1553,314 @@ def _mesh_manifest(mesh: Optional[trimesh.Trimesh], *, scale_factor: float) -> d
     }
 
 
+def _fetch_zone_heightfield_provider(
+    *,
+    request: Any,
+    zone: Any,
+    global_center: Any,
+    max_axis_cells: int = 220,
+):
+    """C3 ТОПО: качає DEM-висоти (Terrarium) для bbox зони у ЛОКАЛЬНИХ метрах
+    і повертає TerrainProvider для інтерполяції. None — якщо висоти недоступні
+    (генерація тоді тихо лишає плоску базу)."""
+    from scipy.ndimage import gaussian_filter
+
+    from services.elevation_api import get_elevation_abs_meters_from_api
+    from services.terrain_provider import TerrainProvider
+
+    minx, miny, maxx, maxy = (float(v) for v in zone.bbox_meters)
+    pad = 20.0
+    width = max(maxx - minx, 1.0) + 2 * pad
+    height = max(maxy - miny, 1.0) + 2 * pad
+    long_axis = max(width, height)
+    nx = max(32, min(int(round(max_axis_cells * width / long_axis)), max_axis_cells))
+    ny = max(32, min(int(round(max_axis_cells * height / long_axis)), max_axis_cells))
+    xs = np.linspace(minx - pad, maxx + pad, nx)
+    ys = np.linspace(miny - pad, maxy + pad, ny)
+    X, Y = np.meshgrid(xs, ys)
+
+    cx, cy = global_center.get_center_utm()
+    source_crs = global_center.get_utm_crs()
+    latlon_bbox = (
+        float(getattr(request, "north", 0.0)),
+        float(getattr(request, "south", 0.0)),
+        float(getattr(request, "east", 0.0)),
+        float(getattr(request, "west", 0.0)),
+    )
+    zoom = int(getattr(request, "terrarium_zoom", 13) or 13)
+    Z = get_elevation_abs_meters_from_api(latlon_bbox, X + cx, Y + cy, source_crs, zoom)
+    if Z is None:
+        print("[KEYCHAIN TOPO] DEM unavailable — keeping flat base")
+        return None
+    Z = np.asarray(Z, dtype=np.float64)
+    finite = np.isfinite(Z)
+    if not np.any(finite):
+        print("[KEYCHAIN TOPO] DEM all-NaN — keeping flat base")
+        return None
+    fill = float(np.nanmedian(Z[finite]))
+    Z[~finite] = fill
+    # Terrarium-викиди (бачили tower-bases у нормальному пайплайні) — клампимо
+    med = float(np.nanmedian(Z))
+    Z = np.clip(Z, med - 3000.0, med + 5000.0)
+    try:
+        Z = gaussian_filter(Z, sigma=1.2)
+    except Exception:
+        pass
+    print(
+        f"[KEYCHAIN TOPO] Heightfield {nx}x{ny}, z={zoom}: "
+        f"{float(np.min(Z)):.1f}..{float(np.max(Z)):.1f}m"
+    )
+    return TerrainProvider(X, Y, Z)
+
+
+def _keychain_topo_inverse_map(
+    *,
+    unwrap_params: Optional[dict],
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+    angle_deg: float,
+):
+    """Обернене відображення: координати ЖЕТОНА (layout) → координати ЗОНИ
+    (локальні метри). Інверсія до _xform/unwrap у run_flat_plate_pipeline."""
+    import math
+
+    if unwrap_params is not None:
+        p = unwrap_params
+        s = max(p["tgt_w"] / p["rect_w"], p["tgt_h"] / p["rect_h"])
+        ang = math.radians(float(p["angle"]))
+        cos_a, sin_a = math.cos(ang), math.sin(ang)
+
+        def _inv(points: np.ndarray) -> np.ndarray:
+            pts = np.asarray(points, dtype=float)
+            qx = (pts[:, 0] - p["tgt_cx"]) / s
+            qy = (pts[:, 1] - p["tgt_cy"]) / s
+            # forward робив rotate(-angle) → інверсія rotate(+angle)
+            x = qx * cos_a - qy * sin_a + p["cx_src"]
+            y = qx * sin_a + qy * cos_a + p["cy_src"]
+            return np.column_stack([x, y])
+
+        return _inv
+
+    # Fallback-гілка (legacy orient+stretch): unstretch target→oriented, потім rotate(-angle)
+    oriented = _rotated_source_bounds(source_bounds, angle_deg)
+    o_minx, o_miny, o_maxx, o_maxy = (float(v) for v in oriented)
+    t_minx, t_miny, t_maxx, t_maxy = (float(v) for v in target_bounds)
+    sx = max(o_maxx - o_minx, 1e-9) / max(t_maxx - t_minx, 1e-9)
+    sy = max(o_maxy - o_miny, 1e-9) / max(t_maxy - t_miny, 1e-9)
+    src_cx = (source_bounds[0] + source_bounds[2]) / 2.0
+    src_cy = (source_bounds[1] + source_bounds[3]) / 2.0
+    import math as _math
+    ang_b = _math.radians(-float(angle_deg or 0.0))
+    cos_b, sin_b = _math.cos(ang_b), _math.sin(ang_b)
+
+    def _inv_legacy(points: np.ndarray) -> np.ndarray:
+        pts = np.asarray(points, dtype=float)
+        ox = o_minx + (pts[:, 0] - t_minx) * sx
+        oy = o_miny + (pts[:, 1] - t_miny) * sy
+        dx = ox - src_cx
+        dy = oy - src_cy
+        x = dx * cos_b - dy * sin_b + src_cx
+        y = dx * sin_b + dy * cos_b + src_cy
+        return np.column_stack([x, y])
+
+    return _inv_legacy
+
+
+def _extrude_polygon_heightfield(
+    poly: Polygon,
+    *,
+    bottom_z_m: float,
+    top_z_func,
+    max_area_m2: float,
+) -> Optional[trimesh.Trimesh]:
+    """Watertight-екструд полігона з ПЕРЕМІННОЮ верхньою гранню (heightfield).
+    Та сама техніка, що _extrude_polygon_prism, але triangle-двигун додає
+    Steiner-точки всередині (q28 + max area) і верхній z береться з top_z_func."""
+    if poly is None or poly.is_empty or float(poly.area) <= 0:
+        return None
+    try:
+        cap_points, tri_idx = trimesh.creation.triangulate_polygon(
+            poly,
+            triangle_args=f"pq28a{max_area_m2:.12f}",
+            engine="triangle",
+        )
+    except Exception as exc:
+        print(f"[KEYCHAIN TOPO] dense triangulation failed: {exc}")
+        return None
+    cap_points = np.asarray(cap_points, dtype=float)[:, :2]
+    tri_idx = np.asarray(tri_idx, dtype=np.int64).reshape((-1, 3))
+    if len(cap_points) == 0 or len(tri_idx) == 0:
+        return None
+    top_z = np.asarray(top_z_func(cap_points), dtype=float).reshape(-1)
+    if len(top_z) != len(cap_points):
+        return None
+    n = len(cap_points)
+    vertices = np.vstack(
+        [
+            np.column_stack([cap_points, np.full(n, float(bottom_z_m))]),
+            np.column_stack([cap_points, top_z]),
+        ]
+    )
+    faces: list[list[int]] = []
+    edge_counts: dict[tuple[int, int], int] = {}
+    for i0, i1, i2 in tri_idx:
+        i0, i1, i2 = int(i0), int(i1), int(i2)
+        faces.append([i2, i1, i0])  # низ — нормаль донизу
+        faces.append([n + i0, n + i1, n + i2])  # верх
+        for a, b in ((i0, i1), (i1, i2), (i2, i0)):
+            key = (min(a, b), max(a, b))
+            edge_counts[key] = edge_counts.get(key, 0) + 1
+    # Стінки: межові ребра (зустрілись 1 раз у cap-тріангуляції)
+    for (a, b), count in edge_counts.items():
+        if count != 1:
+            continue
+        faces.append([a, b, n + b])
+        faces.append([a, n + b, n + a])
+    mesh = trimesh.Trimesh(
+        vertices=vertices,
+        faces=np.asarray(faces, dtype=np.int64),
+        process=False,
+    )
+    try:
+        mesh.merge_vertices(digits_vertex=8)
+        mesh.update_faces(mesh.nondegenerate_faces())
+        mesh.remove_unreferenced_vertices()
+        trimesh.repair.fix_winding(mesh)
+        mesh.fix_normals()
+    except Exception:
+        pass
+    return mesh
+
+
+def _build_keychain_topo_base(
+    *,
+    request: Any,
+    zone: Any,
+    global_center: Any,
+    base_mask: BaseGeometry,
+    relief_zone: Optional[BaseGeometry],
+    base_top_m: float,
+    relief_m: float,
+    feather_m: float,
+    unwrap_params: Optional[dict],
+    source_bounds: tuple[float, float, float, float],
+    target_bounds: tuple[float, float, float, float],
+    map_rotation_deg: float,
+    back_text_poly: Optional[BaseGeometry],
+    engrave_m: float,
+    export_scale_factor: float,
+) -> tuple[Optional[trimesh.Trimesh], Optional[trimesh.Trimesh]]:
+    """C3 ТОПО-БРЕЛОК: база жетона з heightfield-рельєфом на верхній грані.
+    Рельєф нормалізується по видимій зоні (p2..p98), кліпиться по контуру
+    relief_zone (тіло мінус rim/текстові смуги) з feather-переходом до плоских
+    країв — вушко/обід/смуга напису лишаються рівними на base_top.
+    Повертає (topo_mesh, bottom_engrave_mesh) або (None, None) → плоский fallback."""
+    provider = _fetch_zone_heightfield_provider(
+        request=request, zone=zone, global_center=global_center
+    )
+    if provider is None:
+        return None, None
+    if relief_zone is None or getattr(relief_zone, "is_empty", True):
+        relief_zone = base_mask
+    inverse_map = _keychain_topo_inverse_map(
+        unwrap_params=unwrap_params,
+        source_bounds=source_bounds,
+        target_bounds=target_bounds,
+        angle_deg=map_rotation_deg,
+    )
+    try:
+        relief_boundary = relief_zone.boundary
+    except Exception:
+        relief_boundary = None
+
+    norm_state: dict[str, float] = {}
+
+    def _top_z(points_xy: np.ndarray) -> np.ndarray:
+        pts = np.asarray(points_xy, dtype=float)
+        heights = provider.get_heights_for_points(inverse_map(pts))
+        # inside/відстань до межі relief_zone (shapely 2 vectorized, fallback — цикл)
+        try:
+            import shapely as _shp
+
+            pt_objs = _shp.points(pts)
+            inside = np.asarray(_shp.contains(relief_zone, pt_objs), dtype=bool)
+            dist = (
+                np.asarray(_shp.distance(pt_objs, relief_boundary), dtype=float)
+                if relief_boundary is not None
+                else np.full(len(pts), feather_m)
+            )
+        except Exception:
+            from shapely.prepared import prep
+
+            prepared = prep(relief_zone)
+            inside = np.array([prepared.contains(Point(x, y)) for x, y in pts], dtype=bool)
+            dist = np.array(
+                [relief_boundary.distance(Point(x, y)) if relief_boundary is not None else feather_m for x, y in pts],
+                dtype=float,
+            )
+        vis = heights[inside]
+        if len(vis) < 10:
+            print("[KEYCHAIN TOPO] Too few relief samples — flat top")
+            return np.full(len(pts), float(base_top_m))
+        h_lo = float(np.percentile(vis, 2.0))
+        h_hi = float(np.percentile(vis, 98.0))
+        norm_state["range_m"] = h_hi - h_lo
+        if h_hi - h_lo < 0.5:
+            # Рівнина: підсилювати шум DEM немає сенсу — лишаємо пласку базу
+            print(f"[KEYCHAIN TOPO] Terrain range {h_hi - h_lo:.2f}m < 0.5m — flat top kept")
+            return np.full(len(pts), float(base_top_m))
+        z01 = np.clip((heights - h_lo) / max(h_hi - h_lo, 1e-9), 0.0, 1.0)
+        feather = np.clip(dist / max(feather_m, 1e-9), 0.0, 1.0)
+        relief = np.where(inside, z01 * float(relief_m) * feather, 0.0)
+        return float(base_top_m) + relief
+
+    # Щільність сітки: ребро ~0.5мм у model-mm → деталь рельєфу читається на жетоні
+    edge_m = _model_mm_to_world_m(0.5, export_scale_factor)
+    max_area_m2 = max(edge_m * edge_m * 0.5, 1e-12)
+    bottom_z = 0.0
+    bottom_mesh: Optional[trimesh.Trimesh] = None
+    if (
+        back_text_poly is not None
+        and not getattr(back_text_poly, "is_empty", True)
+        and engrave_m > 1e-9
+        and engrave_m < base_top_m - 1e-9
+    ):
+        # Гравіювання звороту: нижній шар із літерами-вирізами (як у
+        # _build_keychain_base_parts), топо-частина починається з engrave_m.
+        try:
+            bottom_mask = base_mask.difference(back_text_poly).buffer(0)
+            bottom_mesh = build_flat_layer_mesh_from_mask(
+                bottom_mask, bottom_z_m=0.0, thickness_m=float(engrave_m),
+                color=LAYER_COLORS["base"], min_area_m2=1e-12,
+            )
+            if bottom_mesh is not None:
+                bottom_z = float(engrave_m)
+        except Exception as exc:
+            print(f"[KEYCHAIN TOPO] back engrave split failed ({exc}); solid topo base")
+            bottom_mesh = None
+            bottom_z = 0.0
+
+    topo_parts: list[trimesh.Trimesh] = []
+    for poly in _iter_polygons(base_mask):
+        part = _extrude_polygon_heightfield(
+            poly, bottom_z_m=bottom_z, top_z_func=_top_z, max_area_m2=max_area_m2
+        )
+        if part is not None and part.faces is not None and len(part.faces) > 0:
+            topo_parts.append(part)
+    if not topo_parts:
+        return None, None
+    topo_mesh = topo_parts[0] if len(topo_parts) == 1 else trimesh.util.concatenate(topo_parts)
+    if norm_state.get("range_m", 0.0) < 0.5:
+        # Рельєф вироджений — чесніше повернути None і лишити стандартну плоску базу
+        return None, None
+    watertight = bool(getattr(topo_mesh, "is_watertight", False))
+    print(
+        f"[KEYCHAIN TOPO] Relief mesh: {len(topo_mesh.faces)} faces, "
+        f"terrain range {norm_state.get('range_m', 0.0):.1f}m, watertight={watertight}"
+    )
+    return _with_color(topo_mesh, LAYER_COLORS["base"]), bottom_mesh
+
+
 def build_flat_building_meshes(
     *,
     request: Any,
@@ -1696,6 +2004,8 @@ def run_flat_plate_pipeline(
     roads_layer_mm = max(float(getattr(request, "flat_roads_layer_mm", 0.42) or 0.42), 0.0)
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)
     keychain_mode = bool(getattr(request, "keychain_mode", False))
+    # C3 ТОПО-БРЕЛОК: рельєф висот замість карти (дороги/вода/парки/будівлі off)
+    topo_mode = keychain_mode and bool(getattr(request, "keychain_topo_mode", False))
     if keychain_mode:
         # DEFAULT база жетона = 1.5мм (міцна основа під рельєф). Юзер:
         # «по дефолту довжину основи зроби 1.5мм». Поважаємо більше значення,
@@ -2270,6 +2580,21 @@ def run_flat_plate_pipeline(
         water_mask = getattr(bundle, "water_final", None)
         parks_mask = getattr(bundle, "parks_final", None)
 
+    # C3 ТОПО-РЕЖИМ: terrain-only — шари карти не друкуються, їх замінює
+    # heightfield-рельєф на базі (будується нижче, після text-блоків).
+    # Текст/вушко/форма/зворот працюють як завжди.
+    if topo_mode:
+        road_mask = None
+        water_mask = None
+        parks_mask = None
+        bridge_mask = None
+        gdf_buildings_local = None
+        print("[KEYCHAIN TOPO] Terrain-only: map layers skipped (relief replaces the map)")
+        try:
+            task.update_status("processing", 72, "Будую рельєф висот на жетоні...")
+        except Exception:
+            pass
+
     # ТЕКСТ: ЗА ЗАМОВЧУВАННЯМ вирізаються/підіймаються ТІЛЬКИ літери — карта
     # навколо напису НЕ очищається (юзер: «по дефолту вирізались тільки букви і
     # щоб область вокруг їх не вирізалась»). Прямокутна зона-підкладка під текст
@@ -2708,6 +3033,54 @@ def run_flat_plate_pipeline(
                         print(f"[KEYCHAIN] Base rebuilt with water depression ({water_layer_mm:.2f}mm)")
         except Exception as exc:
             print(f"[KEYCHAIN] Water carve failed: {exc}")
+
+        # C3 ТОПО-БРЕЛОК: верхня грань бази стає heightfield-рельєфом.
+        # Плоскими лишаються: вушко (поза content_area), rim, смуги напису.
+        if topo_mode:
+            try:
+                relief_mm = min(max(float(getattr(request, "keychain_relief_mm", 2.2) or 2.2), 0.6), 4.0)
+                # Під текстом рельєф флетимо до base_top (текст має стояти на рівному)
+                _flatten_zones = []
+                for _band_key, _txt in (
+                    ("label_band", str(getattr(request, "keychain_label", "") or "").strip()),
+                    ("label_band2", str(getattr(request, "keychain_label2", "") or "").strip()),
+                ):
+                    _bnd = keychain_layout.get(_band_key)
+                    if _txt and _bnd is not None and not getattr(_bnd, "is_empty", True):
+                        try:
+                            _flatten_zones.append(
+                                _bnd.buffer(_model_mm_to_world_m(1.2, export_scale_factor), join_style=1)
+                            )
+                        except Exception:
+                            _flatten_zones.append(_bnd)
+                _relief_zone = _subtract_geometry(content_area, *_flatten_zones) if _flatten_zones else content_area
+                if _relief_zone is None or getattr(_relief_zone, "is_empty", True):
+                    _relief_zone = content_area
+                topo_mesh, topo_bottom = _build_keychain_topo_base(
+                    request=request,
+                    zone=zone,
+                    global_center=global_center,
+                    base_mask=keychain_layout["base"],
+                    relief_zone=_relief_zone,
+                    base_top_m=base_top_m,
+                    relief_m=_model_mm_to_world_m(relief_mm, export_scale_factor),
+                    feather_m=_model_mm_to_world_m(1.5, export_scale_factor),
+                    unwrap_params=locals().get("unwrap_params"),
+                    source_bounds=source_bounds,
+                    target_bounds=target_bounds,
+                    map_rotation_deg=float(getattr(request, "keychain_map_rotation_deg", 0.0) or 0.0),
+                    back_text_poly=keychain_back_poly,
+                    engrave_m=keychain_back_engrave_m,
+                    export_scale_factor=export_scale_factor,
+                )
+                if topo_mesh is not None:
+                    terrain_mesh = topo_mesh
+                    keychain_base_bottom_mesh = topo_bottom
+                    print(f"[KEYCHAIN TOPO] Relief base built: +{relief_mm:.2f}mm heightfield on token")
+                else:
+                    print("[KEYCHAIN TOPO] Relief unavailable — flat base kept (non-fatal)")
+            except Exception as exc:
+                print(f"[KEYCHAIN TOPO] relief failed (non-fatal, flat base kept): {exc}")
 
     # Підпис на плоскій мапі/магніті (не-keychain): рельєф 0.8мм на верхній грані бази.
     if not keychain_mode and map_label_letter_poly is not None and map_label_band is not None:

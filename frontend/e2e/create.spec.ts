@@ -32,6 +32,31 @@ test.describe("Конструктор мап /create", () => {
     await expect(orderBtn).toBeVisible();
   });
 
+  test("REGRESSION: чернетка з plain-object зоною НЕ валить /create і /keychains", async ({ page }) => {
+    // JSON.parse(draft) повертає plain object замість L.LatLngBounds — раніше
+    // це крешило обидві сторінки («getNorth/getCenter is not a function»).
+    await page.evaluate(() => {
+      localStorage.setItem(
+        "monadruk:draft:create",
+        JSON.stringify({
+          selectedArea: {
+            _southWest: { lat: 50.44, lng: 30.5 },
+            _northEast: { lat: 50.46, lng: 30.55 },
+          },
+          styleId: "classic",
+          modelSizeMm: 80,
+        }),
+      );
+    });
+    await page.goto("/uk/create");
+    await expect(page.getByText(/Something went wrong|getCenter is not a function/)).toHaveCount(0);
+    await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);
+    // зона з чернетки реконструйована як справжній LatLngBounds → панель бачить вибір
+    await expect(page.locator("#panel-settings").getByText(/Ділянку вибрано/)).toBeVisible();
+    await page.goto("/uk/keychains");
+    await expect(page.getByText(/Something went wrong|getNorth is not a function/)).toHaveCount(0);
+  });
+
   test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
     const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });

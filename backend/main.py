@@ -538,6 +538,11 @@ class GenerationRequest(BaseModel):
     keychain_back_label: str = Field(default="", max_length=64)
     keychain_back_text_height_mm: float = Field(default=5.0, ge=2.5, le=14.0)
     keychain_back_engrave_mm: float = Field(default=0.5, ge=0.2, le=1.2)
+    # ТОПО-БРЕЛОК (C3): heightfield-рельєф висот на жетоні замість карти
+    # (дороги/вода/парки/будівлі не друкуються). keychain_relief_mm — макс.
+    # висота рельєфу над базою.
+    keychain_topo_mode: bool = False
+    keychain_relief_mm: float = Field(default=2.2, ge=0.6, le=4.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 
@@ -1041,6 +1046,10 @@ def _validate_keychain_print_scale(request: GenerationRequest) -> None:
     """
     if not (bool(getattr(request, "flat_plate_mode", False)) and bool(getattr(request, "keychain_mode", False))):
         return
+    # ТОПО-БРЕЛОК: ліміт 8 м/мм існує для читабельності ВУЛИЦЬ. Рельєф висот
+    # навпаки потребує великих зон (гори = кілометри) — гейт не застосовуємо.
+    if bool(getattr(request, "keychain_topo_mode", False)):
+        return
     map_w_mm = max(float(getattr(request, "keychain_map_width_mm", 0.0) or 0.0), 1.0)
     map_h_mm = max(float(getattr(request, "keychain_map_height_mm", 0.0) or 0.0), 1.0)
     lat_mid = (float(request.north) + float(request.south)) * 0.5
@@ -1097,6 +1106,11 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
             _hard_ceiling = 0.0
         if _hard_ceiling > 0:
             _max_span = min(_max_span, _hard_ceiling) if _max_span > 0 else _hard_ceiling
+        # ТОПО-БРЕЛОК (C3): рельєфу потрібні ВЕЛИКІ зони (гори = кілометри),
+        # масштаб 1:10000 для вуличної деталізації тут не застосовний.
+        # Власна стеля 30 км зі сторони — межа розумного для DEM/OSM-фетчу.
+        if bool(getattr(request, "keychain_topo_mode", False)) and bool(getattr(request, "keychain_mode", False)):
+            _max_span = 30000.0
         if _max_span > 0:
             import math as _m
             _clat = (float(request.north) + float(request.south)) * 0.5
@@ -1952,6 +1966,9 @@ class ZoneGenerationRequest(BaseModel):
     keychain_back_label: str = Field(default="", max_length=64)
     keychain_back_text_height_mm: float = Field(default=5.0, ge=2.5, le=14.0)
     keychain_back_engrave_mm: float = Field(default=0.5, ge=0.2, le=1.2)
+    # ТОПО-БРЕЛОК (C3): heightfield-рельєф на жетоні (див. GenerationRequest).
+    keychain_topo_mode: bool = False
+    keychain_relief_mm: float = Field(default=2.2, ge=0.6, le=4.0)
     canonical_mask_bundle_dir: Optional[str] = None
     auto_canonicalize_masks: bool = True
 

@@ -286,6 +286,8 @@ function fitDesign(next: KeychainDesignerConfig): KeychainDesignerConfig {
 
 function selectedAreaMeters(selectedArea: ReturnType<typeof useGenerationStore.getState>["selectedArea"]) {
   if (!selectedArea) return null;
+  // Захист: у store може потрапити plain object (битий draft) — не валимо рендер
+  if (typeof (selectedArea as any).getNorth !== "function") return null;
   const north = selectedArea.getNorth();
   const south = selectedArea.getSouth();
   const east = selectedArea.getEast();
@@ -303,6 +305,7 @@ function shrinkBoundsToMeters(
   targetHeightM: number,
 ) {
   if (!selectedArea) return null;
+  if (typeof (selectedArea as any).getCenter !== "function") return null;
   const center = selectedArea.getCenter();
   const latMid = center.lat * (Math.PI / 180);
   const halfLatDeg = (targetHeightM / 2) / 111_320;
@@ -360,6 +363,9 @@ export function KeychainControlPanel({
   const [quote, setQuote] = useState<Quote | null>(null);
   const [label2, setLabel2] = useState("");
   const [backLabel, setBackLabel] = useState("");
+  // C3 ТОПО-БРЕЛОК: рельєф висот замість карти (Карпати/Альпи)
+  const [topoMode, setTopoMode] = useState(false);
+  const [reliefMm, setReliefMm] = useState(2.2);
   const [baseThicknessMm, setBaseThicknessMm] = useState(1.5);
 
   // Жива орієнтовна ціна брелка (одна базова — розмір на неї не впливає).
@@ -441,6 +447,14 @@ export function KeychainControlPanel({
         detail: "Клік по карті переносить область друку, великий бірюзовий квадрат змінює розмір.",
       };
     }
+    if (topoMode) {
+      // Топо: масштаб вулиць не важливий — рельєф читається й на великих зонах
+      return {
+        tone: "good" as const,
+        title: "Топо-режим: друкується рельєф висот",
+        detail: "Шари карти вимкнені. Великі гірські зони (5–20 км) — саме те, що треба для виразного рельєфу.",
+      };
+    }
     if (printScale.tooLarge) {
       return {
         tone: "bad" as const,
@@ -466,11 +480,14 @@ export function KeychainControlPanel({
     const labelTooLong = label.trim().length > Math.max(10, Math.floor(design.labelWidthMm / 1.9));
     const loopHoleDiameterMm = design.loopInnerMm * 2;
     const loopWallMm = design.loopOuterMm - design.loopInnerMm;
-    const cropTone: PrintTone = !selectedArea || !printScale || printScale.tooLarge
-      ? "bad"
-      : printScale.onEdge
-        ? "warn"
-        : "good";
+    // Топо-режим: масштаб вулиць не важливий — будь-яка зона з рамкою OK
+    const cropTone: PrintTone = topoMode
+      ? (selectedArea ? "good" : "bad")
+      : !selectedArea || !printScale || printScale.tooLarge
+        ? "bad"
+        : printScale.onEdge
+          ? "warn"
+          : "good";
     // Текст auto-clamp у fitDesign до 0.6mm/3.2mm — RED warning неможливий.
     // Single shape: good якщо комфорт, warn якщо тільки на межі або довгий напис.
     const textTone: PrintTone = labelTooLong
@@ -478,11 +495,13 @@ export function KeychainControlPanel({
       : design.labelStrokeMm >= 0.7 && design.labelTextHeightMm >= 3.6
         ? "good"
         : "warn";
-    const layerTone: PrintTone = roadLayerMm >= 0.44 && waterLayerMm >= 0.28 && buildingMaxMm <= 3.0
+    const layerTone: PrintTone = topoMode
       ? "good"
-      : roadLayerMm >= 0.4 && waterLayerMm >= 0.24 && buildingMaxMm <= 3.2
-        ? "warn"
-        : "bad";
+      : roadLayerMm >= 0.44 && waterLayerMm >= 0.28 && buildingMaxMm <= 3.0
+        ? "good"
+        : roadLayerMm >= 0.4 && waterLayerMm >= 0.24 && buildingMaxMm <= 3.2
+          ? "warn"
+          : "bad";
     return [
       {
         id: "crop",
@@ -523,10 +542,14 @@ export function KeychainControlPanel({
         ok: layerTone !== "bad",
         tone: layerTone,
         label: "Шари",
-        detail: `дороги ${roadLayerMm.toFixed(2)} мм, вода ${waterLayerMm.toFixed(2)} мм, будівлі до ${buildingMaxMm.toFixed(1)} мм`,
+        detail: topoMode
+          ? `топо-рельєф ${reliefMm.toFixed(1)} мм (шари карти вимкнені)`
+          : `дороги ${roadLayerMm.toFixed(2)} мм, вода ${waterLayerMm.toFixed(2)} мм, будівлі до ${buildingMaxMm.toFixed(1)} мм`,
       },
     ];
   }, [
+    topoMode,
+    reliefMm,
     baseThicknessMm,
     buildingMaxMm,
     design.labelStrokeMm,
@@ -830,6 +853,9 @@ export function KeychainControlPanel({
         keychain_label_font_style: design.labelFontStyle,
         keychain_rim_width_mm: design.rimWidthMm,
         keychain_rim_height_mm: design.rimHeightMm,
+        // C3 ТОПО: рельєф висот замість карти (бек вимикає шари сам)
+        keychain_topo_mode: topoMode,
+        keychain_relief_mm: reliefMm,
         // Точний полігон обернутого rect — backend обрізає OSM по ньому,
         // а не по axis-aligned bbox. Так модель показує саме те що обрав юзер.
         ...(cropPolygon && cropPolygon.length >= 3 ? { zone_polygon_coords: cropPolygon } : {}),
@@ -1101,6 +1127,32 @@ export function KeychainControlPanel({
           />
           <div className="mt-4 space-y-3">
             <PrintabilityCard {...printability} />
+            {/* C3 ТОПО-БРЕЛОК: рельєф висот замість карти */}
+            <label className="flex min-h-[52px] items-center gap-3 rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-sm font-semibold text-[var(--text-primary)]">
+              <input
+                type="checkbox"
+                checked={topoMode}
+                onChange={(event) => setTopoMode(event.target.checked)}
+                className="h-5 w-5 accent-[var(--accent-strong)]"
+              />
+              <span>
+                🏔 Рельєф висот (топо)
+                <span className="block text-[11px] font-normal leading-4 text-[var(--text-secondary)]">
+                  Гори замість вулиць: Говерла, Альпи, узбережжя. Шари карти вимикаються.
+                </span>
+              </span>
+            </label>
+            {topoMode && (
+              <SliderField
+                label="Висота рельєфу"
+                valueLabel={`${reliefMm.toFixed(1)} мм`}
+                min={0.6}
+                max={4.0}
+                step={0.1}
+                value={reliefMm}
+                onChange={setReliefMm}
+              />
+            )}
             <div className="grid grid-cols-2 gap-2">
               <QuickActionButton onClick={centerMap}>
                 <MapIcon size={15} />

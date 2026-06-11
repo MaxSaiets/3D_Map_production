@@ -274,3 +274,124 @@ def test_keychain_base_split_without_back_text_stays_single_solid_plate():
     assert upper is not None and upper.is_watertight
     assert float(upper.bounds[0][2]) == pytest.approx(0.0)
     assert float(upper.bounds[1][2]) == pytest.approx(1.5)
+
+
+# ===== C3 ТОПО-БРЕЛОК: heightfield-рельєф на базі жетона =====
+
+def _make_topo_layout():
+    # 350×550м зона → слот 31мм (масштаб ~11.3 м/мм), стандартний брелок 35×55
+    return build_keychain_layout(
+        bbox_meters=(0.0, 0.0, 350.0, 550.0),
+        scale_factor=0.1,
+        model_size_mm=55.0,
+        body_width_mm=35.0,
+        body_height_mm=55.0,
+        map_width_mm=31.0,
+        map_height_mm=40.0,
+        loop_outer_radius_mm=6.5,
+        loop_inner_radius_mm=3.0,
+        corner_radius_mm=4.0,
+        label_band_height_mm=9.0,
+    )
+
+
+class _RadialPeakProvider:
+    """Висота — пік у центрі source-зони (175, 275), спадає до країв на 100м."""
+
+    def get_heights_for_points(self, pts):
+        import numpy as np
+        p = np.asarray(pts, dtype=float)
+        d2 = (p[:, 0] - 175.0) ** 2 + (p[:, 1] - 275.0) ** 2
+        return 100.0 * np.exp(-d2 / (2 * 120.0 ** 2))
+
+
+def test_keychain_topo_base_builds_clipped_watertight_relief(monkeypatch):
+    import numpy as np
+    from services import flat_plate_pipeline as fpp
+
+    monkeypatch.setattr(
+        fpp, "_fetch_zone_heightfield_provider", lambda **kw: _RadialPeakProvider()
+    )
+    layout = _make_topo_layout()
+    scale_m_per_mm = float(layout["layout_scale_m_per_mm"])
+    export_scale = 1.0 / scale_m_per_mm
+    base_top_m = 1.5 * scale_m_per_mm
+    relief_m = 2.2 * scale_m_per_mm
+    src_b = tuple(float(v) for v in layout["source_bbox"].bounds)
+    tgt_b = tuple(float(v) for v in layout["map_target_bounds"])
+    # unwrap_params як у run_flat_plate_pipeline (angle=0, COVER scale)
+    unwrap = {
+        "cx_src": 175.0, "cy_src": 275.0,
+        "rect_w": 350.0, "rect_h": 550.0,
+        "tgt_cx": (tgt_b[0] + tgt_b[2]) / 2.0, "tgt_cy": (tgt_b[1] + tgt_b[3]) / 2.0,
+        "tgt_w": tgt_b[2] - tgt_b[0], "tgt_h": tgt_b[3] - tgt_b[1],
+        "angle": 0.0,
+    }
+    topo, bottom = fpp._build_keychain_topo_base(
+        request=object(),
+        zone=object(),
+        global_center=object(),
+        base_mask=layout["base"],
+        relief_zone=layout["content_area"],
+        base_top_m=base_top_m,
+        relief_m=relief_m,
+        feather_m=1.5 * scale_m_per_mm,
+        unwrap_params=unwrap,
+        source_bounds=src_b,
+        target_bounds=tgt_b,
+        map_rotation_deg=0.0,
+        back_text_poly=None,
+        engrave_m=0.0,
+        export_scale_factor=export_scale,
+    )
+    assert bottom is None
+    assert topo is not None
+    assert topo.is_watertight
+    z_min = float(topo.bounds[0][2])
+    z_max = float(topo.bounds[1][2])
+    assert z_min == pytest.approx(0.0, abs=1e-6)
+    # Пік у центрі (feather=1 там) → верх ≈ base_top + relief (p98-нормалізація
+    # дає невеликий overshoot кліпнутий до 1.0)
+    assert z_max == pytest.approx(base_top_m + relief_m, rel=0.08)
+    # Вушко (вище за body_maxy) лишається ПЛОСКИМ на base_top
+    body_maxy = float(layout["body"].bounds[3])
+    verts = topo.vertices
+    loop_verts = verts[verts[:, 1] > body_maxy + 0.05 * scale_m_per_mm]
+    assert len(loop_verts) > 0
+    assert float(loop_verts[:, 2].max()) <= base_top_m + 1e-6
+
+
+def test_keychain_topo_base_flat_terrain_falls_back_to_none(monkeypatch):
+    from services import flat_plate_pipeline as fpp
+
+    class _FlatProvider:
+        def get_heights_for_points(self, pts):
+            import numpy as np
+            return np.full(len(pts), 123.0)
+
+    monkeypatch.setattr(
+        fpp, "_fetch_zone_heightfield_provider", lambda **kw: _FlatProvider()
+    )
+    layout = _make_topo_layout()
+    scale_m_per_mm = float(layout["layout_scale_m_per_mm"])
+    src_b = tuple(float(v) for v in layout["source_bbox"].bounds)
+    tgt_b = tuple(float(v) for v in layout["map_target_bounds"])
+    topo, bottom = fpp._build_keychain_topo_base(
+        request=object(),
+        zone=object(),
+        global_center=object(),
+        base_mask=layout["base"],
+        relief_zone=layout["content_area"],
+        base_top_m=1.5 * scale_m_per_mm,
+        relief_m=2.2 * scale_m_per_mm,
+        feather_m=1.5 * scale_m_per_mm,
+        unwrap_params=None,
+        source_bounds=src_b,
+        target_bounds=tgt_b,
+        map_rotation_deg=0.0,
+        back_text_poly=None,
+        engrave_m=0.0,
+        export_scale_factor=1.0 / scale_m_per_mm,
+    )
+    # Рівнина (range < 0.5м) → None → пайплайн лишає стандартну плоску базу
+    assert topo is None and bottom is None
