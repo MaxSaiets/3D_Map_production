@@ -234,15 +234,29 @@ $endpoints = @(
     @{ Name = "Frontend /de/maps/kyiv (SSR locale)"; Url = "http://127.0.0.1:3000/de/maps/kyiv" },
     @{ Name = "Public (nginx)";   Url = "http://209.38.210.197/" }
 )
-$allOk = $true
-foreach ($ep in $endpoints) {
-    $code = & ssh @SSH "curl -s -o /dev/null -w '%{http_code}' '$($ep.Url)'" 2>&1
-    if ($code -eq "200") {
-        Write-Ok "$($ep.Name): $code"
-    } else {
-        Write-Err "$($ep.Name): $code"
-        $allOk = $false
+function Test-Endpoints {
+    $ok = $true
+    foreach ($ep in $endpoints) {
+        $code = & ssh @SSH "curl -s -o /dev/null -w '%{http_code}' '$($ep.Url)'" 2>&1
+        if ($code -eq "200") {
+            Write-Ok "$($ep.Name): $code"
+        } else {
+            Write-Err "$($ep.Name): $code"
+            $ok = $false
+        }
     }
+    return $ok
+}
+$allOk = Test-Endpoints
+
+# ── 8b. AUTO-HEAL: битий серверний білд (missing .next/server/chunks/N.js →
+# 500 на sitemap/SSR-роутах) трапляється періодично і НЕ ловиться клієнтським
+# 7c-guard. Один чистий ребілд + повторна перевірка (2026-06-11: двічі за день).
+if (-not $allOk) {
+    Write-Step "Endpoint check failed — attempting ONE clean rebuild (server-chunk corruption heal)"
+    & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_heal.log 2>&1; ec=$?; if [ $ec -ne 0 ]; then npm ci >> /tmp/3dmap_heal.log 2>&1; node_modules/next/dist/bin/next build >> /tmp/3dmap_heal.log 2>&1; ec=$?; fi; echo HEAL_EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/); [ "$c" = "200" ] && break; sleep 1; done' 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    Write-Step "Re-verifying endpoints after heal"
+    $allOk = Test-Endpoints
 }
 
 # ── 9. Final PM2 status
