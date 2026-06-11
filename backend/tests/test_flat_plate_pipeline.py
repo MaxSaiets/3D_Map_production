@@ -240,6 +240,17 @@ def test_keychain_base_split_engraves_letters_into_bottom_layer():
     assert float(upper.volume) == pytest.approx(46 * 42 * 1.0, rel=0.01)
 
 
+def test_keychain_body_shape_tag_cut_is_at_loop_side():
+    # Великий зріз кута «бірки» — біля maxy (бік петлі), як у дизайнер-превʼю.
+    # Зріз (0.16·min) більший за радіуси кутів → центроїд зміщується ВНИЗ.
+    tag = _keychain_body_shape(0, 0, 50, 30, radius_m=2.0, shape="tag")
+    assert tag.centroid.y < 15.0
+    # Верхній правий кут зрізаний сильніше за нижній правий
+    top_right = tag.intersection(_square(45, 25, 50, 30)).area
+    bottom_right = tag.intersection(_square(45, 0, 50, 5)).area
+    assert top_right < bottom_right
+
+
 def test_magnet_pocket_carves_circle_from_bottom_layer():
     from shapely.geometry import Point
     base = _square(0, 0, 60, 60)

@@ -503,16 +503,18 @@ def _keychain_body_shape(
     if shape_name in {"capsule", "token"}:
         return _rounded_rect(minx, miny, maxx, maxy, height / 2.0)
     if shape_name == "tag":
+        # Зріз кута — БІЛЯ ПЕТЛІ (maxy = верх брелка), як малює дизайнер-превʼю.
+        # Історично різалось біля miny (дзеркально до превʼю) — виправлено 2026-06-11.
         cut = min(width, height) * 0.16
         points = [
-            (minx, miny + radius_m),
-            (minx + radius_m, miny),
-            (maxx - cut, miny),
-            (maxx, miny + cut),
-            (maxx, maxy - radius_m),
-            (maxx - radius_m, maxy),
-            (minx + radius_m, maxy),
             (minx, maxy - radius_m),
+            (minx + radius_m, maxy),
+            (maxx - cut, maxy),
+            (maxx, maxy - cut),
+            (maxx, miny + radius_m),
+            (maxx - radius_m, miny),
+            (minx + radius_m, miny),
+            (minx, miny + radius_m),
         ]
         return Polygon(points).buffer(0)
     if shape_name == "octagon":
