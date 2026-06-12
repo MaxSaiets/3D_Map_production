@@ -331,6 +331,7 @@
     "gpxHint": "Wgraj trasę biegu lub wędrówki (.gpx) — zostanie wydrukowana jako wypukła linia na mapie.",
     "gpxMoved": "Strefa przeniesiona do trasy — mapa pokazuje teraz twoją trasę.",
     "gpxPartial": "Trasa jest za duża dla największego rozmiaru — w modelu zmieści się tylko środkowa część.",
+    "gpxScaled": "Strefa powiększona, aby zmieściła się cała trasa (skala {scale}) — szczegóły mapy będą drobniejsze.",
     "panelToggle": "Panel ścienny",
     "panelOff": "Wył",
     "panelTiles": "Kafelki",

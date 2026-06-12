@@ -36,10 +36,12 @@ test.describe("Конструктор мап /create", () => {
   });
 
   test("магніт: перемикач + поле підпису + жива/фолбек ціна в кнопці замовлення", async ({ page }) => {
-    const magnet = page.getByRole("button", { name: /Магніт на холодильник/ });
+    const magnet = page.getByRole("button", { name: /Магніт на холодильник/ }).first();
     await expect(magnet).toBeVisible();
     await magnet.click();
-    await expect(page.getByPlaceholder(/Підпис на магніті/)).toBeVisible();
+    // Стан магніта тепер у store (спільний для обох копій панелі) → поле
+    // підпису з'являється в обох — беремо першу
+    await expect(page.getByPlaceholder(/Підпис на магніті/).first()).toBeVisible();
 
     const orderBtn = page.getByRole("button", { name: /Замовити друк/ }).first();
     await expect(orderBtn).toBeVisible();
@@ -85,7 +87,7 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Ранкова пробіжка · 30 точок/).first()).toBeVisible();
     // Авто-фокус: зона/карта їдуть до треку, юзер бачить чесну примітку
     await expect(page.locator('[data-testid="gpx-note"]').first()).toBeVisible();
-    await expect(page.locator('[data-testid="gpx-note"]').first()).toContainText(/Зону переміщено до треку|лише центральна частина/);
+    await expect(page.locator('[data-testid="gpx-note"]').first()).toContainText(/Зону переміщено до треку|Зону розширено|лише центральна частина/);
     await page.getByRole("button", { name: "Прибрати" }).first().click();
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });

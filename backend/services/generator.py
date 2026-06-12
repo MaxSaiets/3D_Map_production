@@ -264,7 +264,9 @@ def generate_3d_map(
 
     # Ширина доріг × 3 для кращої видимості на моделі
     road_width_mult = params.road_width_multiplier * 3.0
-    min_road_width_m = min(max(0.5 / scale_factor, 0.1), 14.0)
+    # Кап 9м (= вулиця з тротуарами): на великих зонах мм-модельний мінімум
+    # вибухає у світових метрах і зливає щільний центр у суцільні плями.
+    min_road_width_m = min(max(0.5 / scale_factor, 0.1), 9.0)
 
     merged_roads_utm = None   # UTM-координати (для process_roads)
     merged_roads_local = None  # локальні координати

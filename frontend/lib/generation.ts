@@ -86,6 +86,11 @@ export function buildMapRequest(p: MapRequestParams) {
   };
 }
 
+// Гнучкий масштаб для GPX-треків: коли трек не влазить у стандартний 1:10000
+// (10 м/мм), зона може розширюватись аж до 35 м/мм (~1:35000) — плоска мапа
+// друкується шарами, тож точний масштаб не критичний, лише дрібніші деталі.
+export const GPX_MAX_M_PER_MM = 35;
+
 // Curated size options for the simple flow (mm + estimated price in ₴).
 // price = fallback, узгоджено з backend/pricing.json (живу ціну дає /api/quote).
 export const SIMPLE_SIZES = [

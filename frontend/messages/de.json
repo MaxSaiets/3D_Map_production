@@ -331,6 +331,7 @@
     "gpxHint": "Lade einen Lauf- oder Wandertrack (.gpx) hoch — die Route wird als erhabene Linie über der Karte gedruckt.",
     "gpxMoved": "Zone zum Track verschoben — die Karte zeigt jetzt deine Route.",
     "gpxPartial": "Der Track ist zu groß für die größte Variante — nur der zentrale Teil passt ins Modell.",
+    "gpxScaled": "Zone erweitert, damit der ganze Track passt (Maßstab {scale}) — Kartendetails werden feiner.",
     "panelToggle": "Wandpaneel",
     "panelOff": "Aus",
     "panelTiles": "Kacheln",

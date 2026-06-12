@@ -47,6 +47,16 @@ interface GenerationState {
   // перебудовується при зміні розміру моделі і має знов застосувати фокус.
   gpxFocus: { west: number; south: number; east: number; north: number; points: Array<[number, number]> } | null;
 
+  // Стан простої панелі /create — У STORE, НЕ в useState! Панель змонтована
+  // ДВІЧІ (desktop sidebar + mobile таб): локальний стан розсинхронізовувався
+  // між копіями → вибране «Панно 3×3»/GPX/магніт губилось при генерації з
+  // іншої копії (юзер: «панно згенерувало не те»).
+  simplePanelMode: 0 | 2 | 3;
+  simpleMagnetMode: boolean;
+  simpleMapLabel: string;
+  gpxName: string | null;
+  gpxNote: string | null;
+
   // Preview only
   // Preview only
   terrainSmoothShading: boolean;
@@ -69,6 +79,11 @@ interface GenerationState {
   setSelectedArea: (area: LatLngBounds | null) => void;
   setZonePolygonCoords: (coords: Array<[number, number]> | null) => void;
   setGpxFocus: (focus: GenerationState["gpxFocus"]) => void;
+  setSimplePanelMode: (mode: 0 | 2 | 3) => void;
+  setSimpleMagnetMode: (on: boolean) => void;
+  setSimpleMapLabel: (label: string) => void;
+  setGpxName: (name: string | null) => void;
+  setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[]) => void;
@@ -148,6 +163,11 @@ const initialState = {
   zonePolygonCoords: null,
   cropRotationDeg: 0,
   gpxFocus: null,
+  simplePanelMode: 0 as const,
+  simpleMagnetMode: false,
+  simpleMapLabel: "",
+  gpxName: null,
+  gpxNote: null,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
@@ -168,6 +188,11 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSelectedArea: (area) => set({ selectedArea: area }),
   setZonePolygonCoords: (coords) => set({ zonePolygonCoords: coords }),
   setGpxFocus: (focus) => set({ gpxFocus: focus }),
+  setSimplePanelMode: (mode) => set({ simplePanelMode: mode }),
+  setSimpleMagnetMode: (on) => set({ simpleMagnetMode: on }),
+  setSimpleMapLabel: (label) => set({ simpleMapLabel: label }),
+  setGpxName: (name) => set({ gpxName: name }),
+  setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds) =>

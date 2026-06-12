@@ -17,6 +17,15 @@ from services.road_processor import (
 )
 from services.geometry_context import looks_like_projected_meters
 
+# СВІТОВІ КАПИ для доріг. Пороги друкованості (мм моделі) на великих зонах
+# (масштаб ≤0.1 мм/м) вибухають у світових метрах: 1.0мм → 10м мін. ширини
+# вулиці + заливка проміжків ≤10м → щільний центр зливається у суцільні плями
+# (скарга юзера: «обʼєднує дуже багато», чорний Майдан на 1500м-зоні).
+# Капи тримають значення в межах реальної міської геометрії.
+ROAD_MIN_WIDTH_WORLD_CAP_M = 9.0    # вулиця з тротуарами; ширше — безглуздо
+ROAD_GAP_FILL_WORLD_CAP_M = 6.0     # лише міжсмугові щілини/трикутники перехресть
+ROAD_ORPHAN_HOLE_WORLD_CAP_M = 3.0  # дрібні дірки в перехрестях
+
 
 @dataclass
 class RoadGeometryPreparationResult:
@@ -117,7 +126,15 @@ def prepare_road_geometry(
     effective_tiny_feature_mm = max(float(tiny_feature_threshold_mm or 0.0), effective_min_width_mm)
     if scale_factor and float(scale_factor) > 0:
         try:
-            min_road_width_for_build = model_mm_to_world_m(effective_min_width_mm, float(scale_factor))
+            # СВІТОВИЙ КАП: пороги друкованості задані в мм МОДЕЛІ, тож на
+            # великих зонах (масштаб ≤0.1мм/м) вони вибухають у світових метрах:
+            # 1.0мм = 10м мін. ширини КОЖНОЇ вулиці + заливка проміжків ≤10м →
+            # щільний центр (Київ, Майдан) зливався у суцільні чорні плями.
+            # Реальна вулиця з тротуарами ~9м — ширше робити безглуздо.
+            min_road_width_for_build = min(
+                model_mm_to_world_m(effective_min_width_mm, float(scale_factor)),
+                ROAD_MIN_WIDTH_WORLD_CAP_M,
+            )
         except Exception:
             min_road_width_for_build = None
     local_edges_subset = _build_local_road_edges_subset(
@@ -179,14 +196,24 @@ def prepare_road_geometry(
             # normalize_road_mask_for_print only runs merge_close_road_gaps and
             # never deletes road polygons.
             if merged_roads_geom_local is not None and scale_factor and float(scale_factor) > 0:
-                gap_fill_m = model_mm_to_world_m(float(effective_gap_fill_mm), float(scale_factor))
+                # Світові капи (див. ROAD_*_WORLD_CAP_M вище): на великих зонах
+                # мм-модельні пороги вибухають і зливають квартали в плями.
+                gap_fill_m = min(
+                    model_mm_to_world_m(float(effective_gap_fill_mm), float(scale_factor)),
+                    ROAD_GAP_FILL_WORLD_CAP_M,
+                )
                 if gap_fill_m and gap_fill_m > 0:
                     try:
-                        min_road_feature_m = model_mm_to_world_m(0.5, float(scale_factor))
+                        min_road_feature_m = min(
+                            model_mm_to_world_m(0.5, float(scale_factor)), 4.0,
+                        )
                         # orphan_hole fills interior junction holes (triangular gaps at
                         # intersections). Keep it SMALL (0.5mm = 2.5m world) so only
                         # tight junction wedges are filled — not courtyards or medians.
-                        orphan_hole_m = model_mm_to_world_m(0.5, float(scale_factor))
+                        orphan_hole_m = min(
+                            model_mm_to_world_m(0.5, float(scale_factor)),
+                            ROAD_ORPHAN_HOLE_WORLD_CAP_M,
+                        )
                         filled = normalize_road_mask_for_print(
                             merged_roads_geom_local,
                             gap_fill_m=float(gap_fill_m),

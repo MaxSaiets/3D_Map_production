@@ -5,7 +5,7 @@ import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag } from "l
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
-import { buildMapRequest, SIMPLE_SIZES } from "@/lib/generation";
+import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OrderDialog } from "@/components/OrderDialog";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
@@ -45,15 +45,21 @@ export function SimpleControlPanel({
   } = s;
 
   const [styleId, setStyleId] = useState<string>("full");
-  const [magnetMode, setMagnetMode] = useState(false);
-  const [mapLabel, setMapLabel] = useState("");
-  // D4 GPX-трек: маршрут користувача поверх мапи
-  const [gpxTrack, setGpxTrack] = useState<Array<[number, number]> | null>(null);
-  const [gpxName, setGpxName] = useState<string | null>(null);
-  // Примітка після завантаження: «зону переміщено до треку» / «влізе лише частина»
-  const [gpxNote, setGpxNote] = useState<string | null>(null);
-  // D3 ПАННО: 0 = одна плитка, 2 = 2×2, 3 = 3×3 (зшиті плитки + zip)
-  const [panelMode, setPanelMode] = useState<0 | 2 | 3>(0);
+  // МАГНІТ/ПАННО/GPX — у zustand store, НЕ useState: панель змонтована двічі
+  // (desktop + mobile), локальний стан розсинхронізовувався між копіями і
+  // вибір губився при генерації з іншої копії.
+  const magnetMode = s.simpleMagnetMode;
+  const setMagnetMode = s.setSimpleMagnetMode;
+  const mapLabel = s.simpleMapLabel;
+  const setMapLabel = s.setSimpleMapLabel;
+  const panelMode = s.simplePanelMode;
+  const setPanelMode = s.setSimplePanelMode;
+  // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
+  const gpxTrack = s.gpxFocus?.points ?? null;
+  const gpxName = s.gpxName;
+  const setGpxName = s.setGpxName;
+  const gpxNote = s.gpxNote;
+  const setGpxNote = s.setGpxNote;
   // E4 ШЕРИНГ: рендер моделі → /share/{task} з og:image
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -320,7 +326,9 @@ export function SimpleControlPanel({
         previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
         previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
         previewIncludeParks: layerParks,
-        zonePolygonCoords: s.zonePolygonCoords,
+        // Панно: плитки ріжуться строго по своїх bbox — фігурний полігон
+        // (rounded-rect/коло/серце з /create) сюди потрапляти НЕ повинен.
+        zonePolygonCoords: panelMode > 0 ? null : s.zonePolygonCoords,
       });
       const { api } = await import("@/lib/api");
       // D3 ПАННО: ділимо зону на R×C плиток (row 0 = ПІВНІЧ, col 0 = захід)
@@ -495,7 +503,7 @@ export function SimpleControlPanel({
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
-          onClick={() => setMagnetMode((v) => !v)}
+          onClick={() => setMagnetMode(!magnetMode)}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             magnetMode
               ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
@@ -533,9 +541,8 @@ export function SimpleControlPanel({
                 try {
                   const { parseGpx, gpxBounds } = await import("@/lib/gpx");
                   const parsed = parseGpx(await file.text());
-                  if (!parsed) { setGpxName(null); setGpxTrack(null); setGpxNote(null); setGpxFocus(null); setError(t("gpxErr")); return; }
+                  if (!parsed) { setGpxName(null); setGpxNote(null); setGpxFocus(null); setError(t("gpxErr")); return; }
                   setError(null);
-                  setGpxTrack(parsed.points);
                   setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
                   // Авто-фокус: зона і карта їдуть до треку (раніше трек з іншого
                   // міста мовчки обрізався по чужій зоні → у моделі його не було).
@@ -546,11 +553,18 @@ export function SimpleControlPanel({
                     const wM = (e_ - w) * 111320 * Math.max(Math.cos((latC * Math.PI) / 180), 0.2);
                     const hM = (n - s_) * 111320;
                     const spanM = Math.max(wM, hM) * 1.1;
-                    // Авто-розмір: найменший пресет, чия зона (мм × 10 м, 1:10000) покриває трек
+                    // Авто-розмір: найменший пресет, чия зона (мм × 10 м, 1:10000)
+                    // покриває трек. Якщо трек більший — НЕ ріжемо його: зона
+                    // розширюється до GPX_MAX_M_PER_MM (плоска мапа друкується
+                    // шарами, точний масштаб не критичний — дрібніші деталі).
                     const fit = SIMPLE_SIZES.find((sz) => sz.mm * 10 >= spanM);
                     const target = fit ?? SIMPLE_SIZES[SIMPLE_SIZES.length - 1];
                     if (target.mm > (modelSizeMm || 0)) setModelSizeMm(target.mm);
-                    setGpxNote(fit ? t("gpxMoved") : t("gpxPartial"));
+                    if (fit) setGpxNote(t("gpxMoved"));
+                    else if (spanM <= target.mm * GPX_MAX_M_PER_MM) {
+                      const scale = Math.round((spanM / target.mm) * 1000);
+                      setGpxNote(t("gpxScaled", { scale: `1:${scale}` }));
+                    } else setGpxNote(t("gpxPartial"));
                     setGpxFocus({ west: w, south: s_, east: e_, north: n, points: parsed.points });
                   }
                 } catch { setError(t("gpxErr")); }
@@ -564,7 +578,7 @@ export function SimpleControlPanel({
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
                 <span className="truncate">✓ {gpxName} · {gpxTrack.length} {t("gpxPoints")}</span>
-                <button type="button" onClick={() => { setGpxTrack(null); setGpxName(null); setGpxNote(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">
+                <button type="button" onClick={() => { setGpxName(null); setGpxNote(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">
                   {t("gpxClear")}
                 </button>
               </div>

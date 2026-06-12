@@ -7,6 +7,7 @@ import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, 
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
+import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
@@ -118,9 +119,13 @@ export default function Home() {
     { id: "heart", label: "♥ Серце" },
   ] as const;
   const [figureShape, setFigureShape] = useState<string>("rounded");
+  // GPX: коли трек завантажено, дозволяємо зоні розширюватись понад 1:10000
+  // (до GPX_MAX_M_PER_MM) — інакше довгий маршрут фізично не влазив і юзер
+  // не міг збільшити зону.
+  const gpxLoaded = Boolean(useGenerationStore((st) => st.gpxFocus));
   const mapCrop = useMemo(() => (showHexGrid ? undefined : {
     aspectRatio: 1,
-    maxMetersPerMm: 10,
+    maxMetersPerMm: gpxLoaded ? GPX_MAX_M_PER_MM : 10,
     targetMetersPerMm: 6,
     mapWidthMm: modelSizeMm || 80,
     mapHeightMm: modelSizeMm || 80,
@@ -131,7 +136,7 @@ export default function Home() {
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),
-  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape]);
+  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape, gpxLoaded]);
 
   // Clear the rotated polygon when switching INTO grid mode (grid has its own
   // zone logic) so a stale figure crop can't leak into grid generation.

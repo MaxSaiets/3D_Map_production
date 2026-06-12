@@ -331,6 +331,7 @@
     "gpxHint": "Téléversez une trace de course ou de rando (.gpx) — l'itinéraire est imprimé en ligne surélevée sur la carte.",
     "gpxMoved": "Zone déplacée sur votre trace — la carte affiche votre itinéraire.",
     "gpxPartial": "La trace est trop grande pour la taille maximale — seule la partie centrale tiendra dans le modèle.",
+    "gpxScaled": "Zone élargie pour que toute la trace tienne (échelle {scale}) — les détails de la carte seront plus fins.",
     "panelToggle": "Panneau mural",
     "panelOff": "Off",
     "panelTiles": "Tuiles",

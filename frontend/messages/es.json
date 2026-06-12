@@ -331,6 +331,7 @@
     "gpxHint": "Sube una ruta de carrera o senderismo (.gpx): se imprime como línea en relieve sobre el mapa.",
     "gpxMoved": "Zona movida a tu ruta — el mapa ahora muestra tu recorrido.",
     "gpxPartial": "La ruta es demasiado grande para el tamaño máximo: solo la parte central cabrá en el modelo.",
+    "gpxScaled": "Zona ampliada para que quepa toda la ruta (escala {scale}): los detalles del mapa serán más finos.",
     "panelToggle": "Panel de pared",
     "panelOff": "Off",
     "panelTiles": "Piezas",
