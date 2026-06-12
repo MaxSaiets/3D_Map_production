@@ -102,6 +102,15 @@ export default function Home() {
     try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
   };
 
+  // ЗМІНА МІСТА: скидаємо зону ПЕРЕД зміною center — інакше overlay після
+  // ремаунта карти відновлює рамку зі СТАРОГО міста і fitBounds повертає
+  // карту назад (Рома: «коли обираєш місто, карта не переходить»).
+  // /keychains уже робить так само.
+  const handleCityChange = useCallback((key: string) => {
+    useGenerationStore.getState().setSelectedArea(null);
+    setCurrentCityKey(key);
+  }, []);
+
   const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea,
     modelSizeMm, cropRotationDeg, setCropRotationDeg, setZonePolygonCoords } = useGenerationStore();
 
@@ -446,13 +455,13 @@ export default function Home() {
                     setHexSizeM={setHexSizeM}
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={setCurrentCityKey}
+                    onCityChange={handleCityChange}
                   />
                 ) : (
                   <SimpleControlPanel
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={setCurrentCityKey}
+                    onCityChange={handleCityChange}
                   onAdvanced={() => toggleProMode(true)}
                   />
                 )}
@@ -613,13 +622,13 @@ export default function Home() {
                     setHexSizeM={setHexSizeM}
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={setCurrentCityKey}
+                    onCityChange={handleCityChange}
                   />
                 ) : (
                   <SimpleControlPanel
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={setCurrentCityKey}
+                    onCityChange={handleCityChange}
                   onAdvanced={() => toggleProMode(true)}
                   />
                 )}

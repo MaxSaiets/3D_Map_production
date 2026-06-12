@@ -356,11 +356,25 @@ export function SimpleControlPanel({
         const ids = batch.all_task_ids?.length ? batch.all_task_ids : [batch.task_id];
         setTaskGroup(batch.task_id, ids);
         setActiveTaskId(ids[0] ?? null);
+        // СКЛАДЕНЕ ПРЕВʼЮ: показуємо всі плитки разом (та сама механіка, що
+        // «Показати всі зони» у Профі) + row/col, щоб кожна стала на місце.
+        s.setShowAllZones(true);
+        const meta: Record<string, { zoneId: string; row?: number; col?: number }> = {};
+        for (let i = 0; i < ids.length && i < zones.length; i += 1) {
+          meta[String(ids[i])] = {
+            zoneId: String(zones[i].id),
+            row: zones[i].properties?.row,
+            col: zones[i].properties?.col,
+          };
+        }
+        s.setBatchZoneMetaByTaskId(meta);
         return;
       }
       const r = await api.generateModel(req as any);
       setTaskGroup(r.task_id, [r.task_id]);
       setActiveTaskId(r.task_id);
+      s.setShowAllZones(false);
+      s.setBatchZoneMetaByTaskId({});
     } catch (e: any) {
       setError(e?.message || t("errGen"));
       setGenerating(false);
@@ -682,6 +696,12 @@ export function SimpleControlPanel({
           {downloadUrl && printQuality && printQuality.status !== "ok" && (printQuality.warnings?.length ?? 0) > 0 && (
             <div className="rounded-[16px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
               {t("qualityWarn")}
+            </div>
+          )}
+
+          {downloadUrl && downloadUrl.includes("/download_all") && (
+            <div data-testid="panel-howto" className="rounded-[16px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.07)] px-4 py-2.5 text-xs leading-5 text-[var(--text-primary)]">
+              {t("panelHowto", { count: s.taskIds?.length ?? 0 })}
             </div>
           )}
 

@@ -34,7 +34,7 @@ export default async function KeychainsLayout({
         offers: {
           "@type": "Offer",
           priceCurrency: isUA ? "UAH" : "EUR",
-          price: isUA ? "290" : "7",
+          price: isUA ? "120" : "3",
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/keychains"),
         },

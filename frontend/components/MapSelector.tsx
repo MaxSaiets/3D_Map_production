@@ -539,7 +539,13 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     if (!map) return;
 
     const initialSelectedArea = initialSelectedAreaRef.current;
-    const existingCenter = initialSelectedArea?.getCenter() ?? map.getCenter();
+    // Без вибраної зони центр беремо з ОПЦІЙ карти (center міста, заданий
+    // MapContainer'ом) — map.getCenter() при щойно змонтованому 0-розмірному
+    // контейнері повертає сміття → зона будувалась у «нікуди» і fitBounds
+    // показував світ на zoom 0 (зміна міста ламала карту).
+    const optionCenter = (map.options as any)?.center;
+    const fallbackCenter = optionCenter ? L.latLng(optionCenter) : map.getCenter();
+    const existingCenter = initialSelectedArea?.getCenter() ?? fallbackCenter;
     // KEYCHAIN-MODE: ЗАВЖДИ починаємо з комфортного targetSize. Попередня зона
     // з іншої сторінки/міста ігнорується — інакше нова мапа відкривається з
     // занадто великою зоною (RED warning) тільки тому що в Zustand store

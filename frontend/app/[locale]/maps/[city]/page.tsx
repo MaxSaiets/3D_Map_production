@@ -78,7 +78,7 @@ export default async function CityPage({
         offers: {
           "@type": "Offer",
           priceCurrency: locale === "uk" ? "UAH" : "EUR",
-          price: locale === "uk" ? "290" : "7",
+          price: locale === "uk" ? "120" : "3",
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, `/maps/${city.slug}`),
         },

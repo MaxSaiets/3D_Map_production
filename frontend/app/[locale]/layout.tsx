@@ -118,8 +118,8 @@ export default async function LocaleLayout({
         provider: { "@id": `${BASE}/#org` },
         description: t("serviceDescription"),
         offers: [
-          { "@type": "Offer", name: t("offerKeychain"), priceCurrency: "UAH", price: "290", url: `${BASE}/keychains`, availability: "https://schema.org/InStock" },
-          { "@type": "Offer", name: t("offerMap"), priceCurrency: "UAH", price: "690", url: `${BASE}/create`, availability: "https://schema.org/InStock" },
+          { "@type": "Offer", name: t("offerKeychain"), priceCurrency: "UAH", price: "120", url: `${BASE}/keychains`, availability: "https://schema.org/InStock" },
+          { "@type": "Offer", name: t("offerMap"), priceCurrency: "UAH", price: "250", url: `${BASE}/create`, availability: "https://schema.org/InStock" },
         ],
       },
     ],

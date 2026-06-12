@@ -36,7 +36,7 @@ export default async function CreateLayout({
         offers: {
           "@type": "Offer",
           priceCurrency: isUA ? "UAH" : "EUR",
-          price: isUA ? "690" : "16",
+          price: isUA ? "250" : "6",
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/create"),
         },

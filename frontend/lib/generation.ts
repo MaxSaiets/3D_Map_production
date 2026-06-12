@@ -94,8 +94,9 @@ export const GPX_MAX_M_PER_MM = 35;
 // Curated size options for the simple flow (mm + estimated price in ₴).
 // price = fallback, узгоджено з backend/pricing.json (живу ціну дає /api/quote).
 export const SIMPLE_SIZES = [
-  { key: "s",  label: "S", mm: 55,  cm: "5.5 см", price: 690 },
-  { key: "m",  label: "M", mm: 80,  cm: "8 см",   price: 890 },
-  { key: "l",  label: "L", mm: 110, cm: "11 см",  price: 1290 },
-  { key: "xl", label: "XL", mm: 150, cm: "15 см", price: 1790 },
+  // Fallback-ціни = backend/pricing.json (живу ціну дає /api/quote)
+  { key: "s",  label: "S", mm: 55,  cm: "5.5 см", price: 250 },
+  { key: "m",  label: "M", mm: 80,  cm: "8 см",   price: 390 },
+  { key: "l",  label: "L", mm: 110, cm: "11 см",  price: 590 },
+  { key: "xl", label: "XL", mm: 150, cm: "15 см", price: 890 },
 ] as const;

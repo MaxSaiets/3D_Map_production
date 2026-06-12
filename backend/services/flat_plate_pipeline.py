@@ -24,8 +24,11 @@ LAYER_COLORS = {
     "buildings": [225, 225, 225, 255],
     "water": [100, 150, 200, 255],
     "parks": [100, 150, 100, 255],
-    "rim": [92, 80, 58, 255],
-    "text": [20, 20, 20, 255],       # чорний (юзер: «текст має бути чорним»)
+    # Фідбек 2026-06-12 (Рома): «ободок чорний, текст чорний» — виглядало як
+    # суцільна чорнота у 3D-превʼю. Rim = бронза (як у дизайнері #a6926b),
+    # text = темний еспресо (читається на тлі бази, але не «чорний»).
+    "rim": [166, 146, 107, 255],
+    "text": [70, 48, 30, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -855,9 +858,43 @@ def build_keychain_layout(
     )
     loop_center_x = loop_center_x_mm_safe * layout_scale_m_per_mm
     loop_center_y = body_maxy - loop_center_y_mm_safe * layout_scale_m_per_mm
+    # «ЗАКРІПЛЕНЕ» вушко (фідбек 2026-06-12: «закріпи кільце — в жетоні та
+    # інших моделях»): кріплення не сміє триматись на волосині.
+    # (а) Коло вушка мусить заходити в тіло ≥30% радіуса — якщо юзер відтягнув
+    #     його далі, притягуємо центр до тіла (вушко висіло лише на шийці).
+    import math as _math
+    try:
+        if not body.intersects(Point(loop_center_x, loop_center_y).buffer(outer_m * 0.7, resolution=24)):
+            body_pt, _ = nearest_points(body, Point(loop_center_x, loop_center_y))
+            dx = loop_center_x - body_pt.x
+            dy = loop_center_y - body_pt.y
+            d = _math.hypot(dx, dy) or 1.0
+            pull = d - outer_m * 0.7
+            loop_center_x -= dx / d * pull
+            loop_center_y -= dy / d * pull
+    except Exception:
+        pass
+    # (б) Отвір усередині тіла (жетон): перемичка до краю ≥2.0мм, інакше
+    #     кільце вириває тонку стінку — посуваємо отвір углиб тіла.
+    try:
+        pt = Point(loop_center_x, loop_center_y)
+        if body.contains(pt):
+            need = inner_m + 2.0 * layout_scale_m_per_mm
+            edge_dist = body.boundary.distance(pt)
+            if edge_dist < need:
+                bp, _ = nearest_points(body.boundary, pt)
+                dx = loop_center_x - bp.x
+                dy = loop_center_y - bp.y
+                d = _math.hypot(dx, dy) or 1.0
+                push = need - edge_dist
+                loop_center_x += dx / d * push
+                loop_center_y += dy / d * push
+    except Exception:
+        pass
     outer_loop = _keychain_loop_outer(center_x=loop_center_x, center_y=loop_center_y, outer_m=outer_m, style=loop_style)
     inner_hole = _keychain_loop_inner(center_x=loop_center_x, center_y=loop_center_y, inner_m=inner_m, style=loop_style)
-    neck_half = max((outer_m - inner_m) * 0.72, _model_mm_to_world_m(1.8, export_scale))
+    # (в) Товща шийка кріплення: 0.72→0.85 ширини кільця, мін 2.2мм
+    neck_half = max((outer_m - inner_m) * 0.85, _model_mm_to_world_m(2.2, export_scale))
     try:
         body_point, loop_point = nearest_points(body, Point(loop_center_x, loop_center_y))
         neck_line = LineString([body_point, loop_point])
