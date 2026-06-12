@@ -42,6 +42,11 @@ interface GenerationState {
   zonePolygonCoords: Array<[number, number]> | null;
   cropRotationDeg: number;
 
+  // D4 GPX: bbox+точки завантаженого треку. Overlay карти центрує зону на
+  // треку і малює полілінію; зберігається в store (не event), бо overlay
+  // перебудовується при зміні розміру моделі і має знов застосувати фокус.
+  gpxFocus: { west: number; south: number; east: number; north: number; points: Array<[number, number]> } | null;
+
   // Preview only
   // Preview only
   terrainSmoothShading: boolean;
@@ -63,6 +68,7 @@ interface GenerationState {
   // Actions
   setSelectedArea: (area: LatLngBounds | null) => void;
   setZonePolygonCoords: (coords: Array<[number, number]> | null) => void;
+  setGpxFocus: (focus: GenerationState["gpxFocus"]) => void;
   setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[]) => void;
@@ -141,6 +147,7 @@ const initialState = {
   modelSizeMm: 80.0, // 80мм = 8см за замовчуванням
   zonePolygonCoords: null,
   cropRotationDeg: 0,
+  gpxFocus: null,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
@@ -160,6 +167,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
 
   setSelectedArea: (area) => set({ selectedArea: area }),
   setZonePolygonCoords: (coords) => set({ zonePolygonCoords: coords }),
+  setGpxFocus: (focus) => set({ gpxFocus: focus }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds) =>

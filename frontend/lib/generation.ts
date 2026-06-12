@@ -29,7 +29,8 @@ export interface MapRequestParams {
   /** Rotated-rectangle corners [lon,lat] for a single figure (not grid). When
    *  set, the backend crops OSM to this polygon instead of the axis-aligned bbox. */
   zonePolygonCoords?: Array<[number, number]> | null;
-  /** Мапа-магніт: плаский режим + кишеня під магніт Ø10×2мм у центрі дна. */
+  /** Мапа-магніт: плаский режим + 4 кишені під магніти-шайби Ø4×2мм у дні
+   *  (діагональне кільце; кишеня Ø4.4×2.1 = кліренс 0.4/0.1 для вклеювання). */
   magnetPocket?: boolean;
   /** Підпис на плоскій мапі/магніті (рельєфний текст у смузі внизу). */
   mapLabel?: string;
@@ -69,7 +70,17 @@ export function buildMapRequest(p: MapRequestParams) {
     ...(p.zonePolygonCoords && p.zonePolygonCoords.length >= 3
       ? { zone_polygon_coords: p.zonePolygonCoords }
       : {}),
-    ...(p.magnetPocket ? { magnet_pocket: true } : {}),
+    ...(p.magnetPocket
+      ? {
+          magnet_pocket: true,
+          // Шайби Ø4×2мм: кишеня з кліренсом 0.4мм по діаметру і 0.1мм по
+          // глибині; 4 шт по кутах — тримає рівно і не обертається.
+          magnet_pocket_diameter_mm: 4.4,
+          magnet_pocket_depth_mm: 2.1,
+          magnet_pocket_count: 4,
+          magnet_pocket_inset_mm: 8,
+        }
+      : {}),
     ...(p.mapLabel && p.mapLabel.trim() ? { map_label: p.mapLabel.trim() } : {}),
     ...(p.gpxTrack && p.gpxTrack.length >= 2 ? { gpx_track: p.gpxTrack } : {}),
   };

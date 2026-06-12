@@ -427,6 +427,74 @@ def test_puzzle_pair_tab_fits_into_notch_with_clearance():
     assert overlap < tab.area * 0.01, f"tab перетинає тіло R на {overlap:.3f}мм² — клиренсу нема"
 
 
+# ===== ПАРА ДЛЯ ЗАКОХАНИХ: серце-половинки з замком =====
+
+def test_heart_tip_is_rounded():
+    # Вістря серця заокруглене (_round_polygon_tip): у смужці 1мм над самою
+    # нижньою точкою контур уже помітно ШИРОКИЙ (у гострого — голка <1мм).
+    heart = _keychain_body_shape(0, 0, 40, 42, radius_m=4.0, shape="heart")
+    miny = heart.bounds[1]
+    strip = heart.intersection(_square(0, miny, 40, miny + 1.0))
+    assert strip.bounds[2] - strip.bounds[0] > 3.0
+
+
+def test_heart_pair_halves_assemble_into_full_heart():
+    from shapely.affinity import translate
+    from shapely.geometry import Point as _Pt
+
+    W, H = 30.0, 44.0
+    left = _keychain_body_shape(0, 0, W, H, radius_m=4.0, shape="heart-l")
+    right = _keychain_body_shape(0, 0, W, H, radius_m=4.0, shape="heart-r")
+    full = _keychain_body_shape(0, 0, 2 * W, H, radius_m=4.0, shape="heart")
+
+    assert left.is_valid and right.is_valid
+    # L: замок стирчить за грань розрізу, але лишається в контурі повного серця
+    assert left.bounds[2] > W + 1.0
+    assert full.buffer(0.2).covers(left)
+    # Стиковка: жодного перетину тіл при складанні
+    overlap = translate(right, xoff=W).intersection(left).area
+    assert overlap < 0.5, f"половинки перетинаються на {overlap:.3f}мм²"
+    # Складене серце покриває ≥97% площі повного (мінус кліренс замка)
+    union_area = translate(right, xoff=W).union(left).area
+    assert union_area > full.area * 0.97
+    # R: паз реально вирізаний — площа R менша за чисту праву половину серця
+    from shapely.geometry import box as _box
+    right_half_clean = full.intersection(_box(W, -H, 2 * W, 2 * H))
+    assert right.area < right_half_clean.area - 10.0
+
+
+# ===== МАГНІТ: кілька кишень під шайби Ø4×2мм =====
+
+def test_magnet_pockets_four_corner_ring_inside_square():
+    from services.flat_plate_pipeline import build_magnet_pocket_geometry
+
+    zone = _square(0, 0, 60, 60)
+    pockets = build_magnet_pocket_geometry(
+        zone, diameter_mm=4.4, count=4, inset_mm=8.0, export_scale_factor=1.0,
+    )
+    parts = list(pockets.geoms) if hasattr(pockets, "geoms") else [pockets]
+    assert len(parts) == 4
+    import math
+    for p in parts:
+        assert p.area == pytest.approx(math.pi * 2.2 ** 2, rel=0.02)
+        # кишеня + бічна стінка цілком у тілі
+        assert zone.contains(p.buffer(0.5))
+
+
+def test_magnet_pockets_fallback_to_single_centroid_when_shape_too_tight():
+    from shapely.geometry import Point as _Pt
+    from services.flat_plate_pipeline import build_magnet_pocket_geometry
+
+    # Маленьке коло Ø20: кільце з inset 8 не вміщує кишені → 1 у центрі
+    zone = _Pt(10, 10).buffer(10, resolution=48)
+    pockets = build_magnet_pocket_geometry(
+        zone, diameter_mm=4.4, count=4, inset_mm=8.0, export_scale_factor=1.0,
+    )
+    parts = list(pockets.geoms) if hasattr(pockets, "geoms") else [pockets]
+    assert len(parts) == 1
+    assert parts[0].centroid.distance(_Pt(10, 10)) < 0.5
+
+
 # ===== D4 GPX: трек → буферизований полігон у локальних метрах =====
 
 class _FakeGC:

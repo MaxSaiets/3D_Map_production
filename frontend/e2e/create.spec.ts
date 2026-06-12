@@ -83,6 +83,9 @@ test.describe("Конструктор мап /create", () => {
       buffer: Buffer.from(gpx, "utf-8"),
     });
     await expect(page.getByText(/Ранкова пробіжка · 30 точок/).first()).toBeVisible();
+    // Авто-фокус: зона/карта їдуть до треку, юзер бачить чесну примітку
+    await expect(page.locator('[data-testid="gpx-note"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="gpx-note"]').first()).toContainText(/Зону переміщено до треку|лише центральна частина/);
     await page.getByRole("button", { name: "Прибрати" }).first().click();
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });

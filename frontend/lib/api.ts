@@ -152,7 +152,7 @@ export interface GenerationRequest {
   map_label_text_height_mm?: number;
   keychain_mode?: boolean;
   keychain_label?: string;
-  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r";
+  keychain_base_shape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
   keychain_label2?: string;
   keychain_label2_text_height_mm?: number;
   keychain_back_label?: string;

@@ -38,7 +38,7 @@ export function SimpleControlPanel({
     isGenerating, downloadUrl, progress, status, printQuality,
     taskGroupId, setTaskGroup, setActiveTaskId, setGenerating,
     setDownloadUrl, setTaskStatuses, updateProgress,
-    modelSizeMm, setModelSizeMm, previewMode, setPreviewMode,
+    modelSizeMm, setModelSizeMm, previewMode, setPreviewMode, setGpxFocus,
     setTerrainEnabled,
     setPreviewIncludeBuildings, setPreviewIncludeRoads,
     setPreviewIncludeWater, setPreviewIncludeParks,
@@ -50,6 +50,8 @@ export function SimpleControlPanel({
   // D4 GPX-трек: маршрут користувача поверх мапи
   const [gpxTrack, setGpxTrack] = useState<Array<[number, number]> | null>(null);
   const [gpxName, setGpxName] = useState<string | null>(null);
+  // Примітка після завантаження: «зону переміщено до треку» / «влізе лише частина»
+  const [gpxNote, setGpxNote] = useState<string | null>(null);
   // D3 ПАННО: 0 = одна плитка, 2 = 2×2, 3 = 3×3 (зшиті плитки + zip)
   const [panelMode, setPanelMode] = useState<0 | 2 | 3>(0);
   // E4 ШЕРИНГ: рендер моделі → /share/{task} з og:image
@@ -529,12 +531,28 @@ export function SimpleControlPanel({
                 e.target.value = "";
                 if (!file) return;
                 try {
-                  const { parseGpx } = await import("@/lib/gpx");
+                  const { parseGpx, gpxBounds } = await import("@/lib/gpx");
                   const parsed = parseGpx(await file.text());
-                  if (!parsed) { setGpxName(null); setGpxTrack(null); setError(t("gpxErr")); return; }
+                  if (!parsed) { setGpxName(null); setGpxTrack(null); setGpxNote(null); setGpxFocus(null); setError(t("gpxErr")); return; }
                   setError(null);
                   setGpxTrack(parsed.points);
                   setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
+                  // Авто-фокус: зона і карта їдуть до треку (раніше трек з іншого
+                  // міста мовчки обрізався по чужій зоні → у моделі його не було).
+                  const bb = gpxBounds(parsed.points);
+                  if (bb) {
+                    const [w, s_, e_, n] = bb;
+                    const latC = (s_ + n) / 2;
+                    const wM = (e_ - w) * 111320 * Math.max(Math.cos((latC * Math.PI) / 180), 0.2);
+                    const hM = (n - s_) * 111320;
+                    const spanM = Math.max(wM, hM) * 1.1;
+                    // Авто-розмір: найменший пресет, чия зона (мм × 10 м, 1:10000) покриває трек
+                    const fit = SIMPLE_SIZES.find((sz) => sz.mm * 10 >= spanM);
+                    const target = fit ?? SIMPLE_SIZES[SIMPLE_SIZES.length - 1];
+                    if (target.mm > (modelSizeMm || 0)) setModelSizeMm(target.mm);
+                    setGpxNote(fit ? t("gpxMoved") : t("gpxPartial"));
+                    setGpxFocus({ west: w, south: s_, east: e_, north: n, points: parsed.points });
+                  }
                 } catch { setError(t("gpxErr")); }
               }}
             />
@@ -543,11 +561,14 @@ export function SimpleControlPanel({
             </span>
           </label>
           {gpxTrack ? (
-            <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
-              <span className="truncate">✓ {gpxName} · {gpxTrack.length} {t("gpxPoints")}</span>
-              <button type="button" onClick={() => { setGpxTrack(null); setGpxName(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">
-                {t("gpxClear")}
-              </button>
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
+                <span className="truncate">✓ {gpxName} · {gpxTrack.length} {t("gpxPoints")}</span>
+                <button type="button" onClick={() => { setGpxTrack(null); setGpxName(null); setGpxNote(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">
+                  {t("gpxClear")}
+                </button>
+              </div>
+              {gpxNote && <p data-testid="gpx-note" className="text-[11px] leading-4 font-semibold text-[var(--accent-strong)]">{gpxNote}</p>}
             </div>
           ) : (
             <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpxHint")}</p>

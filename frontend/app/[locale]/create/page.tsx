@@ -127,6 +127,7 @@ export default function Home() {
     baseShape: figureShape as any,
     cornerRadiusMm: figureShape === "rounded" ? 6 : 0,
     cropToShape: true,
+    followGpxFocus: true,
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),

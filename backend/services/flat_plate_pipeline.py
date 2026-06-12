@@ -488,6 +488,86 @@ def _rounded_rect(minx: float, miny: float, maxx: float, maxy: float, radius_m: 
     return box(minx + radius_m, miny + radius_m, maxx - radius_m, maxy - radius_m).buffer(radius_m, resolution=14)
 
 
+def build_magnet_pocket_geometry(
+    zone_polygon_local: BaseGeometry,
+    *,
+    diameter_mm: float,
+    count: int,
+    inset_mm: float,
+    export_scale_factor: float,
+) -> Optional[BaseGeometry]:
+    """Кишені під магніти у дні плоскої мапи. count=1 — одна в центроїді
+    (старий режим, golden-сумісний). count≥2 — діагональне кільце навколо
+    центру (кути 45°+k·90°): працює і для квадрата, і для кола/серця;
+    кандидат відкидається, якщо кишеня + 0.6мм бічної стінки не вміщується
+    в тіло; якщо лишилось <2 — fallback до однієї в центроїді."""
+    import math
+    r_m = _model_mm_to_world_m(max(float(diameter_mm), 1.0) / 2.0, export_scale_factor)
+    if zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True):
+        return None
+    cnt = max(int(count or 1), 1)
+    c = zone_polygon_local.centroid
+    if cnt <= 1:
+        return Point(c.x, c.y).buffer(r_m, resolution=48)
+    inset_m = _model_mm_to_world_m(max(float(inset_mm), 1.0), export_scale_factor)
+    wall_m = _model_mm_to_world_m(0.6, export_scale_factor)
+    bminx, bminy, bmaxx, bmaxy = zone_polygon_local.bounds
+    ring_r = min(bmaxx - bminx, bmaxy - bminy) / 2.0 - inset_m
+    centers = []
+    if ring_r > r_m:
+        for i in range(cnt):
+            a = math.pi / 4.0 + (2.0 * math.pi * i) / cnt
+            p = Point(c.x + ring_r * math.cos(a), c.y + ring_r * math.sin(a))
+            if zone_polygon_local.contains(p.buffer(r_m + wall_m, resolution=24)):
+                centers.append(p)
+    if len(centers) < 2:
+        centers = [Point(c.x, c.y)]
+    return unary_union([p.buffer(r_m, resolution=48) for p in centers])
+
+
+def _round_polygon_tip(pts: list, *, tip_index: int, radius: float) -> list:
+    """Заокруглення одного гострого вузла замкнутого контуру: вершини в радіусі
+    `radius` від кінчика замінюються семплами квадратичної Безьє (контрольна
+    точка = старий кінчик). Використовується для вістря серця."""
+    import math
+    n = len(pts)
+    if n < 8 or radius <= 0:
+        return pts
+    tip = pts[tip_index]
+
+    def _walk(direction: int):
+        dist = 0.0
+        i = tip_index
+        prev = tip
+        for _ in range(n // 2):
+            i = (i + direction) % n
+            cur = pts[i]
+            dist += math.hypot(cur[0] - prev[0], cur[1] - prev[1])
+            prev = cur
+            if dist >= radius:
+                return i
+        return (tip_index + direction) % n
+
+    ia = _walk(-1)  # межа дуги "до" кінчика
+    ib = _walk(+1)  # межа дуги "після"
+    a, b = pts[ia], pts[ib]
+    arc = []
+    samples = 10
+    for s in range(samples + 1):
+        t = s / samples
+        x = (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * tip[0] + t ** 2 * b[0]
+        y = (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * tip[1] + t ** 2 * b[1]
+        arc.append((x, y))
+    out = []
+    i = ib
+    while i != ia:
+        out.append(pts[i])
+        i = (i + 1) % n
+    out.append(pts[ia])
+    out.extend(arc)
+    return out
+
+
 def _keychain_body_shape(
     minx: float,
     miny: float,
@@ -555,7 +635,53 @@ def _keychain_body_shape(
             )
             for px, py in raw
         ]
+        # Вістря (вершина з min y) було надто гострим для носіння — зрізаємо
+        # квадратичною Безьє через старий кінчик у радіусі R від нього.
+        # ІДЕНТИЧНИЙ алгоритм у designer-SVG (shapePath) і MapSelector
+        # (shapeOutlinePoints) — превʼю й модель збігаються.
+        pts = _round_polygon_tip(pts, tip_index=min(range(len(pts)), key=lambda i: pts[i][1]),
+                                 radius=min(width, height) * 0.16)
         return Polygon(pts).buffer(0)
+    if shape_name in {"heart-l", "heart-r"}:
+        # ПАРА ДЛЯ ЗАКОХАНИХ: серце, розрізане вертикально на дві половинки
+        # з puzzle-замком по грані розрізу. bbox (minx..maxx) = ОДНА половинка;
+        # повне серце будується на подвійній ширині і кліпається.
+        # Замок: головка k=0.16·довжини грані розрізу, шийка 0.62k, кліренс
+        # паза 0.8% грані (~0.26мм на 44мм) — як у puzzle-пари (під тестом).
+        import math
+        full = _keychain_body_shape(
+            minx, miny, minx + 2.0 * width, maxy, radius_m=radius_m, shape="heart",
+        )
+        cut = minx + width
+        cut_line = LineString([(cut, miny - height), (cut, maxy + height)])
+        seg = full.intersection(cut_line)
+        segs = list(seg.geoms) if hasattr(seg, "geoms") else [seg]
+        longest = max(segs, key=lambda g: g.length)
+        y0e, y1e = longest.bounds[1], longest.bounds[3]
+        elen = max(y1e - y0e, 1e-6)
+        cy = (y0e + y1e) / 2.0
+        k = elen * 0.16
+        nw = k * 0.62
+        if shape_name == "heart-l":
+            half = full.intersection(box(minx - width, miny - height, cut, maxy + height))
+            knob_cx = cut + k * 0.95
+            tab = unary_union([
+                Point(knob_cx, cy).buffer(k, resolution=48),
+                box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
+            ])
+            # tab мусить лишатись усередині ПОВНОГО серця, інакше у складеному
+            # вигляді він стирчатиме за контур
+            tab = tab.intersection(full)
+            return unary_union([half, tab]).buffer(0)
+        clearance = elen * 0.008
+        half = full.intersection(box(cut, miny - height, minx + 2.0 * width + width, maxy + height))
+        knob_cx = cut + k * 0.95
+        notch = unary_union([
+            Point(knob_cx, cy).buffer(k, resolution=48),
+            box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
+        ]).buffer(clearance, join_style=1)
+        half = half.difference(notch).buffer(0)
+        return affinity.translate(half, xoff=-width)
     if shape_name in {"puzzle-l", "puzzle-r"}:
         # C2 ПАЗЛ-ПАРА: два брелки, що зʼєднуються (long-distance подарунок).
         # L має ВИСТУП (knob) на правій грані, R — ПАЗ на лівій з клиренсом
@@ -2183,23 +2309,29 @@ def run_flat_plate_pipeline(
         # МАПА-МАГНІТ: кругла кишеня під магніт у центрі дна. Той самий прийом,
         # що й гравіювання звороту брелка — два watertight-екструди без булевих.
         try:
-            from shapely.geometry import Point as _Pt
             _pocket_d_mm = float(getattr(request, "magnet_pocket_diameter_mm", 10.4) or 10.4)
             _pocket_depth_mm = float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0)
+            _pocket_count = int(getattr(request, "magnet_pocket_count", 1) or 1)
+            _pocket_inset_mm = float(getattr(request, "magnet_pocket_inset_mm", 8.0) or 8.0)
             # Гарантуємо ≥0.8мм стінку над кишенею
             _pocket_depth_mm = min(_pocket_depth_mm, max(base_thickness_mm - 0.8, 0.0))
             _pocket_depth_m = _model_mm_to_world_m(_pocket_depth_mm, export_scale_factor)
-            _pocket_r_m = _model_mm_to_world_m(_pocket_d_mm / 2.0, export_scale_factor)
-            _c = zone.zone_polygon_local.centroid
-            _pocket = _Pt(_c.x, _c.y).buffer(_pocket_r_m, resolution=48)
+            _pocket = build_magnet_pocket_geometry(
+                zone.zone_polygon_local,
+                diameter_mm=_pocket_d_mm,
+                count=_pocket_count,
+                inset_mm=_pocket_inset_mm,
+                export_scale_factor=export_scale_factor,
+            )
             terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
                 zone.zone_polygon_local,
                 base_top_m=base_top_m,
-                back_text_poly=_pocket if _pocket_depth_m > 1e-9 else None,
+                back_text_poly=_pocket if (_pocket is not None and _pocket_depth_m > 1e-9) else None,
                 engrave_m=_pocket_depth_m,
             )
             if keychain_base_bottom_mesh is not None:
-                print(f"[MAGNET] Pocket Ø{_pocket_d_mm}×{_pocket_depth_mm}mm carved into base bottom")
+                _n = len(getattr(_pocket, "geoms", [None])) if _pocket is not None else 0
+                print(f"[MAGNET] {max(_n,1)} pocket(s) Ø{_pocket_d_mm}×{_pocket_depth_mm}mm carved into base bottom")
             else:
                 print("[MAGNET] Base too thin for pocket — solid base fallback")
         except Exception as exc:

@@ -73,4 +73,33 @@ test.describe("Майстерня брелків /keychains", () => {
       }, { timeout: 10_000 })
       .toBe(true);
   });
+
+  test("серце-пара для закоханих: шаблони L/R дають половинку з замком", async ({ page }) => {
+    await page.getByRole("button", { name: /Серце пари · L · 30 × 44/ }).click();
+    // Тіло L ширше за 30мм (замок стирчить праворуч за грань розрізу)
+    await expect
+      .poll(async () => {
+        const d = await page
+          .locator("#keychainMapClip")
+          .evaluate((el) => el.closest("svg")?.querySelector('path[fill="#a6926b"]')?.getAttribute("d") || "");
+        const xs = (d.match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 0);
+        return Math.max(...xs, 0);
+      }, { timeout: 10_000 })
+      .toBeGreaterThan(31);
+    await page.getByRole("button", { name: /Серце пари · R · 30 × 44/ }).click();
+    // Тіло R вписане у 30мм (паз всередину, нічого не стирчить)
+    await expect
+      .poll(async () => {
+        const d = await page
+          .locator("#keychainMapClip")
+          .evaluate((el) => el.closest("svg")?.querySelector('path[fill="#a6926b"]')?.getAttribute("d") || "");
+        const xs = (d.match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 0);
+        return xs.length ? Math.max(...xs) : 999;
+      }, { timeout: 10_000 })
+      .toBeLessThan(30.5);
+    // Чипи нових форм доступні і в додаткових налаштуваннях
+    await page.getByRole("button", { name: /Показати додаткові налаштування/ }).click();
+    await expect(page.getByRole("button", { name: "Серце пари L 💕" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Серце пари R 💕" })).toBeVisible();
+  });
 });

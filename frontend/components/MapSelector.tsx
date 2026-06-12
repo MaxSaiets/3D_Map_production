@@ -148,7 +148,7 @@ type KeychainCropSpec = {
   mapWidthMm: number;
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
-  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart" | "house" | "puzzle-l" | "puzzle-r";
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
   /** When true, the polygon sent to the backend is the actual (rotated) SHAPE
    *  outline, not the axis-aligned bbox — so the model is cut to that shape
    *  (heart/circle/…). Keychains keep bbox (their base shape is separate). */
@@ -161,6 +161,10 @@ type KeychainCropSpec = {
    *  rotated rect у форматі [lon, lat]. Backend використовує це щоб обрізати
    *  OSM-дані строго до обраної ділянки (а не axis-aligned bbox). */
   onPolygonChange?: (polygon: Array<[number, number]>) => void;
+  /** D4 GPX: коли true, overlay стежить за store.gpxFocus — центрує зону на
+   *  bbox завантаженого треку і малює його полілінію. Вмикається лише на
+   *  /create (брелковий конструктор GPX не використовує). */
+  followGpxFocus?: boolean;
 };
 
 const MAP_CLICK_SUPPRESS_AFTER_DRAG_MS = 900;
@@ -257,7 +261,42 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
     const s = Math.min(w / (maxx - minx), h / (maxy - miny));
     const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
-    for (const p of raw) pts.push({ x: (p.x - cx) * s, y: (p.y - cy) * s });
+    let heartPts = raw.map((p) => [(p.x - cx) * s, (p.y - cy) * s] as [number, number]);
+    // Вістря (min y) заокруглюємо — той самий алгоритм, що бек/дизайнер
+    let tipIdx = 0;
+    for (let i = 1; i < heartPts.length; i++) if (heartPts[i][1] < heartPts[tipIdx][1]) tipIdx = i;
+    heartPts = roundOutlineTip(heartPts, tipIdx, Math.min(w, h) * 0.16);
+    for (const [px, py] of heartPts) pts.push({ x: px, y: py });
+  } else if (shape === "heart-l" || shape === "heart-r") {
+    // Половинка серця (пара для закоханих): повне серце шириною 2w, кліп по
+    // центру; замок на грані не малюємо — на карті це лише силует зони.
+    const raw: Array<{ x: number; y: number }> = [];
+    const N = 96;
+    for (let i = 0; i < N; i++) {
+      const t = (2 * Math.PI * i) / N;
+      raw.push({ x: 16 * Math.pow(Math.sin(t), 3), y: 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) });
+    }
+    const xs = raw.map((p) => p.x), ys = raw.map((p) => p.y);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+    const sc = Math.min((2 * w) / (maxx - minx), h / (maxy - miny));
+    const ccx = (minx + maxx) / 2, ccy = (miny + maxy) / 2;
+    let hp = raw.map((p) => [(p.x - ccx) * sc, (p.y - ccy) * sc] as [number, number]);
+    let tIdx = 0;
+    for (let i = 1; i < hp.length; i++) if (hp[i][1] < hp[tIdx][1]) tIdx = i;
+    hp = roundOutlineTip(hp, tIdx, Math.min(2 * w, h) * 0.16);
+    const keepLeft = shape === "heart-l";
+    const keep = (p: [number, number]) => (keepLeft ? p[0] <= 0 : p[0] >= 0);
+    const clipped: Array<[number, number]> = [];
+    for (let i = 0; i < hp.length; i++) {
+      const cur = hp[i], prev = hp[(i - 1 + hp.length) % hp.length];
+      if (keep(cur) !== keep(prev)) {
+        const t = (0 - prev[0]) / (cur[0] - prev[0]);
+        clipped.push([0, prev[1] + t * (cur[1] - prev[1])]);
+      }
+      if (keep(cur)) clipped.push(cur);
+    }
+    const shift = keepLeft ? w / 2 : -w / 2;
+    for (const [px, py] of clipped) pts.push({ x: px + shift, y: py });
   } else if (shape === "house") {
     // Силует будиночка: вершина даху зверху, стіни донизу (як у дизайнері).
     const roofH = h * 0.38;
@@ -266,6 +305,44 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     pts.push({ x: w / 2, y: h / 2 });          // правий низ
     pts.push({ x: -w / 2, y: h / 2 });         // лівий низ
     pts.push({ x: -w / 2, y: -h / 2 + roofH }); // лівий край даху
+  } else if (shape === "puzzle-l" || shape === "puzzle-r") {
+    // Той самий контур, що на беку (_keychain_body_shape puzzle-l/r):
+    // knob k=0.13·min, шийка nw=0.62k, центр головки 0.95k від грані.
+    // Вертикально симетричний → y-фліп не впливає.
+    const k = Math.min(w, h) * 0.13;
+    const nw = k * 0.62;
+    const xInt = Math.sqrt(k * k - nw * nw);
+    const ARC = 14;
+    if (shape === "puzzle-l") {
+      const cx0 = w / 2 + 0.95 * k;
+      // правий край згори донизу з виступом назовні
+      pts.push({ x: -w / 2, y: -h / 2 });
+      pts.push({ x: w / 2, y: -h / 2 });
+      pts.push({ x: w / 2, y: -nw });
+      for (let i = 0; i <= ARC; i++) {
+        const a = -2.474 + (4.948 * i) / ARC; // від входу через "схід" до виходу
+        pts.push({ x: cx0 + Math.cos(a) * k, y: Math.sin(a) * k });
+      }
+      pts.push({ x: w / 2, y: nw });
+      pts.push({ x: w / 2, y: h / 2 });
+      pts.push({ x: -w / 2, y: h / 2 });
+    } else {
+      const cl = Math.min(w, h) * 0.008;
+      const kc = k + cl, nwc = nw + cl;
+      const cxn = -w / 2 + 0.95 * k;
+      const xIntC = Math.sqrt(Math.max(kc * kc - nwc * nwc, 0.01));
+      pts.push({ x: -w / 2, y: -h / 2 });
+      pts.push({ x: w / 2, y: -h / 2 });
+      pts.push({ x: w / 2, y: h / 2 });
+      pts.push({ x: -w / 2, y: h / 2 });
+      // лівий край знизу догори з пазом усередину
+      pts.push({ x: -w / 2, y: nwc });
+      for (let i = 0; i <= ARC; i++) {
+        const a = 2.474 - (4.948 * i) / ARC; // дзеркальна дуга всередину тіла
+        pts.push({ x: cxn + Math.cos(a) * kc, y: Math.sin(a) * kc });
+      }
+      pts.push({ x: -w / 2, y: -nwc });
+    }
   } else if (shape === "hexagon") {
     // Flat-top hexagon inscribed in the box
     const rx = w / 2, ry = h / 2;
@@ -306,6 +383,41 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     }
   }
   return pts;
+}
+
+/** Заокруглення гострого вузла контуру (вістря серця) — дзеркало бекендового
+ *  _round_polygon_tip: квадратична Безьє через старий кінчик у радіусі radius. */
+function roundOutlineTip(pts: Array<[number, number]>, tipIndex: number, radius: number): Array<[number, number]> {
+  const n = pts.length;
+  if (n < 8 || radius <= 0) return pts;
+  const tip = pts[tipIndex];
+  const walk = (dir: number) => {
+    let dist = 0, i = tipIndex;
+    let prev = tip;
+    for (let s = 0; s < Math.floor(n / 2); s++) {
+      i = (i + dir + n) % n;
+      dist += Math.hypot(pts[i][0] - prev[0], pts[i][1] - prev[1]);
+      prev = pts[i];
+      if (dist >= radius) return i;
+    }
+    return (tipIndex + dir + n) % n;
+  };
+  const ia = walk(-1), ib = walk(+1);
+  const a = pts[ia], b = pts[ib];
+  const arc: Array<[number, number]> = [];
+  for (let s = 0; s <= 10; s++) {
+    const t = s / 10;
+    arc.push([
+      (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * tip[0] + t ** 2 * b[0],
+      (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * tip[1] + t ** 2 * b[1],
+    ]);
+  }
+  const out: Array<[number, number]> = [];
+  let i = ib;
+  while (i !== ia) { out.push(pts[i]); i = (i + 1) % n; }
+  out.push(pts[ia]);
+  out.push(...arc);
+  return out;
 }
 
 function rotatedShapePoints(center: L.LatLng, widthM: number, heightM: number, rotationDeg: number, shape: string, cornerRadiusFraction: number = 0.15): L.LatLng[] {
@@ -391,6 +503,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     heightM: number;
   } | null>(null);
   const rectDragCleanupRef = useRef<(() => void) | null>(null);
+  // D4 GPX: полілінія завантаженого треку на карті
+  const gpxLineRef = useRef<L.Polyline | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
   const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
@@ -465,7 +579,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const fitTimer = setTimeout(() => {
       try {
         map.invalidateSize();
-        map.fitBounds(initialBounds.pad(1.6), { animate: false, maxZoom: 16 });
+        // currentBoundsRef, не initialBounds: GPX-фокус міг уже пересунути зону
+        map.fitBounds((currentBoundsRef.current ?? initialBounds).pad(1.6), { animate: false, maxZoom: 16 });
       } catch { /* ignore */ }
     }, 150);
 
@@ -535,6 +650,38 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         spec.onPolygonChange(poly);
       }
     };
+
+    // D4 GPX: центруємо зону на bbox треку + малюємо полілінію. Викликається
+    // при маунті (store вже може містити фокус — overlay перебудовується при
+    // зміні розміру моделі) і при кожній зміні store.gpxFocus.
+    const applyGpxFocus = (focus: ReturnType<typeof useGenerationStore.getState>["gpxFocus"]) => {
+      if (gpxLineRef.current) { gpxLineRef.current.remove(); gpxLineRef.current = null; }
+      if (!focus) return;
+      if (focus.points?.length) {
+        gpxLineRef.current = L.polyline(
+          focus.points.map((p) => [p[1], p[0]] as [number, number]),
+          { color: "#c2410c", weight: 3, opacity: 0.9, interactive: false },
+        ).addTo(map);
+      }
+      const trackBounds = L.latLngBounds([focus.south, focus.west], [focus.north, focus.east]);
+      const tSize = boundsSizeMeters(trackBounds);
+      const span = Math.max(tSize.widthM, tSize.heightM) * 1.1;
+      const widthM = Math.min(Math.max(span, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      const zoneBounds = boundsFromCenterMeters(trackBounds.getCenter(), widthM, widthM / aspect);
+      updateBounds(zoneBounds);
+      try {
+        map.invalidateSize();
+        map.fitBounds(zoneBounds.pad(0.35), { animate: false, maxZoom: 16 });
+      } catch { /* ignore */ }
+    };
+    let unsubGpx: (() => void) | null = null;
+    if (spec.followGpxFocus) {
+      const current = useGenerationStore.getState().gpxFocus;
+      if (current) applyGpxFocus(current);
+      unsubGpx = useGenerationStore.subscribe((st, prev) => {
+        if (st.gpxFocus !== prev.gpxFocus) applyGpxFocus(st.gpxFocus);
+      });
+    }
 
     const blockMapPlacement = () => {
       lastDragEndedAtRef.current = Date.now();
@@ -713,6 +860,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       rotateHandle.remove();
       label.remove();
       clearTimeout(fitTimer);
+      unsubGpx?.();
+      gpxLineRef.current?.remove();
+      gpxLineRef.current = null;
     };
   }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange]);
 

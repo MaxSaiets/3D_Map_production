@@ -12,7 +12,7 @@ const LiveCitySvgPaths = dynamic(
   { ssr: false, loading: () => null },
 );
 
-export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r";
+export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
 export type KeychainLabelFontStyle = "block" | "wide" | "condensed";
 
@@ -292,6 +292,54 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
     },
   },
   {
+    id: "heart-pair-left",
+    name: "Серце пари · L · 30 × 44",
+    description: "Половинка серця для двох: твоє місто. Замок на грані зʼєднується з половинкою R у повне серце.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 30,
+      bodyHeightMm: 44,
+      cornerRadiusMm: 0,
+      baseShape: "heart-l",
+      loopStyle: "round",
+      loopXMm: 15,
+      loopYMm: 0,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 30,
+      mapHeightMm: 44,
+      labelXMm: 15,
+      labelYMm: 33,
+      labelWidthMm: 16,
+      labelBandMm: 5,
+      labelTextHeightMm: 2.8,
+    },
+  },
+  {
+    id: "heart-pair-right",
+    name: "Серце пари · R · 30 × 44",
+    description: "Половинка серця для двох: місто близької людини. Паз приймає половинку L.",
+    design: {
+      ...DEFAULT_KEYCHAIN_DESIGN,
+      bodyWidthMm: 30,
+      bodyHeightMm: 44,
+      cornerRadiusMm: 0,
+      baseShape: "heart-r",
+      loopStyle: "round",
+      loopXMm: 15,
+      loopYMm: 0,
+      mapXMm: 0,
+      mapYMm: 0,
+      mapWidthMm: 30,
+      mapHeightMm: 44,
+      labelXMm: 15,
+      labelYMm: 33,
+      labelWidthMm: 16,
+      labelBandMm: 5,
+      labelTextHeightMm: 2.8,
+    },
+  },
+  {
     id: "right-loop",
     name: "Side Loop",
     description: "Петля справа, зручно для широкої карти.",
@@ -399,19 +447,26 @@ function shapePath(
     const ys = raw.map((p) => p[1]);
     const x0 = Math.min(...xs), x1 = Math.max(...xs);
     const y0 = Math.min(...ys), y1 = Math.max(...ys);
-    const d = raw
-      .map(([px, py], i) => {
-        const sx = minX + ((px - x0) / (x1 - x0)) * w;
-        const sy = minY + ((y1 - py) / (y1 - y0)) * h;
-        return `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`;
-      })
-      .join(" ");
+    let pts2 = raw.map(([px, py]) => [
+      minX + ((px - x0) / (x1 - x0)) * w,
+      minY + ((y1 - py) / (y1 - y0)) * h,
+    ] as [number, number]);
+    // Вістря (max sy, бо y-вниз) заокруглюємо — той самий алгоритм, що на беку
+    // (_round_polygon_tip): Безьє через старий кінчик у радіусі 9% min-сторони.
+    let tipIdx = 0;
+    for (let i = 1; i < pts2.length; i++) if (pts2[i][1] > pts2[tipIdx][1]) tipIdx = i;
+    pts2 = roundPolygonTip(pts2, tipIdx, Math.min(w, h) * 0.16);
+    const d = pts2.map(([sx, sy], i) => `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`).join(" ");
     return `${d} Z`;
   }
   if (value.baseShape === "house") {
     const roofH = h * 0.38;
     const cx = minX + w / 2;
     return `M ${cx} ${minY} L ${maxX} ${minY + roofH} V ${maxY} H ${minX} V ${minY + roofH} Z`;
+  }
+  if (value.baseShape === "heart-l" || value.baseShape === "heart-r") {
+    const pts2 = heartHalfPoints(minX, minY, w, h, value.baseShape === "heart-l" ? "l" : "r");
+    return pts2.map(([sx, sy], i) => `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`).join(" ") + " Z";
   }
   if (value.baseShape === "puzzle-l" || value.baseShape === "puzzle-r") {
     // Та сама геометрія, що на беку (_keychain_body_shape puzzle-l/r):
@@ -440,6 +495,117 @@ function shapePath(
     );
   }
   return `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`;
+}
+
+/** Заокруглення одного гострого вузла контуру (вістря серця): вершини в
+ *  радіусі radius від кінчика → семпли квадратичної Безьє через старий кінчик.
+ *  Дзеркало бекендового _round_polygon_tip — превʼю і модель збігаються. */
+function roundPolygonTip(pts: Array<[number, number]>, tipIndex: number, radius: number): Array<[number, number]> {
+  const n = pts.length;
+  if (n < 8 || radius <= 0) return pts;
+  const tip = pts[tipIndex];
+  const walk = (dir: number) => {
+    let dist = 0;
+    let i = tipIndex;
+    let prev = tip;
+    for (let s = 0; s < Math.floor(n / 2); s++) {
+      i = (i + dir + n) % n;
+      const cur = pts[i];
+      dist += Math.hypot(cur[0] - prev[0], cur[1] - prev[1]);
+      prev = cur;
+      if (dist >= radius) return i;
+    }
+    return (tipIndex + dir + n) % n;
+  };
+  const ia = walk(-1);
+  const ib = walk(+1);
+  const a = pts[ia], b = pts[ib];
+  const arc: Array<[number, number]> = [];
+  const S = 10;
+  for (let s = 0; s <= S; s++) {
+    const t = s / S;
+    arc.push([
+      (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * tip[0] + t ** 2 * b[0],
+      (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * tip[1] + t ** 2 * b[1],
+    ]);
+  }
+  const out: Array<[number, number]> = [];
+  let i = ib;
+  while (i !== ia) {
+    out.push(pts[i]);
+    i = (i + 1) % n;
+  }
+  out.push(pts[ia]);
+  out.push(...arc);
+  return out;
+}
+
+/** ПАРА ДЛЯ ЗАКОХАНИХ: контур половинки серця (w×h) із puzzle-замком на грані
+ *  розрізу — дзеркало бекендового _keychain_body_shape heart-l/r.
+ *  Повне серце будується на подвійній ширині, кліпається по x=cut, прямий
+ *  сегмент розрізу замінюється на knob (l, назовні) / notch (r, всередину). */
+function heartHalfPoints(minX: number, minY: number, w: number, h: number, side: "l" | "r"): Array<[number, number]> {
+  const n = 192;
+  const raw: Array<[number, number]> = [];
+  for (let i = 0; i < n; i++) {
+    const t = (2 * Math.PI * i) / n;
+    raw.push([16 * Math.sin(t) ** 3, 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)]);
+  }
+  const xs = raw.map((p) => p[0]), ys = raw.map((p) => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const fullMinX = side === "l" ? minX : minX - w; // праву половину зсуваємо в [minX..minX+w]
+  let pts = raw.map(([px, py]) => [
+    fullMinX + ((px - x0) / (x1 - x0)) * (2 * w),
+    minY + ((y1 - py) / (y1 - y0)) * h, // y-вниз СВГ: лоби зверху, вістря знизу
+  ] as [number, number]);
+  let tipIdx = 0;
+  for (let i = 1; i < pts.length; i++) if (pts[i][1] > pts[tipIdx][1]) tipIdx = i;
+  pts = roundPolygonTip(pts, tipIdx, Math.min(2 * w, h) * 0.16);
+  const cut = side === "l" ? minX + w : minX;
+  const keep = (p: [number, number]) => (side === "l" ? p[0] <= cut + 1e-9 : p[0] >= cut - 1e-9);
+  // Sutherland–Hodgman кліп по півплощині x=cut
+  const clipped: Array<[number, number]> = [];
+  for (let i = 0; i < pts.length; i++) {
+    const cur = pts[i];
+    const prev = pts[(i - 1 + pts.length) % pts.length];
+    const curIn = keep(cur), prevIn = keep(prev);
+    if (curIn !== prevIn) {
+      const t = (cut - prev[0]) / (cur[0] - prev[0]);
+      clipped.push([cut, prev[1] + t * (cur[1] - prev[1])]);
+    }
+    if (curIn) clipped.push(cur);
+  }
+  // Прямий сегмент розрізу = між двома сусідніми вершинами з x≈cut
+  let i1 = -1;
+  for (let i = 0; i < clipped.length; i++) {
+    const a = clipped[i], b = clipped[(i + 1) % clipped.length];
+    if (Math.abs(a[0] - cut) < 1e-6 && Math.abs(b[0] - cut) < 1e-6 && Math.abs(a[1] - b[1]) > h * 0.2) {
+      i1 = i;
+      break;
+    }
+  }
+  if (i1 < 0) return clipped; // fallback: без замка
+  const A = clipped[i1], B = clipped[(i1 + 1) % clipped.length];
+  const yLo = Math.min(A[1], B[1]), yHi = Math.max(A[1], B[1]);
+  const elen = yHi - yLo;
+  const cy = (yLo + yHi) / 2;
+  const k = elen * 0.16;
+  const nw = k * 0.62;
+  const dir = Math.sign(B[1] - A[1]) || 1; // напрям обходу грані
+  const cxc = cut + 0.95 * k; // центр головки: для l — назовні, для r — всередину тіла (та сама +x сторона)
+  const lock: Array<[number, number]> = [[cut, cy - dir * nw]];
+  const a0 = Math.atan2(-dir * nw, -Math.sqrt(k * k - nw * nw)); // вхід дуги ≈ ±2.474 рад
+  for (let s = 0; s <= 16; s++) {
+    const a = a0 + ((-2 * a0) * s) / 16; // від входу через «схід» до виходу
+    lock.push([cxc + Math.cos(a) * k, cy + Math.sin(a) * k]);
+  }
+  lock.push([cut, cy + dir * nw]);
+  const out: Array<[number, number]> = [];
+  for (let i = 0; i <= i1; i++) out.push(clipped[i]);
+  out.push(...lock);
+  for (let i = i1 + 1; i < clipped.length; i++) out.push(clipped[i]);
+  return out;
 }
 
 function bodyPath(value: KeychainDesignerConfig) {
