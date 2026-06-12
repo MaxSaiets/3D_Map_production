@@ -135,7 +135,7 @@ if ($frontendTouched -and -not $SkipBuild) {
     # `next start` is live corrupts .next (missing .next/server/app/*/page.js ->
     # "ENOENT page.js" / "o is not a function" / unstyled 500s). Stop -> rm ->
     # build -> (started after the BUILD_ID gate below).
-    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; cd /opt/3dmap/frontend && npm install --no-audit --no-fund > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
+    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f 'next-server' 2>/dev/null; pkill -9 -f 'next start' 2>/dev/null; sleep 2; cd /opt/3dmap/frontend && npm install --no-audit --no-fund > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
     Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
     $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
     # Авто-відновлення: пошкоджений node_modules (бракує next/dist/... модулів)
@@ -168,8 +168,13 @@ Write-Step "PM2 restart"
 $backendTouched = $allChanges | Where-Object { $_ -match "^backend/" }
 $restartTargets = @()
 if ($backendTouched) { $restartTargets += "3dmap-backend" }
-if ($frontendTouched) { $restartTargets += "3dmap-frontend" }
-if (-not $restartTargets) { $restartTargets = @("all") }
+# ВАЖЛИВО: фронт НЕ рестартуємо, якщо крок 6 щойно збілдив+запустив+прогрів його.
+# Зайвий restart одразу після старту запускав cookie-race 500 → 7b рестартував
+# падаючий процес → pm2 у рестарт-циклі → guard-ребілд ловив ENOTEMPTY від
+# недобитого next start, що писав у .next (двічі поклало сайт 2026-06-12).
+if ($frontendTouched -and $SkipBuild) { $restartTargets += "3dmap-frontend" }
+if (-not $restartTargets -and -not $frontendTouched) { $restartTargets = @("all") }
+if ($frontendTouched -and -not $SkipBuild) { Write-Ok "Frontend freshly built+started in step 6 — skipping redundant restart" }
 
 foreach ($t in $restartTargets) {
     & ssh @SSH "pm2 restart $t --update-env" 2>&1 | Out-Null
@@ -207,7 +212,7 @@ if ($frontendTouched) {
         Write-Host "    Stale/partial build — clean rebuild (with npm ci fallback)..." -ForegroundColor Yellow
         # Clean rebuild; if the build dies on a corrupted node_modules
         # (MODULE_NOT_FOUND / 'No such file'), restore with npm ci and rebuild.
-        $rb = & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_rebuild.log 2>&1; ec=$?; if [ $ec -ne 0 ] && grep -qiE "Cannot find module|No such file|MODULE_NOT_FOUND" /tmp/3dmap_rebuild.log; then echo "npm ci recovery..."; npm ci >> /tmp/3dmap_rebuild.log 2>&1; node_modules/next/dist/bin/next build >> /tmp/3dmap_rebuild.log 2>&1; ec=$?; fi; echo EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1
+        $rb = & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f "next-server" 2>/dev/null; pkill -9 -f "next start" 2>/dev/null; sleep 2; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_rebuild.log 2>&1; ec=$?; if [ $ec -ne 0 ] && grep -qiE "Cannot find module|No such file|MODULE_NOT_FOUND|ENOTEMPTY" /tmp/3dmap_rebuild.log; then echo "recovery rebuild..."; npm ci >> /tmp/3dmap_rebuild.log 2>&1; rm -rf .next; node_modules/next/dist/bin/next build >> /tmp/3dmap_rebuild.log 2>&1; ec=$?; fi; echo EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1
         Write-Host ($rb | Out-String).Trim() -ForegroundColor DarkGray
         $check2 = (& ssh @SSH $intCmd 2>&1 | Out-String).Trim()
         Write-Host "    $check2" -ForegroundColor DarkGray
