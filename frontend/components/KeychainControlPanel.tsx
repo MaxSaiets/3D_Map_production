@@ -1385,11 +1385,14 @@ export function KeychainControlPanel({
         <div className="h-20 lg:hidden" aria-hidden="true" />
         <StickyActionBar
           priceLabel="Орієнтовна вартість"
-          price={quote?.formatted ?? null}
+          // Fallback поки /api/quote вантажиться — брелок базово 120₴ (не «—»)
+          price={quote?.formatted ?? "≈ 120 ₴"}
           actionLabel={downloadUrl ? "Замовити друк" : isGenerating ? `Генерація… ${progress}%` : "Створити брелок"}
           busy={isGenerating}
           disabled={!downloadUrl && !canGenerate}
           onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
+          secondaryLabel={downloadUrl ? "Завантажити" : undefined}
+          onSecondary={downloadUrl ? handleDownload : undefined}
         />
 
         <section className={sectionClass("advanced")}>

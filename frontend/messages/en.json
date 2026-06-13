@@ -316,6 +316,7 @@
     "errGen": "Generation error",
     "qualityWarn": "The model is ready, but there are print remarks. Details in “Pro” mode.",
     "downloadFile": "Download 3MF",
+    "downloadShort": "Download",
     "mapLabelPh": "Label on the magnet (e.g. KYIV) — optional",
     "magnetToggle": "Fridge magnet",
     "magnetHint": "Flat 6 cm format with 4 pockets for Ø4×2 mm disc magnets in the bottom (near the corners). Glue the magnets in after printing.",

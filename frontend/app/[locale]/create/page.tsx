@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, KeyRound, Layers3, Loader2, Map as MapIcon, Settings2, User, X, Home as HomeIcon } from "lucide-react";
+import { Download, KeyRound, User, X, Home as HomeIcon } from "lucide-react";
 import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
@@ -14,7 +14,6 @@ import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
-import { gatedDownload } from "@/lib/download";
 import { useTranslations } from "next-intl";
 
 type WorkspaceView = "map" | "preview" | "settings";
@@ -78,12 +77,6 @@ const CITY_LABELS: Record<string, string> = {
   Zhytomyr: "Житомир", Sumy: "Суми", Rivne: "Рівне", Lutsk: "Луцьк",
   Uzhhorod: "Ужгород", Chernivtsi: "Чернівці", Kherson: "Херсон", Kropyvnytskyi: "Кропивницький",
 };
-
-const WORKSPACE_TABS: Array<{ id: WorkspaceView; label: string; icon: typeof MapIcon }> = [
-  { id: "map", label: "Мапа", icon: MapIcon },
-  { id: "preview", label: "Прев'ю", icon: Layers3 },
-  { id: "settings", label: "Налаштування", icon: Settings2 },
-];
 
 export default function Home() {
   const tc = useTranslations("create");
@@ -385,26 +378,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-            {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => {
-              const isActive = workspaceView === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setWorkspaceView(id)}
-                  className={`flex min-w-fit items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    isActive
-                      ? "bg-[var(--accent-strong)] text-white shadow-[0_14px_30px_rgba(11,92,87,0.24)]"
-                      : "bg-white/75 text-[var(--text-secondary)]"
-                  }`}
-                >
-                  <Icon size={16} />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Мобільну навігацію уніфіковано: ЄДИНИЙ степер (WizardSteps нижче)
+              замість трьох конкурентних систем табів. Раніше тут був дубль-ряд
+              «Мапа/Прев'ю/Налаштування», що повторював і степер, і нижній бар. */}
         </header>
 
         <div className="mt-3">
@@ -632,89 +608,6 @@ export default function Home() {
               </div>
             </div>
           </section>
-        </div>
-
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 lg:hidden">
-          <div className="pointer-events-auto rounded-[26px] border border-[rgba(255,255,255,0.55)] bg-[rgba(15,23,42,0.9)] px-4 py-3 text-white shadow-[0_22px_60px_rgba(15,23,42,0.3)] backdrop-blur">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
-                  Швидкий статус
-                </p>
-                <div className="mt-1 text-sm font-semibold">
-                  {isGenerating ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {status || "Генерація триває"}
-                    </span>
-                  ) : downloadUrl ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Download className="h-4 w-4" />
-                      Модель готова
-                    </span>
-                  ) : (
-                    selectionLabel
-                  )}
-                </div>
-                {isGenerating && <p className="mt-1 text-xs text-white/65">{progress}% виконано</p>}
-                {!isGenerating && downloadUrl && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {/* UX: primary CTA = замовлення (гроші), secondary = файл */}
-                    <button
-                      type="button"
-                      onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-order"))}
-                      className="inline-flex items-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-4 py-2 text-xs font-extrabold text-white"
-                    >
-                      🛒 Замовити друк
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => gatedDownload({
-                        taskId: taskGroupId, downloadUrl,
-                        meta: { city: currentCityKey, product_type: "map" },
-                        getIdToken, openLogin,
-                        onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." } })),
-                      })}
-                      className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white"
-                    >
-                      <Download size={14} />
-                      Завантажити 3MF
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("map")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "map" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Мапа
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("preview")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "preview" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Прев'ю
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceView("settings")}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                    workspaceView === "settings" ? "bg-white text-slate-900" : "bg-white/10 text-white"
-                  }`}
-                >
-                  Дії
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

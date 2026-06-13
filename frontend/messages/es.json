@@ -316,6 +316,7 @@
     "errGen": "Error de generación",
     "qualityWarn": "El modelo está listo, pero hay observaciones de impresión. Detalles en modo «Pro».",
     "downloadFile": "Descargar 3MF",
+    "downloadShort": "Descargar",
     "mapLabelPh": "Texto en el imán (p. ej. KYIV) — opcional",
     "magnetToggle": "Imán de nevera",
     "magnetHint": "Formato plano de 6 cm con 4 huecos para imanes Ø4×2 mm en la base (en las esquinas). Los imanes se pegan tras la impresión.",

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, Settings2, User } from "lucide-react";
+import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, User } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
 import { KeychainSlicerPreview } from "@/components/KeychainLifePreview";
 import {
@@ -424,41 +424,10 @@ export default function KeychainsPage() {
         </div>
       </div>
 
-      {/* Mobile bottom tab bar — sticky, прихований на десктопі */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] px-2 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-3 gap-1.5">
-          <button
-            type="button"
-            onClick={() => scrollTo("kc-design")}
-            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "design" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
-            }`}
-          >
-            <Layers3 size={18} />
-            Превʼю
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollTo("kc-map")}
-            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "map" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
-            }`}
-          >
-            <MapIcon size={18} />
-            Карта
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollTo("kc-settings")}
-            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-2 py-1 text-[11px] font-semibold transition ${
-              mobileTab === "settings" ? "bg-[var(--accent-strong)] text-white shadow-[0_8px_18px_rgba(11,92,87,0.22)]" : "text-[var(--text-secondary)]"
-            }`}
-          >
-            <Settings2 size={18} />
-            Створити
-          </button>
-        </div>
-      </nav>
+      {/* Мобільну навігацію уніфіковано: ЄДИНИЙ степер (WizardSteps зверху, з
+          клік-скролом до секцій) + StickyActionBar (ціна+«Створити») з
+          KeychainControlPanel. Прибрано дубль-ряд «Превʼю/Карта/Створити»,
+          що перекривав sticky-бар і дублював степер. */}
     </div>
   );
 }

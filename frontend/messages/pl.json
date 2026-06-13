@@ -316,6 +316,7 @@
     "errGen": "Błąd generowania",
     "qualityWarn": "Model gotowy, ale są uwagi do druku. Szczegóły w trybie „Pro”.",
     "downloadFile": "Pobierz 3MF",
+    "downloadShort": "Pobierz",
     "mapLabelPh": "Napis na magnesie (np. KYIV) — opcjonalnie",
     "magnetToggle": "Magnes na lodówkę",
     "magnetHint": "Płaski format 6 cm z 4 kieszeniami na magnesy Ø4×2 mm w spodzie (przy rogach). Magnesy wkleja się po druku.",

@@ -796,6 +796,10 @@ export function SimpleControlPanel({
             busy={isGenerating}
             disabled={!downloadUrl && (!selectedArea || isGenerating)}
             onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
+            // На екрані готового — друга дія «Завантажити» поряд із «Замовити»
+            // (раніше це давав окремий нижній бар, який ми прибрали).
+            secondaryLabel={downloadUrl ? t("downloadShort") : undefined}
+            onSecondary={downloadUrl ? doGatedDownload : undefined}
           />
         </>
       )}

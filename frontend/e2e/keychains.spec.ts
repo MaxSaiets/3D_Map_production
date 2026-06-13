@@ -12,6 +12,17 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect(page.getByRole("button", { name: /Будиночок 44 × 48/ })).toBeVisible();
   });
 
+  test("Ф1b: мобільна навігація уніфікована (sticky з ціною + єдиний степер)", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/uk/keychains");
+    await page.waitForTimeout(1000);
+    // Sticky-бар показує ціну одразу (не «—») + дію «Створити брелок»
+    await expect(page.getByText(/≈\s*120\s*₴/).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Створити брелок/ }).first()).toBeVisible();
+    // Єдина навігація — 3-кроковий степер
+    await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);
+  });
+
   test("клік «Серце» застосовує параметричний контур у дизайнері", async ({ page }) => {
     await page.getByRole("button", { name: /Серце 46 × 42/ }).click();
     // Контур серця — полілінія з 90+ сегментів у SVG превʼю

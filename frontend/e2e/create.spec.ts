@@ -39,6 +39,19 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/≈\s*\d+\s*₴/).first()).toBeVisible();
   });
 
+  test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/uk/create");
+    await page.waitForTimeout(1000);
+    // Прибрано старий ряд табів «Налаштування» і нижній «Швидкий статус · Дії»
+    await expect(page.getByText(/Швидкий статус/)).toHaveCount(0);
+    // Єдина навігація — 3-кроковий степер; клік «Параметри» показує стиль/розмір
+    const steps = page.locator('nav[aria-label] > button');
+    await expect(steps).toHaveCount(3);
+    await steps.nth(1).click();
+    await expect(page.getByText(/Стиль|Розмір/).first()).toBeVisible();
+  });
+
   test("майстер: 3 клікабельні кроки Місце/Параметри/Готово", async ({ page }) => {
     const steps = page.locator('nav[aria-label] > button');
     await expect(steps).toHaveCount(3);
