@@ -357,7 +357,11 @@ export function KeychainControlPanel({
     updateProgress,
     setDownloadUrl,
     setSelectedArea,
+    gpxFocus, setGpxFocus, gpxName, setGpxName,
   } = useGenerationStore();
+  // D4 GPX-трек на брелку — точки живуть у store.gpxFocus (їх же використовує
+  // карта-оверлей для авто-фокусу зони на маршрут).
+  const gpxTrack = gpxFocus?.points ?? null;
 
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -856,6 +860,9 @@ export function KeychainControlPanel({
         // C3 ТОПО: рельєф висот замість карти (бек вимикає шари сам)
         keychain_topo_mode: topoMode,
         keychain_relief_mm: reliefMm,
+        // D4 GPX-трек на брелку (бек малює підвищений шар поверх карти; з топо
+        // несумісний — там рельєф). Точки беремо зі store.gpxFocus.
+        ...(!topoMode && gpxTrack && gpxTrack.length >= 2 ? { gpx_track: gpxTrack } : {}),
         // Точний полігон обернутого rect — backend обрізає OSM по ньому,
         // а не по axis-aligned bbox. Так модель показує саме те що обрав юзер.
         ...(cropPolygon && cropPolygon.length >= 3 ? { zone_polygon_coords: cropPolygon } : {}),
@@ -1152,6 +1159,49 @@ export function KeychainControlPanel({
                 value={reliefMm}
                 onChange={setReliefMm}
               />
+            )}
+            {/* D4 GPX-трек на брелку (маршрут пробіжки/походу як рельєфна лінія).
+                Несумісний з топо — там рельєф замість карти. */}
+            {!topoMode && (
+              <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2.5">
+                <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-[var(--text-primary)]">
+                  <span>🏃 Маршрут (GPX) на брелку</span>
+                  <input
+                    type="file"
+                    accept=".gpx,application/gpx+xml"
+                    data-testid="kc-gpx-input"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!file) return;
+                      try {
+                        const { parseGpx, gpxBounds } = await import("@/lib/gpx");
+                        const parsed = parseGpx(await file.text());
+                        if (!parsed) { setGpxName(null); setGpxFocus(null); setError("Не вдалося прочитати GPX-файл"); return; }
+                        setError(null);
+                        setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
+                        const bb = gpxBounds(parsed.points);
+                        if (bb) {
+                          const [w, s_, e_, n] = bb;
+                          setGpxFocus({ west: w, south: s_, east: e_, north: n, points: parsed.points });
+                        }
+                      } catch { setError("Не вдалося прочитати GPX-файл"); }
+                    }}
+                  />
+                  <span className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
+                    {gpxTrack ? "Замінити" : "Обрати файл"}
+                  </span>
+                </label>
+                {gpxTrack ? (
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
+                    <span className="truncate">✓ {gpxName} · {gpxTrack.length} точок</span>
+                    <button type="button" onClick={() => { setGpxName(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">Прибрати</button>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">Трек пробіжки/походу — лінія поверх карти. Зона авто-наведеться на маршрут.</p>
+                )}
+              </div>
             )}
             <div className="grid grid-cols-2 gap-2">
               <QuickActionButton onClick={centerMap}>

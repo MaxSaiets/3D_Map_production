@@ -60,6 +60,21 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect(page.getByText(/Гори замість вулиць/)).toBeVisible();
   });
 
+  test("GPX-трек у брелках: завантаження показує назву + кількість точок", async ({ page }) => {
+    await page.getByRole("button", { name: "2. Карта" }).click();
+    await expect(page.getByText(/Маршрут \(GPX\) на брелку/)).toBeVisible();
+    const gpx = `<?xml version="1.0"?><gpx><trk><name>Біг містом</name><trkseg>${Array.from(
+      { length: 24 },
+      (_, i) => `<trkpt lat="${49.84 + i * 0.0002}" lon="${24.03 + i * 0.0002}"/>`,
+    ).join("")}</trkseg></trk></gpx>`;
+    await page.locator('[data-testid="kc-gpx-input"]').setInputFiles({
+      name: "run.gpx", mimeType: "application/gpx+xml", buffer: Buffer.from(gpx, "utf-8"),
+    });
+    await expect(page.getByText(/Біг містом · 24 точок/)).toBeVisible();
+    await page.getByRole("button", { name: "Прибрати" }).first().click();
+    await expect(page.getByText(/Біг містом/)).toHaveCount(0);
+  });
+
   test("чипи форм містять Серце ♥ і Будиночок (додаткові налаштування)", async ({ page }) => {
     await page.getByRole("button", { name: /Показати додаткові налаштування/ }).click();
     await expect(page.getByRole("button", { name: "Серце ♥" })).toBeVisible();

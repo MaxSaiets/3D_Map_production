@@ -141,6 +141,8 @@ export default function KeychainsPage() {
       rotationDeg: cropRotationDeg,
       onRotationChange: handleCropRotationChange,
       onPolygonChange: setCropPolygon,
+      // D4 GPX: зона авто-наводиться на завантажений трек (як на /create)
+      followGpxFocus: true,
     }),
     [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio],
   );
