@@ -161,6 +161,7 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           water: 0x6496c8,
           parks: 0x649664,
           green: 0x649664,
+          track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
         };
 
         group.traverse((child) => {
@@ -191,7 +192,11 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           for (const material of materials) {
             if (!material) continue;
             const maybeColored = material as THREE.Material & { color?: THREE.Color };
-            if (partColor !== null && maybeColored.color?.getHex() === 0xffffff) {
+            // GPX-маршрут завжди ЧЕРВОНИЙ (форсуємо, навіть якщо 3MF віддав сірий);
+            // решта шарів — лише коли матеріал білий (не перебиваємо AMS-кольори).
+            if (partKey === "track" && partColor !== null && maybeColored.color) {
+              maybeColored.color.setHex(partColor);
+            } else if (partColor !== null && maybeColored.color?.getHex() === 0xffffff) {
               maybeColored.color.setHex(partColor);
             }
             material.side = THREE.DoubleSide;

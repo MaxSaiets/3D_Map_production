@@ -1199,9 +1199,12 @@ export function KeychainControlPanel({
                   </span>
                 </label>
                 {gpxTrack ? (
-                  <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
-                    <span className="truncate">✓ {gpxName} · {gpxTrack.length} точок</span>
-                    <button type="button" onClick={() => { setGpxName(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">Прибрати</button>
+                  <div className="mt-2 space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
+                      <span className="truncate">✓ {gpxName} · {gpxTrack.length} точок</span>
+                      <button type="button" onClick={() => { setGpxName(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">Прибрати</button>
+                    </div>
+                    <p className="text-[11px] leading-4 text-[var(--text-secondary)]">🔒 Твій маршрут — лише для побудови моделі. Ми його не публікуємо й не передаємо.</p>
                   </div>
                 ) : (
                   <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">Трек пробіжки/походу — лінія поверх карти. Зона авто-наведеться на маршрут.</p>

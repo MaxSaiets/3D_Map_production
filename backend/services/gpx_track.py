@@ -14,7 +14,7 @@ import trimesh
 from shapely.geometry import LineString, MultiLineString
 from shapely.geometry.base import BaseGeometry
 
-TRACK_COLOR = [206, 75, 60, 255]  # теракотовий — контрастний до доріг/парків
+TRACK_COLOR = [222, 28, 28, 255]  # ЧЕРВОНИЙ — маршрут має чітко виділятись (AMS-шар)
 MAX_GPX_POINTS = 8000
 
 

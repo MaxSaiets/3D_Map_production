@@ -331,6 +331,7 @@
     "gpxPoints": "points",
     "gpxErr": "Could not read the GPX file",
     "gpxHint": "Upload a run or hike track (.gpx) — the route is printed as a raised line over the map.",
+    "gpxPrivacy": "🔒 Your route is used only to build this model. We never publish or share it.",
     "gpxMoved": "Zone moved to your track — the map now shows your route.",
     "gpxPartial": "The track is too large for the biggest size — only the central part will fit the model.",
     "gpxScaled": "Zone expanded so the whole track fits (scale {scale}) — map details will be finer.",

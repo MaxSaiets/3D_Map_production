@@ -1190,6 +1190,11 @@ async def generate_model(request: GenerationRequest, background_tasks: Backgroun
         # Власна стеля 30 км зі сторони — межа розумного для DEM/OSM-фетчу.
         if bool(getattr(request, "keychain_topo_mode", False)) and bool(getattr(request, "keychain_mode", False)):
             _max_span = 30000.0
+        # GPX-ТРЕК: маршрути часто більші за вуличний 1:10000 (біг/вело — кілька
+        # км). Даємо гнучкий масштаб до 35 м/мм (як фронт), щоб увесь трек влазив
+        # без помилки «зона завелика». Деталі мапи стають дрібніші — це ок.
+        if getattr(request, "gpx_track", None) and _max_span > 0:
+            _max_span = max(_max_span, _model_mm * 35.0)
         if _max_span > 0:
             import math as _m
             _clat = (float(request.north) + float(request.south)) * 0.5
@@ -2641,6 +2646,14 @@ def generate_model_task(
     # have to thread a new param through 5+ layers.
     flat_plate_mode = bool(getattr(request, "flat_plate_mode", False))
     preview_mode = bool(getattr(request, "preview_mode", False)) and not flat_plate_mode
+    # КРИТИЧНО: скидаємо env-прапори preview-режиму ПЕРЕД повною генерацією.
+    # Раніше preview-генерація лишала BOOLEAN_BACKEND=noop у процесі-воркері →
+    # наступна ПОВНА генерація (замовлення/завантаження/terrain з GPX) падала
+    # на валідації грувів («Groove stage failed: boolean_noop»). Preview —
+    # дефолт для покупців, тож це труїло кожне реальне замовлення в тому ж воркері.
+    if not preview_mode:
+        os.environ.pop("BOOLEAN_BACKEND", None)
+        os.environ.pop("PREVIEW_MODE", None)
     if flat_plate_mode and bool(getattr(request, "keychain_mode", False)):
         try:
             if float(getattr(request, "context_padding_m", 0) or 0) > 35.0:

@@ -331,6 +331,7 @@
     "gpxPoints": "Punkte",
     "gpxErr": "GPX-Datei konnte nicht gelesen werden",
     "gpxHint": "Lade einen Lauf- oder Wandertrack (.gpx) hoch — die Route wird als erhabene Linie über der Karte gedruckt.",
+    "gpxPrivacy": "🔒 Deine Route wird nur zum Erstellen dieses Modells verwendet. Wir veröffentlichen oder teilen sie nie.",
     "gpxMoved": "Zone zum Track verschoben — die Karte zeigt jetzt deine Route.",
     "gpxPartial": "Der Track ist zu groß für die größte Variante — nur der zentrale Teil passt ins Modell.",
     "gpxScaled": "Zone erweitert, damit der ganze Track passt (Maßstab {scale}) — Kartendetails werden feiner.",

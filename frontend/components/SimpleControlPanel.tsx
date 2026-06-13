@@ -623,6 +623,7 @@ export function SimpleControlPanel({
                 </button>
               </div>
               {gpxNote && <p data-testid="gpx-note" className="text-[11px] leading-4 font-semibold text-[var(--accent-strong)]">{gpxNote}</p>}
+              <p className="text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpxPrivacy")}</p>
             </div>
           ) : (
             <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpxHint")}</p>

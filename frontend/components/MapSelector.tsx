@@ -676,7 +676,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       if (focus.points?.length) {
         gpxLineRef.current = L.polyline(
           focus.points.map((p) => [p[1], p[0]] as [number, number]),
-          { color: "#c2410c", weight: 3, opacity: 0.9, interactive: false },
+          { color: "#dc2626", weight: 3.5, opacity: 0.95, interactive: false },
         ).addTo(map);
       }
       const trackBounds = L.latLngBounds([focus.south, focus.west], [focus.north, focus.east]);
