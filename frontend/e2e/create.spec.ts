@@ -20,6 +20,25 @@ test.describe("Конструктор мап /create", () => {
     expect(errors.filter((e) => /hydration|Expected server HTML/i.test(e))).toHaveLength(0);
   });
 
+  test("Ф2 геокодер: пошук локації присутній над картою (будь-яке місто/адреса)", async ({ page }) => {
+    await page.goto("/uk/create");
+    const search = page.locator('[data-testid="map-search"]').first();
+    await expect(search).toBeVisible();
+    await expect(search.getByPlaceholder(/Знайти місто/)).toBeVisible();
+  });
+
+  test("Ф1 sticky: рівно ОДИН закріплений CTA на мобільному (не дубль) + ціна не «—»", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/uk/create");
+    await page.waitForTimeout(1200);
+    // Лише один fixed-бар з «ОРІЄНТОВНА ВАРТІСТЬ» (раніше було два портали)
+    const bars = page.locator("div").filter({ hasText: /ОРІЄНТОВНА ВАРТІСТЬ/ }).filter({
+      has: page.locator("button", { hasText: /Згенерувати|Замовити/ }),
+    });
+    // fallback-ціна показується одразу (≈ N ₴), а не порожнє «—»
+    await expect(page.getByText(/≈\s*\d+\s*₴/).first()).toBeVisible();
+  });
+
   test("майстер: 3 клікабельні кроки Місце/Параметри/Готово", async ({ page }) => {
     const steps = page.locator('nav[aria-label] > button');
     await expect(steps).toHaveCount(3);

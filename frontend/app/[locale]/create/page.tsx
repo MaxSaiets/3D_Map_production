@@ -462,7 +462,8 @@ export default function Home() {
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onCityChange={handleCityChange}
-                  onAdvanced={() => toggleProMode(true)}
+                    onAdvanced={() => toggleProMode(true)}
+                    showStickyBar={false}
                   />
                 )}
               </div>
@@ -471,7 +472,9 @@ export default function Home() {
 
           <section className="flex min-h-0 flex-1 flex-col gap-3">
             <div id="panel-map" className={mapPanelClasses}>
-              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[440px]">
+              {/* Карта — головна взаємодія: на десктопі домінує (≈60% висоти
+                  вікна), щоб рамку було зручно тягати (раніше ~270px). */}
+              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -487,16 +490,10 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="hidden flex-col items-end gap-2 sm:flex">
-                    <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                        Режим
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                        {showHexGrid ? "Сітка зон" : "Одна ділянка"}
-                      </div>
-                    </div>
-                    {showHexGrid && (
+                  {/* Прибрано дубль-бейдж «РЕЖИМ · Одна ділянка» (повторював
+                      заголовок зліва). Лишилась лише дія для grid-режиму. */}
+                  {showHexGrid && (
+                    <div className="hidden sm:flex">
                       <button
                         type="button"
                         onClick={handleSaveGrid}
@@ -504,8 +501,8 @@ export default function Home() {
                       >
                         💾 Зберегти сітку
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {gridNotice && (

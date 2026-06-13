@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
 import { useGenerationStore } from "@/store/generation-store";
+import { MapSearchBox } from "@/components/MapSearchBox";
 
 // Виправлення іконок Leaflet для Next.js (тільки на клієнті)
 if (typeof window !== "undefined") {
@@ -129,11 +130,20 @@ function DrawControl() {
     map.on(L.Draw.Event.EDITED, handleDrawEdited);
     map.on(L.Draw.Event.DELETED, handleDrawDeleted);
 
+    // Пошук локації у grid-режимі — просто фокусуємо карту (зону юзер малює сам).
+    const onMapGoto = (e: Event) => {
+      const d = (e as CustomEvent).detail as { lat: number; lon: number } | undefined;
+      if (!d || !Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
+      try { map.setView(L.latLng(d.lat, d.lon), Math.max(map.getZoom(), 14), { animate: true }); } catch { /* ignore */ }
+    };
+    window.addEventListener("monadruk:map-goto", onMapGoto as EventListener);
+
     return () => {
       map.off(L.Draw.Event.CREATED, handleDrawCreated);
       map.off(L.Draw.Event.EDITED, handleDrawEdited);
       map.off(L.Draw.Event.DELETED, handleDrawDeleted);
       map.removeControl(drawControl);
+      window.removeEventListener("monadruk:map-goto", onMapGoto as EventListener);
     };
   }, [map, setSelectedArea, modelSizeMm]);
 
@@ -689,6 +699,22 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       });
     }
 
+    // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
+    const onMapGoto = (e: Event) => {
+      const d = (e as CustomEvent).detail as { lat: number; lon: number } | undefined;
+      if (!d || !Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
+      const center = L.latLng(d.lat, d.lon);
+      const cur = currentBoundsRef.current;
+      const size = cur ? boundsSizeMeters(cur) : { widthM: Math.min(80, safeSize.widthM), heightM: Math.min(80, safeSize.heightM) };
+      const widthM = Math.min(Math.max(size.widthM, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
+      try {
+        map.invalidateSize();
+        map.setView(center, Math.max(map.getZoom(), 15), { animate: true });
+      } catch { /* ignore */ }
+    };
+    window.addEventListener("monadruk:map-goto", onMapGoto as EventListener);
+
     const blockMapPlacement = () => {
       lastDragEndedAtRef.current = Date.now();
     };
@@ -867,6 +893,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       label.remove();
       clearTimeout(fitTimer);
       unsubGpx?.();
+      window.removeEventListener("monadruk:map-goto", onMapGoto as EventListener);
       gpxLineRef.current?.remove();
       gpxLineRef.current = null;
     };
@@ -999,6 +1026,9 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           Супутник
         </button>
       </div>
+      {/* Пошук будь-якого міста/адреси (Nominatim) → подія monadruk:map-goto,
+          яку слухають оверлеї карти. Закриває «мого міста нема у списку». */}
+      <MapSearchBox />
       {/* Карта на весь екран — зручно вибирати ділянку точно на телефоні */}
       <button
         type="button"
@@ -1047,12 +1077,25 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
             </div>
           </div>
           {cropMetrics ? (
-            <div className={`rounded-[18px] border px-3 py-2 text-xs font-semibold shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur ${
-              cropMetrics.isSafe
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-red-200 bg-red-50 text-red-700"
-            }`}>
-              {Math.round(cropMetrics.widthM)} x {Math.round(cropMetrics.heightM)} м · 0.4 мм = ~{cropMetrics.detailM.toFixed(1)} м
+            <div
+              className={`rounded-[18px] border px-3 py-2 text-xs font-semibold shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur ${
+                cropMetrics.isSafe
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}
+              title={`Найдрібніша деталь ≈ ${cropMetrics.detailM.toFixed(1)} м на моделі`}
+            >
+              {/* Людська мова замість «480×480 м · 0.4 мм = ~2.4 м». Технічний
+                  показник лишається у tooltip для цікавих. */}
+              {cropMetrics.isSafe
+                ? `Ділянка ${Math.round(cropMetrics.widthM)}×${Math.round(cropMetrics.heightM)} м · ${
+                    cropMetrics.detailM <= 1.5
+                      ? "висока деталізація"
+                      : cropMetrics.detailM <= 3
+                        ? "добра деталізація"
+                        : "оглядовий масштаб"
+                  }`
+                : `Ділянка завелика (${Math.round(cropMetrics.widthM)}×${Math.round(cropMetrics.heightM)} м) — дрібні вулиці зіллються. Зменши рамку.`}
             </div>
           ) : null}
         </div>

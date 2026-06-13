@@ -24,11 +24,16 @@ export function SimpleControlPanel({
   selectedCityKey,
   onCityChange,
   onAdvanced,
+  showStickyBar = true,
 }: {
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
   onCityChange?: (key: string) => void;
   onAdvanced?: () => void;
+  // Панель монтується ДВІЧІ (desktop aside + mobile section). StickyActionBar
+  // — портал у <body>, тож обидві копії малювали його → ДВА бари на мобільному
+  // (+ inline-кнопка = «3 кнопки генерації»). Малюємо лише з мобільної копії.
+  showStickyBar?: boolean;
 }) {
   const t = useTranslations("simple");
   const tOrder = useTranslations("order");
@@ -118,6 +123,14 @@ export function SimpleControlPanel({
     fetchQuote("map", modelSizeMm, relief).then((q) => { if (alive) setQuote(q); });
     return () => { alive = false; };
   }, [modelSizeMm, styleId]);
+
+  // Fallback-ціна (поки /api/quote вантажиться): з локальної таблиці розмірів,
+  // щоб sticky-бар не показував порожнє «—» на першому екрані.
+  const simpleFallbackPrice = (() => {
+    const near = SIMPLE_SIZES.reduce((best, z) =>
+      Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
+    return `≈ ${near.price} ₴`;
+  })();
 
   const doGatedDownload = async () => {
     setDlBusy(true);
@@ -763,22 +776,29 @@ export function SimpleControlPanel({
         }}
       />
 
-      {/* Мобільний sticky-бар: ціна завжди на екрані + головна дія стану */}
-      <div className="h-20 lg:hidden" aria-hidden="true" />
-      <StickyActionBar
-        priceLabel={tOrder("estPriceLabel")}
-        price={quote?.formatted ?? null}
-        actionLabel={
-          downloadUrl
-            ? t("orderPrint")
-            : isGenerating
-              ? `${t("generating")} ${progress}%`
-              : t("generate")
-        }
-        busy={isGenerating}
-        disabled={!downloadUrl && (!selectedArea || isGenerating)}
-        onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
-      />
+      {/* Мобільний sticky-бар: ціна завжди на екрані + головна дія стану.
+          Лише з ОДНІЄЇ копії панелі (showStickyBar) — інакше дубль порталів. */}
+      {showStickyBar && (
+        <>
+          <div className="h-20 lg:hidden" aria-hidden="true" />
+          <StickyActionBar
+            priceLabel={tOrder("estPriceLabel")}
+            // Поки /api/quote не відповів — показуємо fallback-ціну з SIMPLE_SIZES
+            // замість «—» (виглядало як зламана ціна).
+            price={quote?.formatted ?? simpleFallbackPrice}
+            actionLabel={
+              downloadUrl
+                ? t("orderPrint")
+                : isGenerating
+                  ? `${t("generating")} ${progress}%`
+                  : t("generate")
+            }
+            busy={isGenerating}
+            disabled={!downloadUrl && (!selectedArea || isGenerating)}
+            onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
+          />
+        </>
+      )}
     </div>
   );
 }
