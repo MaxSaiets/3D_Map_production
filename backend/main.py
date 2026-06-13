@@ -112,6 +112,74 @@ import tempfile
 OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+# D3 ПАННО: persist batch→tile mapping so a server restart doesn't lose a
+# finished panel. `multiple_tasks_map` + `tasks` are in-memory; here we mirror
+# the batch with each tile's row/col AND its on-disk 3MF path (filled in as
+# tiles complete, while `tasks` is still alive). After a restart download_all
+# rebuilds the zip from these persisted paths (the output files survive on disk).
+PANEL_BATCHES_PATH = OUTPUT_DIR / "panel_batches.json"
+panel_tiles: dict[str, list[dict]] = {}  # batch_id -> [{task_id, row, col, path}]
+
+
+def _save_panel_batches() -> None:
+    import json as _json
+    try:
+        data = {
+            bid: {"task_ids": multiple_tasks_map.get(bid, []), "tiles": tiles}
+            for bid, tiles in panel_tiles.items()
+        }
+        tmp = PANEL_BATCHES_PATH.with_suffix(".tmp")
+        tmp.write_text(_json.dumps(data), encoding="utf-8")
+        tmp.replace(PANEL_BATCHES_PATH)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[PANNO] save batches failed (non-fatal): {exc}")
+
+
+def _record_panel_tile_paths(batch_id: str) -> None:
+    """Заповнює шляхи готових плиток у panel_tiles (поки tasks живі) і зберігає
+    на диск, якщо щось змінилось — щоб zip пережив рестарт сервера."""
+    tiles = panel_tiles.get(batch_id)
+    if not tiles:
+        return
+    changed = False
+    for rec in tiles:
+        if rec.get("path"):
+            continue
+        t = tasks.get(rec.get("task_id"))
+        if t is None or getattr(t, "status", None) != "completed":
+            continue
+        ofiles = getattr(t, "output_files", {}) or {}
+        path_str = ofiles.get("3mf") or getattr(t, "output_file", None)
+        if path_str and Path(path_str).exists():
+            rec["path"] = str(path_str)
+            if rec.get("row") is None:
+                rec["row"] = getattr(t, "zone_row", None)
+            if rec.get("col") is None:
+                rec["col"] = getattr(t, "zone_col", None)
+            changed = True
+    if changed:
+        _save_panel_batches()
+
+
+def _load_panel_batches() -> None:
+    import json as _json
+    try:
+        if not PANEL_BATCHES_PATH.exists():
+            return
+        data = _json.loads(PANEL_BATCHES_PATH.read_text(encoding="utf-8"))
+        for bid, rec in data.items():
+            ids = rec.get("task_ids") or []
+            if ids:
+                multiple_tasks_map[bid] = ids
+                panel_tiles[bid] = rec.get("tiles") or []
+        if panel_tiles:
+            print(f"[PANNO] restored {len(panel_tiles)} batch(es) from disk")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[PANNO] load batches failed (non-fatal): {exc}")
+
+
+_load_panel_batches()
+
 
 def _make_export_basename(
     task_id: str,
@@ -1192,7 +1260,11 @@ async def get_status(task_id: str):
         all_task_ids_list = multiple_tasks_map.get(task_id)
         if not all_task_ids_list:
             raise HTTPException(status_code=404, detail="Multiple tasks not found")
-        
+
+        # Фіксуємо шляхи готових плиток на диск (поки tasks живі) — щоб zip
+        # пережив рестарт сервера.
+        _record_panel_tile_paths(task_id)
+
         # РџРѕРІРµСЂС‚Р°С”РјРѕ СЃС‚Р°С‚СѓСЃ РІСЃС–С… Р·Р°РґР°С‡
         tasks_status = []
         for tid in all_task_ids_list:
@@ -1228,12 +1300,28 @@ async def get_status(task_id: str):
                         "parks": t.firebase_outputs.get("parks_3mf"),
                     },
                 })
-        
+            else:
+                # ПІСЛЯ РЕСТАРТУ: tasks порожні. Якщо плитку вже збережено на
+                # диск (panel_tiles) — рапортуємо «completed» з файлом, щоб
+                # фронт показав готовність і дав завантажити zip.
+                rec = next((x for x in panel_tiles.get(task_id, []) if x.get("task_id") == tid), None)
+                p = rec.get("path") if rec else None
+                if p and Path(p).exists():
+                    tasks_status.append({
+                        "task_id": tid, "status": "completed", "progress": 100,
+                        "message": "Restored from disk", "output_file": p,
+                        "output_files": {"3mf": p},
+                        "download_url": f"/files/{Path(p).name}",
+                        "keychain_manifest": None, "firebase_url": None, "print_quality": None,
+                        "preview_3mf": None, "firebase_preview_3mf": None,
+                        "firebase_preview_parts": {"base": None, "roads": None, "buildings": None, "water": None, "parks": None},
+                    })
+
         return {
             "task_id": task_id,
             "status": "multiple",
             "tasks": tasks_status,
-            "total": len(tasks_status),
+            "total": len(all_task_ids_list),
             "completed": sum(1 for t in tasks_status if t["status"] == "completed"),
             "all_task_ids": all_task_ids_list
         }
@@ -1361,21 +1449,30 @@ async def download_all_zones(batch_id: str):
     if not task_ids_list:
         raise HTTPException(status_code=404, detail="Batch не знайдено (можливо, сервер перезапускався — згенеруйте панно знову)")
 
+    # Поки tasks живі — фіксуємо шляхи на диск (щоб zip пережив рестарт).
+    _record_panel_tile_paths(batch_id)
+    tile_meta = {x.get("task_id"): x for x in panel_tiles.get(batch_id, [])}
+
     items = []  # (row, col, filename, path)
     pending = 0
     for tid in task_ids_list:
         t = tasks.get(tid)
-        if t is None or t.status != "completed":
-            pending += 1
+        if t is not None and t.status == "completed":
+            output_files = getattr(t, "output_files", {}) or {}
+            # 3MF пріоритетний (друкований формат); preview-задачі мають .glb primary
+            path_str = output_files.get("3mf") or t.output_file
+            if path_str and Path(path_str).exists():
+                p = Path(path_str)
+                items.append((getattr(t, "zone_row", None), getattr(t, "zone_col", None), p.name, p))
+                continue
+        # FALLBACK (рестарт): беремо збережений шлях плитки з panel_tiles
+        rec = tile_meta.get(tid)
+        rec_path = rec.get("path") if rec else None
+        if rec_path and Path(rec_path).exists():
+            p = Path(rec_path)
+            items.append((rec.get("row"), rec.get("col"), p.name, p))
             continue
-        output_files = getattr(t, "output_files", {}) or {}
-        # 3MF пріоритетний (друкований формат); preview-задачі мають .glb primary
-        path_str = output_files.get("3mf") or t.output_file
-        if not path_str or not Path(path_str).exists():
-            pending += 1
-            continue
-        p = Path(path_str)
-        items.append((getattr(t, "zone_row", None), getattr(t, "zone_col", None), p.name, p))
+        pending += 1
     if pending > 0:
         raise HTTPException(status_code=409, detail=f"Готово {len(items)}/{len(task_ids_list)} плиток — зачекайте завершення генерації")
     if not items:
@@ -2489,6 +2586,18 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     if len(task_ids) > 1:
         main_task_id = f"batch_{uuid.uuid4()}"
         multiple_tasks_map[main_task_id] = task_ids
+        # Зберігаємо batch на диск (row/col кожної плитки; шляхи дописуються по
+        # мірі готовності у status-ендпойнті) — щоб панно пережило рестарт.
+        panel_tiles[main_task_id] = [
+            {
+                "task_id": tid,
+                "row": getattr(tasks.get(tid), "zone_row", None),
+                "col": getattr(tasks.get(tid), "zone_col", None),
+                "path": None,
+            }
+            for tid in task_ids
+        ]
+        _save_panel_batches()
         print(f"[INFO] Batch Р·Р°РґР°С‡С–: {main_task_id} -> {task_ids}")
         print(f"[INFO] Р”Р»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ СЂР°Р·РѕРј РІРёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids: {task_ids}")
     else:
