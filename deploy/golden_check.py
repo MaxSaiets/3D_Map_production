@@ -63,6 +63,88 @@ CASES = [
             "flat_water_layer_mm": 0.22, "flat_roads_layer_mm": 0.42, "flat_parks_layer_mm": 0.36,
         },
     },
+    # 2026-06-13: захист нової геометрії цієї серії (раніше не покрита).
+    {
+        # Серце-пара для закоханих: half-heart + замок (SH-кліп + knob).
+        "id": "heart_pair_left",
+        "body": {
+            "north": 50.4510, "south": 50.4492, "east": 30.5246, "west": 30.5224,
+            "terrain_enabled": False, "terrain_base_thickness_mm": 1.5,
+            "terrain_resolution": 120, "terrarium_zoom": 13,
+            "export_format": "3mf", "model_size_mm": 44, "context_padding_m": 35,
+            "flat_plate_mode": True, "keychain_mode": True, "keychain_label": "L",
+            "keychain_base_shape": "heart-l",
+            "keychain_body_width_mm": 30, "keychain_body_height_mm": 44,
+            "keychain_map_width_mm": 30, "keychain_map_height_mm": 44,
+            "keychain_loop_center_x_mm": 15, "keychain_loop_center_y_mm": 0,
+            "keychain_label_center_x_mm": 15, "keychain_label_center_y_mm": 33,
+            "keychain_loop_outer_radius_mm": 5.5, "keychain_loop_inner_radius_mm": 2.6,
+            "keychain_corner_radius_mm": 0, "keychain_label_band_height_mm": 5,
+            "keychain_label_text_height_mm": 2.8, "keychain_label_width_mm": 16,
+            "keychain_rim_width_mm": 1.6, "keychain_rim_height_mm": 0.6,
+            "flat_water_layer_mm": 0.22, "flat_roads_layer_mm": 0.42, "flat_parks_layer_mm": 0.36,
+        },
+    },
+    {
+        # Пазл-L: виступ (knob) на правій грані — long-distance пара.
+        "id": "puzzle_left",
+        "body": {
+            "north": 50.4513, "south": 50.4491, "east": 30.5248, "west": 30.5222,
+            "terrain_enabled": False, "terrain_base_thickness_mm": 1.5,
+            "terrain_resolution": 120, "terrarium_zoom": 13,
+            "export_format": "3mf", "model_size_mm": 42, "context_padding_m": 35,
+            "flat_plate_mode": True, "keychain_mode": True, "keychain_label": "L",
+            "keychain_base_shape": "puzzle-l",
+            "keychain_body_width_mm": 40, "keychain_body_height_mm": 42,
+            "keychain_map_width_mm": 40, "keychain_map_height_mm": 42,
+            "keychain_loop_center_x_mm": 20, "keychain_loop_center_y_mm": 0,
+            "keychain_label_center_x_mm": 20, "keychain_label_center_y_mm": 37.5,
+            "keychain_loop_outer_radius_mm": 5.5, "keychain_loop_inner_radius_mm": 2.6,
+            "keychain_corner_radius_mm": 5, "keychain_label_band_height_mm": 6,
+            "keychain_label_text_height_mm": 3.2, "keychain_label_width_mm": 30,
+            "keychain_rim_width_mm": 1.6, "keychain_rim_height_mm": 0.6,
+            "flat_water_layer_mm": 0.22, "flat_roads_layer_mm": 0.42, "flat_parks_layer_mm": 0.36,
+        },
+    },
+    {
+        # Магніт із 4 кишенями під шайби Ø4×2мм (новий multi-pocket режим).
+        "id": "magnet_four_pockets",
+        "body": {
+            "north": 50.4512, "south": 50.4494, "east": 30.5250, "west": 30.5222,
+            "terrain_enabled": False, "terrain_base_thickness_mm": 3.0,
+            "terrain_resolution": 120, "terrarium_zoom": 13,
+            "export_format": "3mf", "model_size_mm": 60, "context_padding_m": 100,
+            "flat_plate_mode": True, "magnet_pocket": True, "map_label": "KYIV",
+            "magnet_pocket_diameter_mm": 4.4, "magnet_pocket_depth_mm": 2.1,
+            "magnet_pocket_count": 4, "magnet_pocket_inset_mm": 8,
+            "flat_water_layer_mm": 0.22, "flat_roads_layer_mm": 0.42, "flat_parks_layer_mm": 0.36,
+        },
+    },
+    {
+        # GPX-трек на брелку → шар Track (підвищена лінія поверх карти).
+        "id": "keychain_gpx_track",
+        "body": {
+            "north": 50.4512, "south": 50.4494, "east": 30.5248, "west": 30.5222,
+            "terrain_enabled": False, "terrain_base_thickness_mm": 1.5,
+            "terrain_resolution": 120, "terrarium_zoom": 13,
+            "export_format": "3mf", "model_size_mm": 42, "context_padding_m": 35,
+            "flat_plate_mode": True, "keychain_mode": True, "keychain_label": "RUN",
+            "keychain_base_shape": "rounded",
+            "keychain_body_width_mm": 42, "keychain_body_height_mm": 42,
+            "keychain_map_width_mm": 42, "keychain_map_height_mm": 42,
+            "keychain_loop_center_x_mm": 21, "keychain_loop_center_y_mm": 0,
+            "keychain_label_center_x_mm": 21, "keychain_label_center_y_mm": 35,
+            "keychain_loop_outer_radius_mm": 5.5, "keychain_loop_inner_radius_mm": 2.6,
+            "keychain_corner_radius_mm": 5, "keychain_label_band_height_mm": 6,
+            "keychain_label_text_height_mm": 3.0, "keychain_label_width_mm": 24,
+            "keychain_rim_width_mm": 1.6, "keychain_rim_height_mm": 0.6,
+            "flat_water_layer_mm": 0.22, "flat_roads_layer_mm": 0.42, "flat_parks_layer_mm": 0.36,
+            "gpx_track": [
+                [30.5226, 50.4496], [30.5230, 50.4499], [30.5234, 50.4502],
+                [30.5238, 50.4505], [30.5242, 50.4508], [30.5245, 50.4510],
+            ],
+        },
+    },
 ]
 
 
