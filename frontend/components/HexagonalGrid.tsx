@@ -8,6 +8,16 @@ import "leaflet-draw";
 
 type GBounds = { north: number; south: number; east: number; west: number };
 
+/** Компактна стартова зона сітки (~3км) довкола центру bbox міста — щоб дефолтна
+ *  сітка мала ~100 видимих клітин, а не тисячі на весь bbox міста. */
+function defaultGridArea(b: GBounds, halfKm = 1.5): GBounds {
+  const cLat = (b.north + b.south) / 2;
+  const cLon = (b.east + b.west) / 2;
+  const dLat = (halfKm * 1000) / 111_320;
+  const dLon = (halfKm * 1000) / (111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.2));
+  return { north: cLat + dLat, south: cLat - dLat, east: cLon + dLon, west: cLon - dLon };
+}
+
 // Lets the user draw a rectangle to choose the AREA the grid fills (instead of
 // the whole city). On draw it reports the rectangle's bounds upward.
 function GridAreaDraw({ onArea }: { onArea: (b: GBounds) => void }) {
@@ -51,7 +61,7 @@ function MapBounds({ bounds }: { bounds: { north: number; south: number; east: n
           [bounds.north, bounds.east],
         ] as L.LatLngBoundsExpression, {
           padding: [20, 20],
-          maxZoom: 13,
+          maxZoom: 15,
         });
         hasFittedRef.current = true; // Виконуємо тільки один раз
       } catch (e) {
@@ -173,8 +183,12 @@ export default function HexagonalGrid({
 
       const { api } = await import("@/lib/api");
 
-      // Use the user-drawn area when present, otherwise the whole-city bounds.
-      const eb = drawnBoundsRef.current || bounds;
+      // Use the user-drawn area when present. Раніше fallback = ВЕСЬ bbox міста
+      // (~44км) → тисячі клітин (8807 для Києва), що зливались у суцільну пляму
+      // і користувач не розумів, що це окремі клітини. Тепер дефолт — компактна
+      // зона ~3км довкола центру міста: ~100 видимих клітин, які легко обирати.
+      // Юзер може намалювати власну зону прямокутником.
+      const eb = drawnBoundsRef.current || defaultGridArea(bounds);
       if (!eb || eb.north <= eb.south || eb.east <= eb.west) {
         throw new Error(`Невірні координати bounds: north=${eb?.north}, south=${eb?.south}, east=${eb?.east}, west=${eb?.west}`);
       }
@@ -374,6 +388,26 @@ export default function HexagonalGrid({
             <span className="text-gray-700">Генерація сітки...</span>
           </div>
         ) : hexGrid ? (
+          <div className="space-y-1.5">
+            {/* Чітка інструкція: раніше юзер бачив суцільну пляму клітин і не
+                розумів, що їх треба КЛІКАТИ. Тепер — крок-за-кроком + легенда. */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-gray-700">
+              <span className="font-semibold text-[var(--accent-strong,#0f766e)]">
+                {selectedZones.size === 0
+                  ? "👆 Клікайте клітинки — вони стануть"
+                  : `Обрано ${selectedZones.size} — далі «Згенерувати серію»`}
+              </span>
+              {selectedZones.size === 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-3 w-3 rounded-sm border border-red-600 bg-red-400/60" />
+                  червоними
+                </span>
+              )}
+              <span className="text-gray-400">·</span>
+              <span title="Намалюйте прямокутник інструментом ▢ вгорі праворуч, щоб обмежити сітку своєю зоною">
+                ▢ для своєї зони
+              </span>
+            </div>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-[11px]">
               <span className="font-medium text-gray-700">
@@ -419,7 +453,7 @@ export default function HexagonalGrid({
                 <button
                   onClick={resetArea}
                   className="px-2 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
-                  title="Скинути намальовану зону — сітка знову на все місто"
+                  title="Скинути намальовану зону — сітка повернеться до стартової зони в центрі міста"
                 >
                   ⤢ Своя зона
                 </button>
@@ -429,6 +463,7 @@ export default function HexagonalGrid({
                 </span>
               )}
             </div>
+          </div>
           </div>
         ) : (
           <div className="text-[11px] text-gray-600">Генерація сітки...</div>
@@ -449,7 +484,9 @@ export default function HexagonalGrid({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          <MapBounds bounds={bounds} />
+          {/* Фітимо карту на ДЕФОЛТНУ зону сітки (~3км), а не весь bbox міста —
+              інакше компактна сітка виглядала б крихітною плямою в центрі. */}
+          <MapBounds bounds={drawnBounds || initialArea || defaultGridArea(bounds)} />
           <GridAreaDraw onArea={handleAreaDraw} />
 
           {hexGrid && hexGrid.features && hexGrid.features.length > 0 && (

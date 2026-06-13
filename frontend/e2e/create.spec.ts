@@ -35,8 +35,10 @@ test.describe("Конструктор мап /create", () => {
     const bars = page.locator("div").filter({ hasText: /ОРІЄНТОВНА ВАРТІСТЬ/ }).filter({
       has: page.locator("button", { hasText: /Згенерувати|Замовити/ }),
     });
-    // fallback-ціна показується одразу (≈ N ₴), а не порожнє «—»
-    await expect(page.getByText(/≈\s*\d+\s*₴/).first()).toBeVisible();
+    // fallback-ціна показується одразу у sticky-барі (≈ N ₴), а не порожнє «—»
+    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    await expect(sticky).toBeVisible();
+    await expect(sticky).toContainText(/≈\s*\d+\s*₴/);
   });
 
   test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {

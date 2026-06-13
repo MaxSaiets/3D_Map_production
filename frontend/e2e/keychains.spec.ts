@@ -17,8 +17,10 @@ test.describe("Майстерня брелків /keychains", () => {
     await page.goto("/uk/keychains");
     await page.waitForTimeout(1000);
     // Sticky-бар показує ціну одразу (не «—») + дію «Створити брелок»
-    await expect(page.getByText(/≈\s*120\s*₴/).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Створити брелок/ }).first()).toBeVisible();
+    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    await expect(sticky).toBeVisible();
+    await expect(sticky).toContainText(/≈\s*120\s*₴/);
+    await expect(sticky).toContainText(/Створити брелок/);
     // Єдина навігація — 3-кроковий степер
     await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);
   });
