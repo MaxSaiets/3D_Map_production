@@ -256,7 +256,10 @@ def create_terrain_mesh(
     zone_polygon: Optional[BaseGeometry] = None,
     grid_step_m: Optional[float] = None,
     # --- NEW ARGUMENT FOR INLAY MODE ---
-    road_polygons_for_cutting: Optional[BaseGeometry] = None, 
+    road_polygons_for_cutting: Optional[BaseGeometry] = None,
+    # Друкований максимум рельєфу у СВІТОВИХ метрах. Якщо перепад вищий — рельєф
+    # стискається (гори → друковано і стабільно для boolean-грувів). None = без капу.
+    max_relief_m: Optional[float] = None,
 ) -> Tuple[Optional[trimesh.Trimesh], Optional[TerrainProvider]]:
     
     total_start = time.time()
@@ -346,6 +349,24 @@ def create_terrain_mesh(
     # Clip extreme values just in case
     z_median = np.nanmedian(Z)
     Z = np.clip(Z, z_median - 3000, z_median + 5000)
+
+    # КОМПРЕСІЯ РЕЛЬЄФУ (гори): дуже високий перепад (Карпати/Альпи — сотні
+    # метрів) робить mesh надто крутим → boolean-груви ламаються (catastrophic
+    # z-shift), і модель надто гостра для друку. Стискаємо рельєф до друкованого
+    # максимуму, ЗБЕРІГАЮЧИ ФОРМУ (лінійна компресія відносної висоти).
+    # Звичайні міста (перепад < капу) лишаються без змін.
+    if max_relief_m and max_relief_m > 0:
+        try:
+            z_lo = float(np.nanmin(Z))
+            rel = Z - z_lo
+            cur_range = float(np.nanmax(rel))
+            if cur_range > float(max_relief_m):
+                factor = float(max_relief_m) / cur_range
+                Z = z_lo + rel * factor
+                print(f"[TERRAIN] Relief compressed {cur_range:.0f}m -> {float(max_relief_m):.0f}m "
+                      f"(factor {factor:.2f}) — printable + boolean-stable for steep terrain")
+        except Exception as _exc:
+            print(f"[TERRAIN] relief compression skipped: {_exc}")
 
     # Зберігаємо оригінальні висоти
     Z_original = Z.copy()

@@ -144,6 +144,18 @@ def process_generation_stage(
             except Exception as _exc:
                 print(f"[WARN] {zone_prefix}terrain grid cap skipped: {_exc}")
             print(f"[PERF] {zone_prefix}Flat map: coarse base grid step={_grid_step}m (skip dense terrain build)")
+        # Друкований максимум рельєфу: гори (Карпати/Альпи) мають перепад у сотні
+        # метрів → mesh надто крутий, boolean-груви ламаються, та й друкувати гостро.
+        # Стискаємо так, щоб рельєф у МОДЕЛІ не перевищував ~TERRAIN_MAX_RELIEF_MM.
+        # world_cap = target_mm / scale_factor. Звичайні міста (нижчий перепад)
+        # не зачіпаються — компресія спрацьовує лише коли реально високі гори.
+        _max_relief_m = None
+        try:
+            _max_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
+            if scale_factor and float(scale_factor) > 0 and _max_relief_mm > 0:
+                _max_relief_m = _max_relief_mm / float(scale_factor)
+        except Exception:
+            _max_relief_m = None
         terrain_mesh, terrain_provider = create_terrain_mesh(
             bbox_meters,
             z_scale=_z_scale,
@@ -154,6 +166,7 @@ def process_generation_stage(
             elevation_ref_m=elevation_ref_m,
             baseline_offset_m=baseline_offset_m,
             base_thickness=(float(request.terrain_base_thickness_mm) / float(scale_factor)) if scale_factor else 5.0,
+            max_relief_m=_max_relief_m,
             flatten_buildings=bool(getattr(request, 'flatten_buildings_on_terrain', True)),
             building_geometries=building_geometries_for_flatten,
             flatten_roads=False,

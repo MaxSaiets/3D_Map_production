@@ -354,9 +354,19 @@ def _validate_groove_stage(
     if not bool(grooves_expected):
         return
 
+    # GRACEFUL FALLBACK на крутому рельєфі (гори): boolean-груви можуть не
+    # врізатись / бути відхиленими через катастрофічний z-зсув на дуже високому
+    # перепаді. Замість того щоб ВАЛИТИ всю модель — деградуємо до рельєфу без
+    # рецесованих грувів (поверхня лишається валідною, дороги просто не втоплені).
+    # Вимкнути (суворий режим) можна GROOVE_FALLBACK_ON_FAIL=0.
+    _groove_graceful = os.getenv("GROOVE_FALLBACK_ON_FAIL", "1").lower() in ("1", "true", "yes")
+
     if bool(getattr(groove_result, "rejected", False)):
         reason = getattr(groove_result, "rejection_reason", None) or getattr(groove_result, "failure_reason", None) or "unknown_rejection"
         message = f"Groove stage failed: unsafe groove cut was rejected ({reason})"
+        if _groove_graceful:
+            print(f"[WARN] {zone_prefix}{message} — продовжуємо БЕЗ грувів (рельєф зберігається, дороги не втоплені)")
+            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
@@ -367,6 +377,9 @@ def _validate_groove_stage(
             f"Groove stage failed: canonical groove masks existed but no groove cut was applied "
             f"({reason})"
         )
+        if _groove_graceful:
+            print(f"[WARN] {zone_prefix}{message} — продовжуємо БЕЗ грувів (рельєф зберігається)")
+            return
         if hasattr(task, "fail"):
             task.fail(message)
         raise RuntimeError(message)
