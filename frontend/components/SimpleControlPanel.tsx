@@ -453,12 +453,14 @@ export function SimpleControlPanel({
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                     }`}
                   >
-                    <span className="h-12 w-12 shrink-0 overflow-hidden rounded-[14px] bg-[rgba(46,74,58,0.08)]">
-                      {/* real preview if available; falls back to brand block */}
+                    <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[14px] bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]">
+                      {/* Іконка-плейсхолдер (поки нема фото шаблону) — щоб не зяяв
+                          порожній квадрат; реальне прев'ю накладається зверху. */}
+                      <MapPin size={18} className="opacity-45" />
                       <img
                         src={`/templates/${t.id}.webp`}
                         alt={t.district}
-                        className="h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                       />
                     </span>

@@ -7,6 +7,8 @@ import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon,
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
+import { OrderDialog } from "@/components/OrderDialog";
+import { ShoppingBag } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -30,6 +32,8 @@ export default function AccountPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [grids, setGrids] = useState<CityGrid[]>([]);
   const [orders, setOrders] = useState<AccOrder[]>([]);
+  // Замовлення друку з раніше згенерованої моделі (генеруй зараз — замов потім).
+  const [orderModel, setOrderModel] = useState<AccModel | null>(null);
   // Safety: ніколи не лишаємо вічний спінер. Якщо Firebase не відповів за 3.5с
   // (повільний клієнт / не гідратувалось) — показуємо екран входу, а не крутилку.
   const [gracePassed, setGracePassed] = useState(false);
@@ -218,10 +222,19 @@ export default function AccountPage() {
                   <div className="p-4 pt-3">
                   <div className="font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? "Брелок" : "3D-мапа")}</div>
                   <div className="text-[12px] text-ink-3">{m.product_type === "keychain" ? "Брелок" : "Мапа"}{m.ts ? ` · ${new Date(m.ts * 1000).toLocaleDateString("uk")}` : ""}</div>
-                  <button onClick={() => download(m)} disabled={busy}
-                    className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />} Завантажити
-                  </button>
+                  <div className="mt-3 flex gap-2">
+                    {/* Замовити друк цієї моделі (управління+покупка: генеруй зараз, замов потім) */}
+                    <button onClick={() => setOrderModel(m)}
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white"
+                      style={{ background: "var(--bronze,#8E6B3D)" }}>
+                      <ShoppingBag size={15} /> Замовити друк
+                    </button>
+                    <button onClick={() => download(m)} disabled={busy}
+                      title="Завантажити 3MF"
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-bg-2 disabled:opacity-60">
+                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />}
+                    </button>
+                  </div>
                   </div>
                 </div>
               ))}
@@ -260,6 +273,18 @@ export default function AccountPage() {
           )}
         </>
       )}
+
+      {/* Замовлення друку з картки збереженої моделі */}
+      <OrderDialog
+        open={!!orderModel}
+        onClose={() => setOrderModel(null)}
+        taskId={orderModel?.task_id ?? null}
+        productType={(orderModel?.product_type as "map" | "keychain") || "map"}
+        summary={{
+          city: orderModel?.city,
+          label: orderModel?.product_type === "keychain" ? orderModel?.title : undefined,
+        }}
+      />
     </div>
   );
 }
