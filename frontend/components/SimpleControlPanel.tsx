@@ -394,6 +394,17 @@ export function SimpleControlPanel({
     }
   };
 
+  // ЗАМОВИТИ ОДРАЗУ: користувач не мусить чекати 1-3 хв перед замовленням.
+  // Клік стартує генерацію у фоні (set taskGroupId) і ВІДРАЗУ відкриває форму.
+  // Поки юзер заповнює контакти — модель готується; замовлення несе task_id,
+  // тож оператор отримає і конфіг, і готову модель (бек приймає order і без
+  // завершеної генерації).
+  const orderNow = () => {
+    if (!selectedArea) { setError(t("errSelectArea")); return; }
+    if (!downloadUrl && !isGenerating) handleGenerate();
+    setOrderOpen(true);
+  };
+
   const downloadHref = downloadUrl
     ? (downloadUrl.startsWith("http") ? downloadUrl : `${API_BASE}${downloadUrl}`)
     : null;
@@ -769,6 +780,7 @@ export function SimpleControlPanel({
         taskId={taskGroupId}
         productType="map"
         priceText={quote?.formatted}
+        modelPending={!downloadUrl}
         summary={{
           city: selectedCityKey,
           district: MAP_TEMPLATES.find((t) => t.id === activeTemplate)?.district,
@@ -796,10 +808,12 @@ export function SimpleControlPanel({
             busy={isGenerating}
             disabled={!downloadUrl && (!selectedArea || isGenerating)}
             onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
-            // На екрані готового — друга дія «Завантажити» поряд із «Замовити»
-            // (раніше це давав окремий нижній бар, який ми прибрали).
-            secondaryLabel={downloadUrl ? t("downloadShort") : undefined}
-            onSecondary={downloadUrl ? doGatedDownload : undefined}
+            // Друга дія залежить від стану:
+            //  • готово → «Завантажити» поряд із «Замовити»;
+            //  • до/під час генерації → «Замовити» (order-now: фонова генерація
+            //    + форма одразу, без очікування 1-3 хв).
+            secondaryLabel={downloadUrl ? t("downloadShort") : (selectedArea ? t("orderPrint") : undefined)}
+            onSecondary={downloadUrl ? doGatedDownload : (selectedArea ? orderNow : undefined)}
           />
         </>
       )}

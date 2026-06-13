@@ -54,6 +54,23 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Стиль|Розмір/).first()).toBeVisible();
   });
 
+  test("Order-now: «Замовити» доступне ДО генерації + примітка «модель готується»", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    // Пропускаємо тур-оверлей, щоб він не перехоплював клік (у проді він піднятий
+    // над sticky; у тесті просто вимикаємо для чистоти кліку)
+    await page.addInitScript(() => localStorage.setItem("onb_create_v1", "1"));
+    await page.goto("/uk/create");
+    await page.waitForTimeout(1200);
+    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    // До будь-якої генерації у барі вже є «Замовити друк» (order-now)
+    const orderBtn = sticky.getByRole("button", { name: /Замовити/ });
+    await expect(orderBtn).toBeVisible();
+    await orderBtn.click();
+    // Форма відкривається одразу + заспокійлива примітка про підготовку моделі
+    await expect(page.getByText(/Модель ще готується/)).toBeVisible();
+    await expect(page.getByPlaceholder(/Ім.?я та прізвище|Ім/).first()).toBeVisible();
+  });
+
   test("майстер: 3 клікабельні кроки Місце/Параметри/Готово", async ({ page }) => {
     const steps = page.locator('nav[aria-label] > button');
     await expect(steps).toHaveCount(3);

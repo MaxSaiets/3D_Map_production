@@ -234,6 +234,7 @@
     "acceptedTitle": "¡Pedido recibido!",
     "orderNo": "Número de pedido",
     "acceptedText": "Te contactaremos pronto para confirmar y gestionar el pago.",
+    "modelPending": "Tu modelo aún se está preparando — es normal. Haz el pedido ahora; el archivo listo llega a nuestro operador en cuanto esté. No hace falta esperar.",
     "doneBtn": "Listo",
     "title": "Pedir impresión",
     "prodKeychain": "Llavero con mapa",

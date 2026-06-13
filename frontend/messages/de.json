@@ -234,6 +234,7 @@
     "acceptedTitle": "Bestellung erhalten!",
     "orderNo": "Bestellnummer",
     "acceptedText": "Wir melden uns in Kürze zur Bestätigung und Zahlung.",
+    "modelPending": "Dein Modell wird noch vorbereitet — das ist in Ordnung. Bestelle jetzt; die fertige Datei erreicht unseren Operator, sobald sie bereit ist. Kein Warten nötig.",
     "doneBtn": "Fertig",
     "title": "Druck bestellen",
     "prodKeychain": "Karten-Anhänger",

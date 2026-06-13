@@ -919,6 +919,11 @@ export function KeychainControlPanel({
   };
 
   const canGenerate = Boolean(selectedArea) && !isGenerating && blockingPrintIssues.length === 0;
+  // ЗАМОВИТИ ОДРАЗУ: стартує генерацію у фоні + відкриває форму, щоб не чекати.
+  const orderNow = () => {
+    if (!downloadUrl && canGenerate) handleGenerate();
+    setOrderOpen(true);
+  };
   const currentStatus = isGenerating ? `${progress}% • ${status || "Генерація брелка"}` : downloadUrl ? "3MF готовий" : "Готово";
   const activeTaskStatus = activeTaskId ? taskStatuses[activeTaskId] : null;
   const generatedManifest = activeTaskStatus?.keychain_manifest;
@@ -1425,6 +1430,7 @@ export function KeychainControlPanel({
           taskId={taskGroupId}
           productType="keychain"
           priceText={quote?.formatted}
+          modelPending={!downloadUrl}
           summary={{
             label,
             size: `${Math.round(design.bodyWidthMm)}×${Math.round(design.bodyHeightMm)} мм`,
@@ -1441,8 +1447,9 @@ export function KeychainControlPanel({
           busy={isGenerating}
           disabled={!downloadUrl && !canGenerate}
           onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
-          secondaryLabel={downloadUrl ? "Завантажити" : undefined}
-          onSecondary={downloadUrl ? handleDownload : undefined}
+          // Готово → «Завантажити»; до/під час → «Замовити» (order-now)
+          secondaryLabel={downloadUrl ? "Завантажити" : (selectedArea ? "Замовити" : undefined)}
+          onSecondary={downloadUrl ? handleDownload : (selectedArea ? orderNow : undefined)}
         />
 
         <section className={sectionClass("advanced")}>

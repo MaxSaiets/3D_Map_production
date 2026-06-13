@@ -234,6 +234,7 @@
     "acceptedTitle": "Commande reçue !",
     "orderNo": "Numéro de commande",
     "acceptedText": "Nous te contacterons bientôt pour confirmer et organiser le paiement.",
+    "modelPending": "Ton modèle est encore en préparation — c'est normal. Commande maintenant ; le fichier prêt parvient à notre opérateur dès qu'il est prêt. Pas besoin d'attendre.",
     "doneBtn": "Terminé",
     "title": "Commander l'impression",
     "prodKeychain": "Porte-clés carte",

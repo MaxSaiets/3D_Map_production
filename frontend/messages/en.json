@@ -234,6 +234,7 @@
     "acceptedTitle": "Order received!",
     "orderNo": "Order number",
     "acceptedText": "We'll contact you shortly to confirm and arrange payment.",
+    "modelPending": "Your model is still being prepared — that's fine. Place the order now; the finished file reaches our operator as soon as it's ready. No need to wait.",
     "doneBtn": "Done",
     "title": "Order printing",
     "prodKeychain": "Map keychain",

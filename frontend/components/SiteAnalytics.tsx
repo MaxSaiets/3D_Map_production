@@ -63,7 +63,7 @@ export default function SiteAnalytics() {
       )}
 
       {ready && consent === null && (
-        <div className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-[680px] rounded-2xl border border-line bg-paper/95 p-4 shadow-lift backdrop-blur sm:flex sm:items-center sm:gap-4">
+        <div className="fixed inset-x-3 bottom-[96px] z-[60] mx-auto max-w-[680px] rounded-2xl border border-line bg-paper/95 p-4 shadow-lift backdrop-blur sm:bottom-3 sm:flex sm:items-center sm:gap-4">
           <p className="text-[13px] leading-relaxed text-ink-2">
             {t("text")}{" "}
             <Link href="/privacy" className="font-semibold text-forest underline">{t("more")}</Link>

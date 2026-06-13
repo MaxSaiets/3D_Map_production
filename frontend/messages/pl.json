@@ -234,6 +234,7 @@
     "acceptedTitle": "Zamówienie przyjęte!",
     "orderNo": "Numer zamówienia",
     "acceptedText": "Skontaktujemy się wkrótce, aby potwierdzić i ustalić płatność.",
+    "modelPending": "Twój model jest jeszcze przygotowywany — to normalne. Złóż zamówienie teraz; gotowy plik trafi do operatora, gdy tylko będzie gotowy. Nie trzeba czekać.",
     "doneBtn": "Gotowe",
     "title": "Zamów druk",
     "prodKeychain": "Brelok z mapą",

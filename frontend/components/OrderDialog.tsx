@@ -36,6 +36,7 @@ export function OrderDialog({
   productType,
   summary,
   priceText,
+  modelPending = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -44,6 +45,8 @@ export function OrderDialog({
   summary: OrderSummary;
   /** Жива орієнтовна ціна з /api/quote; без неї — статичний i18n-fallback. */
   priceText?: string;
+  /** Модель ще генерується (order-now) — показуємо заспокійливу примітку. */
+  modelPending?: boolean;
 }) {
   const t = useTranslations("order");
   const [name, setName] = useState("");
@@ -160,6 +163,12 @@ export function OrderDialog({
             </div>
 
             <div className="space-y-3">
+              {modelPending && (
+                <div className="flex items-center gap-2 rounded-2xl border border-[rgba(11,92,87,0.2)] bg-[rgba(15,118,110,0.07)] px-3 py-2 text-[12px] leading-4 text-[var(--text-primary)]">
+                  <span aria-hidden>🛠</span>
+                  <span>{t("modelPending")}</span>
+                </div>
+              )}
               <input className={fieldCls} placeholder={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
               <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
 
