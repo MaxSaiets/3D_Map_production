@@ -260,7 +260,7 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
   } else if (shape === "heart") {
     // Classic heart curve, normalised to fit the box (tip pointing down).
     const raw: Array<{ x: number; y: number }> = [];
-    const N = 64;
+    const N = 160;  // вища роздільність → гладкий низ (синхрон з беком/дизайнером)
     for (let i = 0; i < N; i++) {
       const t = (2 * Math.PI * i) / N;
       const x = 16 * Math.pow(Math.sin(t), 3);
@@ -275,7 +275,7 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     // Вістря (min y) заокруглюємо — той самий алгоритм, що бек/дизайнер
     let tipIdx = 0;
     for (let i = 1; i < heartPts.length; i++) if (heartPts[i][1] < heartPts[tipIdx][1]) tipIdx = i;
-    heartPts = roundOutlineTip(heartPts, tipIdx, Math.min(w, h) * 0.16);
+    heartPts = roundOutlineTip(heartPts, tipIdx, Math.min(w, h) * 0.11);
     for (const [px, py] of heartPts) pts.push({ x: px, y: py });
   } else if (shape === "heart-l" || shape === "heart-r") {
     // Половинка серця (пара для закоханих): повне серце шириною 2w, кліп по
@@ -412,11 +412,15 @@ function roundOutlineTip(pts: Array<[number, number]>, tipIndex: number, radius:
     }
     return (tipIndex + dir + n) % n;
   };
-  const ia = walk(-1), ib = walk(+1);
+  // СИМЕТРИЧНО (k=min з обох боків) + 16 семплів — гладкий низ без зазубрини.
+  const ka = (tipIndex - walk(-1) + n) % n;
+  const kb = (walk(+1) - tipIndex + n) % n;
+  const k = Math.max(1, Math.min(ka, kb));
+  const ia = (tipIndex - k + n) % n, ib = (tipIndex + k) % n;
   const a = pts[ia], b = pts[ib];
   const arc: Array<[number, number]> = [];
-  for (let s = 0; s <= 10; s++) {
-    const t = s / 10;
+  for (let s = 0; s <= 16; s++) {
+    const t = s / 16;
     arc.push([
       (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * tip[0] + t ** 2 * b[0],
       (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * tip[1] + t ** 2 * b[1],

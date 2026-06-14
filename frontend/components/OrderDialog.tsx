@@ -140,7 +140,7 @@ export function OrderDialog({
                   rel="noopener noreferrer"
                   className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
                 >
-                  {t("payNow")} · {priceText || ""}
+                  {t("payNow")} · {priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}
                 </a>
                 <p className="mt-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t("payLater")}</p>
               </>
@@ -221,9 +221,9 @@ export function OrderDialog({
 
               <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />
 
-              <div className="flex items-center justify-between rounded-2xl bg-[rgba(176,141,87,0.12)] px-4 py-2.5 text-sm">
-                <span className="text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
-                <b className="text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
+              <div className="flex items-center justify-between rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-sm">
+                <span className="font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
+                <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
               </div>
 
               <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">

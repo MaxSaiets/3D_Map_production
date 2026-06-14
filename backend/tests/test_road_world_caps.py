@@ -30,7 +30,7 @@ def _prepare(edges, zone):
 
 def test_parallel_streets_16m_apart_stay_separate_on_large_zone():
     # ДО фіксу: min-width 10м (вулиці впритул) + gap-fill 10м → одна пляма.
-    # ПІСЛЯ: ширина капнута 9м (зазор 7м) + gap-fill капнутий 6м → 2 стрічки.
+    # ПІСЛЯ (2026-06-14): ширина капнута 6м (зазор 10м) + gap-fill 3.5м → 2 стрічки.
     edges = gpd.GeoDataFrame({
         "highway": ["residential", "residential"],
         "geometry": [LineString([(0, 0), (200, 0)]), LineString([(0, 16), (200, 16)])],
@@ -43,7 +43,8 @@ def test_parallel_streets_16m_apart_stay_separate_on_large_zone():
 
 
 def test_min_road_width_capped_at_street_scale():
-    # Одна вулиця: ширина має бути ~9м (кап), а не 10м (1.0мм × 10м/мм)
+    # Одна вулиця: ширина має бути ~6м (кап, знижено 9→6 у 2026-06-14 проти
+    # надмірного зливання), а не 10м (1.0мм × 10м/мм). 6м×0.1=0.6мм — друковано.
     edges = gpd.GeoDataFrame({
         "highway": ["residential"],
         "geometry": [LineString([(0, 0), (200, 0)])],
@@ -53,4 +54,4 @@ def test_min_road_width_capped_at_street_scale():
     assert mask is not None and not mask.is_empty
     miny, maxy = mask.bounds[1], mask.bounds[3]
     width = maxy - miny
-    assert 8.0 <= width <= 9.6, f"ширина вулиці {width:.2f}м — очікувався кап ~9м"
+    assert 5.4 <= width <= 6.6, f"ширина вулиці {width:.2f}м — очікувався кап ~6м"

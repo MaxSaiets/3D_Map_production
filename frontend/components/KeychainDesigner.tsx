@@ -435,7 +435,7 @@ function shapePath(
   if (value.baseShape === "heart") {
     // Та сама параметрична крива, що на беку (_keychain_body_shape "heart");
     // SVG має y-вниз → фліп, щоб лоби були зверху (бік петлі), вістря знизу.
-    const n = 96;
+    const n = 160;  // вища роздільність → гладкий низ (синхрон з беком)
     const raw: Array<[number, number]> = [];
     for (let i = 0; i < n; i++) {
       const t = (2 * Math.PI * i) / n;
@@ -455,7 +455,7 @@ function shapePath(
     // (_round_polygon_tip): Безьє через старий кінчик у радіусі 9% min-сторони.
     let tipIdx = 0;
     for (let i = 1; i < pts2.length; i++) if (pts2[i][1] > pts2[tipIdx][1]) tipIdx = i;
-    pts2 = roundPolygonTip(pts2, tipIdx, Math.min(w, h) * 0.16);
+    pts2 = roundPolygonTip(pts2, tipIdx, Math.min(w, h) * 0.11);
     const d = pts2.map(([sx, sy], i) => `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`).join(" ");
     return `${d} Z`;
   }
@@ -517,11 +517,16 @@ function roundPolygonTip(pts: Array<[number, number]>, tipIndex: number, radius:
     }
     return (tipIndex + dir + n) % n;
   };
-  const ia = walk(-1);
-  const ib = walk(+1);
+  // СИМЕТРИЧНО: однакова кількість вузлів з обох боків (інакше асиметрична
+  // зазубрина внизу серця). Дзеркало бекендового _round_polygon_tip.
+  const ka = (tipIndex - walk(-1) + n) % n;
+  const kb = (walk(+1) - tipIndex + n) % n;
+  const k = Math.max(1, Math.min(ka, kb));
+  const ia = (tipIndex - k + n) % n;
+  const ib = (tipIndex + k) % n;
   const a = pts[ia], b = pts[ib];
   const arc: Array<[number, number]> = [];
-  const S = 10;
+  const S = 16;
   for (let s = 0; s <= S; s++) {
     const t = s / S;
     arc.push([

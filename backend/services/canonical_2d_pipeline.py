@@ -780,13 +780,28 @@ def prepare_canonical_2d_stage(
         return_result=True,
     )
 
+    # ЗЕЛЕНЬ ВИГРАЄ ВСЕРЕДИНІ ЗЕЛЕНІ (кладовища/парки): раніше parks_final =
+    # parks − roads (дороги різали парк) → щільна мережа алей кладовища
+    # «заливала» його дорогою (скарга юзера). Тепер зелень лишається суцільною
+    # (мінус лише вода/будівлі), а дороги навпаки віднімаються зеленню нижче.
     parks_final = _subtract_masks(
         parks_result.processed_polygons if parks_result is not None else None,
-        canonical_road_masks.road_insert_mask,
-        canonical_road_masks.road_groove_mask,
         water_polygons,
         building_exclusion_for_roads,
     )
+
+    # Дороги НЕ залазять у зелень: віднімаємо зелену зону від road-масок, тож
+    # службові алеї всередині кладовища/парку зникають, а зелень читається
+    # суцільною. (Магістраль крізь великий парк зникне в межах парку — рідко.)
+    _green_src = parks_result.processed_polygons if parks_result is not None else None
+    if _green_src is not None and not getattr(_green_src, "is_empty", True):
+        for _attr in ("road_insert_mask", "road_groove_mask"):
+            _m = getattr(canonical_road_masks, _attr, None)
+            if _m is not None and not getattr(_m, "is_empty", True):
+                try:
+                    setattr(canonical_road_masks, _attr, _m.difference(_green_src).buffer(0))
+                except Exception:
+                    pass
 
     parks_groove_mask = _prepare_parks_groove_mask(
         parks_final,

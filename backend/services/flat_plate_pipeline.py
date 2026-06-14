@@ -24,11 +24,12 @@ LAYER_COLORS = {
     "buildings": [225, 225, 225, 255],
     "water": [100, 150, 200, 255],
     "parks": [100, 150, 100, 255],
-    # Фідбек 2026-06-12 (Рома): «ободок чорний, текст чорний» — виглядало як
-    # суцільна чорнота у 3D-превʼю. Rim = бронза (як у дизайнері #a6926b),
-    # text = темний еспресо (читається на тлі бази, але не «чорний»).
-    "rim": [166, 146, 107, 255],
-    "text": [70, 48, 30, 255],
+    # Фідбек власника (2026-06-14): ободок і текст — ЧОРНІ (друкуються чорним
+    # філаментом). Беремо дуже темний графіт [25,25,25] замість чистого [0,0,0]:
+    # друкується як чорний, але у 3D-превʼю видно форму (чистий чорний без світла
+    # зливається у пляму — стара скарга Роми). На печать це фактично чорний.
+    "rim": [25, 25, 25, 255],
+    "text": [25, 25, 25, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -528,10 +529,12 @@ def build_magnet_pocket_geometry(
     return unary_union([p.buffer(r_m, resolution=48) for p in centers])
 
 
-def _round_polygon_tip(pts: list, *, tip_index: int, radius: float) -> list:
+def _round_polygon_tip(pts: list, *, tip_index: int, radius: float, samples: int = 16) -> list:
     """Заокруглення одного гострого вузла замкнутого контуру: вершини в радіусі
     `radius` від кінчика замінюються семплами квадратичної Безьє (контрольна
-    точка = старий кінчик). Використовується для вістря серця."""
+    точка = старий кінчик). Використовується для вістря серця.
+    СИМЕТРИЧНО: беремо однакову кількість вузлів з обох боків (k=min) — інакше
+    нерівний крок семплінгу давав асиметричну «зазубрину» внизу серця."""
     import math
     n = len(pts)
     if n < 8 or radius <= 0:
@@ -551,11 +554,13 @@ def _round_polygon_tip(pts: list, *, tip_index: int, radius: float) -> list:
                 return i
         return (tip_index + direction) % n
 
-    ia = _walk(-1)  # межа дуги "до" кінчика
-    ib = _walk(+1)  # межа дуги "після"
+    ka = (tip_index - _walk(-1)) % n
+    kb = (_walk(+1) - tip_index) % n
+    k = max(1, min(ka, kb))          # симетрична кількість вузлів з кожного боку
+    ia = (tip_index - k) % n
+    ib = (tip_index + k) % n
     a, b = pts[ia], pts[ib]
     arc = []
-    samples = 10
     for s in range(samples + 1):
         t = s / samples
         x = (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * tip[0] + t ** 2 * b[0]
@@ -620,7 +625,7 @@ def _keychain_body_shape(
         # = body_maxy - y_mm*scale нижче по файлу) → лоби серця до maxy,
         # вістря до miny. Та сама крива у designer-SVG (shapePath) з y-фліпом.
         import math
-        n = 96
+        n = 160  # вища роздільність → гладкий низ без фасеток (було 96)
         raw = []
         for i in range(n):
             t = 2.0 * math.pi * i / n
@@ -643,7 +648,7 @@ def _keychain_body_shape(
         # ІДЕНТИЧНИЙ алгоритм у designer-SVG (shapePath) і MapSelector
         # (shapeOutlinePoints) — превʼю й модель збігаються.
         pts = _round_polygon_tip(pts, tip_index=min(range(len(pts)), key=lambda i: pts[i][1]),
-                                 radius=min(width, height) * 0.16)
+                                 radius=min(width, height) * 0.11)
         return Polygon(pts).buffer(0)
     if shape_name in {"heart-l", "heart-r"}:
         # ПАРА ДЛЯ ЗАКОХАНИХ: серце, розрізане вертикально на дві половинки
@@ -1683,7 +1688,7 @@ def build_keychain_rim_mesh(
         rim,
         bottom_z_m=bottom_z_m,
         thickness_m=height_m,
-        color=LAYER_COLORS["base"],
+        color=LAYER_COLORS["rim"],  # ободок = чорний (раніше помилково base)
         min_area_m2=max(width_m * width_m * 0.25, 1e-10),
     )
 
@@ -2741,6 +2746,18 @@ def run_flat_plate_pipeline(
             min_area_m2=float(min_area_m2) * 0.3,
             label="parks",
         )
+        # ЗЕЛЕНЬ З-ПІД ДОРІГ: road z (0.55) > parks z (0.50), тож службові дороги/
+        # алеї ВСЕРЕДИНІ зелених зон (кладовища мають щільну мережу алей у OSM)
+        # перекривали зелень → «кладовище заповнене дорогою» (скарга юзера).
+        # Віднімаємо парки/кладовища від доріг — зелена зона читається як зелена,
+        # а дороги лишаються зверху лише ПОЗА зеленню.
+        if (road_mask is not None and not getattr(road_mask, "is_empty", True)
+                and parks_mask is not None and not getattr(parks_mask, "is_empty", True)):
+            try:
+                road_mask = _subtract_geometry(road_mask, parks_mask)
+                print("[KEYCHAIN] Roads clipped out of green/cemetery areas (зелень не залита дорогою)")
+            except Exception:
+                pass
         # BRIDGE = підмножина road_mask по bridge centerlines. Гарантує
         # 1:1 співпадіння з road network → жодних розривів.
         # Алгоритм: bridge centerlines buffered щедро (15m radius у source meters)

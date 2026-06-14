@@ -376,9 +376,12 @@ def fetch_extras_from_pbf(
 
     green = osm.get_data_by_custom_criteria(
         custom_filter={
-            "leisure": ["park", "garden", "playground", "recreation_ground", "pitch"],
-            "landuse": ["grass", "meadow", "forest", "village_green"],
-            "natural": ["wood"],
+            # Синхронізовано з extras_loader/build_osm_db: cemetery/grave_yard
+            # тепер зелена зона (інакше кладовище лишалось голим і заливалось алеями).
+            "leisure": ["park", "garden", "playground", "recreation_ground", "pitch", "nature_reserve", "golf_course"],
+            "landuse": ["grass", "meadow", "forest", "village_green", "cemetery", "allotments", "orchard"],
+            "natural": ["wood", "grassland", "scrub", "heath"],
+            "amenity": ["grave_yard"],
         },
         filter_type="keep",
         keep_nodes=False,

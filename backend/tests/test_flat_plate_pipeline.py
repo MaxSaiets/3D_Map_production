@@ -432,10 +432,12 @@ def test_puzzle_pair_tab_fits_into_notch_with_clearance():
 def test_heart_tip_is_rounded():
     # Вістря серця заокруглене (_round_polygon_tip): у смужці 1мм над самою
     # нижньою точкою контур уже помітно ШИРОКИЙ (у гострого — голка <1мм).
+    # 2026-06-14: радіус знижено 0.16→0.11 (чіткіший, але не гострий низ) —
+    # смужка ~2.5мм; голка дала б <1мм, тож поріг 2.0 підтверджує заокруглення.
     heart = _keychain_body_shape(0, 0, 40, 42, radius_m=4.0, shape="heart")
     miny = heart.bounds[1]
     strip = heart.intersection(_square(0, miny, 40, miny + 1.0))
-    assert strip.bounds[2] - strip.bounds[0] > 3.0
+    assert strip.bounds[2] - strip.bounds[0] > 2.0
 
 
 def test_heart_pair_halves_assemble_into_full_heart():

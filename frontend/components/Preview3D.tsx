@@ -162,6 +162,8 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           parks: 0x649664,
           green: 0x649664,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
+          rim: 0x191919,   // ободок брелка — ЧОРНИЙ (друкується чорним)
+          text: 0x191919,  // текст/назва — ЧОРНИЙ
         };
 
         group.traverse((child) => {
@@ -192,9 +194,10 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           for (const material of materials) {
             if (!material) continue;
             const maybeColored = material as THREE.Material & { color?: THREE.Color };
-            // GPX-маршрут завжди ЧЕРВОНИЙ (форсуємо, навіть якщо 3MF віддав сірий);
+            // track/rim/text форсуємо завжди (щоб превʼю = друк: червоний трек,
+            // чорний ободок і текст), навіть якщо 3MF віддав сірий матеріал;
             // решта шарів — лише коли матеріал білий (не перебиваємо AMS-кольори).
-            if (partKey === "track" && partColor !== null && maybeColored.color) {
+            if ((partKey === "track" || partKey === "rim" || partKey === "text") && partColor !== null && maybeColored.color) {
               maybeColored.color.setHex(partColor);
             } else if (partColor !== null && maybeColored.color?.getHex() === 0xffffff) {
               maybeColored.color.setHex(partColor);
@@ -246,6 +249,9 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           water: { color: 0x6496c8, part: "water" },
           parks: { color: 0x649664, part: "parks" },
           green: { color: 0x649664, part: "parks" },
+          track: { color: 0xdc2626, part: "track" },
+          rim: { color: 0x191919, part: "rim" },   // ободок — чорний
+          text: { color: 0x191919, part: "text" },  // текст — чорний
         };
         group.traverse((child) => {
           if (!(child instanceof THREE.Mesh)) return;
