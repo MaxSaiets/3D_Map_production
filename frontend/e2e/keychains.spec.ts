@@ -6,6 +6,22 @@ test.describe("Майстерня брелків /keychains", () => {
     await page.evaluate(() => localStorage.removeItem("monadruk:draft:keychain"));
   });
 
+  test("REGRESSION: зміна міста ПЕРЕЛІТАЄ карту брелка (скидає стару зону)", async ({ page }) => {
+    const tileLon = () => page.evaluate(() => {
+      const tiles = Array.from(document.querySelectorAll("img.leaflet-tile")) as HTMLImageElement[];
+      for (const t of tiles) {
+        const m = t.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+        if (m) return (+m[2]) / Math.pow(2, +m[1]) * 360 - 180;
+      }
+      return null;
+    });
+    // Київ ~30.5°E
+    await expect.poll(tileLon, { timeout: 12000 }).toBeGreaterThan(28);
+    // місто → Львів (~24°E) дає чіткий зсув на захід
+    await page.locator("select").first().selectOption({ label: "Львів" });
+    await expect.poll(tileLon, { timeout: 12000 }).toBeLessThan(26);
+  });
+
   test("степер 3 кроки + нові шаблони Серце/Будиночок у списку", async ({ page }) => {
     await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);
     await expect(page.getByRole("button", { name: /Серце 46 × 42/ })).toBeVisible();

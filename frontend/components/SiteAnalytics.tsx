@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, getConsent, setConsent, track } from "@/lib/analytics";
+import { GA_ID, getConsent, setConsent, track, isOwnerOptOut } from "@/lib/analytics";
+
+// Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
+// «Connection to Indexed Database server lost» = Firebase Auth persistence у
+// Safari/приватному режимі/кількох вкладках; на роботу сайту не впливає.
+const BENIGN_ERR = /Indexed Database|IndexedDB|ResizeObserver loop|Script error\.?$|Load failed/i;
 
 /**
  * GDPR-friendly analytics: shows a localized consent banner; Google Analytics
@@ -35,7 +40,10 @@ export default function SiteAnalytics() {
     const API = process.env.NEXT_PUBLIC_API_URL || "";
     let sent = 0;
     const report = (msg: string, src?: string) => {
-      if (sent >= 10) return; sent++;
+      if (sent >= 10) return;
+      if (isOwnerOptOut()) return;           // не логуємо помилки власника
+      if (BENIGN_ERR.test(String(msg))) return; // відомий нешкідливий шум
+      sent++;
       try {
         const body = JSON.stringify({ event: "js_error", path: location.pathname, locale: document.documentElement.lang || "", props: { msg: String(msg).slice(0, 200), src: String(src || "").slice(0, 120) } });
         if (navigator.sendBeacon) navigator.sendBeacon(`${API}/api/track`, new Blob([body], { type: "application/json" }));

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { setOwnerOptOut } from "@/lib/analytics";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -26,6 +27,7 @@ export default function AdminPage() {
       const admin = Boolean(q?.quota?.is_admin);
       setIsAdmin(admin);
       if (admin) {
+        setOwnerOptOut(); // власні заходи більше не псують статистику відвідувачів
         const [o, us, st] = await Promise.all([
           fetch(`${API_BASE}/api/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
           fetch(`${API_BASE}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
@@ -107,12 +109,13 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatList title="Країни" rows={stats.byCountry} />
                     <StatList title="Топ сторінок" rows={stats.topPaths} />
                     <StatList title="Події" rows={stats.topEvents} />
                     <StatList title="Мови" rows={stats.byLocale} />
                   </div>
-                  <p className="mt-4 text-[12px] text-ink-3">Власна аналітика на сервері · без cookie-стеження · IP не зберігається (лише денний хеш).</p>
+                  <p className="mt-4 text-[12px] text-ink-3">Власна аналітика на сервері · без cookie-стеження · IP не зберігається (лише денний хеш + код країни Cloudflare) · твої власні (адмінські) заходи не рахуються.</p>
                 </>
               )}
             </div>

@@ -826,9 +826,11 @@ async def track_event(
     ev: TrackEvent,
     x_forwarded_for: Optional[str] = Header(default=None),
     user_agent: Optional[str] = Header(default=None),
+    cf_ipcountry: Optional[str] = Header(default=None),
 ):
     """Append a privacy-friendly analytics event. No raw IP is stored — only a
-    daily salted hash, so we can count unique visitors without tracking people."""
+    daily salted hash, so we can count unique visitors without tracking people.
+    Country code comes from Cloudflare (Cf-Ipcountry) — coarse geo, no raw IP."""
     import hashlib, json
     from datetime import datetime, timezone
     try:
@@ -836,6 +838,7 @@ async def track_event(
         ip = (x_forwarded_for or "").split(",")[0].strip()
         salt = os.getenv("SECRET_KEY", "monadruk")
         visitor = hashlib.sha256(f"{ip}|{user_agent or ''}|{day}|{salt}".encode()).hexdigest()[:16]
+        cc = (cf_ipcountry or "").strip().upper()[:2]
         rec = {
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "day": day,
@@ -844,6 +847,7 @@ async def track_event(
             "locale": (ev.locale or "")[:8],
             "ref": (ev.ref or "")[:200],
             "visitor": visitor,
+            "cc": cc,
         }
         if ev.props:
             try:
@@ -870,6 +874,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     ev_counter: Counter = Counter()
     path_counter: Counter = Counter()
     locale_counter: Counter = Counter()
+    country_counter: Counter = Counter()
     visitors: set = set()
     day_visitors: Dict[str, set] = {}
     try:
@@ -887,6 +892,8 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                     path_counter[r.get("path", "")] += 1
                     if r.get("locale"):
                         locale_counter[r["locale"]] += 1
+                    if r.get("cc"):
+                        country_counter[r["cc"]] += 1
                 d = r.get("day", "")
                 vis = r.get("visitor", "")
                 if vis:
@@ -908,6 +915,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "topEvents": ev_counter.most_common(15),
         "topPaths": path_counter.most_common(15),
         "byLocale": locale_counter.most_common(10),
+        "byCountry": country_counter.most_common(15),
     }
 
 

@@ -79,6 +79,25 @@ test.describe("Конструктор мап /create", () => {
     await expect(steps.nth(2)).toContainText("Готово");
   });
 
+  test("REGRESSION: зміна міста в шапці ПЕРЕЛІТАЄ карту (Рома: «карта не переходить»)", async ({ page }) => {
+    await page.goto("/uk/create");
+    // довгота першого видимого тайла → перевіряємо реальне положення карти
+    const tileLon = () => page.evaluate(() => {
+      const tiles = Array.from(document.querySelectorAll("img.leaflet-tile")) as HTMLImageElement[];
+      for (const t of tiles) {
+        const m = t.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+        if (m) return (+m[2]) / Math.pow(2, +m[1]) * 360 - 180;
+      }
+      return null;
+    });
+    // Київ ~30.5°E
+    await expect.poll(tileLon, { timeout: 12000 }).toBeGreaterThan(28);
+    // header-select → Львів (~24°E)
+    await page.locator("select").first().selectOption({ label: "Львів" });
+    // карта мусить перелетіти на захід (а не лишитись на Києві — це і був баг)
+    await expect.poll(tileLon, { timeout: 12000 }).toBeLessThan(26);
+  });
+
   test("шаблон району → зона вибрана → Згенерувати активна", async ({ page }) => {
     await page.getByRole("button", { name: /Поділ/ }).first().click();
     await expect(page.locator("#panel-settings").getByText(/Ділянку вибрано/)).toBeVisible();
