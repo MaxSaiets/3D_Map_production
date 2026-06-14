@@ -1443,9 +1443,9 @@ export function KeychainControlPanel({
         {/* Мобільний sticky-бар: ціна завжди видима + головна дія стану */}
         <div className="h-20 lg:hidden" aria-hidden="true" />
         <StickyActionBar
-          priceLabel="Орієнтовна вартість"
-          // Fallback поки /api/quote вантажиться — брелок базово 120₴ (не «—»)
-          price={quote?.formatted ?? "≈ 120 ₴"}
+          // Ціну показуємо ЛИШЕ на кроці оформлення (OrderDialog), не тут.
+          priceLabel="Брелок із мапою"
+          price={null}
           actionLabel={downloadUrl ? "Замовити друк" : isGenerating ? `Генерація… ${progress}%` : "Створити брелок"}
           busy={isGenerating}
           disabled={!downloadUrl && !canGenerate}

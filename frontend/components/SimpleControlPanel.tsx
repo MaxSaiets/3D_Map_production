@@ -782,7 +782,7 @@ export function SimpleControlPanel({
         onClose={() => setOrderOpen(false)}
         taskId={taskGroupId}
         productType="map"
-        priceText={quote?.formatted}
+        priceText={quote?.formatted ?? simpleFallbackPrice}
         modelPending={!downloadUrl}
         summary={{
           city: selectedCityKey,
@@ -797,10 +797,10 @@ export function SimpleControlPanel({
         <>
           <div className="h-20 lg:hidden" aria-hidden="true" />
           <StickyActionBar
-            priceLabel={tOrder("estPriceLabel")}
-            // Поки /api/quote не відповів — показуємо fallback-ціну з SIMPLE_SIZES
-            // замість «—» (виглядало як зламана ціна).
-            price={quote?.formatted ?? simpleFallbackPrice}
+            // Ціну показуємо ЛИШЕ на кроці оформлення (OrderDialog), не під час
+            // створення — ліворуч тихий продукт-лейбл, price=null.
+            priceLabel={tOrder("prodMap")}
+            price={null}
             actionLabel={
               downloadUrl
                 ? t("orderPrint")

@@ -44,9 +44,17 @@ export function StickyActionBar({
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
     >
       <div className="mx-auto flex max-w-[640px] items-center justify-between gap-2.5">
+        {/* Ціну НЕ показуємо під час створення (тільки на кроці оформлення).
+            Коли price=null — ліворуч тихий продукт-лейбл; коли задано — як було. */}
         <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{priceLabel}</div>
-          <div className="truncate text-[17px] font-bold leading-tight text-[var(--text-primary)]">{price ?? "—"}</div>
+          {price != null ? (
+            <>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{priceLabel}</div>
+              <div className="truncate text-[17px] font-bold leading-tight text-[var(--text-primary)]">{price}</div>
+            </>
+          ) : (
+            <div className="truncate text-[14px] font-semibold leading-tight text-[var(--text-secondary)]">{priceLabel}</div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {secondaryLabel && onSecondary && (
