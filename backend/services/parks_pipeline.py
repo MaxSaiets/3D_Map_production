@@ -239,12 +239,46 @@ def process_park_layer(
             )
             if rebuilt_parks_mesh is not None and len(rebuilt_parks_mesh.vertices) > 0:
                 parks_mesh = rebuilt_parks_mesh
+        # AMS: рельєф-драпування (_rebuild_park_mesh_from_polygons / process_green_areas)
+        # вертає None бо terrain_provider=None → парки/кладовища ЗНИКАЛИ на AMS-карті
+        # (як було з водою). Будуємо ПЛАСКИЙ зелений шар як вода: суцільна плита
+        # від низу бази до base_top+park_height (гарантовано торкається бази, без
+        # плавання), зверху зелена. Лифт у цьому разі НЕ застосовуємо.
+        ams_flat_parks = False
+        if request.is_ams_mode and (parks_mesh is None or len(getattr(parks_mesh, "vertices", [])) == 0):
+            try:
+                _pp = getattr(parks_result, "processed_polygons", None) if parks_result is not None else None
+                if _pp is None or getattr(_pp, "is_empty", True):
+                    _pp = prepare_green_areas_for_processing(
+                        gdf_green, global_center=global_center, zone_polygon_local=zone_polygon_local,
+                    ) if (park_polygons_override is None) else park_polygons_override
+                    try:
+                        from shapely.ops import unary_union as _uu
+                        if hasattr(_pp, "geometry"):
+                            _pp = _uu(list(_pp.geometry.values))
+                    except Exception:
+                        pass
+                if _pp is not None and not getattr(_pp, "is_empty", True):
+                    from services.flat_plate_pipeline import build_flat_layer_mesh_from_mask, LAYER_COLORS
+                    _land = (1.0 / float(scale_factor)) if scale_factor else 0.001
+                    parks_mesh = build_flat_layer_mesh_from_mask(
+                        _pp, bottom_z_m=0.0, thickness_m=_land + float(park_height_m),
+                        color=LAYER_COLORS["parks"], min_area_m2=1e-12,
+                    )
+                    if parks_mesh is not None:
+                        ams_flat_parks = True
+                        print(f"[INFO] {zone_prefix} AMS flat parks built: {len(parks_mesh.faces)} faces")
+            except Exception as exc:
+                print(f"[WARN] {zone_prefix} AMS flat parks build failed: {exc}")
+
         if parks_mesh is None:
             print(f"[WARN] process_green_areas returned None for {len(prepared_green)} parks")
 
         parks_mesh = clamp_mesh_to_terrain_floor(parks_mesh, terrain_mesh, label="PARK")
 
-        if request.is_ams_mode and parks_mesh is not None:
+        # Лифт лише для ДРАПОВАНИХ парків (realistic-стиль). Пласкі AMS-парки вже
+        # стоять на правильній висоті (плита від низу) — не піднімаємо (плавали б).
+        if request.is_ams_mode and parks_mesh is not None and not ams_flat_parks:
             try:
                 lift_m = (1.4 / scale_factor) if scale_factor else 0.0
                 if lift_m > 0:
