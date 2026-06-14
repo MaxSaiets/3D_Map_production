@@ -352,7 +352,7 @@ export default function Home() {
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <select
                 value={currentCityKey}
-                onChange={(e) => setCurrentCityKey(e.target.value)}
+                onChange={(e) => handleCityChange(e.target.value)}
                 className="rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
                 title="Місто"
               >

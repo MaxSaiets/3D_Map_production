@@ -217,6 +217,10 @@ export default function KeychainsPage() {
                   value={currentCityKey}
                   onChange={(event) => {
                     const nextKey = event.target.value;
+                    // Скидаємо рамку СТАРОГО міста, інакше crop-overlay робить
+                    // fitBounds назад на стару зону і карта не перелітає на нове
+                    // місто (той самий баг, що був на /create — Рома).
+                    setSelectedArea(null);
                     setCurrentCityKey(nextKey);
                     setLabel(CITIES[nextKey]?.defaultText ?? "CITY");
                   }}
