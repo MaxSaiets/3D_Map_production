@@ -178,6 +178,21 @@ def process_park_layer(
                 park_embed_m=float(park_embed_m),
                 global_center=global_center,
             )
+            # AMS: _rebuild вертає None (terrain_provider=None) → парки зникали.
+            # Будуємо ПЛАСКИЙ зелений шар із тих самих canonical-полігонів.
+            if request.is_ams_mode and (parks_mesh is None or len(getattr(parks_mesh, "vertices", [])) == 0):
+                try:
+                    from services.flat_plate_pipeline import build_flat_layer_mesh_from_mask, LAYER_COLORS
+                    _land = (1.0 / float(scale_factor)) if scale_factor else 0.001
+                    parks_mesh = build_flat_layer_mesh_from_mask(
+                        park_polygons_override, bottom_z_m=0.0,
+                        thickness_m=_land + float(park_height_m),
+                        color=LAYER_COLORS["parks"], min_area_m2=1e-12,
+                    )
+                    if parks_mesh is not None:
+                        print(f"[INFO] {zone_prefix} AMS flat parks (override) built: {len(parks_mesh.faces)} faces")
+                except Exception as exc:
+                    print(f"[WARN] {zone_prefix} AMS flat parks (override) failed: {exc}")
             parks_mesh = clamp_mesh_to_terrain_floor(parks_mesh, terrain_mesh, label="PARK")
             return ParkLayerResult(
                 mesh=parks_mesh,
