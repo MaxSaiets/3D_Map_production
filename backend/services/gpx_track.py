@@ -246,6 +246,19 @@ def build_gpx_track_inlay_on_terrain(
         cutter = None
         if cut_meshes:
             cutter = cut_meshes[0] if len(cut_meshes) == 1 else trimesh.util.concatenate(cut_meshes)
+            # Cutter МУСИТЬ бути замкненим обʼємом для manifold-difference ("not a
+            # volume" інакше). Ремонтуємо: merge+winding+fill_holes.
+            try:
+                cutter.merge_vertices()
+                cutter.update_faces(cutter.nondegenerate_faces())
+                cutter.remove_unreferenced_vertices()
+                trimesh.repair.fix_winding(cutter)
+                trimesh.repair.fill_holes(cutter)
+                cutter.fix_normals()
+                if not bool(cutter.is_volume):
+                    print("[GPX] track cutter not watertight after repair — groove may be skipped")
+            except Exception:
+                pass
         print(f"[GPX] Track INLAY on terrain: insert {len(insert.faces)} faces, recess={recess_mm}mm (flush top)")
         return insert, cutter
     except Exception as exc:
