@@ -1026,19 +1026,19 @@ def run_full_generation_pipeline(
         terrain_mesh = merge_result.terrain_mesh
         building_meshes = merge_result.building_meshes
 
-    # D4 GPX-ТРЕК: маршрут користувача як шапка ПОВЕРХ моделі (без булевих
-    # врізань — перекриття зварює слайсер). Трек спершу спрощується+згладжується
-    # (друкований, не хвилястий) і притягується до доріг міста де можливо.
+    # D4 GPX-ТРЕК: ВРІЗАНИЙ маршрут (інлей) — червона вставка, верх якої flush з
+    # поверхнею (НЕ виступає), + жолоб вирізаний у рельєфі boolean-ом (graceful:
+    # якщо boolean впав — вставка лишається flush без жолоба). Трек спершу
+    # спрощується+згладжується (друкований) і притягується до доріг міста.
     gpx_mesh = None
     if getattr(request, "gpx_track", None):
         try:
             from services.gpx_track import (
-                build_gpx_track_mesh_on_terrain,
+                build_gpx_track_inlay_on_terrain,
                 build_gpx_track_polygon,
                 TRACK_COLOR,
             )
 
-            # Осі доріг (місто) для притягання треку — з road_geometry, у локальних метрах.
             road_lines_local = None
             try:
                 _rc = getattr(road_geometry, "semantic_centerlines_local", None)
@@ -1049,21 +1049,42 @@ def run_full_generation_pipeline(
 
             _tp = getattr(terrain_stage, "terrain_provider", None)
             _sf = float(zone.scale_factor or 1.0)
+            _recess_mm = float(getattr(request, "gpx_raise_mm", 0.6) or 0.6)
             if _tp is not None:
-                # Реалістичний рельєф — шапка по рельєфу.
-                gpx_mesh = build_gpx_track_mesh_on_terrain(
+                # Реалістичний рельєф: інлей (flush-вставка) + жолоб boolean-ом.
+                _insert, _cutter = build_gpx_track_inlay_on_terrain(
                     gpx_track=request.gpx_track,
                     global_center=global_center,
                     zone_polygon_local=zone.zone_polygon_local,
                     terrain_provider=_tp,
                     scale_factor=_sf,
                     width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
-                    raise_mm=float(getattr(request, "gpx_raise_mm", 0.6) or 0.6),
+                    recess_mm=_recess_mm,
                     road_lines_local=road_lines_local,
                 )
+                gpx_mesh = _insert
+                # Вирізаємо жолоб у рельєфі під вставку (manifold, швидко). Graceful:
+                # якщо boolean впав/зсунувся — лишаємо рельєф як є (вставка flush).
+                if _insert is not None and _cutter is not None and terrain_mesh is not None:
+                    try:
+                        import trimesh as _tm
+                        _b0 = terrain_mesh.bounds
+                        _cut = _tm.boolean.difference([terrain_mesh, _cutter], engine="manifold")
+                        if (_cut is not None and len(getattr(_cut, "faces", [])) > 0):
+                            _b1 = _cut.bounds
+                            # sanity: bounds не «втекли» (catastrophic boolean shift)
+                            _drift = max(abs(_b1[0][i] - _b0[0][i]) for i in range(2)) + \
+                                     max(abs(_b1[1][i] - _b0[1][i]) for i in range(2))
+                            if _drift < (5.0 / _sf):
+                                terrain_mesh = _cut
+                                print(f"[GPX] {zone_prefix}track groove carved into terrain (manifold)")
+                            else:
+                                print(f"[GPX] {zone_prefix}track groove rejected (drift {_drift:.1f}) — flush insert kept")
+                    except Exception as _bexc:
+                        print(f"[GPX] {zone_prefix}track groove boolean failed (flush insert kept): {_bexc}")
             elif getattr(request, "is_ams_mode", False) and _sf > 0:
-                # AMS-режим (плаский, terrain_provider=None) — плаский червоний шар
-                # ПОВЕРХ доріг (раніше трек тут зникав: терейн-шапка вертала None).
+                # AMS (плаский): врізана flush-вставка — верх на рівні поверхні землі,
+                # втоплена у базу (раніше була підвищена/зникала).
                 _poly = build_gpx_track_polygon(
                     gpx_track=request.gpx_track,
                     global_center=global_center,
@@ -1075,13 +1096,13 @@ def run_full_generation_pipeline(
                 if _poly is not None and not getattr(_poly, "is_empty", True):
                     from services.flat_plate_pipeline import build_flat_layer_mesh_from_mask
                     _land = 1.0 / _sf
-                    _raise = max(float(getattr(request, "gpx_raise_mm", 0.6) or 0.6), 0.8) / _sf
+                    _recess = max(_recess_mm, 0.4) / _sf
                     gpx_mesh = build_flat_layer_mesh_from_mask(
-                        _poly, bottom_z_m=_land, thickness_m=_raise,
+                        _poly, bottom_z_m=max(_land - _recess, 0.0), thickness_m=_recess,
                         color=TRACK_COLOR, min_area_m2=1e-12,
                     )
                     if gpx_mesh is not None:
-                        print(f"[GPX] {zone_prefix}AMS flat track: {len(gpx_mesh.faces)} faces")
+                        print(f"[GPX] {zone_prefix}AMS flush track (inset): {len(gpx_mesh.faces)} faces")
         except Exception as exc:
             print(f"[GPX] {zone_prefix}track build failed (non-fatal): {exc}")
             gpx_mesh = None

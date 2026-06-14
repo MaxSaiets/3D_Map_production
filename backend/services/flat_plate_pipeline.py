@@ -3105,17 +3105,18 @@ def run_flat_plate_pipeline(
             if _gpx_poly is not None and keychain_layout is not None and source_bounds and target_bounds:
                 _gpx_poly = _xform(_gpx_poly)
             if _gpx_poly is not None:
+                # ВРІЗАНИЙ маршрут: верх вставки flush з поверхнею (base_top), тіло
+                # втоплене у базу на ~recess. Раніше був ПІДВИЩЕНИЙ над дорогами.
+                _gpx_recess_m = _model_mm_to_world_m(0.6, export_scale_factor)
                 gpx_track_mesh = build_flat_layer_mesh_from_mask(
                     _clip_geometry(_gpx_poly, content_area),
-                    bottom_z_m=base_top_m,
-                    thickness_m=_model_mm_to_world_m(
-                        roads_layer_mm + 0.2, export_scale_factor
-                    ),
+                    bottom_z_m=max(base_top_m - _gpx_recess_m, 0.0),
+                    thickness_m=min(_gpx_recess_m, base_top_m),
                     color=TRACK_COLOR,
                     min_area_m2=max(_model_mm_to_world_m(0.3, export_scale_factor) ** 2, 1e-12),
                 )
                 if gpx_track_mesh is not None:
-                    print(f"[GPX] Flat track layer built ({roads_layer_mm + 0.2:.2f}mm, above roads)")
+                    print(f"[GPX] Flat track INLAY built (flush, recess 0.6mm)")
         except Exception as exc:
             print(f"[GPX] flat track failed (non-fatal): {exc}")
 

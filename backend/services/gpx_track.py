@@ -176,6 +176,83 @@ def build_gpx_track_polygon(
         return None
 
 
+def build_gpx_track_inlay_on_terrain(
+    *,
+    gpx_track: Any,
+    global_center: Any,
+    zone_polygon_local: Optional[BaseGeometry],
+    terrain_provider: Any,
+    scale_factor: float,
+    width_mm: float = 1.2,
+    recess_mm: float = 0.6,
+    clearance_mm: float = 0.2,
+    road_lines_local: Optional[list] = None,
+) -> tuple:
+    """ВРІЗАНИЙ маршрут (інлей): повертає (insert_mesh, groove_cutter).
+      • insert_mesh — червона вставка, ВЕРХ якої співпадає з поверхнею (flush,
+        НЕ виступає), низ втоплений у рельєф; це окрема деталь «Track».
+      • groove_cutter — трохи ширший суцільний інструмент (по track+clearance,
+        від трохи над поверхнею до глибини recess) для boolean-вирізу жолоба в
+        рельєфі, щоб вставка сиділа В каналі (а не зверху). Каллер ріже рельєф
+        цим cutter-ом з graceful fallback (якщо boolean впав — лишається flush).
+    road_lines_local (місто) — притягнути трек до доріг де можливо."""
+    poly = build_gpx_track_polygon(
+        gpx_track=gpx_track,
+        global_center=global_center,
+        zone_polygon_local=zone_polygon_local,
+        scale_factor=scale_factor,
+        width_mm=width_mm,
+        road_lines_local=road_lines_local,
+    )
+    if poly is None or terrain_provider is None:
+        return None, None
+    try:
+        from services.road_processor import create_road_surface_cap
+
+        sf = max(float(scale_factor), 1e-9)
+        recess_m = max(float(recess_mm), 0.3) / sf
+        clearance_m = max(float(clearance_mm), 0.0) / sf
+        cutter_top_m = 0.6 / sf       # cutter трохи НАД поверхнею (чистий зріз)
+        cutter_bottom_extra = 0.4 / sf
+        insert_embed = 0.4 / sf        # вставка трохи глибша за recess для зварки
+
+        polys = list(poly.geoms) if hasattr(poly, "geoms") else [poly]
+        ins_meshes, cut_meshes = [], []
+        for part in polys:
+            if part.is_empty or float(part.area) <= 0:
+                continue
+            # ВСТАВКА: верх = поверхня (flush, top_z_offset=0), низ = -recess-embed
+            ins = create_road_surface_cap(
+                part, terrain_provider, scale_factor=sf,
+                top_z_offset=0.0, cap_thickness_m=recess_m + insert_embed,
+            )
+            if ins is not None and ins.faces is not None and len(ins.faces) > 0:
+                ins_meshes.append(ins)
+            # CUTTER: ширший на clearance, від cutter_top над поверхнею до recess нижче
+            cut_part = part.buffer(clearance_m, join_style=1) if clearance_m > 0 else part
+            cut = create_road_surface_cap(
+                cut_part, terrain_provider, scale_factor=sf,
+                top_z_offset=cutter_top_m,
+                cap_thickness_m=cutter_top_m + recess_m + cutter_bottom_extra,
+            )
+            if cut is not None and cut.faces is not None and len(cut.faces) > 0:
+                cut_meshes.append(cut)
+        if not ins_meshes:
+            return None, None
+        insert = ins_meshes[0] if len(ins_meshes) == 1 else trimesh.util.concatenate(ins_meshes)
+        insert.visual = trimesh.visual.ColorVisuals(
+            face_colors=np.tile(TRACK_COLOR, (len(insert.faces), 1))
+        )
+        cutter = None
+        if cut_meshes:
+            cutter = cut_meshes[0] if len(cut_meshes) == 1 else trimesh.util.concatenate(cut_meshes)
+        print(f"[GPX] Track INLAY on terrain: insert {len(insert.faces)} faces, recess={recess_mm}mm (flush top)")
+        return insert, cutter
+    except Exception as exc:
+        print(f"[GPX] terrain track inlay failed (non-fatal): {exc}")
+        return None, None
+
+
 def build_gpx_track_mesh_on_terrain(
     *,
     gpx_track: Any,
@@ -187,46 +264,11 @@ def build_gpx_track_mesh_on_terrain(
     raise_mm: float = 0.6,
     road_lines_local: Optional[list] = None,
 ) -> Optional[trimesh.Trimesh]:
-    """Друкована «шапка» треку по рельєфу: верх = terrain + raise_mm, низ
-    втоплений у терейн (~0.8мм) — нічого не плаває і не потребує булевих.
-    road_lines_local (місто) — притягнути трек до доріг де можливо."""
-    poly = build_gpx_track_polygon(
-        gpx_track=gpx_track,
-        global_center=global_center,
-        zone_polygon_local=zone_polygon_local,
-        scale_factor=scale_factor,
-        width_mm=width_mm,
-        road_lines_local=road_lines_local,
+    """Сумісність: піднята «шапка» (raised). Новий код — build_gpx_track_inlay_on_terrain."""
+    insert, _ = build_gpx_track_inlay_on_terrain(
+        gpx_track=gpx_track, global_center=global_center,
+        zone_polygon_local=zone_polygon_local, terrain_provider=terrain_provider,
+        scale_factor=scale_factor, width_mm=width_mm,
+        recess_mm=raise_mm, road_lines_local=road_lines_local,
     )
-    if poly is None or terrain_provider is None:
-        return None
-    try:
-        from services.road_processor import create_road_surface_cap
-
-        raise_m = max(float(raise_mm), 0.2) / max(float(scale_factor), 1e-9)
-        embed_m = 0.8 / max(float(scale_factor), 1e-9)
-        meshes = []
-        polys = list(poly.geoms) if hasattr(poly, "geoms") else [poly]
-        for part in polys:
-            if part.is_empty or float(part.area) <= 0:
-                continue
-            cap = create_road_surface_cap(
-                part,
-                terrain_provider,
-                scale_factor=float(scale_factor),
-                top_z_offset=raise_m,
-                cap_thickness_m=raise_m + embed_m,
-            )
-            if cap is not None and cap.faces is not None and len(cap.faces) > 0:
-                meshes.append(cap)
-        if not meshes:
-            return None
-        mesh = meshes[0] if len(meshes) == 1 else trimesh.util.concatenate(meshes)
-        mesh.visual = trimesh.visual.ColorVisuals(
-            face_colors=np.tile(TRACK_COLOR, (len(mesh.faces), 1))
-        )
-        print(f"[GPX] Track mesh on terrain: {len(mesh.faces)} faces, raise={raise_mm}mm")
-        return mesh
-    except Exception as exc:
-        print(f"[GPX] terrain track mesh failed (non-fatal): {exc}")
-        return None
+    return insert
