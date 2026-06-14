@@ -1065,18 +1065,19 @@ def run_full_generation_pipeline(
                 gpx_mesh = _insert
                 # Вирізаємо жолоб у рельєфі під вставку (manifold, швидко). Graceful:
                 # якщо boolean впав/зсунувся — лишаємо рельєф як є (вставка flush).
-                if _insert is not None and _cutter is not None and terrain_mesh is not None:
+                # Жолоб ріжемо ЛИШЕ якщо обидва меші — чисті обʼєми (manifold інакше
+                # падає «not a volume»). Рельєф ПІСЛЯ грувів доріг/парків часто не
+                # watertight → пропускаємо boolean (без 6с марно), лишаємо flush-вставку.
+                _try_groove = (
+                    _insert is not None and _cutter is not None and terrain_mesh is not None
+                    and bool(getattr(_cutter, "is_volume", False))
+                    and bool(getattr(terrain_mesh, "is_volume", False))
+                )
+                if _try_groove:
                     try:
                         import trimesh as _tm
                         _b0 = terrain_mesh.bounds
-                        # manifold потребує ОБИДВА меші як обʼєми — ремонтуємо копію рельєфу.
-                        _terr = terrain_mesh.copy()
-                        try:
-                            _terr.merge_vertices(); _tm.repair.fill_holes(_terr); _terr.fix_normals()
-                        except Exception:
-                            pass
-                        _src = _terr if bool(getattr(_terr, "is_volume", False)) else terrain_mesh
-                        _cut = _tm.boolean.difference([_src, _cutter], engine="manifold")
+                        _cut = _tm.boolean.difference([terrain_mesh, _cutter], engine="manifold")
                         if (_cut is not None and len(getattr(_cut, "faces", [])) > 0):
                             _b1 = _cut.bounds
                             # sanity: bounds не «втекли» (catastrophic boolean shift)
