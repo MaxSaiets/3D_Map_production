@@ -595,17 +595,36 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
   const yLo = Math.min(A[1], B[1]), yHi = Math.max(A[1], B[1]);
   const elen = yHi - yLo;
   const cy = (yLo + yHi) / 2;
-  const k = elen * 0.16;
-  const nw = k * 0.62;
   const dir = Math.sign(B[1] - A[1]) || 1; // напрям обходу грані
-  const cxc = cut + 0.95 * k; // центр головки: для l — назовні, для r — всередину тіла (та сама +x сторона)
-  const lock: Array<[number, number]> = [[cut, cy - dir * nw]];
-  const a0 = Math.atan2(-dir * nw, -Math.sqrt(k * k - nw * nw)); // вхід дуги ≈ ±2.474 рад
-  for (let s = 0; s <= 16; s++) {
-    const a = a0 + ((-2 * a0) * s) / 16; // від входу через «схід» до виходу
-    lock.push([cxc + Math.cos(a) * k, cy + Math.sin(a) * k]);
+  // ФІГУРНИЙ ЗАМОК-СЕРЦЕ (дзеркало бекендового _heart_lock_polygon): мале серце
+  // кінчиком до розрізу, лоби у +x. Симетричне по горизонталі → y-фліп СВГ не
+  // впливає. Беремо праву (x>=cut) дугу серця і вставляємо замість прямого розрізу.
+  const k = elen * 0.16;
+  const span = k * 1.9, protrusion = k * 1.5, tipX = cut - k * 0.35;
+  const N = 96;
+  const heart: Array<[number, number]> = [];
+  for (let i = 0; i < N; i++) {
+    const t = (2 * Math.PI * i) / N;
+    heart.push([16 * Math.sin(t) ** 3, 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)]);
   }
-  lock.push([cut, cy + dir * nw]);
+  const hxs = heart.map((p) => p[0]), hys = heart.map((p) => p[1]);
+  const hx0 = Math.min(...hxs), hx1 = Math.max(...hxs), hy0 = Math.min(...hys), hy1 = Math.max(...hys);
+  // upright tip→(0,0); rotate -90: (nx,ny)->(ny,-nx); tip→(tipX,cy), lobes→+x
+  const lh: Array<[number, number]> = heart.map(([px, py]) => {
+    const nx = ((px - (hx0 + hx1) / 2) / (hx1 - hx0)) * span;
+    const ny = ((py - hy0) / (hy1 - hy0)) * protrusion;
+    return [tipX + ny, cy - nx] as [number, number];
+  });
+  // contiguous arc where x>=cut
+  const onR = lh.map((p) => p[0] >= cut - 1e-9);
+  let start = -1;
+  for (let i = 0; i < N; i++) if (onR[i] && !onR[(i - 1 + N) % N]) { start = i; break; }
+  let lock: Array<[number, number]> = [];
+  if (start >= 0) for (let j = 0; j < N; j++) { const idx = (start + j) % N; if (!onR[idx]) break; lock.push(lh[idx]); }
+  // впорядкувати так, щоб дуга йшла від A-кінця до B-кінця (за dir по y)
+  if (lock.length >= 2 && Math.sign(lock[lock.length - 1][1] - lock[0][1]) !== dir) lock.reverse();
+  // приклеїти до точок розрізу
+  lock = [[cut, A[1]], ...lock, [cut, B[1]]];
   const out: Array<[number, number]> = [];
   for (let i = 0; i <= i1; i++) out.push(clipped[i]);
   out.push(...lock);

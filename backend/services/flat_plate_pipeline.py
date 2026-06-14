@@ -576,6 +576,32 @@ def _round_polygon_tip(pts: list, *, tip_index: int, radius: float, samples: int
     return out
 
 
+def _heart_lock_polygon(tip_x: float, cy: float, span: float, protrusion: float, lobes_dir: int = 1) -> BaseGeometry:
+    """Маленьке СЕРЦЕ-замок для парного серця: гострий кінчик біля лінії розрізу
+    (tip_x, cy), лоби (широка частина) тягнуться у бік lobes_dir (+1=праворуч).
+    Лоби ширші за шийку → горизонтальний замок (половинки не розʼєднуються), а
+    стик виглядає як гарне мале серце. span = вертикальна висота, protrusion =
+    глибина виступу у сусідню половинку."""
+    import math
+    from shapely import affinity as _aff
+    n = 96
+    raw = []
+    for i in range(n):
+        t = 2.0 * math.pi * i / n
+        hx = 16.0 * math.sin(t) ** 3
+        hy = 13.0 * math.cos(t) - 5.0 * math.cos(2.0 * t) - 2.0 * math.cos(3.0 * t) - math.cos(4.0 * t)
+        raw.append((hx, hy))
+    xs = [p[0] for p in raw]; ys = [p[1] for p in raw]
+    x0, x1 = min(xs), max(xs); y0, y1 = min(ys), max(ys)
+    # вертикальне серце: кінчик у (0,0) знизу, лоби вгору до (±span/2, protrusion)
+    pts = [((px - (x0 + x1) / 2.0) / (x1 - x0) * span,
+            (py - y0) / (y1 - y0) * protrusion) for px, py in raw]
+    poly = Polygon(pts).buffer(0)
+    # поворот: кінчик→ліворуч, лоби→праворуч (для lobes_dir=+1)
+    poly = _aff.rotate(poly, -90.0 * lobes_dir, origin=(0.0, 0.0))
+    return _aff.translate(poly, xoff=tip_x, yoff=cy)
+
+
 def _keychain_body_shape(
     minx: float,
     miny: float,
@@ -668,26 +694,26 @@ def _keychain_body_shape(
         y0e, y1e = longest.bounds[1], longest.bounds[3]
         elen = max(y1e - y0e, 1e-6)
         cy = (y0e + y1e) / 2.0
+        # ФІГУРНИЙ ЗАМОК У ФОРМІ МАЛЕНЬКОГО СЕРЦЯ: кінчик біля розрізу, лоби у
+        # праву половинку (ширші за шийку → горизонтальний замок). L має серце-
+        # ВИСТУП, R — таке саме серце-ПАЗ із клиренсом. Складене = велике серце з
+        # маленьким серцем-стиком. span/protrusion ~ від довжини грані розрізу.
         k = elen * 0.16
-        nw = k * 0.62
+        lock_tip_x = cut - k * 0.35
+        lock_span = k * 1.9
+        lock_protrusion = k * 1.5
         if shape_name == "heart-l":
             half = full.intersection(box(minx - width, miny - height, cut, maxy + height))
-            knob_cx = cut + k * 0.95
-            tab = unary_union([
-                Point(knob_cx, cy).buffer(k, resolution=48),
-                box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
-            ])
+            tab = _heart_lock_polygon(lock_tip_x, cy, lock_span, lock_protrusion, lobes_dir=1)
             # tab мусить лишатись усередині ПОВНОГО серця, інакше у складеному
             # вигляді він стирчатиме за контур
             tab = tab.intersection(full)
             return unary_union([half, tab]).buffer(0)
         clearance = elen * 0.008
         half = full.intersection(box(cut, miny - height, minx + 2.0 * width + width, maxy + height))
-        knob_cx = cut + k * 0.95
-        notch = unary_union([
-            Point(knob_cx, cy).buffer(k, resolution=48),
-            box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
-        ]).buffer(clearance, join_style=1)
+        notch = _heart_lock_polygon(lock_tip_x, cy, lock_span, lock_protrusion, lobes_dir=1).buffer(
+            clearance, join_style=1
+        )
         half = half.difference(notch).buffer(0)
         return affinity.translate(half, xoff=-width)
     if shape_name in {"puzzle-l", "puzzle-r"}:
