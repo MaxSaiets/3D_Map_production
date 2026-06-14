@@ -183,10 +183,15 @@ def process_park_layer(
             if request.is_ams_mode and (parks_mesh is None or len(getattr(parks_mesh, "vertices", [])) == 0):
                 try:
                     from services.flat_plate_pipeline import build_flat_layer_mesh_from_mask, LAYER_COLORS
-                    _land = (1.0 / float(scale_factor)) if scale_factor else 0.001
+                    # Плита від низу до ВЕРХУ бази + park_height → парк стирчить НАД
+                    # базою (видно зелень), не похований у плиті. Верх бази беремо
+                    # з terrain_mesh (а не вгадуємо land_height).
+                    _base_top = float(terrain_mesh.bounds[1][2]) if (
+                        terrain_mesh is not None and len(getattr(terrain_mesh, "vertices", [])) > 0
+                    ) else ((1.0 / float(scale_factor)) if scale_factor else 0.001)
                     parks_mesh = build_flat_layer_mesh_from_mask(
                         park_polygons_override, bottom_z_m=0.0,
-                        thickness_m=_land + float(park_height_m),
+                        thickness_m=_base_top + float(park_height_m),
                         color=LAYER_COLORS["parks"], min_area_m2=1e-12,
                     )
                     if parks_mesh is not None:
