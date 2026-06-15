@@ -1357,10 +1357,13 @@ async def get_status(task_id: str):
                 })
             else:
                 # ПІСЛЯ РЕСТАРТУ: tasks порожні. Якщо плитку вже збережено на
-                # диск (panel_tiles) — рапортуємо «completed» з файлом, щоб
-                # фронт показав готовність і дав завантажити zip.
+                # диск (panel_tiles) АБО файл лежить в output — рапортуємо
+                # «completed», щоб фронт показав готовність і дав завантажити zip.
                 rec = next((x for x in panel_tiles.get(task_id, []) if x.get("task_id") == tid), None)
                 p = rec.get("path") if rec else None
+                if not (p and Path(p).exists()):
+                    disk = _find_file_on_disk_by_task_id(tid, "3mf")
+                    p = str(disk) if disk is not None else None
                 if p and Path(p).exists():
                     tasks_status.append({
                         "task_id": tid, "status": "completed", "progress": 100,
@@ -1368,6 +1371,20 @@ async def get_status(task_id: str):
                         "output_files": {"3mf": p},
                         "download_url": f"/files/{Path(p).name}",
                         "keychain_manifest": None, "firebase_url": None, "print_quality": None,
+                        "preview_3mf": None, "firebase_preview_3mf": None,
+                        "firebase_preview_parts": {"base": None, "roads": None, "buildings": None, "water": None, "parks": None},
+                    })
+                else:
+                    # Плитка ВТРАЧЕНА (рестарт посеред генерації, файла нема). Раніше
+                    # її просто пропускали → completed НІКОЛИ не = total → фронт
+                    # полив вічно «N/M». Тепер рапортуємо ТЕРМІНАЛЬНИЙ «failed»,
+                    # щоб фронт зупинив полінг і дав завантажити готові плитки.
+                    tasks_status.append({
+                        "task_id": tid, "status": "failed", "progress": 0,
+                        "message": "Плитку втрачено (перезапуск сервера) — перегенеруйте",
+                        "output_file": None, "output_files": {},
+                        "download_url": None, "keychain_manifest": None,
+                        "firebase_url": None, "print_quality": None,
                         "preview_3mf": None, "firebase_preview_3mf": None,
                         "firebase_preview_parts": {"base": None, "roads": None, "buildings": None, "water": None, "parks": None},
                     })
@@ -1509,7 +1526,8 @@ async def download_all_zones(batch_id: str):
     tile_meta = {x.get("task_id"): x for x in panel_tiles.get(batch_id, [])}
 
     items = []  # (row, col, filename, path)
-    pending = 0
+    still_running = 0  # плитки, що ЩЕ генеруються (треба зачекати)
+    lost = 0           # плитки failed/втрачені (рестарт) — НЕ зачекаються ніколи
     for tid in task_ids_list:
         t = tasks.get(tid)
         if t is not None and t.status == "completed":
@@ -1520,18 +1538,32 @@ async def download_all_zones(batch_id: str):
                 p = Path(path_str)
                 items.append((getattr(t, "zone_row", None), getattr(t, "zone_col", None), p.name, p))
                 continue
-        # FALLBACK (рестарт): беремо збережений шлях плитки з panel_tiles
+        # FALLBACK 1 (рестарт): збережений шлях плитки з panel_tiles
         rec = tile_meta.get(tid)
         rec_path = rec.get("path") if rec else None
         if rec_path and Path(rec_path).exists():
             p = Path(rec_path)
             items.append((rec.get("row"), rec.get("col"), p.name, p))
             continue
-        pending += 1
-    if pending > 0:
+        # FALLBACK 2: файл міг лишитись на диску навіть якщо task зник
+        disk = _find_file_on_disk_by_task_id(tid, "3mf")
+        if disk is not None and Path(disk).exists():
+            items.append((rec.get("row") if rec else None, rec.get("col") if rec else None, Path(disk).name, Path(disk)))
+            continue
+        # Не знайдено: ще генерується (task живий, не термінальний) vs втрачено
+        if t is not None and t.status not in ("completed", "failed", "cancelled"):
+            still_running += 1
+        else:
+            lost += 1
+    # Лише ЖИВІ незавершені плитки блокують zip (409 = «зачекай»). Якщо нічого
+    # не генерується, а частина плиток втрачена — НЕ блокуємо вічно: віддаємо
+    # zip із готових (краще, ніж нескінченне «N/M»); юзер дозамовить/перегенерує.
+    if still_running > 0:
         raise HTTPException(status_code=409, detail=f"Готово {len(items)}/{len(task_ids_list)} плиток — зачекайте завершення генерації")
     if not items:
-        raise HTTPException(status_code=404, detail="Файли плиток не знайдено")
+        raise HTTPException(status_code=404, detail="Файли плиток не знайдено (перезапуск сервера — згенеруйте панно знову)")
+    if lost > 0:
+        print(f"[PANEL] download_all_zones: {len(items)}/{len(task_ids_list)} плиток, {lost} втрачено — віддаю частковий zip")
 
     # layout.png — схема розкладки: сітка з підписами row/col + імʼя файлу
     layout_png: Optional[bytes] = None

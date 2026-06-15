@@ -61,8 +61,13 @@ def flatten_heightfield_under_buildings(
                 except: continue
                 if poly.is_empty: continue
 
-                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform, 
-                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)
+                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform,
+                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)[::-1]
+                # Y-FLIP: from_bounds дає маску row0=ПІВНІЧ (maxy), але Z-сітка
+                # будується з ascending-Y (meshgrid → row0=ПІВДЕНЬ). Без фліпу
+                # будинки/вода вирівнювали ДЗЕРКАЛЬНІ клітини (на схилах — будинок
+                # не сідав де стоїть). Емпірично перевірено: північний будинок
+                # flattenив південь. [::-1] перевертає рядки → маска == сітка.
                 
                 # min_cells: avoids flattening single-pixel noise or slivers
                 if mask.sum() < min_cells: continue
@@ -106,8 +111,13 @@ def flatten_heightfield_under_polygons(
                     if not poly.is_valid: poly = poly.buffer(0)
                 except: continue
                 
-                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform, 
-                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)
+                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform,
+                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)[::-1]
+                # Y-FLIP: from_bounds дає маску row0=ПІВНІЧ (maxy), але Z-сітка
+                # будується з ascending-Y (meshgrid → row0=ПІВДЕНЬ). Без фліпу
+                # будинки/вода вирівнювали ДЗЕРКАЛЬНІ клітини (на схилах — будинок
+                # не сідав де стоїть). Емпірично перевірено: північний будинок
+                # flattenив південь. [::-1] перевертає рядки → маска == сітка.
                 if mask.sum() < min_cells: continue
                 h = Z_out[mask]
                 h = h[np.isfinite(h)]
@@ -146,8 +156,13 @@ def depress_heightfield_under_polygons(
                     if not poly.is_valid: poly = poly.buffer(0)
                 except: continue
                 
-                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform, 
-                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)
+                mask = rasterize([(poly, 1)], out_shape=(rows, cols), transform=transform,
+                                 fill=0, dtype="uint8", all_touched=all_touched).astype(bool)[::-1]
+                # Y-FLIP: from_bounds дає маску row0=ПІВНІЧ (maxy), але Z-сітка
+                # будується з ascending-Y (meshgrid → row0=ПІВДЕНЬ). Без фліпу
+                # будинки/вода вирівнювали ДЗЕРКАЛЬНІ клітини (на схилах — будинок
+                # не сідав де стоїть). Емпірично перевірено: північний будинок
+                # flattenив південь. [::-1] перевертає рядки → маска == сітка.
                 if mask.sum() < min_cells: continue
                 h = Z_out[mask]
                 h = h[np.isfinite(h)]

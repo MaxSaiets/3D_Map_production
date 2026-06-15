@@ -1446,13 +1446,19 @@ def export_3mf(
     COLOR_MAP = {
         "base": [200, 180, 140, 255],      # Бежевий для рельєфу
         "terrain": [200, 180, 140, 255],  # Бежевий для рельєфу
+        "baseback": [200, 180, 140, 255], # Зворот бази (магніт-кишеня/гравіювання)
         "roads": [60, 60, 60, 255],        # Темно-сірий для доріг
         "buildings": [120, 120, 120, 255], # Сірий для будівель
         "water": [100, 150, 200, 255],     # Блакитний для води
         "parks": [100, 150, 100, 255],     # Зелений для парків
         "green": [100, 150, 100, 255],     # Зелений для парків
-        "rim": [92, 80, 58, 255],           # Темніший край брелка
-        "text": [20, 20, 20, 255],            # Чорний текст (юзер: «текст має бути чорним»)
+        "poi": [255, 200, 100, 255],       # Помаранчевий для POI
+        "track": [222, 28, 28, 255],       # Червоний GPX-маршрут
+        # ободок/текст — ЧОРНІ (синхрон з canonical LAYER_COLORS 0x191919)
+        "rim": [25, 25, 25, 255],
+        "text": [25, 25, 25, 255],
+        "text2": [25, 25, 25, 255],
+        "maplabel": [25, 25, 25, 255],
     }
 
     def _ensure_face_colors(mesh: trimesh.Trimesh, key: str) -> trimesh.Trimesh:
@@ -1501,8 +1507,17 @@ def export_3mf(
     scene.export(filename)
     print(f"[3MF EXPORT] Exported scene with {len(parts)} parts to {filename}")
 
-    # NOTE: m:colorgroup patch прибрано — Bambu Studio призначає кольори через
-    # власні налаштування філаментів. Колір тексту задається user-ом у слайсері.
+    # m:colorgroup patch УВІМКНЕНО: trimesh-3MF writer мовчки губить face_colors,
+    # тож без цього експортований 3MF не мав ЖОДНОЇ кольорової метадати → у
+    # слайсері всі об'єкти сірі, AMS-друк вимагав ручного призначення філаментів
+    # на кожен шар. Патч інжектить m:colorgroup + pid/pindex на кожен <object>
+    # за назвою → Bambu/PrusaSlicer показують мапу одразу у кольорах (base бежевий,
+    # вода блакитна, парки зелені, дороги/будинки сірі) і авто-розкидають філаменти.
+    # Перевірено: результат — валідний 3MF (trimesh reload OK, watertight зберігся).
+    try:
+        _patch_3mf_colors(filename, COLOR_MAP)
+    except Exception as _exc:
+        print(f"[3MF EXPORT] colorgroup patch skipped (non-fatal): {_exc}")
 
     return {"3mf": filename}
 

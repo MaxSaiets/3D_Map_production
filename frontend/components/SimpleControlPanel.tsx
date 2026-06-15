@@ -136,12 +136,20 @@ export function SimpleControlPanel({
     return () => { alive = false; };
   }, [modelSizeMm, styleId, magnetMode]);
 
-  // Fallback-ціна (поки /api/quote вантажиться): з локальної таблиці розмірів,
-  // щоб sticky-бар не показував порожнє «—» на першому екрані.
-  const simpleFallbackPrice = (() => {
+  // Ціна для форми замовлення. КРИТИЧНО: для панно множимо на кількість плиток —
+  // 3×3 = 9 окремих мап, раніше коштувало як 1 плитка → ~9× недозбір (і LiqPay
+  // брав суму однієї). Магніт-fallback = 180₴ (не ціна мапи). Quote вже per-tile.
+  const orderTiles = panelMode > 0 ? panelMode * panelMode : 1;
+  const fmtPrice = (n: number, currency: string) =>
+    currency === "EUR" ? `≈ €${n}` : `≈ ${n} ₴`;
+  const orderPriceText = (() => {
+    if (quote) {
+      return orderTiles > 1 ? fmtPrice(quote.price * orderTiles, quote.currency) : quote.formatted;
+    }
     const near = SIMPLE_SIZES.reduce((best, z) =>
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
-    return `≈ ${near.price} ₴`;
+    const unit = magnetMode ? 180 : near.price; // магніт = окремий продукт 180₴
+    return fmtPrice(unit * orderTiles, "UAH");
   })();
 
   const doGatedDownload = async () => {
@@ -333,9 +341,22 @@ export function SimpleControlPanel({
       const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
       const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
       const layerParks = preset ? preset.layers.parks : s.previewIncludeParks;
+      // ПОВЕРНУТА мапа: selectedArea — це bbox НЕповернутого прямокутника, але
+      // реальна зона (zonePolygonCoords) повернута → її кути стирчать ЗА цей bbox.
+      // Якщо фетчити OSM лише по selectedArea, кути виходять порожні (без будинків/
+      // доріг). Розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
+      let fN = selectedArea.getNorth(), fS = selectedArea.getSouth();
+      let fE = selectedArea.getEast(), fW = selectedArea.getWest();
+      const zpoly = s.zonePolygonCoords;
+      if (panelMode === 0 && zpoly && zpoly.length >= 3) {
+        for (const [lon, lat] of zpoly) {
+          fN = Math.max(fN, lat); fS = Math.min(fS, lat);
+          fE = Math.max(fE, lon); fW = Math.min(fW, lon);
+        }
+      }
       const req = buildMapRequest({
-        north: selectedArea.getNorth(), south: selectedArea.getSouth(),
-        east: selectedArea.getEast(), west: selectedArea.getWest(),
+        north: fN, south: fS,
+        east: fE, west: fW,
         roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
         buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
         buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
@@ -734,7 +755,7 @@ export function SimpleControlPanel({
             onClick={() => setOrderOpen(true)}
             className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
           >
-            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")}{quote ? ` · ${quote.formatted}` : ""}
+            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
           </button>
 
           {error && (
@@ -814,12 +835,16 @@ export function SimpleControlPanel({
         onClose={() => setOrderOpen(false)}
         taskId={taskGroupId}
         productType="map"
-        priceText={quote?.formatted ?? simpleFallbackPrice}
+        priceText={orderPriceText}
         modelPending={!downloadUrl}
         summary={{
           city: selectedCityKey,
           district: MAP_TEMPLATES.find((t) => t.id === activeTemplate)?.district,
-          size: SIMPLE_SIZES.find((z) => Math.abs(modelSizeMm - z.mm) < 1)?.cm,
+          size: panelMode > 0
+            ? `${t("panelToggle")} ${panelMode}×${panelMode} (${orderTiles}×)`
+            : magnetMode
+              ? t("magnetToggle")
+              : SIMPLE_SIZES.find((z) => Math.abs(modelSizeMm - z.mm) < 1)?.cm,
         }}
       />
 

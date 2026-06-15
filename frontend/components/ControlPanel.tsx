@@ -402,11 +402,21 @@ export function ControlPanel({
     setGenerating(true);
 
     try {
+      // ПОВЕРНУТА зона: розширюємо fetch-bbox до AABB повернутого полігона, інакше
+      // кути зони виходять без OSM-даних (порожні клини). Клип лишається по полігону.
+      let fN = selectedArea.getNorth(), fS = selectedArea.getSouth();
+      let fE = selectedArea.getEast(), fW = selectedArea.getWest();
+      if (zonePolygonCoords && zonePolygonCoords.length >= 3) {
+        for (const [lon, lat] of zonePolygonCoords) {
+          fN = Math.max(fN, lat); fS = Math.min(fS, lat);
+          fE = Math.max(fE, lon); fW = Math.min(fW, lon);
+        }
+      }
       const request = {
-        north: selectedArea.getNorth(),
-        south: selectedArea.getSouth(),
-        east: selectedArea.getEast(),
-        west: selectedArea.getWest(),
+        north: fN,
+        south: fS,
+        east: fE,
+        west: fW,
         road_width_multiplier: roadWidthMultiplier,
         road_height_mm: roadHeightMm,
         road_embed_mm: roadEmbedMm,
