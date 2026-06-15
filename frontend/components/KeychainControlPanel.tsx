@@ -681,10 +681,13 @@ export function KeychainControlPanel({
   };
 
   const applyTextPreset = (preset: "s" | "m" | "l") => {
+    // ЛИШЕ розмір+товщина штриха. Раніше пресет ще й перезаписував labelFontStyle
+    // → користувач, що явно обрав шрифт, мовчки втрачав його при зміні розміру.
+    // Шрифт тепер незалежний (окремий селектор «Шрифт для друку»).
     const presets = {
-      s: { labelTextHeightMm: 3.4, labelStrokeMm: 0.65, labelFontStyle: "condensed" },
-      m: { labelTextHeightMm: 4.2, labelStrokeMm: 0.8, labelFontStyle: "block" },
-      l: { labelTextHeightMm: 5.2, labelStrokeMm: 1.0, labelFontStyle: "wide" },
+      s: { labelTextHeightMm: 3.4, labelStrokeMm: 0.65 },
+      m: { labelTextHeightMm: 4.2, labelStrokeMm: 0.8 },
+      l: { labelTextHeightMm: 5.2, labelStrokeMm: 1.0 },
     } satisfies Record<string, Partial<KeychainDesignerConfig>>;
     updateDesign(presets[preset]);
   };

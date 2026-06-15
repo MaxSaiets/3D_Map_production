@@ -54,6 +54,11 @@ interface GenerationState {
   simplePanelMode: 0 | 2 | 3;
   simpleMagnetMode: boolean;
   simpleMapLabel: string;
+  // styleId + активний шаблон теж спільні (панель монтується двічі) — інакше
+  // вибраний стиль/шаблон розсинхронізується між desktop/mobile копіями і при
+  // ресайзі або генерації з іншої копії застосовувався б старий стиль.
+  simpleStyleId: string;
+  simpleTemplate: string | null;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -82,6 +87,8 @@ interface GenerationState {
   setSimplePanelMode: (mode: 0 | 2 | 3) => void;
   setSimpleMagnetMode: (on: boolean) => void;
   setSimpleMapLabel: (label: string) => void;
+  setSimpleStyleId: (id: string) => void;
+  setSimpleTemplate: (id: string | null) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -166,6 +173,8 @@ const initialState = {
   simplePanelMode: 0 as const,
   simpleMagnetMode: false,
   simpleMapLabel: "",
+  simpleStyleId: "full",
+  simpleTemplate: null,
   gpxName: null,
   gpxNote: null,
 
@@ -191,6 +200,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimplePanelMode: (mode) => set({ simplePanelMode: mode }),
   setSimpleMagnetMode: (on) => set({ simpleMagnetMode: on }),
   setSimpleMapLabel: (label) => set({ simpleMapLabel: label }),
+  setSimpleStyleId: (id) => set({ simpleStyleId: id }),
+  setSimpleTemplate: (id) => set({ simpleTemplate: id }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

@@ -49,7 +49,11 @@ export function SimpleControlPanel({
     setPreviewIncludeWater, setPreviewIncludeParks,
   } = s;
 
-  const [styleId, setStyleId] = useState<string>("full");
+  // styleId/activeTemplate — теж у store (панель монтується двічі: desktop+mobile);
+  // локальний стан розсинхронізовувався → при ресайзі/генерації з іншої копії
+  // застосовувався старий стиль/шаблон. Той самий клас багу, що й магніт/панно.
+  const styleId = s.simpleStyleId;
+  const setStyleId = s.setSimpleStyleId;
   // МАГНІТ/ПАННО/GPX — у zustand store, НЕ useState: панель змонтована двічі
   // (desktop + mobile), локальний стан розсинхронізовувався між копіями і
   // вибір губився при генерації з іншої копії.
@@ -100,7 +104,8 @@ export function SimpleControlPanel({
   };
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const activeTemplate = s.simpleTemplate;
+  const setActiveTemplate = s.setSimpleTemplate;
   const [orderOpen, setOrderOpen] = useState(false);
   const [dlBusy, setDlBusy] = useState(false);
   const { getIdToken, openLogin } = useAuth();
