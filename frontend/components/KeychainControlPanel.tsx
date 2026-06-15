@@ -122,6 +122,9 @@ function ChoiceButton({
   return (
     <button
       type="button"
+      // a11y: selection is conveyed only by colour otherwise. aria-pressed lets
+      // screen readers announce the chosen option (shape/size/font/placement…).
+      aria-pressed={active}
       onClick={onClick}
       className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-sm font-semibold transition ${
         active

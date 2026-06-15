@@ -253,7 +253,8 @@
     "previewSubtitle": "Sprawdź kształt modelu przed pobraniem",
     "statusHeading": "Status",
     "cancelTitle": "Anuluj generowanie",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "loading3d": "Ładowanie podglądu 3D…"
   },
   "showcase": {
     "back": "Strona główna",
@@ -344,7 +345,8 @@
       "close": "Zamknij",
       "region": "Region dostawy",
       "method": "Sposób dostawy"
-    }
+    },
+    "phEmail": "Email (opcjonalnie)"
   },
   "contact": {
     "errPhone": "Podaj numer telefonu",
@@ -1211,7 +1213,9 @@
       "buildings": "Budynki",
       "water": "Woda",
       "parks": "Parki"
-    }
+    },
+    "webglUnavailable": "Podgląd 3D niedostępny na tym urządzeniu",
+    "webglUnavailableBody": "Twoja przeglądarka lub karta graficzna nie obsługuje podglądu 3D. Model nadal można zamówić — jest zapisany."
   },
   "gallery": {
     "district": {
@@ -1265,5 +1269,20 @@
       "new": "Nowość",
       "popular": "Popularne"
     }
+  },
+  "adminPanel": {
+    "statusLabel": "Status",
+    "markPaid": "Oznacz jako opłacone",
+    "withoutDelivery": "bez dostawy",
+    "payShown": "Pokazano przycisk płatności — sprawdź wpływ",
+    "payManual": "Płatność ręczna (online jeszcze niepodłączone)"
+  },
+  "error": {
+    "title": "Coś poszło nie tak",
+    "help": "Przepraszamy za niedogodności — wystąpił nieoczekiwany błąd. Spróbuj odświeżyć stronę; jeśli problem nie ustępuje, wróć na stronę główną lub napisz do nas.",
+    "retry": "Spróbuj ponownie",
+    "home": "Strona główna",
+    "createMap": "Utwórz mapę 3D",
+    "contacts": "Skontaktuj się"
   }
 }

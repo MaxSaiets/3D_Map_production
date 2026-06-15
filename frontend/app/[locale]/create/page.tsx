@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, KeyRound, User, X, Home as HomeIcon } from "lucide-react";
-import { Preview3D } from "@/components/Preview3D";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
@@ -34,6 +33,15 @@ function GridLoading() {
   );
 }
 
+function Preview3DLoading() {
+  const tc = useTranslations("create");
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[20px] bg-[#0f172a] text-sm text-white/70">
+      {tc("loading3d")}
+    </div>
+  );
+}
+
 const MapSelector = dynamic(
   () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
   {
@@ -46,6 +54,15 @@ const HexagonalGrid = dynamic(() => import("@/components/HexagonalGrid"), {
   ssr: false,
   loading: () => <GridLoading />,
 });
+
+// Реальний 3D перегляд згенерованої моделі (Three.js, важкий — поза критичним шляхом, ssr:false)
+const Preview3D = dynamic(
+  () => import("@/components/Preview3D").then((mod) => ({ default: mod.Preview3D })),
+  {
+    ssr: false,
+    loading: () => <Preview3DLoading />,
+  },
+);
 
 const CITIES: Record<
   string,

@@ -253,7 +253,8 @@
     "previewSubtitle": "Vérifie la forme du modèle avant de télécharger",
     "statusHeading": "État",
     "cancelTitle": "Annuler la génération",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "loading3d": "Chargement de l aperçu 3D…"
   },
   "showcase": {
     "back": "Accueil",
@@ -344,7 +345,8 @@
       "close": "Fermer",
       "region": "Région de livraison",
       "method": "Mode de livraison"
-    }
+    },
+    "phEmail": "E-mail (facultatif)"
   },
   "contact": {
     "errPhone": "Indique un numéro de téléphone",
@@ -1211,7 +1213,9 @@
       "buildings": "Bâtiments",
       "water": "Eau",
       "parks": "Parcs"
-    }
+    },
+    "webglUnavailable": "Aperçu 3D indisponible sur cet appareil",
+    "webglUnavailableBody": "Votre navigateur ou carte graphique ne prend pas en charge l aperçu 3D. Vous pouvez tout de même commander le modèle — il est enregistré."
   },
   "gallery": {
     "district": {
@@ -1265,5 +1269,20 @@
       "new": "Nouveau",
       "popular": "Populaire"
     }
+  },
+  "adminPanel": {
+    "statusLabel": "Statut",
+    "markPaid": "Marquer comme payé",
+    "withoutDelivery": "hors livraison",
+    "payShown": "Bouton de paiement affiché — vérifiez la réception",
+    "payManual": "Paiement manuel (en ligne pas encore connecté)"
+  },
+  "error": {
+    "title": "Une erreur est survenue",
+    "help": "Désolé pour la gêne — une erreur inattendue est survenue. Essayez d actualiser la page ; si le problème persiste, revenez à l accueil ou contactez-nous.",
+    "retry": "Réessayer",
+    "home": "Accueil",
+    "createMap": "Créer une carte 3D",
+    "contacts": "Nous contacter"
   }
 }

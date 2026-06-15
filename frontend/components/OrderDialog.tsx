@@ -51,6 +51,7 @@ export function OrderDialog({
   const t = useTranslations("order");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [region, setRegion] = useState<Region>("ua");
   const [euCountry, setEuCountry] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nova");
@@ -162,7 +163,7 @@ export function OrderDialog({
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
-          name, phone, product_type: productType, task_id: taskId,
+          name, phone, email, product_type: productType, task_id: taskId,
           delivery_method: delivery,
           delivery_country: region === "ua" ? "Україна" : euCountry,
           delivery_city: city,
@@ -281,6 +282,8 @@ export function OrderDialog({
               )}
               <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
               <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+              {/* Email необовʼязковий — для підтвердження замовлення на пошту. */}
+              <input className={fieldCls} placeholder={t("phEmail")} aria-label={t("phEmail")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
 
               <div role="radiogroup" aria-label={t("aria.region")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
                 {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (

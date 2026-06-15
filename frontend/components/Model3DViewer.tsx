@@ -54,8 +54,8 @@ function Model({ url, mirror = true, lieFlat = false, onReady }: { url: string; 
 /** Auto-rotating 3D viewer for a baked GLB. Mounts the WebGL canvas only when
  *  scrolled near the viewport (saves battery/CPU on mobile & speeds first paint). */
 export default function Model3DViewer({
-  url, height = 360, allowZoom = false, autoRotate = true, label, onActivate,
-}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void }) {
+  url, height = 360, allowZoom = false, autoRotate = true, label, onActivate, flat,
+}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void; flat?: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const down = useRef<{ x: number; y: number } | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -64,7 +64,8 @@ export default function Model3DViewer({
   const [ready, setReady] = useState(false);
   // City maps lie flat (thin axis up) — a low camera shows them edge-on like a
   // vertical slab. Look down at a 3/4 angle instead. Keychains stay front-on.
-  const isMap = /\/map-/.test(url);
+  // `flat` пропом можна примусово (коли URL не містить /map- — напр. /api/download).
+  const isMap = flat ?? /\/map-/.test(url);
   const camPos: [number, number, number] = isMap ? [0, 2.5, 2.1] : [0, 0.6, 2.4];
 
   useEffect(() => {

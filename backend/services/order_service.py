@@ -274,6 +274,61 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {"order_number": order_number, "telegram": True}
 
 
+ORDER_STATUSES = ("new", "paid", "printed", "shipped", "done")
+
+
+def set_order_status(order_number: str, status: str) -> bool:
+    """Rewrite the matching order record's status in orders.jsonl.
+
+    The journal is append-only JSONL with one record per order (plus separate
+    `type:payment` event lines). We rewrite the file in place, updating the
+    status of the order record whose `order_number` matches. Returns True if a
+    matching order record was found and updated.
+
+    Statuses: new, paid, printed, shipped, done.
+    """
+    status = (status or "").strip().lower()
+    if status not in ORDER_STATUSES:
+        raise ValueError(f"invalid status: {status!r}")
+    if not ORDERS_LOG.exists():
+        return False
+    try:
+        lines = ORDERS_LOG.read_text(encoding="utf-8").splitlines()
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] set_status read failed: {e}")
+        return False
+
+    found = False
+    out: List[str] = []
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            rec = json.loads(line)
+        except Exception:  # noqa: BLE001
+            out.append(line)  # keep unparseable lines verbatim
+            continue
+        # Only the order record (not the `type:payment` event lines) carries status.
+        if rec.get("type") != "payment" and str(rec.get("order_number")) == str(order_number):
+            rec["status"] = status
+            rec["status_updated_at"] = datetime.now().isoformat()
+            found = True
+            out.append(json.dumps(rec, ensure_ascii=False))
+        else:
+            out.append(line)
+
+    if not found:
+        return False
+    try:
+        tmp = ORDERS_LOG.with_suffix(".jsonl.tmp")
+        tmp.write_text("\n".join(out) + "\n", encoding="utf-8")
+        tmp.replace(ORDERS_LOG)
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] set_status write failed: {e}")
+        return False
+    return True
+
+
 def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
     """LiqPay-callback підтвердив оплату → лог-подія у журнал + нотифікація оператора
     в Telegram (щоб бачив, що замовлення вже оплачене і можна друкувати/відправляти)."""
@@ -293,6 +348,14 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
             }, ensure_ascii=False) + "\n")
     except Exception as e:  # noqa: BLE001
         print(f"[ORDER] mark_paid log error: {e}")
+    # Fold the payment event into the order record: a successful payment flips
+    # the order's status to "paid" so the admin board reflects it (без окремого
+    # ручного кліку). Best-effort — лог-подія вже записана вище.
+    if paid:
+        try:
+            set_order_status(str(order_id), "paid")
+        except Exception as e:  # noqa: BLE001
+            print(f"[ORDER] mark_paid status fold error: {e}")
     if telegram_configured():
         emoji = "💰" if paid else "⏳"
         _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",

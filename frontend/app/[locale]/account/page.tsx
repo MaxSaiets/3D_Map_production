@@ -2,16 +2,29 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 import { OrderDialog } from "@/components/OrderDialog";
+import Model3DViewer from "@/components/Model3DViewer";
 import { ShoppingBag } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+/**
+ * Невеликий error boundary навколо живого 3D-вʼювера: якщо GLB не завантажився
+ * (мережа / битий файл / WebGL недоступний) — показуємо плейсхолдер Box, а не
+ * ламаємо весь кабінет. r3f кидає під час рендеру, тому потрібен саме boundary.
+ */
+class ModelErrorBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { /* проковтнуто — fallback уже показано */ }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
 
 interface Quota { downloads: number; limit: number; remaining: number; is_admin: boolean; can_download: boolean }
 interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string }
@@ -215,13 +228,22 @@ export default function AccountPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {models.map((m) => (
                 <div key={m.task_id} className="flex flex-col overflow-hidden rounded-[16px] border border-line bg-paper">
-                  {/* Превʼю того, що було згенеровано (зберігається при завантаженні) */}
+                  {/* Превʼю того, що було згенеровано. Якщо знятого превʼю немає —
+                      рендеримо ЖИВУ модель (GLB з бекенда) у мініатюрному вʼювері;
+                      при збої завантаження error boundary показує плейсхолдер Box. */}
                   <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#0b1020]">
                     {m.preview ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.preview} alt={m.title || m.city || t("previewAlt")} className="h-full w-full object-contain" loading="lazy" />
                     ) : (
-                      <Box size={26} className="text-white/30" />
+                      <ModelErrorBoundary fallback={<Box size={26} className="text-white/30" />}>
+                        <Model3DViewer
+                          url={`${API_BASE}/api/download/${m.task_id}?format=glb`}
+                          flat={m.product_type !== "keychain"}
+                          height={150}
+                          autoRotate
+                        />
+                      </ModelErrorBoundary>
                     )}
                   </div>
                   <div className="p-4 pt-3">

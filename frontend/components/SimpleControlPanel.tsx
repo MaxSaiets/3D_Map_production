@@ -532,16 +532,18 @@ export function SimpleControlPanel({
 
         {/* 3. Style */}
         <div>
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-style-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {t("step3style")}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="simple-style-label">
             {MAP_STYLE_PRESETS.map((p) => {
               const active = styleId === p.id;
               return (
                 <button
                   key={p.id}
                   type="button"
+                  role="radio"
+                  aria-checked={active}
                   onClick={() => applyStyle(p.id)}
                   className={`rounded-[18px] border px-3 py-3 text-left transition ${
                     active
@@ -559,16 +561,19 @@ export function SimpleControlPanel({
 
         {/* 4. Size */}
         <div>
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-size-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {t("step4size")}
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-labelledby="simple-size-label">
             {SIMPLE_SIZES.map((sz) => {
               const active = Math.abs(modelSizeMm - sz.mm) < 1;
               return (
                 <button
                   key={sz.key}
                   type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-label={`${sz.label} · ${sz.cm}`}
                   onClick={() => setModelSizeMm(sz.mm)}
                   className={`rounded-[16px] border px-2 py-3 text-center transition ${
                     active
@@ -587,6 +592,7 @@ export function SimpleControlPanel({
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
+          aria-pressed={magnetMode}
           onClick={() => {
             const next = !magnetMode;
             setMagnetMode(next);
@@ -690,11 +696,13 @@ export function SimpleControlPanel({
         <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
           <div className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
             <span>🖼 {t("panelToggle")}</span>
-            <div className="flex gap-1.5" data-testid="panel-chips">
+            <div className="flex gap-1.5" data-testid="panel-chips" role="radiogroup" aria-label={t("panelToggle")}>
               {([[0, t("panelOff")], [2, "2×2"], [3, "3×3"]] as Array<[0 | 2 | 3, string]>).map(([mode, label]) => (
                 <button
                   key={`panel-${mode}`}
                   type="button"
+                  role="radio"
+                  aria-checked={panelMode === mode}
                   onClick={() => {
                     setPanelMode(mode);
                     // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).

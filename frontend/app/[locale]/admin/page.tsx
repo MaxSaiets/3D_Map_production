@@ -3,13 +3,24 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { setOwnerOptOut } from "@/lib/analytics";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
+// Статуси замовлення (серверні значення) → ключі account-неймспейсу (вже перекладені).
+const ORDER_STATUSES = ["new", "paid", "printed", "shipped", "done"] as const;
+type OrderStatus = (typeof ORDER_STATUSES)[number];
+const ORDER_STATUS_KEYS: Record<OrderStatus, string> = {
+  new: "orderStatusNew", paid: "orderStatusPaid", printed: "orderStatusPrinted",
+  shipped: "orderStatusShipped", done: "orderStatusDone",
+};
+
 export default function AdminPage() {
+  const ts = useTranslations("account"); // повторно використовуємо вже перекладені статуси
+  const ta = useTranslations("adminPanel"); // нові адмін-рядки
   const { user, loading, configured, signIn, getIdToken } = useAuth();
   const [tab, setTab] = useState<"stats" | "orders" | "users">("stats");
   const [orders, setOrders] = useState<any[]>([]);
@@ -17,6 +28,28 @@ export default function AdminPage() {
   const [stats, setStats] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  // order_number, що зараз оновлюється (показуємо спінер на його select).
+  const [savingStatus, setSavingStatus] = useState<string | null>(null);
+
+  // Зміна статусу замовлення на сервері + оптимістичне оновлення картки.
+  const setOrderStatus = useCallback(async (orderNumber: string | number, status: OrderStatus) => {
+    const token = await getIdToken();
+    if (!token) return;
+    const num = String(orderNumber);
+    setSavingStatus(num);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/orders/${encodeURIComponent(num)}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        setOrders((os) => os.map((o) => (String(o.order_number) === num ? { ...o, status } : o)));
+      }
+    } catch {/* ignore */} finally {
+      setSavingStatus(null);
+    }
+  }, [getIdToken]);
 
   const load = useCallback(async () => {
     const token = await getIdToken();
@@ -139,20 +172,64 @@ export default function AdminPage() {
 
           {tab === "orders" && (
             <div className="mt-5 space-y-3">
-              {orders.length === 0 ? <p className="text-ink-3">Поки немає замовлень.</p> : orders.map((o, i) => (
-                <div key={i} className="rounded-[14px] border border-line bg-paper p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-serif text-[17px] text-ink">#{o.order_number} · {o.name || "—"}</div>
-                    <div className="text-[12px] text-ink-3">{o.created_at ? new Date(o.created_at).toLocaleString("uk") : ""}</div>
+              {/* Платіжні події у журналі (type:"payment") не є замовленнями — ховаємо. */}
+              {orders.filter((o) => o.type !== "payment").length === 0 ? <p className="text-ink-3">Поки немає замовлень.</p> : orders.filter((o) => o.type !== "payment").map((o, i) => {
+                const status: OrderStatus = (ORDER_STATUSES as readonly string[]).includes(o.status) ? o.status : "new";
+                const saving = savingStatus === String(o.order_number);
+                const deliveryParts = [o.delivery_country, o.delivery_city, o.delivery_branch, o.delivery_address].filter(Boolean).join(", ");
+                return (
+                  <div key={i} className="rounded-[14px] border border-line bg-paper p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-serif text-[17px] text-ink">#{o.order_number} · {o.name || "—"}</div>
+                      <div className="text-[12px] text-ink-3">{o.created_at ? new Date(o.created_at).toLocaleString("uk") : ""}</div>
+                    </div>
+                    <div className="mt-1 text-[13px] text-ink-2">
+                      📞 {o.phone || "—"} · {o.product_type === "keychain" ? "Брелок" : "Мапа"}
+                      {o.summary?.city ? ` · ${o.summary.city}` : ""}
+                      {o.summary?.district ? ` · ${o.summary.district}` : ""}
+                      {o.summary?.label ? ` · «${o.summary.label}»` : ""}
+                      {o.summary?.size ? ` · ${o.summary.size}` : ""}
+                    </div>
+                    {o.user_email && <div className="mt-1 text-[13px] text-ink-2">✉️ {o.user_email}</div>}
+                    {o.est_price && <div className="mt-1 text-[13px] font-semibold text-ink">💰 {o.est_price} <span className="font-normal text-ink-3">{ta("withoutDelivery")}</span></div>}
+                    {deliveryParts && (
+                      <div className="mt-1 text-[13px] text-ink-2">
+                        🚚 {o.delivery_method ? `${o.delivery_method} · ` : ""}{deliveryParts}
+                      </div>
+                    )}
+                    {o.comment && <div className="mt-1 text-[13px] text-ink-3">💬 {o.comment}</div>}
+                    <div className="mt-1 text-[12px] text-ink-3">
+                      💳 {o.payment_url ? ta("payShown") : ta("payManual")}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <label className="inline-flex items-center gap-2 text-[12px] text-ink-2">
+                        {ta("statusLabel")}
+                        <select
+                          value={status}
+                          disabled={saving}
+                          onChange={(e) => setOrderStatus(o.order_number, e.target.value as OrderStatus)}
+                          className="rounded-full border border-line bg-paper px-3 py-1.5 text-[13px] font-semibold text-ink disabled:opacity-60"
+                        >
+                          {ORDER_STATUSES.map((s) => (
+                            <option key={s} value={s}>{ts(ORDER_STATUS_KEYS[s])}</option>
+                          ))}
+                        </select>
+                      </label>
+                      {status !== "paid" && (
+                        <button
+                          onClick={() => setOrderStatus(o.order_number, "paid")}
+                          disabled={saving}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-forest/40 px-3 py-1.5 text-[12px] font-semibold text-forest hover:bg-forest/5 disabled:opacity-60"
+                        >
+                          <CheckCircle2 size={14} /> {ta("markPaid")}
+                        </button>
+                      )}
+                      {saving && <Loader2 className="h-4 w-4 animate-spin text-ink-3" />}
+                    </div>
                   </div>
-                  <div className="mt-1 text-[13px] text-ink-2">
-                    📞 {o.phone || "—"} · {o.product_type === "keychain" ? "Брелок" : "Мапа"}
-                    {o.summary?.district ? ` · ${o.summary.district}` : ""}{o.summary?.size ? ` · ${o.summary.size}` : ""}
-                    {o.delivery_method ? ` · ${o.delivery_method} ${o.delivery_city || ""} ${o.delivery_branch || ""}` : ""}
-                  </div>
-                  {o.comment && <div className="mt-1 text-[13px] text-ink-3">💬 {o.comment}</div>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

@@ -253,7 +253,8 @@
     "previewSubtitle": "Revisa la forma del modelo antes de descargar",
     "statusHeading": "Estado",
     "cancelTitle": "Cancelar generación",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "loading3d": "Cargando vista 3D…"
   },
   "showcase": {
     "back": "Inicio",
@@ -344,7 +345,8 @@
       "close": "Cerrar",
       "region": "Región de entrega",
       "method": "Método de entrega"
-    }
+    },
+    "phEmail": "Email (opcional)"
   },
   "contact": {
     "errPhone": "Indica un teléfono",
@@ -1211,7 +1213,9 @@
       "buildings": "Edificios",
       "water": "Agua",
       "parks": "Parques"
-    }
+    },
+    "webglUnavailable": "Vista 3D no disponible en este dispositivo",
+    "webglUnavailableBody": "Tu navegador o tarjeta gráfica no admite la vista 3D. Aún puedes pedir el modelo — está guardado."
   },
   "gallery": {
     "district": {
@@ -1265,5 +1269,20 @@
       "new": "Novedad",
       "popular": "Popular"
     }
+  },
+  "adminPanel": {
+    "statusLabel": "Estado",
+    "markPaid": "Marcar como pagado",
+    "withoutDelivery": "sin envío",
+    "payShown": "Botón de pago mostrado — verifica el ingreso",
+    "payManual": "Pago manual (online aún no conectado)"
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "help": "Disculpa las molestias — ocurrió un error inesperado. Intenta actualizar la página; si persiste, vuelve al inicio o escríbenos.",
+    "retry": "Intentar de nuevo",
+    "home": "Inicio",
+    "createMap": "Crear un mapa 3D",
+    "contacts": "Contáctanos"
   }
 }

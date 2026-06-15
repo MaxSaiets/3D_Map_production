@@ -1,0 +1,146 @@
+"use client";
+
+import { useState } from "react";
+import { ArrowRight, KeyRound, Box, User, Menu, X, Globe } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { locales, localeMeta } from "@/i18n/routing";
+import { useAuth } from "@/components/AuthProvider";
+
+/* ---------- Language switcher ---------- */
+export function LanguageSwitcher({ compact }: { compact?: boolean }) {
+  const t = useTranslations("nav");
+  const locale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label={t("language")}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+      >
+        <Globe size={15} />
+        <span className="uppercase">{locale}</span>
+      </button>
+      {open && (
+        <>
+          <button aria-hidden className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
+          <ul className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper p-1 shadow-lift">
+            {locales.map((l) => (
+              <li key={l}>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); router.replace(pathname, { locale: l }); }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-bg-2 ${l === locale ? "font-bold text-forest" : "text-ink-2"}`}
+                >
+                  {localeMeta[l].label}
+                  <span className="text-[11px] uppercase text-ink-3">{l}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Header ---------- */
+export function SiteHeader() {
+  const { user, configured } = useAuth();
+  const t = useTranslations("nav");
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
+        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-ink">
+          <Box size={22} className="text-forest" />
+          monadruk
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
+          <Link href="/#how" className="hover:text-ink">{t("how")}</Link>
+          <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
+          <Link href="/#templates" className="hover:text-ink">{t("templates")}</Link>
+          <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
+        </nav>
+        <div className="flex items-center gap-2.5">
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
+          <Link
+            href="/account"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+            title={configured && user ? (user.email || user.phoneNumber || t("account")) : t("login")}
+          >
+            <User size={15} />
+            <span className="hidden sm:inline">{configured && user ? t("account") : t("login")}</span>
+          </Link>
+          <Link
+            href="/keychains"
+            className="hidden min-h-[44px] items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
+            style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze, #8E6B3D)", background: "rgba(142,107,61,0.08)" }}
+          >
+            <KeyRound size={15} /> {t("keychain")}
+          </Link>
+          <Link
+            href="/create"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-4 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
+            style={{ background: "var(--forest, #2E4A3A)" }}
+          >
+            <span className="sm:hidden">{t("mapShort")}</span>
+            <span className="hidden sm:inline">{t("createMap")}</span>
+            <ArrowRight size={15} />
+          </Link>
+          {/* Mobile menu toggle */}
+          <button
+            type="button"
+            aria-label={open ? t("closeMenu") : t("openMenu")}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink md:hidden"
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile dropdown nav */}
+      {open && (
+        <nav className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
+          <ul className="flex flex-col">
+            {[
+              { href: "/#how", label: t("how") },
+              { href: "/showcase", label: t("gallery") },
+              { href: "/#templates", label: t("templates") },
+              { href: "/keychains", label: t("keychains") },
+              { href: "/account", label: configured && user ? t("account") : t("login") },
+            ].map((it) => (
+              <li key={it.href}>
+                <Link
+                  href={it.href}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-[48px] items-center border-b border-line-soft/60 text-[15px] font-semibold text-ink-2 transition hover:text-ink"
+                >
+                  {it.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <Link href="/keychains" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 text-sm font-semibold" style={{ color: "var(--bronze, #8E6B3D)" }}>
+              <KeyRound size={15} /> {t("keychain")}
+            </Link>
+            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
+              {t("createMap")} <ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className="mt-3 border-t border-line-soft/60 pt-3"><LanguageSwitcher /></div>
+        </nav>
+      )}
+    </header>
+  );
+}
+
+export default SiteHeader;

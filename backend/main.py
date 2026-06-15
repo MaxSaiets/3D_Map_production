@@ -1,5 +1,5 @@
 import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header, Form
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header, Form, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -99,6 +99,84 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# ── DoS / spam protection: simple in-memory per-IP rate limiter ─────────────────
+# No external dependency (Redis etc.) — a per-key deque of recent request
+# timestamps. Caddy sits in front and sets X-Real-IP; behind Cloudflare the real
+# client IP is the FIRST hop of X-Forwarded-For. We fall back to request.client.
+# This protects the expensive/abuse-prone endpoints (generation, order, contact,
+# analytics, share) from a single host hammering us.
+import time as _time
+from collections import deque as _deque
+import threading as _threading
+
+_RATE_BUCKETS: dict[tuple[str, str], "_deque[float]"] = {}
+_RATE_LOCK = _threading.Lock()
+_RATE_LAST_SWEEP = [0.0]
+
+
+def _client_ip(request: Request) -> str:
+    """Resolve the real client IP behind Caddy + Cloudflare.
+
+    Priority: X-Real-IP (set by our Caddy) → first hop of X-Forwarded-For
+    (Cloudflare → Caddy chain) → socket peer. Never trust these blindly for
+    auth, but for coarse rate-limiting they are good enough."""
+    h = request.headers
+    real = (h.get("x-real-ip") or "").strip()
+    if real:
+        return real
+    xff = (h.get("x-forwarded-for") or "").strip()
+    if xff:
+        first = xff.split(",")[0].strip()
+        if first:
+            return first
+    try:
+        return request.client.host if request.client else "unknown"
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
+def _check_rate(ip: str, scope: str, limit: int, window_s: float) -> bool:
+    """Return True if the (ip, scope) bucket is still under `limit` within the
+    trailing `window_s` seconds; records the hit. Thread-safe (background tasks
+    + request handlers may share the process)."""
+    now = _time.monotonic()
+    key = (ip, scope)
+    with _RATE_LOCK:
+        dq = _RATE_BUCKETS.get(key)
+        if dq is None:
+            dq = _deque()
+            _RATE_BUCKETS[key] = dq
+        cutoff = now - window_s
+        while dq and dq[0] < cutoff:
+            dq.popleft()
+        if len(dq) >= limit:
+            return False
+        dq.append(now)
+        # Opportunistic sweep of fully-stale buckets so memory can't grow
+        # unbounded under a spray of distinct IPs (~once a minute).
+        if now - _RATE_LAST_SWEEP[0] > 60.0:
+            _RATE_LAST_SWEEP[0] = now
+            stale = [k for k, d in _RATE_BUCKETS.items() if not d or d[-1] < now - 3600.0]
+            for k in stale:
+                _RATE_BUCKETS.pop(k, None)
+        return True
+
+
+def rate_limit(scope: str, limits: list[tuple[int, float]]):
+    """Build a FastAPI dependency enforcing one or more (limit, window_seconds)
+    rules for a named scope. Raises HTTP 429 when any rule is exceeded.
+
+    Example: rate_limit("generate", [(5, 60), (40, 3600)]) → 5/min AND 40/hour."""
+    def _dep(request: Request) -> None:
+        ip = _client_ip(request)
+        for limit, window in limits:
+            if not _check_rate(ip, scope, limit, window):
+                raise HTTPException(
+                    status_code=429,
+                    detail="Забагато запитів — зачекайте трохи й спробуйте ще раз.",
+                )
+    return _dep
 
 # Р—Р±РµСЂС–РіР°РЅРЅСЏ Р·Р°РґР°С‡ РіРµРЅРµСЂР°С†С–С—
 tasks: dict[str, GenerationTask] = {}
@@ -388,8 +466,8 @@ app.mount("/api/files", SafeStatic(directory=OUTPUT_DIR), name="api_files")
 
 
 class VideoStatic(StaticFiles):
-    """Публічна роздача ЛИШЕ відео (для Instagram/Pinterest, що тягнуть з URL)."""
-    _ALLOWED = {".mp4", ".mov", ".m4v", ".webm"}
+    """Публічна роздача відео + обкладинок (Instagram/Threads/Pinterest тягнуть з URL)."""
+    _ALLOWED = {".mp4", ".mov", ".m4v", ".webm", ".jpg", ".jpeg", ".png", ".webp"}
 
     async def get_response(self, path, scope):
         ext = os.path.splitext(path)[1].lower()
@@ -433,8 +511,9 @@ async def startup_event():
         print(f"[OK] Remote Path: 3dMap/")
     else:
         print("[WARN] Firebase Storage: DISABLED")
-        print("   Make sure FIREBASE_STORAGE_BUCKET is set in .env")
-        print("   and serviceAccountKey.json exists in backend folder.")
+        print("   Optional cloud upload only. Set FIREBASE_STORAGE_BUCKET +")
+        print("   FIREBASE_CREDENTIALS_JSON (env) to enable. Auth/login does NOT")
+        print("   need this — ID tokens are verified via Google public certs.")
     print("="*60 + "\n")
 
     print("[INFO] Р’С–РґРЅРѕРІР»РµРЅРЅСЏ СЃРїРёСЃРєСѓ Р·Р°РґР°С‡ Р· РґРёСЃРєР°...")
@@ -749,6 +828,76 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     }
 
 
+def _nearest_map_price(sizes: Dict[float, int], size_mm: Optional[float]) -> int:
+    if not sizes:
+        return 0
+    if size_mm is None:
+        return min(sizes.values())
+    nearest = min(sizes.keys(), key=lambda k: abs(k - float(size_mm)))
+    return int(sizes[nearest])
+
+
+def _compute_authoritative_amount(
+    product_type: str,
+    task: Optional["GenerationTask"],
+    pricing: Dict[str, Any],
+) -> Tuple[float, str]:
+    """ПЛАТІЖНА ЦІЛІСНІСТЬ: рахуємо суму до сплати НА СЕРВЕРІ з pricing.json та
+    РЕАЛЬНИХ параметрів задачі (model_size_mm/relief/magnet/панно-плитки), а НЕ
+    з est_price, який надсилає клієнт (його можна підробити). Повертає (UAH, ccy).
+
+    Для панно (batch) сума = ціна однієї плитки × кількість плиток.
+    """
+    currency = pricing.get("currency") or "UAH"
+    map_cfg = pricing.get("map", {}) or {}
+    sizes = {float(k): int(v) for k, v in (map_cfg.get("sizes_mm", {}) or {}).items()}
+    req = getattr(task, "request", None) if task is not None else None
+
+    if (product_type or "map") == "keychain":
+        amount = float((pricing.get("keychain", {}) or {}).get("base", 120))
+        return round(amount, 2), currency
+
+    # ── map / magnet ────────────────────────────────────────────────────────
+    size_mm = None
+    relief = False
+    is_magnet = False
+    tile_count = 1
+    if req is not None:
+        try:
+            size_mm = float(getattr(req, "model_size_mm", None) or 0.0) or None
+        except Exception:  # noqa: BLE001
+            size_mm = None
+        try:
+            # Relief addon застосовуємо лише якщо рельєф реально увімкнено й
+            # модель не плоска плита (flat_plate=без 3D-рельєфу).
+            relief = bool(getattr(req, "terrain_enabled", False)) and not bool(
+                getattr(req, "flat_plate_mode", False)
+            )
+        except Exception:  # noqa: BLE001
+            relief = False
+        try:
+            is_magnet = bool(getattr(req, "magnet_pocket", False))
+        except Exception:  # noqa: BLE001
+            is_magnet = False
+
+    # Магніт має власну ціну (ключ "60" у sizes_mm = 180₴ за прайсом).
+    if is_magnet and 60.0 in sizes:
+        amount = float(sizes[60.0])
+        return round(amount, 2), currency
+
+    # Невідомий розмір (немає задачі) → беремо стартову ціну `from`, а НЕ
+    # найдешевший рядок (інакше випадково взяли б ціну магніта "60"=180).
+    if size_mm is None:
+        base = float(map_cfg.get("from", 250) or 250)
+    else:
+        base = float(_nearest_map_price(sizes, size_mm) or map_cfg.get("from", 250))
+    if relief:
+        base += float(map_cfg.get("relief_addon", 0) or 0)
+
+    # ПАННО: якщо task_id — це batch, рахуємо за всі плитки.
+    return round(base * max(1, int(tile_count)), 2), currency
+
+
 @app.get("/api/health")
 async def health():
     """Lightweight health probe for monitoring/alerting.
@@ -789,23 +938,39 @@ async def health():
 
 
 class OrderRequest(BaseModel):
-    name: str
-    phone: str = ""
-    product_type: str = "map"           # "map" | "keychain"
-    task_id: Optional[str] = None
-    delivery_method: str = ""           # "nova" | "ukr" | "pickup" | "novapost_eu" | "meest"
-    delivery_country: str = ""          # "Україна" або країна ЄС
-    delivery_city: str = ""
-    delivery_branch: str = ""
-    delivery_address: str = ""
-    comment: str = ""
-    est_price: str = ""                 # орієнтовна ціна, ПОКАЗАНА клієнту на сайті (інформаційно)
+    name: str = Field(max_length=80)
+    phone: str = Field(default="", max_length=32)
+    product_type: str = Field(default="map", max_length=24)   # "map" | "keychain"
+    task_id: Optional[str] = Field(default=None, max_length=128)
+    delivery_method: str = Field(default="", max_length=32)    # "nova" | "ukr" | "pickup" | ...
+    delivery_country: str = Field(default="", max_length=80)   # "Україна" або країна ЄС
+    delivery_city: str = Field(default="", max_length=120)
+    delivery_branch: str = Field(default="", max_length=120)
+    delivery_address: str = Field(default="", max_length=300)
+    comment: str = Field(default="", max_length=2000)
+    est_price: str = Field(default="", max_length=64)          # інфо-нотатка з сайту (НЕ авторитет для оплати)
     summary: Dict[str, Any] = {}
-    screenshots: List[str] = []         # data:image/png;base64,... (max 4 used)
+    screenshots: List[str] = []         # data:image/png;base64,... (трим до 4 у валідаторі)
+
+    @model_validator(mode="after")
+    def _cap_screenshots(self):
+        # Лояльний кап (НЕ 422): беремо щонайбільше 4 перших і відкидаємо завеликі
+        # (>3МБ data-URL) — захист від роздування пейлоада/памʼяті без відмови
+        # клієнту з валідним замовленням.
+        if self.screenshots:
+            self.screenshots = [
+                s for s in self.screenshots[:4]
+                if isinstance(s, str) and len(s) <= 3_000_000
+            ]
+        return self
 
 
 @app.post("/api/order")
-async def create_order_endpoint(order: OrderRequest, authorization: Optional[str] = Header(default=None)):
+async def create_order_endpoint(
+    order: OrderRequest,
+    authorization: Optional[str] = Header(default=None),
+    _rl: None = Depends(rate_limit("order", [(5, 3600.0)])),
+):
     """Accept a customer order and push it to the Telegram CRM (card + file + screenshots)."""
     from services.order_service import create_order
     if not (order.name or "").strip():
@@ -839,11 +1004,28 @@ async def create_order_endpoint(order: OrderRequest, authorization: Optional[str
     try:
         result = create_order(payload)
         # ОПЛАТА: динамічний LiqPay-checkout (якщо ключі налаштовані) має пріоритет над
-        # статичним посиланням з конфігу. Сума = ціна, показана клієнту (est_price).
+        # статичним посиланням з конфігу.
+        # ПЛАТІЖНА ЦІЛІСНІСТЬ: суму до сплати рахуємо НА СЕРВЕРІ з pricing.json та
+        # реальних параметрів задачі — НЕ довіряємо order.est_price (його можна
+        # підробити в запиті). est_price лишається лише як інфо-нотатка в картці.
         try:
             from services.liqpay import is_configured, parse_amount, build_checkout
             if is_configured():
-                amount, currency = parse_amount(order.est_price, order.product_type, pricing)
+                # Authoritative amount from server-side params (не з клієнта).
+                _order_task = tasks.get(order.task_id) if order.task_id else None
+                amount, currency = _compute_authoritative_amount(
+                    order.product_type, _order_task, pricing
+                )
+                # ПАННО (batch): сума × кількість плиток.
+                try:
+                    if order.task_id and str(order.task_id).startswith("batch_"):
+                        _tile_ids = multiple_tasks_map.get(order.task_id) or []
+                        if _tile_ids:
+                            amount = round(amount * len(_tile_ids), 2)
+                except Exception:  # noqa: BLE001
+                    pass
+                # parse_amount лишається в коді (фід — серверна цифра, не клієнтська).
+                amount, currency = parse_amount(f"{amount:.2f}", order.product_type, pricing)
                 site = (os.getenv("PUBLIC_SITE_URL") or "https://monadruk.com").rstrip("/")
                 checkout = build_checkout(
                     amount=amount, currency=currency,
@@ -894,14 +1076,17 @@ async def account_orders(authorization: Optional[str] = Header(default=None)):
 
 
 class ContactRequest(BaseModel):
-    name: str = ""
-    phone: str
-    message: str = ""
-    source: str = ""
+    name: str = Field(default="", max_length=80)
+    phone: str = Field(max_length=32)
+    message: str = Field(default="", max_length=2000)
+    source: str = Field(default="", max_length=200)
 
 
 @app.post("/api/contact")
-async def contact_endpoint(req: ContactRequest):
+async def contact_endpoint(
+    req: ContactRequest,
+    _rl: None = Depends(rate_limit("contact", [(5, 3600.0)])),
+):
     """Customer 'leave a request' → Telegram CRM."""
     from services.order_service import send_contact
     if not (req.phone or "").strip():
@@ -928,6 +1113,7 @@ async def track_event(
     x_forwarded_for: Optional[str] = Header(default=None),
     user_agent: Optional[str] = Header(default=None),
     cf_ipcountry: Optional[str] = Header(default=None),
+    _rl: None = Depends(rate_limit("track", [(120, 60.0)])),
 ):
     """Append a privacy-friendly analytics event. No raw IP is stored — only a
     daily salted hash, so we can count unique visitors without tracking people.
@@ -1216,6 +1402,14 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     from fastapi.responses import FileResponse
     from services.user_store import register_download, add_model
     u = _require_user(authorization)
+    # БЕЗПЕКА: безкоштовні завантаження — лише для ПІДТВЕРДЖЕНОЇ пошти (не-адмін),
+    # інакше квоту FREE_DOWNLOADS легко обнулити, реєструючи нові непідтверджені
+    # акаунти. Адмін (вже гейтований email_verified у verify_token) — без обмежень.
+    if not u["is_admin"] and not u.get("email_verified", False):
+        raise HTTPException(
+            status_code=403,
+            detail="Підтвердьте email, щоб завантажувати моделі (перевірте пошту).",
+        )
     path = _resolve_model_path(req)
     if path is None:
         raise HTTPException(status_code=404, detail="Файл моделі не знайдено")
@@ -1252,6 +1446,40 @@ async def admin_orders(authorization: Optional[str] = Header(default=None)):
         pass
     orders.reverse()
     return {"orders": orders}
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str = Field(max_length=24)
+
+
+@app.post("/api/admin/orders/{order_number}/status")
+async def admin_set_order_status(
+    order_number: str,
+    body: OrderStatusUpdate,
+    authorization: Optional[str] = Header(default=None),
+):
+    """Адмін: змінює статус замовлення в orders.jsonl.
+
+    Дозволені статуси: new, paid, printed, shipped, done. Лише для адмінів
+    (email_verified + ADMIN_EMAILS). LiqPay-оплата теж сама ставить «paid».
+    """
+    from services.order_service import set_order_status, ORDER_STATUSES
+    u = _require_user(authorization)
+    if not u["is_admin"]:
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    status = (body.status or "").strip().lower()
+    if status not in ORDER_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Невідомий статус «{body.status}». Дозволені: {', '.join(ORDER_STATUSES)}",
+        )
+    try:
+        ok = set_order_status(order_number, status)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Замовлення не знайдено")
+    return {"ok": True, "order_number": order_number, "status": status}
 
 
 @app.get("/api/admin/users")
@@ -1306,7 +1534,11 @@ def _validate_keychain_print_scale(request: GenerationRequest) -> None:
 
 
 @app.post("/api/generate", response_model=GenerationResponse)
-async def generate_model(request: GenerationRequest, background_tasks: BackgroundTasks):
+async def generate_model(
+    request: GenerationRequest,
+    background_tasks: BackgroundTasks,
+    _rl: None = Depends(rate_limit("generate", [(5, 60.0), (40, 3600.0)])),
+):
     """
     РЎС‚РІРѕСЂСЋС” Р·Р°РґР°С‡Сѓ РіРµРЅРµСЂР°С†С–С— 3D РјРѕРґРµР»С–
     """
@@ -1568,7 +1800,10 @@ _SHARE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 
 
 @app.post("/api/share/preview")
-async def share_preview(req: SharePreviewRequest):
+async def share_preview(
+    req: SharePreviewRequest,
+    _rl: None = Depends(rate_limit("share_preview", [(10, 3600.0)])),
+):
     """E4: зберігає рендер моделі користувача для OG-шерингу (/share/{task})."""
     import base64
 
@@ -1715,20 +1950,39 @@ async def download_all_zones(batch_id: str):
     )
 
 
+def _task_owner(task: "GenerationTask") -> Optional[str]:
+    """Optional uid the task was created for (set on authenticated generate),
+    if we ever stored one. None = legacy/anonymous task."""
+    return getattr(task, "owner_uid", None)
+
+
 @app.delete("/api/task/{task_id}")
-async def cancel_task(task_id: str):
-    """Cancel a generation task or batch."""
+async def cancel_task(task_id: str, authorization: Optional[str] = Header(default=None)):
+    """Cancel a generation task or batch. БЕЗПЕКА: змінює стан → потрібен валідний
+    токен. Якщо задача привʼязана до власника — лише власник/адмін може скасувати
+    (інакше будь-хто міг убивати чужі генерації за вгаданим task_id)."""
+    u = _require_user(authorization)
+
+    def _can_cancel(t: "GenerationTask") -> bool:
+        owner = _task_owner(t)
+        return owner is None or owner == u["uid"] or u.get("is_admin", False)
+
     if task_id.startswith("batch_"):
         task_ids_list = multiple_tasks_map.get(task_id, [])
-        count = sum(1 for tid in task_ids_list if tid in tasks and (tasks[tid].cancel() or True))
-        if count == 0:
+        live = [tasks[tid] for tid in task_ids_list if tid in tasks]
+        if not live:
             raise HTTPException(status_code=404, detail="Batch tasks not found")
-        print(f"[INFO] Cancelled batch {task_id} ({count} sub-tasks)")
+        if not all(_can_cancel(t) for t in live):
+            raise HTTPException(status_code=403, detail="Це не ваша генерація")
+        count = sum(1 for t in live if (t.cancel() or True))
+        print(f"[INFO] Cancelled batch {task_id} ({count} sub-tasks) by {u.get('email')}")
         return {"cancelled": True, "count": count}
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
+    if not _can_cancel(tasks[task_id]):
+        raise HTTPException(status_code=403, detail="Це не ваша генерація")
     tasks[task_id].cancel()
-    print(f"[INFO] Cancelled task {task_id}")
+    print(f"[INFO] Cancelled task {task_id} by {u.get('email')}")
     return {"cancelled": True}
 
 
@@ -1950,8 +2204,11 @@ async def download_model(
 @app.post("/api/merge-zones")
 async def merge_zones_endpoint(
     task_ids: List[str] = Query(..., description="РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ"),
-    format: str = Query(default="3mf", description="Р¤РѕСЂРјР°С‚ РІРёС…С–РґРЅРѕРіРѕ С„Р°Р№Р»Сѓ (stl Р°Р±Рѕ 3mf)")
+    format: str = Query(default="3mf", description="Р¤РѕСЂРјР°С‚ РІРёС…С–РґРЅРѕРіРѕ С„Р°Р№Р»Сѓ (stl Р°Р±Рѕ 3mf)"),
+    authorization: Optional[str] = Header(default=None),
 ):
+    # БЕЗПЕКА: створює файл з чужих задач → потрібен валідний токен.
+    _require_user(authorization)
     """
     РћР±'С”РґРЅСѓС” РєС–Р»СЊРєР° Р·РѕРЅ РІ РѕРґРёРЅ С„Р°Р№Р» РґР»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ СЂР°Р·РѕРј.
     
@@ -2075,18 +2332,29 @@ async def get_test_model_part(part_name: str):
 
 
 @app.post("/api/global-center")
-async def set_global_center_endpoint(center_lat: float = Query(...), center_lon: float = Query(...), utm_zone: Optional[int] = Query(None)):
+async def set_global_center_endpoint(
+    center_lat: float = Query(...),
+    center_lon: float = Query(...),
+    utm_zone: Optional[int] = Query(None),
+    authorization: Optional[str] = Header(default=None),
+):
     """
-    Р’СЃС‚Р°РЅРѕРІР»СЋС” РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРІР°РґСЂР°С‚С–РІ
-    
+    Р’СЃС‚Р°РЅРѕРІР»СЋС” РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РєР°СЂС‚Рё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РєРІР°РґСЂР°С‚С–РІ.
+
+    БЕЗПЕКА: цей setter мутує ГЛОБАЛЬНИЙ стан, що впливає на стикування ВСІХ
+    генерацій → лише адмін (інакше будь-хто міг збити прив'язку сітки на проді).
+
     Args:
         center_lat: РЁРёСЂРѕС‚Р° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ (WGS84)
         center_lon: Р”РѕРІРіРѕС‚Р° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ (WGS84)
         utm_zone: UTM Р·РѕРЅР° (РѕРїС†С–РѕРЅР°Р»СЊРЅРѕ, РІРёР·РЅР°С‡Р°С”С‚СЊСЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ СЏРєС‰Рѕ РЅРµ РІРєР°Р·Р°РЅРѕ)
-    
+
     Returns:
         Р†РЅС„РѕСЂРјР°С†С–СЏ РїСЂРѕ РІСЃС‚Р°РЅРѕРІР»РµРЅРёР№ С†РµРЅС‚СЂ
     """
+    u = _require_user(authorization)
+    if not u.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
     try:
         global_center = set_global_center(center_lat, center_lon, utm_zone)
         center_x_utm, center_y_utm = global_center.get_center_utm()
@@ -2299,7 +2567,7 @@ class ZoneGenerationRequest(BaseModel):
     """Р—Р°РїРёС‚ РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»РµР№ РґР»СЏ РІРёР±СЂР°РЅРёС… Р·РѕРЅ"""
     model_config = ConfigDict(protected_namespaces=())
     
-    zones: List[dict]  # РЎРїРёСЃРѕРє Р·РѕРЅ (GeoJSON features)
+    zones: List[dict] = Field(max_length=64)  # РЎРїРёСЃРѕРє Р·РѕРЅ (GeoJSON features) — кап 64 проти DoS
     # Hex grid parameters (used to reconstruct exact zone polygons in metric space for perfect stitching)
     hex_size_m: float = Field(default=300.0, ge=100.0, le=10000.0)
     # IMPORTANT: city/area bbox (WGS84) for a stable global reference across sessions.
@@ -2404,7 +2672,11 @@ class ZoneGenerationRequest(BaseModel):
 
 
 @app.post("/api/generate-zones", response_model=GenerationResponse)
-async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tasks: BackgroundTasks):
+async def generate_zones_endpoint(
+    request: ZoneGenerationRequest,
+    background_tasks: BackgroundTasks,
+    _rl: None = Depends(rate_limit("generate_zones", [(3, 60.0)])),
+):
 
     if not request.zones or len(request.zones) == 0:
         raise HTTPException(status_code=400, detail="РќРµ РІРёР±СЂР°РЅРѕ Р¶РѕРґРЅРѕС— Р·РѕРЅРё")
@@ -2799,6 +3071,34 @@ async def generate_zones_endpoint(request: ZoneGenerationRequest, background_tas
     )
 
 
+def _friendly_generation_error(exc: Exception) -> str:
+    """Map a raw pipeline exception to a short, user-friendly UA message.
+
+    Покупець не повинен бачити Python-трейс/назву винятку. Підбираємо людську
+    підказку за ключовими словами; сирий текст уже залогований у консоль вище.
+    """
+    raw = str(exc or "").lower()
+
+    def _has(*subs: str) -> bool:
+        return any(s in raw for s in subs)
+
+    if _has("groove", "boolean", "manifold", "watertight", "non-manifold"):
+        return ("Не вдалося зібрати друковану геометрію для цієї ділянки. "
+                "Спробуйте трохи зменшити зону або вимкнути дрібні шари (дороги/парки).")
+    if _has("timeout", "timed out", "deadline"):
+        return ("Генерація зайняла надто довго й була перервана. "
+                "Спробуйте меншу ділянку або повторіть пізніше.")
+    if _has("memory", "out of memory", "killed", "alloc"):
+        return ("Ділянка завелика для обробки. Виберіть меншу зону або менший розмір моделі.")
+    if _has("overpass", "osm", "http", "connection", "timeouterror", "ssl", "dns", "resolve", "elevation", "terrarium", "dem", "tile"):
+        return ("Тимчасова проблема із завантаженням мапи/рельєфу. "
+                "Спробуйте ще раз за хвилину.")
+    if _has("empty", "no data", "no roads", "no buildings", "nothing to"):
+        return ("Для цієї ділянки замало даних мапи. Спробуйте іншу зону поблизу.")
+    return ("Не вдалося згенерувати модель для цієї ділянки. "
+            "Спробуйте іншу зону або інші параметри, або повторіть пізніше.")
+
+
 def generate_model_task(
     task_id: str,
     request: GenerationRequest,
@@ -3001,7 +3301,9 @@ def generate_model_task(
         print(f"[ERROR] === РџРћРњРР›РљРђ Р“Р•РќР•Р РђР¦Р†Р‡ РњРћР”Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}, Error: {e}")
         import traceback
         traceback.print_exc()
-        task.fail(str(e))
+        # Користувачу — дружнє повідомлення українською, БЕЗ Python-трейсу/класу
+        # винятку (раніше сире `str(e)` типу "BooleanError: ..." текло у фронт).
+        task.fail(_friendly_generation_error(e))
         # IMPORTANT: don't re-raise from background task, otherwise Starlette logs it as ASGI error
         # and it can interrupt other tasks. The failure is already recorded in task state.
         return

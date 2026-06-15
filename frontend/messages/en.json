@@ -253,7 +253,8 @@
     "previewSubtitle": "Check the model shape before downloading",
     "statusHeading": "Status",
     "cancelTitle": "Cancel generation",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "loading3d": "Loading 3D preview…"
   },
   "showcase": {
     "back": "Home",
@@ -344,7 +345,8 @@
       "close": "Close",
       "region": "Delivery region",
       "method": "Delivery method"
-    }
+    },
+    "phEmail": "Email (optional)"
   },
   "contact": {
     "errPhone": "Enter a phone number",
@@ -1211,7 +1213,9 @@
       "buildings": "Buildings",
       "water": "Water",
       "parks": "Parks"
-    }
+    },
+    "webglUnavailable": "3D preview unavailable on this device",
+    "webglUnavailableBody": "Your browser or graphics card does not support 3D preview. You can still order the model — it is saved."
   },
   "gallery": {
     "district": {
@@ -1265,5 +1269,20 @@
       "new": "New",
       "popular": "Popular"
     }
+  },
+  "adminPanel": {
+    "statusLabel": "Status",
+    "markPaid": "Mark as paid",
+    "withoutDelivery": "excl. delivery",
+    "payShown": "Pay button shown — check for incoming payment",
+    "payManual": "Manual payment (online not connected yet)"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "help": "Sorry for the inconvenience — an unexpected error occurred. Try refreshing the page; if it persists, go back home or contact us.",
+    "retry": "Try again",
+    "home": "Home",
+    "createMap": "Create a 3D map",
+    "contacts": "Contact us"
   }
 }

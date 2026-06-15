@@ -253,7 +253,8 @@
     "previewSubtitle": "Prüfe die Modellform vor dem Download",
     "statusHeading": "Status",
     "cancelTitle": "Generierung abbrechen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "loading3d": "3D-Vorschau wird geladen…"
   },
   "showcase": {
     "back": "Startseite",
@@ -344,7 +345,8 @@
       "close": "Schließen",
       "region": "Lieferregion",
       "method": "Liefermethode"
-    }
+    },
+    "phEmail": "E-Mail (optional)"
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -1211,7 +1213,9 @@
       "buildings": "Gebäude",
       "water": "Wasser",
       "parks": "Parks"
-    }
+    },
+    "webglUnavailable": "3D-Vorschau auf diesem Gerät nicht verfügbar",
+    "webglUnavailableBody": "Ihr Browser oder Ihre Grafikkarte unterstützt keine 3D-Vorschau. Sie können das Modell trotzdem bestellen — es ist gespeichert."
   },
   "gallery": {
     "district": {
@@ -1265,5 +1269,20 @@
       "new": "Neu",
       "popular": "Beliebt"
     }
+  },
+  "adminPanel": {
+    "statusLabel": "Status",
+    "markPaid": "Als bezahlt markieren",
+    "withoutDelivery": "ohne Versand",
+    "payShown": "Zahlungs-Button angezeigt — Zahlungseingang prüfen",
+    "payManual": "Manuelle Zahlung (online noch nicht angebunden)"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "help": "Entschuldigung — ein unerwarteter Fehler ist aufgetreten. Laden Sie die Seite neu; wenn das Problem bleibt, kehren Sie zur Startseite zurück oder kontaktieren Sie uns.",
+    "retry": "Erneut versuchen",
+    "home": "Zur Startseite",
+    "createMap": "3D-Karte erstellen",
+    "contacts": "Kontakt"
   }
 }

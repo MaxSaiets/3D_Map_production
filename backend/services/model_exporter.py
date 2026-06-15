@@ -1492,11 +1492,35 @@ def export_3mf(
     # filament/material. Всі objects вже в одному mm-координатному просторі
     # (від prepare_scene_parts → matrix), тому Bambu бачить їх як assembly,
     # а НЕ як розкидані частини.
+    # SLICER-READINESS репар: послідовний winding (нормалі) + watertight для
+    # СОЛІДНИХ частин (база/зворот/ободок/текст). Рельєф-база раніше виходила НЕ
+    # watertight, а вода/дороги мали bad-winding → у слайсері дірки / неоднозначні
+    # нормалі. fix_normals робить winding консистентним; fill_holes закриває базу.
+    _SOLID = {"base", "baseback", "rim", "text", "text2", "maplabel"}
+    def _repair_for_print(m, key):
+        try:
+            m.merge_vertices()
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
+        except Exception:  # noqa: BLE001
+            pass
+        if key.split("_")[0].split(".")[0].lower() in _SOLID and not bool(getattr(m, "is_watertight", True)):
+            try:
+                m.fill_holes()
+                if m.is_watertight:
+                    print(f"[3MF EXPORT] repaired '{key}' -> watertight")
+            except Exception:  # noqa: BLE001
+                pass
+        return m
+
     layer_stats = []
     for key in ordered_keys:
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
+        _repair_for_print(mesh, key)
         _ensure_face_colors(mesh, key)
         name = mesh.metadata.get('original_name', key.capitalize()) if hasattr(mesh, 'metadata') else key.capitalize()
         scene.add_geometry(mesh, node_name=name, geom_name=name)

@@ -2,7 +2,8 @@
 
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+import { Component, Suspense, useEffect, useMemo, useState, useRef } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { api } from "@/lib/api";
@@ -528,7 +529,7 @@ function FreeFlyControls({
   return null;
 }
 
-function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
+function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?: (msg: string | null) => void }) {
   const t = useTranslations("preview");
   const three = useThree();
   const camera = three.camera;
@@ -569,6 +570,13 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedTestModel, setHasLoadedTestModel] = useState(false);
+
+  // Surface the load error to the HTML layer (Preview3D) — components inside the
+  // R3F <Canvas> can only render three.js objects, so a visible message has to
+  // live outside the canvas. Previously a failed load showed only empty lights.
+  useEffect(() => {
+    onError?.(error);
+  }, [error, onError]);
 
   // Керування поворотом моделі (а не камери)
   const modelGroupRef = useRef<THREE.Group | null>(null);
@@ -1016,6 +1024,33 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
   );
 }
 
+// Catches WebGL context-creation/loss failures (and any throw inside the R3F
+// tree) so a broken GPU/driver shows a friendly localized message instead of a
+// blank/crashed canvas. The model stays orderable — only the on-screen preview
+// is affected. React error boundaries must be class components (no hook API),
+// so the localized fallback UI is injected via the `fallback` prop from the
+// parent functional component that has access to next-intl.
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Keep a console trail for debugging GPU/driver issues without crashing the page.
+    console.error("Preview3D Canvas error:", error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   const t = useTranslations("preview");
   const {
@@ -1044,6 +1079,12 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   const [flySpeed, setFlySpeed] = useState<number>(120);
   const [isFs, setIsFs] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  // Set when the WebGL context is lost after creation (GPU reset / driver crash)
+  // — shows the same friendly fallback as the render-time error boundary.
+  const [canvasFailed, setCanvasFailed] = useState(false);
+  // Bubbled up from ModelLoader (inside the Canvas) so a failed model load shows
+  // a visible localized message instead of an empty scene.
+  const [loadError, setLoadError] = useState<string | null>(null);
   // CSS-розгортання (працює на iPhone, на відміну від Fullscreen API).
   useEffect(() => {
     if (!isFs) return;
@@ -1321,26 +1362,67 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           </div>
         </div>
       )}
-      <Canvas style={{ width: '100%', height: '100%', display: 'block' }}>
-        <Suspense fallback={null}>
-          <CameraController />
-          <FreeFlyControls enabled={cameraMode === "fly"} speed={flySpeed} onSpeedChange={setFlySpeed} />
-          <OrbitControls
-            makeDefault
-            enabled={cameraMode === "orbit"}
-            enableDamping
-            dampingFactor={0.05}
-            minDistance={10}
-            maxDistance={2000}
-            target={[0, 0, 0]}
-            autoRotate={false}
-            enableRotate={rotateMode === "camera"}
-          />
-          {gridVisible && <gridHelper args={[200, 20]} />}
-          {axesVisible && <axesHelper args={[100]} />}
-          <ModelLoader rotateMode={rotateMode} />
-        </Suspense>
-      </Canvas>
+      <CanvasErrorBoundary
+        fallback={
+          <div className="absolute inset-0 z-20 flex items-center justify-center px-6 text-center">
+            <div className="max-w-[320px]">
+              <div aria-hidden className="mx-auto mb-3 text-3xl">🖥️</div>
+              <p className="text-[15px] font-semibold text-white/90">{t("webglUnavailable")}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">{t("webglUnavailableBody")}</p>
+            </div>
+          </div>
+        }
+      >
+        <Canvas
+          style={{ width: '100%', height: '100%', display: 'block' }}
+          // Surface a hard WebGL context-creation failure (no GPU / driver) to the
+          // error boundary instead of leaving an invisible/broken canvas.
+          onCreated={({ gl }) => {
+            const canvas = gl.domElement;
+            const onLost = (e: Event) => {
+              e.preventDefault();
+              setCanvasFailed(true);
+            };
+            canvas.addEventListener("webglcontextlost", onLost, false);
+          }}
+        >
+          <Suspense fallback={null}>
+            <CameraController />
+            <FreeFlyControls enabled={cameraMode === "fly"} speed={flySpeed} onSpeedChange={setFlySpeed} />
+            <OrbitControls
+              makeDefault
+              enabled={cameraMode === "orbit"}
+              enableDamping
+              dampingFactor={0.05}
+              minDistance={10}
+              maxDistance={2000}
+              target={[0, 0, 0]}
+              autoRotate={false}
+              enableRotate={rotateMode === "camera"}
+            />
+            {gridVisible && <gridHelper args={[200, 20]} />}
+            {axesVisible && <axesHelper args={[100]} />}
+            <ModelLoader rotateMode={rotateMode} onError={setLoadError} />
+          </Suspense>
+        </Canvas>
+      </CanvasErrorBoundary>
+      {/* Visible localized message when a model fails to load (404/empty/parse). */}
+      {loadError && !isGenerating && !capture && (
+        <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center px-4">
+          <div className="max-w-[340px] rounded-[16px] border border-red-400/30 bg-red-950/70 px-4 py-2.5 text-center text-[12px] leading-4 text-red-100 backdrop-blur">
+            {t("modelLoadError")}
+          </div>
+        </div>
+      )}
+      {canvasFailed && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center px-6 text-center">
+          <div className="max-w-[320px]">
+            <div aria-hidden className="mx-auto mb-3 text-3xl">🖥️</div>
+            <p className="text-[15px] font-semibold text-white/90">{t("webglUnavailable")}</p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">{t("webglUnavailableBody")}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

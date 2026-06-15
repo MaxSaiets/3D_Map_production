@@ -25,8 +25,10 @@ const MODELS_BASE = [
 const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
 const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
-const KEYCHAINS = Array.from({ length: 8 }, (_, i) => `/showcase/keychain-${i + 1}.png`);
-const MAPS = Array.from({ length: 11 }, (_, i) => `/showcase/map-${i + 1}.png`);
+// Перф: показуємо обмежений набір плиток (кожна ще й дублюється для marquee),
+// решта галереї доступна на /showcase. ~10 плиток × 2 = 20 <img> замість 38.
+const KEYCHAINS = Array.from({ length: 5 }, (_, i) => `/showcase/keychain-${i + 1}.png`);
+const MAPS = Array.from({ length: 5 }, (_, i) => `/showcase/map-${i + 1}.png`);
 
 type Tile = { src: string; kind: "key" | "map"; idx: number };
 const TILES: Tile[] = [
@@ -52,7 +54,8 @@ function Row({ tiles, dir, onOpen, rotateLabel, keyAlt, mapAlt }: {
             title={rotateLabel}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={t.src} alt={t.kind === "key" ? keyAlt : mapAlt} loading="lazy"
+            <img src={t.src} alt={t.kind === "key" ? keyAlt : mapAlt} loading="lazy" decoding="async"
+                 width={230} height={180}
                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.07]" />
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
               <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">

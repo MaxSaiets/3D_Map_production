@@ -73,11 +73,15 @@ def verify_token(token: str) -> Optional[Dict[str, object]]:
         if not uid:
             return None
         email = claims.get("email")
+        email_verified = bool(claims.get("email_verified"))
+        # БЕЗПЕКА: адмін-права лише для ПІДТВЕРДЖЕНОЇ пошти. Інакше зловмисник міг
+        # зареєструватися з адмінським email через провайдера без верифікації
+        # (або підмінити claim) і отримати доступ до /api/admin/*.
         return {
             "uid": uid,
             "email": email,
-            "email_verified": bool(claims.get("email_verified")),
-            "is_admin": is_admin(email),
+            "email_verified": email_verified,
+            "is_admin": email_verified and is_admin(email),
             "name": claims.get("name"),
             "phone": claims.get("phone_number"),
         }

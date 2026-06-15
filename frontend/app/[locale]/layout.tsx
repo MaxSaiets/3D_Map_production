@@ -8,6 +8,7 @@ import { ContactWidget } from "@/components/ContactWidget";
 import { AuthProvider } from "@/components/AuthProvider";
 import SiteAnalytics from "@/components/SiteAnalytics";
 import { ToastHost } from "@/components/ToastHost";
+import { GlobalFooter } from "@/components/SiteFooter";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
 
@@ -155,6 +156,10 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}
+            {/* Global footer (legal links + ФОП requisites + contacts + way home)
+                on every content page. Suppressed on "/" (renders its own) and on
+                the full-screen builders /create, /keychains, /capture. */}
+            <GlobalFooter />
             <ToastHost />
             <ContactWidget />
             <SiteAnalytics />
