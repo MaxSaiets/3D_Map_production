@@ -1100,7 +1100,7 @@ export function KeychainControlPanel({
           />
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Metric label={t("metric.base")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} ${t("unit.mm")}`} />
-            <Metric label={t("metric.loop")} value={design.baseShape === "token" ? `${t("metric.hole")} Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? t("loop.round") : design.loopStyle === "slot" ? "slot" : design.loopStyle === "side-tab" ? t("loop.sideTab") : t("loop.teardrop")} />
+            <Metric label={t("metric.loop")} value={design.baseShape === "token" ? `${t("metric.hole")} Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? t("loop.round") : design.loopStyle === "slot" ? t("loop.slot") : design.loopStyle === "side-tab" ? t("loop.sideTab") : t("loop.teardrop")} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <ChoiceButton label="35 x 55" active={Math.round(design.bodyWidthMm) === 35 && Math.round(design.bodyHeightMm) === 55} onClick={resetToStandard} />

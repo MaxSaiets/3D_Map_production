@@ -433,7 +433,9 @@
     "errStale": "Utracono kontakt z zadaniem (restart serwera?). Wygeneruj ponownie.",
     "quotaLeft": "{n} z {limit} darmowych pobrań pozostało",
     "quotaExhausted": "Darmowe pobrania wyczerpane — zamów wydruk",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "panelOffForMagnet": "Panel wyłączony — magnes to pojedyncza płytka z wnęką",
+    "magnetOffForPanel": "Magnes i GPX wyłączone — panel generuje pełne kafelki"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

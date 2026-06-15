@@ -433,7 +433,9 @@
     "errStale": "Verbindung zur Aufgabe verloren (Server-Neustart?). Bitte erneut generieren.",
     "quotaLeft": "{n} von {limit} kostenlosen Downloads übrig",
     "quotaExhausted": "Kostenlose Downloads aufgebraucht — Druck bestellen",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "panelOffForMagnet": "Panel deaktiviert — ein Magnet ist eine einzelne Platte mit Aussparung",
+    "magnetOffForPanel": "Magnet und GPX deaktiviert — ein Panel erzeugt volle Kacheln"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Loader2, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -34,6 +34,17 @@ export function ContactWidget() {
     return () => window.removeEventListener("monadruk:open-contact", handler as EventListener);
   }, []);
 
+  // a11y: Escape закриває попап; при відкритті (зокрема авто-відкритті на ліміті
+  // завантажень) фокус переходить у перше поле.
+  const popupRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    popupRef.current?.querySelector<HTMLElement>("input, textarea, button")?.focus();
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   const submit = async () => {
     if (!phone.trim()) { setError(t("errPhone")); return; }
     setError(null);
@@ -64,7 +75,7 @@ export function ContactWidget() {
     <>
       {/* Popup */}
       {open && (
-        <div className="fixed bottom-[150px] right-3 z-[95] w-[calc(100vw-1.5rem)] max-w-[340px] rounded-[22px] border border-[var(--surface-border,#e3dccb)] bg-[var(--paper-2,#fff)] p-5 shadow-[0_24px_64px_rgba(15,23,42,0.28)] fade-up sm:bottom-24 sm:right-4">
+        <div ref={popupRef} role="dialog" aria-labelledby="contact-dialog-title" className="fixed bottom-[150px] right-3 z-[95] w-[calc(100vw-1.5rem)] max-w-[340px] rounded-[22px] border border-[var(--surface-border,#e3dccb)] bg-[var(--paper-2,#fff)] p-5 shadow-[0_24px_64px_rgba(15,23,42,0.28)] fade-up sm:bottom-24 sm:right-4">
           {done ? (
             <div className="py-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -79,15 +90,15 @@ export function ContactWidget() {
             <>
               <div className="mb-3 flex items-start justify-between">
                 <div>
-                  <h4 className="font-serif text-lg text-[var(--ink,#1B2A22)]">{t("title")}</h4>
+                  <h4 id="contact-dialog-title" className="font-serif text-lg text-[var(--ink,#1B2A22)]">{t("title")}</h4>
                   <p className="text-[12px] text-[var(--ink-3,#7c887f)]">{t("subtitle")}</p>
                 </div>
-                <button onClick={() => setOpen(false)} className="rounded-lg p-1 text-[var(--ink-3,#7c887f)] hover:bg-black/5"><X size={18} /></button>
+                <button onClick={() => setOpen(false)} aria-label={t("close")} className="rounded-lg p-1 text-[var(--ink-3,#7c887f)] hover:bg-black/5"><X size={18} /></button>
               </div>
               <div className="space-y-2.5">
-                <input className={fieldCls} placeholder={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
-                <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
-                <textarea className={`${fieldCls} min-h-[70px] resize-none`} placeholder={t("phMessage")} value={message} onChange={(e) => setMessage(e.target.value)} />
+                <input className={fieldCls} aria-label={t("phName")} placeholder={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
+                <input className={fieldCls} aria-label={t("phPhone")} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+                <textarea className={`${fieldCls} min-h-[70px] resize-none`} aria-label={t("phMessage")} placeholder={t("phMessage")} value={message} onChange={(e) => setMessage(e.target.value)} />
                 {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
                 <button onClick={submit} disabled={sending}
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60">

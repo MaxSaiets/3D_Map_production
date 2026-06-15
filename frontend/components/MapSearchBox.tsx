@@ -84,6 +84,11 @@ export function MapSearchBox() {
           onChange={(e) => runSearch(e.target.value)}
           onFocus={() => { if (results.length) setOpen(true); }}
           placeholder={t("placeholder")}
+          role="combobox"
+          aria-expanded={open && results.length > 0}
+          aria-controls="map-search-results"
+          aria-autocomplete="list"
+          aria-label={t("placeholder")}
           className="min-w-0 flex-1 bg-transparent px-1 py-1 text-[13px] font-medium text-white placeholder:text-white/55 outline-none"
         />
         {busy && <Loader2 size={15} className="shrink-0 animate-spin text-white/70" />}
@@ -103,9 +108,9 @@ export function MapSearchBox() {
         </button>
       </div>
       {open && results.length > 0 && (
-        <ul className="mt-1 overflow-hidden rounded-2xl border border-white/15 bg-[#0a1020]/95 shadow-[0_18px_40px_rgba(15,23,42,0.4)] backdrop-blur">
-          {results.map((r, i) => (
-            <li key={i}>
+        <ul id="map-search-results" role="listbox" className="mt-1 overflow-hidden rounded-2xl border border-white/15 bg-[#0a1020]/95 shadow-[0_18px_40px_rgba(15,23,42,0.4)] backdrop-blur">
+          {results.map((r) => (
+            <li key={`${r.lat},${r.lon},${r.label}`} role="option" aria-selected={false}>
               <button
                 type="button"
                 onClick={() => goto(r.lat, r.lon, r.label)}

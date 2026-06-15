@@ -554,7 +554,17 @@ export function SimpleControlPanel({
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
-          onClick={() => setMagnetMode(!magnetMode)}
+          onClick={() => {
+            const next = !magnetMode;
+            setMagnetMode(next);
+            // Магніт і панно — взаємовиключні (панно = багато плиток, магніт = одна
+            // плитка з кишенею). Раніше можна було лишити обидва ON → генерувалось
+            // панно, але ціна показувала магніт (180₴) — мовчазна підміна продукту.
+            if (next && panelMode > 0) {
+              setPanelMode(0);
+              window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "panelOffForMagnet" } }));
+            }
+          }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             magnetMode
               ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
@@ -594,6 +604,8 @@ export function SimpleControlPanel({
                   const parsed = parseGpx(await file.text());
                   if (!parsed) { setGpxName(null); setGpxNote(null); setGpxFocus(null); setError(t("gpxErr")); return; }
                   setError(null);
+                  // GPX несумісний з панно (трек на одній мапі, не на наборі плиток).
+                  if (panelMode > 0) setPanelMode(0);
                   setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
                   // Авто-фокус: зона і карта їдуть до треку (раніше трек з іншого
                   // міста мовчки обрізався по чужій зоні → у моделі його не було).
@@ -650,7 +662,15 @@ export function SimpleControlPanel({
                 <button
                   key={`panel-${mode}`}
                   type="button"
-                  onClick={() => setPanelMode(mode)}
+                  onClick={() => {
+                    setPanelMode(mode);
+                    // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
+                    if (mode > 0 && (magnetMode || gpxTrack)) {
+                      setMagnetMode(false);
+                      setGpxName(null); setGpxNote(null); setGpxFocus(null);
+                      window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "magnetOffForPanel" } }));
+                    }
+                  }}
                   className={`rounded-full border px-3 py-1 text-[12px] font-semibold transition ${
                     panelMode === mode
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"

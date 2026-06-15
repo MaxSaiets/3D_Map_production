@@ -433,7 +433,9 @@
     "errStale": "Lost track of the task (the server may have restarted). Please generate again.",
     "quotaLeft": "{n} of {limit} free downloads left",
     "quotaExhausted": "Free downloads used up — order a print",
-    "retry": "Try again"
+    "retry": "Try again",
+    "panelOffForMagnet": "Panel turned off — a magnet is a single tile with a pocket",
+    "magnetOffForPanel": "Magnet and GPX turned off — a panel generates full tiles"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

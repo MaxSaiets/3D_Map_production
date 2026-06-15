@@ -433,7 +433,9 @@
     "errStale": "Lien avec la tâche perdu (redémarrage du serveur ?). Veuillez régénérer.",
     "quotaLeft": "{n} sur {limit} téléchargements gratuits restants",
     "quotaExhausted": "Téléchargements gratuits épuisés — commande une impression",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "panelOffForMagnet": "Panneau désactivé — un aimant est une seule plaque avec logement",
+    "magnetOffForPanel": "Aimant et GPX désactivés — un panneau génère des tuiles complètes"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

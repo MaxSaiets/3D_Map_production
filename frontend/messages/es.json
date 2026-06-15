@@ -433,7 +433,9 @@
     "errStale": "Se perdió el contacto con la tarea (¿reinicio del servidor?). Genera de nuevo.",
     "quotaLeft": "{n} de {limit} descargas gratis restantes",
     "quotaExhausted": "Descargas gratis agotadas — pide una impresión",
-    "retry": "Intentar de nuevo"
+    "retry": "Intentar de nuevo",
+    "panelOffForMagnet": "Panel desactivado — un imán es una sola placa con hueco",
+    "magnetOffForPanel": "Imán y GPX desactivados — un panel genera mosaicos completos"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
