@@ -102,7 +102,7 @@ function DrawControl() {
         const mx = Math.round(maxSpanM());
         try {
           window.dispatchEvent(new CustomEvent("monadruk:toast", {
-            detail: { type: "warn", message: `Зона обмежена до ~${mx} м (макс. для моделі ${cm} см, масштаб 1:10000). Для більшої зони збільште розмір моделі.` },
+            detail: { type: "warn", ns: "map", key: "zoneClamp", params: { mx, cm } },
           }));
         } catch { /* no-op */ }
         console.warn(`[zone] clamped to ${mx}m for ${cm}cm model`);

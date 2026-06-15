@@ -608,7 +608,8 @@
     "areaTooLarge": "Area too large ({w}×{h} m) — small streets will merge. Shrink the frame.",
     "detailHigh": "high detail",
     "detailGood": "good detail",
-    "detailOverview": "overview scale"
+    "detailOverview": "overview scale",
+    "zoneClamp": "Zone limited to ~{mx} m (max for a {cm} cm model, scale 1:10000). Increase the model size for a larger zone."
   },
   "kc": {
     "tabs": {
@@ -1193,6 +1194,59 @@
       "buildings": "Buildings",
       "water": "Water",
       "parks": "Parks"
+    }
+  },
+  "gallery": {
+    "district": {
+      "kyiv-podil": "Podil",
+      "kyiv-pechersk": "Pechersk",
+      "kyiv-khreshchatyk": "Khreshchatyk",
+      "lviv-rynok": "Rynok Square",
+      "lviv-citadel": "Citadel",
+      "odesa-deribasivska": "Derybasivska",
+      "odesa-prymorsky": "Prymorskyi",
+      "kharkiv-svobody": "Freedom Square",
+      "dnipro-naberezhna": "Embankment",
+      "chernivtsi-rez": "Residence",
+      "ivano-center": "Stometrivka",
+      "uzhhorod-old": "Old Town"
+    },
+    "blurb": {
+      "kyiv-podil": "The old heart of Kyiv — winding streets and Andriivskyi Descent.",
+      "kyiv-pechersk": "Lavra hills, Mariinskyi Park and grand boulevards.",
+      "kyiv-khreshchatyk": "The city's central axis and Independence Square.",
+      "lviv-rynok": "Town hall, cobblestones and the dense grid of the old town's blocks.",
+      "lviv-citadel": "A park-topped hill wrapped in serpentine historic streets.",
+      "odesa-deribasivska": "The heart of Odesa: Derybasivska, the City Garden and boulevards.",
+      "odesa-prymorsky": "The Duke, the slope to the Potemkin Stairs and the sea front.",
+      "kharkiv-svobody": "Derzhprom and the radiant grid of the centre's avenues.",
+      "dnipro-naberezhna": "The wide arc of the Dnipro, bridges and a wave of high-rises.",
+      "chernivtsi-rez": "The Metropolitans' Residence and the stone facades around it.",
+      "ivano-center": "A pedestrian centre and the town hall on Rynok Square.",
+      "uzhhorod-old": "The Uzh embankment, the castle and Europe's longest linden alley."
+    },
+    "style": {
+      "full": {
+        "label": "Full detail",
+        "blurb": "Buildings, roads, water, parks — everything."
+      },
+      "relief": {
+        "label": "With relief",
+        "blurb": "Adds hills and the terrain's elevation changes."
+      },
+      "minimal": {
+        "label": "Minimal",
+        "blurb": "Only buildings and roads — a clean look."
+      },
+      "nature": {
+        "label": "Nature",
+        "blurb": "Emphasis on water and parks."
+      }
+    },
+    "badge": {
+      "bestseller": "Bestseller",
+      "new": "New",
+      "popular": "Popular"
     }
   }
 }

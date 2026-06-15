@@ -608,7 +608,8 @@
     "areaTooLarge": "Obszar zbyt duży ({w}×{h} m) — małe ulice się zleją. Zmniejsz ramkę.",
     "detailHigh": "wysoka szczegółowość",
     "detailGood": "dobra szczegółowość",
-    "detailOverview": "skala poglądowa"
+    "detailOverview": "skala poglądowa",
+    "zoneClamp": "Strefa ograniczona do ~{mx} m (maks. dla modelu {cm} cm, skala 1:10000). Zwiększ rozmiar modelu, aby uzyskać większą strefę."
   },
   "kc": {
     "tabs": {
@@ -1193,6 +1194,59 @@
       "buildings": "Budynki",
       "water": "Woda",
       "parks": "Parki"
+    }
+  },
+  "gallery": {
+    "district": {
+      "kyiv-podil": "Podil",
+      "kyiv-pechersk": "Pechersk",
+      "kyiv-khreshchatyk": "Khreszczatyk",
+      "lviv-rynok": "Plac Rynek",
+      "lviv-citadel": "Cytadela",
+      "odesa-deribasivska": "Derybasiwska",
+      "odesa-prymorsky": "Prymorskyj",
+      "kharkiv-svobody": "Plac Wolności",
+      "dnipro-naberezhna": "Bulwar nadrzeczny",
+      "chernivtsi-rez": "Rezydencja",
+      "ivano-center": "Stometriwka",
+      "uzhhorod-old": "Stare miasto"
+    },
+    "blurb": {
+      "kyiv-podil": "Stare serce Kijowa — kręte uliczki i Zaułek Andrzejowski.",
+      "kyiv-pechersk": "Wzgórza Ławry, park Maryjski i reprezentacyjne aleje.",
+      "kyiv-khreshchatyk": "Centralna oś miasta i plac Niepodległości.",
+      "lviv-rynok": "Ratusz, bruk i gęsta siatka kwartałów starego miasta.",
+      "lviv-citadel": "Wzgórze z parkiem oplecione serpentyną historycznych ulic.",
+      "odesa-deribasivska": "Serce Odessy: Derybasiwska, Ogród Miejski i bulwary.",
+      "odesa-prymorsky": "Diuk, zejście ku Schodom Potiomkinowskim i fasada morska.",
+      "kharkiv-svobody": "Derżprom i promienista siatka alej centrum.",
+      "dnipro-naberezhna": "Szeroki łuk Dniepru, mosty i fala wieżowców.",
+      "chernivtsi-rez": "Rezydencja Metropolitów i kamienne fasady wokół.",
+      "ivano-center": "Deptak w centrum i ratusz na placu Rynek.",
+      "uzhhorod-old": "Bulwar nad Użem, zamek i najdłuższa aleja lipowa w Europie."
+    },
+    "style": {
+      "full": {
+        "label": "Pełny detal",
+        "blurb": "Budynki, drogi, woda, parki — wszystko."
+      },
+      "relief": {
+        "label": "Z rzeźbą terenu",
+        "blurb": "Dodaje wzgórza i różnice wysokości terenu."
+      },
+      "minimal": {
+        "label": "Minimalizm",
+        "blurb": "Tylko budynki i drogi — czysty wygląd."
+      },
+      "nature": {
+        "label": "Natura",
+        "blurb": "Akcent na wodzie i parkach."
+      }
+    },
+    "badge": {
+      "bestseller": "Bestseller",
+      "new": "Nowość",
+      "popular": "Popularne"
     }
   }
 }

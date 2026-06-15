@@ -7,8 +7,19 @@ import { type LegalDoc, type LegalBlock, LEGAL_LABELS } from "@/lib/legal/conten
 
 const linkCls = "text-forest underline-offset-2 hover:underline";
 
+// BUSINESS.updated зберігається як ISO (2026-06-15) → форматуємо під локаль.
+const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL" };
+function formatUpdated(locale: string): string {
+  try {
+    return new Intl.DateTimeFormat(LOCALE_TAG[locale] ?? "uk-UA", { year: "numeric", month: "long", day: "numeric" })
+      .format(new Date(`${BUSINESS.updated}T00:00:00`));
+  } catch {
+    return BUSINESS.updated;
+  }
+}
+
 // Підстановка токенів {data} та посилань [route:текст] у рядку → React-вузли.
-function renderText(text: string): React.ReactNode[] {
+function renderText(text: string, locale: string): React.ReactNode[] {
   const parts = text.split(/(\{[a-zA-Z]+\}|\[[a-z]+:[^\]]+\])/g).filter((p) => p !== "");
   return parts.map((part, i) => {
     // Дата-токени
@@ -27,7 +38,7 @@ function renderText(text: string): React.ReactNode[] {
         case "storeName": return <React.Fragment key={i}>{BUSINESS.storeName}</React.Fragment>;
         case "storeAddress": return <React.Fragment key={i}>{BUSINESS.storeAddress}</React.Fragment>;
         case "ownerRegAddress": return <React.Fragment key={i}>{BUSINESS.ownerRegAddress}</React.Fragment>;
-        case "updated": return <React.Fragment key={i}>{BUSINESS.updated}</React.Fragment>;
+        case "updated": return <React.Fragment key={i}>{formatUpdated(locale)}</React.Fragment>;
         default: return <React.Fragment key={i}>{part}</React.Fragment>;
       }
     }
@@ -43,12 +54,12 @@ function renderText(text: string): React.ReactNode[] {
   });
 }
 
-function Block({ block }: { block: LegalBlock }) {
-  if ("p" in block) return <p>{renderText(block.p)}</p>;
+function Block({ block, locale }: { block: LegalBlock; locale: string }) {
+  if ("p" in block) return <p>{renderText(block.p, locale)}</p>;
   if ("ul" in block) {
     return (
       <ul className="list-disc space-y-1.5 pl-5">
-        {block.ul.map((item, i) => <li key={i}>{renderText(item)}</li>)}
+        {block.ul.map((item, i) => <li key={i}>{renderText(item, locale)}</li>)}
       </ul>
     );
   }
@@ -56,7 +67,7 @@ function Block({ block }: { block: LegalBlock }) {
   return (
     <ul className="space-y-1.5">
       {block.kv.map((row, i) => (
-        <li key={i}>{row.k}: {renderText(row.v)}</li>
+        <li key={i}>{row.k}: {renderText(row.v, locale)}</li>
       ))}
     </ul>
   );
@@ -79,10 +90,10 @@ export function LegalArticle({ doc, locale, path }: { doc: LegalDoc; locale: str
     <>
       {breadcrumb && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />}
       <h1 className="mt-4 font-serif text-[clamp(28px,4vw,42px)] text-ink">{doc.title}</h1>
-      <p className="mt-2 text-[13px] text-ink-3">{updatedLabel}: {BUSINESS.updated}</p>
+      <p className="mt-2 text-[13px] text-ink-3">{updatedLabel}: {formatUpdated(locale)}</p>
       {doc.intro && (
         <div className="mt-8 space-y-3 text-[15px] leading-relaxed text-ink-2">
-          {doc.intro.map((p, i) => <p key={i}>{renderText(p)}</p>)}
+          {doc.intro.map((p, i) => <p key={i}>{renderText(p, locale)}</p>)}
         </div>
       )}
       <div className="mt-6 space-y-6 text-[15px] leading-relaxed text-ink-2">
@@ -90,7 +101,7 @@ export function LegalArticle({ doc, locale, path }: { doc: LegalDoc; locale: str
           <section key={i}>
             <h2 className="mb-2 font-serif text-xl text-ink">{s.h}</h2>
             <div className="space-y-2">
-              {s.blocks.map((b, j) => <Block key={j} block={b} />)}
+              {s.blocks.map((b, j) => <Block key={j} block={b} locale={locale} />)}
             </div>
           </section>
         ))}

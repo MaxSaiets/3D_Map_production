@@ -608,7 +608,8 @@
     "areaTooLarge": "Bereich zu groß ({w}×{h} m) — kleine Straßen verschmelzen. Rahmen verkleinern.",
     "detailHigh": "hohe Detailtiefe",
     "detailGood": "gute Detailtiefe",
-    "detailOverview": "Übersichtsmaßstab"
+    "detailOverview": "Übersichtsmaßstab",
+    "zoneClamp": "Bereich auf ~{mx} m begrenzt (max. für ein {cm}-cm-Modell, Maßstab 1:10000). Für einen größeren Bereich das Modell vergrößern."
   },
   "kc": {
     "tabs": {
@@ -1193,6 +1194,59 @@
       "buildings": "Gebäude",
       "water": "Wasser",
       "parks": "Parks"
+    }
+  },
+  "gallery": {
+    "district": {
+      "kyiv-podil": "Podil",
+      "kyiv-pechersk": "Pechersk",
+      "kyiv-khreshchatyk": "Khreshchatyk",
+      "lviv-rynok": "Rynok-Platz",
+      "lviv-citadel": "Zitadelle",
+      "odesa-deribasivska": "Derybasivska",
+      "odesa-prymorsky": "Prymorskyi",
+      "kharkiv-svobody": "Freiheitsplatz",
+      "dnipro-naberezhna": "Uferpromenade",
+      "chernivtsi-rez": "Residenz",
+      "ivano-center": "Stometrivka",
+      "uzhhorod-old": "Altstadt"
+    },
+    "blurb": {
+      "kyiv-podil": "Das alte Herz von Kyjiw — verwinkelte Gassen und der Andriïwskyj-Abstieg.",
+      "kyiv-pechersk": "Lawra-Hügel, Marijinskyj-Park und prächtige Prachtstraßen.",
+      "kyiv-khreshchatyk": "Die zentrale Achse der Stadt und der Unabhängigkeitsplatz.",
+      "lviv-rynok": "Rathaus, Kopfsteinpflaster und das dichte Häuserraster der Altstadt.",
+      "lviv-citadel": "Ein Hügel mit Park, umschlungen von einer Serpentine historischer Gassen.",
+      "odesa-deribasivska": "Das Herz von Odessa: Derybasivska, der Stadtgarten und Boulevards.",
+      "odesa-prymorsky": "Der Duc, der Hang zur Potemkinschen Treppe und die Meeresfront.",
+      "kharkiv-svobody": "Derschprom und das strahlenförmige Raster der Avenuen im Zentrum.",
+      "dnipro-naberezhna": "Der weite Bogen des Dnipro, Brücken und eine Welle von Hochhäusern.",
+      "chernivtsi-rez": "Die Metropolitenresidenz und die steinernen Fassaden ringsum.",
+      "ivano-center": "Eine Fußgängerzone und das Rathaus am Rynok-Platz.",
+      "uzhhorod-old": "Die Usch-Promenade, die Burg und Europas längste Lindenallee."
+    },
+    "style": {
+      "full": {
+        "label": "Volle Detailtiefe",
+        "blurb": "Gebäude, Straßen, Wasser, Parks — alles."
+      },
+      "relief": {
+        "label": "Mit Relief",
+        "blurb": "Fügt Hügel und Höhenunterschiede des Geländes hinzu."
+      },
+      "minimal": {
+        "label": "Minimalismus",
+        "blurb": "Nur Gebäude und Straßen — ein klarer Look."
+      },
+      "nature": {
+        "label": "Natur",
+        "blurb": "Betonung auf Wasser und Parks."
+      }
+    },
+    "badge": {
+      "bestseller": "Bestseller",
+      "new": "Neu",
+      "popular": "Beliebt"
     }
   }
 }

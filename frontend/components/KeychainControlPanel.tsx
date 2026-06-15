@@ -391,6 +391,7 @@ export function KeychainControlPanel({
   const { getIdToken, openLogin } = useAuth();
   const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
   const pollingInFlightRef = useRef(false);
+  const pollFailRef = useRef(0);
 
   // Free-download counter (login + 5 free, then order). Refreshed after each download.
   const refreshQuota = useCallback(async () => {
@@ -728,6 +729,7 @@ export function KeychainControlPanel({
 
   useEffect(() => {
     if (!taskGroupId || !isGenerating) return;
+    pollFailRef.current = 0;
 
     const interval = window.setInterval(async () => {
       if (pollingInFlightRef.current) return;
@@ -735,17 +737,26 @@ export function KeychainControlPanel({
       try {
         const resp = await api.getStatus(taskGroupId);
         const task = resp as any;
+        pollFailRef.current = 0;
         setTaskStatuses({ [task.task_id]: task });
         updateProgress(task.progress, task.message);
         if (task.status === "completed") {
           setGenerating(false);
           setDownloadUrl(task.download_url);
-        } else if (task.status === "failed") {
+        } else if (task.status === "failed" || task.status === "cancelled") {
+          // cancelled теж термінальний — інакше «Генерація N%» крутилась би вічно
           setGenerating(false);
-          setError(task.message || t("error.generateFailed"));
+          if (task.status === "failed") setError(task.message || t("error.generateFailed"));
         }
       } catch (pollError) {
+        // Задача зникла (404 після рестарту бека) / мережа: після ~4 невдач підряд
+        // розблоковуємо UI, щоб юзер міг повторити (як у SimpleControlPanel).
+        pollFailRef.current += 1;
         console.error("[Keychain] status error", pollError);
+        if (pollFailRef.current >= 4) {
+          setGenerating(false);
+          setError(t("error.generateFailed"));
+        }
       } finally {
         pollingInFlightRef.current = false;
       }

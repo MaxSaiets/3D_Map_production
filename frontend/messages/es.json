@@ -608,7 +608,8 @@
     "areaTooLarge": "Área demasiado grande ({w}×{h} m) — las calles pequeñas se fusionarán. Reduce el marco.",
     "detailHigh": "alto detalle",
     "detailGood": "buen detalle",
-    "detailOverview": "escala general"
+    "detailOverview": "escala general",
+    "zoneClamp": "Zona limitada a ~{mx} m (máx. para un modelo de {cm} cm, escala 1:10000). Aumenta el tamaño del modelo para una zona mayor."
   },
   "kc": {
     "tabs": {
@@ -1193,6 +1194,59 @@
       "buildings": "Edificios",
       "water": "Agua",
       "parks": "Parques"
+    }
+  },
+  "gallery": {
+    "district": {
+      "kyiv-podil": "Podil",
+      "kyiv-pechersk": "Pechersk",
+      "kyiv-khreshchatyk": "Khreshchatyk",
+      "lviv-rynok": "Plaza Rynok",
+      "lviv-citadel": "Ciudadela",
+      "odesa-deribasivska": "Derybasivska",
+      "odesa-prymorsky": "Prymorskyi",
+      "kharkiv-svobody": "Plaza de la Libertad",
+      "dnipro-naberezhna": "Paseo del río",
+      "chernivtsi-rez": "Residencia",
+      "ivano-center": "Stometrivka",
+      "uzhhorod-old": "Casco antiguo"
+    },
+    "blurb": {
+      "kyiv-podil": "El viejo corazón de Kiev: calles sinuosas y el Descenso de San Andrés.",
+      "kyiv-pechersk": "Las colinas de la Lavra, el parque Mariinski y avenidas señoriales.",
+      "kyiv-khreshchatyk": "El eje central de la ciudad y la Plaza de la Independencia.",
+      "lviv-rynok": "Ayuntamiento, adoquines y la densa retícula de manzanas del casco antiguo.",
+      "lviv-citadel": "Una colina con parque envuelta en una serpiente de calles históricas.",
+      "odesa-deribasivska": "El corazón de Odesa: Derybasivska, el Jardín Municipal y bulevares.",
+      "odesa-prymorsky": "El Duque, la cuesta hacia la Escalera Potemkin y la fachada marítima.",
+      "kharkiv-svobody": "El Derzhprom y la retícula radiante de avenidas del centro.",
+      "dnipro-naberezhna": "El amplio arco del Dniéper, puentes y una ola de rascacielos.",
+      "chernivtsi-rez": "La Residencia de los Metropolitanos y las fachadas de piedra que la rodean.",
+      "ivano-center": "Un centro peatonal y el ayuntamiento en la Plaza Rynok.",
+      "uzhhorod-old": "El paseo del Uzh, el castillo y la avenida de tilos más larga de Europa."
+    },
+    "style": {
+      "full": {
+        "label": "Detalle completo",
+        "blurb": "Edificios, calles, agua, parques: todo."
+      },
+      "relief": {
+        "label": "Con relieve",
+        "blurb": "Añade colinas y los desniveles del terreno."
+      },
+      "minimal": {
+        "label": "Minimalismo",
+        "blurb": "Solo edificios y calles: un aspecto limpio."
+      },
+      "nature": {
+        "label": "Naturaleza",
+        "blurb": "Énfasis en el agua y los parques."
+      }
+    },
+    "badge": {
+      "bestseller": "Más vendido",
+      "new": "Novedad",
+      "popular": "Popular"
     }
   }
 }

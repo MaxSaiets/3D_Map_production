@@ -608,7 +608,8 @@
     "areaTooLarge": "Zone trop grande ({w}×{h} m) — les petites rues vont fusionner. Réduisez le cadre.",
     "detailHigh": "haut niveau de détail",
     "detailGood": "bon niveau de détail",
-    "detailOverview": "échelle d'ensemble"
+    "detailOverview": "échelle d'ensemble",
+    "zoneClamp": "Zone limitée à ~{mx} m (max. pour un modèle de {cm} cm, échelle 1:10000). Augmentez la taille du modèle pour une zone plus grande."
   },
   "kc": {
     "tabs": {
@@ -1193,6 +1194,59 @@
       "buildings": "Bâtiments",
       "water": "Eau",
       "parks": "Parcs"
+    }
+  },
+  "gallery": {
+    "district": {
+      "kyiv-podil": "Podil",
+      "kyiv-pechersk": "Pechersk",
+      "kyiv-khreshchatyk": "Khreshchatyk",
+      "lviv-rynok": "Place Rynok",
+      "lviv-citadel": "Citadelle",
+      "odesa-deribasivska": "Derybasivska",
+      "odesa-prymorsky": "Prymorskyi",
+      "kharkiv-svobody": "Place de la Liberté",
+      "dnipro-naberezhna": "Quais",
+      "chernivtsi-rez": "Résidence",
+      "ivano-center": "Stometrivka",
+      "uzhhorod-old": "Vieille ville"
+    },
+    "blurb": {
+      "kyiv-podil": "Le vieux cœur de Kyiv — ruelles sinueuses et la Descente Saint-André.",
+      "kyiv-pechersk": "Les collines de la Laure, le parc Mariïnskyï et de grandes avenues.",
+      "kyiv-khreshchatyk": "L'axe central de la ville et la place de l'Indépendance.",
+      "lviv-rynok": "Hôtel de ville, pavés et la trame dense des îlots de la vieille ville.",
+      "lviv-citadel": "Une colline boisée enlacée par un serpentin de rues historiques.",
+      "odesa-deribasivska": "Le cœur d'Odessa : Derybasivska, le Jardin municipal et les boulevards.",
+      "odesa-prymorsky": "Le Duc, la pente vers l'escalier Potemkine et la façade maritime.",
+      "kharkiv-svobody": "Le Derjprom et la trame rayonnante des avenues du centre.",
+      "dnipro-naberezhna": "Le large arc du Dnipro, ses ponts et une vague de tours.",
+      "chernivtsi-rez": "La Résidence des métropolites et les façades de pierre alentour.",
+      "ivano-center": "Un centre piéton et l'hôtel de ville sur la place Rynok.",
+      "uzhhorod-old": "Les quais de l'Ouj, le château et la plus longue allée de tilleuls d'Europe."
+    },
+    "style": {
+      "full": {
+        "label": "Détail complet",
+        "blurb": "Bâtiments, routes, eau, parcs — tout."
+      },
+      "relief": {
+        "label": "Avec relief",
+        "blurb": "Ajoute les collines et les dénivelés du terrain."
+      },
+      "minimal": {
+        "label": "Minimalisme",
+        "blurb": "Seulement bâtiments et routes — un rendu épuré."
+      },
+      "nature": {
+        "label": "Nature",
+        "blurb": "Accent sur l'eau et les parcs."
+      }
+    },
+    "badge": {
+      "bestseller": "Best-seller",
+      "new": "Nouveau",
+      "popular": "Populaire"
     }
   }
 }

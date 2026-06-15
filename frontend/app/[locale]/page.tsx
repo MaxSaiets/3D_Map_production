@@ -454,6 +454,11 @@ function HowItWorks() {
 function TemplatesGallery() {
   const t = useTranslations("home.templates");
   const tAlt = useTranslations("home.alt");
+  const tg = useTranslations("gallery");
+  const tCity = useTranslations("cities");
+  // Map a Ukrainian DATA tag to its gallery.badge.* key (data fields stay UA).
+  const badgeKey = (tag?: string) =>
+    tag === "Бестселер" ? "bestseller" : tag === "Новинка" ? "new" : tag === "Популярне" ? "popular" : null;
   return (
     <section id="templates" className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -479,20 +484,20 @@ function TemplatesGallery() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/showcase/map-${(i % 11) + 1}.png`}
-                alt={tAlt("districtMap", { district: t.district, city: t.city })}
+                alt={tAlt("districtMap", { district: tg(`district.${t.id}`), city: tCity(t.cityKey) })}
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
               />
-              {t.tag && (
+              {badgeKey(t.tag) && (
                 <span className="absolute left-3 top-3 rounded-full bg-paper-2/90 px-3 py-1 text-[11px] font-semibold text-forest">
-                  {t.tag}
+                  {tg(`badge.${badgeKey(t.tag)}`)}
                 </span>
               )}
             </div>
             <div className="flex items-center justify-between px-4 py-4">
               <div>
-                <div className="font-serif text-[19px] leading-tight">{t.district}</div>
-                <div className="mt-0.5 text-[12px] text-ink-3">{t.city}</div>
+                <div className="font-serif text-[19px] leading-tight">{tg(`district.${t.id}`)}</div>
+                <div className="mt-0.5 text-[12px] text-ink-3">{tCity(t.cityKey)}</div>
               </div>
               <ArrowUpRight size={18} className="text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </div>
@@ -507,8 +512,8 @@ function TemplatesGallery() {
           {MAP_STYLE_PRESETS.map((p) => (
             <div key={p.id} className="rounded-[14px] border border-line bg-paper p-5">
               <Layers3 size={20} className="text-forest" />
-              <div className="mt-3 font-semibold">{p.label}</div>
-              <div className="mt-1 text-[13px] text-ink-3">{p.blurb}</div>
+              <div className="mt-3 font-semibold">{tg(`style.${p.id}.label`)}</div>
+              <div className="mt-1 text-[13px] text-ink-3">{tg(`style.${p.id}.blurb`)}</div>
             </div>
           ))}
         </div>

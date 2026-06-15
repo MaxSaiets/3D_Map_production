@@ -885,29 +885,6 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     });
   }, [model, previewIncludeBase, previewIncludeRoads, previewIncludeBuildings, previewIncludeWater, previewIncludeParks]);
 
-  // Component visibility toggle: показуємо/приховуємо компоненти в реальному часі
-  useEffect(() => {
-    if (!model) return;
-    const visibilityMap: Record<string, boolean> = {
-      base: previewIncludeBase,
-      terrain: previewIncludeBase,
-      roads: previewIncludeRoads,
-      buildings: previewIncludeBuildings,
-      water: previewIncludeWater,
-      parks: previewIncludeParks,
-      green: previewIncludeParks,
-    };
-    
-    (model as any).traverse?.((child: any) => {
-      if (!(child instanceof THREE.Mesh)) return;
-      const part = child.userData?.part;
-      if (part) {
-        const shouldBeVisible = visibilityMap[part] ?? true;
-        child.visible = shouldBeVisible;
-      }
-    });
-  }, [model, previewIncludeBase, previewIncludeRoads, previewIncludeBuildings, previewIncludeWater, previewIncludeParks]);
-
   if (loading) {
     return (
       <>

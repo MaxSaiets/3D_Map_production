@@ -74,7 +74,9 @@ export default function AccountPage() {
       getIdToken, openLogin: signIn,
       onLimit: () => setNotice(t("limitNotice")),
     });
-    if (res.status === "ok") setQuota(res.quota);
+    // gatedDownload повертає лише {remaining} з X-Quota-Remaining header — НЕ перезаписуємо
+    // повний quota-обʼєкт (інакше downloads/limit/is_admin стають undefined). Перечитуємо.
+    if (res.status === "ok") load();
     setBusy(false);
   };
 

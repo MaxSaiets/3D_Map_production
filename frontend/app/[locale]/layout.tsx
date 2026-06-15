@@ -7,6 +7,7 @@ import "../globals.css";
 import { ContactWidget } from "@/components/ContactWidget";
 import { AuthProvider } from "@/components/AuthProvider";
 import SiteAnalytics from "@/components/SiteAnalytics";
+import { ToastHost } from "@/components/ToastHost";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
 
@@ -154,6 +155,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}
+            <ToastHost />
             <ContactWidget />
             <SiteAnalytics />
           </AuthProvider>
