@@ -113,13 +113,25 @@ export default function AdminPage() {
                     </div>
                   )}
 
+                  {stats.funnel?.length > 0 && <Funnel funnel={stats.funnel} />}
+
                   <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatList title="Країни" rows={stats.byCountry} />
                     <StatList title="Топ сторінок" rows={stats.topPaths} />
                     <StatList title="Події" rows={stats.topEvents} />
                     <StatList title="Мови" rows={stats.byLocale} />
                   </div>
-                  <p className="mt-4 text-[12px] text-ink-3">Власна аналітика на сервері · без cookie-стеження · IP не зберігається (лише денний хеш + код країни Cloudflare) · твої власні (адмінські) заходи не рахуються.</p>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <StatList title="Звідки прийшли (реферери)" rows={stats.topRefs} />
+                    <StatList title="Топ кліків (елемент)" rows={stats.topClicks} />
+                  </div>
+
+                  {stats.clicksByPath && Object.keys(stats.clicksByPath).length > 0 && (
+                    <ClickMaps clicksByPath={stats.clicksByPath} />
+                  )}
+
+                  <p className="mt-4 text-[12px] text-ink-3">Власна аналітика на сервері · без cookie-стеження · IP не зберігається (лише денний хеш + код країни Cloudflare) · твої власні (адмінські) заходи й заходи з localhost не рахуються.</p>
                 </>
               )}
             </div>
@@ -188,6 +200,63 @@ function StatList({ title, rows }: { title: string; rows?: [string, number][] })
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+const FUNNEL_LABELS: Record<string, string> = {
+  view: "Зайшли в конструктор",
+  area: "Виділили зону на карті",
+  generate: "Натиснули «Згенерувати»",
+  order_open: "Відкрили форму замовлення",
+  order_submit: "Оформили замовлення",
+};
+
+function Funnel({ funnel }: { funnel: { step: string; count: number; pct: number }[] }) {
+  const max = Math.max(...funnel.map((f) => f.count), 1);
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Воронка конверсії</div>
+      <div className="mb-3 text-[11px] text-ink-3">Скільки відвідувачів доходить до кожного кроку (і де відвалюються).</div>
+      <div className="space-y-2.5">
+        {funnel.map((f, i) => {
+          const prev = i > 0 ? funnel[i - 1].count : f.count;
+          const drop = prev > 0 ? Math.round(((prev - f.count) / prev) * 100) : 0;
+          return (
+            <div key={f.step}>
+              <div className="mb-1 flex items-center justify-between text-[12px]">
+                <span className="text-ink-2">{i + 1}. {FUNNEL_LABELS[f.step] || f.step}</span>
+                <span className="font-semibold text-ink">{f.count}<span className="ml-1 font-normal text-ink-3">· {f.pct}%</span></span>
+              </div>
+              <div className="h-3.5 rounded bg-bg-2">
+                <div className="h-3.5 rounded bg-forest/80" style={{ width: `${Math.round((f.count / max) * 100)}%` }} />
+              </div>
+              {i > 0 && drop > 0 && <div className="mt-0.5 text-[10px] font-semibold text-red-600">↓ втрата −{drop}% на цьому кроці</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ClickMaps({ clicksByPath }: { clicksByPath: Record<string, [number, number][]> }) {
+  return (
+    <div className="mt-5">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Карта кліків — куди тикають користувачі</div>
+      <div className="mb-2 text-[11px] text-ink-3">Точки = кліки у % екрана (x/y). Скупчення показують, що привертає увагу.</div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Object.entries(clicksByPath).map(([path, pts]) => (
+          <div key={path} className="rounded-[14px] border border-line bg-paper p-3">
+            <div className="mb-2 truncate text-[12px] font-semibold text-ink-2" title={path}>{path || "/"}<span className="ml-1 font-normal text-ink-3">· {pts.length} кліків</span></div>
+            <div className="relative w-full overflow-hidden rounded-lg border border-line bg-bg-2" style={{ aspectRatio: "16 / 10" }}>
+              {pts.map((p, i) => (
+                <span key={i} className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-forest" style={{ left: `${p[0]}%`, top: `${p[1]}%`, opacity: 0.28 }} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

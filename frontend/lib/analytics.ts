@@ -75,6 +75,43 @@ export function track(event: string, props?: Record<string, unknown>) {
   if (typeof g === "function") g("event", event, props || {});
 }
 
+/** Воронка конверсії — ключові кроки шляху покупця. Адмінка показує, де
+ *  користувачі «відвалюються» (view → area → generate → order_open → order_submit). */
+export const FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"] as const;
+export type FunnelStep = (typeof FUNNEL_STEPS)[number];
+
+/** Фіксує крок воронки ОДИН раз за сесію (щоб лічильник = к-сть сесій, що дійшли
+ *  до кроку, а не к-сть кліків). Кроки 1-в-1 у sessionStorage. */
+export function trackFunnel(step: FunnelStep, props?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  try {
+    const k = `mnd_f_${step}`;
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, "1");
+  } catch { /* sessionStorage може бути недоступний (приватний режим) */ }
+  track("funnel", { step, ...(props || {}) });
+}
+
+/** Читабельний підпис елемента, по якому клікнули (для теплокарти/топ-кліків). */
+export function clickLabel(target: EventTarget | null): string {
+  let n = target as HTMLElement | null;
+  for (let i = 0; i < 4 && n; i++) {
+    const dt = (n as HTMLElement).dataset?.track;
+    if (dt) return dt;
+    const aria = n.getAttribute?.("aria-label");
+    if (aria) return aria;
+    const tag = n.tagName?.toLowerCase();
+    if (tag === "button" || tag === "a") {
+      const txt = (n.innerText || n.textContent || "").trim().replace(/\s+/g, " ");
+      if (txt) return txt.slice(0, 40);
+      return n.getAttribute("title") || tag;
+    }
+    n = n.parentElement;
+  }
+  const el = target as HTMLElement | null;
+  return (el?.tagName || "?").toLowerCase();
+}
+
 /**
  * Conversion tracking for Google Ads + GA4. Fire on revenue/lead actions
  * (order submitted, contact request, generation finished). Sends:

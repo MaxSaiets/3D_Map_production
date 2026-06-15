@@ -72,7 +72,11 @@ export function OrderDialog({
   // повторне відкриття (інша модель) показувало СТАРИЙ «#123 прийнято» замість форми,
   // і друге замовлення неможливо було оформити без перезавантаження. (контакт лишаємо.)
   useEffect(() => {
-    if (open) { setOrderNumber(null); setPayment(null); setError(null); setSending(false); }
+    if (open) {
+      setOrderNumber(null); setPayment(null); setError(null); setSending(false);
+      // Воронка: користувач відкрив форму замовлення (передостанній крок).
+      import("@/lib/analytics").then((m) => m.trackFunnel("order_open")).catch(() => {});
+    }
   }, [open]);
 
   // Escape closes the dialog; only active while open.
@@ -173,7 +177,8 @@ export function OrderDialog({
       setPayment(data.payment || null);
       // Google Ads / GA4 conversion — головна ціль реклами (надіслане замовлення = лід).
       try {
-        const { trackConversion } = await import("@/lib/analytics");
+        const { trackConversion, trackFunnel } = await import("@/lib/analytics");
+        trackFunnel("order_submit"); // останній крок воронки — замовлення надіслане
         // Валюту беремо з ТОГО САМОГО рядка, що й число (priceText), а не з region —
         // інакше EUR-замовлення слало б UAH-суму як EUR (×10 інфляція конверсії).
         const raw = String(priceText || "");

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, isOwnerOptOut, gtagConsentUpdate } from "@/lib/analytics";
+import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, isOwnerOptOut, gtagConsentUpdate, clickLabel } from "@/lib/analytics";
 
 // Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
 // «Connection to Indexed Database server lost» = Firebase Auth persistence у
@@ -33,6 +33,24 @@ export default function SiteAnalytics() {
 
   // Page-view tracking (only fires once consent is granted; track() self-guards).
   useEffect(() => { if (consent === "granted") track("pageview"); }, [consent, pathname]);
+
+  // Карта кліків: де користувачі тикають (нормовані % в'юпорта) + підпис елемента.
+  // Допомагає зрозуміти, що приваблює увагу й де люди «застрягають». Капи на сесію,
+  // щоб не роздути лог. track() сам гейтить за згодою/власником/dev.
+  useEffect(() => {
+    if (consent !== "granted") return;
+    let n = 0;
+    const onClick = (e: MouseEvent) => {
+      if (n >= 50) return; // максимум 50 кліків на завантаження сторінки
+      const vw = Math.max(window.innerWidth, 1), vh = Math.max(window.innerHeight, 1);
+      const x = Math.round((e.clientX / vw) * 1000) / 10; // % з 0.1 точністю
+      const y = Math.round((e.clientY / vh) * 1000) / 10;
+      n++;
+      track("click", { x, y, el: clickLabel(e.target).slice(0, 48) });
+    };
+    document.addEventListener("click", onClick, { passive: true, capture: true });
+    return () => document.removeEventListener("click", onClick, { capture: true } as any);
+  }, [consent, pathname]);
 
   // Google Consent Mode v2: push the consent decision to gtag (Ads/GA4). Default
   // is denied (set in the init script) → conversions modelled cookielessly until accept.

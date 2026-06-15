@@ -24,7 +24,11 @@ from typing import Any, Dict, List, Optional
 import requests
 
 OUTPUT_DIR = Path("output").resolve()
-ORDERS_LOG = OUTPUT_DIR / "orders.jsonl"
+# БЕЗПЕКА: orders.jsonl містить ПДн (імʼя/телефон/адреса/оплата) — НЕ можна в
+# OUTPUT_DIR (віддається на /files). Тримаємо у DATA_DIR (не монтується).
+DATA_DIR = Path("data").resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+ORDERS_LOG = DATA_DIR / "orders.jsonl"
 _TG_API = "https://api.telegram.org/bot{token}/{method}"
 
 

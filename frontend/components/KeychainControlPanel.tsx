@@ -407,6 +407,10 @@ export function KeychainControlPanel({
     } catch { /* ignore */ }
   }, [getIdToken]);
   useEffect(() => { refreshQuota(); }, [refreshQuota]);
+
+  // Воронка конверсії (брелки) — спільні кроки з мапами: перегляд + вибір зони.
+  useEffect(() => { import("@/lib/analytics").then((m) => m.trackFunnel("view")).catch(() => {}); }, []);
+  useEffect(() => { if (selectedArea) import("@/lib/analytics").then((m) => m.trackFunnel("area")).catch(() => {}); }, [selectedArea]);
   const printScale = useMemo(() => {
     const size = selectedAreaMeters(selectedArea);
     if (!size) return null;
@@ -793,7 +797,7 @@ export function KeychainControlPanel({
     setGenerating(true);
     setShowAllZones(false);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
-    import("@/lib/analytics").then((m) => m.trackConversion("generate", { props: { product: "keychain" } })).catch(() => {});
+    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "keychain" } }); m.trackFunnel("generate"); }).catch(() => {});
 
     try {
       // КРИТИЧНО: коли рамка повернута (cropPolygon, cropRotationDeg !== 0),

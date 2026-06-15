@@ -112,12 +112,39 @@ import tempfile
 OUTPUT_DIR = Path("output").resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+# БЕЗПЕКА: приватні дані (users.json, orders.jsonl, analytics.jsonl, panel_batches)
+# НЕ можна тримати в OUTPUT_DIR — він віддається статикою на /files. Інакше будь-хто
+# міг GET /files/users.json і завантажити всю базу клієнтів (емейли/телефони/адреси).
+# DATA_DIR — окрема папка, що НЕ монтується назовні.
+DATA_DIR = Path("data").resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+def _migrate_private_data_out_of_webroot() -> None:
+    """Одноразова міграція: переносить приватні файли з OUTPUT_DIR (віддається на
+    /files) у DATA_DIR (не монтується). Закриває витік users.json/orders.jsonl
+    і зберігає наявні дані (move, не порожній рестарт). Безпечно при кожному старті."""
+    for _name in ("users.json", "orders.jsonl", "analytics.jsonl", "panel_batches.json"):
+        try:
+            _old = OUTPUT_DIR / _name
+            _new = DATA_DIR / _name
+            if _old.exists() and not _new.exists():
+                _old.replace(_new)
+                print(f"[SECURITY] migrated {_name}: OUTPUT_DIR -> DATA_DIR")
+            elif _old.exists():
+                # обидва є (напр. analytics очищено) — лишаємо DATA_DIR, прибираємо webroot-копію
+                _old.unlink()
+                print(f"[SECURITY] removed webroot copy of {_name} (DATA_DIR is canonical)")
+        except Exception as _e:  # noqa: BLE001
+            print(f"[SECURITY] migrate {_name} failed: {_e}")
+
+_migrate_private_data_out_of_webroot()
+
 # D3 ПАННО: persist batch→tile mapping so a server restart doesn't lose a
 # finished panel. `multiple_tasks_map` + `tasks` are in-memory; here we mirror
 # the batch with each tile's row/col AND its on-disk 3MF path (filled in as
 # tiles complete, while `tasks` is still alive). After a restart download_all
 # rebuilds the zip from these persisted paths (the output files survive on disk).
-PANEL_BATCHES_PATH = OUTPUT_DIR / "panel_batches.json"
+PANEL_BATCHES_PATH = DATA_DIR / "panel_batches.json"
 panel_tiles: dict[str, list[dict]] = {}  # batch_id -> [{task_id, row, col, path}]
 
 
@@ -337,13 +364,27 @@ def _normalize_request_base_thickness(request: "GenerationRequest", *, zone_pref
 
 
 from fastapi.staticfiles import StaticFiles
-# Mount output folder as static files
-app.mount("/files", StaticFiles(directory=OUTPUT_DIR), name="files")
-# Дзеркальний маунт під /api/files: nginx проксує ЛИШЕ /api/ -> :8000, тож коли
-# Firebase вимкнено і фронт резолвить локальний download_url як
-# `<API_BASE_URL>/files/...` (де API_BASE_URL=http://host/api), посилання має
-# бути доступним і через /api/files/... Без цього модель не качалась (404).
-app.mount("/api/files", StaticFiles(directory=OUTPUT_DIR), name="api_files")
+from starlette.responses import PlainTextResponse as _PlainText
+
+
+class SafeStatic(StaticFiles):
+    """StaticFiles, що віддає ЛИШЕ артефакти моделей за розширенням. Захист у
+    глибину: навіть якщо у OUTPUT_DIR опиниться .json/.jsonl/.env/.py — він НЕ
+    віддасться (раніше відкритий mount зливав users.json/orders.jsonl)."""
+    _ALLOWED = {".3mf", ".stl", ".glb", ".gltf", ".obj", ".png", ".jpg", ".jpeg", ".webp", ".zip"}
+
+    async def get_response(self, path, scope):
+        ext = os.path.splitext(path)[1].lower()
+        if ext and ext not in self._ALLOWED:
+            return _PlainText("Not found", status_code=404)
+        return await super().get_response(path, scope)
+
+
+# Mount output folder — ТІЛЬКИ файли моделей (SafeStatic). Приватні дані тепер у
+# DATA_DIR (не монтується). /api/files — дзеркало для проксі-конфігів, що шлють
+# лише /api/* у бекенд.
+app.mount("/files", SafeStatic(directory=OUTPUT_DIR), name="files")
+app.mount("/api/files", SafeStatic(directory=OUTPUT_DIR), name="api_files")
 
 
 async def _ttl_cleanup_loop():
@@ -860,7 +901,7 @@ class TrackEvent(BaseModel):
     props: Optional[Dict[str, Any]] = None
 
 
-ANALYTICS_LOG = OUTPUT_DIR / "analytics.jsonl"
+ANALYTICS_LOG = DATA_DIR / "analytics.jsonl"
 
 
 @app.post("/api/track")
@@ -896,6 +937,14 @@ async def track_event(
                 rec["props"] = {str(k)[:40]: str(v)[:120] for k, v in list(ev.props.items())[:10]}
             except Exception:  # noqa: BLE001
                 pass
+        # Обмежуємо ріст логу (клік-трекінг додає обсяг): при >25МБ ротуємо в .1
+        # (одна резервна копія), щоб диск не заповнився. Адмін-статистика читає
+        # лише поточний файл (останні ~25МБ подій) — цього достатньо.
+        try:
+            if ANALYTICS_LOG.exists() and ANALYTICS_LOG.stat().st_size > 25_000_000:
+                ANALYTICS_LOG.replace(ANALYTICS_LOG.with_name("analytics.jsonl.1"))
+        except Exception:  # noqa: BLE001
+            pass
         with ANALYTICS_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     except Exception:  # noqa: BLE001
@@ -910,15 +959,20 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     if not u["is_admin"]:
         raise HTTPException(status_code=403, detail="Лише для адміністраторів")
     import json
-    from collections import Counter
+    from collections import Counter, defaultdict
     totals = {"events": 0, "pageviews": 0, "uniqueVisitors": 0}
     by_day: Dict[str, Dict[str, Any]] = {}
     ev_counter: Counter = Counter()
     path_counter: Counter = Counter()
     locale_counter: Counter = Counter()
     country_counter: Counter = Counter()
+    ref_counter: Counter = Counter()
+    funnel_counter: Counter = Counter()       # крок воронки → к-сть сесій
+    click_points: Dict[str, list] = defaultdict(list)  # path → [[x,y],...] для теплокарти
+    click_label_counter: Counter = Counter()  # (path, label) → к-сть кліків
     visitors: set = set()
     day_visitors: Dict[str, set] = {}
+    FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"]
     try:
         if ANALYTICS_LOG.exists():
             for line in ANALYTICS_LOG.read_text(encoding="utf-8").splitlines():
@@ -929,13 +983,29 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                 totals["events"] += 1
                 ev = r.get("event", "")
                 ev_counter[ev] += 1
+                props = r.get("props") or {}
+                path = r.get("path", "")
                 if ev == "pageview":
                     totals["pageviews"] += 1
-                    path_counter[r.get("path", "")] += 1
+                    path_counter[path] += 1
                     if r.get("locale"):
                         locale_counter[r["locale"]] += 1
                     if r.get("cc"):
                         country_counter[r["cc"]] += 1
+                    _ref = (r.get("ref") or "").split("?")[0][:60]
+                    if _ref and "monadruk" not in _ref:
+                        ref_counter[_ref] += 1
+                elif ev == "funnel":
+                    step = props.get("step")
+                    if step:
+                        funnel_counter[step] += 1
+                elif ev == "click":
+                    x, y = props.get("x"), props.get("y")
+                    if isinstance(x, (int, float)) and isinstance(y, (int, float)) and len(click_points[path]) < 1200:
+                        click_points[path].append([round(float(x), 1), round(float(y), 1)])
+                    el = props.get("el")
+                    if el:
+                        click_label_counter[(path, str(el)[:48])] += 1
                 d = r.get("day", "")
                 vis = r.get("visitor", "")
                 if vis:
@@ -951,6 +1021,12 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     series = sorted(by_day.values(), key=lambda x: x["day"])[-days:]
     for s in series:
         s["visitors"] = len(day_visitors.get(s["day"], set()))
+    # Воронка у фіксованому порядку + % від першого кроку (де відвалюються).
+    first = funnel_counter.get("view", 0) or 1
+    funnel = [{"step": st, "count": funnel_counter.get(st, 0),
+               "pct": round(100.0 * funnel_counter.get(st, 0) / first, 1)} for st in FUNNEL_STEPS]
+    # Топ-6 сторінок за к-стю кліків (для теплокарти) + топ елементів.
+    top_click_paths = sorted(click_points.items(), key=lambda kv: -len(kv[1]))[:6]
     return {
         "totals": totals,
         "byDay": series,
@@ -958,6 +1034,10 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "topPaths": path_counter.most_common(15),
         "byLocale": locale_counter.most_common(10),
         "byCountry": country_counter.most_common(15),
+        "topRefs": ref_counter.most_common(10),
+        "funnel": funnel,
+        "clicksByPath": {p: pts for p, pts in top_click_paths},
+        "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
     }
 
 
@@ -1142,7 +1222,7 @@ async def admin_orders(authorization: Optional[str] = Header(default=None)):
     if not u["is_admin"]:
         raise HTTPException(status_code=403, detail="Лише для адміністраторів")
     orders = []
-    log = OUTPUT_DIR / "orders.jsonl"
+    log = DATA_DIR / "orders.jsonl"  # БЕЗПЕКА: ПДн-лог тепер у DATA_DIR (не /files)
     try:
         if log.exists():
             for line in log.read_text(encoding="utf-8").splitlines():

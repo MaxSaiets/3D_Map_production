@@ -125,6 +125,11 @@ export function SimpleControlPanel({
   }, [getIdToken]);
   useEffect(() => { refreshQuota(); }, [refreshQuota]);
 
+  // Воронка конверсії (1 раз/сесію кожен крок): перегляд конструктора + вибір зони.
+  // Решта кроків — generate (нижче) / order_open / order_submit (OrderDialog).
+  useEffect(() => { import("@/lib/analytics").then((m) => m.trackFunnel("view")).catch(() => {}); }, []);
+  useEffect(() => { if (selectedArea) import("@/lib/analytics").then((m) => m.trackFunnel("area")).catch(() => {}); }, [selectedArea]);
+
   // Жива орієнтовна ціна — оновлюється при зміні розміру/стилю (relief = +надбавка).
   useEffect(() => {
     let alive = true;
@@ -331,7 +336,7 @@ export function SimpleControlPanel({
     setError(null);
     setGenerating(true);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
-    import("@/lib/analytics").then((m) => m.trackConversion("generate", { props: { product: "map" } })).catch(() => {});
+    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map" } }); m.trackFunnel("generate"); }).catch(() => {});
     try {
       // Derive layer flags from the CURRENTLY SELECTED style preset, not from the
       // store. The store can lag the visible selection (it isn't synced on mount),

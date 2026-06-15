@@ -14,7 +14,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 OUTPUT_DIR = Path("output").resolve()
-USERS_FILE = OUTPUT_DIR / "users.json"
+# БЕЗПЕКА: users.json (емейли/квоти/історія) НЕ можна в OUTPUT_DIR — він віддається
+# статикою на /files. Тримаємо у DATA_DIR (не монтується назовні).
+DATA_DIR = Path("data").resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+USERS_FILE = DATA_DIR / "users.json"
 FREE_DOWNLOADS = int(os.getenv("FREE_DOWNLOADS", "5"))
 
 _lock = threading.Lock()
