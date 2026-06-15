@@ -5,6 +5,7 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
+import { mapPriceRange } from "@/lib/mapPrices";
 
 /**
  * Programmatic SEO: статична сторінка під кожне місто (23 × 6 локалей).
@@ -77,12 +78,12 @@ export default async function CityPage({
         brand: { "@type": "Brand", name: "Monadruk" },
         offers: {
           // Сторінка про 3D-МАПУ міста → діапазон цін мапи (S–XL), а не брелка.
-          // Раніше стояло 120₴ (ціна брелка) — невідповідність ціни на 138 сторінках.
+          // Ціни з єдиного джерела lib/mapPrices.ts (синхрон з pricing.json) — без дрейфу.
           "@type": "AggregateOffer",
-          priceCurrency: locale === "uk" ? "UAH" : "EUR",
-          lowPrice: locale === "uk" ? "250" : "6",
-          highPrice: locale === "uk" ? "890" : "21",
-          offerCount: "4",
+          priceCurrency: mapPriceRange(locale).currency,
+          lowPrice: mapPriceRange(locale).low,
+          highPrice: mapPriceRange(locale).high,
+          offerCount: mapPriceRange(locale).offerCount,
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, `/maps/${city.slug}`),
         },
