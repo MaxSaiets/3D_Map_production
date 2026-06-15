@@ -885,6 +885,7 @@ def build_keychain_layout(
     # (а) Коло вушка мусить заходити в тіло ≥30% радіуса — якщо юзер відтягнув
     #     його далі, притягуємо центр до тіла (вушко висіло лише на шийці).
     import math as _math
+    shape_norm = (base_shape or "rounded").lower().replace("_", "-")
     try:
         if not body.intersects(Point(loop_center_x, loop_center_y).buffer(outer_m * 0.7, resolution=24)):
             body_pt, _ = nearest_points(body, Point(loop_center_x, loop_center_y))
@@ -896,11 +897,14 @@ def build_keychain_layout(
             loop_center_y -= dy / d * pull
     except Exception:
         pass
-    # (б) Отвір усередині тіла (жетон): перемичка до краю ≥2.0мм, інакше
-    #     кільце вириває тонку стінку — посуваємо отвір углиб тіла.
+    # (б) Отвір усередині тіла — ЛИШЕ для жетона (token): перемичка до краю ≥2.0мм,
+    #     інакше кільце вириває тонку стінку — посуваємо отвір углиб тіла. Для решти
+    #     форм петля периферійна (вушко на краю) і цей зсув НЕ застосовуємо: на
+    #     СИМЕТРИЧНІЙ вершині (дах будинку / пік) nearest_points обирає одну з двох
+    #     рівновіддалених граней → петлю «зносить» убік (баг: вушко будинку справа).
     try:
         pt = Point(loop_center_x, loop_center_y)
-        if body.contains(pt):
+        if shape_norm == "token" and body.contains(pt):
             need = inner_m + 2.0 * layout_scale_m_per_mm
             edge_dist = body.boundary.distance(pt)
             if edge_dist < need:
@@ -926,6 +930,30 @@ def build_keychain_layout(
             neck_half * 0.55,
             resolution=10,
         )
+    # (в2) ЗАПОВНЕННЯ УЩЕЛИНИ під петлею (серце): кругла петля над ВІДКРИТОЮ ущелиною
+    #      серця читалась як булавка-маркер (📍 = коло + трикутник унизу). Будуємо
+    #      «місток» = опукла оболонка (петля ∪ зріз тіла) у ВУЗЬКІЙ смузі довкола осі
+    #      петлі, від дна ущелини до петлі → ущелина заповнюється, петля сидить
+    #      міцно, а лоби й гостре вістря НЕ зачіпаються (смуга вузька + обмежена по
+    #      висоті зверху ущелини, тож опукла оболонка не «роздуває» низ серця).
+    if shape_norm in {"heart", "heart-l", "heart-r"}:
+        try:
+            axis = LineString([(loop_center_x, loop_center_y + outer_m * 1.5), (loop_center_x, body_miny)])
+            hit = body.intersection(axis)
+            anchor_y = float(hit.bounds[3]) if (hit is not None and not hit.is_empty) else body_maxy
+            fill_w = max(outer_m * 1.4, neck_half * 2.0)
+            fill_band = box(
+                loop_center_x - fill_w,
+                anchor_y - outer_m * 0.4,
+                loop_center_x + fill_w,
+                loop_center_y + outer_m * 1.5,
+            )
+            top_slice = body.intersection(fill_band)
+            if not getattr(top_slice, "is_empty", True):
+                gusset = unary_union([outer_loop, top_slice]).convex_hull.intersection(fill_band)
+                neck = unary_union([neck, gusset])
+        except Exception:
+            pass
     if loop_angle_deg:
         try:
             outer_loop = affinity.rotate(outer_loop, loop_angle_deg, origin=(loop_center_x, loop_center_y), use_radians=False)
@@ -935,6 +963,21 @@ def build_keychain_layout(
     base = unary_union([body, outer_loop, neck]).difference(inner_hole)
     try:
         base = base.buffer(0)
+    except Exception:
+        pass
+    # Прибрати мікро-порожнини (тонкі щілини від union-у містка ущелини на серці),
+    # лишаючи СПРАВЖНІЙ отвір петлі — його площа на порядки більша за поріг.
+    try:
+        _min_void = (0.8 * layout_scale_m_per_mm) ** 2  # < ~0.8мм² = артефакт, не отвір
+        def _drop_tiny_holes(poly: Polygon) -> Polygon:
+            kept = [r for r in poly.interiors if Polygon(r).area >= _min_void]
+            return Polygon(poly.exterior, kept) if len(kept) != len(list(poly.interiors)) else poly
+        if isinstance(base, Polygon):
+            base = _drop_tiny_holes(base)
+        elif hasattr(base, "geoms"):
+            base = unary_union([
+                _drop_tiny_holes(g) if isinstance(g, Polygon) else g for g in base.geoms
+            ])
     except Exception:
         pass
     try:

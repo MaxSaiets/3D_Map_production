@@ -461,29 +461,8 @@ export function shapePath(
     return `M ${minX + cut} ${minY} H ${maxX - cut} L ${maxX} ${minY + cut} V ${maxY - cut} L ${maxX - cut} ${maxY} H ${minX + cut} L ${minX} ${maxY - cut} V ${minY + cut} Z`;
   }
   if (value.baseShape === "heart") {
-    // Та сама параметрична крива, що на беку (_keychain_body_shape "heart");
-    // SVG має y-вниз → фліп, щоб лоби були зверху (бік петлі), вістря знизу.
-    const n = 160;  // вища роздільність → гладкий низ (синхрон з беком)
-    const raw: Array<[number, number]> = [];
-    for (let i = 0; i < n; i++) {
-      const t = (2 * Math.PI * i) / n;
-      const hx = 16 * Math.sin(t) ** 3;
-      const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-      raw.push([hx, hy]);
-    }
-    const xs = raw.map((p) => p[0]);
-    const ys = raw.map((p) => p[1]);
-    const x0 = Math.min(...xs), x1 = Math.max(...xs);
-    const y0 = Math.min(...ys), y1 = Math.max(...ys);
-    let pts2 = raw.map(([px, py]) => [
-      minX + ((px - x0) / (x1 - x0)) * w,
-      minY + ((y1 - py) / (y1 - y0)) * h,
-    ] as [number, number]);
-    // Вістря (max sy, бо y-вниз) заокруглюємо — той самий алгоритм, що на беку
-    // (_round_polygon_tip): Безьє через старий кінчик у радіусі 9% min-сторони.
-    let tipIdx = 0;
-    for (let i = 1; i < pts2.length; i++) if (pts2[i][1] > pts2[tipIdx][1]) tipIdx = i;
-    pts2 = roundPolygonTip(pts2, tipIdx, Math.min(w, h) * 0.11);
+    // Контур серця (спільне джерело з містком-ущелиною LoopPreview).
+    const pts2 = heartShapePoints(minX, minY, w, h);
     const d = pts2.map(([sx, sy], i) => `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`).join(" ");
     return `${d} Z`;
   }
@@ -571,6 +550,82 @@ function roundPolygonTip(pts: Array<[number, number]>, tipIndex: number, radius:
   out.push(pts[ia]);
   out.push(...arc);
   return out;
+}
+
+/** Точки контуру серця (SVG y-вниз: лоби зверху=мала y, вістря знизу) із
+ *  заокругленим вістрям — дзеркало бекендового _keychain_body_shape "heart".
+ *  Спільне джерело для shapePath і містка-ущелини LoopPreview (превʼю = модель). */
+function heartShapePoints(minX: number, minY: number, w: number, h: number): Array<[number, number]> {
+  const n = 160; // вища роздільність → гладкий низ (синхрон з беком)
+  const raw: Array<[number, number]> = [];
+  for (let i = 0; i < n; i++) {
+    const t = (2 * Math.PI * i) / n;
+    const hx = 16 * Math.sin(t) ** 3;
+    const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    raw.push([hx, hy]);
+  }
+  const xs = raw.map((p) => p[0]);
+  const ys = raw.map((p) => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  let pts2 = raw.map(([px, py]) => [
+    minX + ((px - x0) / (x1 - x0)) * w,
+    minY + ((y1 - py) / (y1 - y0)) * h, // y-фліп: лоби (py=max) зверху
+  ] as [number, number]);
+  // Вістря (max sy, бо y-вниз) заокруглюємо — _round_polygon_tip на беку.
+  let tipIdx = 0;
+  for (let i = 1; i < pts2.length; i++) if (pts2[i][1] > pts2[tipIdx][1]) tipIdx = i;
+  pts2 = roundPolygonTip(pts2, tipIdx, Math.min(w, h) * 0.11);
+  return pts2;
+}
+
+/** Опукла оболонка (monotone chain), CCW. Для містка-ущелини серця у превʼю. */
+function convexHull(points: Array<[number, number]>): Array<[number, number]> {
+  const pts = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (pts.length < 3) return pts;
+  const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: Array<[number, number]> = [];
+  for (const p of pts) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper: Array<[number, number]> = [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const p = pts[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+/** Місток-ущелина серця (SVG): заповнює V-розколину між лобами під петлею ТАК САМО,
+ *  як бекенд (опукла оболонка петля∪зріз-тіла у вузькій смузі довкола осі петлі) —
+ *  кругла петля над відкритою розколиною читалась як булавка-маркер (📍). Малюється
+ *  ПІД тілом тим самим кольором → крізь розколину видно заповнення. Превʼю = модель. */
+function heartLoopGussetPath(value: KeychainDesignerConfig): string | null {
+  if (value.baseShape !== "heart") return null;
+  const w = Math.max(value.bodyWidthMm, 0.1);
+  const h = Math.max(value.bodyHeightMm, 0.1);
+  const pts = heartShapePoints(0, 0, w, h); // тіло малюється у тих самих координатах (x=0,y=0)
+  const outer = Math.max(value.loopOuterMm, 1);
+  const lx = value.loopXMm, ly = value.loopYMm;
+  const fillW = Math.max(outer * 1.4, 2.5);
+  const cleftY = 0.239 * h; // дно розколини (hy=5 → 0.239·h від верху, з кривої серця)
+  const cand: Array<[number, number]> = [];
+  for (const [px, py] of pts) {
+    if (Math.abs(px - lx) <= fillW && py <= cleftY + outer * 0.5) cand.push([px, py]);
+  }
+  if (cand.length < 2) return null;
+  for (let i = 0; i < 20; i++) {
+    const a = (2 * Math.PI * i) / 20;
+    cand.push([lx + outer * Math.cos(a), ly + outer * Math.sin(a)]);
+  }
+  const hull = convexHull(cand);
+  if (hull.length < 3) return null;
+  return hull.map(([sx, sy], i) => `${i === 0 ? "M" : "L"} ${sx.toFixed(2)} ${sy.toFixed(2)}`).join(" ") + " Z";
 }
 
 /** ПАРА ДЛЯ ЗАКОХАНИХ: контур половинки серця (w×h) із puzzle-замком на грані
@@ -711,12 +766,17 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
     );
   }
 
+  const gusset = heartLoopGussetPath(value);
   return (
-    <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
-      <circle cx={value.loopXMm} cy={value.loopYMm} r={outer} fill="#a6926b" />
-      <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill="#a6926b" />
-      <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
-    </g>
+    <>
+      {/* Місток-ущелина (серце): заповнює V між лобами → петля не «булавка» */}
+      {gusset && <path d={gusset} fill="#a6926b" />}
+      <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={outer} fill="#a6926b" />
+        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill="#a6926b" />
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
+      </g>
+    </>
   );
 }
 
