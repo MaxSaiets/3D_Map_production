@@ -73,16 +73,20 @@ export function SimpleControlPanel({
     if (!taskGroupId) return;
     setShareBusy(true);
     try {
-      const { capturePreviewImages } = await import("@/lib/capturePreview");
-      const shots = await capturePreviewImages();
-      const png = shots.find((s) => s.startsWith("data:image/png"));
-      if (png) {
-        await fetch(`${API_BASE}/api/share/preview`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ task_id: taskGroupId, image: png }),
-        });
-      }
+      // Завантаження прев'ю-картинки = best-effort: якщо впаде (мережа/таймаут),
+      // НЕ блокуємо шеринг — посилання все одно валідне (share-сторінка рендериться без og:image).
+      try {
+        const { capturePreviewImages } = await import("@/lib/capturePreview");
+        const shots = await capturePreviewImages();
+        const png = shots.find((s) => s.startsWith("data:image/png"));
+        if (png) {
+          await fetch(`${API_BASE}/api/share/preview`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task_id: taskGroupId, image: png }),
+          });
+        }
+      } catch { /* прев'ю опційне */ }
       const url = `${window.location.origin}/share/${taskGroupId}`;
       if (typeof navigator.share === "function") {
         await navigator.share({ url, title: "Monadruk" }).catch(() => {});

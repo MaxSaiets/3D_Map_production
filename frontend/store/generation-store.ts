@@ -86,7 +86,7 @@ interface GenerationState {
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
-  setTaskGroup: (groupId: string | null, taskIds?: string[]) => void;
+  setTaskGroup: (groupId: string | null, taskIds?: string[], productType?: "map" | "keychain") => void;
   setActiveTaskId: (taskId: string | null) => void;
   setTaskStatuses: (statuses: Record<string, TaskStatus>) => void;
   setShowAllZones: (value: boolean) => void;
@@ -195,20 +195,23 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
-  setTaskGroup: (taskGroupId, taskIds) =>
+  setTaskGroup: (taskGroupId, taskIds, productType = "map") =>
     set((s) => {
       const nextTaskIds = taskIds ?? (taskGroupId ? [taskGroupId] : []);
       const nextActive = s.activeTaskId && nextTaskIds.includes(s.activeTaskId)
         ? s.activeTaskId
         : (nextTaskIds[0] ?? null);
-      // Зберігаємо в localStorage щоб відновити після refresh
+      // Зберігаємо в localStorage щоб відновити після refresh. ПРОДУКТ-ТИП (map|keychain)
+      // потрібен щоб /create і /keychains відновлювали ЛИШЕ свої задачі (ключ той самий).
       if (typeof window !== "undefined") {
         if (taskGroupId) {
           localStorage.setItem("3dmap_task_group_id", taskGroupId);
           localStorage.setItem("3dmap_task_ids", JSON.stringify(nextTaskIds));
+          localStorage.setItem("3dmap_task_product", productType);
         } else {
           localStorage.removeItem("3dmap_task_group_id");
           localStorage.removeItem("3dmap_task_ids");
+          localStorage.removeItem("3dmap_task_product");
         }
       }
       return {

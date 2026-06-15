@@ -132,7 +132,8 @@ export function OrderDialog({
         setError(t("errEu"));
         return;
       }
-    } else if (delivery !== "pickup" && (!city.trim() || !branch.trim())) {
+    } else if (delivery !== "pickup" && (!city.trim() || !branch.trim() || (delivery === "ukr" && !address.trim()))) {
+      // Укрпошта потребує і місто+індекс, і вулицю/будинок (інакше недоставне).
       setError(delivery === "nova" ? t("errNova") : t("errUkr"));
       return;
     }

@@ -345,13 +345,15 @@ export default function Home() {
     } catch {/* ignore */}
   }, []);
 
-  // Відновлюємо task_id з localStorage після refresh
+  // Відновлюємо task_id з localStorage після refresh — ЛИШЕ задачі мап (не брелків,
+  // бо /create і /keychains ділять той самий ключ; інакше відновили б чужу задачу).
   useEffect(() => {
     const savedGroupId = localStorage.getItem("3dmap_task_group_id");
     const savedTaskIds = localStorage.getItem("3dmap_task_ids");
-    if (savedGroupId && !taskGroupId) {
+    const savedProduct = localStorage.getItem("3dmap_task_product");
+    if (savedGroupId && !taskGroupId && savedProduct !== "keychain") {
       const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
-      setTaskGroup(savedGroupId, ids);
+      setTaskGroup(savedGroupId, ids, "map");
       setGenerating(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

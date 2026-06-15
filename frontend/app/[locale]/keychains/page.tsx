@@ -91,7 +91,7 @@ export default function KeychainsPage() {
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const [cropPolygon, setCropPolygon] = useState<Array<[number, number]> | null>(null);
-  const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
+  const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea, setTaskGroup, setGenerating, taskGroupId } = useGenerationStore();
   // Завантажений GPX-трек (store.gpxFocus) → зона має розширюватись як на /create,
   // інакше довгий маршрут обрізало (maxMetersPerMm був жорстко 7).
   const gpxFocus = useGenerationStore((s) => s.gpxFocus);
@@ -106,6 +106,22 @@ export default function KeychainsPage() {
   // з targetMetersPerMm (зелена зона), а не з пам'яті з main мапи.
   useEffect(() => {
     setSelectedArea(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Відновлюємо задачу БРЕЛКА після refresh (ЛИШЕ keychain-задачі — не мап, бо ключ
+  // localStorage спільний). Інакше генерація брелка зависала «осиротілою» при перезавантаженні.
+  useEffect(() => {
+    try {
+      const savedGroupId = localStorage.getItem("3dmap_task_group_id");
+      const savedProduct = localStorage.getItem("3dmap_task_product");
+      if (savedGroupId && !taskGroupId && savedProduct === "keychain") {
+        const savedTaskIds = localStorage.getItem("3dmap_task_ids");
+        const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
+        setTaskGroup(savedGroupId, ids, "keychain");
+        setGenerating(true);
+      }
+    } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

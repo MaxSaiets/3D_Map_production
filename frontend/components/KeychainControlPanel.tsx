@@ -894,7 +894,7 @@ export function KeychainControlPanel({
         preview_include_water: true,
         preview_include_parks: true,
       });
-      setTaskGroup(response.task_id, [response.task_id]);
+      setTaskGroup(response.task_id, [response.task_id], "keychain");
       setActiveTaskId(response.task_id);
     } catch (generateError: any) {
       const apiDetail = generateError?.response?.data?.detail;
