@@ -67,6 +67,13 @@ export function OrderDialog({
   const firstInputRef = useRef<HTMLInputElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
+  // Скидаємо екран успіху при КОЖНОМУ відкритті — інакше після одного замовлення
+  // повторне відкриття (інша модель) показувало СТАРИЙ «#123 прийнято» замість форми,
+  // і друге замовлення неможливо було оформити без перезавантаження. (контакт лишаємо.)
+  useEffect(() => {
+    if (open) { setOrderNumber(null); setPaymentUrl(null); setError(null); setSending(false); }
+  }, [open]);
+
   // Escape closes the dialog; only active while open.
   useEffect(() => {
     if (!open) return;
@@ -166,10 +173,13 @@ export function OrderDialog({
       // Google Ads / GA4 conversion — головна ціль реклами (надіслане замовлення = лід).
       try {
         const { trackConversion } = await import("@/lib/analytics");
-        const value = priceText ? Number(String(priceText).replace(/[^\d]/g, "")) || undefined : undefined;
+        // Валюту беремо з ТОГО САМОГО рядка, що й число (priceText), а не з region —
+        // інакше EUR-замовлення слало б UAH-суму як EUR (×10 інфляція конверсії).
+        const raw = String(priceText || "");
+        const value = raw ? Number(raw.replace(/[^\d]/g, "")) || undefined : undefined;
         trackConversion("order", {
           value,
-          currency: region === "eu" ? "EUR" : "UAH",
+          currency: raw.includes("€") ? "EUR" : "UAH",
           transactionId: String(data.order_number),
           props: { product: productType, delivery },
         });

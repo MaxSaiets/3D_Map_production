@@ -64,23 +64,32 @@ def get_quota(uid: str, email: str, is_admin: bool) -> Dict[str, Any]:
         }
 
 
-def register_download(uid: str, email: str, is_admin: bool) -> Dict[str, Any]:
-    """Increment download count if allowed. Returns {ok, quota}."""
+def register_download(uid: str, email: str, is_admin: bool, task_id: str = "") -> Dict[str, Any]:
+    """Increment download count if allowed. Re-downloading a task_id that was ALREADY
+    charged does NOT burn another free download (втрата файлу / повторний клік не з'їдає
+    квоту → користувач реально отримує 5 РІЗНИХ моделей). Returns {ok, quota}."""
     with _lock:
         data = _load()
         u = _get(data, uid, email)
         used = int(u.get("downloads", 0))
-        if not is_admin and used >= FREE_DOWNLOADS:
+        downloaded = u.get("downloaded", [])
+        already = bool(task_id) and task_id in downloaded
+        if not is_admin and used >= FREE_DOWNLOADS and not already:
             return {"ok": False, "reason": "limit", "quota": {
                 "downloads": used, "limit": FREE_DOWNLOADS, "remaining": 0,
                 "is_admin": False, "can_download": False,
             }}
-        u["downloads"] = used + 1
-        _save(data)
+        if not already:
+            u["downloads"] = used + 1
+            if task_id:
+                downloaded.append(task_id)
+                u["downloaded"] = downloaded[-500:]
+            _save(data)
+        cur = int(u.get("downloads", 0))
         return {"ok": True, "quota": {
-            "downloads": u["downloads"], "limit": FREE_DOWNLOADS,
-            "remaining": (10**9 if is_admin else max(0, FREE_DOWNLOADS - u["downloads"])),
-            "is_admin": is_admin, "can_download": is_admin or u["downloads"] < FREE_DOWNLOADS,
+            "downloads": cur, "limit": FREE_DOWNLOADS,
+            "remaining": (10**9 if is_admin else max(0, FREE_DOWNLOADS - cur)),
+            "is_admin": is_admin, "can_download": is_admin or cur < FREE_DOWNLOADS,
         }}
 
 

@@ -430,6 +430,8 @@ export function SimpleControlPanel({
             <select
               value={selectedCityKey}
               onChange={(e) => { onCityChange(e.target.value); setActiveTemplate(null); }}
+              aria-label={t("step1city")}
+              title={t("step1city")}
               className="w-full rounded-2xl border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.35)]"
             >
               {cityKeys.map((k) => (
@@ -803,8 +805,18 @@ export function SimpleControlPanel({
                   : t("generateShort") /* короткий лейбл для sticky (без «модель») — не переноситься у 2 рядки */
             }
             busy={isGenerating}
-            disabled={!downloadUrl && (!selectedArea || isGenerating)}
-            onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
+            // НЕ блокуємо коли зона не вибрана — інакше на мобільному тап по єдиній
+            // видимій кнопці нічого не робить (глухий кут). Замість цього даємо фідбек.
+            disabled={isGenerating}
+            onAction={() => {
+              if (downloadUrl) { setOrderOpen(true); return; }
+              if (!selectedArea) {
+                setError(t("errSelectArea"));
+                window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", ns: "simple", key: "errSelectArea" } }));
+                return;
+              }
+              handleGenerate();
+            }}
             // Друга дія залежить від стану:
             //  • готово → «Завантажити» поряд із «Замовити»;
             //  • до/під час генерації → «Замовити» (order-now: фонова генерація

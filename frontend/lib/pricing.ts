@@ -21,12 +21,11 @@ export async function fetchQuote(
     if (sizeMm) params.set("size_mm", String(sizeMm));
     if (relief) params.set("relief", "1");
     const res = await fetch(`${API_BASE}/api/quote?${params}`, { cache: "no-store" });
-    if (!res.ok) { cache.set(key, null); return null; }
+    if (!res.ok) return null; // НЕ кешуємо невдачу — інакше ціна застрягне на fallback на всю сесію
     const q: Quote = await res.json();
-    cache.set(key, q);
+    cache.set(key, q); // кешуємо ЛИШЕ успіх
     return q;
   } catch {
-    cache.set(key, null);
-    return null;
+    return null; // тимчасова помилка мережі → дозволяємо ретрай наступним викликом
   }
 }

@@ -549,6 +549,23 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     previewIncludeParks,
   } = useGenerationStore();
   const [model, setModel] = useState<THREE.Group | THREE.Mesh | null>(null);
+  // Звільняємо GPU-пам'ять попередньої моделі при заміні/розмонтуванні: кожне прев'ю
+  // вантажить нову сцену, а стара лишала geometry/material/texture у VRAM → WebGL-витік
+  // і падіння канви («context lost») на слабких пристроях після багатьох ітерацій.
+  useEffect(() => {
+    return () => {
+      const old = model as any;
+      old?.traverse?.((o: any) => {
+        if (o.isMesh) {
+          o.geometry?.dispose?.();
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach((mat: any) => {
+            mat?.map?.dispose?.();
+            mat?.dispose?.();
+          });
+        }
+      });
+    };
+  }, [model]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedTestModel, setHasLoadedTestModel] = useState(false);

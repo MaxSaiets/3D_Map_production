@@ -104,11 +104,15 @@ function LoginModal({ onClose }: { onClose: () => void }) {
   const doGoogle = () => wrap(async () => { await signInWithGoogle(); });
   const sendCode = async () => {
     setBusy(true); setError(null);
+    resetRecaptcha(); // прибрати попередній reCAPTCHA-віджет перед новою спробою (не накопичувати)
     try { setConfirm(await startPhoneSignIn(phone.trim())); }
     catch (e: any) { setError(errText(e?.code, e?.message) || t("errSendCode")); resetRecaptcha(); }
     finally { setBusy(false); }
   };
-  const verifyCode = () => wrap(async () => { await confirm.confirm(code.trim()); });
+  const verifyCode = () => wrap(async () => {
+    if (!confirm) { throw { code: "auth/missing-verification" }; } // захист: код без активного confirm
+    await confirm.confirm(code.trim());
+  });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onCloseSafe}>

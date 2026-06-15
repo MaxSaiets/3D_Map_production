@@ -76,6 +76,9 @@ export default function SiteAnalytics() {
           <Script id="ga-init" strategy="afterInteractive">
             {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());` +
               `gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});` +
+              // returning visitor, що вже погодився → застосувати granted ОДРАЗУ (синхронно,
+              // до config) — інакше update з React-ефекту міг загубитись через гонку завантаження.
+              `var _mc=document.cookie.match(/mnd_consent=(granted|denied)/);if(_mc&&_mc[1]==='granted'){gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});}` +
               (GA_ID ? `gtag('config','${GA_ID}',{anonymize_ip:true});` : ``) +
               (GADS_ID ? `gtag('config','${GADS_ID}');` : ``)}
           </Script>

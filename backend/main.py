@@ -1082,7 +1082,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     path = _resolve_model_path(req)
     if path is None:
         raise HTTPException(status_code=404, detail="Файл моделі не знайдено")
-    res = register_download(u["uid"], u.get("email") or "", u["is_admin"])
+    res = register_download(u["uid"], u.get("email") or "", u["is_admin"], req.task_id or "")
     if not res["ok"]:
         raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
     add_model(u["uid"], u.get("email") or "", {
