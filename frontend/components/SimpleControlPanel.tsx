@@ -311,6 +311,8 @@ export function SimpleControlPanel({
     if (!selectedArea) { setError(t("errSelectArea")); return; }
     setError(null);
     setGenerating(true);
+    // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
+    import("@/lib/analytics").then((m) => m.trackConversion("generate", { props: { product: "map" } })).catch(() => {});
     try {
       // Derive layer flags from the CURRENTLY SELECTED style preset, not from the
       // store. The store can lag the visible selection (it isn't synced on mount),

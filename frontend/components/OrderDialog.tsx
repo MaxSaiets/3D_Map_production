@@ -162,7 +162,17 @@ export function OrderDialog({
       const data = await res.json();
       setOrderNumber(String(data.order_number));
       setPaymentUrl(data.payment?.url || null);
-      try { const { track } = await import("@/lib/analytics"); track("order", { product: productType, delivery }); } catch { /* ignore */ }
+      // Google Ads / GA4 conversion — головна ціль реклами (надіслане замовлення = лід).
+      try {
+        const { trackConversion } = await import("@/lib/analytics");
+        const value = priceText ? Number(String(priceText).replace(/[^\d]/g, "")) || undefined : undefined;
+        trackConversion("order", {
+          value,
+          currency: region === "eu" ? "EUR" : "UAH",
+          transactionId: String(data.order_number),
+          props: { product: productType, delivery },
+        });
+      } catch { /* ignore */ }
     } catch (e: any) {
       setError(t("sendFail"));
     } finally {

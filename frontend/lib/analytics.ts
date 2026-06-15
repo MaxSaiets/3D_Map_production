@@ -1,6 +1,21 @@
 // Free, self-hosted analytics — events go to our own backend (/api/track).
 // No third party, no cost, data stays on our server. Consent-gated.
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID; // optional extra; off by default
+// Optional Google stack (off until env IDs are set):
+//   NEXT_PUBLIC_GA_ID    = "G-XXXXXXX"  (Google Analytics 4 — measurement)
+//   NEXT_PUBLIC_GADS_ID  = "AW-XXXXXXX" (Google Ads — conversion tracking)
+//   NEXT_PUBLIC_GADS_LABEL_ORDER|CONTACT|GENERATE = "AW-XXXXXXX/aBcDeF…" (conversion action send_to)
+export const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+export const GADS_ID = process.env.NEXT_PUBLIC_GADS_ID;
+export const GTAG_ON = Boolean(GA_ID || GADS_ID); // load gtag.js if any Google ID is set
+
+export type ConversionAction = "order" | "contact" | "generate" | "lead";
+const GADS_LABELS: Record<ConversionAction, string | undefined> = {
+  order: process.env.NEXT_PUBLIC_GADS_LABEL_ORDER,
+  contact: process.env.NEXT_PUBLIC_GADS_LABEL_CONTACT,
+  generate: process.env.NEXT_PUBLIC_GADS_LABEL_GENERATE,
+  lead: process.env.NEXT_PUBLIC_GADS_LABEL_CONTACT, // alias
+};
+
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const CONSENT_COOKIE = "mnd_consent";
@@ -53,4 +68,66 @@ export function track(event: string, props?: Record<string, unknown>) {
   } catch { /* ignore */ }
   const g = (window as any).gtag;
   if (typeof g === "function") g("event", event, props || {});
+}
+
+/**
+ * Conversion tracking for Google Ads + GA4. Fire on revenue/lead actions
+ * (order submitted, contact request, generation finished). Sends:
+ *   1) self-hosted /api/track (consent-gated, for /admin stats)
+ *   2) a GA4 event (mark as a key event/conversion in the GA4 UI)
+ *   3) a Google Ads conversion (`send_to: AW-XXX/label`) so Smart Bidding can optimise.
+ * Google Consent Mode v2 handles privacy: with ad_storage denied the conversion is
+ * still MODELLED (cookieless), so ad campaigns keep learning even from decliners.
+ */
+export function trackConversion(
+  action: ConversionAction,
+  opts?: { value?: number; currency?: string; transactionId?: string; props?: Record<string, unknown> },
+) {
+  if (typeof window === "undefined") return;
+  const value = opts?.value;
+  const currency = opts?.currency || "UAH";
+  // (1) self-hosted (own banner consent gates this inside track())
+  track(`conv_${action}`, { value, ...(opts?.props || {}) });
+  const g = (window as any).gtag;
+  if (typeof g !== "function") return;
+  // (2) GA4 key event — name it generate_lead/purchase per GA conventions
+  const ga4Event = action === "order" ? "generate_lead" : action === "contact" ? "contact" : action;
+  try { g("event", ga4Event, { value, currency, ...(opts?.props || {}) }); } catch { /* noop */ }
+  // (3) Google Ads conversion
+  const sendTo = GADS_LABELS[action];
+  if (sendTo) {
+    const payload: Record<string, unknown> = { send_to: sendTo };
+    if (value != null) { payload.value = value; payload.currency = currency; }
+    if (opts?.transactionId) payload.transaction_id = opts.transactionId;
+    try { g("event", "conversion", payload); } catch { /* noop */ }
+  }
+}
+
+/**
+ * Google Consent Mode v2 — call BEFORE gtag config (default = denied), then
+ * update on banner accept. Keeps us GDPR-compliant while still feeding Ads
+ * (denied = cookieless modelled conversions).
+ */
+export function gtagConsentDefault() {
+  const g = (window as any).gtag;
+  if (typeof g !== "function") return;
+  g("consent", "default", {
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    analytics_storage: "denied",
+    wait_for_update: 500,
+  });
+}
+
+export function gtagConsentUpdate(granted: boolean) {
+  const g = (window as any).gtag;
+  if (typeof g !== "function") return;
+  const v = granted ? "granted" : "denied";
+  g("consent", "update", {
+    ad_storage: v,
+    ad_user_data: v,
+    ad_personalization: v,
+    analytics_storage: v,
+  });
 }

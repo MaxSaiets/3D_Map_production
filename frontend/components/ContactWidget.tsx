@@ -49,6 +49,8 @@ export function ContactWidget() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setDone(true);
+      // Google Ads / GA4 conversion — контакт-лід (телефон/повідомлення).
+      try { const { trackConversion } = await import("@/lib/analytics"); trackConversion("contact"); } catch { /* ignore */ }
     } catch {
       setError(t("sendFail"));
     } finally {

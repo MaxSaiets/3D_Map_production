@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, getConsent, setConsent, track, isOwnerOptOut } from "@/lib/analytics";
+import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, isOwnerOptOut, gtagConsentUpdate } from "@/lib/analytics";
 
 // Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
 // «Connection to Indexed Database server lost» = Firebase Auth persistence у
@@ -34,6 +34,13 @@ export default function SiteAnalytics() {
   // Page-view tracking (only fires once consent is granted; track() self-guards).
   useEffect(() => { if (consent === "granted") track("pageview"); }, [consent, pathname]);
 
+  // Google Consent Mode v2: push the consent decision to gtag (Ads/GA4). Default
+  // is denied (set in the init script) → conversions modelled cookielessly until accept.
+  useEffect(() => {
+    if (consent === "granted") gtagConsentUpdate(true);
+    else if (consent === "denied") gtagConsentUpdate(false);
+  }, [consent]);
+
   // Free self-hosted error monitoring (Sentry alternative): report uncaught JS
   // errors to /api/track. No PII, throttled. Visible in /admin → topEvents.
   useEffect(() => {
@@ -61,11 +68,16 @@ export default function SiteAnalytics() {
 
   return (
     <>
-      {GA_ID && consent === "granted" && (
+      {/* gtag.js (GA4 + Google Ads). Loaded once any Google ID is set. Consent Mode v2:
+          default DENIED → cookieless modelled conversions until the visitor accepts. */}
+      {GTAG_ON && (
         <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID || GADS_ID}`} strategy="afterInteractive" />
           <Script id="ga-init" strategy="afterInteractive">
-            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true});`}
+            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());` +
+              `gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});` +
+              (GA_ID ? `gtag('config','${GA_ID}',{anonymize_ip:true});` : ``) +
+              (GADS_ID ? `gtag('config','${GADS_ID}');` : ``)}
           </Script>
         </>
       )}

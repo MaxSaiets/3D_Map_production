@@ -668,13 +668,13 @@ function SiteFooter() {
         </div>
         {/* Контакти + реквізити продавця — вимога платіжних систем (LiqPay). */}
         <div className="flex flex-col items-center gap-1 border-t border-line-soft pt-5 text-center text-[13px] text-ink-3 md:flex-row md:flex-wrap md:justify-center md:gap-x-4">
-          <span>{BUSINESS.ownerShort}</span>
+          <span>{t("entity")}</span>
           <span className="hidden md:inline">·</span>
           <a className="hover:text-ink" href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
           <span className="hidden md:inline">·</span>
           <a className="hover:text-ink" href={`tel:${BUSINESS.phone}`}>{BUSINESS.phoneDisplay}</a>
           <span className="hidden md:inline">·</span>
-          <span>{BUSINESS.addressFull}</span>
+          <span>{t("addressLine")}</span>
         </div>
         <div className="text-center">© {new Date().getFullYear()} monadruk.com</div>
       </div>

@@ -781,6 +781,8 @@ export function KeychainControlPanel({
     setError(null);
     setGenerating(true);
     setShowAllZones(false);
+    // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
+    import("@/lib/analytics").then((m) => m.trackConversion("generate", { props: { product: "keychain" } })).catch(() => {});
 
     try {
       // КРИТИЧНО: коли рамка повернута (cropPolygon, cropRotationDeg !== 0),
