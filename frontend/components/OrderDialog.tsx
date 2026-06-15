@@ -229,7 +229,7 @@ export function OrderDialog({
                   <p className="text-[11px] text-[var(--text-secondary)]">{productType === "keychain" ? t("prodKeychain") : t("prodMap")}{summary.size ? ` · ${summary.size}` : ""}</p>
                 </div>
               </div>
-              <button onClick={onClose} aria-label="Закрити" className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-black/5"><X size={20} /></button>
+              <button onClick={onClose} aria-label={t("aria.close")} className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-black/5"><X size={20} /></button>
             </div>
 
             <div className="space-y-3">
@@ -242,7 +242,7 @@ export function OrderDialog({
               <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
               <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
 
-              <div role="radiogroup" aria-label="Регіон доставки" className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+              <div role="radiogroup" aria-label={t("aria.region")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
                 {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
                   <button key={k} type="button" role="radio" aria-checked={region === k}
                     onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
@@ -252,7 +252,7 @@ export function OrderDialog({
                 ))}
               </div>
 
-              <div role="radiogroup" aria-label="Спосіб доставки" className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+              <div role="radiogroup" aria-label={t("aria.method")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
                 {(region === "ua"
                   ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
                   : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])

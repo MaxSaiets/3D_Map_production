@@ -152,6 +152,13 @@
       "title": "3D-Stadtkarten und personalisierte Anhänger — was wir machen",
       "p1": "Monadruk verwandelt jeden Ort der Erde in ein druckbares 3D-Modell: eine 3D-Stadtkarte mit echten Gebäudehöhen, Parks und Flüssen aus OpenStreetMap-Daten, einen Karten-Schlüsselanhänger mit eigenem Text, einen topografischen Anhänger mit echtem Gebirgsrelief aus Satelliten-Höhendaten oder einen Stadtkarten-Magneten. Die 3MF- und STL-Dateien öffnen sich direkt in Bambu Studio und PrusaSlicer.",
       "p2": "Kein 3D-Drucker? Wir drucken für dich in umweltfreundlichem Eco PLA und liefern in die Ukraine und in die EU. Eine 3D-Karte von Berlin, München, Kyjiw oder New York, das Relief der Alpen, ein personalisierter Anhänger zum Jahrestag — wähle einen Ort auf der Karte, und das Modell ist in Minuten fertig."
+    },
+    "alt": {
+      "keychainMap": "Stadtkarten-Schlüsselanhänger",
+      "district": "3D-Stadtbezirk",
+      "cityMap": "3D-Stadtkarte",
+      "districtMap": "{district}, {city} — 3D-Karte",
+      "dims": "2,4 × 1,8 km"
     }
   },
   "createMeta": {
@@ -329,7 +336,12 @@
     "paymentNote": "Die Zahlung wird nach Bestätigung der Bestellung vereinbart. Dein Design und Modell werden automatisch angehängt.",
     "sending": "Senden…",
     "submit": "Bestellen",
-    "leadTime": "Druck & Versand: 2–4 Werktage"
+    "leadTime": "Druck & Versand: 2–4 Werktage",
+    "aria": {
+      "close": "Schließen",
+      "region": "Lieferregion",
+      "method": "Liefermethode"
+    }
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -599,221 +611,336 @@
     "detailOverview": "Übersichtsmaßstab"
   },
   "kc": {
-    "tabs.product": "Produkt",
-    "tabs.map": "Karte",
-    "tabs.label": "Text",
-    "tabs.review": "Druck",
-    "tabs.advanced": "Mehr",
-    "header.eyebrow": "Erstellungsassistent",
-    "header.title": "Erst die Form, dann die Karte",
-    "header.subtitle": "Minimaler Ablauf: Vorlage, Kartenausschnitt, Beschriftung, Generierung.",
-    "ready.good": "Druckbereit",
-    "ready.warn": "Druckbar, aber mit Vorsicht",
-    "ready.bad": "Korrekturen nötig",
-    "ready.fix": "Beheben: {issue}",
-    "ready.nextWarn": "Für ein besseres Ergebnis einen kleineren Ausschnitt oder größeren Kartenbereich wählen.",
-    "ready.nextGood": "Du kannst die 3MF erstellen.",
-    "details.summary": "Druckdetails und Schnellaktionen",
-    "details.printability": "Druckbarkeit",
-    "quick.centerMap": "Karte zentrieren",
-    "quick.maxMap": "Karte maximieren",
-    "quick.centerLabel": "Text zentrieren",
-    "quick.loopTop": "Öse oben",
-    "quick.autoFix": "Auto-Korrektur",
-    "advanced.show": "Erweiterte Einstellungen anzeigen",
-    "advanced.hide": "Erweiterte Einstellungen ausblenden",
-    "advanced.title": "Erweiterte Einstellungen",
-    "advanced.desc": "Dieser Modus ist für dich oder den Druckoperator. Ein Kunde braucht diese Parameter im Hauptablauf nicht.",
-    "advanced.baseLoop": "Basis und Öse",
-    "advanced.shapeLoop": "Form und Öse",
-    "advanced.baseShape": "Trägerform",
-    "advanced.loopType": "Ösentyp",
-    "advanced.loopPosition": "Ösenposition",
-    "advanced.rotation": "Drehung",
-    "advanced.mapText": "Karte und Text",
-    "advanced.mapOrientation": "Kartenausrichtung",
-    "advanced.printFont": "Druckschrift",
-    "advanced.textRotation": "Textdrehung",
-    "advanced.mapLayers": "Kartenebenen",
-    "advanced.uniformBuildings": "Einheitliche Gebäudehöhe",
-    "product.title": "Schlüsselanhänger-Basis prüfen",
-    "product.desc": "Fertige Vorlagen liegen direkt unter der Vorschau. Hier bleiben nur die Schnellaktionen, die ein Kunde nach der Vorlagenwahl wirklich braucht.",
-    "product.maxMap": "Max. Karte",
-    "product.token": "Token 55 x 30",
-    "product.centerLoop": "Öse zentr.",
-    "product.layoutRotation": "Layout-Drehung",
-    "map.title": "Kartenbereich festlegen",
-    "map.desc": "Auf die Karte klicken, um den Rahmen zu verschieben. Nicht unter den empfohlenen Maßstab verkleinern: das System warnt, wenn der Bereich zu groß ist.",
-    "map.orientation": "Ausrichtung auf der Karte",
-    "label.title": "Beschriftung unten",
-    "label.desc": "Text ändert sich ohne Neugenerierung. Für den Druck sind eine kurze Beschriftung und ein dickerer Strich besser.",
-    "label.printFont": "Drucksichere Schrift",
-    "label.placement": "Seite / Platzierung",
-    "label.current": "Aktueller Text: {height} mm Höhe, {stroke} mm Strich, Stil {style}.",
-    "label.secondLine": "Zweite Zeile · Datum oder Koordinaten",
-    "label.insertCoords": "Koordinaten der Bereichsmitte einfügen",
-    "label.secondHint": "Kleinerer Schriftgrad direkt unter der Hauptbeschriftung. 📍 fügt die Koordinaten des gewählten Bereichs ein.",
-    "label.backTitle": "Rückseiten-Text · Gravur",
-    "label.backPlaceholder": "NAME · DATUM",
-    "label.backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar.",
-    "review.title": "Prüfung vor der Generierung",
-    "review.desc": "Hier gehören nur für den Kunden verständliche Parameter hin: Größe, Text, Detailgrad und Druckbereitschaft.",
-    "review.noText": "kein Text",
-    "review.generated3mf": "Generierte 3MF",
-    "review.layersNote": "Text und Rand sind separate Ebenen, die Karte ist auf den Innenbereich des Anhängers zugeschnitten.",
-    "metric.base": "Basis",
-    "metric.loop": "Öse",
-    "metric.hole": "Loch",
-    "metric.detail": "Detailgrad",
-    "metric.status": "Status",
-    "metric.product": "Produkt",
-    "metric.map": "Karte",
-    "metric.signature": "Beschriftung",
-    "loop.round": "Rund",
-    "loop.teardrop": "Tropfen",
-    "loop.slot": "Schlitz",
-    "loop.sideTab": "Lasche",
-    "detail.bad": "schlecht",
-    "detail.edge": "grenzwertig",
-    "detail.good": "gut",
-    "detail.pickCrop": "Ausschnitt wählen",
-    "topo.label": "🏔 Höhenrelief (Topo)",
-    "topo.hint": "Berge statt Straßen: Hoverla, Alpen, Küste. Kartenebenen werden ausgeschaltet.",
-    "topo.reliefHeight": "Reliefhöhe",
-    "gpx.title": "🏃 Route (GPX) auf dem Anhänger",
-    "gpx.replace": "Ersetzen",
-    "gpx.pickFile": "Datei wählen",
-    "gpx.loaded": "✓ {name} · {count} Punkte",
-    "gpx.remove": "Entfernen",
-    "gpx.privacy": "🔒 Deine Route dient nur zum Erstellen des Modells. Wir veröffentlichen oder teilen sie nicht.",
-    "gpx.hint": "Eine Lauf-/Wanderstrecke — eine Linie über der Karte. Der Bereich richtet sich automatisch auf die Route aus.",
-    "gpx.readError": "GPX-Datei konnte nicht gelesen werden",
-    "shape.rounded": "Rechteck",
-    "shape.token": "Token",
-    "shape.capsule": "Kapsel",
-    "shape.octagon": "Achteck",
-    "shape.heart": "Herz ♥",
-    "shape.house": "Haus",
-    "shape.puzzleL": "Puzzle L 🧩",
-    "shape.puzzleR": "Puzzle R 🧩",
-    "shape.heartL": "Paarherz L 💕",
-    "shape.heartR": "Paarherz R 💕",
-    "loopPos.topLeft": "Oben links",
-    "loopPos.topRight": "Oben rechts",
-    "loopPos.right": "Rechts",
-    "loopPos.bottomLeft": "Unten links",
-    "place.bottom": "Unten",
-    "place.top": "Oben",
-    "place.left": "Links",
-    "place.right": "Rechts",
-    "slider.labelWidth": "Beschriftungsbreite",
-    "slider.textHeight": "Buchstabenhöhe",
-    "slider.strokeWidth": "Strichstärke",
-    "slider.baseWidth": "Basisbreite",
-    "slider.baseHeight": "Basishöhe",
-    "slider.baseThickness": "Basisdicke",
-    "slider.holeGuideRadius": "Führungsradius um das Loch",
-    "slider.loopOuterRadius": "Äußerer Ösenradius",
-    "slider.ringHole": "Ringloch",
-    "slider.cornerRadius": "Eckenradius",
-    "slider.labelBand": "Beschriftungsband",
-    "slider.rimWidth": "Seitenrandbreite",
-    "slider.rimHeight": "Seitenrandhöhe",
-    "slider.mapWidth": "Breite des Kartenbereichs",
-    "slider.mapHeight": "Höhe des Kartenbereichs",
-    "slider.maxBuildings": "Max. Gebäude",
-    "layer.base": "Basis",
-    "layer.rim": "Rand",
-    "layer.water": "Wasser",
-    "layer.parks": "Parks",
-    "layer.roads": "Straßen",
-    "layer.buildings": "Gebäude",
-    "layer.text": "Text",
-    "layer.top": "oben {z} mm",
-    "layer.size": ", {w} x {h} mm",
-    "layer.noWater": "im gewählten Bereich gibt es möglicherweise kein Wasser",
-    "layer.missing": "Ebene wurde nicht erstellt",
-    "layerTone.ok": "OK",
-    "layerTone.warn": "Hinweis",
-    "layerTone.bad": "Problem",
-    "printability.idle.title": "Zuerst einen Rahmen auf die Karte setzen",
-    "printability.idle.detail": "Ein Klick auf die Karte verschiebt den Druckbereich, das große türkise Quadrat ändert die Größe.",
-    "printability.topo.title": "Topo-Modus: das Höhenrelief wird gedruckt",
-    "printability.topo.detail": "Kartenebenen sind aus. Große Bergregionen (5–20 km) sind genau das Richtige für ein ausdrucksstarkes Relief.",
-    "printability.tooLarge.title": "Bereich zu groß für FDM",
-    "printability.tooLarge.detail": "Das minimale Detail von 0,4 mm entspricht jetzt ~{m} m. Feine Straßen und Text können zerfallen.",
-    "printability.onEdge.title": "Druckbar, aber Detailgrad grenzwertig",
-    "printability.onEdge.detail": "0,4 mm entspricht ~{m} m. Für dünne Straßen besser einen kleineren Bereich wählen.",
-    "printability.good.title": "Maßstab zum Drucken geeignet",
-    "printability.good.detail": "0,4 mm entspricht ~{m} m. Eine gute Balance für einen Anhänger.",
-    "check.crop.label": "Kartenmaßstab",
-    "check.crop.detail": "{min} mm = ~{m} m",
-    "check.crop.empty": "Einen Rahmen auf die Karte setzen",
-    "check.text.label": "Text",
-    "check.text.tooLong": "Beschriftung zu groß für diese Breite: kürzen, Feld verbreitern oder Narrow wählen",
-    "check.text.detail": "{stroke} mm Strich, {height} mm Höhe",
-    "check.loop.label": "Öse",
-    "check.loop.detail": "Loch Ø{hole} mm, Wand {wall} mm",
-    "check.base.label": "Basis und Rand",
-    "check.base.detail": "{base} mm Basis, {rim} mm Rand",
-    "check.layers.label": "Ebenen",
-    "check.layers.topo": "Topo-Relief {relief} mm (Kartenebenen aus)",
-    "check.layers.detail": "Straßen {roads} mm, Wasser {water} mm, Gebäude bis {buildings} mm",
-    "verdict.bad.title": "3MF muss geprüft werden",
-    "verdict.bad.detail": "Problem-Ebenen: {layers}.",
-    "verdict.warn.title": "3MF erstellt, es gibt Warnungen",
-    "verdict.warn.detail": "Prüfen: {layers}.",
-    "verdict.good.title": "3MF sieht bereit für den Slicer aus",
-    "verdict.good.detail": "Basis, Rand, Karte, Gebäude und Text sind als separate Ebenen vorhanden.",
-    "status.generating": "Anhänger wird generiert",
-    "status.ready3mf": "3MF fertig",
-    "status.ready": "Fertig",
-    "btn.generating": "Generierung...",
-    "btn.create3mf": "3MF erstellen",
-    "btn.buyOrder": "Kaufen / Druck bestellen",
-    "btn.order": "Druck bestellen",
-    "btn.download3mf": "3MF herunterladen",
-    "quota.remaining": "{remaining} von {limit} kostenlosen Downloads übrig",
-    "quota.exhausted": "Kostenlose Downloads aufgebraucht — Druckbestellung aufgeben",
-    "sticky.priceLabel": "Anhänger mit Karte",
-    "sticky.generating": "Generierung… {progress}%",
-    "sticky.createKeychain": "Anhänger erstellen",
-    "sticky.download": "Herunterladen",
-    "error.generateFailed": "Anhänger konnte nicht generiert werden",
-    "error.noArea": "Markiere zuerst einen Bereich auf der Karte",
-    "error.notReady": "Nicht druckbereit: {issues}.",
-    "error.generic": "Fehler bei der Anhänger-Generierung",
-    "error.limitContact": "Ich habe 5 kostenlose Anhänger-Downloads aufgebraucht. Ich möchte mehr / einen Druck — bitte kontaktiere mich.",
-    "error.downloadFailed": "3MF konnte nicht heruntergeladen werden",
-    "templates.ready": "Fertige Vorlagen",
-    "templates.tapClick": "tap / click",
-    "designer.hintFront": "Ziehe die Karte, den Text, die Öse oder den Griff unten rechts",
-    "designer.hintBack": "Rückseite: Loch, Rand und Innentext steuern",
-    "designer.front": "Vorderseite",
-    "designer.back": "Rückseite",
-    "designer.pickArea": "Wähle einen Bereich auf der Karte",
-    "tpl.classicWide.name": "35 x 55",
-    "tpl.classicWide.desc": "Standardmäßiger kompakter vertikaler Anhänger.",
-    "tpl.token55.name": "Token 55 x 30",
-    "tpl.token55.desc": "Standard-Token 55×30 mit linkem Ø3 mm Loch und Kapselbasis.",
-    "tpl.heart46.name": "Herz 46 × 42",
-    "tpl.heart46.desc": "Eine Karte des Ortes im Herzen — ein Geschenk für zwei.",
-    "tpl.house44.name": "Haus 44 × 48",
-    "tpl.house44.desc": "Zuhause ist da, wo deine Straße ist. Dach mit Öse oben.",
-    "tpl.puzzleLeft.name": "Puzzle L · 40 × 42",
-    "tpl.puzzleLeft.desc": "Hälfte eines Paares: deine Stadt. Die Nase rechts verbindet sich mit Hälfte R.",
-    "tpl.puzzleRight.name": "Puzzle R · 40 × 42",
-    "tpl.puzzleRight.desc": "Hälfte eines Paares: die Stadt eines geliebten Menschen. Die Aussparung links nimmt Hälfte L auf.",
-    "tpl.heartPairLeft.name": "Paarherz · L · 30 × 44",
-    "tpl.heartPairLeft.desc": "Halbes Herz für zwei: deine Stadt. Der Kantenverschluss verbindet sich mit Hälfte R zu einem vollen Herz.",
-    "tpl.heartPairRight.name": "Paarherz · R · 30 × 44",
-    "tpl.heartPairRight.desc": "Halbes Herz für zwei: die Stadt eines geliebten Menschen. Die Aussparung nimmt Hälfte L auf.",
-    "tpl.rightLoop.name": "Side Loop",
-    "tpl.rightLoop.desc": "Öse rechts, praktisch für eine breite Karte.",
-    "tpl.verticalTag.name": "Vertical",
-    "tpl.verticalTag.desc": "Vertikaler Anhänger mit gedrehter Beschriftung.",
-    "tpl.softCapsule.name": "Capsule",
-    "tpl.softCapsule.desc": "Weiche Kapselform mit Schlitzöse."
+    "tabs": {
+      "product": "Produkt",
+      "map": "Karte",
+      "label": "Text",
+      "review": "Druck",
+      "advanced": "Mehr"
+    },
+    "header": {
+      "eyebrow": "Erstellungsassistent",
+      "title": "Erst die Form, dann die Karte",
+      "subtitle": "Minimaler Ablauf: Vorlage, Kartenausschnitt, Beschriftung, Generierung."
+    },
+    "ready": {
+      "good": "Druckbereit",
+      "warn": "Druckbar, aber mit Vorsicht",
+      "bad": "Korrekturen nötig",
+      "fix": "Beheben: {issue}",
+      "nextWarn": "Für ein besseres Ergebnis einen kleineren Ausschnitt oder größeren Kartenbereich wählen.",
+      "nextGood": "Du kannst die 3MF erstellen."
+    },
+    "details": {
+      "summary": "Druckdetails und Schnellaktionen",
+      "printability": "Druckbarkeit"
+    },
+    "quick": {
+      "centerMap": "Karte zentrieren",
+      "maxMap": "Karte maximieren",
+      "centerLabel": "Text zentrieren",
+      "loopTop": "Öse oben",
+      "autoFix": "Auto-Korrektur"
+    },
+    "advanced": {
+      "show": "Erweiterte Einstellungen anzeigen",
+      "hide": "Erweiterte Einstellungen ausblenden",
+      "title": "Erweiterte Einstellungen",
+      "desc": "Dieser Modus ist für dich oder den Druckoperator. Ein Kunde braucht diese Parameter im Hauptablauf nicht.",
+      "baseLoop": "Basis und Öse",
+      "shapeLoop": "Form und Öse",
+      "baseShape": "Trägerform",
+      "loopType": "Ösentyp",
+      "loopPosition": "Ösenposition",
+      "rotation": "Drehung",
+      "mapText": "Karte und Text",
+      "mapOrientation": "Kartenausrichtung",
+      "printFont": "Druckschrift",
+      "textRotation": "Textdrehung",
+      "mapLayers": "Kartenebenen",
+      "uniformBuildings": "Einheitliche Gebäudehöhe"
+    },
+    "product": {
+      "title": "Schlüsselanhänger-Basis prüfen",
+      "desc": "Fertige Vorlagen liegen direkt unter der Vorschau. Hier bleiben nur die Schnellaktionen, die ein Kunde nach der Vorlagenwahl wirklich braucht.",
+      "maxMap": "Max. Karte",
+      "token": "Token 55 x 30",
+      "centerLoop": "Öse zentr.",
+      "layoutRotation": "Layout-Drehung"
+    },
+    "map": {
+      "title": "Kartenbereich festlegen",
+      "desc": "Auf die Karte klicken, um den Rahmen zu verschieben. Nicht unter den empfohlenen Maßstab verkleinern: das System warnt, wenn der Bereich zu groß ist.",
+      "orientation": "Ausrichtung auf der Karte"
+    },
+    "label": {
+      "title": "Beschriftung unten",
+      "desc": "Text ändert sich ohne Neugenerierung. Für den Druck sind eine kurze Beschriftung und ein dickerer Strich besser.",
+      "printFont": "Drucksichere Schrift",
+      "placement": "Seite / Platzierung",
+      "current": "Aktueller Text: {height} mm Höhe, {stroke} mm Strich, Stil {style}.",
+      "secondLine": "Zweite Zeile · Datum oder Koordinaten",
+      "insertCoords": "Koordinaten der Bereichsmitte einfügen",
+      "secondHint": "Kleinerer Schriftgrad direkt unter der Hauptbeschriftung. 📍 fügt die Koordinaten des gewählten Bereichs ein.",
+      "backTitle": "Rückseiten-Text · Gravur",
+      "backPlaceholder": "NAME · DATUM",
+      "backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar."
+    },
+    "review": {
+      "title": "Prüfung vor der Generierung",
+      "desc": "Hier gehören nur für den Kunden verständliche Parameter hin: Größe, Text, Detailgrad und Druckbereitschaft.",
+      "noText": "kein Text",
+      "generated3mf": "Generierte 3MF",
+      "layersNote": "Text und Rand sind separate Ebenen, die Karte ist auf den Innenbereich des Anhängers zugeschnitten."
+    },
+    "metric": {
+      "base": "Basis",
+      "loop": "Öse",
+      "hole": "Loch",
+      "detail": "Detailgrad",
+      "status": "Status",
+      "product": "Produkt",
+      "map": "Karte",
+      "signature": "Beschriftung"
+    },
+    "loop": {
+      "round": "Rund",
+      "teardrop": "Tropfen",
+      "slot": "Schlitz",
+      "sideTab": "Lasche"
+    },
+    "detail": {
+      "bad": "schlecht",
+      "edge": "grenzwertig",
+      "good": "gut",
+      "pickCrop": "Ausschnitt wählen"
+    },
+    "topo": {
+      "label": "🏔 Höhenrelief (Topo)",
+      "hint": "Berge statt Straßen: Hoverla, Alpen, Küste. Kartenebenen werden ausgeschaltet.",
+      "reliefHeight": "Reliefhöhe"
+    },
+    "gpx": {
+      "title": "🏃 Route (GPX) auf dem Anhänger",
+      "replace": "Ersetzen",
+      "pickFile": "Datei wählen",
+      "loaded": "✓ {name} · {count} Punkte",
+      "remove": "Entfernen",
+      "privacy": "🔒 Deine Route dient nur zum Erstellen des Modells. Wir veröffentlichen oder teilen sie nicht.",
+      "hint": "Eine Lauf-/Wanderstrecke — eine Linie über der Karte. Der Bereich richtet sich automatisch auf die Route aus.",
+      "readError": "GPX-Datei konnte nicht gelesen werden"
+    },
+    "shape": {
+      "rounded": "Rechteck",
+      "token": "Token",
+      "capsule": "Kapsel",
+      "octagon": "Achteck",
+      "heart": "Herz ♥",
+      "house": "Haus",
+      "puzzleL": "Puzzle L 🧩",
+      "puzzleR": "Puzzle R 🧩",
+      "heartL": "Paarherz L 💕",
+      "heartR": "Paarherz R 💕"
+    },
+    "loopPos": {
+      "topLeft": "Oben links",
+      "topRight": "Oben rechts",
+      "right": "Rechts",
+      "bottomLeft": "Unten links"
+    },
+    "place": {
+      "bottom": "Unten",
+      "top": "Oben",
+      "left": "Links",
+      "right": "Rechts"
+    },
+    "slider": {
+      "labelWidth": "Beschriftungsbreite",
+      "textHeight": "Buchstabenhöhe",
+      "strokeWidth": "Strichstärke",
+      "baseWidth": "Basisbreite",
+      "baseHeight": "Basishöhe",
+      "baseThickness": "Basisdicke",
+      "holeGuideRadius": "Führungsradius um das Loch",
+      "loopOuterRadius": "Äußerer Ösenradius",
+      "ringHole": "Ringloch",
+      "cornerRadius": "Eckenradius",
+      "labelBand": "Beschriftungsband",
+      "rimWidth": "Seitenrandbreite",
+      "rimHeight": "Seitenrandhöhe",
+      "mapWidth": "Breite des Kartenbereichs",
+      "mapHeight": "Höhe des Kartenbereichs",
+      "maxBuildings": "Max. Gebäude"
+    },
+    "layer": {
+      "base": "Basis",
+      "rim": "Rand",
+      "water": "Wasser",
+      "parks": "Parks",
+      "roads": "Straßen",
+      "buildings": "Gebäude",
+      "text": "Text",
+      "top": "oben {z} mm",
+      "size": ", {w} x {h} mm",
+      "noWater": "im gewählten Bereich gibt es möglicherweise kein Wasser",
+      "missing": "Ebene wurde nicht erstellt"
+    },
+    "layerTone": {
+      "ok": "OK",
+      "warn": "Hinweis",
+      "bad": "Problem"
+    },
+    "printability": {
+      "idle": {
+        "title": "Zuerst einen Rahmen auf die Karte setzen",
+        "detail": "Ein Klick auf die Karte verschiebt den Druckbereich, das große türkise Quadrat ändert die Größe."
+      },
+      "topo": {
+        "title": "Topo-Modus: das Höhenrelief wird gedruckt",
+        "detail": "Kartenebenen sind aus. Große Bergregionen (5–20 km) sind genau das Richtige für ein ausdrucksstarkes Relief."
+      },
+      "tooLarge": {
+        "title": "Bereich zu groß für FDM",
+        "detail": "Das minimale Detail von 0,4 mm entspricht jetzt ~{m} m. Feine Straßen und Text können zerfallen."
+      },
+      "onEdge": {
+        "title": "Druckbar, aber Detailgrad grenzwertig",
+        "detail": "0,4 mm entspricht ~{m} m. Für dünne Straßen besser einen kleineren Bereich wählen."
+      },
+      "good": {
+        "title": "Maßstab zum Drucken geeignet",
+        "detail": "0,4 mm entspricht ~{m} m. Eine gute Balance für einen Anhänger."
+      }
+    },
+    "check": {
+      "crop": {
+        "label": "Kartenmaßstab",
+        "detail": "{min} mm = ~{m} m",
+        "empty": "Einen Rahmen auf die Karte setzen"
+      },
+      "text": {
+        "label": "Text",
+        "tooLong": "Beschriftung zu groß für diese Breite: kürzen, Feld verbreitern oder Narrow wählen",
+        "detail": "{stroke} mm Strich, {height} mm Höhe"
+      },
+      "loop": {
+        "label": "Öse",
+        "detail": "Loch Ø{hole} mm, Wand {wall} mm"
+      },
+      "base": {
+        "label": "Basis und Rand",
+        "detail": "{base} mm Basis, {rim} mm Rand"
+      },
+      "layers": {
+        "label": "Ebenen",
+        "topo": "Topo-Relief {relief} mm (Kartenebenen aus)",
+        "detail": "Straßen {roads} mm, Wasser {water} mm, Gebäude bis {buildings} mm"
+      }
+    },
+    "verdict": {
+      "bad": {
+        "title": "3MF muss geprüft werden",
+        "detail": "Problem-Ebenen: {layers}."
+      },
+      "warn": {
+        "title": "3MF erstellt, es gibt Warnungen",
+        "detail": "Prüfen: {layers}."
+      },
+      "good": {
+        "title": "3MF sieht bereit für den Slicer aus",
+        "detail": "Basis, Rand, Karte, Gebäude und Text sind als separate Ebenen vorhanden."
+      }
+    },
+    "status": {
+      "generating": "Anhänger wird generiert",
+      "ready3mf": "3MF fertig",
+      "ready": "Fertig"
+    },
+    "btn": {
+      "generating": "Generierung...",
+      "create3mf": "3MF erstellen",
+      "buyOrder": "Kaufen / Druck bestellen",
+      "order": "Druck bestellen",
+      "download3mf": "3MF herunterladen"
+    },
+    "quota": {
+      "remaining": "{remaining} von {limit} kostenlosen Downloads übrig",
+      "exhausted": "Kostenlose Downloads aufgebraucht — Druckbestellung aufgeben"
+    },
+    "sticky": {
+      "priceLabel": "Anhänger mit Karte",
+      "generating": "Generierung… {progress}%",
+      "createKeychain": "Anhänger erstellen",
+      "download": "Herunterladen"
+    },
+    "error": {
+      "generateFailed": "Anhänger konnte nicht generiert werden",
+      "noArea": "Markiere zuerst einen Bereich auf der Karte",
+      "notReady": "Nicht druckbereit: {issues}.",
+      "generic": "Fehler bei der Anhänger-Generierung",
+      "limitContact": "Ich habe 5 kostenlose Anhänger-Downloads aufgebraucht. Ich möchte mehr / einen Druck — bitte kontaktiere mich.",
+      "downloadFailed": "3MF konnte nicht heruntergeladen werden"
+    },
+    "templates": {
+      "ready": "Fertige Vorlagen",
+      "tapClick": "tap / click"
+    },
+    "designer": {
+      "hintFront": "Ziehe die Karte, den Text, die Öse oder den Griff unten rechts",
+      "hintBack": "Rückseite: Loch, Rand und Innentext steuern",
+      "front": "Vorderseite",
+      "back": "Rückseite",
+      "pickArea": "Wähle einen Bereich auf der Karte"
+    },
+    "tpl": {
+      "classicWide": {
+        "name": "35 x 55",
+        "desc": "Standardmäßiger kompakter vertikaler Anhänger."
+      },
+      "token55": {
+        "name": "Token 55 x 30",
+        "desc": "Standard-Token 55×30 mit linkem Ø3 mm Loch und Kapselbasis."
+      },
+      "heart46": {
+        "name": "Herz 46 × 42",
+        "desc": "Eine Karte des Ortes im Herzen — ein Geschenk für zwei."
+      },
+      "house44": {
+        "name": "Haus 44 × 48",
+        "desc": "Zuhause ist da, wo deine Straße ist. Dach mit Öse oben."
+      },
+      "puzzleLeft": {
+        "name": "Puzzle L · 40 × 42",
+        "desc": "Hälfte eines Paares: deine Stadt. Die Nase rechts verbindet sich mit Hälfte R."
+      },
+      "puzzleRight": {
+        "name": "Puzzle R · 40 × 42",
+        "desc": "Hälfte eines Paares: die Stadt eines geliebten Menschen. Die Aussparung links nimmt Hälfte L auf."
+      },
+      "heartPairLeft": {
+        "name": "Paarherz · L · 30 × 44",
+        "desc": "Halbes Herz für zwei: deine Stadt. Der Kantenverschluss verbindet sich mit Hälfte R zu einem vollen Herz."
+      },
+      "heartPairRight": {
+        "name": "Paarherz · R · 30 × 44",
+        "desc": "Halbes Herz für zwei: die Stadt eines geliebten Menschen. Die Aussparung nimmt Hälfte L auf."
+      },
+      "rightLoop": {
+        "name": "Side Loop",
+        "desc": "Öse rechts, praktisch für eine breite Karte."
+      },
+      "verticalTag": {
+        "name": "Vertical",
+        "desc": "Vertikaler Anhänger mit gedrehter Beschriftung."
+      },
+      "softCapsule": {
+        "name": "Capsule",
+        "desc": "Weiche Kapselform mit Schlitzöse."
+      }
+    },
+    "unit": {
+      "mm": "mm"
+    }
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
@@ -942,5 +1069,130 @@
     "qaBaseNotWatertight": "die Basis ist nicht vollständig wasserdicht — der Slicer druckt sie trotzdem, aber prüfe das Modell besser",
     "qaSlicerNotFound": "der Slicer ist auf dem Server nicht verfügbar — die Prüfung wurde übersprungen",
     "qaLayerNotWatertight": "{layer}: die Schicht ist nicht vollständig wasserdicht"
+  },
+  "kcp": {
+    "loadingMap": "Karte wird geladen...",
+    "loading3d": "3D-Vorschau wird geladen…",
+    "statusGenerating": "Generierung",
+    "statusReady": "Schlüsselanhänger fertig",
+    "statusSelected": "Bereich ausgewählt",
+    "statusPickArea": "Bereich auswählen",
+    "eyebrow": "Schlüsselanhänger-Konfigurator",
+    "title": "Schlüsselanhänger-Werkstatt mit Karte",
+    "subtitle": "Eine flache mehrfarbige Platte mit verstärkter Öse, einem sauberen Streifen für die Beschriftung und kontrollierter Gebäudehöhe.",
+    "navMaps": "Karten",
+    "navAccount": "Konto",
+    "city": "Stadt",
+    "state": "Status",
+    "pickShape": "Form des Schlüsselanhängers wählen",
+    "pickShapeHint": "Beispiel antippen — die Form wird übernommen",
+    "dragHint": "Weiter: Ziehe Karte, Beschriftung und Öse direkt in der Vorschau. Karte und Beschriftung lassen sich <rotate>drehen</rotate> — ziehe den Eckgriff <b>⟳</b> auf der Karte oder den grünen Griff <b>↻</b> über der Beschriftung.",
+    "mapTitle": "Form auf der Karte platzieren",
+    "mapSubtitle": "Ziehe den Rahmen; der Griff ⟳ auf der Karte dreht ihn. Der türkise Rahmen hält die Proportionen mit der Vorschau im Einklang.",
+    "layoutTitle": "Größe, Kartenbereich, Öse und Beschriftung",
+    "layoutSubtitle": "Stelle die Form des Schlüsselanhängers lokal ein und setze dann den gewählten Kartenbereich in den gestrichelten Bereich ein.",
+    "preview3dTitle": "3D-Vorschau des fertigen Schlüsselanhängers",
+    "layers": "Schichten",
+    "emptyTitle": "Das 3D-Modell erscheint nach der Erstellung",
+    "emptyBody": "Drücke „3MF erstellen“ — und hier erscheint eine echte 3D-Vorschau mit allen Schichten.",
+    "generatingPct": "Generierung: {progress}%",
+    "tour": {
+      "step1Title": "Stadt und Bezirk wählen",
+      "step1Body": "Wähle eine Stadt und einen Punkt auf der Karte — das wird die Karte auf deinem Schlüsselanhänger.",
+      "step2Title": "Vorlage wählen",
+      "step2Body": "Token 55×30, klassisch oder quadratisch — antippen, und die Maße werden automatisch gesetzt.",
+      "step3Title": "Beschriftung hinzufügen",
+      "step3Body": "Gib Text ein (z. B. den Stadtnamen), verschiebe oder drehe ihn. Drücke dann „Generieren“."
+    }
+  },
+  "cities": {
+    "Kyiv": "Kyiv",
+    "Khmelnytskyi": "Khmelnytskyi",
+    "Lviv": "Lviv",
+    "Odesa": "Odesa",
+    "Dnipro": "Dnipro",
+    "Kharkiv": "Kharkiv",
+    "Vinnytsia": "Vinnytsia",
+    "Ternopil": "Ternopil",
+    "IvanoFrankivsk": "Ivano-Frankivsk",
+    "Chernihiv": "Chernihiv",
+    "Zaporizhzhia": "Zaporizhzhia",
+    "Kryvyi_Rih": "Kryvyi Rih",
+    "Mykolaiv": "Mykolaiv",
+    "Poltava": "Poltava",
+    "Cherkasy": "Cherkasy",
+    "Zhytomyr": "Zhytomyr",
+    "Sumy": "Sumy",
+    "Rivne": "Rivne",
+    "Lutsk": "Lutsk",
+    "Uzhhorod": "Uzhhorod",
+    "Chernivtsi": "Chernivtsi",
+    "Kherson": "Kherson",
+    "Kropyvnytskyi": "Kropyvnytskyi",
+    "Manual": "Andere / manuell"
+  },
+  "lifeprev": {
+    "realLifePreview": "Vorschau im Alltag",
+    "slicerPreview": "Slicer-Vorschau",
+    "layerOrder": "Druckreihenfolge der Schichten",
+    "clipInside": "Die Karte sollte innerhalb der Kante beschnitten werden; Text und Rand bleiben separate Schichten für saubere Farben.",
+    "printNote": "Druckhinweis",
+    "minStroke": "Mindeststrich: 0,4 mm. Der Text wird am besten als letzte Farbschicht gedruckt."
+  },
+  "live": {
+    "pickAreaOnMap": "Wählen Sie einen Bereich auf der Karte",
+    "pickArea": "Bereich wählen",
+    "loading": "Wird geladen"
+  },
+  "search": {
+    "placeholder": "Stadt, Ort oder Adresse suchen…",
+    "myPlace": "Mein Standort",
+    "myLocation": "Mein Standort",
+    "clear": "Löschen"
+  },
+  "modal": {
+    "loading": "3D wird geladen…",
+    "close": "Schließen",
+    "descKey": "Karten-Schlüsselanhänger 55×30 mm",
+    "descMap": "3D-Stadtviertel",
+    "hint": "ziehen / Rad = Zoom",
+    "ctaKey": "Schlüsselanhänger erstellen",
+    "ctaMap": "Karte erstellen"
+  },
+  "preview": {
+    "generating": "Modell wird generiert...",
+    "batchLoadError": "Batch-Vorschau konnte nicht geladen werden",
+    "modelLoadError": "Modell konnte nicht geladen werden",
+    "tools": {
+      "fullscreen": "Vollbild",
+      "collapse": "Einklappen",
+      "viewTools": "Ansichtswerkzeuge",
+      "sceneControl": "Schnelle Szenensteuerung",
+      "grid": "Gitter",
+      "axes": "Achsen",
+      "onF": "Aktiviert",
+      "hiddenF": "Ausgeblendet",
+      "onPl": "Aktiviert",
+      "hiddenPl": "Ausgeblendet",
+      "rotation": "Rotation",
+      "camera": "Kamera",
+      "model": "Modell",
+      "rotateHint": "Camera: Die Kamera dreht sich. Model: Ziehen dreht das Modell selbst.",
+      "cameraHint": "Orbit: Standardansicht. Fly: freie Bewegung WASD + Maus.",
+      "flySpeed": "Fluggeschwindigkeit",
+      "terrainShading": "Geländeschattierung",
+      "shadingSmooth": "Sanfte Hangschattierung",
+      "shadingFlat": "Schärfere Geländekanten",
+      "shadingToggleHint": "Smooth = weiche Normalen. Flat = schärferes Gelände ohne sichtbare Nähte.",
+      "hintFly": "Fly: WASD zum Bewegen, Q/E hoch/runter, Shift zum Beschleunigen, rechte Maustaste zum Umsehen.",
+      "hintModel": "Ziehen Sie das Modell, um es zu drehen, Doppelklick setzt die Ausrichtung zurück.",
+      "hintCamera": "Ziehen steuert die Kamera, das Mausrad ändert die Entfernung.",
+      "visibility": "Komponentensichtbarkeit:",
+      "terrain": "Gelände",
+      "roads": "Straßen",
+      "buildings": "Gebäude",
+      "water": "Wasser",
+      "parks": "Parks"
+    }
   }
 }

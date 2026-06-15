@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), {
   ssr: false,
@@ -14,6 +15,7 @@ export type ModalModel = { url: string; label: string; kind: "key" | "map"; pric
 
 /** Fullscreen, draggable + zoomable 3D viewer for one model. */
 export default function ModelModal({ model, onClose }: { model: ModalModel | null; onClose: () => void }) {
+  const t = useTranslations("modal");
   useEffect(() => {
     if (!model) return;
     const prev = document.body.style.overflow;
@@ -35,7 +37,7 @@ export default function ModelModal({ model, onClose }: { model: ModalModel | nul
       >
         <button
           onClick={onClose}
-          aria-label="Закрити"
+          aria-label={t("close")}
           className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-ink/80 text-white transition hover:bg-ink"
         >
           <X size={18} />
@@ -45,14 +47,14 @@ export default function ModelModal({ model, onClose }: { model: ModalModel | nul
           <div>
             <div className="font-serif text-lg text-ink">{model.label}</div>
             <div className="text-[12px] text-ink-3">
-              {model.kind === "key" ? "Брелок-мапа 55×30 мм" : "3D-район міста"} · перетягни / колесо = масштаб
+              {model.kind === "key" ? t("descKey") : t("descMap")} · {t("hint")}
             </div>
           </div>
           <Link
             href={model.kind === "key" ? "/keychains" : "/create"}
             className="shrink-0 rounded-full bg-forest px-5 py-2.5 text-sm font-bold text-white hover:brightness-110"
           >
-            {model.price || (model.kind === "key" ? "Створити брелок" : "Створити мапу")} →
+            {model.price || (model.kind === "key" ? t("ctaKey") : t("ctaMap")) } →
           </Link>
         </div>
       </div>

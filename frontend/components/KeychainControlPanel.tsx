@@ -1086,7 +1086,7 @@ export function KeychainControlPanel({
             description={t("product.desc")}
           />
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Metric label={t("metric.base")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
+            <Metric label={t("metric.base")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} ${t("unit.mm")}`} />
             <Metric label={t("metric.loop")} value={design.baseShape === "token" ? `${t("metric.hole")} Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? t("loop.round") : design.loopStyle === "slot" ? "slot" : design.loopStyle === "side-tab" ? t("loop.sideTab") : t("loop.teardrop")} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -1160,7 +1160,7 @@ export function KeychainControlPanel({
             {topoMode && (
               <SliderField
                 label={t("topo.reliefHeight")}
-                valueLabel={`${reliefMm.toFixed(1)} мм`}
+                valueLabel={`${reliefMm.toFixed(1)} ${t("unit.mm")}`}
                 min={0.6}
                 max={4.0}
                 step={0.1}
@@ -1302,9 +1302,9 @@ export function KeychainControlPanel({
             {t("label.current", { height: design.labelTextHeightMm.toFixed(1), stroke: design.labelStrokeMm.toFixed(2), style: design.labelFontStyle })}
           </div>
           <div className="mt-4 space-y-3">
-            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
-            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} ${t("unit.mm")}`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} ${t("unit.mm")}`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} ${t("unit.mm")}`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
           </div>
 
           <div className="mt-5">
@@ -1353,8 +1353,8 @@ export function KeychainControlPanel({
           />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Metric label={t("metric.status")} value={currentStatus} />
-            <Metric label={t("metric.product")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
-            <Metric label={t("metric.map")} value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} мм`} />
+            <Metric label={t("metric.product")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} ${t("unit.mm")}`} />
+            <Metric label={t("metric.map")} value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} ${t("unit.mm")}`} />
             <Metric label={t("metric.signature")} value={label || t("review.noText")} />
           </div>
           <div className="mt-4">
@@ -1439,7 +1439,7 @@ export function KeychainControlPanel({
           modelPending={!downloadUrl}
           summary={{
             label,
-            size: `${Math.round(design.bodyWidthMm)}×${Math.round(design.bodyHeightMm)} мм`,
+            size: `${Math.round(design.bodyWidthMm)}×${Math.round(design.bodyHeightMm)} ${t("unit.mm")}`,
           }}
         />
 
@@ -1467,24 +1467,24 @@ export function KeychainControlPanel({
 
           <div className="mt-4 space-y-3">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.baseLoop")}</div>
-            <SliderField label={t("slider.baseWidth")} valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
-            <SliderField label={t("slider.baseHeight")} valueLabel={`${design.bodyHeightMm.toFixed(0)} мм`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
+            <SliderField label={t("slider.baseWidth")} valueLabel={`${design.bodyWidthMm.toFixed(0)} ${t("unit.mm")}`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
+            <SliderField label={t("slider.baseHeight")} valueLabel={`${design.bodyHeightMm.toFixed(0)} ${t("unit.mm")}`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
             <SliderField label={t("product.layoutRotation")} valueLabel={`${design.layoutRotationDeg.toFixed(0)}°`} min={0} max={270} step={90} value={design.layoutRotationDeg} onChange={(value) => updateDesign({ layoutRotationDeg: value })} />
-            <SliderField label={t("slider.baseThickness")} valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.0} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
-            <SliderField label={design.baseShape === "token" ? t("slider.holeGuideRadius") : t("slider.loopOuterRadius")} valueLabel={`${design.loopOuterMm.toFixed(1)} мм`} min={design.baseShape === "token" ? 2.4 : 4.5} max={design.baseShape === "token" ? 6 : 11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
+            <SliderField label={t("slider.baseThickness")} valueLabel={`${baseThicknessMm.toFixed(1)} ${t("unit.mm")}`} min={1.0} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
+            <SliderField label={design.baseShape === "token" ? t("slider.holeGuideRadius") : t("slider.loopOuterRadius")} valueLabel={`${design.loopOuterMm.toFixed(1)} ${t("unit.mm")}`} min={design.baseShape === "token" ? 2.4 : 4.5} max={design.baseShape === "token" ? 6 : 11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
             <SliderField
               label={t("slider.ringHole")}
-              valueLabel={design.baseShape === "token" ? `Ø${(design.loopInnerMm * 2).toFixed(1)} мм` : `${design.loopInnerMm.toFixed(1)} мм`}
+              valueLabel={design.baseShape === "token" ? `Ø${(design.loopInnerMm * 2).toFixed(1)} ${t("unit.mm")}` : `${design.loopInnerMm.toFixed(1)} ${t("unit.mm")}`}
               min={design.baseShape === "token" ? 1.5 : 2.0}
               max={design.baseShape === "token" ? 3.5 : 6.5}
               step={0.1}
               value={design.loopInnerMm}
               onChange={(value) => updateDesign({ loopInnerMm: design.baseShape === "token" ? Math.min(value, design.loopOuterMm - 0.8) : Math.min(value, design.loopOuterMm - 1.4) })}
             />
-            <SliderField label={t("slider.cornerRadius")} valueLabel={`${design.cornerRadiusMm.toFixed(1)} мм`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
-            <SliderField label={t("slider.labelBand")} valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={3} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
-            <SliderField label={t("slider.rimWidth")} valueLabel={`${design.rimWidthMm.toFixed(1)} мм`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
-            <SliderField label={t("slider.rimHeight")} valueLabel={`${design.rimHeightMm.toFixed(2)} мм`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
+            <SliderField label={t("slider.cornerRadius")} valueLabel={`${design.cornerRadiusMm.toFixed(1)} ${t("unit.mm")}`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
+            <SliderField label={t("slider.labelBand")} valueLabel={`${design.labelBandMm.toFixed(1)} ${t("unit.mm")}`} min={3} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
+            <SliderField label={t("slider.rimWidth")} valueLabel={`${design.rimWidthMm.toFixed(1)} ${t("unit.mm")}`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
+            <SliderField label={t("slider.rimHeight")} valueLabel={`${design.rimHeightMm.toFixed(2)} ${t("unit.mm")}`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
           </div>
 
           <div className="mt-5 space-y-4">
@@ -1543,8 +1543,8 @@ export function KeychainControlPanel({
 
           <div className="mt-5 space-y-3">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapText")}</div>
-            <SliderField label={t("slider.mapWidth")} valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
-            <SliderField label={t("slider.mapHeight")} valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
+            <SliderField label={t("slider.mapWidth")} valueLabel={`${design.mapWidthMm.toFixed(0)} ${t("unit.mm")}`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
+            <SliderField label={t("slider.mapHeight")} valueLabel={`${design.mapHeightMm.toFixed(0)} ${t("unit.mm")}`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapOrientation")}</div>
               <div className="grid grid-cols-4 gap-2">
@@ -1553,9 +1553,9 @@ export function KeychainControlPanel({
                 ))}
               </div>
             </div>
-            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
-            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} ${t("unit.mm")}`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} ${t("unit.mm")}`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} ${t("unit.mm")}`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.printFont")}</div>
               <div className="grid grid-cols-3 gap-2">
@@ -1580,10 +1580,10 @@ export function KeychainControlPanel({
 
           <div className="mt-5 space-y-3">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapLayers")}</div>
-            <SliderField label={t("layer.roads")} valueLabel={`${roadLayerMm.toFixed(2)} мм`} min={0.4} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
-            <SliderField label={t("layer.parks")} valueLabel={`${parkLayerMm.toFixed(2)} мм`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
-            <SliderField label={t("layer.water")} valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
-            <SliderField label={t("slider.maxBuildings")} valueLabel={`${buildingMaxMm.toFixed(1)} мм`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
+            <SliderField label={t("layer.roads")} valueLabel={`${roadLayerMm.toFixed(2)} ${t("unit.mm")}`} min={0.4} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
+            <SliderField label={t("layer.parks")} valueLabel={`${parkLayerMm.toFixed(2)} ${t("unit.mm")}`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
+            <SliderField label={t("layer.water")} valueLabel={`${waterLayerMm.toFixed(2)} ${t("unit.mm")}`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
+            <SliderField label={t("slider.maxBuildings")} valueLabel={`${buildingMaxMm.toFixed(1)} ${t("unit.mm")}`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
             <label className="flex min-h-[52px] items-center gap-3 rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-sm font-semibold text-[var(--text-primary)]">
               <input
                 type="checkbox"

@@ -259,6 +259,7 @@ function SiteHeader() {
 /* ---------- Hero ---------- */
 function Hero() {
   const t = useTranslations("home.hero");
+  const tAlt = useTranslations("home.alt");
   return (
     <section className="border-b border-line-soft">
       <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
@@ -292,7 +293,7 @@ function Hero() {
                 <span className="pulse h-2 w-2 rounded-full bg-forest" />
                 <span className="eyebrow">{t("demoLabel")}</span>
               </div>
-              <span className="font-mono text-[11px] text-ink-3">2.4 × 1.8 км</span>
+              <span className="font-mono text-[11px] text-ink-3">{tAlt("dims")}</span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
@@ -452,6 +453,7 @@ function HowItWorks() {
 /* ---------- Templates gallery ---------- */
 function TemplatesGallery() {
   const t = useTranslations("home.templates");
+  const tAlt = useTranslations("home.alt");
   return (
     <section id="templates" className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -477,7 +479,7 @@ function TemplatesGallery() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/showcase/map-${(i % 11) + 1}.png`}
-                alt={`${t.district}, ${t.city} — 3D-мапа`}
+                alt={tAlt("districtMap", { district: t.district, city: t.city })}
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
               />
@@ -518,6 +520,7 @@ function TemplatesGallery() {
 /* ---------- Craft / specs ---------- */
 function Craft() {
   const t = useTranslations("home.craft");
+  const tAlt = useTranslations("home.alt");
   const specs = [
     { icon: <Ruler size={18} />, t: t("spec1t"), d: t("spec1d") },
     { icon: <Leaf size={18} />, t: t("spec2t"), d: t("spec2d") },
@@ -548,14 +551,14 @@ function Craft() {
         <div className="grid grid-cols-2 gap-4">
           {/* eslint-disable @next/next/no-img-element */}
           <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft">
-            <img src="/showcase/keychain-1.png" alt="Брелок-мапа міста" loading="lazy" className="h-full w-full object-cover" />
+            <img src="/showcase/keychain-1.png" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-4">
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/map-2.png" alt="3D-район міста" loading="lazy" className="h-full w-full object-cover" />
+              <img src="/showcase/map-2.png" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
             </div>
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/keychain-5.png" alt="Брелок-мапа міста" loading="lazy" className="h-full w-full object-cover" />
+              <img src="/showcase/keychain-5.png" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
             </div>
           </div>
           {/* eslint-enable @next/next/no-img-element */}
@@ -606,6 +609,7 @@ function Testimonials() {
 /* ---------- Final CTA ---------- */
 function FinalCTA() {
   const t = useTranslations("home.cta");
+  const tAlt = useTranslations("home.alt");
   return (
     <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="grid items-center gap-12 overflow-hidden rounded-[32px] bg-forest px-8 py-16 text-[#F4EFE4] lg:grid-cols-[1.4fr_1fr] lg:px-16">
@@ -626,7 +630,7 @@ function FinalCTA() {
         </div>
         <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)] bg-[rgba(244,239,228,0.06)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/showcase/map-1.png" alt="3D-мапа міста" loading="lazy" className="h-full w-full object-cover" />
+          <img src="/showcase/map-1.png" alt={tAlt("cityMap")} loading="lazy" className="h-full w-full object-cover" />
         </div>
       </div>
     </section>

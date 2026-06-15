@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { KeychainDesignerConfig } from "@/components/KeychainDesigner";
 import { shapePath } from "@/components/KeychainDesigner";
 
@@ -10,6 +12,7 @@ export function KeychainLifePreview({
   design: KeychainDesignerConfig;
   label: string;
 }) {
+  const t = useTranslations("lifeprev");
   const aspect = design.bodyWidthMm / Math.max(design.bodyHeightMm, 1);
   const plateWidth = aspect >= 1 ? 250 : Math.max(156, 250 * aspect);
   const plateHeight = plateWidth / Math.max(aspect, 0.35);
@@ -151,7 +154,7 @@ export function KeychainLifePreview({
         </g>
       </svg>
       <div className="absolute left-3 top-3 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5b4a32] backdrop-blur">
-        Real-life preview
+        {t("realLifePreview")}
       </div>
     </div>
   );
@@ -164,6 +167,7 @@ export function KeychainSlicerPreview({
   design: KeychainDesignerConfig;
   label: string;
 }) {
+  const t = useTranslations("lifeprev");
   const layers = [
     { name: "Base", color: "#a6926b", height: "2.0 mm", width: "100%" },
     { name: "Rim", color: "#ffffff", height: `${design.rimHeightMm.toFixed(2)} mm`, width: "96%" },
@@ -179,11 +183,11 @@ export function KeychainSlicerPreview({
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_38%),radial-gradient(circle_at_20%_12%,rgba(94,234,212,0.16),transparent_26%)]" />
       <div className="relative z-10">
         <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
-          Slicer preview
+          {t("slicerPreview")}
         </div>
-        <h3 className="mt-4 font-title text-xl font-semibold">Порядок друку шарів</h3>
+        <h3 className="mt-4 font-title text-xl font-semibold">{t("layerOrder")}</h3>
         <p className="mt-2 text-sm leading-6 text-white/68">
-          Карта має обрізатись всередині краю, текст і край лишаються окремими шарами для чистого кольору.
+          {t("clipInside")}
         </p>
       </div>
       <div className="relative z-10 mt-5 space-y-3">
@@ -201,9 +205,9 @@ export function KeychainSlicerPreview({
         ))}
       </div>
       <div className="relative z-10 mt-6 rounded-[18px] border border-white/10 bg-white/[0.06] p-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Print note</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("printNote")}</div>
         <div className="mt-1 text-sm font-semibold text-white/86">
-          Мінімальний штрих: 0.4 мм. Текст краще друкувати як останній колірний шар.
+          {t("minStroke")}
         </div>
       </div>
     </div>

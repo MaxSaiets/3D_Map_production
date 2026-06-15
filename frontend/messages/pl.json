@@ -152,6 +152,13 @@
       "title": "Mapy miast 3D i personalizowane breloki — co robimy",
       "p1": "Monadruk zamienia dowolne miejsce na Ziemi w model 3D do druku: mapę dzielnicy z prawdziwymi wysokościami budynków, parkami i rzekami z danych OpenStreetMap, brelok z mapą miasta z własnym napisem, brelok topograficzny z rzeźbą gór z satelitarnych danych wysokości albo magnes na lodówkę z mapą. Pliki 3MF i STL otwierają się w Bambu Studio i PrusaSlicer.",
       "p2": "Nie masz drukarki 3D? Wydrukujemy za ciebie z ekologicznego Eco PLA i wyślemy po Ukrainie i UE. Mapa 3D Warszawy, Krakowa, Kijowa czy Nowego Jorku, rzeźba Tatr lub Howerli, imienny brelok na rocznicę — wybierz miejsce na mapie, a model będzie gotowy w kilka minut."
+    },
+    "alt": {
+      "keychainMap": "Brelok z mapą miasta",
+      "district": "Dzielnica miasta 3D",
+      "cityMap": "Mapa 3D miasta",
+      "districtMap": "{district}, {city} — mapa 3D",
+      "dims": "2,4 × 1,8 km"
     }
   },
   "createMeta": {
@@ -329,7 +336,12 @@
     "paymentNote": "Płatność ustalana po potwierdzeniu zamówienia. Twój projekt i model dołączane są automatycznie.",
     "sending": "Wysyłanie…",
     "submit": "Złóż zamówienie",
-    "leadTime": "Druk i wysyłka: 2–4 dni robocze"
+    "leadTime": "Druk i wysyłka: 2–4 dni robocze",
+    "aria": {
+      "close": "Zamknij",
+      "region": "Region dostawy",
+      "method": "Sposób dostawy"
+    }
   },
   "contact": {
     "errPhone": "Podaj numer telefonu",
@@ -599,221 +611,336 @@
     "detailOverview": "skala poglądowa"
   },
   "kc": {
-    "tabs.product": "Produkt",
-    "tabs.map": "Mapa",
-    "tabs.label": "Tekst",
-    "tabs.review": "Druk",
-    "tabs.advanced": "Więcej",
-    "header.eyebrow": "Kreator tworzenia",
-    "header.title": "Najpierw kształt, potem mapa",
-    "header.subtitle": "Minimalny przepływ: szablon, obszar mapy, podpis, generowanie.",
-    "ready.good": "Gotowe do druku",
-    "ready.warn": "Można drukować, ale ostrożnie",
-    "ready.bad": "Potrzebne poprawki",
-    "ready.fix": "Popraw: {issue}",
-    "ready.nextWarn": "Dla lepszego efektu wybierz mniejszy kadr lub większy obszar mapy.",
-    "ready.nextGood": "Możesz utworzyć plik 3MF.",
-    "details.summary": "Szczegóły druku i szybkie akcje",
-    "details.printability": "Drukowalność",
-    "quick.centerMap": "Wyśrodkuj mapę",
-    "quick.maxMap": "Maksymalizuj mapę",
-    "quick.centerLabel": "Wyśrodkuj tekst",
-    "quick.loopTop": "Uszko na górze",
-    "quick.autoFix": "Auto-popraw",
-    "advanced.show": "Pokaż ustawienia zaawansowane",
-    "advanced.hide": "Ukryj ustawienia zaawansowane",
-    "advanced.title": "Ustawienia zaawansowane",
-    "advanced.desc": "Ten tryb jest dla ciebie lub operatora druku. Klient nie potrzebuje tych parametrów w głównym scenariuszu.",
-    "advanced.baseLoop": "Podstawa i uszko",
-    "advanced.shapeLoop": "Kształt i uszko",
-    "advanced.baseShape": "Kształt podkładki",
-    "advanced.loopType": "Typ uszka",
-    "advanced.loopPosition": "Pozycja uszka",
-    "advanced.rotation": "Obrót",
-    "advanced.mapText": "Mapa i tekst",
-    "advanced.mapOrientation": "Orientacja mapy",
-    "advanced.printFont": "Czcionka do druku",
-    "advanced.textRotation": "Obrót tekstu",
-    "advanced.mapLayers": "Warstwy mapy",
-    "advanced.uniformBuildings": "Jednolita wysokość budynków",
-    "product.title": "Sprawdź podstawę breloka",
-    "product.desc": "Gotowe szablony są tuż pod podglądem. Tutaj zostały tylko szybkie akcje, których klient naprawdę potrzebuje po wyborze szablonu.",
-    "product.maxMap": "Maks. mapa",
-    "product.token": "Żeton 55 x 30",
-    "product.centerLoop": "Wyśr. uszko",
-    "product.layoutRotation": "Obrót układu",
-    "map.title": "Ustaw obszar mapy",
-    "map.desc": "Kliknij mapę, aby przesunąć ramkę. Nie zmniejszaj jej poniżej zalecanej skali: system ostrzeże, jeśli obszar będzie za duży.",
-    "map.orientation": "Orientacja na mapie",
-    "label.title": "Podpis na dole",
-    "label.desc": "Tekst zmienia się bez ponownego generowania. Do druku lepszy jest krótki podpis i grubszy obrys.",
-    "label.printFont": "Czcionka bezpieczna do druku",
-    "label.placement": "Strona / rozmieszczenie",
-    "label.current": "Aktualny tekst: {height} mm wysokości, {stroke} mm obrysu, styl {style}.",
-    "label.secondLine": "Druga linia · data lub współrzędne",
-    "label.insertCoords": "Wstaw współrzędne środka obszaru",
-    "label.secondHint": "Mniejszy stopień tuż pod głównym podpisem. 📍 wstawia współrzędne wybranego obszaru.",
-    "label.backTitle": "Napis na rewersie · grawer",
-    "label.backPlaceholder": "IMIĘ · DATA",
-    "label.backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D.",
-    "review.title": "Sprawdzenie przed generowaniem",
-    "review.desc": "Tu powinny być tylko zrozumiałe dla klienta parametry: rozmiar, tekst, poziom szczegółów i gotowość do druku.",
-    "review.noText": "bez tekstu",
-    "review.generated3mf": "Wygenerowany 3MF",
-    "review.layersNote": "Tekst i krawędź to osobne warstwy, mapa jest przycięta do wewnętrznego obszaru breloka.",
-    "metric.base": "Podstawa",
-    "metric.loop": "Uszko",
-    "metric.hole": "otwór",
-    "metric.detail": "Szczegółowość",
-    "metric.status": "Stan",
-    "metric.product": "Produkt",
-    "metric.map": "Mapa",
-    "metric.signature": "Podpis",
-    "loop.round": "Okrągłe",
-    "loop.teardrop": "Kropla",
-    "loop.slot": "Szczelina",
-    "loop.sideTab": "Zakładka",
-    "detail.bad": "słaba",
-    "detail.edge": "na granicy",
-    "detail.good": "dobra",
-    "detail.pickCrop": "wybierz kadr",
-    "topo.label": "🏔 Relief wysokości (topo)",
-    "topo.hint": "Góry zamiast ulic: Howerla, Alpy, wybrzeże. Warstwy mapy są wyłączane.",
-    "topo.reliefHeight": "Wysokość reliefu",
-    "gpx.title": "🏃 Trasa (GPX) na breloku",
-    "gpx.replace": "Zamień",
-    "gpx.pickFile": "Wybierz plik",
-    "gpx.loaded": "✓ {name} · {count} punktów",
-    "gpx.remove": "Usuń",
-    "gpx.privacy": "🔒 Twoja trasa służy tylko do zbudowania modelu. Nie publikujemy jej ani nie udostępniamy.",
-    "gpx.hint": "Trasa biegu/wędrówki — linia nad mapą. Obszar automatycznie ustawi się na trasę.",
-    "gpx.readError": "Nie udało się odczytać pliku GPX",
-    "shape.rounded": "Prostokąt",
-    "shape.token": "Żeton",
-    "shape.capsule": "Kapsuła",
-    "shape.octagon": "Ośmiokąt",
-    "shape.heart": "Serce ♥",
-    "shape.house": "Domek",
-    "shape.puzzleL": "Puzzel L 🧩",
-    "shape.puzzleR": "Puzzel R 🧩",
-    "shape.heartL": "Serce pary L 💕",
-    "shape.heartR": "Serce pary R 💕",
-    "loopPos.topLeft": "Lewy górny",
-    "loopPos.topRight": "Prawy górny",
-    "loopPos.right": "Prawo",
-    "loopPos.bottomLeft": "Lewy dolny",
-    "place.bottom": "Na dole",
-    "place.top": "Na górze",
-    "place.left": "Z lewej",
-    "place.right": "Z prawej",
-    "slider.labelWidth": "Szerokość podpisu",
-    "slider.textHeight": "Wysokość liter",
-    "slider.strokeWidth": "Grubość obrysu",
-    "slider.baseWidth": "Szerokość podstawy",
-    "slider.baseHeight": "Wysokość podstawy",
-    "slider.baseThickness": "Grubość podstawy",
-    "slider.holeGuideRadius": "Promień prowadnicy wokół otworu",
-    "slider.loopOuterRadius": "Zewnętrzny promień uszka",
-    "slider.ringHole": "Otwór pod kółko",
-    "slider.cornerRadius": "Zaokrąglenie rogów",
-    "slider.labelBand": "Pasek podpisu",
-    "slider.rimWidth": "Szerokość krawędzi bocznej",
-    "slider.rimHeight": "Wysokość krawędzi bocznej",
-    "slider.mapWidth": "Szerokość obszaru mapy",
-    "slider.mapHeight": "Wysokość obszaru mapy",
-    "slider.maxBuildings": "Maks. budynki",
-    "layer.base": "Podstawa",
-    "layer.rim": "Krawędź",
-    "layer.water": "Woda",
-    "layer.parks": "Parki",
-    "layer.roads": "Drogi",
-    "layer.buildings": "Budynki",
-    "layer.text": "Tekst",
-    "layer.top": "góra {z} mm",
-    "layer.size": ", {w} x {h} mm",
-    "layer.noWater": "w wybranym obszarze może nie być wody",
-    "layer.missing": "warstwa nie została utworzona",
-    "layerTone.ok": "OK",
-    "layerTone.warn": "uwaga",
-    "layerTone.bad": "problem",
-    "printability.idle.title": "Najpierw umieść ramkę na mapie",
-    "printability.idle.detail": "Kliknięcie mapy przesuwa obszar druku, duży turkusowy kwadrat zmienia rozmiar.",
-    "printability.topo.title": "Tryb topo: drukowany jest relief wysokości",
-    "printability.topo.detail": "Warstwy mapy są wyłączone. Duże obszary górskie (5–20 km) to dokładnie to, czego trzeba do wyrazistego reliefu.",
-    "printability.tooLarge.title": "Obszar zbyt duży dla FDM",
-    "printability.tooLarge.detail": "Minimalny detal 0,4 mm odpowiada teraz ~{m} m. Drobne drogi i tekst mogą się rozsypać.",
-    "printability.onEdge.title": "Drukowalne, ale szczegółowość na granicy",
-    "printability.onEdge.detail": "0,4 mm odpowiada ~{m} m. Dla cienkich ulic lepiej wybrać mniejszy obszar.",
-    "printability.good.title": "Skala odpowiednia do druku",
-    "printability.good.detail": "0,4 mm odpowiada ~{m} m. Dobry balans dla breloka.",
-    "check.crop.label": "Skala mapy",
-    "check.crop.detail": "{min} mm = ~{m} m",
-    "check.crop.empty": "Umieść ramkę na mapie",
-    "check.text.label": "Tekst",
-    "check.text.tooLong": "Podpis za duży dla tej szerokości: skróć go, poszerz pole lub wybierz Narrow",
-    "check.text.detail": "{stroke} mm obrysu, {height} mm wysokości",
-    "check.loop.label": "Uszko",
-    "check.loop.detail": "otwór Ø{hole} mm, ścianka {wall} mm",
-    "check.base.label": "Podstawa i krawędź",
-    "check.base.detail": "{base} mm podstawy, {rim} mm krawędzi",
-    "check.layers.label": "Warstwy",
-    "check.layers.topo": "relief topo {relief} mm (warstwy mapy wyłączone)",
-    "check.layers.detail": "drogi {roads} mm, woda {water} mm, budynki do {buildings} mm",
-    "verdict.bad.title": "3MF wymaga sprawdzenia",
-    "verdict.bad.detail": "Problematyczne warstwy: {layers}.",
-    "verdict.warn.title": "3MF utworzony, są ostrzeżenia",
-    "verdict.warn.detail": "Sprawdź: {layers}.",
-    "verdict.good.title": "3MF wygląda na gotowy do slicera",
-    "verdict.good.detail": "Podstawa, krawędź, mapa, budynki i tekst są obecne jako osobne warstwy.",
-    "status.generating": "Generowanie breloka",
-    "status.ready3mf": "3MF gotowy",
-    "status.ready": "Gotowe",
-    "btn.generating": "Generowanie...",
-    "btn.create3mf": "Utwórz 3MF",
-    "btn.buyOrder": "Kup / zamów druk",
-    "btn.order": "Zamów druk",
-    "btn.download3mf": "Pobierz 3MF",
-    "quota.remaining": "Pozostało {remaining} z {limit} darmowych pobrań",
-    "quota.exhausted": "Darmowe pobrania wyczerpane — złóż zamówienie druku",
-    "sticky.priceLabel": "Brelok z mapą",
-    "sticky.generating": "Generowanie… {progress}%",
-    "sticky.createKeychain": "Utwórz brelok",
-    "sticky.download": "Pobierz",
-    "error.generateFailed": "Nie udało się wygenerować breloka",
-    "error.noArea": "Najpierw zaznacz obszar na mapie",
-    "error.notReady": "Nie gotowe do druku: {issues}.",
-    "error.generic": "Błąd generowania breloka",
-    "error.limitContact": "Wykorzystałem 5 darmowych pobrań breloków. Chcę więcej / druk — proszę o kontakt.",
-    "error.downloadFailed": "Nie udało się pobrać pliku 3MF",
-    "templates.ready": "Gotowe szablony",
-    "templates.tapClick": "tap / click",
-    "designer.hintFront": "Przeciągnij mapę, tekst, uszko lub uchwyt w prawym dolnym rogu",
-    "designer.hintBack": "Rewers: kontrola otworu, obwódki i tekstu wewnętrznego",
-    "designer.front": "Awers",
-    "designer.back": "Rewers",
-    "designer.pickArea": "Wybierz obszar na mapie",
-    "tpl.classicWide.name": "35 x 55",
-    "tpl.classicWide.desc": "Standardowy kompaktowy pionowy brelok.",
-    "tpl.token55.name": "Token 55 x 30",
-    "tpl.token55.desc": "Standardowy żeton 55×30 z lewym otworem Ø3 mm i kapsułową podstawą.",
-    "tpl.heart46.name": "Serce 46 × 42",
-    "tpl.heart46.desc": "Mapa miejsca, które jest w sercu — prezent dla dwojga.",
-    "tpl.house44.name": "Domek 44 × 48",
-    "tpl.house44.desc": "Dom jest tam, gdzie twoja ulica. Dach z uszkiem na górze.",
-    "tpl.puzzleLeft.name": "Puzzel L · 40 × 42",
-    "tpl.puzzleLeft.desc": "Połówka pary: twoje miasto. Wypust po prawej łączy się z połówką R.",
-    "tpl.puzzleRight.name": "Puzzel R · 40 × 42",
-    "tpl.puzzleRight.desc": "Połówka pary: miasto bliskiej osoby. Wycięcie po lewej przyjmuje połówkę L.",
-    "tpl.heartPairLeft.name": "Serce pary · L · 30 × 44",
-    "tpl.heartPairLeft.desc": "Połowa serca dla dwojga: twoje miasto. Zamek na krawędzi łączy się z połówką R w pełne serce.",
-    "tpl.heartPairRight.name": "Serce pary · R · 30 × 44",
-    "tpl.heartPairRight.desc": "Połowa serca dla dwojga: miasto bliskiej osoby. Wycięcie przyjmuje połówkę L.",
-    "tpl.rightLoop.name": "Side Loop",
-    "tpl.rightLoop.desc": "Uszko po prawej, wygodne dla szerokiej mapy.",
-    "tpl.verticalTag.name": "Vertical",
-    "tpl.verticalTag.desc": "Pionowy brelok z obróconym podpisem.",
-    "tpl.softCapsule.name": "Capsule",
-    "tpl.softCapsule.desc": "Miękki kształt kapsuły z uszkiem szczelinowym."
+    "tabs": {
+      "product": "Produkt",
+      "map": "Mapa",
+      "label": "Tekst",
+      "review": "Druk",
+      "advanced": "Więcej"
+    },
+    "header": {
+      "eyebrow": "Kreator tworzenia",
+      "title": "Najpierw kształt, potem mapa",
+      "subtitle": "Minimalny przepływ: szablon, obszar mapy, podpis, generowanie."
+    },
+    "ready": {
+      "good": "Gotowe do druku",
+      "warn": "Można drukować, ale ostrożnie",
+      "bad": "Potrzebne poprawki",
+      "fix": "Popraw: {issue}",
+      "nextWarn": "Dla lepszego efektu wybierz mniejszy kadr lub większy obszar mapy.",
+      "nextGood": "Możesz utworzyć plik 3MF."
+    },
+    "details": {
+      "summary": "Szczegóły druku i szybkie akcje",
+      "printability": "Drukowalność"
+    },
+    "quick": {
+      "centerMap": "Wyśrodkuj mapę",
+      "maxMap": "Maksymalizuj mapę",
+      "centerLabel": "Wyśrodkuj tekst",
+      "loopTop": "Uszko na górze",
+      "autoFix": "Auto-popraw"
+    },
+    "advanced": {
+      "show": "Pokaż ustawienia zaawansowane",
+      "hide": "Ukryj ustawienia zaawansowane",
+      "title": "Ustawienia zaawansowane",
+      "desc": "Ten tryb jest dla ciebie lub operatora druku. Klient nie potrzebuje tych parametrów w głównym scenariuszu.",
+      "baseLoop": "Podstawa i uszko",
+      "shapeLoop": "Kształt i uszko",
+      "baseShape": "Kształt podkładki",
+      "loopType": "Typ uszka",
+      "loopPosition": "Pozycja uszka",
+      "rotation": "Obrót",
+      "mapText": "Mapa i tekst",
+      "mapOrientation": "Orientacja mapy",
+      "printFont": "Czcionka do druku",
+      "textRotation": "Obrót tekstu",
+      "mapLayers": "Warstwy mapy",
+      "uniformBuildings": "Jednolita wysokość budynków"
+    },
+    "product": {
+      "title": "Sprawdź podstawę breloka",
+      "desc": "Gotowe szablony są tuż pod podglądem. Tutaj zostały tylko szybkie akcje, których klient naprawdę potrzebuje po wyborze szablonu.",
+      "maxMap": "Maks. mapa",
+      "token": "Żeton 55 x 30",
+      "centerLoop": "Wyśr. uszko",
+      "layoutRotation": "Obrót układu"
+    },
+    "map": {
+      "title": "Ustaw obszar mapy",
+      "desc": "Kliknij mapę, aby przesunąć ramkę. Nie zmniejszaj jej poniżej zalecanej skali: system ostrzeże, jeśli obszar będzie za duży.",
+      "orientation": "Orientacja na mapie"
+    },
+    "label": {
+      "title": "Podpis na dole",
+      "desc": "Tekst zmienia się bez ponownego generowania. Do druku lepszy jest krótki podpis i grubszy obrys.",
+      "printFont": "Czcionka bezpieczna do druku",
+      "placement": "Strona / rozmieszczenie",
+      "current": "Aktualny tekst: {height} mm wysokości, {stroke} mm obrysu, styl {style}.",
+      "secondLine": "Druga linia · data lub współrzędne",
+      "insertCoords": "Wstaw współrzędne środka obszaru",
+      "secondHint": "Mniejszy stopień tuż pod głównym podpisem. 📍 wstawia współrzędne wybranego obszaru.",
+      "backTitle": "Napis na rewersie · grawer",
+      "backPlaceholder": "IMIĘ · DATA",
+      "backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D."
+    },
+    "review": {
+      "title": "Sprawdzenie przed generowaniem",
+      "desc": "Tu powinny być tylko zrozumiałe dla klienta parametry: rozmiar, tekst, poziom szczegółów i gotowość do druku.",
+      "noText": "bez tekstu",
+      "generated3mf": "Wygenerowany 3MF",
+      "layersNote": "Tekst i krawędź to osobne warstwy, mapa jest przycięta do wewnętrznego obszaru breloka."
+    },
+    "metric": {
+      "base": "Podstawa",
+      "loop": "Uszko",
+      "hole": "otwór",
+      "detail": "Szczegółowość",
+      "status": "Stan",
+      "product": "Produkt",
+      "map": "Mapa",
+      "signature": "Podpis"
+    },
+    "loop": {
+      "round": "Okrągłe",
+      "teardrop": "Kropla",
+      "slot": "Szczelina",
+      "sideTab": "Zakładka"
+    },
+    "detail": {
+      "bad": "słaba",
+      "edge": "na granicy",
+      "good": "dobra",
+      "pickCrop": "wybierz kadr"
+    },
+    "topo": {
+      "label": "🏔 Relief wysokości (topo)",
+      "hint": "Góry zamiast ulic: Howerla, Alpy, wybrzeże. Warstwy mapy są wyłączane.",
+      "reliefHeight": "Wysokość reliefu"
+    },
+    "gpx": {
+      "title": "🏃 Trasa (GPX) na breloku",
+      "replace": "Zamień",
+      "pickFile": "Wybierz plik",
+      "loaded": "✓ {name} · {count} punktów",
+      "remove": "Usuń",
+      "privacy": "🔒 Twoja trasa służy tylko do zbudowania modelu. Nie publikujemy jej ani nie udostępniamy.",
+      "hint": "Trasa biegu/wędrówki — linia nad mapą. Obszar automatycznie ustawi się na trasę.",
+      "readError": "Nie udało się odczytać pliku GPX"
+    },
+    "shape": {
+      "rounded": "Prostokąt",
+      "token": "Żeton",
+      "capsule": "Kapsuła",
+      "octagon": "Ośmiokąt",
+      "heart": "Serce ♥",
+      "house": "Domek",
+      "puzzleL": "Puzzel L 🧩",
+      "puzzleR": "Puzzel R 🧩",
+      "heartL": "Serce pary L 💕",
+      "heartR": "Serce pary R 💕"
+    },
+    "loopPos": {
+      "topLeft": "Lewy górny",
+      "topRight": "Prawy górny",
+      "right": "Prawo",
+      "bottomLeft": "Lewy dolny"
+    },
+    "place": {
+      "bottom": "Na dole",
+      "top": "Na górze",
+      "left": "Z lewej",
+      "right": "Z prawej"
+    },
+    "slider": {
+      "labelWidth": "Szerokość podpisu",
+      "textHeight": "Wysokość liter",
+      "strokeWidth": "Grubość obrysu",
+      "baseWidth": "Szerokość podstawy",
+      "baseHeight": "Wysokość podstawy",
+      "baseThickness": "Grubość podstawy",
+      "holeGuideRadius": "Promień prowadnicy wokół otworu",
+      "loopOuterRadius": "Zewnętrzny promień uszka",
+      "ringHole": "Otwór pod kółko",
+      "cornerRadius": "Zaokrąglenie rogów",
+      "labelBand": "Pasek podpisu",
+      "rimWidth": "Szerokość krawędzi bocznej",
+      "rimHeight": "Wysokość krawędzi bocznej",
+      "mapWidth": "Szerokość obszaru mapy",
+      "mapHeight": "Wysokość obszaru mapy",
+      "maxBuildings": "Maks. budynki"
+    },
+    "layer": {
+      "base": "Podstawa",
+      "rim": "Krawędź",
+      "water": "Woda",
+      "parks": "Parki",
+      "roads": "Drogi",
+      "buildings": "Budynki",
+      "text": "Tekst",
+      "top": "góra {z} mm",
+      "size": ", {w} x {h} mm",
+      "noWater": "w wybranym obszarze może nie być wody",
+      "missing": "warstwa nie została utworzona"
+    },
+    "layerTone": {
+      "ok": "OK",
+      "warn": "uwaga",
+      "bad": "problem"
+    },
+    "printability": {
+      "idle": {
+        "title": "Najpierw umieść ramkę na mapie",
+        "detail": "Kliknięcie mapy przesuwa obszar druku, duży turkusowy kwadrat zmienia rozmiar."
+      },
+      "topo": {
+        "title": "Tryb topo: drukowany jest relief wysokości",
+        "detail": "Warstwy mapy są wyłączone. Duże obszary górskie (5–20 km) to dokładnie to, czego trzeba do wyrazistego reliefu."
+      },
+      "tooLarge": {
+        "title": "Obszar zbyt duży dla FDM",
+        "detail": "Minimalny detal 0,4 mm odpowiada teraz ~{m} m. Drobne drogi i tekst mogą się rozsypać."
+      },
+      "onEdge": {
+        "title": "Drukowalne, ale szczegółowość na granicy",
+        "detail": "0,4 mm odpowiada ~{m} m. Dla cienkich ulic lepiej wybrać mniejszy obszar."
+      },
+      "good": {
+        "title": "Skala odpowiednia do druku",
+        "detail": "0,4 mm odpowiada ~{m} m. Dobry balans dla breloka."
+      }
+    },
+    "check": {
+      "crop": {
+        "label": "Skala mapy",
+        "detail": "{min} mm = ~{m} m",
+        "empty": "Umieść ramkę na mapie"
+      },
+      "text": {
+        "label": "Tekst",
+        "tooLong": "Podpis za duży dla tej szerokości: skróć go, poszerz pole lub wybierz Narrow",
+        "detail": "{stroke} mm obrysu, {height} mm wysokości"
+      },
+      "loop": {
+        "label": "Uszko",
+        "detail": "otwór Ø{hole} mm, ścianka {wall} mm"
+      },
+      "base": {
+        "label": "Podstawa i krawędź",
+        "detail": "{base} mm podstawy, {rim} mm krawędzi"
+      },
+      "layers": {
+        "label": "Warstwy",
+        "topo": "relief topo {relief} mm (warstwy mapy wyłączone)",
+        "detail": "drogi {roads} mm, woda {water} mm, budynki do {buildings} mm"
+      }
+    },
+    "verdict": {
+      "bad": {
+        "title": "3MF wymaga sprawdzenia",
+        "detail": "Problematyczne warstwy: {layers}."
+      },
+      "warn": {
+        "title": "3MF utworzony, są ostrzeżenia",
+        "detail": "Sprawdź: {layers}."
+      },
+      "good": {
+        "title": "3MF wygląda na gotowy do slicera",
+        "detail": "Podstawa, krawędź, mapa, budynki i tekst są obecne jako osobne warstwy."
+      }
+    },
+    "status": {
+      "generating": "Generowanie breloka",
+      "ready3mf": "3MF gotowy",
+      "ready": "Gotowe"
+    },
+    "btn": {
+      "generating": "Generowanie...",
+      "create3mf": "Utwórz 3MF",
+      "buyOrder": "Kup / zamów druk",
+      "order": "Zamów druk",
+      "download3mf": "Pobierz 3MF"
+    },
+    "quota": {
+      "remaining": "Pozostało {remaining} z {limit} darmowych pobrań",
+      "exhausted": "Darmowe pobrania wyczerpane — złóż zamówienie druku"
+    },
+    "sticky": {
+      "priceLabel": "Brelok z mapą",
+      "generating": "Generowanie… {progress}%",
+      "createKeychain": "Utwórz brelok",
+      "download": "Pobierz"
+    },
+    "error": {
+      "generateFailed": "Nie udało się wygenerować breloka",
+      "noArea": "Najpierw zaznacz obszar na mapie",
+      "notReady": "Nie gotowe do druku: {issues}.",
+      "generic": "Błąd generowania breloka",
+      "limitContact": "Wykorzystałem 5 darmowych pobrań breloków. Chcę więcej / druk — proszę o kontakt.",
+      "downloadFailed": "Nie udało się pobrać pliku 3MF"
+    },
+    "templates": {
+      "ready": "Gotowe szablony",
+      "tapClick": "tap / click"
+    },
+    "designer": {
+      "hintFront": "Przeciągnij mapę, tekst, uszko lub uchwyt w prawym dolnym rogu",
+      "hintBack": "Rewers: kontrola otworu, obwódki i tekstu wewnętrznego",
+      "front": "Awers",
+      "back": "Rewers",
+      "pickArea": "Wybierz obszar na mapie"
+    },
+    "tpl": {
+      "classicWide": {
+        "name": "35 x 55",
+        "desc": "Standardowy kompaktowy pionowy brelok."
+      },
+      "token55": {
+        "name": "Token 55 x 30",
+        "desc": "Standardowy żeton 55×30 z lewym otworem Ø3 mm i kapsułową podstawą."
+      },
+      "heart46": {
+        "name": "Serce 46 × 42",
+        "desc": "Mapa miejsca, które jest w sercu — prezent dla dwojga."
+      },
+      "house44": {
+        "name": "Domek 44 × 48",
+        "desc": "Dom jest tam, gdzie twoja ulica. Dach z uszkiem na górze."
+      },
+      "puzzleLeft": {
+        "name": "Puzzel L · 40 × 42",
+        "desc": "Połówka pary: twoje miasto. Wypust po prawej łączy się z połówką R."
+      },
+      "puzzleRight": {
+        "name": "Puzzel R · 40 × 42",
+        "desc": "Połówka pary: miasto bliskiej osoby. Wycięcie po lewej przyjmuje połówkę L."
+      },
+      "heartPairLeft": {
+        "name": "Serce pary · L · 30 × 44",
+        "desc": "Połowa serca dla dwojga: twoje miasto. Zamek na krawędzi łączy się z połówką R w pełne serce."
+      },
+      "heartPairRight": {
+        "name": "Serce pary · R · 30 × 44",
+        "desc": "Połowa serca dla dwojga: miasto bliskiej osoby. Wycięcie przyjmuje połówkę L."
+      },
+      "rightLoop": {
+        "name": "Side Loop",
+        "desc": "Uszko po prawej, wygodne dla szerokiej mapy."
+      },
+      "verticalTag": {
+        "name": "Vertical",
+        "desc": "Pionowy brelok z obróconym podpisem."
+      },
+      "softCapsule": {
+        "name": "Capsule",
+        "desc": "Miękki kształt kapsuły z uszkiem szczelinowym."
+      }
+    },
+    "unit": {
+      "mm": "mm"
+    }
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
@@ -942,5 +1069,130 @@
     "qaBaseNotWatertight": "podstawa nie jest w pełni szczelna — slicer i tak ją wydrukuje, ale lepiej sprawdzić model",
     "qaSlicerNotFound": "slicer jest niedostępny na serwerze — kontrolę pominięto",
     "qaLayerNotWatertight": "{layer}: warstwa nie jest w pełni szczelna"
+  },
+  "kcp": {
+    "loadingMap": "Ładowanie mapy...",
+    "loading3d": "Ładowanie podglądu 3D…",
+    "statusGenerating": "Generowanie",
+    "statusReady": "Brelok gotowy",
+    "statusSelected": "Obszar wybrany",
+    "statusPickArea": "Wybierz obszar",
+    "eyebrow": "Kreator breloków",
+    "title": "Pracownia breloków z mapą",
+    "subtitle": "Płaska wielokolorowa płytka ze wzmocnionym uchem, czystym paskiem na napis i kontrolowaną wysokością budynków.",
+    "navMaps": "Mapy",
+    "navAccount": "Konto",
+    "city": "Miasto",
+    "state": "Status",
+    "pickShape": "Wybierz kształt breloka",
+    "pickShapeHint": "Kliknij przykład — kształt zostanie zastosowany",
+    "dragHint": "Dalej: przeciągaj mapę, napis i ucho bezpośrednio w podglądzie. Mapę i napis można <rotate>obracać</rotate> — pociągnij narożny uchwyt <b>⟳</b> na mapie lub zielony uchwyt <b>↻</b> nad napisem.",
+    "mapTitle": "Umieść kształt na mapie",
+    "mapSubtitle": "Przeciągnij ramkę; uchwyt ⟳ na mapie obraca ją. Turkusowa ramka utrzymuje proporcje zgodne z podglądem.",
+    "layoutTitle": "Rozmiar, obszar mapy, ucho i napis",
+    "layoutSubtitle": "Dopasuj kształt breloka lokalnie, a następnie wstaw wybrany obszar mapy w przerywany obszar.",
+    "preview3dTitle": "Podgląd 3D gotowego breloka",
+    "layers": "Warstwy",
+    "emptyTitle": "Model 3D pojawi się po utworzeniu",
+    "emptyBody": "Naciśnij „Utwórz 3MF” — i tutaj pojawi się prawdziwy podgląd 3D ze wszystkimi warstwami.",
+    "generatingPct": "Generowanie: {progress}%",
+    "tour": {
+      "step1Title": "Wybierz miasto i dzielnicę",
+      "step1Body": "Wybierz miasto i punkt na mapie — to będzie mapa na Twoim breloku.",
+      "step2Title": "Wybierz szablon",
+      "step2Body": "Token 55×30, klasyczny lub kwadratowy — kliknij, a wymiary ustawią się automatycznie.",
+      "step3Title": "Dodaj napis",
+      "step3Body": "Wpisz tekst (np. nazwę miasta), przesuń go lub obróć. Następnie naciśnij „Generuj”."
+    }
+  },
+  "cities": {
+    "Kyiv": "Kyiv",
+    "Khmelnytskyi": "Khmelnytskyi",
+    "Lviv": "Lviv",
+    "Odesa": "Odesa",
+    "Dnipro": "Dnipro",
+    "Kharkiv": "Kharkiv",
+    "Vinnytsia": "Vinnytsia",
+    "Ternopil": "Ternopil",
+    "IvanoFrankivsk": "Ivano-Frankivsk",
+    "Chernihiv": "Chernihiv",
+    "Zaporizhzhia": "Zaporizhzhia",
+    "Kryvyi_Rih": "Kryvyi Rih",
+    "Mykolaiv": "Mykolaiv",
+    "Poltava": "Poltava",
+    "Cherkasy": "Cherkasy",
+    "Zhytomyr": "Zhytomyr",
+    "Sumy": "Sumy",
+    "Rivne": "Rivne",
+    "Lutsk": "Lutsk",
+    "Uzhhorod": "Uzhhorod",
+    "Chernivtsi": "Chernivtsi",
+    "Kherson": "Kherson",
+    "Kropyvnytskyi": "Kropyvnytskyi",
+    "Manual": "Inne / ręcznie"
+  },
+  "lifeprev": {
+    "realLifePreview": "Podgląd w realu",
+    "slicerPreview": "Podgląd slicera",
+    "layerOrder": "Kolejność druku warstw",
+    "clipInside": "Mapa powinna być przycięta wewnątrz krawędzi; tekst i krawędź pozostają osobnymi warstwami dla czystego koloru.",
+    "printNote": "Uwaga do druku",
+    "minStroke": "Minimalna kreska: 0,4 mm. Tekst najlepiej drukować jako ostatnią warstwę koloru."
+  },
+  "live": {
+    "pickAreaOnMap": "Wybierz obszar na mapie",
+    "pickArea": "Wybierz obszar",
+    "loading": "Ładowanie"
+  },
+  "search": {
+    "placeholder": "Znajdź miasto, miejscowość lub adres…",
+    "myPlace": "Moje miejsce",
+    "myLocation": "Moja lokalizacja",
+    "clear": "Wyczyść"
+  },
+  "modal": {
+    "loading": "Ładowanie 3D…",
+    "close": "Zamknij",
+    "descKey": "Brelok-mapa 55×30 mm",
+    "descMap": "Dzielnica miasta w 3D",
+    "hint": "przeciągnij / kółko = powiększenie",
+    "ctaKey": "Utwórz brelok",
+    "ctaMap": "Utwórz mapę"
+  },
+  "preview": {
+    "generating": "Generowanie modelu...",
+    "batchLoadError": "Nie udało się załadować podglądu partii",
+    "modelLoadError": "Nie udało się załadować modelu",
+    "tools": {
+      "fullscreen": "Pełny ekran",
+      "collapse": "Zwiń",
+      "viewTools": "Narzędzia widoku",
+      "sceneControl": "Szybkie sterowanie sceną",
+      "grid": "Siatka",
+      "axes": "Osie",
+      "onF": "Włączona",
+      "hiddenF": "Ukryta",
+      "onPl": "Włączone",
+      "hiddenPl": "Ukryte",
+      "rotation": "Obrót",
+      "camera": "Kamera",
+      "model": "Model",
+      "rotateHint": "Camera: obraca się kamera. Model: przeciąganie obraca sam model.",
+      "cameraHint": "Orbit: standardowy widok. Fly: swobodny ruch WASD + mysz.",
+      "flySpeed": "Prędkość lotu",
+      "terrainShading": "Cieniowanie terenu",
+      "shadingSmooth": "Płynne cieniowanie zboczy",
+      "shadingFlat": "Ostrzejsze krawędzie terenu",
+      "shadingToggleHint": "Smooth = gładkie normalne. Flat = ostrzejszy teren bez widocznych szwów.",
+      "hintFly": "Fly: WASD do ruchu, Q/E w górę/dół, Shift do przyspieszenia, prawy przycisk myszy do rozglądania się.",
+      "hintModel": "Przeciągnij model, aby go obrócić, podwójne kliknięcie resetuje orientację.",
+      "hintCamera": "Przeciąganie steruje kamerą, kółko zmienia odległość.",
+      "visibility": "Widoczność komponentów:",
+      "terrain": "Teren",
+      "roads": "Drogi",
+      "buildings": "Budynki",
+      "water": "Woda",
+      "parks": "Parki"
+    }
   }
 }

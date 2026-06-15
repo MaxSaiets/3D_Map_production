@@ -152,6 +152,13 @@
       "title": "3D city maps and personalised keychains — what we make",
       "p1": "Monadruk turns any place on Earth into a printable 3D model: a 3D map of a city district with real building heights, parks and rivers from OpenStreetMap data, a city map keychain with your own text, a topographic keychain with real mountain relief from satellite elevation data, or a city-map fridge magnet. The 3MF and STL files open straight in Bambu Studio and PrusaSlicer, ready to print at home.",
       "p2": "No 3D printer? We print for you in eco-friendly Eco PLA and ship across Ukraine and the EU. A 3D map of London, Berlin, Kyiv or New York, the relief of the Alps or Hoverla, a personalised anniversary keychain — pick a spot on the map and the model is ready in minutes."
+    },
+    "alt": {
+      "keychainMap": "City map keychain",
+      "district": "3D city district",
+      "cityMap": "3D city map",
+      "districtMap": "{district}, {city} — 3D map",
+      "dims": "2.4 × 1.8 km"
     }
   },
   "createMeta": {
@@ -329,7 +336,12 @@
     "paymentNote": "Payment is arranged after the order is confirmed. Your design and model are attached automatically.",
     "sending": "Sending…",
     "submit": "Place order",
-    "leadTime": "Printing & dispatch: 2–4 business days"
+    "leadTime": "Printing & dispatch: 2–4 business days",
+    "aria": {
+      "close": "Close",
+      "region": "Delivery region",
+      "method": "Delivery method"
+    }
   },
   "contact": {
     "errPhone": "Enter a phone number",
@@ -599,221 +611,336 @@
     "detailOverview": "overview scale"
   },
   "kc": {
-    "tabs.product": "Item",
-    "tabs.map": "Map",
-    "tabs.label": "Text",
-    "tabs.review": "Print",
-    "tabs.advanced": "More",
-    "header.eyebrow": "Creation wizard",
-    "header.title": "Shape first, then the map",
-    "header.subtitle": "Minimal flow: template, map area, label, generation.",
-    "ready.good": "Ready to print",
-    "ready.warn": "Printable, but handle with care",
-    "ready.bad": "Fixes needed",
-    "ready.fix": "Fix: {issue}",
-    "ready.nextWarn": "For a better result pick a smaller crop or a larger map area.",
-    "ready.nextGood": "You can create the 3MF.",
-    "details.summary": "Print details and quick actions",
-    "details.printability": "Printability",
-    "quick.centerMap": "Center map",
-    "quick.maxMap": "Maximize map",
-    "quick.centerLabel": "Center text",
-    "quick.loopTop": "Loop on top",
-    "quick.autoFix": "Auto-fix",
-    "advanced.show": "Show advanced settings",
-    "advanced.hide": "Hide advanced settings",
-    "advanced.title": "Advanced settings",
-    "advanced.desc": "This mode is for you or the print operator. A client doesn't need these parameters in the main flow.",
-    "advanced.baseLoop": "Base and loop",
-    "advanced.shapeLoop": "Shape and loop",
-    "advanced.baseShape": "Backing shape",
-    "advanced.loopType": "Loop type",
-    "advanced.loopPosition": "Loop position",
-    "advanced.rotation": "Rotation",
-    "advanced.mapText": "Map and text",
-    "advanced.mapOrientation": "Map orientation",
-    "advanced.printFont": "Print font",
-    "advanced.textRotation": "Text rotation",
-    "advanced.mapLayers": "Map layers",
-    "advanced.uniformBuildings": "Uniform building height",
-    "product.title": "Check the keychain base",
-    "product.desc": "Ready-made templates sit right under the preview. Only the quick actions a client really needs after picking a template are left here.",
-    "product.maxMap": "Max map",
-    "product.token": "Token 55 x 30",
-    "product.centerLoop": "Center loop",
-    "product.layoutRotation": "Layout rotation",
-    "map.title": "Set the map area",
-    "map.desc": "Click on the map to move the frame. Don't shrink it below the recommended scale: the system will warn you if the area is too large.",
-    "map.orientation": "Orientation on the map",
-    "label.title": "Bottom caption",
-    "label.desc": "Text changes without re-generating. For printing, a short caption and a thicker stroke work best.",
-    "label.printFont": "Print-safe font",
-    "label.placement": "Side / placement",
-    "label.current": "Current text: {height} mm height, {stroke} mm stroke, style {style}.",
-    "label.secondLine": "Second line · date or coordinates",
-    "label.insertCoords": "Insert coordinates of the area center",
-    "label.secondHint": "Smaller size right under the main caption. 📍 inserts the coordinates of the selected area.",
-    "label.backTitle": "Back caption · engraving",
-    "label.backPlaceholder": "NAME · DATE",
-    "label.backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D.",
-    "review.title": "Pre-generation check",
-    "review.desc": "Only parameters a client understands belong here: size, text, detail level and print readiness.",
-    "review.noText": "no text",
-    "review.generated3mf": "Generated 3MF",
-    "review.layersNote": "Text and rim are separate layers, the map is clipped to the inner area of the keychain.",
-    "metric.base": "Base",
-    "metric.loop": "Loop",
-    "metric.hole": "hole",
-    "metric.detail": "Detail",
-    "metric.status": "Status",
-    "metric.product": "Item",
-    "metric.map": "Map",
-    "metric.signature": "Caption",
-    "loop.round": "Round",
-    "loop.teardrop": "Teardrop",
-    "loop.slot": "Slot",
-    "loop.sideTab": "Tab",
-    "detail.bad": "poor",
-    "detail.edge": "borderline",
-    "detail.good": "good",
-    "detail.pickCrop": "pick a crop",
-    "topo.label": "🏔 Elevation relief (topo)",
-    "topo.hint": "Mountains instead of streets: Hoverla, the Alps, coastlines. Map layers are turned off.",
-    "topo.reliefHeight": "Relief height",
-    "gpx.title": "🏃 Route (GPX) on the keychain",
-    "gpx.replace": "Replace",
-    "gpx.pickFile": "Choose file",
-    "gpx.loaded": "✓ {name} · {count} points",
-    "gpx.remove": "Remove",
-    "gpx.privacy": "🔒 Your route is only used to build the model. We don't publish or share it.",
-    "gpx.hint": "A run/hike track — a line over the map. The area auto-focuses on the route.",
-    "gpx.readError": "Could not read the GPX file",
-    "shape.rounded": "Rectangle",
-    "shape.token": "Token",
-    "shape.capsule": "Capsule",
-    "shape.octagon": "Octagon",
-    "shape.heart": "Heart ♥",
-    "shape.house": "House",
-    "shape.puzzleL": "Puzzle L 🧩",
-    "shape.puzzleR": "Puzzle R 🧩",
-    "shape.heartL": "Couple heart L 💕",
-    "shape.heartR": "Couple heart R 💕",
-    "loopPos.topLeft": "Top left",
-    "loopPos.topRight": "Top right",
-    "loopPos.right": "Right",
-    "loopPos.bottomLeft": "Bottom left",
-    "place.bottom": "Bottom",
-    "place.top": "Top",
-    "place.left": "Left",
-    "place.right": "Right",
-    "slider.labelWidth": "Caption width",
-    "slider.textHeight": "Letter height",
-    "slider.strokeWidth": "Stroke width",
-    "slider.baseWidth": "Base width",
-    "slider.baseHeight": "Base height",
-    "slider.baseThickness": "Base thickness",
-    "slider.holeGuideRadius": "Guide radius around the hole",
-    "slider.loopOuterRadius": "Outer loop radius",
-    "slider.ringHole": "Ring hole",
-    "slider.cornerRadius": "Corner radius",
-    "slider.labelBand": "Caption band",
-    "slider.rimWidth": "Side rim width",
-    "slider.rimHeight": "Side rim height",
-    "slider.mapWidth": "Map area width",
-    "slider.mapHeight": "Map area height",
-    "slider.maxBuildings": "Max buildings",
-    "layer.base": "Base",
-    "layer.rim": "Rim",
-    "layer.water": "Water",
-    "layer.parks": "Parks",
-    "layer.roads": "Roads",
-    "layer.buildings": "Buildings",
-    "layer.text": "Text",
-    "layer.top": "top {z} mm",
-    "layer.size": ", {w} x {h} mm",
-    "layer.noWater": "there may be no water in the selected area",
-    "layer.missing": "layer was not created",
-    "layerTone.ok": "OK",
-    "layerTone.warn": "warning",
-    "layerTone.bad": "issue",
-    "printability.idle.title": "First place a frame on the map",
-    "printability.idle.detail": "Clicking the map moves the print area, the large teal square resizes it.",
-    "printability.topo.title": "Topo mode: elevation relief is printed",
-    "printability.topo.detail": "Map layers are off. Large mountain areas (5–20 km) are exactly what's needed for expressive relief.",
-    "printability.tooLarge.title": "Area too large for FDM",
-    "printability.tooLarge.detail": "The minimal 0.4 mm detail now equals ~{m} m. Fine roads and text may break up.",
-    "printability.onEdge.title": "Printable, but detail is borderline",
-    "printability.onEdge.detail": "0.4 mm equals ~{m} m. For thin streets it's better to pick a smaller area.",
-    "printability.good.title": "Scale suitable for printing",
-    "printability.good.detail": "0.4 mm equals ~{m} m. A good balance for a keychain.",
-    "check.crop.label": "Map scale",
-    "check.crop.detail": "{min} mm = ~{m} m",
-    "check.crop.empty": "Place a frame on the map",
-    "check.text.label": "Text",
-    "check.text.tooLong": "Caption too large for this width: shorten it, widen the field, or pick Narrow",
-    "check.text.detail": "{stroke} mm stroke, {height} mm height",
-    "check.loop.label": "Loop",
-    "check.loop.detail": "hole Ø{hole} mm, wall {wall} mm",
-    "check.base.label": "Base and rim",
-    "check.base.detail": "{base} mm base, {rim} mm rim",
-    "check.layers.label": "Layers",
-    "check.layers.topo": "topo relief {relief} mm (map layers off)",
-    "check.layers.detail": "roads {roads} mm, water {water} mm, buildings up to {buildings} mm",
-    "verdict.bad.title": "3MF needs a review",
-    "verdict.bad.detail": "Problem layers: {layers}.",
-    "verdict.warn.title": "3MF created, there are warnings",
-    "verdict.warn.detail": "Check: {layers}.",
-    "verdict.good.title": "3MF looks ready for the slicer",
-    "verdict.good.detail": "Base, rim, map, buildings and text are present as separate layers.",
-    "status.generating": "Generating keychain",
-    "status.ready3mf": "3MF ready",
-    "status.ready": "Done",
-    "btn.generating": "Generating...",
-    "btn.create3mf": "Create 3MF",
-    "btn.buyOrder": "Buy / order print",
-    "btn.order": "Order print",
-    "btn.download3mf": "Download 3MF",
-    "quota.remaining": "{remaining} of {limit} free downloads left",
-    "quota.exhausted": "Free downloads used up — place a print order",
-    "sticky.priceLabel": "Keychain with a map",
-    "sticky.generating": "Generating… {progress}%",
-    "sticky.createKeychain": "Create keychain",
-    "sticky.download": "Download",
-    "error.generateFailed": "Keychain failed to generate",
-    "error.noArea": "First mark an area on the map",
-    "error.notReady": "Not ready to print: {issues}.",
-    "error.generic": "Keychain generation error",
-    "error.limitContact": "I've used up 5 free keychain downloads. I want more / a print — please get in touch with me.",
-    "error.downloadFailed": "Could not download the 3MF",
-    "templates.ready": "Ready-made templates",
-    "templates.tapClick": "tap / click",
-    "designer.hintFront": "Drag the map, text, loop or the bottom-right handle",
-    "designer.hintBack": "Back: control the hole, rim and inner text",
-    "designer.front": "Front",
-    "designer.back": "Back",
-    "designer.pickArea": "Pick an area on the map",
-    "tpl.classicWide.name": "35 x 55",
-    "tpl.classicWide.desc": "Standard compact vertical keychain.",
-    "tpl.token55.name": "Token 55 x 30",
-    "tpl.token55.desc": "Standard 55×30 token with a left Ø3 mm hole and a capsule base.",
-    "tpl.heart46.name": "Heart 46 × 42",
-    "tpl.heart46.desc": "A map of the place in your heart — a gift for two.",
-    "tpl.house44.name": "House 44 × 48",
-    "tpl.house44.desc": "Home is where your street is. Roof with a loop on top.",
-    "tpl.puzzleLeft.name": "Puzzle L · 40 × 42",
-    "tpl.puzzleLeft.desc": "Half of a pair: your city. The tab on the right joins half R.",
-    "tpl.puzzleRight.name": "Puzzle R · 40 × 42",
-    "tpl.puzzleRight.desc": "Half of a pair: a loved one's city. The slot on the left accepts half L.",
-    "tpl.heartPairLeft.name": "Couple heart · L · 30 × 44",
-    "tpl.heartPairLeft.desc": "Half a heart for two: your city. The edge lock joins half R into a full heart.",
-    "tpl.heartPairRight.name": "Couple heart · R · 30 × 44",
-    "tpl.heartPairRight.desc": "Half a heart for two: a loved one's city. The slot accepts half L.",
-    "tpl.rightLoop.name": "Side Loop",
-    "tpl.rightLoop.desc": "Loop on the right, handy for a wide map.",
-    "tpl.verticalTag.name": "Vertical",
-    "tpl.verticalTag.desc": "Vertical keychain with a rotated caption.",
-    "tpl.softCapsule.name": "Capsule",
-    "tpl.softCapsule.desc": "Soft capsule shape with a slot loop."
+    "tabs": {
+      "product": "Item",
+      "map": "Map",
+      "label": "Text",
+      "review": "Print",
+      "advanced": "More"
+    },
+    "header": {
+      "eyebrow": "Creation wizard",
+      "title": "Shape first, then the map",
+      "subtitle": "Minimal flow: template, map area, label, generation."
+    },
+    "ready": {
+      "good": "Ready to print",
+      "warn": "Printable, but handle with care",
+      "bad": "Fixes needed",
+      "fix": "Fix: {issue}",
+      "nextWarn": "For a better result pick a smaller crop or a larger map area.",
+      "nextGood": "You can create the 3MF."
+    },
+    "details": {
+      "summary": "Print details and quick actions",
+      "printability": "Printability"
+    },
+    "quick": {
+      "centerMap": "Center map",
+      "maxMap": "Maximize map",
+      "centerLabel": "Center text",
+      "loopTop": "Loop on top",
+      "autoFix": "Auto-fix"
+    },
+    "advanced": {
+      "show": "Show advanced settings",
+      "hide": "Hide advanced settings",
+      "title": "Advanced settings",
+      "desc": "This mode is for you or the print operator. A client doesn't need these parameters in the main flow.",
+      "baseLoop": "Base and loop",
+      "shapeLoop": "Shape and loop",
+      "baseShape": "Backing shape",
+      "loopType": "Loop type",
+      "loopPosition": "Loop position",
+      "rotation": "Rotation",
+      "mapText": "Map and text",
+      "mapOrientation": "Map orientation",
+      "printFont": "Print font",
+      "textRotation": "Text rotation",
+      "mapLayers": "Map layers",
+      "uniformBuildings": "Uniform building height"
+    },
+    "product": {
+      "title": "Check the keychain base",
+      "desc": "Ready-made templates sit right under the preview. Only the quick actions a client really needs after picking a template are left here.",
+      "maxMap": "Max map",
+      "token": "Token 55 x 30",
+      "centerLoop": "Center loop",
+      "layoutRotation": "Layout rotation"
+    },
+    "map": {
+      "title": "Set the map area",
+      "desc": "Click on the map to move the frame. Don't shrink it below the recommended scale: the system will warn you if the area is too large.",
+      "orientation": "Orientation on the map"
+    },
+    "label": {
+      "title": "Bottom caption",
+      "desc": "Text changes without re-generating. For printing, a short caption and a thicker stroke work best.",
+      "printFont": "Print-safe font",
+      "placement": "Side / placement",
+      "current": "Current text: {height} mm height, {stroke} mm stroke, style {style}.",
+      "secondLine": "Second line · date or coordinates",
+      "insertCoords": "Insert coordinates of the area center",
+      "secondHint": "Smaller size right under the main caption. 📍 inserts the coordinates of the selected area.",
+      "backTitle": "Back caption · engraving",
+      "backPlaceholder": "NAME · DATE",
+      "backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D."
+    },
+    "review": {
+      "title": "Pre-generation check",
+      "desc": "Only parameters a client understands belong here: size, text, detail level and print readiness.",
+      "noText": "no text",
+      "generated3mf": "Generated 3MF",
+      "layersNote": "Text and rim are separate layers, the map is clipped to the inner area of the keychain."
+    },
+    "metric": {
+      "base": "Base",
+      "loop": "Loop",
+      "hole": "hole",
+      "detail": "Detail",
+      "status": "Status",
+      "product": "Item",
+      "map": "Map",
+      "signature": "Caption"
+    },
+    "loop": {
+      "round": "Round",
+      "teardrop": "Teardrop",
+      "slot": "Slot",
+      "sideTab": "Tab"
+    },
+    "detail": {
+      "bad": "poor",
+      "edge": "borderline",
+      "good": "good",
+      "pickCrop": "pick a crop"
+    },
+    "topo": {
+      "label": "🏔 Elevation relief (topo)",
+      "hint": "Mountains instead of streets: Hoverla, the Alps, coastlines. Map layers are turned off.",
+      "reliefHeight": "Relief height"
+    },
+    "gpx": {
+      "title": "🏃 Route (GPX) on the keychain",
+      "replace": "Replace",
+      "pickFile": "Choose file",
+      "loaded": "✓ {name} · {count} points",
+      "remove": "Remove",
+      "privacy": "🔒 Your route is only used to build the model. We don't publish or share it.",
+      "hint": "A run/hike track — a line over the map. The area auto-focuses on the route.",
+      "readError": "Could not read the GPX file"
+    },
+    "shape": {
+      "rounded": "Rectangle",
+      "token": "Token",
+      "capsule": "Capsule",
+      "octagon": "Octagon",
+      "heart": "Heart ♥",
+      "house": "House",
+      "puzzleL": "Puzzle L 🧩",
+      "puzzleR": "Puzzle R 🧩",
+      "heartL": "Couple heart L 💕",
+      "heartR": "Couple heart R 💕"
+    },
+    "loopPos": {
+      "topLeft": "Top left",
+      "topRight": "Top right",
+      "right": "Right",
+      "bottomLeft": "Bottom left"
+    },
+    "place": {
+      "bottom": "Bottom",
+      "top": "Top",
+      "left": "Left",
+      "right": "Right"
+    },
+    "slider": {
+      "labelWidth": "Caption width",
+      "textHeight": "Letter height",
+      "strokeWidth": "Stroke width",
+      "baseWidth": "Base width",
+      "baseHeight": "Base height",
+      "baseThickness": "Base thickness",
+      "holeGuideRadius": "Guide radius around the hole",
+      "loopOuterRadius": "Outer loop radius",
+      "ringHole": "Ring hole",
+      "cornerRadius": "Corner radius",
+      "labelBand": "Caption band",
+      "rimWidth": "Side rim width",
+      "rimHeight": "Side rim height",
+      "mapWidth": "Map area width",
+      "mapHeight": "Map area height",
+      "maxBuildings": "Max buildings"
+    },
+    "layer": {
+      "base": "Base",
+      "rim": "Rim",
+      "water": "Water",
+      "parks": "Parks",
+      "roads": "Roads",
+      "buildings": "Buildings",
+      "text": "Text",
+      "top": "top {z} mm",
+      "size": ", {w} x {h} mm",
+      "noWater": "there may be no water in the selected area",
+      "missing": "layer was not created"
+    },
+    "layerTone": {
+      "ok": "OK",
+      "warn": "warning",
+      "bad": "issue"
+    },
+    "printability": {
+      "idle": {
+        "title": "First place a frame on the map",
+        "detail": "Clicking the map moves the print area, the large teal square resizes it."
+      },
+      "topo": {
+        "title": "Topo mode: elevation relief is printed",
+        "detail": "Map layers are off. Large mountain areas (5–20 km) are exactly what's needed for expressive relief."
+      },
+      "tooLarge": {
+        "title": "Area too large for FDM",
+        "detail": "The minimal 0.4 mm detail now equals ~{m} m. Fine roads and text may break up."
+      },
+      "onEdge": {
+        "title": "Printable, but detail is borderline",
+        "detail": "0.4 mm equals ~{m} m. For thin streets it's better to pick a smaller area."
+      },
+      "good": {
+        "title": "Scale suitable for printing",
+        "detail": "0.4 mm equals ~{m} m. A good balance for a keychain."
+      }
+    },
+    "check": {
+      "crop": {
+        "label": "Map scale",
+        "detail": "{min} mm = ~{m} m",
+        "empty": "Place a frame on the map"
+      },
+      "text": {
+        "label": "Text",
+        "tooLong": "Caption too large for this width: shorten it, widen the field, or pick Narrow",
+        "detail": "{stroke} mm stroke, {height} mm height"
+      },
+      "loop": {
+        "label": "Loop",
+        "detail": "hole Ø{hole} mm, wall {wall} mm"
+      },
+      "base": {
+        "label": "Base and rim",
+        "detail": "{base} mm base, {rim} mm rim"
+      },
+      "layers": {
+        "label": "Layers",
+        "topo": "topo relief {relief} mm (map layers off)",
+        "detail": "roads {roads} mm, water {water} mm, buildings up to {buildings} mm"
+      }
+    },
+    "verdict": {
+      "bad": {
+        "title": "3MF needs a review",
+        "detail": "Problem layers: {layers}."
+      },
+      "warn": {
+        "title": "3MF created, there are warnings",
+        "detail": "Check: {layers}."
+      },
+      "good": {
+        "title": "3MF looks ready for the slicer",
+        "detail": "Base, rim, map, buildings and text are present as separate layers."
+      }
+    },
+    "status": {
+      "generating": "Generating keychain",
+      "ready3mf": "3MF ready",
+      "ready": "Done"
+    },
+    "btn": {
+      "generating": "Generating...",
+      "create3mf": "Create 3MF",
+      "buyOrder": "Buy / order print",
+      "order": "Order print",
+      "download3mf": "Download 3MF"
+    },
+    "quota": {
+      "remaining": "{remaining} of {limit} free downloads left",
+      "exhausted": "Free downloads used up — place a print order"
+    },
+    "sticky": {
+      "priceLabel": "Keychain with a map",
+      "generating": "Generating… {progress}%",
+      "createKeychain": "Create keychain",
+      "download": "Download"
+    },
+    "error": {
+      "generateFailed": "Keychain failed to generate",
+      "noArea": "First mark an area on the map",
+      "notReady": "Not ready to print: {issues}.",
+      "generic": "Keychain generation error",
+      "limitContact": "I've used up 5 free keychain downloads. I want more / a print — please get in touch with me.",
+      "downloadFailed": "Could not download the 3MF"
+    },
+    "templates": {
+      "ready": "Ready-made templates",
+      "tapClick": "tap / click"
+    },
+    "designer": {
+      "hintFront": "Drag the map, text, loop or the bottom-right handle",
+      "hintBack": "Back: control the hole, rim and inner text",
+      "front": "Front",
+      "back": "Back",
+      "pickArea": "Pick an area on the map"
+    },
+    "tpl": {
+      "classicWide": {
+        "name": "35 x 55",
+        "desc": "Standard compact vertical keychain."
+      },
+      "token55": {
+        "name": "Token 55 x 30",
+        "desc": "Standard 55×30 token with a left Ø3 mm hole and a capsule base."
+      },
+      "heart46": {
+        "name": "Heart 46 × 42",
+        "desc": "A map of the place in your heart — a gift for two."
+      },
+      "house44": {
+        "name": "House 44 × 48",
+        "desc": "Home is where your street is. Roof with a loop on top."
+      },
+      "puzzleLeft": {
+        "name": "Puzzle L · 40 × 42",
+        "desc": "Half of a pair: your city. The tab on the right joins half R."
+      },
+      "puzzleRight": {
+        "name": "Puzzle R · 40 × 42",
+        "desc": "Half of a pair: a loved one's city. The slot on the left accepts half L."
+      },
+      "heartPairLeft": {
+        "name": "Couple heart · L · 30 × 44",
+        "desc": "Half a heart for two: your city. The edge lock joins half R into a full heart."
+      },
+      "heartPairRight": {
+        "name": "Couple heart · R · 30 × 44",
+        "desc": "Half a heart for two: a loved one's city. The slot accepts half L."
+      },
+      "rightLoop": {
+        "name": "Side Loop",
+        "desc": "Loop on the right, handy for a wide map."
+      },
+      "verticalTag": {
+        "name": "Vertical",
+        "desc": "Vertical keychain with a rotated caption."
+      },
+      "softCapsule": {
+        "name": "Capsule",
+        "desc": "Soft capsule shape with a slot loop."
+      }
+    },
+    "unit": {
+      "mm": "mm"
+    }
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
@@ -942,5 +1069,130 @@
     "qaBaseNotWatertight": "the base isn't fully watertight — the slicer will print it anyway, but it's better to check the model",
     "qaSlicerNotFound": "the slicer isn't available on the server — the check was skipped",
     "qaLayerNotWatertight": "{layer}: the layer isn't fully watertight"
+  },
+  "kcp": {
+    "loadingMap": "Loading map...",
+    "loading3d": "Loading 3D preview…",
+    "statusGenerating": "Generating",
+    "statusReady": "Keychain ready",
+    "statusSelected": "Area selected",
+    "statusPickArea": "Pick an area",
+    "eyebrow": "Keychain builder",
+    "title": "Keychain studio with a map",
+    "subtitle": "A flat multi-color plate with a reinforced loop, a clean band for the label and controlled building height.",
+    "navMaps": "Maps",
+    "navAccount": "Account",
+    "city": "City",
+    "state": "Status",
+    "pickShape": "Choose the keychain shape",
+    "pickShapeHint": "Tap an example — the shape will apply",
+    "dragHint": "Next: drag the map, label and loop right in the preview. The map and label can be <rotate>rotated</rotate> — drag the corner handle <b>⟳</b> on the map or the green handle <b>↻</b> above the label.",
+    "mapTitle": "Place the shape on the map",
+    "mapSubtitle": "Drag the frame; the ⟳ handle on the map rotates it. The teal frame keeps proportions in sync with the preview.",
+    "layoutTitle": "Size, map area, loop and label",
+    "layoutSubtitle": "Tune the keychain shape locally, then drop the chosen map area into the dashed region.",
+    "preview3dTitle": "3D preview of the finished keychain",
+    "layers": "Layers",
+    "emptyTitle": "The 3D model will appear after you create it",
+    "emptyBody": "Press “Create 3MF” — and a real 3D preview with all the layers will appear here.",
+    "generatingPct": "Generating: {progress}%",
+    "tour": {
+      "step1Title": "Choose a city and district",
+      "step1Body": "Pick a city and a point on the map — this will be the map on your keychain.",
+      "step2Title": "Choose a template",
+      "step2Body": "Token 55×30, classic or square — tap it and the dimensions will be set automatically.",
+      "step3Title": "Add a label",
+      "step3Body": "Enter text (e.g. the city name), move or rotate it. Then press “Generate”."
+    }
+  },
+  "cities": {
+    "Kyiv": "Kyiv",
+    "Khmelnytskyi": "Khmelnytskyi",
+    "Lviv": "Lviv",
+    "Odesa": "Odesa",
+    "Dnipro": "Dnipro",
+    "Kharkiv": "Kharkiv",
+    "Vinnytsia": "Vinnytsia",
+    "Ternopil": "Ternopil",
+    "IvanoFrankivsk": "Ivano-Frankivsk",
+    "Chernihiv": "Chernihiv",
+    "Zaporizhzhia": "Zaporizhzhia",
+    "Kryvyi_Rih": "Kryvyi Rih",
+    "Mykolaiv": "Mykolaiv",
+    "Poltava": "Poltava",
+    "Cherkasy": "Cherkasy",
+    "Zhytomyr": "Zhytomyr",
+    "Sumy": "Sumy",
+    "Rivne": "Rivne",
+    "Lutsk": "Lutsk",
+    "Uzhhorod": "Uzhhorod",
+    "Chernivtsi": "Chernivtsi",
+    "Kherson": "Kherson",
+    "Kropyvnytskyi": "Kropyvnytskyi",
+    "Manual": "Other / manual"
+  },
+  "lifeprev": {
+    "realLifePreview": "Real-life preview",
+    "slicerPreview": "Slicer preview",
+    "layerOrder": "Layer print order",
+    "clipInside": "The map should be clipped inside the edge; the text and rim stay as separate layers for clean color.",
+    "printNote": "Print note",
+    "minStroke": "Minimum stroke: 0.4 mm. The text is best printed as the last color layer."
+  },
+  "live": {
+    "pickAreaOnMap": "Select an area on the map",
+    "pickArea": "Select an area",
+    "loading": "Loading"
+  },
+  "search": {
+    "placeholder": "Find a city, town or address…",
+    "myPlace": "My place",
+    "myLocation": "My location",
+    "clear": "Clear"
+  },
+  "modal": {
+    "loading": "Loading 3D…",
+    "close": "Close",
+    "descKey": "Map keychain 55×30 mm",
+    "descMap": "3D city district",
+    "hint": "drag / wheel = zoom",
+    "ctaKey": "Create keychain",
+    "ctaMap": "Create map"
+  },
+  "preview": {
+    "generating": "Generating model...",
+    "batchLoadError": "Failed to load batch preview",
+    "modelLoadError": "Failed to load model",
+    "tools": {
+      "fullscreen": "Fullscreen",
+      "collapse": "Collapse",
+      "viewTools": "View tools",
+      "sceneControl": "Quick scene control",
+      "grid": "Grid",
+      "axes": "Axes",
+      "onF": "Enabled",
+      "hiddenF": "Hidden",
+      "onPl": "Enabled",
+      "hiddenPl": "Hidden",
+      "rotation": "Rotation",
+      "camera": "Camera",
+      "model": "Model",
+      "rotateHint": "Camera: rotates the camera. Model: drag rotates the model itself.",
+      "cameraHint": "Orbit: standard view. Fly: free movement WASD + mouse.",
+      "flySpeed": "Fly speed",
+      "terrainShading": "Terrain shading",
+      "shadingSmooth": "Smooth slope shading",
+      "shadingFlat": "Sharper terrain edges",
+      "shadingToggleHint": "Smooth = smooth normals. Flat = sharper terrain without visible seams.",
+      "hintFly": "Fly: WASD to move, Q/E up/down, Shift to accelerate, right mouse button to look around.",
+      "hintModel": "Drag the model to rotate it, double-click resets orientation.",
+      "hintCamera": "Drag controls the camera, scroll wheel changes distance.",
+      "visibility": "Component visibility:",
+      "terrain": "Terrain",
+      "roads": "Roads",
+      "buildings": "Buildings",
+      "water": "Water",
+      "parks": "Parks"
+    }
   }
 }

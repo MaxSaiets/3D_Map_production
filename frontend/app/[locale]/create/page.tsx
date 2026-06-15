@@ -77,17 +77,9 @@ const CITIES: Record<
 };
 
 
-const CITY_LABELS: Record<string, string> = {
-  Kyiv: "Київ", Khmelnytskyi: "Хмельницький", Lviv: "Львів", Odesa: "Одеса",
-  Dnipro: "Дніпро", Kharkiv: "Харків", Vinnytsia: "Вінниця", Zaporizhzhia: "Запоріжжя",
-  Kryvyi_Rih: "Кривий Ріг", Mykolaiv: "Миколаїв", Poltava: "Полтава", Cherkasy: "Черкаси",
-  Chernihiv: "Чернігів", Ternopil: "Тернопіль", IvanoFrankivsk: "Івано-Франківськ",
-  Zhytomyr: "Житомир", Sumy: "Суми", Rivne: "Рівне", Lutsk: "Луцьк",
-  Uzhhorod: "Ужгород", Chernivtsi: "Чернівці", Kherson: "Херсон", Kropyvnytskyi: "Кропивницький",
-};
-
 export default function Home() {
   const tc = useTranslations("create");
+  const tCity = useTranslations("cities");
   const [showHexGrid, setShowHexGrid] = useState(false);
   const [selectedZones, setSelectedZones] = useState<any[]>([]);
   const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
@@ -222,7 +214,7 @@ export default function Home() {
     const city = CITIES[currentCityKey];
     const grid = await saveGrid(token, {
       id: gridId || undefined,
-      name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridTypeLabel(gridType)}`,
+      name: `${tCity(currentCityKey)} · ${gridTypeLabel(gridType)}`,
       city: currentCityKey,
       center: city?.center,
       grid_type: gridType,
@@ -269,7 +261,7 @@ export default function Home() {
         const city = CITIES[currentCityKey];
         const grid = await saveGrid(token, {
           id: gridId || undefined,
-          name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridTypeLabel(gridType)}`,
+          name: `${tCity(currentCityKey)} · ${gridTypeLabel(gridType)}`,
           city: currentCityKey,
           center: city?.center,
           grid_type: gridType,
@@ -388,7 +380,7 @@ export default function Home() {
   }, [downloadUrl]);
 
   const currentCity = CITIES[currentCityKey];
-  const selectedCityLabel = CITY_LABELS[currentCityKey] ?? currentCityKey;
+  const selectedCityLabel = tCity(currentCityKey);
   const hasMapSelection = Boolean(selectedArea);
   const zoneCount = selectedZones.length;
   const selectionLabel = showHexGrid
@@ -451,7 +443,7 @@ export default function Home() {
                 title={tc("cityTitle")}
               >
                 {Object.keys(CITIES).map((key) => (
-                  <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
+                  <option key={key} value={key}>{tCity(key)}</option>
                 ))}
               </select>
               <span className="hidden rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] md:inline">

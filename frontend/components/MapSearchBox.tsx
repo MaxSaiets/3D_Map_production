@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Search, Loader2, LocateFixed, X } from "lucide-react";
 import { geocodeSearch, reverseGeocode, type GeoResult } from "@/lib/geocode";
 
@@ -11,6 +12,7 @@ import { geocodeSearch, reverseGeocode, type GeoResult } from "@/lib/geocode";
  * Кнопка 📍 — геолокація браузера.
  */
 export function MapSearchBox() {
+  const t = useTranslations("search");
   const [q, setQ] = useState("");
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -58,7 +60,7 @@ export function MapSearchBox() {
         const { latitude, longitude } = pos.coords;
         const name = await reverseGeocode(latitude, longitude);
         setGeoBusy(false);
-        goto(latitude, longitude, name || "Моє місце");
+        goto(latitude, longitude, name || t("myPlace"));
       },
       () => setGeoBusy(false),
       { enableHighAccuracy: true, timeout: 8000 },
@@ -81,12 +83,12 @@ export function MapSearchBox() {
           value={q}
           onChange={(e) => runSearch(e.target.value)}
           onFocus={() => { if (results.length) setOpen(true); }}
-          placeholder="Знайти місто, село чи адресу…"
+          placeholder={t("placeholder")}
           className="min-w-0 flex-1 bg-transparent px-1 py-1 text-[13px] font-medium text-white placeholder:text-white/55 outline-none"
         />
         {busy && <Loader2 size={15} className="shrink-0 animate-spin text-white/70" />}
         {q && !busy && (
-          <button type="button" onClick={() => { setQ(""); setResults([]); setOpen(false); }} className="shrink-0 text-white/60 hover:text-white" aria-label="Очистити">
+          <button type="button" onClick={() => { setQ(""); setResults([]); setOpen(false); }} className="shrink-0 text-white/60 hover:text-white" aria-label={t("clear")}>
             <X size={15} />
           </button>
         )}
@@ -94,8 +96,8 @@ export function MapSearchBox() {
           type="button"
           onClick={useMyLocation}
           className="ml-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
-          title="Моє місцеположення"
-          aria-label="Моє місцеположення"
+          title={t("myLocation")}
+          aria-label={t("myLocation")}
         >
           {geoBusy ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} />}
         </button>

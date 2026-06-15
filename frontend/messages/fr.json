@@ -152,6 +152,13 @@
       "title": "Cartes de villes 3D et porte-clés personnalisés — ce que nous faisons",
       "p1": "Monadruk transforme n'importe quel endroit de la Terre en modèle 3D imprimable : une carte 3D de quartier avec les vraies hauteurs des bâtiments, parcs et rivières issues d'OpenStreetMap, un porte-clés carte de ville avec votre texte, un porte-clés topographique avec le vrai relief des montagnes issu des données satellite d'altitude, ou un magnet frigo carte. Les fichiers 3MF et STL s'ouvrent directement dans Bambu Studio et PrusaSlicer.",
       "p2": "Pas d'imprimante 3D ? Nous imprimons pour vous en Eco PLA écologique et livrons en Ukraine et dans l'UE. Une carte 3D de Paris, Lyon, Kyiv ou New York, le relief des Alpes, un porte-clés personnalisé pour un anniversaire — choisissez un lieu sur la carte et le modèle est prêt en quelques minutes."
+    },
+    "alt": {
+      "keychainMap": "Porte-clés carte de la ville",
+      "district": "Quartier de la ville en 3D",
+      "cityMap": "Carte 3D de la ville",
+      "districtMap": "{district}, {city} — carte 3D",
+      "dims": "2,4 × 1,8 km"
     }
   },
   "createMeta": {
@@ -329,7 +336,12 @@
     "paymentNote": "Le paiement est convenu après confirmation de la commande. Ton design et ton modèle sont joints automatiquement.",
     "sending": "Envoi…",
     "submit": "Commander",
-    "leadTime": "Impression & expédition : 2–4 jours ouvrés"
+    "leadTime": "Impression & expédition : 2–4 jours ouvrés",
+    "aria": {
+      "close": "Fermer",
+      "region": "Région de livraison",
+      "method": "Mode de livraison"
+    }
   },
   "contact": {
     "errPhone": "Indique un numéro de téléphone",
@@ -599,221 +611,336 @@
     "detailOverview": "échelle d'ensemble"
   },
   "kc": {
-    "tabs.product": "Produit",
-    "tabs.map": "Carte",
-    "tabs.label": "Texte",
-    "tabs.review": "Impression",
-    "tabs.advanced": "Plus",
-    "header.eyebrow": "Assistant de création",
-    "header.title": "D'abord la forme, puis la carte",
-    "header.subtitle": "Flux minimal : modèle, zone de carte, légende, génération.",
-    "ready.good": "Prêt à imprimer",
-    "ready.warn": "Imprimable, mais avec précaution",
-    "ready.bad": "Corrections nécessaires",
-    "ready.fix": "Corrigez : {issue}",
-    "ready.nextWarn": "Pour un meilleur résultat, choisissez un cadrage plus petit ou une zone de carte plus grande.",
-    "ready.nextGood": "Vous pouvez créer le 3MF.",
-    "details.summary": "Détails d'impression et actions rapides",
-    "details.printability": "Imprimabilité",
-    "quick.centerMap": "Centrer la carte",
-    "quick.maxMap": "Maximiser la carte",
-    "quick.centerLabel": "Centrer le texte",
-    "quick.loopTop": "Anneau en haut",
-    "quick.autoFix": "Correction auto.",
-    "advanced.show": "Afficher les réglages avancés",
-    "advanced.hide": "Masquer les réglages avancés",
-    "advanced.title": "Réglages avancés",
-    "advanced.desc": "Ce mode est pour vous ou l'opérateur d'impression. Un client n'a pas besoin de ces paramètres dans le flux principal.",
-    "advanced.baseLoop": "Base et anneau",
-    "advanced.shapeLoop": "Forme et anneau",
-    "advanced.baseShape": "Forme du support",
-    "advanced.loopType": "Type d'anneau",
-    "advanced.loopPosition": "Position de l'anneau",
-    "advanced.rotation": "Rotation",
-    "advanced.mapText": "Carte et texte",
-    "advanced.mapOrientation": "Orientation de la carte",
-    "advanced.printFont": "Police d'impression",
-    "advanced.textRotation": "Rotation du texte",
-    "advanced.mapLayers": "Couches de la carte",
-    "advanced.uniformBuildings": "Hauteur uniforme des bâtiments",
-    "product.title": "Vérifiez la base du porte-clés",
-    "product.desc": "Les modèles prêts à l'emploi sont juste sous l'aperçu. Seules les actions rapides dont un client a vraiment besoin après avoir choisi un modèle restent ici.",
-    "product.maxMap": "Carte max.",
-    "product.token": "Jeton 55 x 30",
-    "product.centerLoop": "Centrer anneau",
-    "product.layoutRotation": "Rotation de la mise en page",
-    "map.title": "Définir la zone de carte",
-    "map.desc": "Cliquez sur la carte pour déplacer le cadre. Ne le réduisez pas en dessous de l'échelle recommandée : le système vous avertira si la zone est trop grande.",
-    "map.orientation": "Orientation sur la carte",
-    "label.title": "Légende du bas",
-    "label.desc": "Le texte change sans régénération. Pour l'impression, une légende courte et un trait plus épais sont préférables.",
-    "label.printFont": "Police adaptée à l'impression",
-    "label.placement": "Côté / placement",
-    "label.current": "Texte actuel : {height} mm de hauteur, {stroke} mm de trait, style {style}.",
-    "label.secondLine": "Deuxième ligne · date ou coordonnées",
-    "label.insertCoords": "Insérer les coordonnées du centre de la zone",
-    "label.secondHint": "Taille plus petite juste sous la légende principale. 📍 insère les coordonnées de la zone sélectionnée.",
-    "label.backTitle": "Légende au dos · gravure",
-    "label.backPlaceholder": "NOM · DATE",
-    "label.backHint": "Gravé dans la face inférieure sur 0,5 mm (en miroir — lisible lorsque le porte-clés est retourné). Visible après la génération en 3D.",
-    "review.title": "Vérification avant génération",
-    "review.desc": "Seuls les paramètres compréhensibles par le client doivent figurer ici : taille, texte, niveau de détail et préparation à l'impression.",
-    "review.noText": "sans texte",
-    "review.generated3mf": "3MF généré",
-    "review.layersNote": "Le texte et le bord sont des couches séparées, la carte est découpée à la zone intérieure du porte-clés.",
-    "metric.base": "Base",
-    "metric.loop": "Anneau",
-    "metric.hole": "trou",
-    "metric.detail": "Détail",
-    "metric.status": "État",
-    "metric.product": "Produit",
-    "metric.map": "Carte",
-    "metric.signature": "Légende",
-    "loop.round": "Rond",
-    "loop.teardrop": "Goutte",
-    "loop.slot": "Fente",
-    "loop.sideTab": "Languette",
-    "detail.bad": "faible",
-    "detail.edge": "limite",
-    "detail.good": "bon",
-    "detail.pickCrop": "choisir un cadrage",
-    "topo.label": "🏔 Relief d'altitude (topo)",
-    "topo.hint": "Montagnes au lieu de rues : Hoverla, les Alpes, le littoral. Les couches de la carte sont désactivées.",
-    "topo.reliefHeight": "Hauteur du relief",
-    "gpx.title": "🏃 Itinéraire (GPX) sur le porte-clés",
-    "gpx.replace": "Remplacer",
-    "gpx.pickFile": "Choisir un fichier",
-    "gpx.loaded": "✓ {name} · {count} points",
-    "gpx.remove": "Retirer",
-    "gpx.privacy": "🔒 Votre itinéraire sert uniquement à construire le modèle. Nous ne le publions ni ne le partageons.",
-    "gpx.hint": "Une trace de course/randonnée — une ligne sur la carte. La zone se recentre automatiquement sur l'itinéraire.",
-    "gpx.readError": "Impossible de lire le fichier GPX",
-    "shape.rounded": "Rectangle",
-    "shape.token": "Jeton",
-    "shape.capsule": "Capsule",
-    "shape.octagon": "Octogone",
-    "shape.heart": "Cœur ♥",
-    "shape.house": "Maison",
-    "shape.puzzleL": "Puzzle L 🧩",
-    "shape.puzzleR": "Puzzle R 🧩",
-    "shape.heartL": "Cœur en duo L 💕",
-    "shape.heartR": "Cœur en duo R 💕",
-    "loopPos.topLeft": "En haut à gauche",
-    "loopPos.topRight": "En haut à droite",
-    "loopPos.right": "À droite",
-    "loopPos.bottomLeft": "En bas à gauche",
-    "place.bottom": "En bas",
-    "place.top": "En haut",
-    "place.left": "À gauche",
-    "place.right": "À droite",
-    "slider.labelWidth": "Largeur de la légende",
-    "slider.textHeight": "Hauteur des lettres",
-    "slider.strokeWidth": "Épaisseur du trait",
-    "slider.baseWidth": "Largeur de la base",
-    "slider.baseHeight": "Hauteur de la base",
-    "slider.baseThickness": "Épaisseur de la base",
-    "slider.holeGuideRadius": "Rayon de repère autour du trou",
-    "slider.loopOuterRadius": "Rayon extérieur de l'anneau",
-    "slider.ringHole": "Trou de l'anneau",
-    "slider.cornerRadius": "Rayon des coins",
-    "slider.labelBand": "Bande de la légende",
-    "slider.rimWidth": "Largeur du bord latéral",
-    "slider.rimHeight": "Hauteur du bord latéral",
-    "slider.mapWidth": "Largeur de la zone de carte",
-    "slider.mapHeight": "Hauteur de la zone de carte",
-    "slider.maxBuildings": "Max. bâtiments",
-    "layer.base": "Base",
-    "layer.rim": "Bord",
-    "layer.water": "Eau",
-    "layer.parks": "Parcs",
-    "layer.roads": "Routes",
-    "layer.buildings": "Bâtiments",
-    "layer.text": "Texte",
-    "layer.top": "haut {z} mm",
-    "layer.size": ", {w} x {h} mm",
-    "layer.noWater": "il peut n'y avoir aucune eau dans la zone sélectionnée",
-    "layer.missing": "la couche n'a pas été créée",
-    "layerTone.ok": "OK",
-    "layerTone.warn": "attention",
-    "layerTone.bad": "problème",
-    "printability.idle.title": "Placez d'abord un cadre sur la carte",
-    "printability.idle.detail": "Cliquer sur la carte déplace la zone d'impression, le grand carré turquoise la redimensionne.",
-    "printability.topo.title": "Mode topo : le relief d'altitude est imprimé",
-    "printability.topo.detail": "Les couches de la carte sont désactivées. Les grandes zones de montagne (5–20 km) sont exactement ce qu'il faut pour un relief expressif.",
-    "printability.tooLarge.title": "Zone trop grande pour le FDM",
-    "printability.tooLarge.detail": "Le détail minimal de 0,4 mm équivaut maintenant à ~{m} m. Les routes fines et le texte peuvent se désagréger.",
-    "printability.onEdge.title": "Imprimable, mais le détail est limite",
-    "printability.onEdge.detail": "0,4 mm équivaut à ~{m} m. Pour les rues fines, il vaut mieux choisir une zone plus petite.",
-    "printability.good.title": "Échelle adaptée à l'impression",
-    "printability.good.detail": "0,4 mm équivaut à ~{m} m. Un bon équilibre pour un porte-clés.",
-    "check.crop.label": "Échelle de la carte",
-    "check.crop.detail": "{min} mm = ~{m} m",
-    "check.crop.empty": "Placez un cadre sur la carte",
-    "check.text.label": "Texte",
-    "check.text.tooLong": "Légende trop grande pour cette largeur : raccourcissez-la, élargissez le champ ou choisissez Narrow",
-    "check.text.detail": "{stroke} mm de trait, {height} mm de hauteur",
-    "check.loop.label": "Anneau",
-    "check.loop.detail": "trou Ø{hole} mm, paroi {wall} mm",
-    "check.base.label": "Base et bord",
-    "check.base.detail": "{base} mm de base, {rim} mm de bord",
-    "check.layers.label": "Couches",
-    "check.layers.topo": "relief topo {relief} mm (couches de la carte désactivées)",
-    "check.layers.detail": "routes {roads} mm, eau {water} mm, bâtiments jusqu'à {buildings} mm",
-    "verdict.bad.title": "Le 3MF doit être vérifié",
-    "verdict.bad.detail": "Couches problématiques : {layers}.",
-    "verdict.warn.title": "3MF créé, il y a des avertissements",
-    "verdict.warn.detail": "Vérifiez : {layers}.",
-    "verdict.good.title": "Le 3MF semble prêt pour le trancheur",
-    "verdict.good.detail": "Base, bord, carte, bâtiments et texte sont présents en couches séparées.",
-    "status.generating": "Génération du porte-clés",
-    "status.ready3mf": "3MF prêt",
-    "status.ready": "Terminé",
-    "btn.generating": "Génération...",
-    "btn.create3mf": "Créer le 3MF",
-    "btn.buyOrder": "Acheter / commander l'impression",
-    "btn.order": "Commander l'impression",
-    "btn.download3mf": "Télécharger le 3MF",
-    "quota.remaining": "Il reste {remaining} sur {limit} téléchargements gratuits",
-    "quota.exhausted": "Téléchargements gratuits épuisés — passez une commande d'impression",
-    "sticky.priceLabel": "Porte-clés avec carte",
-    "sticky.generating": "Génération… {progress}%",
-    "sticky.createKeychain": "Créer le porte-clés",
-    "sticky.download": "Télécharger",
-    "error.generateFailed": "Le porte-clés n'a pas pu être généré",
-    "error.noArea": "Marquez d'abord une zone sur la carte",
-    "error.notReady": "Pas prêt à imprimer : {issues}.",
-    "error.generic": "Erreur de génération du porte-clés",
-    "error.limitContact": "J'ai épuisé 5 téléchargements gratuits de porte-clés. Je veux plus / une impression — merci de me contacter.",
-    "error.downloadFailed": "Impossible de télécharger le 3MF",
-    "templates.ready": "Modèles prêts à l'emploi",
-    "templates.tapClick": "tap / click",
-    "designer.hintFront": "Faites glisser la carte, le texte, l'anneau ou la poignée en bas à droite",
-    "designer.hintBack": "Dos : contrôlez le trou, le bord et le texte intérieur",
-    "designer.front": "Recto",
-    "designer.back": "Verso",
-    "designer.pickArea": "Choisissez une zone sur la carte",
-    "tpl.classicWide.name": "35 x 55",
-    "tpl.classicWide.desc": "Porte-clés vertical compact standard.",
-    "tpl.token55.name": "Token 55 x 30",
-    "tpl.token55.desc": "Jeton standard 55×30 avec trou gauche Ø3 mm et base capsule.",
-    "tpl.heart46.name": "Cœur 46 × 42",
-    "tpl.heart46.desc": "Une carte du lieu qui est dans le cœur — un cadeau pour deux.",
-    "tpl.house44.name": "Maison 44 × 48",
-    "tpl.house44.desc": "La maison est là où se trouve votre rue. Toit avec anneau en haut.",
-    "tpl.puzzleLeft.name": "Puzzle L · 40 × 42",
-    "tpl.puzzleLeft.desc": "Moitié d'une paire : votre ville. L'ergot à droite se relie à la moitié R.",
-    "tpl.puzzleRight.name": "Puzzle R · 40 × 42",
-    "tpl.puzzleRight.desc": "Moitié d'une paire : la ville d'un proche. L'encoche à gauche accueille la moitié L.",
-    "tpl.heartPairLeft.name": "Cœur en duo · L · 30 × 44",
-    "tpl.heartPairLeft.desc": "Demi-cœur pour deux : votre ville. Le verrou du bord se relie à la moitié R en un cœur complet.",
-    "tpl.heartPairRight.name": "Cœur en duo · R · 30 × 44",
-    "tpl.heartPairRight.desc": "Demi-cœur pour deux : la ville d'un proche. L'encoche accueille la moitié L.",
-    "tpl.rightLoop.name": "Side Loop",
-    "tpl.rightLoop.desc": "Anneau à droite, pratique pour une carte large.",
-    "tpl.verticalTag.name": "Vertical",
-    "tpl.verticalTag.desc": "Porte-clés vertical avec une légende pivotée.",
-    "tpl.softCapsule.name": "Capsule",
-    "tpl.softCapsule.desc": "Forme capsule douce avec anneau à fente."
+    "tabs": {
+      "product": "Produit",
+      "map": "Carte",
+      "label": "Texte",
+      "review": "Impression",
+      "advanced": "Plus"
+    },
+    "header": {
+      "eyebrow": "Assistant de création",
+      "title": "D'abord la forme, puis la carte",
+      "subtitle": "Flux minimal : modèle, zone de carte, légende, génération."
+    },
+    "ready": {
+      "good": "Prêt à imprimer",
+      "warn": "Imprimable, mais avec précaution",
+      "bad": "Corrections nécessaires",
+      "fix": "Corrigez : {issue}",
+      "nextWarn": "Pour un meilleur résultat, choisissez un cadrage plus petit ou une zone de carte plus grande.",
+      "nextGood": "Vous pouvez créer le 3MF."
+    },
+    "details": {
+      "summary": "Détails d'impression et actions rapides",
+      "printability": "Imprimabilité"
+    },
+    "quick": {
+      "centerMap": "Centrer la carte",
+      "maxMap": "Maximiser la carte",
+      "centerLabel": "Centrer le texte",
+      "loopTop": "Anneau en haut",
+      "autoFix": "Correction auto."
+    },
+    "advanced": {
+      "show": "Afficher les réglages avancés",
+      "hide": "Masquer les réglages avancés",
+      "title": "Réglages avancés",
+      "desc": "Ce mode est pour vous ou l'opérateur d'impression. Un client n'a pas besoin de ces paramètres dans le flux principal.",
+      "baseLoop": "Base et anneau",
+      "shapeLoop": "Forme et anneau",
+      "baseShape": "Forme du support",
+      "loopType": "Type d'anneau",
+      "loopPosition": "Position de l'anneau",
+      "rotation": "Rotation",
+      "mapText": "Carte et texte",
+      "mapOrientation": "Orientation de la carte",
+      "printFont": "Police d'impression",
+      "textRotation": "Rotation du texte",
+      "mapLayers": "Couches de la carte",
+      "uniformBuildings": "Hauteur uniforme des bâtiments"
+    },
+    "product": {
+      "title": "Vérifiez la base du porte-clés",
+      "desc": "Les modèles prêts à l'emploi sont juste sous l'aperçu. Seules les actions rapides dont un client a vraiment besoin après avoir choisi un modèle restent ici.",
+      "maxMap": "Carte max.",
+      "token": "Jeton 55 x 30",
+      "centerLoop": "Centrer anneau",
+      "layoutRotation": "Rotation de la mise en page"
+    },
+    "map": {
+      "title": "Définir la zone de carte",
+      "desc": "Cliquez sur la carte pour déplacer le cadre. Ne le réduisez pas en dessous de l'échelle recommandée : le système vous avertira si la zone est trop grande.",
+      "orientation": "Orientation sur la carte"
+    },
+    "label": {
+      "title": "Légende du bas",
+      "desc": "Le texte change sans régénération. Pour l'impression, une légende courte et un trait plus épais sont préférables.",
+      "printFont": "Police adaptée à l'impression",
+      "placement": "Côté / placement",
+      "current": "Texte actuel : {height} mm de hauteur, {stroke} mm de trait, style {style}.",
+      "secondLine": "Deuxième ligne · date ou coordonnées",
+      "insertCoords": "Insérer les coordonnées du centre de la zone",
+      "secondHint": "Taille plus petite juste sous la légende principale. 📍 insère les coordonnées de la zone sélectionnée.",
+      "backTitle": "Légende au dos · gravure",
+      "backPlaceholder": "NOM · DATE",
+      "backHint": "Gravé dans la face inférieure sur 0,5 mm (en miroir — lisible lorsque le porte-clés est retourné). Visible après la génération en 3D."
+    },
+    "review": {
+      "title": "Vérification avant génération",
+      "desc": "Seuls les paramètres compréhensibles par le client doivent figurer ici : taille, texte, niveau de détail et préparation à l'impression.",
+      "noText": "sans texte",
+      "generated3mf": "3MF généré",
+      "layersNote": "Le texte et le bord sont des couches séparées, la carte est découpée à la zone intérieure du porte-clés."
+    },
+    "metric": {
+      "base": "Base",
+      "loop": "Anneau",
+      "hole": "trou",
+      "detail": "Détail",
+      "status": "État",
+      "product": "Produit",
+      "map": "Carte",
+      "signature": "Légende"
+    },
+    "loop": {
+      "round": "Rond",
+      "teardrop": "Goutte",
+      "slot": "Fente",
+      "sideTab": "Languette"
+    },
+    "detail": {
+      "bad": "faible",
+      "edge": "limite",
+      "good": "bon",
+      "pickCrop": "choisir un cadrage"
+    },
+    "topo": {
+      "label": "🏔 Relief d'altitude (topo)",
+      "hint": "Montagnes au lieu de rues : Hoverla, les Alpes, le littoral. Les couches de la carte sont désactivées.",
+      "reliefHeight": "Hauteur du relief"
+    },
+    "gpx": {
+      "title": "🏃 Itinéraire (GPX) sur le porte-clés",
+      "replace": "Remplacer",
+      "pickFile": "Choisir un fichier",
+      "loaded": "✓ {name} · {count} points",
+      "remove": "Retirer",
+      "privacy": "🔒 Votre itinéraire sert uniquement à construire le modèle. Nous ne le publions ni ne le partageons.",
+      "hint": "Une trace de course/randonnée — une ligne sur la carte. La zone se recentre automatiquement sur l'itinéraire.",
+      "readError": "Impossible de lire le fichier GPX"
+    },
+    "shape": {
+      "rounded": "Rectangle",
+      "token": "Jeton",
+      "capsule": "Capsule",
+      "octagon": "Octogone",
+      "heart": "Cœur ♥",
+      "house": "Maison",
+      "puzzleL": "Puzzle L 🧩",
+      "puzzleR": "Puzzle R 🧩",
+      "heartL": "Cœur en duo L 💕",
+      "heartR": "Cœur en duo R 💕"
+    },
+    "loopPos": {
+      "topLeft": "En haut à gauche",
+      "topRight": "En haut à droite",
+      "right": "À droite",
+      "bottomLeft": "En bas à gauche"
+    },
+    "place": {
+      "bottom": "En bas",
+      "top": "En haut",
+      "left": "À gauche",
+      "right": "À droite"
+    },
+    "slider": {
+      "labelWidth": "Largeur de la légende",
+      "textHeight": "Hauteur des lettres",
+      "strokeWidth": "Épaisseur du trait",
+      "baseWidth": "Largeur de la base",
+      "baseHeight": "Hauteur de la base",
+      "baseThickness": "Épaisseur de la base",
+      "holeGuideRadius": "Rayon de repère autour du trou",
+      "loopOuterRadius": "Rayon extérieur de l'anneau",
+      "ringHole": "Trou de l'anneau",
+      "cornerRadius": "Rayon des coins",
+      "labelBand": "Bande de la légende",
+      "rimWidth": "Largeur du bord latéral",
+      "rimHeight": "Hauteur du bord latéral",
+      "mapWidth": "Largeur de la zone de carte",
+      "mapHeight": "Hauteur de la zone de carte",
+      "maxBuildings": "Max. bâtiments"
+    },
+    "layer": {
+      "base": "Base",
+      "rim": "Bord",
+      "water": "Eau",
+      "parks": "Parcs",
+      "roads": "Routes",
+      "buildings": "Bâtiments",
+      "text": "Texte",
+      "top": "haut {z} mm",
+      "size": ", {w} x {h} mm",
+      "noWater": "il peut n'y avoir aucune eau dans la zone sélectionnée",
+      "missing": "la couche n'a pas été créée"
+    },
+    "layerTone": {
+      "ok": "OK",
+      "warn": "attention",
+      "bad": "problème"
+    },
+    "printability": {
+      "idle": {
+        "title": "Placez d'abord un cadre sur la carte",
+        "detail": "Cliquer sur la carte déplace la zone d'impression, le grand carré turquoise la redimensionne."
+      },
+      "topo": {
+        "title": "Mode topo : le relief d'altitude est imprimé",
+        "detail": "Les couches de la carte sont désactivées. Les grandes zones de montagne (5–20 km) sont exactement ce qu'il faut pour un relief expressif."
+      },
+      "tooLarge": {
+        "title": "Zone trop grande pour le FDM",
+        "detail": "Le détail minimal de 0,4 mm équivaut maintenant à ~{m} m. Les routes fines et le texte peuvent se désagréger."
+      },
+      "onEdge": {
+        "title": "Imprimable, mais le détail est limite",
+        "detail": "0,4 mm équivaut à ~{m} m. Pour les rues fines, il vaut mieux choisir une zone plus petite."
+      },
+      "good": {
+        "title": "Échelle adaptée à l'impression",
+        "detail": "0,4 mm équivaut à ~{m} m. Un bon équilibre pour un porte-clés."
+      }
+    },
+    "check": {
+      "crop": {
+        "label": "Échelle de la carte",
+        "detail": "{min} mm = ~{m} m",
+        "empty": "Placez un cadre sur la carte"
+      },
+      "text": {
+        "label": "Texte",
+        "tooLong": "Légende trop grande pour cette largeur : raccourcissez-la, élargissez le champ ou choisissez Narrow",
+        "detail": "{stroke} mm de trait, {height} mm de hauteur"
+      },
+      "loop": {
+        "label": "Anneau",
+        "detail": "trou Ø{hole} mm, paroi {wall} mm"
+      },
+      "base": {
+        "label": "Base et bord",
+        "detail": "{base} mm de base, {rim} mm de bord"
+      },
+      "layers": {
+        "label": "Couches",
+        "topo": "relief topo {relief} mm (couches de la carte désactivées)",
+        "detail": "routes {roads} mm, eau {water} mm, bâtiments jusqu'à {buildings} mm"
+      }
+    },
+    "verdict": {
+      "bad": {
+        "title": "Le 3MF doit être vérifié",
+        "detail": "Couches problématiques : {layers}."
+      },
+      "warn": {
+        "title": "3MF créé, il y a des avertissements",
+        "detail": "Vérifiez : {layers}."
+      },
+      "good": {
+        "title": "Le 3MF semble prêt pour le trancheur",
+        "detail": "Base, bord, carte, bâtiments et texte sont présents en couches séparées."
+      }
+    },
+    "status": {
+      "generating": "Génération du porte-clés",
+      "ready3mf": "3MF prêt",
+      "ready": "Terminé"
+    },
+    "btn": {
+      "generating": "Génération...",
+      "create3mf": "Créer le 3MF",
+      "buyOrder": "Acheter / commander l'impression",
+      "order": "Commander l'impression",
+      "download3mf": "Télécharger le 3MF"
+    },
+    "quota": {
+      "remaining": "Il reste {remaining} sur {limit} téléchargements gratuits",
+      "exhausted": "Téléchargements gratuits épuisés — passez une commande d'impression"
+    },
+    "sticky": {
+      "priceLabel": "Porte-clés avec carte",
+      "generating": "Génération… {progress}%",
+      "createKeychain": "Créer le porte-clés",
+      "download": "Télécharger"
+    },
+    "error": {
+      "generateFailed": "Le porte-clés n'a pas pu être généré",
+      "noArea": "Marquez d'abord une zone sur la carte",
+      "notReady": "Pas prêt à imprimer : {issues}.",
+      "generic": "Erreur de génération du porte-clés",
+      "limitContact": "J'ai épuisé 5 téléchargements gratuits de porte-clés. Je veux plus / une impression — merci de me contacter.",
+      "downloadFailed": "Impossible de télécharger le 3MF"
+    },
+    "templates": {
+      "ready": "Modèles prêts à l'emploi",
+      "tapClick": "tap / click"
+    },
+    "designer": {
+      "hintFront": "Faites glisser la carte, le texte, l'anneau ou la poignée en bas à droite",
+      "hintBack": "Dos : contrôlez le trou, le bord et le texte intérieur",
+      "front": "Recto",
+      "back": "Verso",
+      "pickArea": "Choisissez une zone sur la carte"
+    },
+    "tpl": {
+      "classicWide": {
+        "name": "35 x 55",
+        "desc": "Porte-clés vertical compact standard."
+      },
+      "token55": {
+        "name": "Token 55 x 30",
+        "desc": "Jeton standard 55×30 avec trou gauche Ø3 mm et base capsule."
+      },
+      "heart46": {
+        "name": "Cœur 46 × 42",
+        "desc": "Une carte du lieu qui est dans le cœur — un cadeau pour deux."
+      },
+      "house44": {
+        "name": "Maison 44 × 48",
+        "desc": "La maison est là où se trouve votre rue. Toit avec anneau en haut."
+      },
+      "puzzleLeft": {
+        "name": "Puzzle L · 40 × 42",
+        "desc": "Moitié d'une paire : votre ville. L'ergot à droite se relie à la moitié R."
+      },
+      "puzzleRight": {
+        "name": "Puzzle R · 40 × 42",
+        "desc": "Moitié d'une paire : la ville d'un proche. L'encoche à gauche accueille la moitié L."
+      },
+      "heartPairLeft": {
+        "name": "Cœur en duo · L · 30 × 44",
+        "desc": "Demi-cœur pour deux : votre ville. Le verrou du bord se relie à la moitié R en un cœur complet."
+      },
+      "heartPairRight": {
+        "name": "Cœur en duo · R · 30 × 44",
+        "desc": "Demi-cœur pour deux : la ville d'un proche. L'encoche accueille la moitié L."
+      },
+      "rightLoop": {
+        "name": "Side Loop",
+        "desc": "Anneau à droite, pratique pour une carte large."
+      },
+      "verticalTag": {
+        "name": "Vertical",
+        "desc": "Porte-clés vertical avec une légende pivotée."
+      },
+      "softCapsule": {
+        "name": "Capsule",
+        "desc": "Forme capsule douce avec anneau à fente."
+      }
+    },
+    "unit": {
+      "mm": "mm"
+    }
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
@@ -942,5 +1069,130 @@
     "qaBaseNotWatertight": "la base n'est pas totalement étanche — le slicer l'imprimera quand même, mais il vaut mieux vérifier le modèle",
     "qaSlicerNotFound": "le slicer n'est pas disponible sur le serveur — la vérification a été ignorée",
     "qaLayerNotWatertight": "{layer} : la couche n'est pas totalement étanche"
+  },
+  "kcp": {
+    "loadingMap": "Chargement de la carte...",
+    "loading3d": "Chargement de l'aperçu 3D…",
+    "statusGenerating": "Génération",
+    "statusReady": "Porte-clés prêt",
+    "statusSelected": "Zone sélectionnée",
+    "statusPickArea": "Choisissez une zone",
+    "eyebrow": "Configurateur de porte-clés",
+    "title": "Atelier de porte-clés avec carte",
+    "subtitle": "Une plaque plate multicolore avec un anneau renforcé, une bande nette pour le texte et une hauteur de bâtiments maîtrisée.",
+    "navMaps": "Cartes",
+    "navAccount": "Compte",
+    "city": "Ville",
+    "state": "État",
+    "pickShape": "Choisissez la forme du porte-clés",
+    "pickShapeHint": "Touchez un exemple — la forme s'appliquera",
+    "dragHint": "Ensuite : faites glisser la carte, le texte et l'anneau directement dans l'aperçu. La carte et le texte peuvent <rotate>pivoter</rotate> — tirez la poignée d'angle <b>⟳</b> sur la carte ou la poignée verte <b>↻</b> au-dessus du texte.",
+    "mapTitle": "Placez la forme sur la carte",
+    "mapSubtitle": "Faites glisser le cadre ; la poignée ⟳ sur la carte la fait pivoter. Le cadre turquoise garde les proportions en accord avec l'aperçu.",
+    "layoutTitle": "Taille, zone de carte, anneau et texte",
+    "layoutSubtitle": "Réglez la forme du porte-clés localement, puis insérez la zone de carte choisie dans la zone en pointillés.",
+    "preview3dTitle": "Aperçu 3D du porte-clés terminé",
+    "layers": "Couches",
+    "emptyTitle": "Le modèle 3D apparaîtra après sa création",
+    "emptyBody": "Appuyez sur « Créer 3MF » — et un véritable aperçu 3D avec toutes les couches apparaîtra ici.",
+    "generatingPct": "Génération : {progress}%",
+    "tour": {
+      "step1Title": "Choisissez une ville et un quartier",
+      "step1Body": "Choisissez une ville et un point sur la carte — ce sera la carte de votre porte-clés.",
+      "step2Title": "Choisissez un modèle",
+      "step2Body": "Token 55×30, classique ou carré — touchez-le et les dimensions seront définies automatiquement.",
+      "step3Title": "Ajoutez un texte",
+      "step3Body": "Saisissez le texte (par ex. le nom de la ville), déplacez-le ou faites-le pivoter. Puis appuyez sur « Générer »."
+    }
+  },
+  "cities": {
+    "Kyiv": "Kyiv",
+    "Khmelnytskyi": "Khmelnytskyi",
+    "Lviv": "Lviv",
+    "Odesa": "Odesa",
+    "Dnipro": "Dnipro",
+    "Kharkiv": "Kharkiv",
+    "Vinnytsia": "Vinnytsia",
+    "Ternopil": "Ternopil",
+    "IvanoFrankivsk": "Ivano-Frankivsk",
+    "Chernihiv": "Chernihiv",
+    "Zaporizhzhia": "Zaporizhzhia",
+    "Kryvyi_Rih": "Kryvyi Rih",
+    "Mykolaiv": "Mykolaiv",
+    "Poltava": "Poltava",
+    "Cherkasy": "Cherkasy",
+    "Zhytomyr": "Zhytomyr",
+    "Sumy": "Sumy",
+    "Rivne": "Rivne",
+    "Lutsk": "Lutsk",
+    "Uzhhorod": "Uzhhorod",
+    "Chernivtsi": "Chernivtsi",
+    "Kherson": "Kherson",
+    "Kropyvnytskyi": "Kropyvnytskyi",
+    "Manual": "Autre / manuel"
+  },
+  "lifeprev": {
+    "realLifePreview": "Aperçu en situation",
+    "slicerPreview": "Aperçu du trancheur",
+    "layerOrder": "Ordre d'impression des couches",
+    "clipInside": "La carte doit être détourée à l'intérieur du bord ; le texte et le contour restent des couches distinctes pour une couleur nette.",
+    "printNote": "Note d'impression",
+    "minStroke": "Trait minimal : 0,4 mm. Le texte s'imprime mieux comme dernière couche de couleur."
+  },
+  "live": {
+    "pickAreaOnMap": "Sélectionnez une zone sur la carte",
+    "pickArea": "Sélectionnez une zone",
+    "loading": "Chargement"
+  },
+  "search": {
+    "placeholder": "Rechercher une ville, un village ou une adresse…",
+    "myPlace": "Mon lieu",
+    "myLocation": "Ma position",
+    "clear": "Effacer"
+  },
+  "modal": {
+    "loading": "Chargement 3D…",
+    "close": "Fermer",
+    "descKey": "Porte-clés carte 55×30 mm",
+    "descMap": "Quartier de ville en 3D",
+    "hint": "glisser / molette = zoom",
+    "ctaKey": "Créer un porte-clés",
+    "ctaMap": "Créer une carte"
+  },
+  "preview": {
+    "generating": "Génération du modèle...",
+    "batchLoadError": "Échec du chargement de l'aperçu du lot",
+    "modelLoadError": "Échec du chargement du modèle",
+    "tools": {
+      "fullscreen": "Plein écran",
+      "collapse": "Réduire",
+      "viewTools": "Outils d'affichage",
+      "sceneControl": "Contrôle rapide de la scène",
+      "grid": "Grille",
+      "axes": "Axes",
+      "onF": "Activée",
+      "hiddenF": "Masquée",
+      "onPl": "Activés",
+      "hiddenPl": "Masqués",
+      "rotation": "Rotation",
+      "camera": "Caméra",
+      "model": "Modèle",
+      "rotateHint": "Camera : la caméra pivote. Model : glisser fait pivoter le modèle lui-même.",
+      "cameraHint": "Orbit : vue standard. Fly : déplacement libre WASD + souris.",
+      "flySpeed": "Vitesse de vol",
+      "terrainShading": "Ombrage du relief",
+      "shadingSmooth": "Ombrage doux des pentes",
+      "shadingFlat": "Arêtes du relief plus nettes",
+      "shadingToggleHint": "Smooth = normales lisses. Flat = relief plus net sans coutures visibles.",
+      "hintFly": "Fly : WASD pour se déplacer, Q/E haut/bas, Shift pour accélérer, bouton droit de la souris pour regarder.",
+      "hintModel": "Faites glisser le modèle pour le faire pivoter, double-clic réinitialise l'orientation.",
+      "hintCamera": "Glisser contrôle la caméra, la molette change la distance.",
+      "visibility": "Visibilité des composants :",
+      "terrain": "Relief",
+      "roads": "Routes",
+      "buildings": "Bâtiments",
+      "water": "Eau",
+      "parks": "Parcs"
+    }
   }
 }

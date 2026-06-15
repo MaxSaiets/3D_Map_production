@@ -152,6 +152,13 @@
       "title": "Mapas 3D de ciudades y llaveros personalizados — qué hacemos",
       "p1": "Monadruk convierte cualquier lugar de la Tierra en un modelo 3D imprimible: un mapa 3D de un barrio con alturas reales de edificios, parques y ríos a partir de datos de OpenStreetMap, un llavero con el mapa de tu ciudad y tu propio texto, un llavero topográfico con el relieve real de las montañas a partir de datos satelitales de altura, o un imán de nevera con mapa. Los archivos 3MF y STL se abren directamente en Bambu Studio y PrusaSlicer.",
       "p2": "¿No tienes impresora 3D? Imprimimos por ti en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un mapa 3D de Madrid, Barcelona, Kyiv o Nueva York, el relieve de los Alpes, un llavero personalizado para un aniversario — elige un lugar en el mapa y el modelo está listo en minutos."
+    },
+    "alt": {
+      "keychainMap": "Llavero con mapa de la ciudad",
+      "district": "Distrito de la ciudad en 3D",
+      "cityMap": "Mapa 3D de la ciudad",
+      "districtMap": "{district}, {city} — mapa 3D",
+      "dims": "2,4 × 1,8 km"
     }
   },
   "createMeta": {
@@ -329,7 +336,12 @@
     "paymentNote": "El pago se acuerda tras confirmar el pedido. Tu diseño y modelo se adjuntan automáticamente.",
     "sending": "Enviando…",
     "submit": "Hacer pedido",
-    "leadTime": "Impresión y envío: 2–4 días laborables"
+    "leadTime": "Impresión y envío: 2–4 días laborables",
+    "aria": {
+      "close": "Cerrar",
+      "region": "Región de entrega",
+      "method": "Método de entrega"
+    }
   },
   "contact": {
     "errPhone": "Indica un teléfono",
@@ -599,221 +611,336 @@
     "detailOverview": "escala general"
   },
   "kc": {
-    "tabs.product": "Producto",
-    "tabs.map": "Mapa",
-    "tabs.label": "Texto",
-    "tabs.review": "Impresión",
-    "tabs.advanced": "Más",
-    "header.eyebrow": "Asistente de creación",
-    "header.title": "Primero la forma, luego el mapa",
-    "header.subtitle": "Flujo mínimo: plantilla, área del mapa, etiqueta, generación.",
-    "ready.good": "Listo para imprimir",
-    "ready.warn": "Imprimible, pero con cuidado",
-    "ready.bad": "Se necesitan correcciones",
-    "ready.fix": "Corrige: {issue}",
-    "ready.nextWarn": "Para un mejor resultado elige un recorte más pequeño o un área de mapa mayor.",
-    "ready.nextGood": "Puedes crear el 3MF.",
-    "details.summary": "Detalles de impresión y acciones rápidas",
-    "details.printability": "Imprimibilidad",
-    "quick.centerMap": "Centrar mapa",
-    "quick.maxMap": "Maximizar mapa",
-    "quick.centerLabel": "Centrar texto",
-    "quick.loopTop": "Argolla arriba",
-    "quick.autoFix": "Corrección auto.",
-    "advanced.show": "Mostrar ajustes avanzados",
-    "advanced.hide": "Ocultar ajustes avanzados",
-    "advanced.title": "Ajustes avanzados",
-    "advanced.desc": "Este modo es para ti o el operador de impresión. Un cliente no necesita estos parámetros en el flujo principal.",
-    "advanced.baseLoop": "Base y argolla",
-    "advanced.shapeLoop": "Forma y argolla",
-    "advanced.baseShape": "Forma del soporte",
-    "advanced.loopType": "Tipo de argolla",
-    "advanced.loopPosition": "Posición de la argolla",
-    "advanced.rotation": "Rotación",
-    "advanced.mapText": "Mapa y texto",
-    "advanced.mapOrientation": "Orientación del mapa",
-    "advanced.printFont": "Fuente de impresión",
-    "advanced.textRotation": "Rotación del texto",
-    "advanced.mapLayers": "Capas del mapa",
-    "advanced.uniformBuildings": "Altura uniforme de edificios",
-    "product.title": "Revisa la base del llavero",
-    "product.desc": "Las plantillas listas están justo debajo de la vista previa. Aquí solo quedan las acciones rápidas que un cliente realmente necesita tras elegir una plantilla.",
-    "product.maxMap": "Mapa máx.",
-    "product.token": "Ficha 55 x 30",
-    "product.centerLoop": "Centrar argolla",
-    "product.layoutRotation": "Rotación del diseño",
-    "map.title": "Define el área del mapa",
-    "map.desc": "Haz clic en el mapa para mover el marco. No lo reduzcas por debajo de la escala recomendada: el sistema te avisará si el área es demasiado grande.",
-    "map.orientation": "Orientación en el mapa",
-    "label.title": "Texto inferior",
-    "label.desc": "El texto cambia sin volver a generar. Para imprimir, es mejor un texto corto y un trazo más grueso.",
-    "label.printFont": "Fuente segura para impresión",
-    "label.placement": "Lado / colocación",
-    "label.current": "Texto actual: {height} mm de altura, {stroke} mm de trazo, estilo {style}.",
-    "label.secondLine": "Segunda línea · fecha o coordenadas",
-    "label.insertCoords": "Insertar coordenadas del centro del área",
-    "label.secondHint": "Tamaño menor justo debajo del texto principal. 📍 inserta las coordenadas del área seleccionada.",
-    "label.backTitle": "Texto del reverso · grabado",
-    "label.backPlaceholder": "NOMBRE · FECHA",
-    "label.backHint": "Se graba en la cara inferior a 0,5 mm (en espejo — legible al voltear el llavero). Visible tras la generación en 3D.",
-    "review.title": "Comprobación antes de generar",
-    "review.desc": "Aquí solo deben ir parámetros comprensibles para el cliente: tamaño, texto, nivel de detalle y preparación para imprimir.",
-    "review.noText": "sin texto",
-    "review.generated3mf": "3MF generado",
-    "review.layersNote": "El texto y el borde van en capas separadas, el mapa se recorta al área interior del llavero.",
-    "metric.base": "Base",
-    "metric.loop": "Argolla",
-    "metric.hole": "orificio",
-    "metric.detail": "Detalle",
-    "metric.status": "Estado",
-    "metric.product": "Producto",
-    "metric.map": "Mapa",
-    "metric.signature": "Texto",
-    "loop.round": "Redonda",
-    "loop.teardrop": "Lágrima",
-    "loop.slot": "Ranura",
-    "loop.sideTab": "Pestaña",
-    "detail.bad": "pobre",
-    "detail.edge": "al límite",
-    "detail.good": "bueno",
-    "detail.pickCrop": "elige un recorte",
-    "topo.label": "🏔 Relieve de altitud (topo)",
-    "topo.hint": "Montañas en vez de calles: Hoverla, los Alpes, la costa. Las capas del mapa se desactivan.",
-    "topo.reliefHeight": "Altura del relieve",
-    "gpx.title": "🏃 Ruta (GPX) en el llavero",
-    "gpx.replace": "Reemplazar",
-    "gpx.pickFile": "Elegir archivo",
-    "gpx.loaded": "✓ {name} · {count} puntos",
-    "gpx.remove": "Quitar",
-    "gpx.privacy": "🔒 Tu ruta solo se usa para construir el modelo. No la publicamos ni la compartimos.",
-    "gpx.hint": "Una ruta de carrera/senderismo — una línea sobre el mapa. El área se enfoca automáticamente en la ruta.",
-    "gpx.readError": "No se pudo leer el archivo GPX",
-    "shape.rounded": "Rectángulo",
-    "shape.token": "Ficha",
-    "shape.capsule": "Cápsula",
-    "shape.octagon": "Octágono",
-    "shape.heart": "Corazón ♥",
-    "shape.house": "Casa",
-    "shape.puzzleL": "Puzle L 🧩",
-    "shape.puzzleR": "Puzle R 🧩",
-    "shape.heartL": "Corazón en pareja L 💕",
-    "shape.heartR": "Corazón en pareja R 💕",
-    "loopPos.topLeft": "Arriba izquierda",
-    "loopPos.topRight": "Arriba derecha",
-    "loopPos.right": "Derecha",
-    "loopPos.bottomLeft": "Abajo izquierda",
-    "place.bottom": "Abajo",
-    "place.top": "Arriba",
-    "place.left": "Izquierda",
-    "place.right": "Derecha",
-    "slider.labelWidth": "Ancho del texto",
-    "slider.textHeight": "Altura de letras",
-    "slider.strokeWidth": "Grosor del trazo",
-    "slider.baseWidth": "Ancho de la base",
-    "slider.baseHeight": "Altura de la base",
-    "slider.baseThickness": "Grosor de la base",
-    "slider.holeGuideRadius": "Radio guía alrededor del orificio",
-    "slider.loopOuterRadius": "Radio exterior de la argolla",
-    "slider.ringHole": "Orificio del anillo",
-    "slider.cornerRadius": "Radio de esquinas",
-    "slider.labelBand": "Banda del texto",
-    "slider.rimWidth": "Ancho del borde lateral",
-    "slider.rimHeight": "Altura del borde lateral",
-    "slider.mapWidth": "Ancho del área del mapa",
-    "slider.mapHeight": "Altura del área del mapa",
-    "slider.maxBuildings": "Máx. edificios",
-    "layer.base": "Base",
-    "layer.rim": "Borde",
-    "layer.water": "Agua",
-    "layer.parks": "Parques",
-    "layer.roads": "Calles",
-    "layer.buildings": "Edificios",
-    "layer.text": "Texto",
-    "layer.top": "arriba {z} mm",
-    "layer.size": ", {w} x {h} mm",
-    "layer.noWater": "puede no haber agua en el área seleccionada",
-    "layer.missing": "la capa no se creó",
-    "layerTone.ok": "OK",
-    "layerTone.warn": "aviso",
-    "layerTone.bad": "problema",
-    "printability.idle.title": "Primero coloca un marco en el mapa",
-    "printability.idle.detail": "Hacer clic en el mapa mueve el área de impresión, el gran cuadrado turquesa cambia el tamaño.",
-    "printability.topo.title": "Modo topo: se imprime el relieve de altitud",
-    "printability.topo.detail": "Las capas del mapa están desactivadas. Las grandes zonas montañosas (5–20 km) son justo lo que se necesita para un relieve expresivo.",
-    "printability.tooLarge.title": "Área demasiado grande para FDM",
-    "printability.tooLarge.detail": "El detalle mínimo de 0,4 mm ahora equivale a ~{m} m. Las calles finas y el texto pueden desmoronarse.",
-    "printability.onEdge.title": "Imprimible, pero el detalle está al límite",
-    "printability.onEdge.detail": "0,4 mm equivale a ~{m} m. Para calles finas es mejor elegir un área más pequeña.",
-    "printability.good.title": "Escala adecuada para imprimir",
-    "printability.good.detail": "0,4 mm equivale a ~{m} m. Un buen equilibrio para un llavero.",
-    "check.crop.label": "Escala del mapa",
-    "check.crop.detail": "{min} mm = ~{m} m",
-    "check.crop.empty": "Coloca un marco en el mapa",
-    "check.text.label": "Texto",
-    "check.text.tooLong": "Texto demasiado grande para este ancho: acórtalo, ensancha el campo o elige Narrow",
-    "check.text.detail": "{stroke} mm de trazo, {height} mm de altura",
-    "check.loop.label": "Argolla",
-    "check.loop.detail": "orificio Ø{hole} mm, pared {wall} mm",
-    "check.base.label": "Base y borde",
-    "check.base.detail": "{base} mm de base, {rim} mm de borde",
-    "check.layers.label": "Capas",
-    "check.layers.topo": "relieve topo {relief} mm (capas del mapa desactivadas)",
-    "check.layers.detail": "calles {roads} mm, agua {water} mm, edificios hasta {buildings} mm",
-    "verdict.bad.title": "El 3MF necesita revisión",
-    "verdict.bad.detail": "Capas con problemas: {layers}.",
-    "verdict.warn.title": "3MF creado, hay avisos",
-    "verdict.warn.detail": "Revisa: {layers}.",
-    "verdict.good.title": "El 3MF parece listo para el slicer",
-    "verdict.good.detail": "Base, borde, mapa, edificios y texto están presentes como capas separadas.",
-    "status.generating": "Generando llavero",
-    "status.ready3mf": "3MF listo",
-    "status.ready": "Hecho",
-    "btn.generating": "Generando...",
-    "btn.create3mf": "Crear 3MF",
-    "btn.buyOrder": "Comprar / pedir impresión",
-    "btn.order": "Pedir impresión",
-    "btn.download3mf": "Descargar 3MF",
-    "quota.remaining": "Quedan {remaining} de {limit} descargas gratis",
-    "quota.exhausted": "Descargas gratis agotadas — realiza un pedido de impresión",
-    "sticky.priceLabel": "Llavero con mapa",
-    "sticky.generating": "Generando… {progress}%",
-    "sticky.createKeychain": "Crear llavero",
-    "sticky.download": "Descargar",
-    "error.generateFailed": "El llavero no se generó",
-    "error.noArea": "Primero marca un área en el mapa",
-    "error.notReady": "No está listo para imprimir: {issues}.",
-    "error.generic": "Error al generar el llavero",
-    "error.limitContact": "He agotado 5 descargas gratis de llaveros. Quiero más / una impresión — por favor contáctame.",
-    "error.downloadFailed": "No se pudo descargar el 3MF",
-    "templates.ready": "Plantillas listas",
-    "templates.tapClick": "tap / click",
-    "designer.hintFront": "Arrastra el mapa, el texto, la argolla o el tirador inferior derecho",
-    "designer.hintBack": "Reverso: controla el orificio, el borde y el texto interior",
-    "designer.front": "Anverso",
-    "designer.back": "Reverso",
-    "designer.pickArea": "Elige un área en el mapa",
-    "tpl.classicWide.name": "35 x 55",
-    "tpl.classicWide.desc": "Llavero vertical compacto estándar.",
-    "tpl.token55.name": "Token 55 x 30",
-    "tpl.token55.desc": "Ficha estándar 55×30 con orificio izquierdo de Ø3 mm y base de cápsula.",
-    "tpl.heart46.name": "Corazón 46 × 42",
-    "tpl.heart46.desc": "Un mapa del lugar que está en el corazón — un regalo para dos.",
-    "tpl.house44.name": "Casa 44 × 48",
-    "tpl.house44.desc": "El hogar está donde está tu calle. Tejado con argolla arriba.",
-    "tpl.puzzleLeft.name": "Puzle L · 40 × 42",
-    "tpl.puzzleLeft.desc": "Mitad de una pareja: tu ciudad. La pestaña de la derecha se une con la mitad R.",
-    "tpl.puzzleRight.name": "Puzle R · 40 × 42",
-    "tpl.puzzleRight.desc": "Mitad de una pareja: la ciudad de un ser querido. La ranura de la izquierda acepta la mitad L.",
-    "tpl.heartPairLeft.name": "Corazón en pareja · L · 30 × 44",
-    "tpl.heartPairLeft.desc": "Medio corazón para dos: tu ciudad. El cierre del borde se une con la mitad R en un corazón completo.",
-    "tpl.heartPairRight.name": "Corazón en pareja · R · 30 × 44",
-    "tpl.heartPairRight.desc": "Medio corazón para dos: la ciudad de un ser querido. La ranura acepta la mitad L.",
-    "tpl.rightLoop.name": "Side Loop",
-    "tpl.rightLoop.desc": "Argolla a la derecha, práctica para un mapa ancho.",
-    "tpl.verticalTag.name": "Vertical",
-    "tpl.verticalTag.desc": "Llavero vertical con texto girado.",
-    "tpl.softCapsule.name": "Capsule",
-    "tpl.softCapsule.desc": "Forma de cápsula suave con argolla de ranura."
+    "tabs": {
+      "product": "Producto",
+      "map": "Mapa",
+      "label": "Texto",
+      "review": "Impresión",
+      "advanced": "Más"
+    },
+    "header": {
+      "eyebrow": "Asistente de creación",
+      "title": "Primero la forma, luego el mapa",
+      "subtitle": "Flujo mínimo: plantilla, área del mapa, etiqueta, generación."
+    },
+    "ready": {
+      "good": "Listo para imprimir",
+      "warn": "Imprimible, pero con cuidado",
+      "bad": "Se necesitan correcciones",
+      "fix": "Corrige: {issue}",
+      "nextWarn": "Para un mejor resultado elige un recorte más pequeño o un área de mapa mayor.",
+      "nextGood": "Puedes crear el 3MF."
+    },
+    "details": {
+      "summary": "Detalles de impresión y acciones rápidas",
+      "printability": "Imprimibilidad"
+    },
+    "quick": {
+      "centerMap": "Centrar mapa",
+      "maxMap": "Maximizar mapa",
+      "centerLabel": "Centrar texto",
+      "loopTop": "Argolla arriba",
+      "autoFix": "Corrección auto."
+    },
+    "advanced": {
+      "show": "Mostrar ajustes avanzados",
+      "hide": "Ocultar ajustes avanzados",
+      "title": "Ajustes avanzados",
+      "desc": "Este modo es para ti o el operador de impresión. Un cliente no necesita estos parámetros en el flujo principal.",
+      "baseLoop": "Base y argolla",
+      "shapeLoop": "Forma y argolla",
+      "baseShape": "Forma del soporte",
+      "loopType": "Tipo de argolla",
+      "loopPosition": "Posición de la argolla",
+      "rotation": "Rotación",
+      "mapText": "Mapa y texto",
+      "mapOrientation": "Orientación del mapa",
+      "printFont": "Fuente de impresión",
+      "textRotation": "Rotación del texto",
+      "mapLayers": "Capas del mapa",
+      "uniformBuildings": "Altura uniforme de edificios"
+    },
+    "product": {
+      "title": "Revisa la base del llavero",
+      "desc": "Las plantillas listas están justo debajo de la vista previa. Aquí solo quedan las acciones rápidas que un cliente realmente necesita tras elegir una plantilla.",
+      "maxMap": "Mapa máx.",
+      "token": "Ficha 55 x 30",
+      "centerLoop": "Centrar argolla",
+      "layoutRotation": "Rotación del diseño"
+    },
+    "map": {
+      "title": "Define el área del mapa",
+      "desc": "Haz clic en el mapa para mover el marco. No lo reduzcas por debajo de la escala recomendada: el sistema te avisará si el área es demasiado grande.",
+      "orientation": "Orientación en el mapa"
+    },
+    "label": {
+      "title": "Texto inferior",
+      "desc": "El texto cambia sin volver a generar. Para imprimir, es mejor un texto corto y un trazo más grueso.",
+      "printFont": "Fuente segura para impresión",
+      "placement": "Lado / colocación",
+      "current": "Texto actual: {height} mm de altura, {stroke} mm de trazo, estilo {style}.",
+      "secondLine": "Segunda línea · fecha o coordenadas",
+      "insertCoords": "Insertar coordenadas del centro del área",
+      "secondHint": "Tamaño menor justo debajo del texto principal. 📍 inserta las coordenadas del área seleccionada.",
+      "backTitle": "Texto del reverso · grabado",
+      "backPlaceholder": "NOMBRE · FECHA",
+      "backHint": "Se graba en la cara inferior a 0,5 mm (en espejo — legible al voltear el llavero). Visible tras la generación en 3D."
+    },
+    "review": {
+      "title": "Comprobación antes de generar",
+      "desc": "Aquí solo deben ir parámetros comprensibles para el cliente: tamaño, texto, nivel de detalle y preparación para imprimir.",
+      "noText": "sin texto",
+      "generated3mf": "3MF generado",
+      "layersNote": "El texto y el borde van en capas separadas, el mapa se recorta al área interior del llavero."
+    },
+    "metric": {
+      "base": "Base",
+      "loop": "Argolla",
+      "hole": "orificio",
+      "detail": "Detalle",
+      "status": "Estado",
+      "product": "Producto",
+      "map": "Mapa",
+      "signature": "Texto"
+    },
+    "loop": {
+      "round": "Redonda",
+      "teardrop": "Lágrima",
+      "slot": "Ranura",
+      "sideTab": "Pestaña"
+    },
+    "detail": {
+      "bad": "pobre",
+      "edge": "al límite",
+      "good": "bueno",
+      "pickCrop": "elige un recorte"
+    },
+    "topo": {
+      "label": "🏔 Relieve de altitud (topo)",
+      "hint": "Montañas en vez de calles: Hoverla, los Alpes, la costa. Las capas del mapa se desactivan.",
+      "reliefHeight": "Altura del relieve"
+    },
+    "gpx": {
+      "title": "🏃 Ruta (GPX) en el llavero",
+      "replace": "Reemplazar",
+      "pickFile": "Elegir archivo",
+      "loaded": "✓ {name} · {count} puntos",
+      "remove": "Quitar",
+      "privacy": "🔒 Tu ruta solo se usa para construir el modelo. No la publicamos ni la compartimos.",
+      "hint": "Una ruta de carrera/senderismo — una línea sobre el mapa. El área se enfoca automáticamente en la ruta.",
+      "readError": "No se pudo leer el archivo GPX"
+    },
+    "shape": {
+      "rounded": "Rectángulo",
+      "token": "Ficha",
+      "capsule": "Cápsula",
+      "octagon": "Octágono",
+      "heart": "Corazón ♥",
+      "house": "Casa",
+      "puzzleL": "Puzle L 🧩",
+      "puzzleR": "Puzle R 🧩",
+      "heartL": "Corazón en pareja L 💕",
+      "heartR": "Corazón en pareja R 💕"
+    },
+    "loopPos": {
+      "topLeft": "Arriba izquierda",
+      "topRight": "Arriba derecha",
+      "right": "Derecha",
+      "bottomLeft": "Abajo izquierda"
+    },
+    "place": {
+      "bottom": "Abajo",
+      "top": "Arriba",
+      "left": "Izquierda",
+      "right": "Derecha"
+    },
+    "slider": {
+      "labelWidth": "Ancho del texto",
+      "textHeight": "Altura de letras",
+      "strokeWidth": "Grosor del trazo",
+      "baseWidth": "Ancho de la base",
+      "baseHeight": "Altura de la base",
+      "baseThickness": "Grosor de la base",
+      "holeGuideRadius": "Radio guía alrededor del orificio",
+      "loopOuterRadius": "Radio exterior de la argolla",
+      "ringHole": "Orificio del anillo",
+      "cornerRadius": "Radio de esquinas",
+      "labelBand": "Banda del texto",
+      "rimWidth": "Ancho del borde lateral",
+      "rimHeight": "Altura del borde lateral",
+      "mapWidth": "Ancho del área del mapa",
+      "mapHeight": "Altura del área del mapa",
+      "maxBuildings": "Máx. edificios"
+    },
+    "layer": {
+      "base": "Base",
+      "rim": "Borde",
+      "water": "Agua",
+      "parks": "Parques",
+      "roads": "Calles",
+      "buildings": "Edificios",
+      "text": "Texto",
+      "top": "arriba {z} mm",
+      "size": ", {w} x {h} mm",
+      "noWater": "puede no haber agua en el área seleccionada",
+      "missing": "la capa no se creó"
+    },
+    "layerTone": {
+      "ok": "OK",
+      "warn": "aviso",
+      "bad": "problema"
+    },
+    "printability": {
+      "idle": {
+        "title": "Primero coloca un marco en el mapa",
+        "detail": "Hacer clic en el mapa mueve el área de impresión, el gran cuadrado turquesa cambia el tamaño."
+      },
+      "topo": {
+        "title": "Modo topo: se imprime el relieve de altitud",
+        "detail": "Las capas del mapa están desactivadas. Las grandes zonas montañosas (5–20 km) son justo lo que se necesita para un relieve expresivo."
+      },
+      "tooLarge": {
+        "title": "Área demasiado grande para FDM",
+        "detail": "El detalle mínimo de 0,4 mm ahora equivale a ~{m} m. Las calles finas y el texto pueden desmoronarse."
+      },
+      "onEdge": {
+        "title": "Imprimible, pero el detalle está al límite",
+        "detail": "0,4 mm equivale a ~{m} m. Para calles finas es mejor elegir un área más pequeña."
+      },
+      "good": {
+        "title": "Escala adecuada para imprimir",
+        "detail": "0,4 mm equivale a ~{m} m. Un buen equilibrio para un llavero."
+      }
+    },
+    "check": {
+      "crop": {
+        "label": "Escala del mapa",
+        "detail": "{min} mm = ~{m} m",
+        "empty": "Coloca un marco en el mapa"
+      },
+      "text": {
+        "label": "Texto",
+        "tooLong": "Texto demasiado grande para este ancho: acórtalo, ensancha el campo o elige Narrow",
+        "detail": "{stroke} mm de trazo, {height} mm de altura"
+      },
+      "loop": {
+        "label": "Argolla",
+        "detail": "orificio Ø{hole} mm, pared {wall} mm"
+      },
+      "base": {
+        "label": "Base y borde",
+        "detail": "{base} mm de base, {rim} mm de borde"
+      },
+      "layers": {
+        "label": "Capas",
+        "topo": "relieve topo {relief} mm (capas del mapa desactivadas)",
+        "detail": "calles {roads} mm, agua {water} mm, edificios hasta {buildings} mm"
+      }
+    },
+    "verdict": {
+      "bad": {
+        "title": "El 3MF necesita revisión",
+        "detail": "Capas con problemas: {layers}."
+      },
+      "warn": {
+        "title": "3MF creado, hay avisos",
+        "detail": "Revisa: {layers}."
+      },
+      "good": {
+        "title": "El 3MF parece listo para el slicer",
+        "detail": "Base, borde, mapa, edificios y texto están presentes como capas separadas."
+      }
+    },
+    "status": {
+      "generating": "Generando llavero",
+      "ready3mf": "3MF listo",
+      "ready": "Hecho"
+    },
+    "btn": {
+      "generating": "Generando...",
+      "create3mf": "Crear 3MF",
+      "buyOrder": "Comprar / pedir impresión",
+      "order": "Pedir impresión",
+      "download3mf": "Descargar 3MF"
+    },
+    "quota": {
+      "remaining": "Quedan {remaining} de {limit} descargas gratis",
+      "exhausted": "Descargas gratis agotadas — realiza un pedido de impresión"
+    },
+    "sticky": {
+      "priceLabel": "Llavero con mapa",
+      "generating": "Generando… {progress}%",
+      "createKeychain": "Crear llavero",
+      "download": "Descargar"
+    },
+    "error": {
+      "generateFailed": "El llavero no se generó",
+      "noArea": "Primero marca un área en el mapa",
+      "notReady": "No está listo para imprimir: {issues}.",
+      "generic": "Error al generar el llavero",
+      "limitContact": "He agotado 5 descargas gratis de llaveros. Quiero más / una impresión — por favor contáctame.",
+      "downloadFailed": "No se pudo descargar el 3MF"
+    },
+    "templates": {
+      "ready": "Plantillas listas",
+      "tapClick": "tap / click"
+    },
+    "designer": {
+      "hintFront": "Arrastra el mapa, el texto, la argolla o el tirador inferior derecho",
+      "hintBack": "Reverso: controla el orificio, el borde y el texto interior",
+      "front": "Anverso",
+      "back": "Reverso",
+      "pickArea": "Elige un área en el mapa"
+    },
+    "tpl": {
+      "classicWide": {
+        "name": "35 x 55",
+        "desc": "Llavero vertical compacto estándar."
+      },
+      "token55": {
+        "name": "Token 55 x 30",
+        "desc": "Ficha estándar 55×30 con orificio izquierdo de Ø3 mm y base de cápsula."
+      },
+      "heart46": {
+        "name": "Corazón 46 × 42",
+        "desc": "Un mapa del lugar que está en el corazón — un regalo para dos."
+      },
+      "house44": {
+        "name": "Casa 44 × 48",
+        "desc": "El hogar está donde está tu calle. Tejado con argolla arriba."
+      },
+      "puzzleLeft": {
+        "name": "Puzle L · 40 × 42",
+        "desc": "Mitad de una pareja: tu ciudad. La pestaña de la derecha se une con la mitad R."
+      },
+      "puzzleRight": {
+        "name": "Puzle R · 40 × 42",
+        "desc": "Mitad de una pareja: la ciudad de un ser querido. La ranura de la izquierda acepta la mitad L."
+      },
+      "heartPairLeft": {
+        "name": "Corazón en pareja · L · 30 × 44",
+        "desc": "Medio corazón para dos: tu ciudad. El cierre del borde se une con la mitad R en un corazón completo."
+      },
+      "heartPairRight": {
+        "name": "Corazón en pareja · R · 30 × 44",
+        "desc": "Medio corazón para dos: la ciudad de un ser querido. La ranura acepta la mitad L."
+      },
+      "rightLoop": {
+        "name": "Side Loop",
+        "desc": "Argolla a la derecha, práctica para un mapa ancho."
+      },
+      "verticalTag": {
+        "name": "Vertical",
+        "desc": "Llavero vertical con texto girado."
+      },
+      "softCapsule": {
+        "name": "Capsule",
+        "desc": "Forma de cápsula suave con argolla de ranura."
+      }
+    },
+    "unit": {
+      "mm": "mm"
+    }
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
@@ -942,5 +1069,130 @@
     "qaBaseNotWatertight": "la base no es del todo estanca — el slicer la imprimirá igual, pero conviene revisar el modelo",
     "qaSlicerNotFound": "el slicer no está disponible en el servidor — se omitió la verificación",
     "qaLayerNotWatertight": "{layer}: la capa no es del todo estanca"
+  },
+  "kcp": {
+    "loadingMap": "Cargando mapa...",
+    "loading3d": "Cargando vista 3D…",
+    "statusGenerating": "Generando",
+    "statusReady": "Llavero listo",
+    "statusSelected": "Área seleccionada",
+    "statusPickArea": "Elige un área",
+    "eyebrow": "Configurador de llaveros",
+    "title": "Taller de llaveros con mapa",
+    "subtitle": "Una placa plana multicolor con un ojal reforzado, una franja limpia para el texto y una altura de edificios controlada.",
+    "navMaps": "Mapas",
+    "navAccount": "Cuenta",
+    "city": "Ciudad",
+    "state": "Estado",
+    "pickShape": "Elige la forma del llavero",
+    "pickShapeHint": "Toca un ejemplo — la forma se aplicará",
+    "dragHint": "A continuación: arrastra el mapa, el texto y el ojal directamente en la vista previa. El mapa y el texto se pueden <rotate>girar</rotate> — arrastra el tirador de esquina <b>⟳</b> en el mapa o el tirador verde <b>↻</b> sobre el texto.",
+    "mapTitle": "Coloca la forma en el mapa",
+    "mapSubtitle": "Arrastra el marco; el tirador ⟳ en el mapa lo gira. El marco turquesa mantiene las proporciones acordes con la vista previa.",
+    "layoutTitle": "Tamaño, área del mapa, ojal y texto",
+    "layoutSubtitle": "Ajusta la forma del llavero localmente y luego inserta el área del mapa elegida en la zona punteada.",
+    "preview3dTitle": "Vista 3D del llavero terminado",
+    "layers": "Capas",
+    "emptyTitle": "El modelo 3D aparecerá tras crearlo",
+    "emptyBody": "Pulsa «Crear 3MF» — y aquí aparecerá una vista 3D real con todas las capas.",
+    "generatingPct": "Generando: {progress}%",
+    "tour": {
+      "step1Title": "Elige una ciudad y un distrito",
+      "step1Body": "Elige una ciudad y un punto en el mapa — este será el mapa de tu llavero.",
+      "step2Title": "Elige una plantilla",
+      "step2Body": "Token 55×30, clásico o cuadrado — tócalo y las dimensiones se ajustarán automáticamente.",
+      "step3Title": "Añade un texto",
+      "step3Body": "Introduce el texto (p. ej. el nombre de la ciudad), muévelo o gíralo. Luego pulsa «Generar»."
+    }
+  },
+  "cities": {
+    "Kyiv": "Kyiv",
+    "Khmelnytskyi": "Khmelnytskyi",
+    "Lviv": "Lviv",
+    "Odesa": "Odesa",
+    "Dnipro": "Dnipro",
+    "Kharkiv": "Kharkiv",
+    "Vinnytsia": "Vinnytsia",
+    "Ternopil": "Ternopil",
+    "IvanoFrankivsk": "Ivano-Frankivsk",
+    "Chernihiv": "Chernihiv",
+    "Zaporizhzhia": "Zaporizhzhia",
+    "Kryvyi_Rih": "Kryvyi Rih",
+    "Mykolaiv": "Mykolaiv",
+    "Poltava": "Poltava",
+    "Cherkasy": "Cherkasy",
+    "Zhytomyr": "Zhytomyr",
+    "Sumy": "Sumy",
+    "Rivne": "Rivne",
+    "Lutsk": "Lutsk",
+    "Uzhhorod": "Uzhhorod",
+    "Chernivtsi": "Chernivtsi",
+    "Kherson": "Kherson",
+    "Kropyvnytskyi": "Kropyvnytskyi",
+    "Manual": "Otra / manual"
+  },
+  "lifeprev": {
+    "realLifePreview": "Vista previa real",
+    "slicerPreview": "Vista previa del slicer",
+    "layerOrder": "Orden de impresión de capas",
+    "clipInside": "El mapa debe recortarse dentro del borde; el texto y el borde quedan como capas separadas para un color limpio.",
+    "printNote": "Nota de impresión",
+    "minStroke": "Trazo mínimo: 0,4 mm. El texto se imprime mejor como la última capa de color."
+  },
+  "live": {
+    "pickAreaOnMap": "Selecciona un área en el mapa",
+    "pickArea": "Selecciona un área",
+    "loading": "Cargando"
+  },
+  "search": {
+    "placeholder": "Buscar ciudad, pueblo o dirección…",
+    "myPlace": "Mi lugar",
+    "myLocation": "Mi ubicación",
+    "clear": "Borrar"
+  },
+  "modal": {
+    "loading": "Cargando 3D…",
+    "close": "Cerrar",
+    "descKey": "Llavero-mapa 55×30 mm",
+    "descMap": "Distrito de la ciudad en 3D",
+    "hint": "arrastra / rueda = zoom",
+    "ctaKey": "Crear llavero",
+    "ctaMap": "Crear mapa"
+  },
+  "preview": {
+    "generating": "Generando modelo...",
+    "batchLoadError": "Error al cargar la vista previa del lote",
+    "modelLoadError": "Error al cargar el modelo",
+    "tools": {
+      "fullscreen": "Pantalla completa",
+      "collapse": "Contraer",
+      "viewTools": "Herramientas de vista",
+      "sceneControl": "Control rápido de la escena",
+      "grid": "Cuadrícula",
+      "axes": "Ejes",
+      "onF": "Activada",
+      "hiddenF": "Oculta",
+      "onPl": "Activados",
+      "hiddenPl": "Ocultos",
+      "rotation": "Rotación",
+      "camera": "Cámara",
+      "model": "Modelo",
+      "rotateHint": "Camera: gira la cámara. Model: arrastrar gira el propio modelo.",
+      "cameraHint": "Orbit: vista estándar. Fly: movimiento libre WASD + ratón.",
+      "flySpeed": "Velocidad de vuelo",
+      "terrainShading": "Sombreado del relieve",
+      "shadingSmooth": "Sombreado suave de pendientes",
+      "shadingFlat": "Bordes del relieve más definidos",
+      "shadingToggleHint": "Smooth = normales suaves. Flat = relieve más definido sin costuras visibles.",
+      "hintFly": "Fly: WASD para moverse, Q/E arriba/abajo, Shift para acelerar, botón derecho del ratón para mirar.",
+      "hintModel": "Arrastra el modelo para girarlo, doble clic restablece la orientación.",
+      "hintCamera": "Arrastrar controla la cámara, la rueda cambia la distancia.",
+      "visibility": "Visibilidad de componentes:",
+      "terrain": "Relieve",
+      "roads": "Carreteras",
+      "buildings": "Edificios",
+      "water": "Agua",
+      "parks": "Parques"
+    }
   }
 }

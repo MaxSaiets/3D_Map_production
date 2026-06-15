@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 type Bounds = { north: number; south: number; east: number; west: number };
 
@@ -564,6 +565,7 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
  * мм-системі координат позиціонуються правильно скрізь і успадковують поворот/кліп.
  */
 export function LiveCitySvgPaths(props: LiveCityProps) {
+  const t = useTranslations("live");
   const { printable, loading, error, hasData } = useCityPrintable(props);
   const { design } = props;
   const cx = design.mapXMm + design.mapWidthMm / 2;
@@ -585,7 +587,7 @@ export function LiveCitySvgPaths(props: LiveCityProps) {
       )}
       {!hasData && !loading && !error && (
         <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={2.2} fontWeight={700} fill="#6a5d44">
-          Оберіть ділянку на карті
+          {t("pickAreaOnMap")}
         </text>
       )}
     </g>
@@ -595,6 +597,7 @@ export function LiveCitySvgPaths(props: LiveCityProps) {
 /** Чистий 2D preview ділянки (standalone div+svg). Зберігається для можливого
  *  окремого використання; на брелку застосовується LiveCitySvgPaths. */
 export function LiveCity3D(props: LiveCityProps) {
+  const t = useTranslations("live");
   const { printable, loading, error, hasData } = useCityPrintable(props);
   const { design } = props;
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
@@ -614,7 +617,7 @@ export function LiveCity3D(props: LiveCityProps) {
       </svg>
       {loading && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-[#0f766e]" aria-label="Завантаження" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-[#0f766e]" aria-label={t("loading")} />
         </div>
       )}
       {error && (
@@ -624,7 +627,7 @@ export function LiveCity3D(props: LiveCityProps) {
       )}
       {!hasData && !loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center text-[10px] text-[#6a5d44]">
-          Оберіть ділянку
+          {t("pickArea")}
         </div>
       )}
     </div>

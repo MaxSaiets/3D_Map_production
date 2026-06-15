@@ -19,15 +19,29 @@ import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
 
+function MapLoading() {
+  const t = useTranslations("kcp");
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
+      {t("loadingMap")}
+    </div>
+  );
+}
+
+function Preview3DLoading() {
+  const t = useTranslations("kcp");
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[20px] bg-[#0f172a] text-sm text-white/70">
+      {t("loading3d")}
+    </div>
+  );
+}
+
 const MapSelector = dynamic(
   () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
-        Завантаження карти...
-      </div>
-    ),
+    loading: () => <MapLoading />,
   },
 );
 
@@ -36,11 +50,7 @@ const Preview3D = dynamic(
   () => import("@/components/Preview3D").then((mod) => ({ default: mod.Preview3D })),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-[20px] bg-[#0f172a] text-sm text-white/70">
-        Завантаження 3D перегляду…
-      </div>
-    ),
+    loading: () => <Preview3DLoading />,
   },
 );
 
@@ -86,6 +96,8 @@ export default function KeychainsPage() {
   // інакше довгий маршрут обрізало (maxMetersPerMm був жорстко 7).
   const gpxFocus = useGenerationStore((s) => s.gpxFocus);
   const tKc = useTranslations("kc"); // локалізовані назви шаблонів брелків
+  const t = useTranslations("kcp");
+  const tCity = useTranslations("cities");
 
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
@@ -154,12 +166,12 @@ export default function KeychainsPage() {
     [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio, gpxFocus],
   );
   const statusLabel = isGenerating
-    ? `${progress}% • ${status || "Генерація"}`
+    ? `${progress}% • ${status || t("statusGenerating")}`
     : downloadUrl
-      ? "Брелок готовий"
+      ? t("statusReady")
       : selectedArea
-        ? "Ділянка вибрана"
-        : "Оберіть ділянку";
+        ? t("statusSelected")
+        : t("statusPickArea");
 
   // Mobile = single scroll: every panel is visible and stacked (no tab juggling).
   // The bottom bar just smooth-scrolls to a section. Desktop keeps the 3-col grid.
@@ -178,9 +190,9 @@ export default function KeychainsPage() {
         <OnboardingTour
           storageKey="onb_keychain_v1"
           steps={[
-            { title: "Оберіть місто та район", body: "Виберіть місто й точку на карті — це буде мапа на вашому брелку." },
-            { title: "Оберіть шаблон", body: "Жетон 55×30, класичний чи квадратний — натисніть, і розміри виставляться автоматично." },
-            { title: "Додайте напис", body: "Введіть текст (напр. назву міста), посуньте чи поверніть його. Тоді натисніть «Згенерувати»." },
+            { title: t("tour.step1Title"), body: t("tour.step1Body") },
+            { title: t("tour.step2Title"), body: t("tour.step2Body") },
+            { title: t("tour.step3Title"), body: t("tour.step3Body") },
           ]}
         />
       )}
@@ -189,14 +201,14 @@ export default function KeychainsPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
-                Конструктор брелків
+                {t("eyebrow")}
               </p>
               <div>
                 <h1 className="font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl">
-                  Майстерня брелків з мапою
+                  {t("title")}
                 </h1>
                 <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:block sm:text-[15px]">
-                  Пласка багатоколірна пластина з посиленою петлею, чистою смугою під напис і контрольованою висотою будинків.
+                  {t("subtitle")}
                 </p>
               </div>
             </div>
@@ -207,18 +219,18 @@ export default function KeychainsPage() {
                   href="/"
                   className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-3 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
                 >
-                  <ArrowLeft size={16} /> Мапи
+                  <ArrowLeft size={16} /> {t("navMaps")}
                 </Link>
                 <Link
                   href="/account"
                   className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
                 >
-                  <User size={16} /> Кабінет
+                  <User size={16} /> {t("navAccount")}
                 </Link>
               </div>
               <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Місто
+                  {t("city")}
                 </div>
                 <select
                   value={currentCityKey}
@@ -235,14 +247,14 @@ export default function KeychainsPage() {
                 >
                   {Object.keys(CITIES).map((cityKey) => (
                     <option key={cityKey} value={cityKey}>
-                      {CITIES[cityKey].label}
+                      {tCity(cityKey)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Стан
+                  {t("state")}
                 </div>
                 <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</div>
               </div>
@@ -254,7 +266,7 @@ export default function KeychainsPage() {
           <WizardSteps
             variant="keychain"
             state={{
-              cityLabel: CITIES[currentCityKey]?.label ?? currentCityKey,
+              cityLabel: CITIES[currentCityKey] ? tCity(currentCityKey) : currentCityKey,
               hasSelection: Boolean(selectedArea),
               isGenerating,
               hasDownload: Boolean(downloadUrl),
@@ -271,9 +283,9 @@ export default function KeychainsPage() {
         <div className="mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[10px] font-bold text-white">1</span>
-            Оберіть форму брелка
+            {t("pickShape")}
             <span className="ml-auto rounded-full bg-[rgba(46,74,58,0.07)] px-2 py-0.5 text-[10px] normal-case tracking-normal text-[var(--accent-strong)]">
-              Натисніть приклад — форма застосується
+              {t("pickShapeHint")}
             </span>
           </div>
           <div className="flex gap-2.5 overflow-x-auto pb-1">
@@ -309,7 +321,10 @@ export default function KeychainsPage() {
             })}
           </div>
           <p className="mt-2 px-1 text-[11px] leading-4 text-[var(--text-secondary)]">
-            Далі: перетягуйте карту, напис і вушко прямо в прев'ю. Карту й напис можна <span className="font-semibold text-[var(--accent-strong)]">обертати</span> — тягніть кутову ручку <span className="font-semibold">⟳</span> на карті або зелену ручку <span className="font-semibold">↻</span> над написом.
+            {t.rich("dragHint", {
+              rotate: (chunks) => <span className="font-semibold text-[var(--accent-strong)]">{chunks}</span>,
+              b: (chunks) => <span className="font-semibold">{chunks}</span>,
+            })}
           </p>
         </div>
 
@@ -318,10 +333,10 @@ export default function KeychainsPage() {
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
-                  <MapIcon size={16} /> Постав форму на карту
+                  <MapIcon size={16} /> {t("mapTitle")}
                 </h2>
                 <p className="mt-0.5 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block">
-                  Перетягни рамку; ручка ⟳ на карті — обертання. Бірюзова рамка тримає пропорції з превʼю.
+                  {t("mapSubtitle")}
                 </p>
               </div>
             </div>
@@ -352,10 +367,10 @@ export default function KeychainsPage() {
                     Product Layout
                   </p>
                   <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
-                    Розмір, зона карти, вушко і підпис
+                    {t("layoutTitle")}
                   </h2>
                   <p className="mt-1 hidden text-xs leading-5 text-[var(--text-secondary)] sm:block sm:text-sm">
-                    Підбери форму брелка локально, потім встав обрану ділянку карти в пунктирну область.
+                    {t("layoutSubtitle")}
                   </p>
                 </div>
                 <div className="rounded-[18px] border border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] px-3 py-2 text-[var(--accent-strong)]">
@@ -390,7 +405,7 @@ export default function KeychainsPage() {
           <section id="kc-preview3d" className={`${designPanelClasses} order-4 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-4 lg:col-start-3 lg:row-start-2`}>
               <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
-                  <Layers3 size={16} /> 3D-перегляд готового брелка
+                  <Layers3 size={16} /> {t("preview3dTitle")}
                 </h2>
                 <div className="flex overflow-hidden rounded-full border border-[var(--surface-border)] bg-white/70 p-0.5">
                   <button
@@ -405,7 +420,7 @@ export default function KeychainsPage() {
                     onClick={() => setSidePreview("slicer")}
                     className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "slicer" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
                   >
-                    Шари
+                    {t("layers")}
                   </button>
                 </div>
               </div>
@@ -418,14 +433,14 @@ export default function KeychainsPage() {
                     ) : (
                       <div className="flex h-full min-h-[340px] flex-col items-center justify-center gap-2 rounded-[22px] bg-[#0f172a] p-6 text-center text-white/85">
                         <KeyRound size={32} className="text-[#5eead4]" />
-                        <div className="font-title text-lg">3D модель з'явиться після створення</div>
+                        <div className="font-title text-lg">{t("emptyTitle")}</div>
                         <div className="text-sm leading-6 text-white/55">
-                          Натисніть «Створити 3MF» — і тут зʼявиться реальний 3D-перегляд з усіма шарами.
+                          {t("emptyBody")}
                         </div>
                         {isGenerating && (
                           <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
                             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                            Генерація: {progress}%
+                            {t("generatingPct", { progress })}
                           </div>
                         )}
                       </div>

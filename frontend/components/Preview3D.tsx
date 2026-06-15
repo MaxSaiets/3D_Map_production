@@ -3,6 +3,7 @@
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { api } from "@/lib/api";
 import * as THREE from "three";
@@ -528,6 +529,7 @@ function FreeFlyControls({
 }
 
 function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
+  const t = useTranslations("preview");
   const three = useThree();
   const camera = three.camera;
   const controls = (three as any).controls as { target?: THREE.Vector3; update?: () => void } | undefined;
@@ -731,7 +733,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
         (group as any).userData = { batch: true, ids: idsToLoad, zoneCount: idsToLoad.length };
         setModel(group);
       } catch (e: any) {
-        setError(e?.message || "Помилка завантаження batch превʼю");
+        setError(e?.message || t("batchLoadError"));
       } finally {
         setLoading(false);
       }
@@ -833,7 +835,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
 // removed-debug-log
       } catch (error: any) {
         console.error("Помилка завантаження моделі:", error);
-        setError(error.message || "Помилка завантаження моделі");
+        setError(error.message || t("modelLoadError"));
         setLoading(false);
       }
     };
@@ -1055,6 +1057,7 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
 }
 
 export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
+  const t = useTranslations("preview");
   const {
     downloadUrl,
     isGenerating,
@@ -1103,15 +1106,15 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
             type="button"
             onClick={toggleFullscreen}
             className="flex h-10 items-center gap-1.5 rounded-full border border-white/15 bg-[rgba(2,6,23,0.7)] px-3 text-[12px] font-semibold text-white backdrop-blur transition hover:bg-[rgba(2,6,23,0.9)]"
-            title="На весь екран"
+            title={t("tools.fullscreen")}
           >
-            {isFs ? "✕ Згорнути" : "⤢ На весь екран"}
+            {isFs ? `✕ ${t("tools.collapse")}` : `⤢ ${t("tools.fullscreen")}`}
           </button>
           <button
             type="button"
             onClick={() => setToolsOpen((v) => !v)}
             className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/15 backdrop-blur transition ${toolsOpen ? "bg-white text-[#0b1020]" : "bg-[rgba(2,6,23,0.7)] text-white hover:bg-[rgba(2,6,23,0.9)]"}`}
-            title="Інструменти перегляду"
+            title={t("tools.viewTools")}
           >
             ⚙
           </button>
@@ -1124,7 +1127,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
                 Preview Tools
               </div>
-              <div className="mt-1 text-sm font-semibold">Швидке керування сценою</div>
+              <div className="mt-1 text-sm font-semibold">{t("tools.sceneControl")}</div>
             </div>
             <div className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/70">
               {cameraMode === "fly" ? "Fly" : "Orbit"}
@@ -1136,30 +1139,30 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               className="rounded-2xl bg-white/10 px-3 py-2 text-left text-xs font-medium transition hover:bg-white/20"
               onClick={() => setGridVisible((v) => !v)}
             >
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">Сітка</span>
-              <span className="mt-1 block">{gridVisible ? "Увімкнена" : "Прихована"}</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{t("tools.grid")}</span>
+              <span className="mt-1 block">{gridVisible ? t("tools.onF") : t("tools.hiddenF")}</span>
             </button>
             <button
               className="rounded-2xl bg-white/10 px-3 py-2 text-left text-xs font-medium transition hover:bg-white/20"
               onClick={() => setAxesVisible((v) => !v)}
             >
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">Осі</span>
-              <span className="mt-1 block">{axesVisible ? "Увімкнені" : "Приховані"}</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{t("tools.axes")}</span>
+              <span className="mt-1 block">{axesVisible ? t("tools.onPl") : t("tools.hiddenPl")}</span>
             </button>
             <button
               className="rounded-2xl bg-white/10 px-3 py-2 text-left text-xs font-medium transition hover:bg-white/20"
               onClick={() => setRotateMode((m) => (m === "camera" ? "model" : "camera"))}
-              title="Camera: крутиться камера. Model: drag обертає саму модель."
+              title={t("tools.rotateHint")}
             >
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">Обертання</span>
-              <span className="mt-1 block">{rotateMode === "camera" ? "Камера" : "Модель"}</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{t("tools.rotation")}</span>
+              <span className="mt-1 block">{rotateMode === "camera" ? t("tools.camera") : t("tools.model")}</span>
             </button>
             <button
               className="rounded-2xl bg-white/10 px-3 py-2 text-left text-xs font-medium transition hover:bg-white/20"
               onClick={() => setCameraMode((m) => (m === "orbit" ? "fly" : "orbit"))}
-              title="Orbit: стандартний огляд. Fly: вільний рух WASD + mouse."
+              title={t("tools.cameraHint")}
             >
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">Камера</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{t("tools.camera")}</span>
               <span className="mt-1 block">{cameraMode === "orbit" ? "Orbit" : "Fly"}</span>
             </button>
           </div>
@@ -1167,7 +1170,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           {cameraMode === "fly" && (
             <div className="mt-3 rounded-[18px] bg-white/8 px-3 py-3">
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="font-medium">Швидкість польоту</span>
+                <span className="font-medium">{t("tools.flySpeed")}</span>
                 <span className="tabular-nums text-white/70">{Math.round(flySpeed)}</span>
               </div>
               <input
@@ -1184,15 +1187,15 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
 
           <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-white/8 px-3 py-3 text-xs">
             <div>
-              <div className="font-medium">Terrain shading</div>
+              <div className="font-medium">{t("tools.terrainShading")}</div>
               <div className="mt-1 text-white/60">
-                {terrainSmoothShading ? "Плавне затінення схилів" : "Більш чіткі грані рельєфу"}
+                {terrainSmoothShading ? t("tools.shadingSmooth") : t("tools.shadingFlat")}
               </div>
             </div>
             <button
               className="rounded-full bg-white/10 px-3 py-2 font-semibold transition hover:bg-white/20"
               onClick={() => setTerrainSmoothShading(!terrainSmoothShading)}
-              title="Smooth = плавні нормалі. Flat = чіткіший рельєф без помітних швів."
+              title={t("tools.shadingToggleHint")}
             >
               {terrainSmoothShading ? "Smooth" : "Flat"}
             </button>
@@ -1200,10 +1203,10 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
 
           <div className="mt-3 text-[10px] leading-4 text-white/55">
             {cameraMode === "fly"
-              ? "Fly: WASD рух, Q/E вгору-вниз, Shift прискорення, права кнопка миші для огляду."
+              ? t("tools.hintFly")
               : rotateMode === "model"
-                ? "Drag по моделі обертає її, подвійний клік скидає орієнтацію."
-                : "Drag керує камерою, wheel змінює дистанцію."}
+                ? t("tools.hintModel")
+                : t("tools.hintCamera")}
           </div>
 
           <div className="hidden">
@@ -1278,9 +1281,9 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
             </button>
           </div>
           <div className="border-t border-white/20 pt-2 mt-2 space-y-1">
-            <div className="text-xs font-semibold text-white/90 mb-1">Видимість компонентів:</div>
+            <div className="text-xs font-semibold text-white/90 mb-1">{t("tools.visibility")}</div>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-xs">Рельєф</span>
+              <span className="text-xs">{t("tools.terrain")}</span>
               <input
                 type="checkbox"
                 checked={previewIncludeBase}
@@ -1289,7 +1292,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-xs">Дороги</span>
+              <span className="text-xs">{t("tools.roads")}</span>
               <input
                 type="checkbox"
                 checked={previewIncludeRoads}
@@ -1298,7 +1301,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-xs">Будівлі</span>
+              <span className="text-xs">{t("tools.buildings")}</span>
               <input
                 type="checkbox"
                 checked={previewIncludeBuildings}
@@ -1307,7 +1310,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-xs">Вода</span>
+              <span className="text-xs">{t("tools.water")}</span>
               <input
                 type="checkbox"
                 checked={previewIncludeWater}
@@ -1316,7 +1319,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
               />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-xs">Парки</span>
+              <span className="text-xs">{t("tools.parks")}</span>
               <input
                 type="checkbox"
                 checked={previewIncludeParks}
@@ -1331,7 +1334,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
       {isGenerating && !capture && (
         <div className="absolute inset-0 flex items-center justify-center text-white z-10 pointer-events-none">
           <div className="text-center">
-            <p className="text-lg mb-2">Генерація моделі...</p>
+            <p className="text-lg mb-2">{t("generating")}</p>
             <p className="text-sm text-gray-400">{progress}%</p>
           </div>
         </div>
