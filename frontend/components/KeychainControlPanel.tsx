@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
 import { StickyActionBar } from "@/components/StickyActionBar";
@@ -29,11 +30,11 @@ type PrintCheck = {
   detail: string;
 };
 
-const PANEL_SECTIONS: Array<{ id: PanelSection; label: string }> = [
-  { id: "product", label: "Виріб" },
-  { id: "map", label: "Карта" },
-  { id: "label", label: "Текст" },
-  { id: "review", label: "Друк" },
+const PANEL_SECTIONS: Array<{ id: PanelSection; labelKey: string }> = [
+  { id: "product", labelKey: "tabs.product" },
+  { id: "map", labelKey: "tabs.map" },
+  { id: "label", labelKey: "tabs.label" },
+  { id: "review", labelKey: "tabs.review" },
 ];
 
 const PANEL_CARD_CLASS =
@@ -340,6 +341,7 @@ export function KeychainControlPanel({
    *  по полігону а не bbox — гарантовано показує тільки те що обрав юзер. */
   cropPolygon?: Array<[number, number]> | null;
 }) {
+  const t = useTranslations("kc");
   const {
     selectedArea,
     isGenerating,
@@ -440,43 +442,43 @@ export function KeychainControlPanel({
     `${activeSection === section ? "block" : "hidden"} ${PANEL_CARD_CLASS}`;
 
   const visibleSections = expertMode
-    ? [...PANEL_SECTIONS, { id: "advanced" as const, label: "Додатково" }]
+    ? [...PANEL_SECTIONS, { id: "advanced" as const, labelKey: "tabs.advanced" }]
     : PANEL_SECTIONS;
 
   const printability = (() => {
     if (!selectedArea || !printScale) {
       return {
         tone: "idle" as const,
-        title: "Спочатку поставте рамку на карту",
-        detail: "Клік по карті переносить область друку, великий бірюзовий квадрат змінює розмір.",
+        title: t("printability.idle.title"),
+        detail: t("printability.idle.detail"),
       };
     }
     if (topoMode) {
       // Топо: масштаб вулиць не важливий — рельєф читається й на великих зонах
       return {
         tone: "good" as const,
-        title: "Топо-режим: друкується рельєф висот",
-        detail: "Шари карти вимкнені. Великі гірські зони (5–20 км) — саме те, що треба для виразного рельєфу.",
+        title: t("printability.topo.title"),
+        detail: t("printability.topo.detail"),
       };
     }
     if (printScale.tooLarge) {
       return {
         tone: "bad" as const,
-        title: "Зона завелика для FDM",
-        detail: `Мінімальна деталь 0.4 мм зараз дорівнює ~${printScale.minPrintableWorldM.toFixed(1)} м. Дрібні дороги й текст можуть розсипатися.`,
+        title: t("printability.tooLarge.title"),
+        detail: t("printability.tooLarge.detail", { m: printScale.minPrintableWorldM.toFixed(1) }),
       };
     }
     if (printScale.onEdge) {
       return {
         tone: "warn" as const,
-        title: "Друкується, але деталізація на межі",
-        detail: `0.4 мм відповідає ~${printScale.minPrintableWorldM.toFixed(1)} м. Для тонких вулиць краще обрати меншу ділянку.`,
+        title: t("printability.onEdge.title"),
+        detail: t("printability.onEdge.detail", { m: printScale.minPrintableWorldM.toFixed(1) }),
       };
     }
     return {
       tone: "good" as const,
-      title: "Масштаб придатний для друку",
-      detail: `0.4 мм відповідає ~${printScale.minPrintableWorldM.toFixed(1)} м. Це хороший баланс для брелка.`,
+      title: t("printability.good.title"),
+      detail: t("printability.good.detail", { m: printScale.minPrintableWorldM.toFixed(1) }),
     };
   })();
 
@@ -511,26 +513,26 @@ export function KeychainControlPanel({
         id: "crop",
         ok: cropTone !== "bad",
         tone: cropTone,
-        label: "Масштаб карти",
+        label: t("check.crop.label"),
         detail: printScale
-          ? `${MIN_PRINT_FEATURE_MM.toFixed(1)} мм = ~${printScale.minPrintableWorldM.toFixed(1)} м`
-          : "Поставте рамку на карту",
+          ? t("check.crop.detail", { min: MIN_PRINT_FEATURE_MM.toFixed(1), m: printScale.minPrintableWorldM.toFixed(1) })
+          : t("check.crop.empty"),
       },
       {
         id: "text-stroke",
         ok: true,  // text auto-clamped у fitDesign — завжди friendly
         tone: textTone,
-        label: "Текст",
+        label: t("check.text.label"),
         detail: labelTooLong
-          ? "Напис завеликий для цієї ширини: скоротіть, розширте поле або виберіть Narrow"
-          : `${design.labelStrokeMm.toFixed(2)} мм штрих, ${design.labelTextHeightMm.toFixed(1)} мм висота`,
+          ? t("check.text.tooLong")
+          : t("check.text.detail", { stroke: design.labelStrokeMm.toFixed(2), height: design.labelTextHeightMm.toFixed(1) }),
       },
       {
         id: "loop",
         ok: loopHoleDiameterMm >= 2.8 && loopWallMm >= 1.25,
         tone: loopHoleDiameterMm >= 3.0 && loopWallMm >= 1.45 ? "good" : loopHoleDiameterMm >= 2.8 && loopWallMm >= 1.25 ? "warn" : "bad",
-        label: "Вушко",
-        detail: `отвір Ø${loopHoleDiameterMm.toFixed(1)} мм, стінка ${loopWallMm.toFixed(1)} мм`,
+        label: t("check.loop.label"),
+        detail: t("check.loop.detail", { hole: loopHoleDiameterMm.toFixed(1), wall: loopWallMm.toFixed(1) }),
       },
       {
         id: "base",
@@ -538,20 +540,21 @@ export function KeychainControlPanel({
         // Тонкі брелки можуть гнутись/зламатись, але це вибір користувача.
         ok: baseThicknessMm >= 1.0 && design.rimWidthMm >= 0.4,
         tone: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6 ? "warn" : "warn",
-        label: "Основа і край",
-        detail: `${baseThicknessMm.toFixed(1)} мм основа, ${design.rimWidthMm.toFixed(1)} мм край`,
+        label: t("check.base.label"),
+        detail: t("check.base.detail", { base: baseThicknessMm.toFixed(1), rim: design.rimWidthMm.toFixed(1) }),
       },
       {
         id: "layers",
         ok: layerTone !== "bad",
         tone: layerTone,
-        label: "Шари",
+        label: t("check.layers.label"),
         detail: topoMode
-          ? `топо-рельєф ${reliefMm.toFixed(1)} мм (шари карти вимкнені)`
-          : `дороги ${roadLayerMm.toFixed(2)} мм, вода ${waterLayerMm.toFixed(2)} мм, будівлі до ${buildingMaxMm.toFixed(1)} мм`,
+          ? t("check.layers.topo", { relief: reliefMm.toFixed(1) })
+          : t("check.layers.detail", { roads: roadLayerMm.toFixed(2), water: waterLayerMm.toFixed(2), buildings: buildingMaxMm.toFixed(1) }),
       },
     ];
   }, [
+    t,
     topoMode,
     reliefMm,
     baseThicknessMm,
@@ -575,12 +578,12 @@ export function KeychainControlPanel({
       ? "warn"
       : "good"
     : "bad";
-  const readyLabel = readyTone === "good" ? "Готово до друку" : readyTone === "warn" ? "Можна друкувати, але обережно" : "Потрібні правки";
+  const readyLabel = readyTone === "good" ? t("ready.good") : readyTone === "warn" ? t("ready.warn") : t("ready.bad");
   const nextAction = blockingPrintIssues[0]
-    ? `Виправте: ${blockingPrintIssues[0].label.toLowerCase()}`
+    ? t("ready.fix", { issue: blockingPrintIssues[0].label.toLowerCase() })
     : printability.tone === "warn"
-      ? "Для кращого результату виберіть менший crop або більшу зону карти."
-      : "Можна створювати 3MF.";
+      ? t("ready.nextWarn")
+      : t("ready.nextGood");
 
   const repairForPrint = () => {
     // Триетапна стратегія для покращення масштабу:
@@ -739,7 +742,7 @@ export function KeychainControlPanel({
           setDownloadUrl(task.download_url);
         } else if (task.status === "failed") {
           setGenerating(false);
-          setError(task.message || "Брелок не згенерувався");
+          setError(task.message || t("error.generateFailed"));
         }
       } catch (pollError) {
         console.error("[Keychain] status error", pollError);
@@ -752,15 +755,15 @@ export function KeychainControlPanel({
       window.clearInterval(interval);
       pollingInFlightRef.current = false;
     };
-  }, [taskGroupId, isGenerating, setGenerating, setTaskStatuses, setDownloadUrl, updateProgress]);
+  }, [t, taskGroupId, isGenerating, setGenerating, setTaskStatuses, setDownloadUrl, updateProgress]);
 
   const handleGenerate = async () => {
     if (!selectedArea) {
-      setError("Спочатку позначте ділянку на мапі");
+      setError(t("error.noArea"));
       return;
     }
     if (blockingPrintIssues.length > 0) {
-      setError(`Не готово до друку: ${blockingPrintIssues.map((issue) => issue.label.toLowerCase()).join(", ")}.`);
+      setError(t("error.notReady", { issues: blockingPrintIssues.map((issue) => issue.label.toLowerCase()).join(", ") }));
       return;
     }
 
@@ -887,7 +890,7 @@ export function KeychainControlPanel({
         : typeof apiDetail === "string"
           ? apiDetail
           : generateError.message;
-      setError(apiMessage || "Помилка генерації брелка");
+      setError(apiMessage || t("error.generic"));
       setGenerating(false);
     }
   };
@@ -905,10 +908,10 @@ export function KeychainControlPanel({
       preview,
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-        detail: { message: "Вичерпав 5 безкоштовних завантажень брелків. Хочу більше / друк — звʼяжіться зі мною." },
+        detail: { message: t("error.limitContact") },
       })),
     });
-    if (res.status === "error") setError("Не вдалося завантажити 3MF");
+    if (res.status === "error") setError(t("error.downloadFailed"));
     if (res.status === "ok") {
       if (res.quota && typeof res.quota.remaining === "number") {
         setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
@@ -924,18 +927,18 @@ export function KeychainControlPanel({
     if (!downloadUrl && canGenerate) handleGenerate();
     setOrderOpen(true);
   };
-  const currentStatus = isGenerating ? `${progress}% • ${status || "Генерація брелка"}` : downloadUrl ? "3MF готовий" : "Готово";
+  const currentStatus = isGenerating ? `${progress}% • ${status || t("status.generating")}` : downloadUrl ? t("status.ready3mf") : t("status.ready");
   const activeTaskStatus = activeTaskId ? taskStatuses[activeTaskId] : null;
   const generatedManifest = activeTaskStatus?.keychain_manifest;
   const generatedLayers = generatedManifest?.layers ?? null;
   const generatedLayerOrder = [
-    ["base", "Основа"],
-    ["rim", "Край"],
-    ["water", "Вода"],
-    ["parks", "Парки"],
-    ["roads", "Дороги"],
-    ["buildings", "Будинки"],
-    ["text", "Текст"],
+    ["base", t("layer.base")],
+    ["rim", t("layer.rim")],
+    ["water", t("layer.water")],
+    ["parks", t("layer.parks")],
+    ["roads", t("layer.roads")],
+    ["buildings", t("layer.buildings")],
+    ["text", t("layer.text")],
   ] as const;
   const generatedLayerChecks = generatedLayers
     ? generatedLayerOrder.map(([key, title]) => {
@@ -958,10 +961,10 @@ export function KeychainControlPanel({
           tone,
           present,
           detail: present
-            ? `верх ${zMax !== null ? zMax.toFixed(2) : "-"} мм${size.length >= 2 ? `, ${size[0].toFixed(1)} x ${size[1].toFixed(1)} мм` : ""}`
+            ? t("layer.top", { z: zMax !== null ? zMax.toFixed(2) : "-" }) + (size.length >= 2 ? t("layer.size", { w: size[0].toFixed(1), h: size[1].toFixed(1) }) : "")
             : key === "water"
-              ? "води в обраній зоні може не бути"
-              : "шар не створився",
+              ? t("layer.noWater")
+              : t("layer.missing"),
         };
       })
     : [];
@@ -972,19 +975,19 @@ export function KeychainControlPanel({
     : generatedBad.length > 0
       ? {
           tone: "bad" as const,
-          title: "3MF потребує перевірки",
-          detail: `Проблемні шари: ${generatedBad.map((item) => item.title.toLowerCase()).join(", ")}.`,
+          title: t("verdict.bad.title"),
+          detail: t("verdict.bad.detail", { layers: generatedBad.map((item) => item.title.toLowerCase()).join(", ") }),
         }
       : generatedWarn.length > 0
         ? {
             tone: "warn" as const,
-            title: "3MF створено, є попередження",
-            detail: `Перевірте: ${generatedWarn.map((item) => item.title.toLowerCase()).join(", ")}.`,
+            title: t("verdict.warn.title"),
+            detail: t("verdict.warn.detail", { layers: generatedWarn.map((item) => item.title.toLowerCase()).join(", ") }),
           }
         : {
             tone: "good" as const,
-            title: "3MF виглядає готовим до слайсера",
-            detail: "Основа, край, карта, будинки й текст присутні окремими шарами.",
+            title: t("verdict.good.title"),
+            detail: t("verdict.good.detail"),
           };
 
   return (
@@ -992,13 +995,13 @@ export function KeychainControlPanel({
       <div className="space-y-4 pb-4 lg:pb-8">
         <section className="rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            Майстер створення
+            {t("header.eyebrow")}
           </p>
           <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
-            Спочатку форма, потім карта
+            {t("header.title")}
           </h2>
           <p className="mt-1 hidden text-sm leading-5 text-[var(--text-secondary)] sm:block">
-            Мінімальний потік: шаблон, ділянка карти, підпис, генерація.
+            {t("header.subtitle")}
           </p>
 
           <div className={`mt-3 rounded-[22px] border px-4 py-3 ${
@@ -1019,14 +1022,14 @@ export function KeychainControlPanel({
 
           <details className="group mt-3 rounded-[18px] border border-[var(--surface-border)] bg-white/55">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] [&::-webkit-details-marker]:hidden">
-              Деталі друку та швидкі дії
+              {t("details.summary")}
               <span className="text-[var(--text-secondary)] transition group-open:rotate-180">▾</span>
             </summary>
             <div className="space-y-3 px-2 pb-3">
               <PrintabilityCard {...printability} />
               <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/65 p-2">
                 <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                  Друкованість
+                  {t("details.printability")}
                 </div>
                 <div className="grid gap-2">
                   {printChecks.slice(0, 3).map((check) => (
@@ -1036,10 +1039,10 @@ export function KeychainControlPanel({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <QuickActionButton onClick={resetToStandard}><RotateCcw size={15} />35 x 55</QuickActionButton>
-                <QuickActionButton onClick={centerMap}><MapIcon size={15} />Карта по центру</QuickActionButton>
-                <QuickActionButton onClick={centerLabel}><AlignCenter size={15} />Текст по центру</QuickActionButton>
-                <QuickActionButton onClick={centerLoop}><KeyRound size={15} />Вушко зверху</QuickActionButton>
-                <QuickActionButton onClick={repairForPrint}><CheckCircle2 size={15} />Авто-виправити</QuickActionButton>
+                <QuickActionButton onClick={centerMap}><MapIcon size={15} />{t("quick.centerMap")}</QuickActionButton>
+                <QuickActionButton onClick={centerLabel}><AlignCenter size={15} />{t("quick.centerLabel")}</QuickActionButton>
+                <QuickActionButton onClick={centerLoop}><KeyRound size={15} />{t("quick.loopTop")}</QuickActionButton>
+                <QuickActionButton onClick={repairForPrint}><CheckCircle2 size={15} />{t("quick.autoFix")}</QuickActionButton>
               </div>
             </div>
           </details>
@@ -1053,7 +1056,7 @@ export function KeychainControlPanel({
             className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[18px] border border-[var(--surface-border)] bg-white/85 px-3 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
           >
             <SlidersHorizontal size={16} />
-            {expertMode ? "Сховати додаткові налаштування" : "Показати додаткові налаштування"}
+            {expertMode ? t("advanced.hide") : t("advanced.show")}
           </button>
         </section>
 
@@ -1070,7 +1073,7 @@ export function KeychainControlPanel({
                     : "text-[var(--text-secondary)] hover:bg-white/80"
                 }`}
               >
-                <span className="hidden sm:inline">{section.id === "advanced" ? "" : `${index + 1}. `}</span>{section.label}
+                <span className="hidden sm:inline">{section.id === "advanced" ? "" : `${index + 1}. `}</span>{t(section.labelKey)}
               </button>
             ))}
           </div>
@@ -1079,17 +1082,17 @@ export function KeychainControlPanel({
         <section className={sectionClass("product")}>
           <SectionHeader
             icon={<KeyRound size={18} />}
-            title="Перевірте основу брелка"
-            description="Готові шаблони знаходяться прямо під превю. Тут залишені тільки швидкі дії, які клієнту реально потрібні після вибору шаблону."
+            title={t("product.title")}
+            description={t("product.desc")}
           />
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Metric label="Основа" value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
-            <Metric label="Вушко" value={design.baseShape === "token" ? `отвір Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? "кругле" : design.loopStyle === "slot" ? "slot" : design.loopStyle === "side-tab" ? "плашка" : "крапля"} />
+            <Metric label={t("metric.base")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
+            <Metric label={t("metric.loop")} value={design.baseShape === "token" ? `${t("metric.hole")} Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? t("loop.round") : design.loopStyle === "slot" ? "slot" : design.loopStyle === "side-tab" ? t("loop.sideTab") : t("loop.teardrop")} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <ChoiceButton label="35 x 55" active={Math.round(design.bodyWidthMm) === 35 && Math.round(design.bodyHeightMm) === 55} onClick={resetToStandard} />
-            <ChoiceButton label="Макс. карта" active={design.mapWidthMm >= design.bodyWidthMm - 5} onClick={maximizeMapArea} />
-            <ChoiceButton label="Жетон 55 x 30" active={design.baseShape === "token"} onClick={() => updateDesign({
+            <ChoiceButton label={t("product.maxMap")} active={design.mapWidthMm >= design.bodyWidthMm - 5} onClick={maximizeMapArea} />
+            <ChoiceButton label={t("product.token")} active={design.baseShape === "token"} onClick={() => updateDesign({
               bodyWidthMm: 55,
               bodyHeightMm: 30,
               cornerRadiusMm: 15,
@@ -1113,11 +1116,11 @@ export function KeychainControlPanel({
               rimWidthMm: 0.9,
               rimHeightMm: 0.35,
             })} />
-            <ChoiceButton label="Центр. вушко" active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && Math.abs(design.loopYMm) < 2} onClick={centerLoop} />
+            <ChoiceButton label={t("product.centerLoop")} active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && Math.abs(design.loopYMm) < 2} onClick={centerLoop} />
             <ChoiceButton label="Side loop" active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
           </div>
           <div className="mt-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Поворот макета</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("product.layoutRotation")}</div>
             <div className="grid grid-cols-4 gap-2">
               {[0, 90, 180, 270].map((angle) => (
                 <ChoiceButton
@@ -1134,8 +1137,8 @@ export function KeychainControlPanel({
         <section className={sectionClass("map")}>
           <SectionHeader
             icon={<MapIcon size={18} />}
-            title="Поставте область карти"
-            description="Клік по карті переносить рамку. Не зменшуйте її нижче рекомендованого масштабу: система підкаже, якщо зона завелика."
+            title={t("map.title")}
+            description={t("map.desc")}
           />
           <div className="mt-4 space-y-3">
             <PrintabilityCard {...printability} />
@@ -1148,15 +1151,15 @@ export function KeychainControlPanel({
                 className="h-5 w-5 accent-[var(--accent-strong)]"
               />
               <span>
-                🏔 Рельєф висот (топо)
+                {t("topo.label")}
                 <span className="block text-[11px] font-normal leading-4 text-[var(--text-secondary)]">
-                  Гори замість вулиць: Говерла, Альпи, узбережжя. Шари карти вимикаються.
+                  {t("topo.hint")}
                 </span>
               </span>
             </label>
             {topoMode && (
               <SliderField
-                label="Висота рельєфу"
+                label={t("topo.reliefHeight")}
                 valueLabel={`${reliefMm.toFixed(1)} мм`}
                 min={0.6}
                 max={4.0}
@@ -1170,7 +1173,7 @@ export function KeychainControlPanel({
             {!topoMode && (
               <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2.5">
                 <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-[var(--text-primary)]">
-                  <span>🏃 Маршрут (GPX) на брелку</span>
+                  <span>{t("gpx.title")}</span>
                   <input
                     type="file"
                     accept=".gpx,application/gpx+xml"
@@ -1183,7 +1186,7 @@ export function KeychainControlPanel({
                       try {
                         const { parseGpx, gpxBounds } = await import("@/lib/gpx");
                         const parsed = parseGpx(await file.text());
-                        if (!parsed) { setGpxName(null); setGpxFocus(null); setError("Не вдалося прочитати GPX-файл"); return; }
+                        if (!parsed) { setGpxName(null); setGpxFocus(null); setError(t("gpx.readError")); return; }
                         setError(null);
                         setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
                         const bb = gpxBounds(parsed.points);
@@ -1191,38 +1194,38 @@ export function KeychainControlPanel({
                           const [w, s_, e_, n] = bb;
                           setGpxFocus({ west: w, south: s_, east: e_, north: n, points: parsed.points });
                         }
-                      } catch { setError("Не вдалося прочитати GPX-файл"); }
+                      } catch { setError(t("gpx.readError")); }
                     }}
                   />
                   <span className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
-                    {gpxTrack ? "Замінити" : "Обрати файл"}
+                    {gpxTrack ? t("gpx.replace") : t("gpx.pickFile")}
                   </span>
                 </label>
                 {gpxTrack ? (
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center justify-between gap-2 text-[12px] text-[var(--text-secondary)]">
-                      <span className="truncate">✓ {gpxName} · {gpxTrack.length} точок</span>
-                      <button type="button" onClick={() => { setGpxName(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">Прибрати</button>
+                      <span className="truncate">{t("gpx.loaded", { name: gpxName ?? "", count: gpxTrack.length })}</span>
+                      <button type="button" onClick={() => { setGpxName(null); setGpxFocus(null); }} className="shrink-0 font-semibold text-red-700 hover:underline">{t("gpx.remove")}</button>
                     </div>
-                    <p className="text-[11px] leading-4 text-[var(--text-secondary)]">🔒 Твій маршрут — лише для побудови моделі. Ми його не публікуємо й не передаємо.</p>
+                    <p className="text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpx.privacy")}</p>
                   </div>
                 ) : (
-                  <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">Трек пробіжки/походу — лінія поверх карти. Зона авто-наведеться на маршрут.</p>
+                  <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("gpx.hint")}</p>
                 )}
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
               <QuickActionButton onClick={centerMap}>
                 <MapIcon size={15} />
-                Карта по центру
+                {t("quick.centerMap")}
               </QuickActionButton>
               <QuickActionButton onClick={maximizeMapArea}>
                 <AlignCenter size={15} />
-                Максимум карти
+                {t("quick.maxMap")}
               </QuickActionButton>
             </div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Орієнтація на карті</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("map.orientation")}</div>
               <div className="grid grid-cols-3 gap-2">
                 {[0, 90, 180].map((angle) => (
                   <ChoiceButton
@@ -1243,15 +1246,15 @@ export function KeychainControlPanel({
               </div>
             </div>
             <Metric
-              label="Деталізація"
+              label={t("metric.detail")}
               value={
                 printScale
                   ? printScale.tooLarge
-                    ? "погана"
+                    ? t("detail.bad")
                     : printScale.minPrintableWorldM > 2.8
-                      ? "на межі"
-                      : "добра"
-                  : "оберіть crop"
+                      ? t("detail.edge")
+                      : t("detail.good")
+                  : t("detail.pickCrop")
               }
             />
           </div>
@@ -1260,8 +1263,8 @@ export function KeychainControlPanel({
         <section className={sectionClass("label")}>
           <SectionHeader
             icon={<Type size={18} />}
-            title="Підпис знизу"
-            description="Текст змінюється без перегенерації. Для друку краще короткий напис і товстіший штрих."
+            title={t("label.title")}
+            description={t("label.desc")}
           />
           <input
             value={label}
@@ -1275,7 +1278,7 @@ export function KeychainControlPanel({
             <ChoiceButton label="L" active={design.labelTextHeightMm >= 4.8} onClick={() => applyTextPreset("l")} />
           </div>
           <div className="mt-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Друкобезпечний шрифт</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.printFont")}</div>
             <div className="grid grid-cols-3 gap-2">
               {([
                 ["block", "Block"],
@@ -1287,25 +1290,25 @@ export function KeychainControlPanel({
             </div>
           </div>
           <div className="mt-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Сторона / розміщення</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.placement")}</div>
             <div className="grid grid-cols-2 gap-2">
-              <ChoiceButton label="Знизу" active={design.labelYMm > design.bodyHeightMm * 0.68 && design.labelAngleDeg === 0} onClick={() => placeLabel("bottom")} />
-              <ChoiceButton label="Зверху" active={design.labelYMm < design.bodyHeightMm * 0.32} onClick={() => placeLabel("top")} />
-              <ChoiceButton label="Ліворуч" active={design.labelXMm < design.bodyWidthMm * 0.32} onClick={() => placeLabel("left")} />
-              <ChoiceButton label="Праворуч" active={design.labelXMm > design.bodyWidthMm * 0.68} onClick={() => placeLabel("right")} />
+              <ChoiceButton label={t("place.bottom")} active={design.labelYMm > design.bodyHeightMm * 0.68 && design.labelAngleDeg === 0} onClick={() => placeLabel("bottom")} />
+              <ChoiceButton label={t("place.top")} active={design.labelYMm < design.bodyHeightMm * 0.32} onClick={() => placeLabel("top")} />
+              <ChoiceButton label={t("place.left")} active={design.labelXMm < design.bodyWidthMm * 0.32} onClick={() => placeLabel("left")} />
+              <ChoiceButton label={t("place.right")} active={design.labelXMm > design.bodyWidthMm * 0.68} onClick={() => placeLabel("right")} />
             </div>
           </div>
           <div className="mt-3 rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-xs leading-5 text-[var(--text-secondary)]">
-            Поточний текст: {design.labelTextHeightMm.toFixed(1)} мм висота, {design.labelStrokeMm.toFixed(2)} мм штрих, стиль {design.labelFontStyle}.
+            {t("label.current", { height: design.labelTextHeightMm.toFixed(1), stroke: design.labelStrokeMm.toFixed(2), style: design.labelFontStyle })}
           </div>
           <div className="mt-4 space-y-3">
-            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
-            <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
           </div>
 
           <div className="mt-5">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Другий рядок · дата чи координати</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.secondLine")}</div>
             <div className="flex gap-2">
               <input
                 value={label2}
@@ -1315,7 +1318,7 @@ export function KeychainControlPanel({
               />
               <button
                 type="button"
-                title="Вставити координати центру зони"
+                title={t("label.insertCoords")}
                 disabled={!selectedArea}
                 onClick={() => {
                   if (!selectedArea) return;
@@ -1327,32 +1330,32 @@ export function KeychainControlPanel({
                 📍
               </button>
             </div>
-            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">Менший кегль одразу під основним написом. 📍 підставляє координати вибраної зони.</p>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.secondHint")}</p>
           </div>
 
           <div className="mt-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Напис на звороті · гравіювання</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.backTitle")}</div>
             <input
               value={backLabel}
               onChange={(event) => setBackLabel(event.target.value.toUpperCase().slice(0, 28))}
-              placeholder="ІМʼЯ · ДАТА"
+              placeholder={t("label.backPlaceholder")}
               className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
             />
-            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">Гравіюється у нижню грань на 0.5 мм (дзеркально — читається, коли брелок перевернуто). Видно після генерації у 3D.</p>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.backHint")}</p>
           </div>
         </section>
 
         <section className={sectionClass("review")}>
           <SectionHeader
             icon={<CheckCircle2 size={18} />}
-            title="Перевірка перед генерацією"
-            description="Тут мають бути тільки зрозумілі клієнту параметри: розмір, текст, деталізація і готовність до друку."
+            title={t("review.title")}
+            description={t("review.desc")}
           />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Metric label="Стан" value={currentStatus} />
-            <Metric label="Виріб" value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
-            <Metric label="Карта" value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} мм`} />
-            <Metric label="Підпис" value={label || "без тексту"} />
+            <Metric label={t("metric.status")} value={currentStatus} />
+            <Metric label={t("metric.product")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} мм`} />
+            <Metric label={t("metric.map")} value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} мм`} />
+            <Metric label={t("metric.signature")} value={label || t("review.noText")} />
           </div>
           <div className="mt-4">
             <PrintabilityCard {...printability} />
@@ -1365,7 +1368,7 @@ export function KeychainControlPanel({
           {generatedManifest && generatedLayers ? (
             <div className="mt-4 rounded-[22px] border border-[var(--surface-border)] bg-white/82 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                Згенерований 3MF
+                {t("review.generated3mf")}
               </div>
               {generatedVerdict ? (
                 <div className="mt-2">
@@ -1378,14 +1381,14 @@ export function KeychainControlPanel({
                     <div key={layer.key} className="flex items-center justify-between gap-3 rounded-[14px] border border-[var(--surface-border)] bg-white/75 px-3 py-2 text-xs">
                       <span className="font-semibold text-[var(--text-primary)]">{layer.title}</span>
                       <span className={layer.tone === "good" ? "text-[var(--accent-strong)]" : layer.tone === "warn" ? "text-amber-700" : "text-red-700"}>
-                        {layer.tone === "good" ? "OK" : layer.tone === "warn" ? "увага" : "проблема"} · {layer.detail}
+                        {layer.tone === "good" ? t("layerTone.ok") : layer.tone === "warn" ? t("layerTone.warn") : t("layerTone.bad")} · {layer.detail}
                       </span>
                     </div>
                   );
                 })}
               </div>
               <div className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-                Текст і край йдуть окремими шарами, карта обрізана по внутрішній області брелка.
+                {t("review.layersNote")}
               </div>
             </div>
           ) : null}
@@ -1397,7 +1400,7 @@ export function KeychainControlPanel({
               className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(11,92,87,0.24)] transition disabled:cursor-not-allowed disabled:opacity-45"
             >
               {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              {isGenerating ? "Генерація..." : "Створити 3MF"}
+              {isGenerating ? t("btn.generating") : t("btn.create3mf")}
             </button>
             {/* «Замовити» — одразу після «Створити», на видному місці (бронзова) */}
             <button
@@ -1406,7 +1409,7 @@ export function KeychainControlPanel({
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
             >
               <ShoppingBag className="h-5 w-5" />
-              {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}{quote ? ` · ${quote.formatted}` : ""}
+              {downloadUrl ? t("btn.buyOrder") : t("btn.order")}{quote ? ` · ${quote.formatted}` : ""}
             </button>
             <button
               type="button"
@@ -1415,13 +1418,13 @@ export function KeychainControlPanel({
               className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/85 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Download className="h-4 w-4" />
-              Завантажити 3MF
+              {t("btn.download3mf")}
             </button>
             {downloadUrl && quota && !quota.isAdmin && (
               <div className={`-mt-1 text-center text-[12px] font-medium ${quota.remaining > 0 ? "text-[var(--text-secondary)]" : "text-amber-700"}`}>
                 {quota.remaining > 0
-                  ? `Залишилось ${quota.remaining} з ${quota.limit} безкоштовних завантажень`
-                  : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
+                  ? t("quota.remaining", { remaining: quota.remaining, limit: quota.limit })
+                  : t("quota.exhausted")}
               </div>
             )}
           </div>
@@ -1444,33 +1447,33 @@ export function KeychainControlPanel({
         <div className="h-20 lg:hidden" aria-hidden="true" />
         <StickyActionBar
           // Ціну показуємо ЛИШЕ на кроці оформлення (OrderDialog), не тут.
-          priceLabel="Брелок із мапою"
+          priceLabel={t("sticky.priceLabel")}
           price={null}
-          actionLabel={downloadUrl ? "Замовити друк" : isGenerating ? `Генерація… ${progress}%` : "Створити брелок"}
+          actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
           busy={isGenerating}
           disabled={!downloadUrl && !canGenerate}
           onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
           // Готово → «Завантажити»; до/під час → «Замовити» (order-now)
-          secondaryLabel={downloadUrl ? "Завантажити" : (selectedArea ? "Замовити" : undefined)}
+          secondaryLabel={downloadUrl ? t("sticky.download") : (selectedArea ? t("btn.order") : undefined)}
           onSecondary={downloadUrl ? handleDownload : (selectedArea ? orderNow : undefined)}
         />
 
         <section className={sectionClass("advanced")}>
           <SectionHeader
             icon={<SlidersHorizontal size={18} />}
-            title="Додаткові налаштування"
-            description="Це режим для тебе або оператора друку. Клієнту ці параметри не потрібні в основному сценарії."
+            title={t("advanced.title")}
+            description={t("advanced.desc")}
           />
 
           <div className="mt-4 space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Основа і петля</div>
-            <SliderField label="Ширина основи" valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
-            <SliderField label="Висота основи" valueLabel={`${design.bodyHeightMm.toFixed(0)} мм`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
-            <SliderField label="Поворот макета" valueLabel={`${design.layoutRotationDeg.toFixed(0)}°`} min={0} max={270} step={90} value={design.layoutRotationDeg} onChange={(value) => updateDesign({ layoutRotationDeg: value })} />
-            <SliderField label="Товщина основи" valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.0} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
-            <SliderField label={design.baseShape === "token" ? "Контрольний радіус навколо отвору" : "Зовнішній радіус петлі"} valueLabel={`${design.loopOuterMm.toFixed(1)} мм`} min={design.baseShape === "token" ? 2.4 : 4.5} max={design.baseShape === "token" ? 6 : 11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.baseLoop")}</div>
+            <SliderField label={t("slider.baseWidth")} valueLabel={`${design.bodyWidthMm.toFixed(0)} мм`} min={35} max={140} step={1} value={design.bodyWidthMm} onChange={(value) => updateDesign({ bodyWidthMm: value })} />
+            <SliderField label={t("slider.baseHeight")} valueLabel={`${design.bodyHeightMm.toFixed(0)} мм`} min={26} max={96} step={1} value={design.bodyHeightMm} onChange={(value) => updateDesign({ bodyHeightMm: value })} />
+            <SliderField label={t("product.layoutRotation")} valueLabel={`${design.layoutRotationDeg.toFixed(0)}°`} min={0} max={270} step={90} value={design.layoutRotationDeg} onChange={(value) => updateDesign({ layoutRotationDeg: value })} />
+            <SliderField label={t("slider.baseThickness")} valueLabel={`${baseThicknessMm.toFixed(1)} мм`} min={1.0} max={4.0} step={0.1} value={baseThicknessMm} onChange={setBaseThicknessMm} />
+            <SliderField label={design.baseShape === "token" ? t("slider.holeGuideRadius") : t("slider.loopOuterRadius")} valueLabel={`${design.loopOuterMm.toFixed(1)} мм`} min={design.baseShape === "token" ? 2.4 : 4.5} max={design.baseShape === "token" ? 6 : 11} step={0.1} value={design.loopOuterMm} onChange={(value) => updateDesign({ loopOuterMm: value, loopInnerMm: Math.min(design.loopInnerMm, value - 1.4) })} />
             <SliderField
-              label="Отвір під кільце"
+              label={t("slider.ringHole")}
               valueLabel={design.baseShape === "token" ? `Ø${(design.loopInnerMm * 2).toFixed(1)} мм` : `${design.loopInnerMm.toFixed(1)} мм`}
               min={design.baseShape === "token" ? 1.5 : 2.0}
               max={design.baseShape === "token" ? 3.5 : 6.5}
@@ -1478,58 +1481,58 @@ export function KeychainControlPanel({
               value={design.loopInnerMm}
               onChange={(value) => updateDesign({ loopInnerMm: design.baseShape === "token" ? Math.min(value, design.loopOuterMm - 0.8) : Math.min(value, design.loopOuterMm - 1.4) })}
             />
-            <SliderField label="Заокруглення кутів" valueLabel={`${design.cornerRadiusMm.toFixed(1)} мм`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
-            <SliderField label="Смуга під напис" valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={3} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
-            <SliderField label="Ширина бокової грані" valueLabel={`${design.rimWidthMm.toFixed(1)} мм`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
-            <SliderField label="Висота бокової грані" valueLabel={`${design.rimHeightMm.toFixed(2)} мм`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
+            <SliderField label={t("slider.cornerRadius")} valueLabel={`${design.cornerRadiusMm.toFixed(1)} мм`} min={0} max={9} step={0.1} value={design.cornerRadiusMm} onChange={(value) => updateDesign({ cornerRadiusMm: value })} />
+            <SliderField label={t("slider.labelBand")} valueLabel={`${design.labelBandMm.toFixed(1)} мм`} min={3} max={18} step={0.5} value={design.labelBandMm} onChange={(value) => updateDesign({ labelBandMm: value })} />
+            <SliderField label={t("slider.rimWidth")} valueLabel={`${design.rimWidthMm.toFixed(1)} мм`} min={0} max={5} step={0.1} value={design.rimWidthMm} onChange={(value) => updateDesign({ rimWidthMm: value })} />
+            <SliderField label={t("slider.rimHeight")} valueLabel={`${design.rimHeightMm.toFixed(2)} мм`} min={0} max={1.6} step={0.05} value={design.rimHeightMm} onChange={(value) => updateDesign({ rimHeightMm: value })} />
           </div>
 
           <div className="mt-5 space-y-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Форма і вушко</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.shapeLoop")}</div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Форма підложки</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.baseShape")}</div>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ["rounded", "Прямокутник"],
-                  ["token", "Жетон"],
-                  ["capsule", "Капсула"],
+                  ["rounded", t("shape.rounded")],
+                  ["token", t("shape.token")],
+                  ["capsule", t("shape.capsule")],
                   ["tag", "Tag"],
-                  ["octagon", "Октагон"],
-                  ["heart", "Серце ♥"],
-                  ["house", "Будиночок"],
-                  ["puzzle-l", "Пазл L 🧩"],
-                  ["puzzle-r", "Пазл R 🧩"],
-                  ["heart-l", "Серце пари L 💕"],
-                  ["heart-r", "Серце пари R 💕"],
+                  ["octagon", t("shape.octagon")],
+                  ["heart", t("shape.heart")],
+                  ["house", t("shape.house")],
+                  ["puzzle-l", t("shape.puzzleL")],
+                  ["puzzle-r", t("shape.puzzleR")],
+                  ["heart-l", t("shape.heartL")],
+                  ["heart-r", t("shape.heartR")],
                 ] as Array<[KeychainBaseShape, string]>).map(([shape, text]) => (
                   <ChoiceButton key={shape} label={text} active={design.baseShape === shape} onClick={() => updateDesign({ baseShape: shape })} />
                 ))}
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Тип вушка</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.loopType")}</div>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ["round", "Кругле"],
-                  ["teardrop", "Крапля"],
-                  ["slot", "Слот"],
-                  ["side-tab", "Плашка"],
+                  ["round", t("loop.round")],
+                  ["teardrop", t("loop.teardrop")],
+                  ["slot", t("loop.slot")],
+                  ["side-tab", t("loop.sideTab")],
                 ] as Array<[KeychainLoopStyle, string]>).map(([style, text]) => (
                   <ChoiceButton key={style} label={text} active={design.loopStyle === style} onClick={() => updateDesign({ loopStyle: style })} />
                 ))}
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Позиція вушка</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.loopPosition")}</div>
               <div className="grid grid-cols-2 gap-2">
-                <ChoiceButton label="Зліва зверху" active={design.loopXMm < design.bodyWidthMm / 2 && design.loopYMm < 0} onClick={() => placeLoop("top-left")} />
-                <ChoiceButton label="Справа зверху" active={design.loopXMm > design.bodyWidthMm / 2 && design.loopYMm < 0} onClick={() => placeLoop("top-right")} />
-                <ChoiceButton label="Справа" active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
-                <ChoiceButton label="Знизу зліва" active={design.loopYMm > design.bodyHeightMm} onClick={() => placeLoop("bottom-left")} />
+                <ChoiceButton label={t("loopPos.topLeft")} active={design.loopXMm < design.bodyWidthMm / 2 && design.loopYMm < 0} onClick={() => placeLoop("top-left")} />
+                <ChoiceButton label={t("loopPos.topRight")} active={design.loopXMm > design.bodyWidthMm / 2 && design.loopYMm < 0} onClick={() => placeLoop("top-right")} />
+                <ChoiceButton label={t("loopPos.right")} active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
+                <ChoiceButton label={t("loopPos.bottomLeft")} active={design.loopYMm > design.bodyHeightMm} onClick={() => placeLoop("bottom-left")} />
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Поворот</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.rotation")}</div>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map((angle) => (
                   <ChoiceButton key={`loop-${angle}`} label={`${angle}°`} active={design.loopAngleDeg === angle} onClick={() => updateDesign({ loopAngleDeg: angle })} />
@@ -1539,22 +1542,22 @@ export function KeychainControlPanel({
           </div>
 
           <div className="mt-5 space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Карта і текст</div>
-            <SliderField label="Ширина зони карти" valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
-            <SliderField label="Висота зони карти" valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapText")}</div>
+            <SliderField label={t("slider.mapWidth")} valueLabel={`${design.mapWidthMm.toFixed(0)} мм`} min={Math.min(28, design.bodyWidthMm)} max={design.bodyWidthMm} step={1} value={design.mapWidthMm} onChange={(value) => updateDesign({ mapWidthMm: value })} />
+            <SliderField label={t("slider.mapHeight")} valueLabel={`${design.mapHeightMm.toFixed(0)} мм`} min={Math.min(18, design.bodyHeightMm)} max={design.bodyHeightMm} step={1} value={design.mapHeightMm} onChange={(value) => updateDesign({ mapHeightMm: value })} />
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Орієнтація карти</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapOrientation")}</div>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map((angle) => (
                   <ChoiceButton key={`map-${angle}`} label={`${angle}°`} active={(design.mapRotationDeg || 0) === angle} onClick={() => updateDesign({ mapRotationDeg: angle })} />
                 ))}
               </div>
             </div>
-            <SliderField label="Ширина напису" valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
-            <SliderField label="Висота літер" valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
-            <SliderField label="Товщина штриха" valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
+            <SliderField label={t("slider.labelWidth")} valueLabel={`${design.labelWidthMm.toFixed(0)} мм`} min={6} max={design.bodyWidthMm} step={1} value={design.labelWidthMm} onChange={(value) => updateDesign({ labelWidthMm: value })} />
+            <SliderField label={t("slider.textHeight")} valueLabel={`${design.labelTextHeightMm.toFixed(1)} мм`} min={1.6} max={8.5} step={0.1} value={design.labelTextHeightMm} onChange={(value) => updateDesign({ labelTextHeightMm: value })} />
+            <SliderField label={t("slider.strokeWidth")} valueLabel={`${design.labelStrokeMm.toFixed(2)} мм`} min={0.4} max={2.0} step={0.05} value={design.labelStrokeMm} onChange={(value) => updateDesign({ labelStrokeMm: value })} />
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Шрифт для друку</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.printFont")}</div>
               <div className="grid grid-cols-3 gap-2">
                 {([
                   ["block", "Block"],
@@ -1566,7 +1569,7 @@ export function KeychainControlPanel({
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Поворот тексту</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.textRotation")}</div>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map((angle) => (
                   <ChoiceButton key={`label-${angle}`} label={`${angle}°`} active={design.labelAngleDeg === angle} onClick={() => updateDesign({ labelAngleDeg: angle })} />
@@ -1576,11 +1579,11 @@ export function KeychainControlPanel({
           </div>
 
           <div className="mt-5 space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Шари карти</div>
-            <SliderField label="Дороги" valueLabel={`${roadLayerMm.toFixed(2)} мм`} min={0.4} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
-            <SliderField label="Парки" valueLabel={`${parkLayerMm.toFixed(2)} мм`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
-            <SliderField label="Вода" valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
-            <SliderField label="Максимум будівель" valueLabel={`${buildingMaxMm.toFixed(1)} мм`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.mapLayers")}</div>
+            <SliderField label={t("layer.roads")} valueLabel={`${roadLayerMm.toFixed(2)} мм`} min={0.4} max={0.9} step={0.01} value={roadLayerMm} onChange={setRoadLayerMm} />
+            <SliderField label={t("layer.parks")} valueLabel={`${parkLayerMm.toFixed(2)} мм`} min={0.18} max={0.75} step={0.01} value={parkLayerMm} onChange={setParkLayerMm} />
+            <SliderField label={t("layer.water")} valueLabel={`${waterLayerMm.toFixed(2)} мм`} min={0.24} max={0.55} step={0.01} value={waterLayerMm} onChange={setWaterLayerMm} />
+            <SliderField label={t("slider.maxBuildings")} valueLabel={`${buildingMaxMm.toFixed(1)} мм`} min={0.8} max={5.0} step={0.1} value={buildingMaxMm} onChange={setBuildingMaxMm} />
             <label className="flex min-h-[52px] items-center gap-3 rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-sm font-semibold text-[var(--text-primary)]">
               <input
                 type="checkbox"
@@ -1588,7 +1591,7 @@ export function KeychainControlPanel({
                 onChange={(event) => setUniformBuildingHeight(event.target.checked)}
                 className="h-5 w-5 accent-[var(--accent-strong)]"
               />
-              Однакова висота будівель
+              {t("advanced.uniformBuildings")}
             </label>
           </div>
         </section>
@@ -1605,7 +1608,7 @@ export function KeychainControlPanel({
             className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(11,92,87,0.24)] transition disabled:cursor-not-allowed disabled:opacity-45"
           >
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {isGenerating ? "Генерація..." : "Створити брелок"}
+            {isGenerating ? t("btn.generating") : t("sticky.createKeychain")}
           </button>
           <button
             type="button"
@@ -1614,7 +1617,7 @@ export function KeychainControlPanel({
             className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/85 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Download className="h-4 w-4" />
-            Завантажити 3MF
+            {t("btn.download3mf")}
           </button>
           <button
             type="button"
@@ -1622,51 +1625,14 @@ export function KeychainControlPanel({
             className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
           >
             <ShoppingBag className="h-4 w-4" />
-            {downloadUrl ? "Купити / замовити друк" : "Замовити друк"}
+            {downloadUrl ? t("btn.buyOrder") : t("btn.order")}
           </button>
         </div>
 
-        <div className="sticky bottom-3 z-30 rounded-[26px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] px-4 py-3 shadow-[0_-14px_34px_rgba(15,23,42,0.16)] backdrop-blur lg:hidden">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                Готовність
-              </div>
-              <div className="text-sm font-semibold text-[var(--text-primary)]">{currentStatus}</div>
-            </div>
-            <div className="rounded-full border border-[rgba(11,92,87,0.22)] bg-[rgba(15,118,110,0.08)] px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
-              {Math.round(design.bodyWidthMm)} x {Math.round(design.bodyHeightMm)} мм
-            </div>
-          </div>
-          <div className="grid grid-cols-[1fr,auto,auto] gap-2">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={!canGenerate}
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[20px] bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(11,92,87,0.24)] transition disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              {isGenerating ? "Генерація" : "Створити"}
-            </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={!downloadUrl || !activeTaskId}
-              className="inline-flex min-h-[48px] min-w-[52px] items-center justify-center rounded-[20px] border border-[var(--surface-border)] bg-white/85 px-3 py-3 text-[var(--text-primary)] transition disabled:cursor-not-allowed disabled:opacity-45"
-              aria-label="Завантажити 3MF"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setOrderOpen(true)}
-              className="inline-flex min-h-[48px] min-w-[52px] items-center justify-center gap-1.5 rounded-[20px] bg-[var(--bronze,#8E6B3D)] px-3 py-3 text-white shadow-[0_12px_26px_rgba(142,107,61,0.3)] transition hover:opacity-90"
-              aria-label="Замовити друк"
-            >
-              <ShoppingBag className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+        {/* Мобільний другий нижній бар (sticky bottom-3) ПРИБРАНО: він дублював
+            StickyActionBar (портал, fixed bottom-0) — обидва внизу на мобільному
+            давали два конкурентні бари. StickyActionBar уже має Створити/
+            Завантажити/Замовити; статус+розмір видно у превʼю та степері. */}
       </div>
     </div>
   );

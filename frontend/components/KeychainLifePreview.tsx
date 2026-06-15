@@ -1,12 +1,7 @@
 "use client";
 
 import type { KeychainDesignerConfig } from "@/components/KeychainDesigner";
-
-function bodyRadius(value: KeychainDesignerConfig) {
-  if (value.baseShape === "capsule" || value.baseShape === "token") return value.bodyHeightMm / 2;
-  if (value.baseShape === "octagon") return 0;
-  return Math.min(value.cornerRadiusMm, Math.min(value.bodyWidthMm, value.bodyHeightMm) / 2);
-}
+import { shapePath } from "@/components/KeychainDesigner";
 
 export function KeychainLifePreview({
   design,
@@ -28,7 +23,18 @@ export function KeychainLifePreview({
   const loopTop = (design.loopYMm / design.bodyHeightMm) * plateHeight;
   const loopOuter = (design.loopOuterMm / design.bodyWidthMm) * plateWidth;
   const loopInner = (design.loopInnerMm / design.bodyWidthMm) * plateWidth;
-  const radius = (bodyRadius(design) / design.bodyWidthMm) * plateWidth;
+
+  // Реальний контур тіла у пікселях плити (та сама shapePath, що в дизайнері) —
+  // серце/пазл/будиночок/восьмикутник/токен більше не показуються прямокутником.
+  // ВАЖЛИВО: cornerRadius масштабуємо тим самим коефіцієнтом, що й тіло.
+  const mmToPx = plateWidth / Math.max(design.bodyWidthMm, 0.1);
+  const bodyShapeD = shapePath(design, {
+    x: 0,
+    y: 0,
+    width: plateWidth,
+    height: plateHeight,
+    radius: design.cornerRadiusMm * mmToPx,
+  });
 
   const sceneTilt = aspect >= 1 ? -13 : -10;
   const plateSceneX = aspect >= 1 ? 84 : 132;
@@ -50,8 +56,10 @@ export function KeychainLifePreview({
             <stop offset="0.42" stopColor="#9ca3af" />
             <stop offset="1" stopColor="#ffffff" />
           </linearGradient>
+          {/* Карту обрізаємо по РЕАЛЬНОМУ контуру тіла (форма), а не по rect —
+              інакше мапа вилазила за межі серця/пазла/будиночка. */}
           <clipPath id="lifeMapClip">
-            <rect x={mapLeft} y={mapTop} width={mapWidth} height={mapHeight} rx="5" />
+            <path d={bodyShapeD} />
           </clipPath>
           <linearGradient id="plateSide" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#7f6c48" />
@@ -84,23 +92,11 @@ export function KeychainLifePreview({
           transform={`translate(${plateSceneX} ${plateSceneY}) rotate(${Number(design.layoutRotationDeg || 0) + sceneTilt} ${plateWidth / 2} ${plateHeight / 2}) skewX(-4)`}
         >
           <rect x="8" y={plateHeight - 3} width={Math.max(plateWidth - 16, 1)} height="14" rx="7" fill="url(#plateSide)" opacity="0.75" />
-          {design.baseShape === "octagon" ? (
-            <path
-              d={`M 18 0 H ${plateWidth - 18} L ${plateWidth} 18 V ${plateHeight - 18} L ${plateWidth - 18} ${plateHeight} H 18 L 0 ${plateHeight - 18} V 18 Z`}
-              fill="#a6926b"
-              stroke="#d8ccb1"
-              strokeWidth="2"
-            />
-          ) : (
-            <rect width={plateWidth} height={plateHeight} rx={radius} fill="#a6926b" stroke="#d8ccb1" strokeWidth="2" />
-          )}
+          {/* Тіло = реальний контур обраної форми (shapePath), не прямокутник. */}
+          <path d={bodyShapeD} fill="#a6926b" stroke="#d8ccb1" strokeWidth="2" />
           {design.rimWidthMm > 0 ? (
-            <rect
-              x="4"
-              y="4"
-              width={Math.max(plateWidth - 8, 1)}
-              height={Math.max(plateHeight - 8, 1)}
-              rx={Math.max(radius - 4, 0)}
+            <path
+              d={bodyShapeD}
               fill="none"
               stroke="#6d5c3f"
               strokeOpacity="0.45"

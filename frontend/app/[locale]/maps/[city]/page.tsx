@@ -76,9 +76,13 @@ export default async function CityPage({
         image: `${BASE}/showcase/map-1.png`,
         brand: { "@type": "Brand", name: "Monadruk" },
         offers: {
-          "@type": "Offer",
+          // Сторінка про 3D-МАПУ міста → діапазон цін мапи (S–XL), а не брелка.
+          // Раніше стояло 120₴ (ціна брелка) — невідповідність ціни на 138 сторінках.
+          "@type": "AggregateOffer",
           priceCurrency: locale === "uk" ? "UAH" : "EUR",
-          price: locale === "uk" ? "120" : "3",
+          lowPrice: locale === "uk" ? "250" : "6",
+          highPrice: locale === "uk" ? "890" : "21",
+          offerCount: "4",
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, `/maps/${city.slug}`),
         },

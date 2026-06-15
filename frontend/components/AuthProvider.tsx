@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { X, Mail, Phone as PhoneIcon, Loader2 } from "lucide-react";
 import {
@@ -70,6 +71,7 @@ export function useAuth() {
 type Tab = "email" | "phone" | "google";
 
 function LoginModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("auth");
   const [tab, setTab] = useState<Tab>("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,10 +86,14 @@ function LoginModal({ onClose }: { onClose: () => void }) {
   const field = "w-full rounded-2xl border border-[var(--surface-border,#e3dccb)] bg-white px-4 py-3 text-sm text-[var(--ink,#1B2A22)] outline-none focus:border-[rgba(46,74,58,0.4)]";
 
   const onCloseSafe = () => { resetRecaptcha(); onClose(); };
-  const wrap = async (fn: () => Promise<void>, msg = "Сталася помилка") => {
+  const errText = (code?: string, fallback?: string) => {
+    const key = humanize(code);
+    return key ? t(key) : (fallback || t("errGeneric"));
+  };
+  const wrap = async (fn: () => Promise<void>, fallbackMsg?: string) => {
     setBusy(true); setError(null);
     try { await fn(); onCloseSafe(); }
-    catch (e: any) { setError(humanize(e?.code) || e?.message || msg); }
+    catch (e: any) { setError(errText(e?.code, e?.message) || fallbackMsg || t("errGeneric")); }
     finally { setBusy(false); }
   };
 
@@ -99,7 +105,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
   const sendCode = async () => {
     setBusy(true); setError(null);
     try { setConfirm(await startPhoneSignIn(phone.trim())); }
-    catch (e: any) { setError(humanize(e?.code) || e?.message || "Не вдалося надіслати код"); resetRecaptcha(); }
+    catch (e: any) { setError(errText(e?.code, e?.message) || t("errSendCode")); resetRecaptcha(); }
     finally { setBusy(false); }
   };
   const verifyCode = () => wrap(async () => { await confirm.confirm(code.trim()); });
@@ -109,14 +115,14 @@ function LoginModal({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-[420px] rounded-t-[26px] border border-[var(--surface-border,#e3dccb)] bg-[var(--paper-2,#fff)] p-6 shadow-[0_30px_80px_rgba(15,23,42,0.35)] sm:rounded-[26px]" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="font-serif text-2xl text-[var(--ink,#1B2A22)]">Вхід / Реєстрація</h3>
-            <p className="text-[12px] text-[var(--ink-3,#7c887f)]">5 безкоштовних завантажень моделей у кабінеті.</p>
+            <h3 className="font-serif text-2xl text-[var(--ink,#1B2A22)]">{t("title")}</h3>
+            <p className="text-[12px] text-[var(--ink-3,#7c887f)]">{t("subtitle")}</p>
           </div>
           <button onClick={onCloseSafe} className="rounded-lg p-1 text-[var(--ink-3,#7c887f)] hover:bg-black/5"><X size={20} /></button>
         </div>
 
         <div className="mb-4 flex gap-1 rounded-2xl border border-[var(--surface-border,#e3dccb)] bg-white/70 p-1 text-xs">
-          {([["email", "Пошта"], ["phone", "Телефон"], ["google", "Google"]] as [Tab, string][]).map(([k, l]) => (
+          {([["email", t("tabEmail")], ["phone", t("tabPhone")], ["google", t("tabGoogle")]] as [Tab, string][]).map(([k, l]) => (
             <button key={k} onClick={() => { setTab(k); setError(null); }}
               className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${tab === k ? "bg-[var(--forest,#2E4A3A)] text-white" : "text-[var(--ink-2,#4b5a50)]"}`}>{l}</button>
           ))}
@@ -124,19 +130,19 @@ function LoginModal({ onClose }: { onClose: () => void }) {
 
         {tab === "email" && (
           <div className="space-y-2.5">
-            <input className={field} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input className={field} type="password" placeholder="Пароль (мін. 6 символів)" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input className={field} type="email" placeholder={t("emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className={field} type="password" placeholder={t("passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} />
             <button onClick={doEmail} disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail size={16} />}
-              {mode === "up" ? "Зареєструватися" : "Увійти"}
+              {mode === "up" ? t("signUp") : t("signIn")}
             </button>
             <div className="flex items-center justify-between text-[12px] text-[var(--ink-3,#7c887f)]">
               <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="underline-offset-2 hover:underline">
-                {mode === "in" ? "Немає акаунта? Реєстрація" : "Вже є акаунт? Вхід"}
+                {mode === "in" ? t("noAccount") : t("haveAccount")}
               </button>
               {mode === "in" && (
-                <button onClick={() => email && resetPassword(email.trim()).then(() => setError("Лист для скидання надіслано")).catch(() => {})} className="underline-offset-2 hover:underline">
-                  Забули пароль?
+                <button onClick={() => email && resetPassword(email.trim()).then(() => setError(t("resetSent"))).catch(() => {})} className="underline-offset-2 hover:underline">
+                  {t("forgotPassword")}
                 </button>
               )}
             </div>
@@ -147,16 +153,16 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-2.5">
             {!confirm ? (
               <>
-                <input className={field} type="tel" placeholder="Телефон (+380…)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <input className={field} type="tel" placeholder={t("phonePlaceholder")} value={phone} onChange={(e) => setPhone(e.target.value)} />
                 <button onClick={sendCode} disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneIcon size={16} />} Надіслати код
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneIcon size={16} />} {t("sendCode")}
                 </button>
               </>
             ) : (
               <>
-                <input className={field} inputMode="numeric" placeholder="Код з SMS" value={code} onChange={(e) => setCode(e.target.value)} />
+                <input className={field} inputMode="numeric" placeholder={t("codePlaceholder")} value={code} onChange={(e) => setCode(e.target.value)} />
                 <button onClick={verifyCode} disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2E4A3A)] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Підтвердити
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {t("verifyCode")}
                 </button>
               </>
             )}
@@ -165,7 +171,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
 
         {tab === "google" && (
           <button onClick={doGoogle} disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border,#e3dccb)] bg-white px-4 py-3 text-sm font-bold text-[var(--ink,#1B2A22)] disabled:opacity-60">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-[16px] font-bold">G</span>} Продовжити з Google
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-[16px] font-bold">G</span>} {t("continueGoogle")}
           </button>
         )}
 
@@ -176,20 +182,21 @@ function LoginModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Maps a Firebase auth error code to a translation key in the "auth" namespace.
 function humanize(code?: string): string | null {
   const m: Record<string, string> = {
-    "auth/invalid-email": "Невірний email",
-    "auth/missing-password": "Введіть пароль",
-    "auth/weak-password": "Пароль закороткий (мін. 6 символів)",
-    "auth/email-already-in-use": "Цей email вже зареєстрований — увійдіть",
-    "auth/invalid-credential": "Невірний email або пароль",
-    "auth/wrong-password": "Невірний пароль",
-    "auth/user-not-found": "Акаунт не знайдено — зареєструйтесь",
-    "auth/invalid-phone-number": "Невірний номер телефону",
-    "auth/invalid-verification-code": "Невірний код",
-    "auth/too-many-requests": "Забагато спроб, спробуйте пізніше",
-    "auth/popup-closed-by-user": "Вікно входу закрито",
-    "auth/billing-not-enabled": "SMS-вхід тимчасово недоступний",
+    "auth/invalid-email": "errInvalidEmail",
+    "auth/missing-password": "errMissingPassword",
+    "auth/weak-password": "errWeakPassword",
+    "auth/email-already-in-use": "errEmailInUse",
+    "auth/invalid-credential": "errInvalidCredential",
+    "auth/wrong-password": "errWrongPassword",
+    "auth/user-not-found": "errUserNotFound",
+    "auth/invalid-phone-number": "errInvalidPhone",
+    "auth/invalid-verification-code": "errInvalidCode",
+    "auth/too-many-requests": "errTooManyRequests",
+    "auth/popup-closed-by-user": "errPopupClosed",
+    "auth/billing-not-enabled": "errBillingNotEnabled",
   };
   return code ? (m[code] || null) : null;
 }

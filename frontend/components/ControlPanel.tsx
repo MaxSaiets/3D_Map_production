@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Building2,
   CheckCircle2,
@@ -32,6 +33,10 @@ interface ControlPanelProps {
   availableCities?: Record<string, any>;
   selectedCityKey?: string;
   onCityChange?: (cityKey: string) => void;
+  /** Викликається ПІСЛЯ генерації серії зон з клітинами {row,col,task_id} —
+   *  батьківська сторінка авто-зберігає сітку (продовження панно: куплені клітини
+   *  лишаються золотими при наступному відкритті, без ручного «Зберегти сітку»). */
+  onSeriesGenerated?: (cells: Array<{ row: number; col: number; task_id?: string; zone_id?: string }>) => void;
 }
 
 type AdvancedPanel = "roads" | "buildings" | "terrain" | "preview";
@@ -200,6 +205,7 @@ export function ControlPanel({
   availableCities,
   selectedCityKey,
   onCityChange,
+  onSeriesGenerated,
 }: ControlPanelProps = {}) {
   const {
     selectedArea,
@@ -272,6 +278,7 @@ export function ControlPanel({
   } = useGenerationStore();
 
   const { getIdToken, openLogin } = useAuth();
+  const t = useTranslations("pro");
   const [error, setError] = useState<string | null>(null);
   const [internalShowHexGrid, setInternalShowHexGrid] = useState(false);
   const [internalSelectedZones, setInternalSelectedZones] = useState<any[]>([]);
@@ -330,7 +337,12 @@ export function ControlPanel({
           const avg = tasksList.length
             ? Math.round(tasksList.reduce((sum, task) => sum + (task.progress || 0), 0) / tasksList.length)
             : 0;
-          updateProgress(avg, `Зони: ${completed}/${total} готово${failed ? `, помилок: ${failed}` : ""}`);
+          updateProgress(
+            avg,
+            failed
+              ? t("zonesProgressWithErrors", { completed, total, failed })
+              : t("zonesProgress", { completed, total }),
+          );
 
           const active =
             (activeTaskId ? nextStatuses[activeTaskId] : null) || (taskIds[0] ? nextStatuses[taskIds[0]] : null);
@@ -345,7 +357,7 @@ export function ControlPanel({
             localStorage.removeItem("3dmap_task_ids");
             if (failed) {
               const firstFailed = tasksList.find((task) => task.status === "failed");
-              if (firstFailed) setError(firstFailed.message || "Одна з зон не згенерувалася");
+              if (firstFailed) setError(firstFailed.message || t("errorZoneFailed"));
             }
           }
           return;
@@ -382,7 +394,7 @@ export function ControlPanel({
 
   const handleGenerate = async () => {
     if (!selectedArea) {
-      setError("Виберіть область на карті");
+      setError(t("errorSelectArea"));
       return;
     }
 
@@ -432,19 +444,19 @@ export function ControlPanel({
       setActiveTaskId(response.task_id);
     } catch (generateError: any) {
       console.error("[ERROR] Помилка генерації моделі:", generateError);
-      setError(generateError.message || "Помилка генерації моделі");
+      setError(generateError.message || t("errorGenerate"));
       setGenerating(false);
     }
   };
 
-  // Human-readable Ukrainian labels for QA warning codes from the backend gate.
+  // Human-readable labels for QA warning codes from the backend gate.
   const qaWarningLabel = (code: string): string => {
     const map: Record<string, string> = {
-      "base:base_not_watertight": "основа не повністю герметична — слайсер усе одно надрукує, але краще перевірити модель",
-      "slicer:not_found": "слайсер недоступний на сервері — перевірку пропущено",
+      "base:base_not_watertight": t("qaBaseNotWatertight"),
+      "slicer:not_found": t("qaSlicerNotFound"),
     };
     if (map[code]) return map[code];
-    if (code.includes("not_watertight")) return `${code.split(":")[0]}: шар не повністю герметичний`;
+    if (code.includes("not_watertight")) return t("qaLayerNotWatertight", { layer: code.split(":")[0] });
     return code;
   };
 
@@ -458,10 +470,10 @@ export function ControlPanel({
       meta: { city: selectedCityKey, product_type: "map" },
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-        detail: { message: "Вичерпав 5 безкоштовних завантажень. Хочу більше / друк — звʼяжіться зі мною." },
+        detail: { message: t("contactLimitMessage") },
       })),
     });
-    if (res.status === "error") setError("Помилка завантаження файлу");
+    if (res.status === "error") setError(t("errorDownload"));
   };
 
   const kyivBounds = {
@@ -473,7 +485,7 @@ export function ControlPanel({
 
   const handleGenerateZones = async () => {
     if (selectedZones.length === 0) {
-      setError("Виберіть хоча б одну зону");
+      setError(t("errorSelectZone"));
       return;
     }
 
@@ -541,6 +553,18 @@ export function ControlPanel({
           : [response.task_id];
       setTaskGroup(response.task_id, ids);
       setActiveTaskId(ids[0] ?? null);
+      // Продовження панно: віддаємо батьку клітини з task_id (zonesSorted[i]↔ids[i])
+      // → авто-збереження сітки, щоб ці зони лишились «куплені» (золоті) надалі.
+      try {
+        onSeriesGenerated?.(
+          zonesSorted.map((z: any, i: number) => ({
+            row: Number(z?.properties?.row ?? 0),
+            col: Number(z?.properties?.col ?? 0),
+            task_id: ids[i],
+            zone_id: String(z?.id ?? z?.properties?.id ?? ""),
+          })),
+        );
+      } catch { /* збереження сітки не критичне для генерації */ }
       if (ids.length > 1) setShowAllZones(true);
 
       try {
@@ -559,7 +583,7 @@ export function ControlPanel({
         // ignore metadata sync issues
       }
     } catch (generateError: any) {
-      setError(generateError.message || "Помилка генерації моделей для зон");
+      setError(generateError.message || t("errorGenerateZones"));
       setGenerating(false);
     }
   };
@@ -570,37 +594,39 @@ export function ControlPanel({
 
   const cityOptions = availableCities ? Object.keys(availableCities) : [];
   const selectionReady = showHexGrid ? selectedZones.length > 0 : Boolean(selectedArea);
-  const selectionMode = showHexGrid ? "Сітка зон" : "Одна ділянка";
+  const selectionMode = showHexGrid ? t("modeGridZones") : t("modeSingleArea");
   const selectionCopy = showHexGrid
     ? selectedZones.length > 0
-      ? `${selectedZones.length} зон готово до пакетної генерації`
-      : "Спочатку оберіть зони на мапі"
+      ? t("selectionZonesReady", { n: selectedZones.length })
+      : t("selectionPickZones")
     : selectedArea
-      ? "Ділянка вибрана, можна запускати генерацію"
-      : "Намалюйте область на мапі, щоб перейти до генерації";
+      ? t("selectionAreaReady")
+      : t("selectionDrawArea");
   const primaryActionLabel = showHexGrid
-    ? `Згенерувати ${selectedZones.length > 0 ? `${selectedZones.length} зон` : "вибрані зони"}`
-    : "Згенерувати 3D модель";
+    ? selectedZones.length > 0
+      ? t("generateZones", { n: selectedZones.length })
+      : t("generateSelectedZones")
+    : t("generateModel");
   const statusSummary = isGenerating
-    ? status || "Генерація триває"
+    ? status || t("statusGenerating")
     : downloadUrl
-      ? "Модель готова до завантаження"
+      ? t("statusReady")
       : taskGroupId
-        ? "Останній рендер збережено в сесії"
-        : "Немає активних задач";
+        ? t("statusLastRenderSaved")
+        : t("statusNoTasks");
 
   return (
     <div className="h-full overflow-y-auto px-4 py-4 sm:px-5">
       <div className="space-y-4 pb-8">
         <SectionFrame
-          eyebrow="Essentials"
-          title="Керуйте потоком без зайвого шуму"
-          description="Спершу виберіть місто та спосіб роботи, потім задайте базові параметри й запустіть генерацію."
+          eyebrow={t("essentialsEyebrow")}
+          title={t("essentialsTitle")}
+          description={t("essentialsDescription")}
         >
           <div className="grid gap-3 sm:grid-cols-2">
-            <InfoPill label="Режим" value={selectionMode} tone="accent" />
+            <InfoPill label={t("pillMode")} value={selectionMode} tone="accent" />
             <InfoPill
-              label="Готовність"
+              label={t("pillReadiness")}
               value={selectionCopy}
               tone={selectionReady ? "success" : "default"}
             />
@@ -610,7 +636,7 @@ export function ControlPanel({
             <div className="rounded-[24px] border border-[var(--surface-border)] bg-white/80 p-4">
               <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <MapPinned size={16} className="text-[var(--accent-strong)]" />
-                Місто
+                {t("cityLabel")}
               </label>
               <select
                 value={selectedCityKey}
@@ -623,7 +649,7 @@ export function ControlPanel({
               >
                 {cityOptions.map((city) => (
                   <option key={city} value={city}>
-                    {city === "Kyiv" ? "Київ" : city === "Khmelnytskyi" ? "Хмельницький" : city}
+                    {city === "Kyiv" ? t("cityKyiv") : city === "Khmelnytskyi" ? t("cityKhmelnytskyi") : city}
                   </option>
                 ))}
               </select>
@@ -646,10 +672,10 @@ export function ControlPanel({
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <MapPinned size={16} className="text-[var(--accent-strong)]" />
-                Одна ділянка
+                {t("cardSingleTitle")}
               </div>
               <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-                Найшвидший шлях для одного рендеру з простою взаємодією на телефоні.
+                {t("cardSingleDesc")}
               </p>
             </button>
 
@@ -667,10 +693,10 @@ export function ControlPanel({
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <Grid size={16} className="text-[var(--accent-strong)]" />
-                Серія зон
+                {t("cardSeriesTitle")}
               </div>
               <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-                Оберіть кілька клітин і згенеруйте пакет моделей для прев'ю та друку.
+                {t("cardSeriesDesc")}
               </p>
             </button>
           </div>
@@ -679,12 +705,12 @@ export function ControlPanel({
             <div className="rounded-[24px] border border-[rgba(15,118,110,0.15)] bg-[rgba(15,118,110,0.05)] p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <Grid size={16} className="text-[var(--accent-strong)]" />
-                Параметри сітки
+                {t("gridParams")}
               </div>
 
               <div className="grid gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Тип сітки</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">{t("gridType")}</label>
                   <select
                     value={gridType}
                     onChange={(e) => {
@@ -694,15 +720,15 @@ export function ControlPanel({
                     }}
                     className="w-full rounded-2xl border border-[var(--surface-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.35)]"
                   >
-                    <option value="hexagonal">Шестикутники</option>
-                    <option value="square">Квадрати</option>
-                    <option value="circle">Круги</option>
+                    <option value="hexagonal">{t("gridHexagonal")}</option>
+                    <option value="square">{t("gridSquare")}</option>
+                    <option value="circle">{t("gridCircle")}</option>
                   </select>
                 </div>
 
                 <SliderField
-                  label={gridType === "circle" ? "Діаметр круга" : "Розмір клітинки"}
-                  valueLabel={`${hexSizeM.toFixed(0)} м`}
+                  label={gridType === "circle" ? t("circleDiameter") : t("cellSizeLabel")}
+                  valueLabel={t("meters", { m: hexSizeM.toFixed(0) })}
                   min={200}
                   max={2000}
                   step={100}
@@ -711,14 +737,14 @@ export function ControlPanel({
                     setHexSizeM(value);
                     setSelectedZones([]);
                   }}
-                  hint="Змінюйте масштаб клітин перед вибором зон. Для мобільного перегляду стартова клітинка менша, щоб простіше потрапляти по цілям."
+                  hint={t("cellSizeHint")}
                 />
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <InfoPill label="Вибрано зон" value={String(selectedZones.length)} tone={selectedZones.length > 0 ? "success" : "default"} />
+                  <InfoPill label={t("zonesSelected")} value={String(selectedZones.length)} tone={selectedZones.length > 0 ? "success" : "default"} />
                   <InfoPill
-                    label="Стан вибору"
-                    value={selectedZones.length > 0 ? "Готово до запуску" : "Оберіть зони на мапі"}
+                    label={t("selectionState")}
+                    value={selectedZones.length > 0 ? t("readyToRun") : t("pickZonesOnMap")}
                     tone={selectedZones.length > 0 ? "success" : "default"}
                   />
                 </div>
@@ -730,38 +756,36 @@ export function ControlPanel({
             <div className="rounded-[24px] border border-[var(--surface-border)] bg-white/80 p-4">
               <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                 <Sparkles size={16} className="text-[var(--accent-strong)]" />
-                Формат експорту
+                {t("exportFormat")}
               </label>
               <select
                 value={exportFormat}
                 onChange={(e) => setExportFormat(e.target.value as "stl" | "3mf")}
                 className="w-full rounded-2xl border border-[var(--surface-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.35)]"
               >
-                <option value="3mf">3MF (рекомендовано)</option>
+                <option value="3mf">{t("formatRecommended")}</option>
                 <option value="stl">STL</option>
               </select>
             </div>
 
             <SliderField
-              label="Розмір моделі"
-              valueLabel={`${modelSizeMm.toFixed(0)} мм`}
+              label={t("modelSize")}
+              valueLabel={t("millimeters", { mm: modelSizeMm.toFixed(0) })}
               min={50}
               max={500}
               step={10}
               value={modelSizeMm}
               onChange={setModelSizeMm}
-              hint={`${(modelSizeMm / 10).toFixed(1)} см на фінальній моделі.`}
+              hint={t("modelSizeHint", { cm: (modelSizeMm / 10).toFixed(1) })}
             />
           </div>
 
           <div className="rounded-[24px] border border-[rgba(11,92,87,0.18)] bg-[rgba(11,92,87,0.06)] p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)]">Основна дія</div>
+                <div className="text-sm font-semibold text-[var(--text-primary)]">{t("mainAction")}</div>
                 <div className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  {showHexGrid
-                    ? "Коли зони вже обрані, запускайте серію одним натисканням."
-                    : "Після позначення ділянки генерація стартує одразу з поточними параметрами."}
+                  {showHexGrid ? t("mainActionGridHint") : t("mainActionSingleHint")}
                 </div>
               </div>
 
@@ -777,9 +801,9 @@ export function ControlPanel({
                         ? "bg-[var(--accent-strong)] text-white shadow"
                         : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     } disabled:cursor-not-allowed disabled:opacity-50`}
-                    title="Швидке превю ~30s — для показу покупцям"
+                    title={t("previewModeTitle")}
                   >
-                    Превю ~30s
+                    {t("previewModeLabel")}
                   </button>
                   <button
                     type="button"
@@ -790,9 +814,9 @@ export function ControlPanel({
                         ? "bg-[var(--accent-strong)] text-white shadow"
                         : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     } disabled:cursor-not-allowed disabled:opacity-50`}
-                    title="Повна модель з пазами та manifold cleanup — для друку"
+                    title={t("fullModeTitle")}
                   >
-                    Повна
+                    {t("fullModeLabel")}
                   </button>
                 </div>
 
@@ -805,13 +829,13 @@ export function ControlPanel({
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Генерація...
+                      {t("generating")}
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4" />
                       {primaryActionLabel}
-                      {previewMode && <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">ПРЕВ'Ю</span>}
+                      {previewMode && <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{t("previewBadge")}</span>}
                     </>
                   )}
                 </button>
@@ -822,7 +846,7 @@ export function ControlPanel({
                     onClick={() => setSelectedZones([])}
                     className="rounded-full px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-black/5"
                   >
-                    Очистити вибір
+                    {t("clearSelection")}
                   </button>
                 )}
               </div>
@@ -831,15 +855,15 @@ export function ControlPanel({
         </SectionFrame>
 
         <SectionFrame
-          eyebrow="Output"
-          title="Статус, батч і завантаження"
-          description="Тут зібрані прогрес задачі, пакетний режим, готові файли та активна зона для прев'ю."
+          eyebrow={t("outputEyebrow")}
+          title={t("outputTitle")}
+          description={t("outputDescription")}
         >
           <div className="grid gap-3 sm:grid-cols-2">
-            <InfoPill label="Стан рендера" value={statusSummary} tone={downloadUrl ? "success" : "default"} />
+            <InfoPill label={t("pillRenderState")} value={statusSummary} tone={downloadUrl ? "success" : "default"} />
             <InfoPill
-              label="Активна задача"
-              value={activeTaskId ? activeTaskId.slice(0, 12) : "ще не створена"}
+              label={t("pillActiveTask")}
+              value={activeTaskId ? activeTaskId.slice(0, 12) : t("taskNotCreated")}
               tone={activeTaskId ? "accent" : "default"}
             />
           </div>
@@ -849,7 +873,7 @@ export function ControlPanel({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
                   <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-strong)]" />
-                  {status || "Обробка..."}
+                  {status || t("processing")}
                 </div>
                 <span className="text-sm font-semibold text-[var(--accent-strong)]">{progress}%</span>
               </div>
@@ -866,9 +890,9 @@ export function ControlPanel({
             <div className="rounded-[24px] border border-[var(--surface-border)] bg-white/80 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-[var(--text-primary)]">Згенеровані зони</div>
+                  <div className="text-sm font-semibold text-[var(--text-primary)]">{t("generatedZones")}</div>
                   <div className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                    Оберіть активну зону для прев'ю й завантаження або увімкніть спільний перегляд усіх зон.
+                    {t("generatedZonesDesc")}
                   </div>
                 </div>
 
@@ -886,7 +910,7 @@ export function ControlPanel({
                       : "bg-slate-900 text-white"
                   }`}
                 >
-                  {showAllZones ? "Показувати одну зону" : "Показати всі зони разом"}
+                  {showAllZones ? t("showOneZone") : t("showAllZones")}
                 </button>
               </div>
 
@@ -928,7 +952,7 @@ export function ControlPanel({
                       {id === activeTaskId && <CheckCircle2 className="h-4 w-4 text-[var(--accent-strong)]" />}
                     </div>
                     <div className="mt-1 text-xs text-[var(--text-secondary)]">
-                      {taskStatuses[id]?.status || "Очікує оновлення статусу"}
+                      {taskStatuses[id]?.status || t("awaitingStatus")}
                     </div>
                   </button>
                 ))}
@@ -938,12 +962,12 @@ export function ControlPanel({
 
           {downloadUrl && printQuality && printQuality.status === "ok" && (
             <div className="rounded-[18px] border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800">
-              ✓ Перевірку друкопридатності пройдено
+              {t("printCheckPassed")}
             </div>
           )}
           {downloadUrl && printQuality && printQuality.status !== "ok" && (printQuality.warnings?.length ?? 0) > 0 && (
             <div className="rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-              <p className="font-semibold">Модель готова, але є зауваження щодо друку:</p>
+              <p className="font-semibold">{t("printWarningsTitle")}</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-4">
                 {printQuality.warnings!.map((w, i) => (
                   <li key={i}>{qaWarningLabel(w)}</li>
@@ -959,7 +983,7 @@ export function ControlPanel({
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
             >
               <Download className="h-4 w-4" />
-              Завантажити модель
+              {t("downloadModel")}
             </button>
           )}
 
@@ -971,13 +995,13 @@ export function ControlPanel({
         </SectionFrame>
 
         <SectionFrame
-          eyebrow="Advanced"
-          title="Тонке налаштування моделі"
-          description="Детальні параметри сховані в акордеони, щоб мобільний сценарій залишався чистим і швидким."
+          eyebrow={t("advancedEyebrow")}
+          title={t("advancedTitle")}
+          description={t("advancedDescription")}
         >
           <AccordionButton
-            title="Дороги"
-            description="Ширина, висота та посадка доріг у рельєф."
+            title={t("roadsTitle")}
+            description={t("roadsDesc")}
             icon={Route}
             isOpen={openPanels.roads}
             onClick={() => togglePanel("roads")}
@@ -985,7 +1009,7 @@ export function ControlPanel({
           {openPanels.roads && (
             <div className="space-y-3">
               <SliderField
-                label="Ширина доріг"
+                label={t("roadWidth")}
                 valueLabel={roadWidthMultiplier.toFixed(1)}
                 min={0.3}
                 max={2}
@@ -994,8 +1018,8 @@ export function ControlPanel({
                 onChange={setRoadWidthMultiplier}
               />
               <SliderField
-                label="Висота доріг"
-                valueLabel={`${roadHeightMm.toFixed(1)} мм`}
+                label={t("roadHeight")}
+                valueLabel={t("millimeters", { mm: roadHeightMm.toFixed(1) })}
                 min={0.2}
                 max={3}
                 step={0.1}
@@ -1003,21 +1027,21 @@ export function ControlPanel({
                 onChange={setRoadHeightMm}
               />
               <SliderField
-                label="Втиснення в рельєф"
-                valueLabel={`${roadEmbedMm.toFixed(1)} мм`}
+                label={t("roadEmbed")}
+                valueLabel={t("millimeters", { mm: roadEmbedMm.toFixed(1) })}
                 min={0}
                 max={1}
                 step={0.1}
                 value={roadEmbedMm}
                 onChange={setRoadEmbedMm}
-                hint="Допомагає прибрати візуальне мерехтіння на стику дороги з рельєфом."
+                hint={t("roadEmbedHint")}
               />
             </div>
           )}
 
           <AccordionButton
-            title="Будівлі"
-            description="Контроль мінімальної висоти, масштабу та фундаменту."
+            title={t("buildingsTitle")}
+            description={t("buildingsDesc")}
             icon={Building2}
             isOpen={openPanels.buildings}
             onClick={() => togglePanel("buildings")}
@@ -1025,8 +1049,8 @@ export function ControlPanel({
           {openPanels.buildings && (
             <div className="space-y-3">
               <SliderField
-                label="Мінімальна висота"
-                valueLabel={`${buildingMinHeight.toFixed(1)} м`}
+                label={t("buildingMinHeight")}
+                valueLabel={t("metersFloat", { m: buildingMinHeight.toFixed(1) })}
                 min={1}
                 max={10}
                 step={0.5}
@@ -1034,7 +1058,7 @@ export function ControlPanel({
                 onChange={setBuildingMinHeight}
               />
               <SliderField
-                label="Множник висоти"
+                label={t("buildingHeightMultiplier")}
                 valueLabel={buildingHeightMultiplier.toFixed(1)}
                 min={0.5}
                 max={3}
@@ -1043,8 +1067,8 @@ export function ControlPanel({
                 onChange={setBuildingHeightMultiplier}
               />
               <SliderField
-                label="Фундамент"
-                valueLabel={`${buildingFoundationMm.toFixed(1)} мм`}
+                label={t("buildingFoundation")}
+                valueLabel={t("millimeters", { mm: buildingFoundationMm.toFixed(1) })}
                 min={0.1}
                 max={3}
                 step={0.1}
@@ -1052,21 +1076,21 @@ export function ControlPanel({
                 onChange={setBuildingFoundationMm}
               />
               <SliderField
-                label="Втиснення в основу"
-                valueLabel={`${buildingEmbedMm.toFixed(1)} мм`}
+                label={t("buildingEmbed")}
+                valueLabel={t("millimeters", { mm: buildingEmbedMm.toFixed(1) })}
                 min={0}
                 max={1}
                 step={0.1}
                 value={buildingEmbedMm}
                 onChange={setBuildingEmbedMm}
-                hint="Якщо будівлі ніби провалюються під землю — зменшуйте значення."
+                hint={t("buildingEmbedHint")}
               />
             </div>
           )}
 
           <AccordionButton
-            title="Рельєф, вода та AMS"
-            description="Terrain, water depth і друкований flat mode в одному місці."
+            title={t("terrainTitle")}
+            description={t("terrainDesc")}
             icon={Mountain}
             isOpen={openPanels.terrain}
             onClick={() => togglePanel("terrain")}
@@ -1074,8 +1098,8 @@ export function ControlPanel({
           {openPanels.terrain && (
             <div className="space-y-3">
               <SliderField
-                label="Глибина води"
-                valueLabel={`${waterDepth.toFixed(1)} мм`}
+                label={t("waterDepth")}
+                valueLabel={t("millimeters", { mm: waterDepth.toFixed(1) })}
                 min={0.5}
                 max={5}
                 step={0.5}
@@ -1084,15 +1108,15 @@ export function ControlPanel({
               />
 
               <CheckboxRow
-                label="Пласкі пластини"
-                description="Новий режим без DEM-рельєфу і пазів: рівна основа, вода, дороги/зелені зони та будівлі друкуються шарами."
+                label={t("flatPlate")}
+                description={t("flatPlateDesc")}
                 checked={flatPlateMode}
                 onChange={setFlatPlateMode}
               />
 
               <CheckboxRow
-                label="AMS / Flat Mode"
-                description="Оптимізація під шаровий друк: рельєф стає пласкішим і більш передбачуваним."
+                label={t("amsFlatMode")}
+                description={t("amsFlatModeDesc")}
                 checked={isAmsMode && !flatPlateMode}
                 onChange={setAmsMode}
               />
@@ -1100,8 +1124,8 @@ export function ControlPanel({
               {!isAmsMode && !flatPlateMode && (
                 <>
                   <CheckboxRow
-                    label="Увімкнути рельєф"
-                    description="Керуйте terrain-параметрами лише коли рельєф справді потрібен у фінальній моделі."
+                    label={t("enableTerrain")}
+                    description={t("enableTerrainDesc")}
                     checked={terrainEnabled}
                     onChange={setTerrainEnabled}
                   />
@@ -1109,7 +1133,7 @@ export function ControlPanel({
                   {terrainEnabled && (
                     <div className="space-y-3">
                       <SliderField
-                        label="Множник висоти рельєфу"
+                        label={t("terrainZScale")}
                         valueLabel={terrainZScale.toFixed(1)}
                         min={0.5}
                         max={3}
@@ -1118,34 +1142,34 @@ export function ControlPanel({
                         onChange={setTerrainZScale}
                       />
                       <SliderField
-                        label="Деталізація mesh"
+                        label={t("meshDetail")}
                         valueLabel={`${terrainResolution}×${terrainResolution}`}
                         min={120}
                         max={320}
                         step={20}
                         value={terrainResolution}
                         onChange={(value) => setTerrainResolution(parseInt(String(value), 10))}
-                        hint="Більше значення дає дрібнішу сітку, але уповільнює генерацію."
+                        hint={t("meshDetailHint")}
                       />
                       <SliderField
-                        label="Terrarium zoom"
+                        label={t("terrariumZoom")}
                         valueLabel={String(terrariumZoom)}
                         min={11}
                         max={16}
                         step={1}
                         value={terrariumZoom}
                         onChange={(value) => setTerrariumZoom(parseInt(String(value), 10))}
-                        hint="14–15 найчастіше оптимальні для балансу якості й швидкості."
+                        hint={t("terrariumZoomHint")}
                       />
                       <SliderField
-                        label="Товщина основи рельєфу"
-                        valueLabel={`${terrainBaseThicknessMm.toFixed(1)} мм`}
+                        label={t("terrainBaseThickness")}
+                        valueLabel={t("millimeters", { mm: terrainBaseThicknessMm.toFixed(1) })}
                         min={0.2}
                         max={20}
                         step={0.1}
                         value={terrainBaseThicknessMm}
                         onChange={setTerrainBaseThicknessMm}
-                        hint="Тонка підложка підходить для друку, але не варто робити її надто крихкою."
+                        hint={t("terrainBaseThicknessHint")}
                       />
                     </div>
                   )}
@@ -1155,8 +1179,8 @@ export function ControlPanel({
           )}
 
           <AccordionButton
-            title="Компоненти в прев'ю"
-            description="Окремо вмикайте рельєф, дороги, будівлі, воду та парки."
+            title={t("previewComponentsTitle")}
+            description={t("previewComponentsDesc")}
             icon={Layers3}
             isOpen={openPanels.preview}
             onClick={() => togglePanel("preview")}
@@ -1164,37 +1188,37 @@ export function ControlPanel({
           {openPanels.preview && (
             <div className="space-y-3">
               <CheckboxRow
-                label="Рельєф"
-                description="Основа і terrain шар у 3D-прев'ю."
+                label={t("previewTerrain")}
+                description={t("previewTerrainDesc")}
                 checked={previewIncludeBase}
                 onChange={setPreviewIncludeBase}
               />
               <CheckboxRow
-                label="Дороги"
-                description="Показувати дорожню сітку на моделі."
+                label={t("previewRoads")}
+                description={t("previewRoadsDesc")}
                 checked={previewIncludeRoads}
                 onChange={setPreviewIncludeRoads}
               />
               <CheckboxRow
-                label="Будівлі"
-                description="Видимість будівель у прев'ю."
+                label={t("previewBuildings")}
+                description={t("previewBuildingsDesc")}
                 checked={previewIncludeBuildings}
                 onChange={setPreviewIncludeBuildings}
               />
               <CheckboxRow
-                label="Вода"
-                description="Показувати водойми в прев'ю."
+                label={t("previewWater")}
+                description={t("previewWaterDesc")}
                 checked={previewIncludeWater}
                 onChange={setPreviewIncludeWater}
               />
               <CheckboxRow
-                label="Парки"
-                description="Зелений шар парків і зелених зон."
+                label={t("previewParks")}
+                description={t("previewParksDesc")}
                 checked={previewIncludeParks}
                 onChange={setPreviewIncludeParks}
               />
               <div className="rounded-[20px] border border-[rgba(15,118,110,0.12)] bg-[rgba(15,118,110,0.05)] px-4 py-3 text-xs leading-5 text-[var(--text-secondary)]">
-                Налаштування видимості зберігаються в сесії та впливають на наступний запуск генерації.
+                {t("previewVisibilityNote")}
               </div>
             </div>
           )}

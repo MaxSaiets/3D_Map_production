@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, ArrowRight, Sparkles } from "lucide-react";
 
 export interface TourStep {
@@ -21,6 +22,7 @@ export function OnboardingTour({
   storageKey: string;
   steps: TourStep[];
 }) {
+  const t = useTranslations("tour");
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -51,16 +53,16 @@ export function OnboardingTour({
       <div
         className="pointer-events-auto w-full max-w-[360px] rounded-[18px] border border-line bg-paper-2 p-5 shadow-lift fade-up"
         role="dialog"
-        aria-label="Підказка"
+        aria-label={t("hintAria")}
       >
         <div className="mb-3 flex items-start justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest text-[#F4EFE4]">
               <Sparkles size={14} />
             </span>
-            <span className="eyebrow">Підказка · {idx + 1}/{steps.length}</span>
+            <span className="eyebrow">{t("hintCounter", { current: idx + 1, total: steps.length })}</span>
           </div>
-          <button onClick={close} aria-label="Закрити" className="rounded-md p-1 text-ink-3 transition hover:bg-bg-2 hover:text-ink">
+          <button onClick={close} aria-label={t("closeAria")} className="rounded-md p-1 text-ink-3 transition hover:bg-bg-2 hover:text-ink">
             <X size={16} />
           </button>
         </div>
@@ -68,13 +70,13 @@ export function OnboardingTour({
         <p className="mb-4 text-[14px] leading-relaxed text-ink-2">{step.body}</p>
         <div className="flex items-center justify-between">
           <button onClick={close} className="text-[12px] text-ink-3 underline-offset-2 hover:underline">
-            Не показувати знову
+            {t("dontShowAgain")}
           </button>
           {last ? (
-            <button onClick={close} className="btn btn-primary btn-sm">Зрозуміло</button>
+            <button onClick={close} className="btn btn-primary btn-sm">{t("done")}</button>
           ) : (
             <button onClick={() => setIdx((i) => i + 1)} className="btn btn-primary btn-sm">
-              Далі <ArrowRight size={14} />
+              {t("next")} <ArrowRight size={14} />
             </button>
           )}
         </div>

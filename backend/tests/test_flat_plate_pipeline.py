@@ -441,18 +441,31 @@ def test_heart_tip_is_rounded():
 
 
 def test_heart_pair_halves_assemble_into_full_heart():
+    import math
     from shapely.affinity import translate
-    from shapely.geometry import Point as _Pt
+    from shapely.geometry import Polygon as _Poly
 
     W, H = 30.0, 44.0
     left = _keychain_body_shape(0, 0, W, H, radius_m=4.0, shape="heart-l")
     right = _keychain_body_shape(0, 0, W, H, radius_m=4.0, shape="heart-r")
-    full = _keychain_body_shape(0, 0, 2 * W, H, radius_m=4.0, shape="heart")
+    # Еталон = ГОСТРЕ повне серце на 2W (як будує пара всередині — БЕЗ заокруглення
+    # вістря, інакше клиповані половинки давали 90°-«гачок» біля шва).
+    _raw = []
+    for _i in range(160):
+        _t = 2.0 * math.pi * _i / 160
+        _raw.append((16.0 * math.sin(_t) ** 3,
+                     13.0 * math.cos(_t) - 5.0 * math.cos(2 * _t) - 2.0 * math.cos(3 * _t) - math.cos(4 * _t)))
+    _xs = [p[0] for p in _raw]; _ys = [p[1] for p in _raw]
+    _x0, _x1 = min(_xs), max(_xs); _y0, _y1 = min(_ys), max(_ys)
+    full = _Poly([(0 + (px - _x0) / (_x1 - _x0) * 2 * W, 0 + (py - _y0) / (_y1 - _y0) * H) for px, py in _raw]).buffer(0)
 
     assert left.is_valid and right.is_valid
     # L: замок стирчить за грань розрізу, але лишається в контурі повного серця
     assert left.bounds[2] > W + 1.0
     assert full.buffer(0.2).covers(left)
+    # Кожна половинка сходить у ГОСТРИЙ кінчик рівно на шві (низ не «кривий»)
+    lowest = min(left.exterior.coords, key=lambda c: c[1])
+    assert abs(lowest[0] - W) < 0.3 and lowest[1] < 0.3, f"низ L не на шві: {lowest}"
     # Стиковка: жодного перетину тіл при складанні
     overlap = translate(right, xoff=W).intersection(left).area
     assert overlap < 0.5, f"половинки перетинаються на {overlap:.3f}мм²"

@@ -189,13 +189,20 @@ def get_elevation_abs_meters_from_api(
                 return None
 
         Z = Z_flat.reshape(X_meters.shape)
-        
+
+        # НУЛЬОВІ ТОЧКИ: корумповані Terrarium-пікселі (океан / краї тайлів) кодуються
+        # ~ -7000м і нижче (а інколи абсурдні піки), переживають палітру і ТЯГНУТЬ
+        # baseline вниз → у моделі виростає гігантська «вежа-база» перед рельєфом.
+        # Відкидаємо нереальні значення ДО обчислення zmin (нижня межа -500м безпечна
+        # глобально: суходіл нижче лише Мертве море ~-430м; верхня 9000м > Евересту).
+        Z = np.where((Z < -500.0) | (Z > 9000.0), np.nan, Z)
+
         # Повертаємо абсолютні значення БЕЗ нормалізації
         zmin = float(np.nanmin(Z)) if np.any(~np.isnan(Z)) else 0.0
         zmax = float(np.nanmax(Z)) if np.any(~np.isnan(Z)) else 0.0
-        _debug(f"[elevation] {provider} abs_range={zmin:.2f}..{zmax:.2f}m (absolute, not normalized)")
+        _debug(f"[elevation] {provider} abs_range={zmin:.2f}..{zmax:.2f}m (absolute, cleaned, not normalized)")
 
-        # Заповнюємо NaN, але зберігаємо абсолютні значення
+        # Дірки (NaN) → рівень землі (мін очищеного), а не fake-горб посередині.
         Z = np.where(np.isnan(Z), zmin, Z)
         return Z
     except Exception as e:

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
@@ -20,11 +21,13 @@ interface AccOrder {
   summary?: { city?: string; district?: string; label?: string; size?: string };
 }
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  new: "Прийнято", paid: "Оплачено", printed: "Надруковано", shipped: "Відправлено", done: "Виконано",
+const ORDER_STATUS_KEYS: Record<string, string> = {
+  new: "orderStatusNew", paid: "orderStatusPaid", printed: "orderStatusPrinted",
+  shipped: "orderStatusShipped", done: "orderStatusDone",
 };
 
 export default function AccountPage() {
+  const t = useTranslations("account");
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
   const [quota, setQuota] = useState<Quota | null>(null);
   const [models, setModels] = useState<AccModel[]>([]);
@@ -69,7 +72,7 @@ export default function AccountPage() {
       taskId: m.task_id, downloadUrl: m.download_url,
       meta: { title: m.title, city: m.city, product_type: (m.product_type as any) || "map" },
       getIdToken, openLogin: signIn,
-      onLimit: () => setNotice("Вичерпано 5 безкоштовних завантажень. Натисніть «Звʼязатися» внизу — і ми домовимось про друк/оплату."),
+      onLimit: () => setNotice(t("limitNotice")),
     });
     if (res.status === "ok") setQuota(res.quota);
     setBusy(false);
@@ -78,24 +81,24 @@ export default function AccountPage() {
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[1100px] px-5 py-8 lg:px-8">
       <Link href="/create" className="mb-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-2 hover:text-ink">
-        <ArrowLeft size={15} /> Конструктор
+        <ArrowLeft size={15} /> {t("backToBuilder")}
       </Link>
 
       <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-[clamp(28px,4vw,44px)] text-ink">Мій кабінет</h1>
-          <p className="mt-1 text-[14px] text-ink-2">Історія моделей і завантаження.</p>
+          <h1 className="font-serif text-[clamp(28px,4vw,44px)] text-ink">{t("title")}</h1>
+          <p className="mt-1 text-[14px] text-ink-2">{t("subtitle")}</p>
         </div>
         {user && (
           <button onClick={() => signOut()} className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-bg-2">
-            <LogOut size={15} /> Вийти
+            <LogOut size={15} /> {t("signOut")}
           </button>
         )}
       </div>
 
       {!configured && (
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Firebase ще не налаштований.
+          {t("firebaseNotConfigured")}
         </div>
       )}
 
@@ -109,34 +112,34 @@ export default function AccountPage() {
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-forest/10 text-forest">
               <KeyRound size={22} />
             </div>
-            <h2 className="font-serif text-2xl text-ink">Увійдіть у кабінет</h2>
+            <h2 className="font-serif text-2xl text-ink">{t("loginHeading")}</h2>
             <p className="mx-auto mt-2 max-w-[360px] text-sm text-ink-2">
-              Зберігаємо ваші моделі та сітки міста. <b>5 безкоштовних</b> завантажень повної 3MF-моделі.
+              {t.rich("loginPitch", { b: (chunks) => <b>{chunks}</b> })}
             </p>
             <button onClick={signIn} className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-sm font-bold text-white transition hover:opacity-90" style={{ background: "var(--forest,#2E4A3A)" }}>
-              Увійти / Зареєструватися
+              {t("loginButton")}
             </button>
-            <p className="mt-3 text-[12px] text-ink-3">Email, телефон або Google — за кілька секунд.</p>
+            <p className="mt-3 text-[12px] text-ink-3">{t("loginHint")}</p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <Link href="/create" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-4 text-sm font-semibold text-ink-2 hover:text-ink">
-                <MapIcon size={15} /> Створити мапу
+                <MapIcon size={15} /> {t("createMap")}
               </Link>
               <Link href="/keychains" className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm font-semibold" style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze,#8E6B3D)" }}>
-                <KeyRound size={15} /> Брелок
+                <KeyRound size={15} /> {t("keychain")}
               </Link>
             </div>
           </div>
           {/* Праворуч: коротко про сайт + плюси */}
           <div className="rounded-[24px] border border-line bg-paper p-6 sm:p-8">
-            <h3 className="font-serif text-xl text-ink">monadruk — 3D-мапи й брелки</h3>
-            <p className="mt-1 text-sm text-ink-2">Перетвори будь-яке місце Землі на 3D-сувенір. Усе у браузері, готове до друку.</p>
+            <h3 className="font-serif text-xl text-ink">{t("aboutHeading")}</h3>
+            <p className="mt-1 text-sm text-ink-2">{t("aboutText")}</p>
             <ul className="mt-4 space-y-2.5">
               {[
-                "Будь-яке місто світу — 3D-мапа за ~3 хвилини",
-                "Брелки-жетони з вашим районом і написом",
-                "5 безкоштовних завантажень 3MF (повна модель)",
-                "Готово до 3D-друку (FDM 0.4 мм) — або замовте друк у нас",
-                "Історія моделей і збережені сітки міста в кабінеті",
+                t("bullet1"),
+                t("bullet2"),
+                t("bullet3"),
+                t("bullet4"),
+                t("bullet5"),
               ].map((b) => (
                 <li key={b} className="flex items-start gap-2.5 text-sm text-ink-2">
                   <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-forest" />
@@ -153,19 +156,19 @@ export default function AccountPage() {
         <>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[18px] border border-line bg-paper p-5">
-              <div className="text-[11px] uppercase tracking-wide text-ink-3">Акаунт</div>
+              <div className="text-[11px] uppercase tracking-wide text-ink-3">{t("accountLabel")}</div>
               <div className="mt-1 truncate text-[15px] font-semibold text-ink">{user.email || user.phoneNumber || "—"}</div>
             </div>
             <div className="rounded-[18px] border border-line bg-paper p-5">
-              <div className="text-[11px] uppercase tracking-wide text-ink-3">Завантаження</div>
+              <div className="text-[11px] uppercase tracking-wide text-ink-3">{t("downloadsLabel")}</div>
               <div className="mt-1 text-[15px] font-semibold text-ink">
-                {quota ? (quota.is_admin ? "Безліміт" : `${quota.downloads} / ${quota.limit}`) : "…"}
+                {quota ? (quota.is_admin ? t("unlimited") : `${quota.downloads} / ${quota.limit}`) : "…"}
               </div>
             </div>
             <div className="rounded-[18px] border border-line bg-paper p-5">
-              <div className="text-[11px] uppercase tracking-wide text-ink-3">Статус</div>
+              <div className="text-[11px] uppercase tracking-wide text-ink-3">{t("statusLabel")}</div>
               <div className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-ink">
-                {quota?.is_admin ? <><ShieldCheck size={16} className="text-forest" /> Адмін</> : "Стандарт"}
+                {quota?.is_admin ? <><ShieldCheck size={16} className="text-forest" /> {t("admin")}</> : t("standard")}
               </div>
             </div>
           </div>
@@ -174,18 +177,18 @@ export default function AccountPage() {
 
           {orders.length > 0 && (
             <>
-              <h3 className="mb-3 mt-8 font-serif text-xl text-ink">Мої замовлення</h3>
+              <h3 className="mb-3 mt-8 font-serif text-xl text-ink">{t("myOrders")}</h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {orders.map((o, i) => (
                   <div key={`${o.order_number}-${i}`} className="rounded-[16px] border border-line bg-paper p-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="font-serif text-[17px] text-ink">#{o.order_number}</div>
                       <span className="rounded-full bg-[rgba(15,118,110,0.10)] px-2.5 py-1 text-[11px] font-semibold text-forest">
-                        {ORDER_STATUS_LABELS[o.status || "new"] || o.status}
+                        {ORDER_STATUS_KEYS[o.status || "new"] ? t(ORDER_STATUS_KEYS[o.status || "new"]) : o.status}
                       </span>
                     </div>
                     <div className="mt-1 text-[12px] text-ink-3">
-                      {o.product_type === "keychain" ? "Брелок" : "3D-мапа"}
+                      {o.product_type === "keychain" ? t("keychain") : t("map3d")}
                       {o.summary?.size ? ` · ${o.summary.size}` : ""}
                       {o.created_at ? ` · ${new Date(o.created_at).toLocaleDateString("uk")}` : ""}
                     </div>
@@ -201,10 +204,10 @@ export default function AccountPage() {
             </>
           )}
 
-          <h3 className="mb-3 mt-8 font-serif text-xl text-ink">Мої моделі</h3>
+          <h3 className="mb-3 mt-8 font-serif text-xl text-ink">{t("myModels")}</h3>
           {models.length === 0 ? (
             <div className="rounded-[18px] border border-dashed border-line bg-paper px-4 py-10 text-center text-sm text-ink-3">
-              Поки немає моделей. <Link href="/create" className="font-semibold text-forest underline-offset-2 hover:underline">Створити першу →</Link>
+              {t("noModels")} <Link href="/create" className="font-semibold text-forest underline-offset-2 hover:underline">{t("createFirst")}</Link>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -214,23 +217,23 @@ export default function AccountPage() {
                   <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#0b1020]">
                     {m.preview ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.preview} alt={m.title || m.city || "превʼю"} className="h-full w-full object-contain" loading="lazy" />
+                      <img src={m.preview} alt={m.title || m.city || t("previewAlt")} className="h-full w-full object-contain" loading="lazy" />
                     ) : (
                       <Box size={26} className="text-white/30" />
                     )}
                   </div>
                   <div className="p-4 pt-3">
-                  <div className="font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? "Брелок" : "3D-мапа")}</div>
-                  <div className="text-[12px] text-ink-3">{m.product_type === "keychain" ? "Брелок" : "Мапа"}{m.ts ? ` · ${new Date(m.ts * 1000).toLocaleDateString("uk")}` : ""}</div>
+                  <div className="font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? t("keychain") : t("map3d"))}</div>
+                  <div className="text-[12px] text-ink-3">{m.product_type === "keychain" ? t("keychain") : t("mapShort")}{m.ts ? ` · ${new Date(m.ts * 1000).toLocaleDateString("uk")}` : ""}</div>
                   <div className="mt-3 flex gap-2">
                     {/* Замовити друк цієї моделі (управління+покупка: генеруй зараз, замов потім) */}
                     <button onClick={() => setOrderModel(m)}
                       className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white"
                       style={{ background: "var(--bronze,#8E6B3D)" }}>
-                      <ShoppingBag size={15} /> Замовити друк
+                      <ShoppingBag size={15} /> {t("orderPrint")}
                     </button>
                     <button onClick={() => download(m)} disabled={busy}
-                      title="Завантажити 3MF"
+                      title={t("downloadTitle")}
                       className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-bg-2 disabled:opacity-60">
                       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />}
                     </button>
@@ -241,30 +244,30 @@ export default function AccountPage() {
             </div>
           )}
 
-          <h3 className="mb-3 mt-10 font-serif text-xl text-ink">Мої сітки міста</h3>
+          <h3 className="mb-3 mt-10 font-serif text-xl text-ink">{t("myGrids")}</h3>
           {grids.length === 0 ? (
             <div className="rounded-[18px] border border-dashed border-line bg-paper px-4 py-10 text-center text-sm text-ink-3">
-              Поки немає збережених сіток. У конструкторі ввімкніть «Сітка зон», створіть сітку й натисніть «Зберегти сітку» — потім зможете догенерувати сусідні комірки.
+              {t("noGrids")}
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {grids.map((g) => (
                 <div key={g.id} className="flex flex-col rounded-[16px] border border-line bg-paper p-4">
-                  <div className="font-serif text-[17px] text-ink">{g.name || g.city || "Сітка"}</div>
+                  <div className="font-serif text-[17px] text-ink">{g.name || g.city || t("gridFallback")}</div>
                   <div className="text-[12px] text-ink-3">
-                    {g.grid_type === "square" ? "Квадрати" : g.grid_type === "circle" ? "Кола" : "Гексагони"}
-                    {g.hex_size_m ? ` · ${Math.round(g.hex_size_m)} м` : ""}
-                    {` · ${(g.cells || []).length} комірок`}
+                    {g.grid_type === "square" ? t("gridSquare") : g.grid_type === "circle" ? t("gridCircle") : t("gridHex")}
+                    {g.hex_size_m ? ` · ${t("gridMeters", { n: Math.round(g.hex_size_m) })}` : ""}
+                    {` · ${t("gridCells", { n: (g.cells || []).length })}`}
                     {g.updated_at ? ` · ${new Date(g.updated_at * 1000).toLocaleDateString("uk")}` : ""}
                   </div>
                   <div className="mt-3 flex gap-2">
                     <Link href={`/create?grid=${g.id}`}
                       className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-semibold text-white">
-                      Відкрити
+                      {t("open")}
                     </Link>
                     <button onClick={() => g.id && removeGrid(g.id)}
                       className="inline-flex min-h-10 items-center justify-center rounded-full border border-line px-3 text-sm font-semibold text-ink-2 hover:bg-bg-2">
-                      Видалити
+                      {t("delete")}
                     </button>
                   </div>
                 </div>

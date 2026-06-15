@@ -27,18 +27,18 @@ test.describe("Конструктор мап /create", () => {
     await expect(search.getByPlaceholder(/Знайти місто/)).toBeVisible();
   });
 
-  test("Ф1 sticky: рівно ОДИН закріплений CTA на мобільному (не дубль) + ціна не «—»", async ({ page }) => {
+  test("Ф1 sticky: рівно ОДИН закріплений CTA на мобільному + ЦІНА не показується під час створення", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/uk/create");
     await page.waitForTimeout(1200);
-    // Лише один fixed-бар з «ОРІЄНТОВНА ВАРТІСТЬ» (раніше було два портали)
-    const bars = page.locator("div").filter({ hasText: /ОРІЄНТОВНА ВАРТІСТЬ/ }).filter({
+    // Єдиний fixed-бар із дією генерації (раніше було два портали)
+    const sticky = page.locator("div.fixed").filter({
       has: page.locator("button", { hasText: /Згенерувати|Замовити/ }),
-    });
-    // fallback-ціна показується одразу у sticky-барі (≈ N ₴), а не порожнє «—»
-    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    }).first();
     await expect(sticky).toBeVisible();
-    await expect(sticky).toContainText(/≈\s*\d+\s*₴/);
+    // Ліворуч — тихий продукт-лейбл, БЕЗ ціни (ціна лише на кроці оформлення)
+    await expect(sticky).toContainText(/3D-мапа/);
+    await expect(sticky).not.toContainText(/₴/);
   });
 
   test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {
@@ -61,7 +61,9 @@ test.describe("Конструктор мап /create", () => {
     await page.addInitScript(() => localStorage.setItem("onb_create_v1", "1"));
     await page.goto("/uk/create");
     await page.waitForTimeout(1200);
-    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    const sticky = page.locator("div.fixed").filter({
+      has: page.locator("button", { hasText: /Замовити/ }),
+    }).first();
     // До будь-якої генерації у барі вже є «Замовити друк» (order-now)
     const orderBtn = sticky.getByRole("button", { name: /Замовити/ });
     await expect(orderBtn).toBeVisible();

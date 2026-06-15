@@ -8,6 +8,7 @@ import { ContactWidget } from "@/components/ContactWidget";
 import { AuthProvider } from "@/components/AuthProvider";
 import SiteAnalytics from "@/components/SiteAnalytics";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
+import { BUSINESS } from "@/lib/legal";
 
 const BASE = "https://monadruk.com";
 
@@ -96,10 +97,29 @@ export default async function LocaleLayout({
         "@type": "Organization",
         "@id": `${BASE}/#org`,
         name: "Monadruk",
+        legalName: BUSINESS.ownerFull,
         url: BASE,
         logo: `${BASE}/icon`,
         image: `${BASE}/opengraph-image`,
         description: t("orgDescription"),
+        email: BUSINESS.email,
+        telephone: BUSINESS.phone,
+        vatID: BUSINESS.taxId,
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "UA",
+          addressRegion: "Хмельницька область",
+          addressLocality: "Хмельницький",
+          streetAddress: "вул. Завадського, 38",
+        },
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: BUSINESS.email,
+          telephone: BUSINESS.phone,
+          areaServed: ["UA", "EU"],
+          availableLanguage: ["uk", "en", "pl", "de"],
+        },
         sameAs: ["https://t.me/monadruk"],
       },
       {

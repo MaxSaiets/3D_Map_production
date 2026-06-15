@@ -301,9 +301,14 @@ def generate_3d_map(
     # не перевищував ~TERRAIN_MAX_RELIEF_MM. Інакше Карпати/Альпи дають надто
     # крутий mesh — boolean-груви ламаються і друкувати гостро. Звичайні міста
     # (нижчий перепад) не зачіпаються. world_cap = target_mm / scale_factor.
+    # Кап ПРОПОРЦІЙНИЙ розміру моделі (якір 80мм→28мм, клемп [14..55]) — щоб гори
+    # виглядали однаково виразно на S/M/L/XL (раніше жорсткі 28мм: пласко на XL,
+    # крихко на S). Те саме у generation_pipeline.process_generation_stage.
     _max_relief_m = None
     try:
-        _max_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
+        _base_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
+        _model_mm = float(getattr(params, "model_size_mm", 80.0) or 80.0)
+        _max_relief_mm = max(14.0, min(_base_relief_mm * (_model_mm / 80.0), 55.0))
         if scale_factor and float(scale_factor) > 0 and _max_relief_mm > 0:
             _max_relief_m = _max_relief_mm / float(scale_factor)
     except Exception:

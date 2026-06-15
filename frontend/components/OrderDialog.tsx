@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, CheckCircle2, Truck, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -63,6 +63,64 @@ export function OrderDialog({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const { getIdToken } = useAuth();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Escape closes the dialog; only active while open.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  // Focus management: move focus into the dialog on open, restore on close (best-effort).
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = (document.activeElement as HTMLElement) || null;
+    // Defer so the portal content is mounted before focusing.
+    const id = window.setTimeout(() => {
+      if (firstInputRef.current) firstInputRef.current.focus();
+      else if (containerRef.current) containerRef.current.focus();
+    }, 0);
+    return () => {
+      window.clearTimeout(id);
+      const prev = previouslyFocusedRef.current;
+      if (prev && typeof prev.focus === "function") {
+        try { prev.focus(); } catch { /* ignore */ }
+      }
+    };
+  }, [open]);
+
+  // Focus trap: keep Tab focus within the dialog, wrapping at the edges.
+  const handleTrapKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const container = containerRef.current;
+    if (!container) return;
+    const focusable = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+    if (e.shiftKey) {
+      if (active === first || !container.contains(active)) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last || !container.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
 
   if (!open) return null;
 
@@ -117,17 +175,29 @@ export function OrderDialog({
   // Portal to <body>: ancestors with backdrop-filter/transform become the
   // containing block for position:fixed, clipping the dialog inside side panels.
   const dialog = (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-dialog-title"
+    >
       <div
+        ref={containerRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-dialog-title"
         className="max-h-[92dvh] w-full max-w-[460px] overflow-y-auto rounded-t-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel,#fff)] p-5 shadow-[0_30px_80px_rgba(15,23,42,0.35)] sm:rounded-[28px]"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleTrapKeyDown}
       >
         {orderNumber ? (
           <div className="py-6 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <CheckCircle2 size={30} />
             </div>
-            <h3 className="font-serif text-2xl text-[var(--text-primary)]">{t("acceptedTitle")}</h3>
+            <h3 id="order-dialog-title" className="font-serif text-2xl text-[var(--text-primary)]">{t("acceptedTitle")}</h3>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
               {t("orderNo")} <b className="text-[var(--text-primary)]">#{orderNumber}</b>.<br />
               {t("acceptedText")}
@@ -155,11 +225,11 @@ export function OrderDialog({
               <div className="flex items-center gap-2">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Package size={18} /></span>
                 <div>
-                  <h3 className="font-serif text-xl text-[var(--text-primary)]">{t("title")}</h3>
+                  <h3 id="order-dialog-title" className="font-serif text-xl text-[var(--text-primary)]">{t("title")}</h3>
                   <p className="text-[11px] text-[var(--text-secondary)]">{productType === "keychain" ? t("prodKeychain") : t("prodMap")}{summary.size ? ` · ${summary.size}` : ""}</p>
                 </div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-black/5"><X size={20} /></button>
+              <button onClick={onClose} aria-label="Закрити" className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-black/5"><X size={20} /></button>
             </div>
 
             <div className="space-y-3">
@@ -169,12 +239,12 @@ export function OrderDialog({
                   <span>{t("modelPending")}</span>
                 </div>
               )}
-              <input className={fieldCls} placeholder={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
-              <input className={fieldCls} placeholder={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+              <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
+              <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
 
-              <div className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+              <div role="radiogroup" aria-label="Регіон доставки" className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
                 {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
-                  <button key={k} type="button"
+                  <button key={k} type="button" role="radio" aria-checked={region === k}
                     onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
                     className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                     {lbl}
@@ -182,12 +252,12 @@ export function OrderDialog({
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+              <div role="radiogroup" aria-label="Спосіб доставки" className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
                 {(region === "ua"
                   ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
                   : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
                 ).map(([k, lbl]) => (
-                  <button key={k} type="button" onClick={() => setDelivery(k)}
+                  <button key={k} type="button" role="radio" aria-checked={delivery === k} onClick={() => setDelivery(k)}
                     className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                     {lbl}
                   </button>
@@ -195,7 +265,7 @@ export function OrderDialog({
               </div>
 
               {region === "eu" && (
-                <select className={fieldCls} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
+                <select className={fieldCls} aria-label={t("phCountry")} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
                   <option value="">{t("phCountry")}</option>
                   {EU_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -203,23 +273,23 @@ export function OrderDialog({
 
               {delivery !== "pickup" && (
                 <>
-                  <input className={fieldCls} placeholder={t("phCity")} value={city} onChange={(e) => setCity(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} value={city} onChange={(e) => setCity(e.target.value)} />
                   {region === "ua" ? (
                     <>
-                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} aria-label={delivery === "nova" ? t("phNova") : t("phUkr")} value={branch} onChange={(e) => setBranch(e.target.value)} />
                       {delivery === "ukr" && (
-                        <input className={fieldCls} placeholder={t("phAddress")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                        <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} value={address} onChange={(e) => setAddress(e.target.value)} />
                       )}
                     </>
                   ) : delivery === "novapost_eu" ? (
-                    <input className={fieldCls} placeholder={t("phBranchEu")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                    <input className={fieldCls} placeholder={t("phBranchEu")} aria-label={t("phBranchEu")} value={branch} onChange={(e) => setBranch(e.target.value)} />
                   ) : (
-                    <input className={fieldCls} placeholder={t("phAddressEu")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <input className={fieldCls} placeholder={t("phAddressEu")} aria-label={t("phAddressEu")} value={address} onChange={(e) => setAddress(e.target.value)} />
                   )}
                 </>
               )}
 
-              <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />
+              <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} aria-label={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />
 
               <div className="flex items-center justify-between rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-sm">
                 <span className="font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>

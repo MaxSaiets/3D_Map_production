@@ -1,0 +1,254 @@
+{
+  "locale": "de",
+  "legal": {
+    "offer": {
+      "title": "Öffentlicher Angebotsvertrag",
+      "intro": [
+        "Dieses Dokument ist das offizielle öffentliche Angebot (Offerte) von {ownerFull} (nachfolgend „Verkäufer") zum Abschluss eines Kauf- und Dienstleistungsvertrags zu den nachstehenden Bedingungen. Durch die Bezahlung einer Bestellung auf der Website {domain} (nachfolgend „Website") bestätigt der Käufer, dass er diese Vertragsbedingungen vollständig gelesen, verstanden und vorbehaltlos akzeptiert hat (Annahme des Angebots gemäß Art. 633, 641, 642 des Zivilgesetzbuchs der Ukraine)."
+      ],
+      "sections": [
+        {
+          "h": "1. Begriffsbestimmungen",
+          "blocks": [
+            { "p": "Verkäufer — {ownerShort}, Steuer-ID {taxId}." },
+            { "p": "Käufer — jede geschäftsfähige Person, die auf der Website eine Bestellung aufgegeben hat." },
+            { "p": "Ware / Dienstleistung — ein digitales 3D-Modell (Datei 3MF/STL) einer Stadtkarte oder eines Karten-Schlüsselanhängers und/oder die Herstellung (3D-Druck) eines physischen Produkts aus Eco PLA-Biokunststoff nach individueller Bestellung des Käufers." }
+          ]
+        },
+        {
+          "h": "2. Vertragsgegenstand",
+          "blocks": [
+            { "p": "Der Verkäufer verpflichtet sich, dem Käufer ein digitales 3D-Modell bereitzustellen und/oder ein physisches Produkt nach Bestellung herzustellen und zu übergeben; der Käufer verpflichtet sich, dieses gemäß den Vertragsbedingungen entgegenzunehmen und zu bezahlen." },
+            { "p": "Jedes Produkt wird individuell nach den vom Käufer im Website-Konfigurator selbst gewählten Parametern (Kartenausschnitt, Form, Größe, Text) gefertigt und stellt damit eine Sonderanfertigung dar." }
+          ]
+        },
+        {
+          "h": "3. Bestellvorgang",
+          "blocks": [
+            { "p": "Der Käufer erstellt seine Bestellung im Konfigurator auf der Website und gibt seine Kontaktdaten an (Name, Telefonnummer, Lieferart und -adresse). Die Bestellung gilt nach Zahlungseingang oder Bestätigung durch einen Mitarbeiter als angenommen." },
+            { "p": "Der Käufer ist für die Richtigkeit der angegebenen Daten verantwortlich. Der Verkäufer haftet nicht für Folgen, die auf fehlerhaften Angaben des Käufers beruhen." }
+          ]
+        },
+        {
+          "h": "4. Preis und Zahlung",
+          "blocks": [
+            { "p": "Die auf der Website angegebenen Preise für Waren und Dienstleistungen sind in Hrywnja (für Bestellungen innerhalb der Ukraine) bzw. in Euro (für Lieferungen in die EU) angegeben und gelten als unverbindlich bis zur Auftragsbestätigung. Den endgültigen Betrag sieht der Käufer beim Bestellabschluss." },
+            { "p": "Die Zahlung erfolgt online über den Zahlungsdienst LiqPay (per Bankkarte Visa/Mastercard) oder auf einem anderen vereinbarten Weg. Das Herunterladen einer fertigen digitalen Datei im Rahmen des kostenlosen Kontingents ist kostenlos." },
+            { "p": "Details finden Sie auf der Seite [delivery:«Zahlung & Lieferung»]." }
+          ]
+        },
+        {
+          "h": "5. Herstellung und Lieferung",
+          "blocks": [
+            { "p": "Die digitale Datei wird im Kundenkonto bzw. per E-Mail sofort oder nach Auftragsbestätigung bereitgestellt. Das physische Produkt wird innerhalb der auf der Seite „Zahlung & Lieferung" angegebenen Frist hergestellt und über Nova Poshta oder Ukrposhta (Ukraine) bzw. Nova Post EU oder Meest (EU) versendet." }
+          ]
+        },
+        {
+          "h": "6. Rückerstattung",
+          "blocks": [
+            { "p": "Da die Produkte als Sonderanfertigung gefertigt werden und digitale Dateien den Charakter elektronischer Inhalte haben, richtet sich die Rückabwicklung nach dem gesonderten Dokument — [refund:«Rückerstattungs- und Umtauschrichtlinie»], das Bestandteil dieses Vertrags ist." }
+          ]
+        },
+        {
+          "h": "7. Geistige Eigentumsrechte",
+          "blocks": [
+            { "p": "Kartografische Daten werden von OpenStreetMap (ODbL) bereitgestellt, Höhendaten stammen aus offenen Quellen. Das generierte 3D-Modell wird dem Käufer zur persönlichen, nicht kommerziellen Nutzung und zum Druck überlassen. Ein vom Käufer hochgeladener GPX-Track stellt seine eigenen Daten dar und wird ausschließlich zur Modellerstellung verarbeitet (siehe [privacy:Datenschutzerklärung])." }
+          ]
+        },
+        {
+          "h": "8. Haftung der Parteien",
+          "blocks": [
+            { "p": "Der Verkäufer haftet nicht für die Druckqualität auf dem Gerät des Käufers bei eigenständigem Druck der heruntergeladenen Datei. Die Gesamthaftung des Verkäufers ist auf den bezahlten Bestellbetrag begrenzt." },
+            { "p": "Die Parteien sind von der Haftung für die Nichterfüllung ihrer Verpflichtungen infolge höherer Gewalt (Force Majeure) befreit." }
+          ]
+        },
+        {
+          "h": "9. Personenbezogene Daten",
+          "blocks": [
+            { "p": "Mit der Bestellaufgabe erklärt der Käufer seine Einwilligung zur Verarbeitung seiner personenbezogenen Daten zur Auftragsabwicklung gemäß dem Gesetz der Ukraine zum Schutz personenbezogener Daten sowie der [privacy:Datenschutzerklärung]." }
+          ]
+        },
+        {
+          "h": "10. Streitbeilegung und Laufzeit",
+          "blocks": [
+            { "p": "Streitigkeiten werden im Verhandlungsweg beigelegt; kommt keine Einigung zustande, gilt das geltende Recht der Ukraine. Der Vertrag tritt mit der Annahme in Kraft und endet mit der vollständigen Erfüllung der Verpflichtungen beider Parteien. Der Verkäufer behält sich das Recht vor, die Bedingungen durch Veröffentlichung einer neuen Fassung auf dieser Seite zu ändern." }
+          ]
+        },
+        {
+          "h": "11. Verkäuferdaten",
+          "blocks": [
+            {
+              "kv": [
+                { "k": "Verkäufer", "v": "{ownerFull}" },
+                { "k": "Steuer-ID", "v": "{taxId}" },
+                { "k": "IBAN", "v": "{iban}" },
+                { "k": "Eingetragene Adresse", "v": "{ownerRegAddress}" },
+                { "k": "Shop", "v": "{storeName}, {storeAddress}" },
+                { "k": "E-Mail", "v": "{email}" },
+                { "k": "Telefon", "v": "{phone}" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "refund": {
+      "title": "Rückerstattungs- und Umtauschrichtlinie",
+      "sections": [
+        {
+          "h": "Art der Waren",
+          "blocks": [
+            { "p": "Alle Produkte von {storeName} werden individuell nach den vom Käufer selbst gewählten Parametern (Kartenausschnitt, Form, Größe, Text) gefertigt; digitale 3D-Modelle stellen elektronische Inhalte dar. Dies beeinflusst die Rückgabebedingungen gemäß dem Gesetz der Ukraine zum Schutz der Verbraucherrechte (eine Ware einwandfreier Qualität, die auf individuelle Bestellung hergestellt wurde, kann weder zurückgegeben noch umgetauscht werden)." }
+          ]
+        },
+        {
+          "h": "Digitale Dateien (Download 3MF/STL)",
+          "blocks": [
+            { "p": "Eine Erstattung für eine digitale Datei ist nicht möglich, sobald die Datei generiert und zum Download bereitgestellt wurde, da die Leistung vollständig erbracht wurde. Falls die Datei aus technischen Gründen unsererseits nicht heruntergeladen werden kann oder beschädigt ist, generieren wir sie kostenlos neu oder erstatten den Betrag." }
+          ]
+        },
+        {
+          "h": "Druck auf Bestellung (physisches Produkt)",
+          "blocks": [
+            {
+              "ul": [
+                "Vor Produktionsbeginn — Sie können die Bestellung stornieren und erhalten eine vollständige Rückerstattung, sofern wir noch nicht mit dem Druck begonnen haben.",
+                "Nach Produktionsbeginn — eine Rückerstattung ist nicht möglich, da das Produkt individuell nach Ihrer Bestellung gefertigt wird.",
+                "Mangelhaftes Produkt, Beschädigung bei der Lieferung oder Abweichung von der Bestellung — wir drucken das Produkt kostenlos neu und versenden es erneut oder erstatten den vollen Betrag (nach Ihrer Wahl)."
+              ]
+            }
+          ]
+        },
+        {
+          "h": "So beantragen Sie eine Rückerstattung",
+          "blocks": [
+            { "p": "Schreiben Sie an {email} oder rufen Sie {phone} an, und geben Sie dabei die Bestellnummer, den Grund sowie (bei Mängeln) Fotos des Produkts an. Wir bearbeiten Ihre Anfrage innerhalb von 1–3 Werktagen." },
+            { "p": "Rückerstattungen werden auf demselben Weg durchgeführt, über den die Zahlung eingegangen ist (Rückbuchung auf die Karte über LiqPay), innerhalb der Fristen, die die Zahlungssystemregeln und die Bank vorsehen." }
+          ]
+        },
+        {
+          "h": "Kontakt",
+          "blocks": [
+            { "p": "Dieses Dokument ist Bestandteil des [offer:Öffentlichen Angebotsvertrags]. Bei Fragen: {email}." }
+          ]
+        }
+      ]
+    },
+    "delivery": {
+      "title": "Zahlung & Lieferung",
+      "sections": [
+        {
+          "h": "Produkte und Preise",
+          "blocks": [
+            { "p": "Unverbindliche Preise (der endgültige Betrag ist beim Bestellabschluss sichtbar):" },
+            {
+              "ul": [
+                "Karten-Schlüsselanhänger — ab 120 ₴ (≈ 3 €).",
+                "3D-Stadtkarte: S 5,5 cm — 250 ₴, M 8 cm — 390 ₴, L 11 cm — 590 ₴, XL 15 cm — 890 ₴ (Karten — ab 6 €).",
+                "Kühlschrankmagnet (Karte) — 180 ₴.",
+                "Download der fertigen Datei 3MF/STL für den Eigendruck — kostenlos im Rahmen des Kontokontingents."
+              ]
+            }
+          ]
+        },
+        {
+          "h": "Zahlung",
+          "blocks": [
+            { "p": "Online-Zahlung per Bankkarte Visa / Mastercard über den gesicherten Dienst LiqPay. Kartendaten werden ausschließlich seitens des Zahlungsdienstleisters verarbeitet — wir speichern sie nicht. Zahlung nach Vereinbarung mit einem Mitarbeiter ist ebenfalls möglich. Die digitale Datei im Rahmen des kostenlosen Kontingents wird ohne Zahlung bereitgestellt." }
+          ]
+        },
+        {
+          "h": "Herstellung",
+          "blocks": [
+            { "p": "Produkte werden auf Bestellung aus Eco PLA-Biokunststoff gedruckt. Die voraussichtliche Herstellungszeit beträgt 1–3 Werktage nach Auftragsbestätigung (abhängig von Auslastung und Komplexität)." }
+          ]
+        },
+        {
+          "h": "Lieferung",
+          "blocks": [
+            { "p": "Ukraine:" },
+            { "ul": ["Nova Poshta — Filiale oder Paketautomat.", "Ukrposhta — Filiale."] },
+            { "p": "Europäische Union (15 Länder):" },
+            { "ul": ["Nova Post EU.", "Meest."] },
+            { "p": "Die Versandkosten werden nach den Tarifen des jeweiligen Versanddienstleisters berechnet und sind separat zu entrichten (in der Regel bei der Abholung). Die voraussichtliche Lieferdauer innerhalb der Ukraine beträgt 2–4 Werktage nach Versand." }
+          ]
+        },
+        {
+          "h": "Rückgabe",
+          "blocks": [
+            { "p": "Die Rückerstattungsbedingungen sind auf der Seite [refund:«Rückerstattungs- und Umtauschrichtlinie»] beschrieben. Allgemeine Bedingungen finden Sie im [offer:Öffentlichen Angebotsvertrag]." }
+          ]
+        },
+        {
+          "h": "Kontakt",
+          "blocks": [
+            { "p": "Fragen zu Zahlung oder Lieferung: {email}, {phone}." }
+          ]
+        }
+      ]
+    },
+    "contacts": {
+      "title": "Kontakt & Impressum",
+      "sections": [
+        {
+          "h": "Kontakt",
+          "blocks": [
+            {
+              "kv": [
+                { "k": "E-Mail", "v": "{email}" },
+                { "k": "Telefon", "v": "{phone}" },
+                { "k": "Website", "v": "{domain}" }
+              ]
+            },
+            { "p": "Bestellbearbeitung: täglich; Antwortzeit in der Regel innerhalb von 24 Stunden." }
+          ]
+        },
+        {
+          "h": "Shop",
+          "blocks": [
+            {
+              "kv": [
+                { "k": "Bezeichnung", "v": "{storeName}" },
+                { "k": "Adresse des Shops", "v": "{storeAddress}" }
+              ]
+            }
+          ]
+        },
+        {
+          "h": "Verkäufer (Einzelunternehmer)",
+          "blocks": [
+            {
+              "kv": [
+                { "k": "Bezeichnung", "v": "{ownerFull}" },
+                { "k": "Steuer-ID", "v": "{taxId}" },
+                { "k": "Eingetragene Adresse", "v": "{ownerRegAddress}" },
+                { "k": "Geschäftstätigkeit (KVED)", "v": "{ved}" },
+                { "k": "IBAN", "v": "{iban}" }
+              ]
+            }
+          ]
+        },
+        {
+          "h": "Was wir anbieten",
+          "blocks": [
+            { "p": "{storeName} ist ein Anbieter von 3D-Stadtkartenmodellen und Karten-Schlüsselanhängern auf Bestellung. Sie können die fertige Datei zum Eigendruck (3MF/STL) im Rahmen des kostenlosen Kontingents herunterladen oder den Druck eines Produkts aus Eco PLA-Biokunststoff mit Lieferung bestellen. Unverbindliche Preise finden Sie im Konfigurator und auf der Seite [delivery:«Zahlung & Lieferung»]." }
+          ]
+        },
+        {
+          "h": "Rechtliche Dokumente",
+          "blocks": [
+            {
+              "ul": [
+                "[offer:Öffentlicher Angebotsvertrag]",
+                "[refund:Rückerstattungs- und Umtauschrichtlinie]",
+                "[delivery:Zahlung & Lieferung]",
+                "[privacy:Datenschutzerklärung]",
+                "[terms:Nutzungsbedingungen]"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

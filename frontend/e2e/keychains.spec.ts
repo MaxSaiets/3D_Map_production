@@ -28,14 +28,17 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect(page.getByRole("button", { name: /Будиночок 44 × 48/ })).toBeVisible();
   });
 
-  test("Ф1b: мобільна навігація уніфікована (sticky з ціною + єдиний степер)", async ({ page }) => {
+  test("Ф1b: мобільна навігація уніфікована (sticky БЕЗ ціни + єдиний степер)", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/uk/keychains");
     await page.waitForTimeout(1000);
-    // Sticky-бар показує ціну одразу (не «—») + дію «Створити брелок»
-    const sticky = page.locator("div.fixed").filter({ hasText: /Орієнтовна вартість/i }).first();
+    // Sticky-бар: продукт-лейбл + дія «Створити брелок», БЕЗ ціни (ціна лише у фіналі)
+    const sticky = page.locator("div.fixed").filter({
+      has: page.locator("button", { hasText: /Створити брелок|Замовити/ }),
+    }).first();
     await expect(sticky).toBeVisible();
-    await expect(sticky).toContainText(/≈\s*120\s*₴/);
+    await expect(sticky).toContainText(/Брелок із мапою/);
+    await expect(sticky).not.toContainText(/₴/);
     await expect(sticky).toContainText(/Створити брелок/);
     // Єдина навігація — 3-кроковий степер
     await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);

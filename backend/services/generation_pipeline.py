@@ -149,9 +149,15 @@ def process_generation_stage(
         # Стискаємо так, щоб рельєф у МОДЕЛІ не перевищував ~TERRAIN_MAX_RELIEF_MM.
         # world_cap = target_mm / scale_factor. Звичайні міста (нижчий перепад)
         # не зачіпаються — компресія спрацьовує лише коли реально високі гори.
+        # Кап ПРОПОРЦІЙНИЙ розміру моделі (раніше було жорстко 28мм для ВСІХ
+        # розмірів → на XL 240мм це лише ~12% висоти (пласко), на S 55мм ~50%
+        # (крихко/гостро)). Якоримо 80мм→28мм і масштабуємо: рельєф ≈ 35% висоти
+        # моделі, клемп [14..55]мм. Так гори виглядають однаково виразно на S/M/L/XL.
         _max_relief_m = None
         try:
-            _max_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
+            _base_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
+            _model_mm = float(getattr(request, "model_size_mm", 80.0) or 80.0)
+            _max_relief_mm = max(14.0, min(_base_relief_mm * (_model_mm / 80.0), 55.0))
             if scale_factor and float(scale_factor) > 0 and _max_relief_mm > 0:
                 _max_relief_m = _max_relief_mm / float(scale_factor)
         except Exception:

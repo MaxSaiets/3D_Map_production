@@ -12,6 +12,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { locales, localeMeta } from "@/i18n/routing";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
+import { BUSINESS } from "@/lib/legal";
 import { useAuth } from "@/components/AuthProvider";
 
 const ShowcaseSection = dynamic(() => import("@/components/ShowcaseSection"), { ssr: false });
@@ -405,8 +406,17 @@ function HowItWorks() {
     { n: "03", t: t("s3t"), d: t("s3d") },
     { n: "04", t: t("s4t"), d: t("s4d") },
   ];
+  // HowTo-розмітка (локалізована) — rich-result «як це працює» у пошуку.
+  const howLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: t("title"),
+    description: t("sub"),
+    step: steps.map((s, i) => ({ "@type": "HowToStep", position: i + 1, name: s.t, text: s.d })),
+  };
   return (
     <section id="how" className="bg-ink py-20 text-[#E8E1CC] lg:py-28">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howLd) }} />
       <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
         <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
@@ -466,7 +476,7 @@ function TemplatesGallery() {
             <div className="relative aspect-[16/10] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/showcase/map-${(i % 13) + 1}.png`}
+                src={`/showcase/map-${(i % 11) + 1}.png`}
                 alt={`${t.district}, ${t.city} — 3D-мапа`}
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
@@ -628,20 +638,36 @@ function SiteFooter() {
   const t = useTranslations("home.footer");
   return (
     <footer className="border-t border-line-soft py-12">
-      <div className="mx-auto flex max-w-[1360px] flex-col items-center justify-between gap-6 px-5 text-sm text-ink-3 md:flex-row lg:px-8">
-        <div className="flex items-center gap-2 font-serif text-lg text-ink">
-          <Box size={18} className="text-forest" /> monadruk
+      <div className="mx-auto flex max-w-[1360px] flex-col gap-6 px-5 text-sm text-ink-3 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex items-center gap-2 font-serif text-lg text-ink">
+            <Box size={18} className="text-forest" /> monadruk
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+            {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
+            <Link href="/create" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("create")}</Link>
+            <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("keychains")}</Link>
+            <Link href="/maps" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("maps")}</Link>
+            <Link href="/account" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("account")}</Link>
+            <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("delivery")}</Link>
+            <Link href="/refund" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("refund")}</Link>
+            <Link href="/offer" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("offer")}</Link>
+            <Link href="/contacts" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("contacts")}</Link>
+            <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("privacy")}</Link>
+            <Link href="/terms" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("terms")}</Link>
+          </div>
         </div>
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-          {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
-          <Link href="/create" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("create")}</Link>
-          <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("keychains")}</Link>
-          <Link href="/maps" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("maps")}</Link>
-          <Link href="/account" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("account")}</Link>
-          <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("privacy")}</Link>
-          <Link href="/terms" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("terms")}</Link>
+        {/* Контакти + реквізити продавця — вимога платіжних систем (LiqPay). */}
+        <div className="flex flex-col items-center gap-1 border-t border-line-soft pt-5 text-center text-[13px] text-ink-3 md:flex-row md:flex-wrap md:justify-center md:gap-x-4">
+          <span>{BUSINESS.ownerShort}</span>
+          <span className="hidden md:inline">·</span>
+          <a className="hover:text-ink" href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
+          <span className="hidden md:inline">·</span>
+          <a className="hover:text-ink" href={`tel:${BUSINESS.phone}`}>{BUSINESS.phoneDisplay}</a>
+          <span className="hidden md:inline">·</span>
+          <span>{BUSINESS.addressFull}</span>
         </div>
-        <div>© {new Date().getFullYear()} monadruk.com</div>
+        <div className="text-center">© {new Date().getFullYear()} monadruk.com</div>
       </div>
     </footer>
   );

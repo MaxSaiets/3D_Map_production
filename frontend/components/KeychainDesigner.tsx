@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 // Three.js + Overpass fetch — lazy load to avoid SSR + keep designer bundle light
 // SVG-LAYER (нативні шляхи у батьківському SVG). НЕ foreignObject — інакше на
@@ -50,6 +51,11 @@ export type KeychainDesignerConfig = {
 
 export type KeychainTemplate = {
   id: string;
+  /** i18n keys (namespace "kc") for the template name/description. */
+  nameKey: string;
+  descKey: string;
+  /** Ukrainian fallback (kept for backward-compat with consumers that don't
+   *  resolve via next-intl yet). New render sites use nameKey/descKey + t(). */
   name: string;
   description: string;
   design: KeychainDesignerConfig;
@@ -156,12 +162,16 @@ export const DEFAULT_KEYCHAIN_DESIGN: KeychainDesignerConfig = {
 export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   {
     id: "classic-wide",
+    nameKey: "tpl.classicWide.name",
+    descKey: "tpl.classicWide.desc",
     name: "35 x 55",
     description: "Стандартний компактний вертикальний брелок.",
     design: DEFAULT_KEYCHAIN_DESIGN,
   },
   {
     id: "token-55",
+    nameKey: "tpl.token55.name",
+    descKey: "tpl.token55.desc",
     name: "Token 55 x 30",
     description: "Стандартний жетон 55×30 з лівим отвором Ø3 мм і капсульною основою.",
     design: {
@@ -193,6 +203,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "heart-46",
+    nameKey: "tpl.heart46.name",
+    descKey: "tpl.heart46.desc",
     name: "Серце 46 × 42",
     description: "Мапа місця, що в серці — подарунок для двох.",
     design: {
@@ -219,6 +231,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "house-44",
+    nameKey: "tpl.house44.name",
+    descKey: "tpl.house44.desc",
     name: "Будиночок 44 × 48",
     description: "Дім — там, де твоя вулиця. Дах з вушком зверху.",
     design: {
@@ -245,6 +259,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "puzzle-left",
+    nameKey: "tpl.puzzleLeft.name",
+    descKey: "tpl.puzzleLeft.desc",
     name: "Пазл L · 40 × 42",
     description: "Половинка пари: твоє місто. Виступ праворуч зʼєднується з половинкою R.",
     design: {
@@ -269,6 +285,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "puzzle-right",
+    nameKey: "tpl.puzzleRight.name",
+    descKey: "tpl.puzzleRight.desc",
     name: "Пазл R · 40 × 42",
     description: "Половинка пари: місто близької людини. Паз ліворуч приймає половинку L.",
     design: {
@@ -293,6 +311,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "heart-pair-left",
+    nameKey: "tpl.heartPairLeft.name",
+    descKey: "tpl.heartPairLeft.desc",
     name: "Серце пари · L · 30 × 44",
     description: "Половинка серця для двох: твоє місто. Замок на грані зʼєднується з половинкою R у повне серце.",
     design: {
@@ -317,6 +337,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "heart-pair-right",
+    nameKey: "tpl.heartPairRight.name",
+    descKey: "tpl.heartPairRight.desc",
     name: "Серце пари · R · 30 × 44",
     description: "Половинка серця для двох: місто близької людини. Паз приймає половинку L.",
     design: {
@@ -341,6 +363,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "right-loop",
+    nameKey: "tpl.rightLoop.name",
+    descKey: "tpl.rightLoop.desc",
     name: "Side Loop",
     description: "Петля справа, зручно для широкої карти.",
     design: {
@@ -361,6 +385,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "vertical-tag",
+    nameKey: "tpl.verticalTag.name",
+    descKey: "tpl.verticalTag.desc",
     name: "Vertical",
     description: "Вертикальний брелок з повернутим написом.",
     design: {
@@ -382,6 +408,8 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
   {
     id: "soft-capsule",
+    nameKey: "tpl.softCapsule.name",
+    descKey: "tpl.softCapsule.desc",
     name: "Capsule",
     description: "М'яка капсульна форма з slot-вушком.",
     design: {
@@ -403,7 +431,7 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
   },
 ];
 
-function shapePath(
+export function shapePath(
   value: KeychainDesignerConfig,
   {
     x = 0,
@@ -564,9 +592,9 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
     fullMinX + ((px - x0) / (x1 - x0)) * (2 * w),
     minY + ((y1 - py) / (y1 - y0)) * h, // y-вниз СВГ: лоби зверху, вістря знизу
   ] as [number, number]);
-  let tipIdx = 0;
-  for (let i = 1; i < pts.length; i++) if (pts[i][1] > pts[tipIdx][1]) tipIdx = i;
-  pts = roundPolygonTip(pts, tipIdx, Math.min(2 * w, h) * 0.16);
+  // БЕЗ заокруглення вістря: гостре вістря по центру → кожна половинка сходить у
+  // чистий кінчик на шві (заокруглений низ давав 90°-«гачок» біля шва). Дзеркало
+  // бекенду, де heart-l/r будує full без _round_polygon_tip.
   const cut = side === "l" ? minX + w : minX;
   const keep = (p: [number, number]) => (side === "l" ? p[0] <= cut + 1e-9 : p[0] >= cut - 1e-9);
   // Sutherland–Hodgman кліп по півплощині x=cut
@@ -596,34 +624,28 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
   const elen = yHi - yLo;
   const cy = (yLo + yHi) / 2;
   const dir = Math.sign(B[1] - A[1]) || 1; // напрям обходу грані
-  // ФІГУРНИЙ ЗАМОК-СЕРЦЕ (дзеркало бекендового _heart_lock_polygon): мале серце
-  // кінчиком до розрізу, лоби у +x. Симетричне по горизонталі → y-фліп СВГ не
-  // впливає. Беремо праву (x>=cut) дугу серця і вставляємо замість прямого розрізу.
-  const k = elen * 0.16;
-  const span = k * 1.9, protrusion = k * 1.5, tipX = cut - k * 0.35;
-  const N = 96;
-  const heart: Array<[number, number]> = [];
-  for (let i = 0; i < N; i++) {
-    const t = (2 * Math.PI * i) / N;
-    heart.push([16 * Math.sin(t) ** 3, 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)]);
+  // ЗАМОК = jigsaw-кнопка (головка ШИРША за шийку → справжнє зчеплення в площині).
+  // Дзеркало бекендового _keychain_body_shape heart-l/r: коло k=0.14·грані, шийка
+  // 0.60k (головка 2k vs шийка 1.2k → ~1.67×), центр зсунутий на 0.95k за грань.
+  // L = виступ (без кліренсу), R = паз (+кліренс 0.6% грані). Опукла дуга у +x.
+  const kBase = elen * 0.14;
+  const cl = side === "r" ? elen * 0.006 : 0;
+  const R = kBase + cl;            // радіус головки (+кліренс для паза)
+  const NW = kBase * 0.6 + cl;     // півширина шийки
+  const kc = cut + kBase * 0.95;   // центр головки за гранню розрізу
+  const xj = kc - Math.sqrt(Math.max(R * R - NW * NW, 1e-9)); // стик шийки з колом
+  const th1 = Math.atan2(NW, xj - kc); // кут верхнього стику (~+143°)
+  const M = 44;
+  const arc: Array<[number, number]> = [];
+  for (let s = 0; s <= M; s++) {
+    const th = th1 - (s / M) * (2 * th1); // велика дуга th1 → 0° → -th1 (опукла у +x)
+    arc.push([kc + R * Math.cos(th), cy + R * Math.sin(th)]);
   }
-  const hxs = heart.map((p) => p[0]), hys = heart.map((p) => p[1]);
-  const hx0 = Math.min(...hxs), hx1 = Math.max(...hxs), hy0 = Math.min(...hys), hy1 = Math.max(...hys);
-  // upright tip→(0,0); rotate -90: (nx,ny)->(ny,-nx); tip→(tipX,cy), lobes→+x
-  const lh: Array<[number, number]> = heart.map(([px, py]) => {
-    const nx = ((px - (hx0 + hx1) / 2) / (hx1 - hx0)) * span;
-    const ny = ((py - hy0) / (hy1 - hy0)) * protrusion;
-    return [tipX + ny, cy - nx] as [number, number];
-  });
-  // contiguous arc where x>=cut
-  const onR = lh.map((p) => p[0] >= cut - 1e-9);
-  let start = -1;
-  for (let i = 0; i < N; i++) if (onR[i] && !onR[(i - 1 + N) % N]) { start = i; break; }
-  let lock: Array<[number, number]> = [];
-  if (start >= 0) for (let j = 0; j < N; j++) { const idx = (start + j) % N; if (!onR[idx]) break; lock.push(lh[idx]); }
-  // впорядкувати так, щоб дуга йшла від A-кінця до B-кінця (за dir по y)
-  if (lock.length >= 2 && Math.sign(lock[lock.length - 1][1] - lock[0][1]) !== dir) lock.reverse();
-  // приклеїти до точок розрізу
+  let lock: Array<[number, number]> = [
+    [cut, cy + NW], [xj, cy + NW], ...arc, [xj, cy - NW], [cut, cy - NW],
+  ];
+  // впорядкувати так, щоб полілінія йшла від A-кінця до B-кінця
+  if (Math.sign(lock[lock.length - 1][1] - lock[0][1]) !== dir) lock.reverse();
   lock = [[cut, A[1]], ...lock, [cut, B[1]]];
   const out: Array<[number, number]> = [];
   for (let i = 0; i <= i1; i++) out.push(clipped[i]);
@@ -754,14 +776,10 @@ export function TemplateMiniature({ design, label, active }: { design: KeychainD
   return (
     <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className="h-14 w-full rounded-[12px] bg-[#050a18] sm:h-16 lg:h-12">
       <defs>
+        {/* Карту обрізаємо по РЕАЛЬНОМУ контуру тіла (форма), а не по rect —
+            інакше серце/пазл/будиночок показували мапу прямокутником. */}
         <clipPath id={clipId}>
-          <rect
-            x={design.mapXMm}
-            y={design.mapYMm}
-            width={design.mapWidthMm}
-            height={design.mapHeightMm}
-            rx={Math.min(design.cornerRadiusMm, 3)}
-          />
+          <path d={bodyPath(design)} />
         </clipPath>
       </defs>
       <g transform={`rotate(${design.layoutRotationDeg || 0} ${bodyCx} ${bodyCy})`}>
@@ -816,11 +834,12 @@ export function KeychainTemplateStrip({
   label: string;
   onSelect: (value: KeychainDesignerConfig) => void;
 }) {
+  const t = useTranslations("kc");
   return (
     <div className="border-t border-white/10 bg-[#070d1d] px-2 py-2 sm:px-3">
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">Готові шаблони</div>
-        <div className="text-[11px] font-medium text-slate-400">tap / click</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">{t("templates.ready")}</div>
+        <div className="text-[11px] font-medium text-slate-400">{t("templates.tapClick")}</div>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {KEYCHAIN_TEMPLATES.map((template) => {
@@ -841,8 +860,8 @@ export function KeychainTemplateStrip({
               }`}
             >
               <TemplateMiniature design={template.design} label={label} active={active} />
-              <div className="mt-1 text-[11px] font-semibold text-white sm:text-xs">{template.name}</div>
-              <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-400 lg:hidden">{template.description}</div>
+              <div className="mt-1 text-[11px] font-semibold text-white sm:text-xs">{t(template.nameKey)}</div>
+              <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-slate-400 lg:hidden">{t(template.descKey)}</div>
             </button>
           );
         })}
@@ -871,6 +890,7 @@ export function KeychainDesigner({
   /** 4 кути обернутого rect ([lon, lat]) — preview обрізає по полігону. */
   cropPolygon?: Array<[number, number]> | null;
 }) {
+  const t = useTranslations("kc");
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragSessionRef = useRef<DragSession | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
@@ -1018,7 +1038,7 @@ export function KeychainDesigner({
   return (
     <div className="relative h-full min-h-[280px] overflow-hidden rounded-[22px] bg-[#050a18] p-2 sm:min-h-[340px] sm:p-3">
       <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[11px] font-semibold text-white/75 backdrop-blur">
-        {previewSide === "front" ? "Тягни карту, текст, вушко або нижній правий маркер" : "Зворот: контроль отвору, ободка і внутрішнього тексту"}
+        {previewSide === "front" ? t("designer.hintFront") : t("designer.hintBack")}
       </div>
       <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/15 bg-black/35 p-1 backdrop-blur">
         <button
@@ -1026,14 +1046,14 @@ export function KeychainDesigner({
           onClick={() => setPreviewSide("front")}
           className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/72"}`}
         >
-          Лице
+          {t("designer.front")}
         </button>
         <button
           type="button"
           onClick={() => setPreviewSide("back")}
           className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
         >
-          Зворот
+          {t("designer.back")}
         </button>
       </div>
       <svg
@@ -1267,7 +1287,7 @@ export function KeychainDesigner({
                       fontSize={2.2}
                       fontWeight={700}
                     >
-                      Обери ділянку на карті
+                      {t("designer.pickArea")}
                     </text>
                   </>
                 )}

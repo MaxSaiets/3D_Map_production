@@ -80,6 +80,9 @@ class TerrainStageResult:
     merged_roads_geom: Optional[BaseGeometry]
     merged_roads_geom_local: Optional[BaseGeometry]
     preclipped_to_zone: bool
+    # Осьові лінії доріг (локальні метри) — GPX-трек прилипає до них (snap-to-roads).
+    # Раніше road_geometry не пробрасувалось у GPX-блок → road-snap мовчки не діяв.
+    semantic_centerlines_local: Optional[BaseGeometry] = None
 
 
 @dataclass

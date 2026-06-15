@@ -655,10 +655,13 @@ def _load_pricing() -> Dict[str, Any]:
     except Exception as e:  # noqa: BLE001
         print(f"[PRICING] load failed: {e}")
         if _PRICING_CACHE["data"] is None:
+            # Аварійний fallback СИНХРОНІЗОВАНО з pricing.json (раніше застаріле
+            # 290/690 суперечило поточним цінам, якби pricing.json не прочитався).
             _PRICING_CACHE["data"] = {
                 "currency": "UAH", "currency_symbol": "₴",
-                "map": {"sizes_mm": {"55": 690}, "relief_addon": 0, "from": 690},
-                "keychain": {"base": 290, "from": 290},
+                "map": {"sizes_mm": {"55": 250, "60": 180, "80": 390, "110": 590, "150": 890},
+                        "relief_addon": 0, "from": 250},
+                "keychain": {"base": 120, "from": 120},
             }
     return _PRICING_CACHE["data"]
 
@@ -669,9 +672,9 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     p = _load_pricing()
     sym = p.get("currency_symbol", "₴")
     if product == "keychain":
-        price = int(p.get("keychain", {}).get("base", 290))
+        price = int(p.get("keychain", {}).get("base", 120))
     else:
-        sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 690}).items()}
+        sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 250}).items()}
         if size_mm:
             nearest = min(sizes.keys(), key=lambda k: abs(k - float(size_mm)))
             price = sizes[nearest]

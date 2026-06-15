@@ -16,27 +16,35 @@ import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
 import { useTranslations } from "next-intl";
 
-type WorkspaceView = "map" | "preview" | "settings";
+function MapLoading() {
+  const tc = useTranslations("create");
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
+      {tc("loadingMap")}
+    </div>
+  );
+}
+
+function GridLoading() {
+  const tc = useTranslations("create");
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
+      {tc("loadingGrid")}
+    </div>
+  );
+}
 
 const MapSelector = dynamic(
   () => import("@/components/MapSelector").then((mod) => ({ default: mod.MapSelector })),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
-        Завантаження карти...
-      </div>
-    ),
+    loading: () => <MapLoading />,
   },
 );
 
 const HexagonalGrid = dynamic(() => import("@/components/HexagonalGrid"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full min-h-[320px] items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.65)] text-sm text-[var(--text-secondary)]">
-      Завантаження сітки...
-    </div>
-  ),
+  loading: () => <GridLoading />,
 });
 
 const CITIES: Record<
@@ -85,14 +93,24 @@ export default function Home() {
   const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
   const [hexSizeM, setHexSizeM] = useState(300.0);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
   const [proMode, setProMode] = useState(false);
   useEffect(() => {
-    try { setProMode(localStorage.getItem("3dmap_pro_mode") === "1"); } catch {/* ignore */}
+    try {
+      setProMode(localStorage.getItem("3dmap_pro_mode") === "1");
+      // showHexGrid теж відновлюємо разом із proMode — інакше після
+      // перезавантаження «Серія зон» мовчки скидалась (proMode=true лишався, а
+      // сітка зникала → панель «Профі» показувала режим «Одна ділянка»).
+      if (localStorage.getItem("3dmap_hex_grid") === "1") setShowHexGrid(true);
+    } catch {/* ignore */}
   }, []);
   const toggleProMode = (v: boolean) => {
     setProMode(v);
     try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
+  };
+  // showHexGrid зберігаємо у localStorage, щоб режим сітки переживав reload.
+  const setShowHexGridPersist = (v: boolean) => {
+    setShowHexGrid(v);
+    try { localStorage.setItem("3dmap_hex_grid", v ? "1" : "0"); } catch {/* ignore */}
   };
 
   // ЗМІНА МІСТА: скидаємо зону ПЕРЕД зміною center — інакше overlay після
@@ -113,12 +131,12 @@ export default function Home() {
   // the figure. Sized by the 1:10000 model-size rule (mapWidthMm * 10 m).
   const handleMapRotation = useCallback((deg: number) => setCropRotationDeg(((deg % 360) + 360) % 360), [setCropRotationDeg]);
   const FIGURE_SHAPES = [
-    { id: "rounded", label: "▭ Прямокутник" },
-    { id: "circle", label: "⬤ Коло" },
-    { id: "hexagon", label: "⬡ Шестикутник" },
-    { id: "octagon", label: "⯃ Восьмикутник" },
-    { id: "capsule", label: "▢ Капсула" },
-    { id: "heart", label: "♥ Серце" },
+    { id: "rounded", label: tc("shapeRect") },
+    { id: "circle", label: tc("shapeCircle") },
+    { id: "hexagon", label: tc("shapeHexagon") },
+    { id: "octagon", label: tc("shapeOctagon") },
+    { id: "capsule", label: tc("shapeCapsule") },
+    { id: "heart", label: tc("shapeHeart") },
   ] as const;
   const [figureShape, setFigureShape] = useState<string>("rounded");
   // GPX: коли трек завантажено, дозволяємо зоні розширюватись понад 1:10000
@@ -151,6 +169,16 @@ export default function Home() {
   const [gridId, setGridId] = useState<string | null>(null);
   const [gridNotice, setGridNotice] = useState<string | null>(null);
   const [gridArea, setGridArea] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+  // Клітини, вже куплені у попередньому замовленні цієї сітки (id `hex_2_3`),
+  // щоб показати їх золотим і дати докупити лише НОВІ сусідні (продовження панно).
+  const [boughtCells, setBoughtCells] = useState<Set<string>>(new Set());
+
+  // Префікс id клітини за типом сітки (бек: hex_/square_/circle_{row}_{col}).
+  const cellIdPrefix = (gt?: string) => (gt === "square" ? "square" : gt === "circle" ? "circle" : "hex");
+
+  // Локалізована назва типу сітки для назви збереженої сітки.
+  const gridTypeLabel = (gt: string) =>
+    gt === "square" ? tc("gridTypeSquares") : gt === "circle" ? tc("gridTypeCircles") : tc("gridTypeHexagons");
 
   // Load a saved grid from history (?grid=<id>): reproduces the same tiling so
   // the user can pick neighbouring cells and generate them.
@@ -166,32 +194,95 @@ export default function Home() {
       if (g.hex_size_m) setHexSizeM(g.hex_size_m);
       if (g.bounds) setGridArea(g.bounds);
       setGridId(g.id || id);
-      setShowHexGrid(true);
-      setGridNotice(`Завантажено сітку «${g.name || g.city || "сітка"}» — згенеровано ${(g.cells || []).length} комірок. Виберіть сусідні й згенеруйте.`);
+      // Куплені клітини → золоті, не обираються повторно.
+      const px = cellIdPrefix(g.grid_type);
+      // Будь-яка збережена клітина = частина попереднього панно → золота на
+      // повторному відкритті (продовження = додати сусідні, замовити лише нові).
+      const bought = new Set<string>(
+        (g.cells || [])
+          .filter((c: any) => c && c.row != null && c.col != null)
+          .map((c: any) => `${px}_${c.row}_${c.col}`),
+      );
+      setBoughtCells(bought);
+      // Завантажена сітка → повний режим сітки (Профі-панель має генерацію серії).
+      setShowHexGridPersist(true);
+      toggleProMode(true);
+      const gridName = g.name || g.city || tc("gridFallbackName");
+      setGridNotice(
+        bought.size > 0
+          ? tc("gridBoughtNotice", { name: gridName, count: bought.size })
+          : tc("gridLoadedNotice", { name: gridName }),
+      );
     })();
   }, [getIdToken]);
 
   const handleSaveGrid = useCallback(async () => {
     const token = await getIdToken();
-    if (!token) { setGridNotice("Увійдіть, щоб зберегти сітку в історію."); return; }
+    if (!token) { setGridNotice(tc("gridLoginToSave")); return; }
     const city = CITIES[currentCityKey];
     const grid = await saveGrid(token, {
       id: gridId || undefined,
-      name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridType === "square" ? "квадрати" : gridType === "circle" ? "кола" : "гексагони"}`,
+      name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridTypeLabel(gridType)}`,
       city: currentCityKey,
       center: city?.center,
       grid_type: gridType,
       hex_size_m: hexSizeM,
       bounds: gridArea || city?.bounds,
       rotation_deg: 0,
-      cells: (selectedZones || []).map((z: any, i: number) => ({
-        row: z?.row ?? z?.gridRow ?? i, col: z?.col ?? z?.gridCol ?? 0,
-        task_id: z?.task_id, ...(z?.id ? { zone_id: z.id } : {}),
-      })),
+      // row/col живуть у feature.properties (GeoJSON) — раніше читалось z.row
+      // → падало на індекс i, тож збережені клітини не збігались зі справжніми
+      // координатами сітки (продовження відкривало не ті зони).
+      cells: (selectedZones || []).map((z: any, i: number) => {
+        const p = z?.properties ?? z ?? {};
+        return {
+          row: p.row ?? p.gridRow ?? i, col: p.col ?? p.gridCol ?? 0,
+          task_id: z?.task_id ?? p.task_id, ...(z?.id ? { zone_id: z.id } : {}),
+        };
+      }),
     });
-    if (grid?.id) { setGridId(grid.id); setGridNotice("Сітку збережено в історію (кабінет → Мої сітки)."); }
-    else setGridNotice("Не вдалося зберегти сітку.");
+    if (grid?.id) { setGridId(grid.id); setGridNotice(tc("gridSaved")); }
+    else setGridNotice(tc("gridSaveFailed"));
   }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones, gridArea]);
+
+  // ПРОДОВЖЕННЯ: авто-зберігаємо сітку ОДРАЗУ після генерації серії з task_id
+  // кожної клітини. Так куплені зони лишаються «золотими» при наступному відкритті
+  // (кабінет → Мої сітки → Відкрити) — людина додає сусідні й замовляє лише нові.
+  const handleSeriesGenerated = useCallback(
+    async (cells: Array<{ row: number; col: number; task_id?: string; zone_id?: string }>) => {
+      const px = cellIdPrefix(gridType);
+      // ОБ'ЄДНУЄМО з раніше купленими (save_grid замінює масив cells цілком → без
+      // мерджу другий заказ стер би перший). Реконструюємо старі з boughtCells.
+      const byKey = new Map<string, { row: number; col: number; task_id?: string }>();
+      for (const id of boughtCells) {
+        const parts = id.split("_");
+        const row = Number(parts[parts.length - 2]);
+        const col = Number(parts[parts.length - 1]);
+        if (Number.isFinite(row) && Number.isFinite(col)) byKey.set(`${row}_${col}`, { row, col });
+      }
+      for (const c of cells) byKey.set(`${c.row}_${c.col}`, c); // нові (з task_id) перекривають
+      const merged = [...byKey.values()];
+      // Одразу підсвічуємо щойно згенеровані клітини золотим (не чекаючи reload).
+      setBoughtCells(new Set(merged.map((c) => `${px}_${c.row}_${c.col}`)));
+      try {
+        const token = await getIdToken();
+        if (!token) return; // не залогінений — золоті лишаться лише на сесію
+        const city = CITIES[currentCityKey];
+        const grid = await saveGrid(token, {
+          id: gridId || undefined,
+          name: `${CITY_LABELS[currentCityKey] ?? currentCityKey} · ${gridTypeLabel(gridType)}`,
+          city: currentCityKey,
+          center: city?.center,
+          grid_type: gridType,
+          hex_size_m: hexSizeM,
+          bounds: gridArea || city?.bounds,
+          rotation_deg: 0,
+          cells: merged,
+        });
+        if (grid?.id) setGridId(grid.id);
+      } catch { /* збереження не критичне */ }
+    },
+    [getIdToken, gridId, currentCityKey, gridType, hexSizeM, gridArea, boughtCells],
+  );
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
   // run a real preview generation through the site's own pipeline, so an
@@ -208,7 +299,6 @@ export default function Home() {
       const s = tpl.span;
       const lonPad = s / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
       const north = lat + s, south = lat - s, east = lon + lonPad, west = lon - lonPad;
-      setWorkspaceView("preview");
       (async () => {
         const L = await import("leaflet");
         const bounds = new L.LatLngBounds([south, west], [north, east]);
@@ -287,12 +377,12 @@ export default function Home() {
     localStorage.removeItem("3dmap_task_ids");
   };
 
-  // UX: момент успіху — щойно модель готова, на мобілці самі показуємо 3D
-  // (раніше юзер лишався на «Мапі» і мусив здогадатися перемкнути таб).
+  // UX: момент успіху — щойно модель готова, на мобілці плавно прокручуємо до 3D
+  // (одноекранно превʼю вже на сторінці нижче — просто наводимо на нього).
   const prevDownloadRef = useRef<string | null>(null);
   useEffect(() => {
     if (downloadUrl && !prevDownloadRef.current && typeof window !== "undefined" && window.innerWidth < 1024) {
-      setWorkspaceView("preview");
+      document.getElementById("panel-preview")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     prevDownloadRef.current = downloadUrl ?? null;
   }, [downloadUrl]);
@@ -303,20 +393,24 @@ export default function Home() {
   const zoneCount = selectedZones.length;
   const selectionLabel = showHexGrid
     ? zoneCount > 0
-      ? `${zoneCount} зон готово`
-      : "Оберіть зони на мапі"
+      ? tc("zonesReady", { count: zoneCount })
+      : tc("pickZonesOnMap")
     : hasMapSelection
-      ? "Ділянка готова до генерації"
-      : "Позначте одну ділянку";
+      ? tc("areaReady")
+      : tc("markOneArea");
   const statusLabel = isGenerating
-    ? `${progress}% • ${status || "Генерація триває"}`
+    ? `${progress}% • ${status || tc("generationInProgress")}`
     : downloadUrl
-      ? "Файл готовий до завантаження"
-      : "Готово до налаштування";
+      ? tc("fileReady")
+      : tc("readyToConfigure");
 
-  const mapPanelClasses = workspaceView === "map" ? "flex" : "hidden lg:flex";
-  const previewPanelClasses = workspaceView === "preview" ? "flex" : "hidden lg:flex";
-  const settingsPanelClasses = workspaceView === "settings" ? "flex" : "hidden";
+  // ОДНОЕКРАННО (як /keychains): панелі НЕ перемикаються табами, а стоять усі
+  // разом у скрол-колонці на мобільному. Порядок: карта → налаштування →
+  // превʼю (логічний потік). На десктопі налаштування у власному aside (тут
+  // lg:hidden), а карта+превʼю стоять у правій колонці. Степер лише прокручує.
+  const mapPanelClasses = "order-1 flex";
+  const previewPanelClasses = "order-3 flex";
+  const settingsPanelClasses = "order-2 flex lg:hidden";
 
   return (
     <div className="min-h-[100dvh] bg-transparent">
@@ -326,9 +420,9 @@ export default function Home() {
         <OnboardingTour
           storageKey="onb_create_v1"
           steps={[
-            { title: "Оберіть місто", body: "Виберіть місто зі списку вгорі — карта одразу перенесеться туди." },
-            { title: "Пересуньте рамку", body: "Рамка на карті — це майбутня 3D-мапа. Клік переносить її, бірюзовий квадрат змінює розмір. Оптимально 0.5–4 км²." },
-            { title: "Згенеруйте", body: "Натисніть «Згенерувати модель» — за 1–3 хвилини отримаєте 3D-превʼю і готовий файл для друку." },
+            { title: tc("tourCityTitle"), body: tc("tourCityBody") },
+            { title: tc("tourFrameTitle"), body: tc("tourFrameBody") },
+            { title: tc("tourGenerateTitle"), body: tc("tourGenerateBody") },
           ]}
         />
       )}
@@ -338,7 +432,7 @@ export default function Home() {
             {/* Back to home (prominent, always visible) */}
             <Link
               href="/"
-              title="На головну"
+              title={tc("backHomeTitle")}
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.35)] hover:text-[var(--text-primary)]"
             >
               <HomeIcon size={15} /> <span className="hidden sm:inline">{tc("backHome")}</span>
@@ -354,7 +448,7 @@ export default function Home() {
                 value={currentCityKey}
                 onChange={(e) => handleCityChange(e.target.value)}
                 className="rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
-                title="Місто"
+                title={tc("cityTitle")}
               >
                 {Object.keys(CITIES).map((key) => (
                   <option key={key} value={key}>{CITY_LABELS[key] ?? key}</option>
@@ -393,12 +487,15 @@ export default function Home() {
               progress,
             }}
             onStepClick={(key) => {
-              // Мобайл: перемикаємо відповідний таб; десктоп: мʼякий скрол до панелі.
-              const view = key === "place" ? "map" : key === "settings" ? "settings" : "preview";
-              setWorkspaceView(view as typeof workspaceView);
-              const target = document.getElementById(
-                key === "place" ? "panel-map" : key === "settings" ? "panel-settings" : "panel-preview",
-              );
+              // Одноекранно: степер лише ПРОКРУЧУЄ до секції (нічого не ховає).
+              const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+              // На мобільному налаштування — окрема картка (aside схований); ведемо
+              // на неї, а не на десктоп-aside (display:none → скрол нікуди).
+              const id =
+                key === "place" ? "panel-map"
+                : key === "settings" ? (isMobile ? "panel-settings-mobile" : "panel-settings")
+                : "panel-preview";
+              const target = document.getElementById(id);
               target?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           />
@@ -409,20 +506,20 @@ export default function Home() {
             <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  {proMode ? "Експертний режим" : "Швидке створення"}
+                  {proMode ? tc("expertMode") : tc("quickCreate")}
                 </span>
                 <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
                   <button type="button" onClick={() => toggleProMode(false)}
-                    className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
+                    className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modeSimple")}</button>
                   <button type="button" onClick={() => toggleProMode(true)}
-                    className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Профі</button>
+                    className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modePro")}</button>
                 </div>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
                 {proMode ? (
                   <ControlPanel
                     showHexGrid={showHexGrid}
-                    setShowHexGrid={setShowHexGrid}
+                    setShowHexGrid={setShowHexGridPersist}
                     selectedZones={selectedZones}
                     setSelectedZones={setSelectedZones}
                     gridType={gridType}
@@ -432,12 +529,13 @@ export default function Home() {
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onCityChange={handleCityChange}
+                    onSeriesGenerated={handleSeriesGenerated}
                   />
                 ) : (
+                  // Місто вибирається у шапці (завжди видно) — у панелі дубль
+                  // прибрано, щоб не плодити два однакові селектори.
                   <SimpleControlPanel
-                    availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={handleCityChange}
                     onAdvanced={() => toggleProMode(true)}
                     showStickyBar={false}
                   />
@@ -454,15 +552,15 @@ export default function Home() {
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      {showHexGrid ? "Вибір серії зон" : "Одна ділянка"}
+                      {showHexGrid ? tc("seriesSelection") : tc("singleArea")}
                     </p>
                     <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                      {showHexGrid ? "Оберіть зони для серії" : "Позначте ділянку на мапі"}
+                      {showHexGrid ? tc("pickZonesForSeries") : tc("markAreaOnMap")}
                     </h2>
                     <p className="mt-1 hidden text-sm text-[var(--text-secondary)] sm:block">
                       {showHexGrid
-                        ? "Працюйте з кількома зонами та швидко готуйте пакетний рендер."
-                        : "Виділіть одну ділянку, щоб швидко згенерувати модель і перейти до прев'ю."}
+                        ? tc("pickAdjacentZones")
+                        : tc("dragFrameSubtitle")}
                     </p>
                   </div>
 
@@ -475,11 +573,77 @@ export default function Home() {
                         onClick={handleSaveGrid}
                         className="rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
                       >
-                        💾 Зберегти сітку
+                        {tc("saveGridButton")}
                       </button>
                     </div>
                   )}
                 </div>
+
+                {/* РЕЖИМ ВИБОРУ — першокласний, завжди видимий перемикач (раніше
+                    «Серія зон» була схована за «Профі», і люди її не знаходили).
+                    «Серія зон» вмикає сітку гексагонів + експертну панель з
+                    параметрами та пакетною генерацією одним кліком. */}
+                <div className="mx-4 mt-3 grid grid-cols-2 gap-2" role="tablist" aria-label={tc("selectionModeAria")}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={!showHexGrid}
+                    onClick={() => { setShowHexGridPersist(false); toggleProMode(false); }}
+                    className={`rounded-[16px] border px-3 py-2.5 text-left transition ${
+                      !showHexGrid
+                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
+                        : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("singleAreaTab")}</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{tc("singleAreaSubtitle")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={showHexGrid}
+                    onClick={() => { setShowHexGridPersist(true); toggleProMode(true); }}
+                    className={`rounded-[16px] border px-3 py-2.5 text-left transition ${
+                      showHexGrid
+                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
+                        : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("seriesTab")}</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{tc("seriesSubtitle")}</span>
+                  </button>
+                </div>
+
+                {/* ВИБІР ФОРМИ КЛІТИНОК — видимий прямо у режимі сітки (раніше був
+                    схований у «Профі»-панелі й на мобільному недоступний). */}
+                {showHexGrid && (
+                  <div className="mx-4 mt-2">
+                    <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("cellShape")}</div>
+                    <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={tc("cellShapeAria")}>
+                      {([
+                        ["hexagonal", tc("gridHexLabel"), tc("gridHexHint")],
+                        ["square", tc("gridSquareLabel"), tc("gridSquareHint")],
+                        ["circle", tc("gridCircleLabel"), tc("gridCircleHint")],
+                      ] as Array<["hexagonal" | "square" | "circle", string, string]>).map(([gt, label, hint]) => (
+                        <button
+                          key={gt}
+                          type="button"
+                          role="radio"
+                          aria-checked={gridType === gt}
+                          onClick={() => setGridType(gt)}
+                          title={hint}
+                          className={`rounded-[14px] border px-2 py-2 text-center transition ${
+                            gridType === gt
+                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
+                              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                          }`}
+                        >
+                          <span className="block text-[12px] font-semibold text-[var(--text-primary)]">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {gridNotice && (
                   <div className="mx-4 mt-3 rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[rgba(15,118,110,0.08)] px-3 py-2 text-[12px] text-[var(--text-primary)]">
@@ -489,7 +653,7 @@ export default function Home() {
 
                 {!showHexGrid && (
                   <div className="mx-4 mt-3 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">Форма:</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
                     {FIGURE_SHAPES.map((sh) => (
                       <button
                         key={sh.id}
@@ -504,20 +668,22 @@ export default function Home() {
                         {sh.label}
                       </button>
                     ))}
-                    <span className="ml-1 text-[11px] text-[var(--text-secondary)]">· клік на карті = поставити точково · ⟳ = обертати</span>
                   </div>
                 )}
 
                 <div className="min-h-[460px] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
-                      key={`hex-grid-${currentCityKey}`}
+                      // boughtCells.size у ключі: коли куплені клітини
+                      // підвантажились, грід перемальовується з золотими.
+                      key={`hex-grid-${currentCityKey}-${boughtCells.size}`}
                       bounds={currentCity.bounds}
                       onZonesSelected={setSelectedZones}
                       gridType={gridType}
                       hexSizeM={hexSizeM}
                       onAreaChange={setGridArea}
                       initialArea={gridArea}
+                      boughtCells={boughtCells}
                     />
                   ) : (
                     <div className="h-full overflow-hidden rounded-[24px]">
@@ -533,19 +699,16 @@ export default function Home() {
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                      3D-превʼю
+                      {tc("preview3d")}
                     </p>
                     <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
-                      Перевіряйте форму моделі ще до завантаження
+                      {tc("previewSubtitle")}
                     </h2>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                      На телефоні прев'ю винесене в окремий екран, щоб не конфліктувати з картою та налаштуваннями.
-                    </p>
                   </div>
 
                   <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      Стан
+                      {tc("statusHeading")}
                     </div>
                     <div className="mt-1 flex items-center justify-end gap-2">
                       <span className="text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</span>
@@ -553,9 +716,9 @@ export default function Home() {
                         <button
                           onClick={handleCancelTask}
                           className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-200 transition-colors"
-                          title="Скасувати генерацію"
+                          title={tc("cancelTitle")}
                         >
-                          <X size={10} /> Скасувати
+                          <X size={10} /> {tc("cancel")}
                         </button>
                       )}
                     </div>
@@ -570,23 +733,23 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={settingsPanelClasses}>
+            <div id="panel-settings-mobile" className={settingsPanelClasses}>
               <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
                 <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    {proMode ? "Експертний режим" : "Швидке створення"}
+                    {proMode ? tc("expertMode") : tc("quickCreate")}
                   </span>
                   <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
                     <button type="button" onClick={() => toggleProMode(false)}
-                      className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Просто</button>
+                      className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modeSimple")}</button>
                     <button type="button" onClick={() => toggleProMode(true)}
-                      className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>Профі</button>
+                      className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modePro")}</button>
                   </div>
                 </div>
                 {proMode ? (
                   <ControlPanel
                     showHexGrid={showHexGrid}
-                    setShowHexGrid={setShowHexGrid}
+                    setShowHexGrid={setShowHexGridPersist}
                     selectedZones={selectedZones}
                     setSelectedZones={setSelectedZones}
                     gridType={gridType}
@@ -596,13 +759,12 @@ export default function Home() {
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onCityChange={handleCityChange}
+                    onSeriesGenerated={handleSeriesGenerated}
                   />
                 ) : (
                   <SimpleControlPanel
-                    availableCities={CITIES}
                     selectedCityKey={currentCityKey}
-                    onCityChange={handleCityChange}
-                  onAdvanced={() => toggleProMode(true)}
+                    onAdvanced={() => toggleProMode(true)}
                   />
                 )}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -86,6 +87,9 @@ interface HexagonalGridProps {
   onAreaChange?: (area: GBounds | null) => void;
   /** Pre-set the grid area (e.g. when reopening a saved grid from history). */
   initialArea?: GBounds | null;
+  /** Клітини, вже куплені у попередньому замовленні (id `hex_2_3` тощо) — їх
+   *  підсвічуємо золотим «куплено» і НЕ даємо обирати знову (продовження панно). */
+  boughtCells?: Set<string>;
 }
 
 // Стилі для шестикутників
@@ -112,6 +116,15 @@ const hoverStyle = {
   fillColor: "#34d399",
 };
 
+// Вже куплена клітина (продовження панно) — золота, не обирається повторно.
+const boughtStyle = {
+  color: "#b45309",
+  weight: 2.5,
+  opacity: 1,
+  fillOpacity: 0.55,
+  fillColor: "#f59e0b",
+};
+
 export default function HexagonalGrid({
   bounds,
   onZonesSelected,
@@ -119,14 +132,20 @@ export default function HexagonalGrid({
   hexSizeM: externalHexSizeM = 300.0,
   onAreaChange,
   initialArea = null,
+  boughtCells,
 }: HexagonalGridProps) {
+  const t = useTranslations("grid");
   const normalizeId = (id: any): string => String(id ?? "");
+  const boughtCellsRef = useRef<Set<string>>(new Set());
+  boughtCellsRef.current = boughtCells ?? new Set();
   const [hexGrid, setHexGrid] = useState<any>(null);
   const [selectedZones, setSelectedZones] = useState<Set<string>>(new Set());
   // Ordered selection (so zones can be generated and previewed "one after another")
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Інлайн-помилка генерації сітки (замість блокуючого alert()).
+  const [gridError, setGridError] = useState<string | null>(null);
   // User-drawn area (large zone) the grid fills. Falls back to the city bounds.
   const [drawnBounds, setDrawnBounds] = useState<GBounds | null>(null);
   const drawnBoundsRef = useRef<GBounds | null>(null);
@@ -177,6 +196,7 @@ export default function HexagonalGrid({
     setAppliedHexSizeM(hexSizeM);
 
     setIsLoading(true);
+    setGridError(null);
     setHexGrid(null); // Скидаємо попередню сітку
 
     try {
@@ -206,7 +226,7 @@ export default function HexagonalGrid({
 
 
       if (!data.geojson || !data.geojson.features || data.geojson.features.length === 0) {
-        throw new Error("Сітка порожня або невалідна");
+        throw new Error(t("errorEmptyGrid"));
       }
 
       // Діагностика першого feature
@@ -222,7 +242,7 @@ export default function HexagonalGrid({
     } catch (error: any) {
       console.error("Помилка генерації сітки:", error);
       const errorMessage = error.response?.data?.detail || error.message || String(error);
-      alert("Помилка генерації сітки: " + errorMessage);
+      setGridError(t("errorGenerate", { error: errorMessage }));
       setHexGrid(null);
     } finally {
       setIsLoading(false);
@@ -236,6 +256,10 @@ export default function HexagonalGrid({
 
     if (!zoneId) {
       console.error("[HexagonalGrid] zoneId is empty!");
+      return;
+    }
+    // Куплені клітини не обираються повторно (продовження = лише НОВІ сусідні).
+    if (boughtCellsRef.current.has(zoneId)) {
       return;
     }
 
@@ -317,6 +341,10 @@ export default function HexagonalGrid({
       return defaultStyle;
     }
 
+    // Куплена клітина має пріоритет — золота, не реагує на вибір/наведення.
+    if (boughtCellsRef.current.has(zid)) {
+      return boughtStyle;
+    }
     const isSelected = selectedZonesRef.current.has(zid);
     const isHovered = hoveredZoneRef.current === zid;
 
@@ -382,46 +410,63 @@ export default function HexagonalGrid({
   return (
     <div className="w-full h-full flex flex-col">
       <div className="px-2 py-1.5 bg-white border-b border-gray-200 flex-shrink-0 shadow-sm">
+        {gridError && (
+          <div className="mb-1.5 flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-red-700">
+            <span>⚠ {gridError}</span>
+            <button type="button" onClick={() => setGridError(null)} className="font-semibold underline-offset-2 hover:underline">{t("hide")}</button>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center gap-1.5 text-[11px]">
             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
-            <span className="text-gray-700">Генерація сітки...</span>
+            <span className="text-gray-700">{t("generating")}</span>
           </div>
         ) : hexGrid ? (
           <div className="space-y-1.5">
             {/* Чітка інструкція: раніше юзер бачив суцільну пляму клітин і не
-                розумів, що їх треба КЛІКАТИ. Тепер — крок-за-кроком + легенда. */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-gray-700">
-              <span className="font-semibold text-[var(--accent-strong,#0f766e)]">
+                розумів, що їх треба КЛІКАТИ. Тепер — «як це працює» одним рядком
+                + ПОСТІЙНА легенда трьох станів (доступна/наведення/обрана). */}
+            <div className="space-y-1">
+              <div className="text-[11px] font-semibold leading-4 text-[var(--accent-strong,#0f766e)]">
                 {selectedZones.size === 0
-                  ? "👆 Клікайте клітинки — вони стануть"
-                  : `Обрано ${selectedZones.size} — далі «Згенерувати серію»`}
-              </span>
-              {selectedZones.size === 0 && (
+                  ? t("howItWorks")
+                  : t("howItWorksSelected", { n: selectedZones.size })}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] leading-4 text-gray-600">
                 <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-sm border border-red-600 bg-red-400/60" />
-                  червоними
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-blue-500 bg-blue-400/40" /> {t("legendAvailable")}
                 </span>
-              )}
-              <span className="text-gray-400">·</span>
-              <span title="Намалюйте прямокутник інструментом ▢ вгорі праворуч, щоб обмежити сітку своєю зоною">
-                ▢ для своєї зони
-              </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-emerald-500 bg-emerald-400/60" /> {t("legendHover")}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-red-600 bg-red-400/70" /> {t("legendSelected")}
+                </span>
+                {boughtCells && boughtCells.size > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-700 bg-amber-400/70" /> {t("legendBought")}
+                  </span>
+                )}
+                <span className="text-gray-400">·</span>
+                <span title={t("ownZoneHint")}>
+                  ▢ {t("ownZone")}
+                </span>
+              </div>
             </div>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-[11px]">
               <span className="font-medium text-gray-700">
-                Клітинок: <span className="text-gray-900 font-semibold">{hexGrid.features.length}</span>
+                {t("cellsLabel")} <span className="text-gray-900 font-semibold">{hexGrid.features.length}</span>
               </span>
               <span className="font-medium text-blue-700">
-                Вибрано: <span className="text-blue-800 font-bold">{selectedZones.size}</span>
+                {t("selectedLabel")} <span className="text-blue-800 font-bold">{selectedZones.size}</span>
               </span>
               {selectedZones.size > 0 && (
-                <span className="text-green-700 font-semibold">✓ Готово</span>
+                <span className="text-green-700 font-semibold">✓ {t("ready")}</span>
               )}
               {!isValid && validationErrors.length > 0 && (
                 <span className="text-red-600 text-[10px]">
-                  ⚠ {validationErrors.length} помилок
+                  ⚠ {t("validationErrors", { n: validationErrors.length })}
                 </span>
               )}
             </div>
@@ -429,44 +474,44 @@ export default function HexagonalGrid({
               {hasPendingChanges && (
                 <button
                   onClick={generateGrid}
-                  className="px-2 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
-                  title={`Застосувати нові параметри: ${gridType}, ${hexSizeM}м`}
+                  className="px-3 py-1.5 text-[11px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
+                  title={t("applyTitle", { type: gridType, size: hexSizeM })}
                 >
-                  ↻ Застосувати
+                  ↻ {t("apply")}
                 </button>
               )}
               <button
                 onClick={handleSelectAll}
-                className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                title="Вибрати всі зони"
+                className="px-3 py-1.5 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                title={t("selectAllTitle")}
               >
-                Всі
+                {t("all")}
               </button>
               <button
                 onClick={handleDeselectAll}
-                className="px-2 py-0.5 text-[10px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-                title="Зняти вибір з усіх зон"
+                className="px-3 py-1.5 text-[11px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                title={t("clearTitle")}
               >
-                Очистити
+                {t("clear")}
               </button>
               {drawnBounds ? (
                 <button
                   onClick={resetArea}
-                  className="px-2 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
-                  title="Скинути намальовану зону — сітка повернеться до стартової зони в центрі міста"
+                  className="px-3 py-1.5 text-[11px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                  title={t("resetAreaTitle")}
                 >
-                  ⤢ Своя зона
+                  ⤢ {t("ownZone")}
                 </button>
               ) : (
-                <span className="px-2 py-0.5 text-[10px] text-teal-700" title="Намалюйте прямокутник на карті (значок ▢ праворуч), щоб сітка будувалась лише в ньому">
-                  ▢ намалюйте зону
+                <span className="px-3 py-1.5 text-[11px] text-teal-700" title={t("drawZoneTitle")}>
+                  ▢ {t("drawZone")}
                 </span>
               )}
             </div>
           </div>
           </div>
         ) : (
-          <div className="text-[11px] text-gray-600">Генерація сітки...</div>
+          <div className="text-[11px] text-gray-600">{t("generating")}</div>
         )}
       </div>
 
@@ -547,7 +592,7 @@ export default function HexagonalGrid({
                 const props = feature.properties || {};
                 const isSelected = selectedZones.has(zoneId);
                 layer.bindTooltip(
-                  `<b>Зона ${zoneId}</b><br/>Ряд: ${props.row}, Колонка: ${props.col}<br/>${isSelected ? '<span style="color: red; font-weight: bold;">✓ Вибрано</span>' : '<span style="color: gray;">Клікніть для вибору</span>'}`,
+                  `<b>${t("tooltipZone", { zone: zoneId })}</b><br/>${t("tooltipRowCol", { row: props.row, col: props.col })}<br/>${isSelected ? '<span style="color: red; font-weight: bold;">' + t("tooltipSelected") + '</span>' : '<span style="color: gray;">' + t("tooltipClickToSelect") + '</span>'}`,
                   {
                     permanent: false,
                     direction: 'top',

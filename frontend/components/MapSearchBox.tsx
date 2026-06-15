@@ -68,7 +68,10 @@ export function MapSearchBox() {
   return (
     <div
       ref={boxRef}
-      className="pointer-events-auto absolute left-1/2 top-2 w-[min(360px,calc(100%-110px))] -translate-x-1/2"
+      // Мобільний: власний повноширинний рядок зверху (тоглі/поворот опускаються
+      // на ряд нижче — не налазять). Десктоп (sm+): по центру з достатнім
+      // резервом обабіч (тоглі ~120px зліва + поворот ~110px справа).
+      className="pointer-events-auto absolute left-2 right-2 top-2 sm:left-1/2 sm:right-auto sm:w-[min(360px,calc(100%-260px))] sm:-translate-x-1/2"
       style={{ zIndex: 10_000 }}
       data-testid="map-search"
     >

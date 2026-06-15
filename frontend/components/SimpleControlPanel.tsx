@@ -43,7 +43,7 @@ export function SimpleControlPanel({
     isGenerating, downloadUrl, progress, status, printQuality,
     taskGroupId, setTaskGroup, setActiveTaskId, setGenerating,
     setDownloadUrl, setTaskStatuses, updateProgress,
-    modelSizeMm, setModelSizeMm, previewMode, setPreviewMode, setGpxFocus,
+    modelSizeMm, setModelSizeMm, setGpxFocus,
     setTerrainEnabled,
     setPreviewIncludeBuildings, setPreviewIncludeRoads,
     setPreviewIncludeWater, setPreviewIncludeParks,
@@ -120,9 +120,12 @@ export function SimpleControlPanel({
   useEffect(() => {
     let alive = true;
     const relief = MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain ?? false;
-    fetchQuote("map", modelSizeMm, relief).then((q) => { if (alive) setQuote(q); });
+    // Магніт — окремий продукт із фіксованою ціною (ключ розміру 60 = 180₴), а
+    // НЕ звичайна мапа за вибраним S/M/L/XL. Без цього у формі показувалась ціна
+    // мапи (напр. 250₴ замість 180₴). Генерація теж форсує modelSizeMm=60.
+    fetchQuote("map", magnetMode ? 60 : modelSizeMm, magnetMode ? false : relief).then((q) => { if (alive) setQuote(q); });
     return () => { alive = false; };
-  }, [modelSizeMm, styleId]);
+  }, [modelSizeMm, styleId, magnetMode]);
 
   // Fallback-ціна (поки /api/quote вантажиться): з локальної таблиці розмірів,
   // щоб sticky-бар не показував порожнє «—» на першому екрані.
@@ -658,25 +661,10 @@ export function SimpleControlPanel({
 
         {/* Generate */}
         <div className="space-y-3">
-          <div className="flex items-center justify-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setPreviewMode(true)}
-              disabled={isGenerating}
-              className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${previewMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
-            >
-              {t("quickPreview")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewMode(false)}
-              disabled={isGenerating}
-              className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${!previewMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
-            >
-              {t("forPrint")}
-            </button>
-          </div>
-
+          {/* Перемикач «Швидке прев'ю / Для друку» прибрано: на екрані завжди
+              швидке прев'ю (previewMode=true за замовчанням), а друкарську якість
+              оператор генерує при оформленні замовлення. Менше технічних рішень
+              для покупця. */}
           <button
             type="button"
             onClick={handleGenerate}
@@ -759,8 +747,8 @@ export function SimpleControlPanel({
           {downloadUrl && quota && !quota.isAdmin && (
             <div className={`-mt-1 text-center text-[12px] font-medium ${quota.remaining > 0 ? "text-[var(--text-secondary)]" : "text-amber-700"}`}>
               {quota.remaining > 0
-                ? `Залишилось ${quota.remaining} з ${quota.limit} безкоштовних завантажень`
-                : "Безкоштовні завантаження вичерпано — оформіть замовлення друку"}
+                ? t("quotaLeft", { n: quota.remaining, limit: quota.limit })
+                : t("quotaExhausted")}
             </div>
           )}
 
@@ -806,7 +794,7 @@ export function SimpleControlPanel({
                 ? t("orderPrint")
                 : isGenerating
                   ? `${t("generating")} ${progress}%`
-                  : t("generate")
+                  : t("generateShort") /* короткий лейбл для sticky (без «модель») — не переноситься у 2 рядки */
             }
             busy={isGenerating}
             disabled={!downloadUrl && (!selectedArea || isGenerating)}

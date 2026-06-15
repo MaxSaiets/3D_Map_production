@@ -576,32 +576,6 @@ def _round_polygon_tip(pts: list, *, tip_index: int, radius: float, samples: int
     return out
 
 
-def _heart_lock_polygon(tip_x: float, cy: float, span: float, protrusion: float, lobes_dir: int = 1) -> BaseGeometry:
-    """Маленьке СЕРЦЕ-замок для парного серця: гострий кінчик біля лінії розрізу
-    (tip_x, cy), лоби (широка частина) тягнуться у бік lobes_dir (+1=праворуч).
-    Лоби ширші за шийку → горизонтальний замок (половинки не розʼєднуються), а
-    стик виглядає як гарне мале серце. span = вертикальна висота, protrusion =
-    глибина виступу у сусідню половинку."""
-    import math
-    from shapely import affinity as _aff
-    n = 96
-    raw = []
-    for i in range(n):
-        t = 2.0 * math.pi * i / n
-        hx = 16.0 * math.sin(t) ** 3
-        hy = 13.0 * math.cos(t) - 5.0 * math.cos(2.0 * t) - 2.0 * math.cos(3.0 * t) - math.cos(4.0 * t)
-        raw.append((hx, hy))
-    xs = [p[0] for p in raw]; ys = [p[1] for p in raw]
-    x0, x1 = min(xs), max(xs); y0, y1 = min(ys), max(ys)
-    # вертикальне серце: кінчик у (0,0) знизу, лоби вгору до (±span/2, protrusion)
-    pts = [((px - (x0 + x1) / 2.0) / (x1 - x0) * span,
-            (py - y0) / (y1 - y0) * protrusion) for px, py in raw]
-    poly = Polygon(pts).buffer(0)
-    # поворот: кінчик→ліворуч, лоби→праворуч (для lobes_dir=+1)
-    poly = _aff.rotate(poly, -90.0 * lobes_dir, origin=(0.0, 0.0))
-    return _aff.translate(poly, xoff=tip_x, yoff=cy)
-
-
 def _keychain_body_shape(
     minx: float,
     miny: float,
@@ -680,12 +654,28 @@ def _keychain_body_shape(
         # ПАРА ДЛЯ ЗАКОХАНИХ: серце, розрізане вертикально на дві половинки
         # з puzzle-замком по грані розрізу. bbox (minx..maxx) = ОДНА половинка;
         # повне серце будується на подвійній ширині і кліпається.
-        # Замок: головка k=0.16·довжини грані розрізу, шийка 0.62k, кліренс
-        # паза 0.8% грані (~0.26мм на 44мм) — як у puzzle-пари (під тестом).
+        # Замок: jigsaw-кнопка (головка-коло k=0.14·грані розрізу, шийка 0.60k →
+        # головка ширша за шийку = справжнє зчеплення в площині). Деталі нижче.
         import math
-        full = _keychain_body_shape(
-            minx, miny, minx + 2.0 * width, maxy, radius_m=radius_m, shape="heart",
-        )
+        # ПОВНЕ серце на подвійній ширині, але БЕЗ заокруглення вістря: інакше
+        # вертикальний розріз через заокруглений (пласкенький) низ дає у кожній
+        # половинці 90°-«гачок» біля шва — саме та «крива» що скаржився власник.
+        # Гостре вістря по центру → кожна половинка сходить у чистий кінчик на шві,
+        # а складене серце має класичний гострий низ.
+        _hn = 160
+        _hraw = []
+        for _i in range(_hn):
+            _t = 2.0 * math.pi * _i / _hn
+            _hx = 16.0 * math.sin(_t) ** 3
+            _hy = 13.0 * math.cos(_t) - 5.0 * math.cos(2.0 * _t) - 2.0 * math.cos(3.0 * _t) - math.cos(4.0 * _t)
+            _hraw.append((_hx, _hy))
+        _fw = 2.0 * width
+        _xs = [p[0] for p in _hraw]; _ys = [p[1] for p in _hraw]
+        _x0, _x1 = min(_xs), max(_xs); _y0, _y1 = min(_ys), max(_ys)
+        full = Polygon([
+            (minx + (px - _x0) / (_x1 - _x0) * _fw, miny + (py - _y0) / (_y1 - _y0) * height)
+            for px, py in _hraw
+        ]).buffer(0)
         cut = minx + width
         cut_line = LineString([(cut, miny - height), (cut, maxy + height)])
         seg = full.intersection(cut_line)
@@ -694,26 +684,27 @@ def _keychain_body_shape(
         y0e, y1e = longest.bounds[1], longest.bounds[3]
         elen = max(y1e - y0e, 1e-6)
         cy = (y0e + y1e) / 2.0
-        # ФІГУРНИЙ ЗАМОК У ФОРМІ МАЛЕНЬКОГО СЕРЦЯ: кінчик біля розрізу, лоби у
-        # праву половинку (ширші за шийку → горизонтальний замок). L має серце-
-        # ВИСТУП, R — таке саме серце-ПАЗ із клиренсом. Складене = велике серце з
-        # маленьким серцем-стиком. span/protrusion ~ від довжини грані розрізу.
-        k = elen * 0.16
-        lock_tip_x = cut - k * 0.35
-        lock_span = k * 1.9
-        lock_protrusion = k * 1.5
+        # СПРАВЖНІЙ ЗАМОК = jigsaw-кнопка (головка ШИРША за шийку → інтерференційне
+        # зчеплення, що тримає в площині; серце-форма трималась лише тертям —
+        # дослідження). Головка-коло k=0.14·грані, шийка nw=0.60k (діаметр 2k vs
+        # шийка 1.2k → головка ~1.67× → замикає). Кліренс 0.6% грані (~0.20мм на
+        # 33мм) — щільний клац, але розʼємний (FDM-друк). Та сама механіка, що
+        # puzzle-пара. Кнопка лишається ВСЕРЕДИНІ контуру серця (∩ full) → стик
+        # виглядає як ОДНЕ ціле серце.
+        k = elen * 0.14
+        nw = k * 0.60
+        clearance = elen * 0.006
+        knob_cx = cut + k * 0.95
+        knob = unary_union([
+            Point(knob_cx, cy).buffer(k, resolution=48),
+            box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
+        ])
         if shape_name == "heart-l":
             half = full.intersection(box(minx - width, miny - height, cut, maxy + height))
-            tab = _heart_lock_polygon(lock_tip_x, cy, lock_span, lock_protrusion, lobes_dir=1)
-            # tab мусить лишатись усередині ПОВНОГО серця, інакше у складеному
-            # вигляді він стирчатиме за контур
-            tab = tab.intersection(full)
+            tab = knob.intersection(full)  # лишається в межах серця
             return unary_union([half, tab]).buffer(0)
-        clearance = elen * 0.008
         half = full.intersection(box(cut, miny - height, minx + 2.0 * width + width, maxy + height))
-        notch = _heart_lock_polygon(lock_tip_x, cy, lock_span, lock_protrusion, lobes_dir=1).buffer(
-            clearance, join_style=1
-        )
+        notch = knob.buffer(clearance, join_style=1)
         half = half.difference(notch).buffer(0)
         return affinity.translate(half, xoff=-width)
     if shape_name in {"puzzle-l", "puzzle-r"}:
@@ -3306,7 +3297,9 @@ def run_flat_plate_pipeline(
         # Плоскими лишаються: вушко (поза content_area), rim, смуги напису.
         if topo_mode:
             try:
-                relief_mm = min(max(float(getattr(request, "keychain_relief_mm", 2.2) or 2.2), 0.6), 4.0)
+                # Кап 6мм (було 4мм) — гори на топо-брелку виразніші, лишаючись
+                # друкабельними на жетоні (стінка ще достатня над рельєфом).
+                relief_mm = min(max(float(getattr(request, "keychain_relief_mm", 2.2) or 2.2), 0.6), 6.0)
                 # Під текстом рельєф флетимо до base_top (текст має стояти на рівному)
                 _flatten_zones = []
                 for _band_key, _txt in (

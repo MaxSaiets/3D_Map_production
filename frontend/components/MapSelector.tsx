@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap, ZoomControl } from "react-leaflet";
+import { useTranslations } from "next-intl";
 import L from "leaflet";
 import "leaflet-draw";
 import { useGenerationStore } from "@/store/generation-store";
@@ -290,10 +291,9 @@ function shapeOutlinePoints(widthM: number, heightM: number, shape: string, corn
     const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
     const sc = Math.min((2 * w) / (maxx - minx), h / (maxy - miny));
     const ccx = (minx + maxx) / 2, ccy = (miny + maxy) / 2;
-    let hp = raw.map((p) => [(p.x - ccx) * sc, (p.y - ccy) * sc] as [number, number]);
-    let tIdx = 0;
-    for (let i = 1; i < hp.length; i++) if (hp[i][1] < hp[tIdx][1]) tIdx = i;
-    hp = roundOutlineTip(hp, tIdx, Math.min(2 * w, h) * 0.16);
+    const hp = raw.map((p) => [(p.x - ccx) * sc, (p.y - ccy) * sc] as [number, number]);
+    // БЕЗ заокруглення вістря: гострий кінчик по центру → чистий силует половинки
+    // (заокруглений низ давав «кривий гачок» біля шва). Дзеркало бекенду.
     const keepLeft = shape === "heart-l";
     const keep = (p: [number, number]) => (keepLeft ? p[0] <= 0 : p[0] >= 0);
     const clipped: Array<[number, number]> = [];
@@ -493,6 +493,7 @@ function safeCropMeters(spec: KeychainCropSpec) {
 
 function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const map = useMap();
+  const t = useTranslations("map");
   const { selectedArea, setSelectedArea } = useGenerationStore();
   const initialSelectedAreaRef = useRef(selectedArea);
   const shapeRef = useRef<L.Polygon | null>(null);
@@ -613,8 +614,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     });
     const labelIcon = L.divIcon({
       className: "",
-      html: '<div style="padding:6px 9px;border-radius:999px;background:rgba(5,10,24,.82);border:1px solid rgba(255,255,255,.3);color:white;font:700 11px/1.1 system-ui;white-space:nowrap;">клік = поставити · ⟳ = крутити</div>',
-      iconSize: [172, 28],
+      html: `<div style="padding:6px 9px;border-radius:999px;background:rgba(5,10,24,.82);border:1px solid rgba(255,255,255,.3);color:white;font:700 11px/1.1 system-ui;white-space:nowrap;">${t("dragHint")}</div>`,
+      iconSize: [184, 28],
       iconAnchor: [86, 36],
     });
     const rotateIcon = L.divIcon({
@@ -901,7 +902,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       gpxLineRef.current?.remove();
       gpxLineRef.current = null;
     };
-  }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange]);
+  }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange, t]);
 
   return null;
 }
@@ -946,6 +947,7 @@ interface MapSelectorProps {
 }
 
 export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSelectorProps) {
+  const t = useTranslations("map");
   const [tileMode, setTileMode] = useState<"map" | "satellite">("map");
   const { selectedArea } = useGenerationStore();
   const isKeychainCrop = Boolean(keychainCrop);
@@ -1012,7 +1014,7 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         <InvalidateOnResize />
       </MapContainer>
       <div
-        className="pointer-events-auto absolute left-2 top-2 flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur"
+        className="pointer-events-auto absolute left-2 top-[50px] flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur sm:top-2"
         style={{ zIndex: 10_000 }}
       >
         <button
@@ -1020,14 +1022,14 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           onClick={() => setTileMode("map")}
           className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "map" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
-          Карта
+          {t("layerMap")}
         </button>
         <button
           type="button"
           onClick={() => setTileMode("satellite")}
           className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "satellite" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
-          Супутник
+          {t("layerSatellite")}
         </button>
       </div>
       {/* Пошук будь-якого міста/адреси (Nominatim) → подія monadruk:map-goto,
@@ -1037,15 +1039,15 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="pointer-events-auto absolute left-2 top-[46px] flex min-h-[32px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/90 px-3 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(15,23,42,0.3)] backdrop-blur transition hover:bg-[#050a18]"
+        className="pointer-events-auto absolute left-2 top-[92px] flex min-h-[32px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/90 px-3 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(15,23,42,0.3)] backdrop-blur transition hover:bg-[#050a18] sm:top-[46px]"
         style={{ zIndex: 10_000 }}
-        title="На весь екран"
+        title={t("fullscreen")}
       >
-        {expanded ? "✕ Згорнути" : "⤢ На весь екран"}
+        {expanded ? t("collapse") : t("expand")}
       </button>
       {keychainCrop ? (
         <div
-          className="pointer-events-auto absolute right-2 top-2 flex items-center overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur"
+          className="pointer-events-auto absolute right-2 top-[50px] flex items-center overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur sm:top-2"
           style={{ zIndex: 10_000 }}
         >
           <button
@@ -1075,9 +1077,9 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           style={{ zIndex: 10_000 }}
         >
           <div className="hidden rounded-[18px] border border-white/45 bg-[#050a18]/86 px-3 py-2 text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur sm:block">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">Область друку</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{t("printArea")}</div>
             <div className="mt-1 text-xs font-semibold">
-              Клік ставить рамку. Бірюзовий квадрат змінює розмір, кругла ручка ⟳ крутить форму.
+              {t("cropHelp")}
             </div>
           </div>
           {cropMetrics ? (
@@ -1087,19 +1089,25 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
                   ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                   : "border-red-200 bg-red-50 text-red-700"
               }`}
-              title={`Найдрібніша деталь ≈ ${cropMetrics.detailM.toFixed(1)} м на моделі`}
+              title={t("detailTooltip", { detail: cropMetrics.detailM.toFixed(1) })}
             >
               {/* Людська мова замість «480×480 м · 0.4 мм = ~2.4 м». Технічний
                   показник лишається у tooltip для цікавих. */}
               {cropMetrics.isSafe
-                ? `Ділянка ${Math.round(cropMetrics.widthM)}×${Math.round(cropMetrics.heightM)} м · ${
-                    cropMetrics.detailM <= 1.5
-                      ? "висока деталізація"
-                      : cropMetrics.detailM <= 3
-                        ? "добра деталізація"
-                        : "оглядовий масштаб"
-                  }`
-                : `Ділянка завелика (${Math.round(cropMetrics.widthM)}×${Math.round(cropMetrics.heightM)} м) — дрібні вулиці зіллються. Зменши рамку.`}
+                ? t("areaInfo", {
+                    w: Math.round(cropMetrics.widthM),
+                    h: Math.round(cropMetrics.heightM),
+                    detail:
+                      cropMetrics.detailM <= 1.5
+                        ? t("detailHigh")
+                        : cropMetrics.detailM <= 3
+                          ? t("detailGood")
+                          : t("detailOverview"),
+                  })
+                : t("areaTooLarge", {
+                    w: Math.round(cropMetrics.widthM),
+                    h: Math.round(cropMetrics.heightM),
+                  })}
             </div>
           ) : null}
         </div>

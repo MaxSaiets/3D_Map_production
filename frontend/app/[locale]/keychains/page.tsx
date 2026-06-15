@@ -14,6 +14,8 @@ import {
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
 import { useGenerationStore } from "@/store/generation-store";
+import { GPX_MAX_M_PER_MM } from "@/lib/generation";
+import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
 
@@ -80,6 +82,10 @@ export default function KeychainsPage() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const [cropPolygon, setCropPolygon] = useState<Array<[number, number]> | null>(null);
   const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea } = useGenerationStore();
+  // Завантажений GPX-трек (store.gpxFocus) → зона має розширюватись як на /create,
+  // інакше довгий маршрут обрізало (maxMetersPerMm був жорстко 7).
+  const gpxFocus = useGenerationStore((s) => s.gpxFocus);
+  const tKc = useTranslations("kc"); // локалізовані назви шаблонів брелків
 
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
@@ -132,7 +138,8 @@ export default function KeychainsPage() {
   const keychainCrop = useMemo(
     () => ({
       aspectRatio: mapAspectRatio,
-      maxMetersPerMm: 7.0,
+      // GPX: коли є трек — даємо зоні розтягнутись (як на мапах), щоб маршрут влазив.
+      maxMetersPerMm: gpxFocus ? GPX_MAX_M_PER_MM : 7.0,
       targetMetersPerMm: 3.5,
       mapWidthMm: design.mapWidthMm,
       mapHeightMm: design.mapHeightMm,
@@ -144,7 +151,7 @@ export default function KeychainsPage() {
       // D4 GPX: зона авто-наводиться на завантажений трек (як на /create)
       followGpxFocus: true,
     }),
-    [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio],
+    [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio, gpxFocus],
   );
   const statusLabel = isGenerating
     ? `${progress}% • ${status || "Генерація"}`
@@ -291,12 +298,12 @@ export default function KeychainsPage() {
                     <TemplateMiniature design={t.design} label={label} active={active} />
                   </span>
                   <span className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
+                    <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.nameKey ? tKc(t.nameKey) : t.name}</span>
                     <span className="shrink-0 rounded-md bg-[rgba(46,74,58,0.08)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-strong)]">
                       {Math.round(t.design.bodyWidthMm)}×{Math.round(t.design.bodyHeightMm)}
                     </span>
                   </span>
-                  <span className="line-clamp-2 block text-[11px] leading-4 text-[var(--text-secondary)]">{t.description}</span>
+                  <span className="line-clamp-2 block text-[11px] leading-4 text-[var(--text-secondary)]">{t.descKey ? tKc(t.descKey) : t.description}</span>
                 </button>
               );
             })}

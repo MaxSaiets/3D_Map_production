@@ -629,6 +629,7 @@ def _run_terrain_stage(
         merged_roads_geom=road_geometry.merged_roads_geom,
         merged_roads_geom_local=road_geometry.merged_roads_geom_local,
         preclipped_to_zone=preclip_result.preclipped_to_zone,
+        semantic_centerlines_local=getattr(road_geometry, "semantic_centerlines_local", None),
     )
 
 
@@ -1039,9 +1040,13 @@ def run_full_generation_pipeline(
                 TRACK_COLOR,
             )
 
+            # ОСЬОВІ ЛІНІЇ доріг для snap-to-roads. ПАСТКА (виправлено): беремо їх з
+            # terrain_stage, а НЕ з road_geometry — road_geometry присвоюється у
+            # _run_terrain_stage() і поза його областю видимості тут undefined →
+            # NameError мовчки ловився except'ом і road-snap НЕ працював.
             road_lines_local = None
             try:
-                _rc = getattr(road_geometry, "semantic_centerlines_local", None)
+                _rc = getattr(terrain_stage, "semantic_centerlines_local", None)
                 if _rc is not None and not getattr(_rc, "is_empty", True):
                     road_lines_local = list(_rc.geoms) if hasattr(_rc, "geoms") else [_rc]
             except Exception:
@@ -1090,9 +1095,11 @@ def run_full_generation_pipeline(
                                 print(f"[GPX] {zone_prefix}track groove rejected (drift {_drift:.1f}) — flush insert kept")
                     except Exception as _bexc:
                         print(f"[GPX] {zone_prefix}track groove boolean failed (flush insert kept): {_bexc}")
-            elif getattr(request, "is_ams_mode", False) and _sf > 0:
-                # AMS (плаский): врізана flush-вставка — верх на рівні поверхні землі,
-                # втоплена у базу (раніше була підвищена/зникала).
+            elif _sf > 0:
+                # БЕЗ terrain_provider (AMS, або плоска мапа з вимкненим рельєфом,
+                # або preview) → плаский flush-трек: верх на рівні землі, втоплений
+                # у базу. Раніше умова вимагала саме is_ams_mode → у не-AMS плоских
+                # картах трек МОВЧКИ зникав. Тепер fallback працює завжди.
                 _poly = build_gpx_track_polygon(
                     gpx_track=request.gpx_track,
                     global_center=global_center,
