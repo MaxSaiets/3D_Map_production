@@ -432,7 +432,8 @@
     "cancelGen": "Anuluj generowanie",
     "errStale": "Utracono kontakt z zadaniem (restart serwera?). Wygeneruj ponownie.",
     "quotaLeft": "{n} z {limit} darmowych pobrań pozostało",
-    "quotaExhausted": "Darmowe pobrania wyczerpane — zamów wydruk"
+    "quotaExhausted": "Darmowe pobrania wyczerpane — zamów wydruk",
+    "retry": "Spróbuj ponownie"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
@@ -670,7 +671,8 @@
       "maxMap": "Maks. mapa",
       "token": "Żeton 55 x 30",
       "centerLoop": "Wyśr. uszko",
-      "layoutRotation": "Obrót układu"
+      "layoutRotation": "Obrót układu",
+      "sideLoop": "Boczne uszko"
     },
     "map": {
       "title": "Ustaw obszar mapy",
@@ -744,7 +746,8 @@
       "puzzleL": "Puzzel L 🧩",
       "puzzleR": "Puzzel R 🧩",
       "heartL": "Serce pary L 💕",
-      "heartR": "Serce pary R 💕"
+      "heartR": "Serce pary R 💕",
+      "tag": "Zawieszka"
     },
     "loopPos": {
       "topLeft": "Lewy górny",
@@ -883,7 +886,8 @@
       "notReady": "Nie gotowe do druku: {issues}.",
       "generic": "Błąd generowania breloka",
       "limitContact": "Wykorzystałem 5 darmowych pobrań breloków. Chcę więcej / druk — proszę o kontakt.",
-      "downloadFailed": "Nie udało się pobrać pliku 3MF"
+      "downloadFailed": "Nie udało się pobrać pliku 3MF",
+      "retry": "Spróbuj ponownie"
     },
     "templates": {
       "ready": "Gotowe szablony",
@@ -944,6 +948,11 @@
     },
     "unit": {
       "mm": "mm"
+    },
+    "font": {
+      "block": "Blokowy",
+      "wide": "Szeroki",
+      "narrow": "Wąski"
     }
   },
   "pro": {
@@ -1165,6 +1174,8 @@
   },
   "preview": {
     "generating": "Generowanie modelu...",
+    "emptyTitle": "Tutaj pojawi się Twój model 3D",
+    "emptyBody": "Zaznacz obszar na mapie i kliknij „Generuj”.",
     "batchLoadError": "Nie udało się załadować podglądu partii",
     "modelLoadError": "Nie udało się załadować modelu",
     "tools": {

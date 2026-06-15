@@ -432,7 +432,8 @@
     "cancelGen": "Annuler la génération",
     "errStale": "Lien avec la tâche perdu (redémarrage du serveur ?). Veuillez régénérer.",
     "quotaLeft": "{n} sur {limit} téléchargements gratuits restants",
-    "quotaExhausted": "Téléchargements gratuits épuisés — commande une impression"
+    "quotaExhausted": "Téléchargements gratuits épuisés — commande une impression",
+    "retry": "Réessayer"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
@@ -670,7 +671,8 @@
       "maxMap": "Carte max.",
       "token": "Jeton 55 x 30",
       "centerLoop": "Centrer anneau",
-      "layoutRotation": "Rotation de la mise en page"
+      "layoutRotation": "Rotation de la mise en page",
+      "sideLoop": "Anneau latéral"
     },
     "map": {
       "title": "Définir la zone de carte",
@@ -744,7 +746,8 @@
       "puzzleL": "Puzzle L 🧩",
       "puzzleR": "Puzzle R 🧩",
       "heartL": "Cœur en duo L 💕",
-      "heartR": "Cœur en duo R 💕"
+      "heartR": "Cœur en duo R 💕",
+      "tag": "Étiquette"
     },
     "loopPos": {
       "topLeft": "En haut à gauche",
@@ -883,7 +886,8 @@
       "notReady": "Pas prêt à imprimer : {issues}.",
       "generic": "Erreur de génération du porte-clés",
       "limitContact": "J'ai épuisé 5 téléchargements gratuits de porte-clés. Je veux plus / une impression — merci de me contacter.",
-      "downloadFailed": "Impossible de télécharger le 3MF"
+      "downloadFailed": "Impossible de télécharger le 3MF",
+      "retry": "Réessayer"
     },
     "templates": {
       "ready": "Modèles prêts à l'emploi",
@@ -944,6 +948,11 @@
     },
     "unit": {
       "mm": "mm"
+    },
+    "font": {
+      "block": "Bloc",
+      "wide": "Large",
+      "narrow": "Étroit"
     }
   },
   "pro": {
@@ -1165,6 +1174,8 @@
   },
   "preview": {
     "generating": "Génération du modèle...",
+    "emptyTitle": "Votre modèle 3D apparaîtra ici",
+    "emptyBody": "Sélectionnez une zone sur la carte et cliquez sur « Générer ».",
     "batchLoadError": "Échec du chargement de l'aperçu du lot",
     "modelLoadError": "Échec du chargement du modèle",
     "tools": {

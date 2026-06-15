@@ -902,50 +902,16 @@ function ModelLoader({ rotateMode }: { rotateMode: RotateMode }) {
     });
   }, [model, previewIncludeBase, previewIncludeRoads, previewIncludeBuildings, previewIncludeWater, previewIncludeParks]);
 
-  if (loading) {
+  // Поки модель вантажиться / помилка / ще нема моделі — НЕ показуємо
+  // дебаг-кубик/сітку/осі (це читалось як «зламаний рендер» на першому вході).
+  // Сцена лишається чистою; підказку-empty-state показує оверлей у Preview3D,
+  // а статус генерації — окремий оверлей «Генерація…».
+  if (loading || error || !model) {
+    if (error) console.error("Помилка в ModelLoader:", error);
     return (
       <>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <gridHelper args={[100, 100]} />
-        <axesHelper args={[50]} />
-        <mesh>
-          <boxGeometry args={[10, 10, 10]} />
-          <meshStandardMaterial color="orange" />
-        </mesh>
-      </>
-    );
-  }
-
-  if (error) {
-    console.error("Помилка в ModelLoader:", error);
-    return (
-      <>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <gridHelper args={[100, 100]} />
-        <axesHelper args={[50]} />
-        <mesh>
-          <boxGeometry args={[10, 10, 10]} />
-          <meshStandardMaterial color="red" />
-        </mesh>
-      </>
-    );
-  }
-
-  if (!model) {
-// removed-debug-log
-    return (
-      <>
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[100, 100, 100]} intensity={1.0} />
-        <directionalLight position={[-100, -100, -100]} intensity={0.5} />
-        <gridHelper args={[200, 20]} />
-        <axesHelper args={[100]} />
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[20, 20, 20]} />
-          <meshStandardMaterial color="orange" />
-        </mesh>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[10, 10, 5]} intensity={0.8} />
       </>
     );
   }
@@ -1330,6 +1296,28 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           <div className="text-center">
             <p className="text-lg mb-2">{t("generating")}</p>
             <p className="text-sm text-gray-400">{progress}%</p>
+          </div>
+        </div>
+      )}
+      {!downloadUrl && !isGenerating && !capture && (
+        // Перший вхід: дружня підказка замість сирого three.js-кубика.
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pointer-events-none">
+          <div className="max-w-[300px] text-center">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mx-auto mb-3 h-10 w-10 text-white/60"
+              aria-hidden="true"
+            >
+              <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <p className="text-[15px] font-medium text-white/90">{t("emptyTitle")}</p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">{t("emptyBody")}</p>
           </div>
         </div>
       )}

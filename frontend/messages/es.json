@@ -432,7 +432,8 @@
     "cancelGen": "Cancelar la generación",
     "errStale": "Se perdió el contacto con la tarea (¿reinicio del servidor?). Genera de nuevo.",
     "quotaLeft": "{n} de {limit} descargas gratis restantes",
-    "quotaExhausted": "Descargas gratis agotadas — pide una impresión"
+    "quotaExhausted": "Descargas gratis agotadas — pide una impresión",
+    "retry": "Intentar de nuevo"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
@@ -670,7 +671,8 @@
       "maxMap": "Mapa máx.",
       "token": "Ficha 55 x 30",
       "centerLoop": "Centrar argolla",
-      "layoutRotation": "Rotación del diseño"
+      "layoutRotation": "Rotación del diseño",
+      "sideLoop": "Anilla lateral"
     },
     "map": {
       "title": "Define el área del mapa",
@@ -744,7 +746,8 @@
       "puzzleL": "Puzle L 🧩",
       "puzzleR": "Puzle R 🧩",
       "heartL": "Corazón en pareja L 💕",
-      "heartR": "Corazón en pareja R 💕"
+      "heartR": "Corazón en pareja R 💕",
+      "tag": "Etiqueta"
     },
     "loopPos": {
       "topLeft": "Arriba izquierda",
@@ -883,7 +886,8 @@
       "notReady": "No está listo para imprimir: {issues}.",
       "generic": "Error al generar el llavero",
       "limitContact": "He agotado 5 descargas gratis de llaveros. Quiero más / una impresión — por favor contáctame.",
-      "downloadFailed": "No se pudo descargar el 3MF"
+      "downloadFailed": "No se pudo descargar el 3MF",
+      "retry": "Intentar de nuevo"
     },
     "templates": {
       "ready": "Plantillas listas",
@@ -944,6 +948,11 @@
     },
     "unit": {
       "mm": "mm"
+    },
+    "font": {
+      "block": "Bloque",
+      "wide": "Ancho",
+      "narrow": "Estrecho"
     }
   },
   "pro": {
@@ -1165,6 +1174,8 @@
   },
   "preview": {
     "generating": "Generando modelo...",
+    "emptyTitle": "Aquí aparecerá tu modelo 3D",
+    "emptyBody": "Selecciona un área en el mapa y pulsa «Generar».",
     "batchLoadError": "Error al cargar la vista previa del lote",
     "modelLoadError": "Error al cargar el modelo",
     "tools": {

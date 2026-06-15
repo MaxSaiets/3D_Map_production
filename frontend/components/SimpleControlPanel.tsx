@@ -713,7 +713,18 @@ export function SimpleControlPanel({
           </button>
 
           {error && (
-            <div className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">{error}</div>
+            <div className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
+              <p>{error}</p>
+              {selectedArea && !isGenerating && (
+                <button
+                  type="button"
+                  onClick={() => handleGenerate()}
+                  className="mt-2 inline-flex items-center gap-1 font-semibold text-red-800 underline-offset-2 hover:underline"
+                >
+                  ↻ {t("retry")}
+                </button>
+              )}
+            </div>
           )}
 
           {downloadUrl && printQuality && printQuality.status !== "ok" && (printQuality.warnings?.length ?? 0) > 0 && (

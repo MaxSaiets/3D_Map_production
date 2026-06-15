@@ -2269,6 +2269,14 @@ def run_flat_plate_pipeline(
         parks_layer_mm = max(parks_layer_mm, 0.65)
         roads_layer_mm = max(roads_layer_mm, 0.75)
 
+    # МАГНІТ: кишеня під шайбу мусить РЕАЛЬНО вирізатись. Якщо база тонша за
+    # (глибина кишені + 0.8мм стінка) — кишеня раніше тихо клампилась до 0 і
+    # магніт друкувався БЕЗ заглиблення (a no-op). Авто-потовщуємо базу, щоб
+    # магніт ЗАВЖДИ отримав робочу кишеню незалежно від того, що шле клієнт.
+    if bool(getattr(request, "magnet_pocket", False)) and not keychain_mode:
+        _mag_depth_mm = float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0)
+        base_thickness_mm = max(base_thickness_mm, _mag_depth_mm + 0.8)
+
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
     keychain_layout: Optional[dict[str, BaseGeometry]] = None

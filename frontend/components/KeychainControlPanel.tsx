@@ -1130,7 +1130,7 @@ export function KeychainControlPanel({
               rimHeightMm: 0.35,
             })} />
             <ChoiceButton label={t("product.centerLoop")} active={Math.abs(design.loopXMm - design.bodyWidthMm / 2) < 1 && Math.abs(design.loopYMm) < 2} onClick={centerLoop} />
-            <ChoiceButton label="Side loop" active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
+            <ChoiceButton label={t("product.sideLoop")} active={design.loopXMm > design.bodyWidthMm} onClick={() => placeLoop("right")} />
           </div>
           <div className="mt-4">
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("product.layoutRotation")}</div>
@@ -1294,9 +1294,9 @@ export function KeychainControlPanel({
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.printFont")}</div>
             <div className="grid grid-cols-3 gap-2">
               {([
-                ["block", "Block"],
-                ["wide", "Wide"],
-                ["condensed", "Narrow"],
+                ["block", t("font.block")],
+                ["wide", t("font.wide")],
+                ["condensed", t("font.narrow")],
               ] as Array<[KeychainLabelFontStyle, string]>).map(([font, text]) => (
                 <ChoiceButton key={font} label={text} active={design.labelFontStyle === font} onClick={() => updateDesign({ labelFontStyle: font })} />
               ))}
@@ -1464,8 +1464,28 @@ export function KeychainControlPanel({
           price={null}
           actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
           busy={isGenerating}
-          disabled={!downloadUrl && !canGenerate}
-          onAction={() => { if (downloadUrl) setOrderOpen(true); else handleGenerate(); }}
+          // НЕ блокуємо коли зона не вибрана / є print-issue — інакше на мобільному
+          // єдина видима кнопка стає глухим disabled без пояснення (dead-end).
+          // Замість цього тап дає тост із причиною + перемикає на потрібну секцію.
+          disabled={isGenerating}
+          onAction={() => {
+            if (downloadUrl) { setOrderOpen(true); return; }
+            if (!selectedArea) {
+              setError(t("error.noArea"));
+              window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", message: t("error.noArea") } }));
+              setActiveSection("map");
+              return;
+            }
+            if (blockingPrintIssues.length > 0) {
+              const issue = blockingPrintIssues[0];
+              const msg = t("error.notReady", { issues: blockingPrintIssues.map((i) => i.label.toLowerCase()).join(", ") });
+              setError(msg);
+              window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", message: msg } }));
+              setActiveSection(issue.id === "crop" ? "map" : issue.id === "text-stroke" ? "label" : "product");
+              return;
+            }
+            handleGenerate();
+          }}
           // Готово → «Завантажити»; до/під час → «Замовити» (order-now)
           secondaryLabel={downloadUrl ? t("sticky.download") : (selectedArea ? t("btn.order") : undefined)}
           onSecondary={downloadUrl ? handleDownload : (selectedArea ? orderNow : undefined)}
@@ -1509,7 +1529,7 @@ export function KeychainControlPanel({
                   ["rounded", t("shape.rounded")],
                   ["token", t("shape.token")],
                   ["capsule", t("shape.capsule")],
-                  ["tag", "Tag"],
+                  ["tag", t("shape.tag")],
                   ["octagon", t("shape.octagon")],
                   ["heart", t("shape.heart")],
                   ["house", t("shape.house")],
@@ -1573,9 +1593,9 @@ export function KeychainControlPanel({
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("advanced.printFont")}</div>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  ["block", "Block"],
-                  ["wide", "Wide"],
-                  ["condensed", "Narrow"],
+                  ["block", t("font.block")],
+                  ["wide", t("font.wide")],
+                  ["condensed", t("font.narrow")],
                 ] as Array<[KeychainLabelFontStyle, string]>).map(([font, text]) => (
                   <ChoiceButton key={`advanced-font-${font}`} label={text} active={design.labelFontStyle === font} onClick={() => updateDesign({ labelFontStyle: font })} />
                 ))}
@@ -1610,7 +1630,18 @@ export function KeychainControlPanel({
         </section>
 
         {error && (
-          <div className="rounded-[20px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-[20px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p>{error}</p>
+            {selectedArea && !isGenerating && (
+              <button
+                type="button"
+                onClick={() => handleGenerate()}
+                className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-red-800 underline-offset-2 hover:underline"
+              >
+                ↻ {t("error.retry")}
+              </button>
+            )}
+          </div>
         )}
 
         <div className="hidden gap-3 lg:grid">

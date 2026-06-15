@@ -432,7 +432,8 @@
     "cancelGen": "Generierung abbrechen",
     "errStale": "Verbindung zur Aufgabe verloren (Server-Neustart?). Bitte erneut generieren.",
     "quotaLeft": "{n} von {limit} kostenlosen Downloads übrig",
-    "quotaExhausted": "Kostenlose Downloads aufgebraucht — Druck bestellen"
+    "quotaExhausted": "Kostenlose Downloads aufgebraucht — Druck bestellen",
+    "retry": "Erneut versuchen"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",
@@ -670,7 +671,8 @@
       "maxMap": "Max. Karte",
       "token": "Token 55 x 30",
       "centerLoop": "Öse zentr.",
-      "layoutRotation": "Layout-Drehung"
+      "layoutRotation": "Layout-Drehung",
+      "sideLoop": "Seitliche Öse"
     },
     "map": {
       "title": "Kartenbereich festlegen",
@@ -744,7 +746,8 @@
       "puzzleL": "Puzzle L 🧩",
       "puzzleR": "Puzzle R 🧩",
       "heartL": "Paarherz L 💕",
-      "heartR": "Paarherz R 💕"
+      "heartR": "Paarherz R 💕",
+      "tag": "Anhänger"
     },
     "loopPos": {
       "topLeft": "Oben links",
@@ -883,7 +886,8 @@
       "notReady": "Nicht druckbereit: {issues}.",
       "generic": "Fehler bei der Anhänger-Generierung",
       "limitContact": "Ich habe 5 kostenlose Anhänger-Downloads aufgebraucht. Ich möchte mehr / einen Druck — bitte kontaktiere mich.",
-      "downloadFailed": "3MF konnte nicht heruntergeladen werden"
+      "downloadFailed": "3MF konnte nicht heruntergeladen werden",
+      "retry": "Erneut versuchen"
     },
     "templates": {
       "ready": "Fertige Vorlagen",
@@ -944,6 +948,11 @@
     },
     "unit": {
       "mm": "mm"
+    },
+    "font": {
+      "block": "Block",
+      "wide": "Breit",
+      "narrow": "Schmal"
     }
   },
   "pro": {
@@ -1165,6 +1174,8 @@
   },
   "preview": {
     "generating": "Modell wird generiert...",
+    "emptyTitle": "Hier erscheint Ihr 3D-Modell",
+    "emptyBody": "Wählen Sie einen Bereich auf der Karte und klicken Sie „Generieren“.",
     "batchLoadError": "Batch-Vorschau konnte nicht geladen werden",
     "modelLoadError": "Modell konnte nicht geladen werden",
     "tools": {
