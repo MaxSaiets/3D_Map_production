@@ -93,11 +93,15 @@ export default function AdminPage() {
                   {(stats.byDay?.length > 0) && (
                     <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
                       <div className="mb-3 text-[13px] font-semibold text-ink-2">Перегляди за днями</div>
-                      <div className="flex items-end gap-1.5" style={{ height: 120 }}>
+                      <div className="flex items-stretch gap-1.5" style={{ height: 120 }}>
                         {stats.byDay.map((d: any) => {
                           const max = Math.max(...stats.byDay.map((x: any) => x.pageviews || 0), 1);
+                          // h-full на колонці ОБОВ'ЯЗКОВЕ: стовпчик має % висоту,
+                          // а % резолвиться лише проти батька з ВИЗНАЧЕНОЮ висотою.
+                          // Без цього (старий items-end → колонка стискалась до
+                          // контенту) усі бари виходили 0 → графік порожній.
                           return (
-                            <div key={d.day} className="flex flex-1 flex-col items-center justify-end" title={`${d.day}: ${d.pageviews} переглядів, ${d.visitors} відвідувачів`}>
+                            <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end" title={`${d.day}: ${d.pageviews} переглядів, ${d.visitors} відвідувачів`}>
                               <div className="w-full rounded-t bg-forest/80" style={{ height: `${Math.round(((d.pageviews || 0) / max) * 100)}%`, minHeight: d.pageviews ? 3 : 0 }} />
                             </div>
                           );

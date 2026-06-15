@@ -49,6 +49,11 @@ export function setConsent(value: "granted" | "denied") {
 /** Track an event (pageview by default). No-ops without consent. */
 export function track(event: string, props?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
+  // DEV/PREVIEW guard: не логуємо з localhost/прев'ю — інакше тестування
+  // конструкторів (та e2e) роздуває статистику й js_error без коду країни
+  // Cloudflare → у адмінці виглядає як «сміттєві» дані без гео.
+  const host = location.hostname;
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
   if (getConsent() !== "granted") return;
   if (isOwnerOptOut()) return; // не рахуємо власні (адмінські) заходи
   try {
