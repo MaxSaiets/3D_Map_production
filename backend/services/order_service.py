@@ -268,3 +268,28 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
             print(f"[ORDER] screenshot {idx} error: {e}")
 
     return {"order_number": order_number, "telegram": True}
+
+
+def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
+    """LiqPay-callback підтвердив оплату → лог-подія у журнал + нотифікація оператора
+    в Telegram (щоб бачив, що замовлення вже оплачене і можна друкувати/відправляти)."""
+    import time
+    status = str(info.get("status") or "")
+    amount = info.get("amount")
+    ccy = info.get("currency") or ""
+    paid = status in ("success", "sandbox")
+    pay_id = info.get("payment_id") or info.get("transaction_id") or ""
+    try:
+        ORDERS_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with ORDERS_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "type": "payment", "order_number": str(order_id), "paid": paid,
+                "amount": amount, "currency": ccy, "status": status,
+                "payment_id": pay_id, "ts": int(time.time()),
+            }, ensure_ascii=False) + "\n")
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] mark_paid log error: {e}")
+    if telegram_configured():
+        emoji = "💰" if paid else "⏳"
+        _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",
+                 text=f"{emoji} <b>Оплата LiqPay</b> · замовлення <b>#{order_id}</b>: {status} — {amount} {ccy}")

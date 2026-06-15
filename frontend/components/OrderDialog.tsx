@@ -61,7 +61,8 @@ export function OrderDialog({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  // payment: { provider?: "liqpay", action_url?, data?, signature?, url?, label? }
+  const [payment, setPayment] = useState<any>(null);
   const { getIdToken } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
@@ -71,7 +72,7 @@ export function OrderDialog({
   // повторне відкриття (інша модель) показувало СТАРИЙ «#123 прийнято» замість форми,
   // і друге замовлення неможливо було оформити без перезавантаження. (контакт лишаємо.)
   useEffect(() => {
-    if (open) { setOrderNumber(null); setPaymentUrl(null); setError(null); setSending(false); }
+    if (open) { setOrderNumber(null); setPayment(null); setError(null); setSending(false); }
   }, [open]);
 
   // Escape closes the dialog; only active while open.
@@ -169,7 +170,7 @@ export function OrderDialog({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setOrderNumber(String(data.order_number));
-      setPaymentUrl(data.payment?.url || null);
+      setPayment(data.payment || null);
       // Google Ads / GA4 conversion — головна ціль реклами (надіслане замовлення = лід).
       try {
         const { trackConversion } = await import("@/lib/analytics");
@@ -223,19 +224,32 @@ export function OrderDialog({
               {t("orderNo")} <b className="text-[var(--text-primary)]">#{orderNumber}</b>.<br />
               {t("acceptedText")}
             </p>
-            {paymentUrl && (
-              <>
-                <a
-                  href={paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
-                >
-                  {t("payNow")} · {priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}
-                </a>
-                <p className="mt-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t("payLater")}</p>
-              </>
-            )}
+            {payment && (() => {
+              const payLabel = `${t("payNow")} · ${priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}`;
+              const btnCls = "mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90";
+              if (payment.provider === "liqpay" && payment.data && payment.signature) {
+                // Форма-POST на LiqPay checkout (стандартна кнопка LiqPay), у новій вкладці.
+                return (
+                  <>
+                    <form action={payment.action_url} method="POST" acceptCharset="utf-8" target="_blank" className="mt-0">
+                      <input type="hidden" name="data" value={payment.data} />
+                      <input type="hidden" name="signature" value={payment.signature} />
+                      <button type="submit" className={btnCls}>{payLabel}</button>
+                    </form>
+                    <p className="mt-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t("payLater")}</p>
+                  </>
+                );
+              }
+              if (payment.url) {
+                return (
+                  <>
+                    <a href={payment.url} target="_blank" rel="noopener noreferrer" className={btnCls}>{payLabel}</a>
+                    <p className="mt-2 text-[11px] leading-4 text-[var(--text-secondary)]">{t("payLater")}</p>
+                  </>
+                );
+              }
+              return null;
+            })()}
             <button onClick={onClose} className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--accent-strong)] px-5 py-3 text-sm font-semibold text-white">
               {t("doneBtn")}
             </button>

@@ -1,5 +1,5 @@
 import warnings
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -763,7 +763,8 @@ async def create_order_endpoint(order: OrderRequest, authorization: Optional[str
         pass
     # Посилання на оплату з конфігу (pricing.json → payment.url). Якщо задано —
     # клієнт побачить кнопку «Оплатити зараз», оператор — позначку в картці.
-    pay = (_load_pricing().get("payment") or {})
+    pricing = _load_pricing()
+    pay = (pricing.get("payment") or {})
     pay_url = (pay.get("url") or "").strip()
     if pay_url:
         payload["payment_url"] = pay_url
@@ -778,13 +779,51 @@ async def create_order_endpoint(order: OrderRequest, authorization: Optional[str
         pass
     try:
         result = create_order(payload)
-        if pay_url:
+        # ОПЛАТА: динамічний LiqPay-checkout (якщо ключі налаштовані) має пріоритет над
+        # статичним посиланням з конфігу. Сума = ціна, показана клієнту (est_price).
+        try:
+            from services.liqpay import is_configured, parse_amount, build_checkout
+            if is_configured():
+                amount, currency = parse_amount(order.est_price, order.product_type, pricing)
+                site = (os.getenv("PUBLIC_SITE_URL") or "https://monadruk.com").rstrip("/")
+                checkout = build_checkout(
+                    amount=amount, currency=currency,
+                    description=f"Monadruk #{result.get('order_number')} · {order.product_type}",
+                    order_id=str(result.get("order_number") or order.task_id or ""),
+                    result_url=f"{site}/account",
+                    server_url=f"{site}/api/liqpay/callback",
+                )
+                if checkout:
+                    result["payment"] = {**checkout, "amount": amount, "currency": currency,
+                                         "label": pay.get("label_uk") or "Оплатити зараз"}
+        except Exception as _pe:  # noqa: BLE001
+            print(f"[liqpay] checkout build failed: {_pe}")
+        if "payment" not in result and pay_url:
             result["payment"] = {"url": pay_url, "label": pay.get("label_uk") or "Оплатити зараз"}
         return {"status": "ok", **result}
     except Exception as e:  # noqa: BLE001
         print(f"[ERROR] order failed: {e}")
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
+
+
+@app.post("/api/liqpay/callback")
+async def liqpay_callback(data: str = Form(default=""), signature: str = Form(default="")):
+    """LiqPay server-callback (webhook): підтвердження статусу оплати. Перевіряємо підпис
+    приватним ключем; при success — нотифікуємо оператора в Telegram + лог у журнал.
+    LiqPay шле application/x-www-form-urlencoded з полями data + signature."""
+    from services.liqpay import verify_callback
+    info = verify_callback(data, signature)
+    if info is None:
+        raise HTTPException(status_code=403, detail="bad signature")
+    status = str(info.get("status") or "")
+    if status in ("success", "sandbox", "subscribed", "wait_accept"):
+        try:
+            from services.order_service import mark_order_paid
+            mark_order_paid(str(info.get("order_id") or ""), info)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[liqpay] mark_paid error: {exc}")
+    return {"ok": True}
 
 
 @app.get("/api/account/orders")
