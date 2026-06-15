@@ -89,7 +89,22 @@ def process_generation_stage(
                 except Exception as exc:
                     print(f"[WARN] {zone_prefix} AMS Mode: Failed to subtract water from land: {exc}")
 
-            terrain_mesh = trimesh.creation.extrude_polygon(poly_to_extrude, height=land_height_m)
+            # Вода могла РОЗБИТИ зону (річка через всю плитку) → difference дає
+            # MultiPolygon, а extrude_polygon чекає ОДИН Polygon → виняток →
+            # terrain_mesh=None → AMS-мапа БЕЗ бази (непридатна). Екструдуємо КОЖНУ
+            # частину окремо й зшиваємо.
+            if getattr(poly_to_extrude, "geom_type", "") == "Polygon":
+                terrain_mesh = trimesh.creation.extrude_polygon(poly_to_extrude, height=land_height_m)
+            else:
+                _parts = [g for g in getattr(poly_to_extrude, "geoms", [])
+                          if getattr(g, "geom_type", "") == "Polygon" and not g.is_empty]
+                _meshes = []
+                for _g in _parts:
+                    try:
+                        _meshes.append(trimesh.creation.extrude_polygon(_g, height=land_height_m))
+                    except Exception:
+                        pass
+                terrain_mesh = trimesh.util.concatenate(_meshes) if _meshes else None
             terrain_provider = None
         except Exception as exc:
             print(f"[ERROR] {zone_prefix} AMS Terrain creation failed: {exc}")

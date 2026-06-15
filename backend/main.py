@@ -660,7 +660,7 @@ def _load_pricing() -> Dict[str, Any]:
             _PRICING_CACHE["data"] = {
                 "currency": "UAH", "currency_symbol": "₴",
                 "map": {"sizes_mm": {"55": 250, "60": 180, "80": 390, "110": 590, "150": 890},
-                        "relief_addon": 0, "from": 250},
+                        "relief_addon": 100, "from": 250},
                 "keychain": {"base": 120, "from": 120},
             }
     return _PRICING_CACHE["data"]

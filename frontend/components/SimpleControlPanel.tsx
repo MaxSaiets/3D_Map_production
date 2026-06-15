@@ -148,7 +148,9 @@ export function SimpleControlPanel({
     }
     const near = SIMPLE_SIZES.reduce((best, z) =>
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
-    const unit = magnetMode ? 180 : near.price; // магніт = окремий продукт 180₴
+    // Рельєф додає надбавку (як у бекенд-quote) — інакше fallback недооцінює.
+    const reliefAddon = (MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain && !magnetMode) ? 100 : 0;
+    const unit = magnetMode ? 180 : near.price + reliefAddon; // магніт = окремий продукт 180₴
     return fmtPrice(unit * orderTiles, "UAH");
   })();
 
