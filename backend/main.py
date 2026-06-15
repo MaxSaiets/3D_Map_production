@@ -387,6 +387,24 @@ app.mount("/files", SafeStatic(directory=OUTPUT_DIR), name="files")
 app.mount("/api/files", SafeStatic(directory=OUTPUT_DIR), name="api_files")
 
 
+class VideoStatic(StaticFiles):
+    """Публічна роздача ЛИШЕ відео (для Instagram/Pinterest, що тягнуть з URL)."""
+    _ALLOWED = {".mp4", ".mov", ".m4v", ".webm"}
+
+    async def get_response(self, path, scope):
+        ext = os.path.splitext(path)[1].lower()
+        if ext and ext not in self._ALLOWED:
+            return _PlainText("Not found", status_code=404)
+        return await super().get_response(path, scope)
+
+
+# Публічна тека відео для соц-публікації (IG/Pinterest тягнуть video_url).
+PUBLIC_MEDIA_DIR = Path("public_media").resolve()
+PUBLIC_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/media", VideoStatic(directory=PUBLIC_MEDIA_DIR), name="media")
+app.mount("/api/public_media", VideoStatic(directory=PUBLIC_MEDIA_DIR), name="api_public_media")
+
+
 async def _ttl_cleanup_loop():
     """TTL: remove tasks older than 2 hours every 30 minutes."""
     import asyncio as _asyncio
