@@ -955,7 +955,8 @@
       "block": "Bloc",
       "wide": "Large",
       "narrow": "Étroit"
-    }
+    },
+    "tabsAria": "Sections de réglages du porte-clés"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

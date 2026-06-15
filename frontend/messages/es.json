@@ -955,7 +955,8 @@
       "block": "Bloque",
       "wide": "Ancho",
       "narrow": "Estrecho"
-    }
+    },
+    "tabsAria": "Secciones de ajustes del llavero"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

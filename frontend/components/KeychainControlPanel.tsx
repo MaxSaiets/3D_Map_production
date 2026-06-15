@@ -441,6 +441,14 @@ export function KeychainControlPanel({
 
   const sectionClass = (section: PanelSection) =>
     `${activeSection === section ? "block" : "hidden"} ${PANEL_CARD_CLASS}`;
+  // a11y: секції — це tabpanel'и табів-навігації нижче (role=tablist/tab).
+  const sectionProps = (section: PanelSection) => ({
+    className: sectionClass(section),
+    role: "tabpanel",
+    id: `kc-tabpanel-${section}`,
+    "aria-labelledby": `kc-tab-${section}`,
+    hidden: activeSection !== section,
+  });
 
   const visibleSections = expertMode
     ? [...PANEL_SECTIONS, { id: "advanced" as const, labelKey: "tabs.advanced" }]
@@ -1077,11 +1085,15 @@ export function KeychainControlPanel({
         </section>
 
         <nav className="-mx-1 rounded-[20px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] p-1 shadow-[0_8px_22px_rgba(15,23,42,0.06)] backdrop-blur lg:sticky lg:top-0 lg:z-20">
-          <div className="grid grid-cols-4 gap-1">
+          <div role="tablist" aria-label={t("tabsAria")} className="grid grid-cols-4 gap-1">
             {visibleSections.map((section, index) => (
               <button
                 key={section.id}
                 type="button"
+                role="tab"
+                id={`kc-tab-${section.id}`}
+                aria-selected={activeSection === section.id}
+                aria-controls={`kc-tabpanel-${section.id}`}
                 onClick={() => setActiveSection(section.id)}
                 className={`min-h-[42px] rounded-[16px] px-2 text-[11px] font-semibold transition sm:text-xs ${
                   activeSection === section.id
@@ -1095,7 +1107,7 @@ export function KeychainControlPanel({
           </div>
         </nav>
 
-        <section className={sectionClass("product")}>
+        <section {...sectionProps("product")}>
           <SectionHeader
             icon={<KeyRound size={18} />}
             title={t("product.title")}
@@ -1150,7 +1162,7 @@ export function KeychainControlPanel({
           </div>
         </section>
 
-        <section className={sectionClass("map")}>
+        <section {...sectionProps("map")}>
           <SectionHeader
             icon={<MapIcon size={18} />}
             title={t("map.title")}
@@ -1276,7 +1288,7 @@ export function KeychainControlPanel({
           </div>
         </section>
 
-        <section className={sectionClass("label")}>
+        <section {...sectionProps("label")}>
           <SectionHeader
             icon={<Type size={18} />}
             title={t("label.title")}
@@ -1361,7 +1373,7 @@ export function KeychainControlPanel({
           </div>
         </section>
 
-        <section className={sectionClass("review")}>
+        <section {...sectionProps("review")}>
           <SectionHeader
             icon={<CheckCircle2 size={18} />}
             title={t("review.title")}
@@ -1494,7 +1506,7 @@ export function KeychainControlPanel({
           onSecondary={downloadUrl ? handleDownload : (selectedArea ? orderNow : undefined)}
         />
 
-        <section className={sectionClass("advanced")}>
+        <section {...sectionProps("advanced")}>
           <SectionHeader
             icon={<SlidersHorizontal size={18} />}
             title={t("advanced.title")}

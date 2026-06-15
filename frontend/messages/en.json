@@ -955,7 +955,8 @@
       "block": "Block",
       "wide": "Wide",
       "narrow": "Narrow"
-    }
+    },
+    "tabsAria": "Keychain settings sections"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

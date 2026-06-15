@@ -955,7 +955,8 @@
       "block": "Blokowy",
       "wide": "Szeroki",
       "narrow": "Wąski"
-    }
+    },
+    "tabsAria": "Sekcje ustawień breloka"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

@@ -955,7 +955,8 @@
       "block": "Block",
       "wide": "Breit",
       "narrow": "Schmal"
-    }
+    },
+    "tabsAria": "Schlüsselanhänger-Einstellungen"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

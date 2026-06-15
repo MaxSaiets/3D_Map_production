@@ -955,7 +955,8 @@
       "block": "Блоковий",
       "wide": "Широкий",
       "narrow": "Вузький"
-    }
+    },
+    "tabsAria": "Розділи налаштувань брелка"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",
