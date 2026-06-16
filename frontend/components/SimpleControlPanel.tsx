@@ -552,16 +552,15 @@ export function SimpleControlPanel({
                     key={t.id}
                     type="button"
                     onClick={() => pickTemplate(t.id)}
-                    className={`flex items-center gap-3 rounded-[20px] border px-3 py-3 text-left transition ${
+                    title={t.blurb}
+                    className={`flex items-center gap-2.5 rounded-[16px] border px-2.5 py-2 text-left transition ${
                       active
                         ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                     }`}
                   >
-                    <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[14px] bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]">
-                      {/* Іконка-плейсхолдер (поки нема фото шаблону) — щоб не зяяв
-                          порожній квадрат; реальне прев'ю накладається зверху. */}
-                      <MapPin size={18} className="opacity-45" />
+                    <span className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-[11px] bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]">
+                      <MapPin size={15} className="opacity-45" />
                       <img
                         src={`/templates/${t.id}.webp`}
                         alt={t.district}
@@ -569,12 +568,9 @@ export function SimpleControlPanel({
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                       />
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.district}</span>
-                        {t.tag && <span className="rounded-full bg-[var(--accent-strong)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">{t.tag}</span>}
-                      </span>
-                      <span className="mt-0.5 block truncate text-[11px] text-[var(--text-secondary)]">{t.blurb}</span>
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.district}</span>
+                      {t.tag && <span className="shrink-0 rounded-full bg-[var(--accent-strong)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">{t.tag}</span>}
                     </span>
                     {active && <Check size={16} className="shrink-0 text-[var(--accent-strong)]" />}
                   </button>
@@ -606,14 +602,14 @@ export function SimpleControlPanel({
                   role="radio"
                   aria-checked={active}
                   onClick={() => applyStyle(p.id)}
-                  className={`rounded-[18px] border px-3 py-3 text-left transition ${
+                  title={p.blurb}
+                  className={`rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
                     active
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
-                      : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                      : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.25)]"
                   }`}
                 >
-                  <span className="block text-sm font-semibold text-[var(--text-primary)]">{p.label}</span>
-                  <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{p.blurb}</span>
+                  {p.label}
                 </button>
               );
             })}
