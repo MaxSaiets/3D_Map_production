@@ -537,7 +537,9 @@ def fetch_city_data(
     padded_bbox = (padded_west, padded_south, padded_east, padded_north)  # osmnx 2.x: (left, bottom, right, top)
     bbox = (target_west, target_south, target_east, target_north)  # Для обрізки
     
-    print("[INFO] 🌐 ДЖЕРЕЛО ДАНИХ: Overpass API (онлайн)")
+    # Реальне джерело оголошується нижче: локальна DuckDB (548) або Overpass-гілка.
+    # Раніше тут безумовно писало «Overpass API» навіть коли дані бралися з DuckDB.
+    print("[INFO] 🗺  Завантаження OSM (локальна DuckDB → Overpass лише як fallback)")
     print(f"[INFO] Буферизація: розширено bbox на {padding} градусів (~{padding * 111000:.0f}м) для коректної обробки країв")
     print(f"[INFO] Завантаження даних для розширеного bbox: north={padded_north}, south={padded_south}, east={padded_east}, west={padded_west}")
     
@@ -887,31 +889,25 @@ def fetch_city_data(
             _LOCAL_DB_DATA = None
 
     if _LOCAL_DB_DATA is not None:
-        # Hybrid: use local where present, Overpass for any missing layer.
+        # Покриття України підтверджено вище (є buildings АБО roads). DuckDB — це
+        # ПОВНИЙ екстракт OSM України, тому ПОРОЖНІЙ шар = шару реально нема (а НЕ
+        # брак покриття). Довіряємо ВСІМ шарам із БД і НЕ ходимо в Overpass за
+        # порожніми water/bridges/buildings: типове рівнинне місто без річки/мостів
+        # раніше робило 2-4 зайвих Overpass-виклики (2-10с кожен, а при недоступності
+        # Overpass — таймаут 180с×2 ендпойнти = генерація «зависала» на хвилини).
+        # Overpass лишається ТІЛЬКИ для зон без локального покриття (вище → None).
         _lb = _LOCAL_DB_DATA.get("buildings")
         _lw = _LOCAL_DB_DATA.get("water")
         _lbr = _LOCAL_DB_DATA.get("bridges")
         _lr = _LOCAL_DB_DATA.get("roads")
-        if _lb is not None and not _lb.empty:
-            gdf_buildings = _lb
-        else:
-            print("[LOCAL OSM DB] buildings empty locally — Overpass fallback", flush=True)
-            gdf_buildings = _fetch_buildings()
-        if _lw is not None and not _lw.empty:
-            gdf_water = _lw
-        else:
-            gdf_water = _fetch_water()
-        if _lbr is not None and not _lbr.empty:
-            gdf_bridges = _lbr
-        else:
-            gdf_bridges = _fetch_bridges()
-        if _lr is not None and hasattr(_lr, "edges") and len(list(_lr.edges())) > 0:
-            G_roads = _lr
-            print("[LOCAL OSM DB] roads from DuckDB", flush=True)
-        else:
-            print("[LOCAL OSM DB] roads empty locally — Overpass fallback", flush=True)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                G_roads = executor.submit(_fetch_roads).result()
+        gdf_buildings = _lb if _lb is not None else gpd.GeoDataFrame()
+        gdf_water = _lw if _lw is not None else gpd.GeoDataFrame()
+        gdf_bridges = _lbr if _lbr is not None else gpd.GeoDataFrame()
+        G_roads = _lr if (_lr is not None and hasattr(_lr, "edges")) else None
+        print(f"[LOCAL OSM DB] ALL layers from DuckDB (no Overpass): "
+              f"buildings={len(gdf_buildings)}, water={len(gdf_water)}, "
+              f"bridges={len(gdf_bridges)}, "
+              f"roads={len(list(G_roads.edges())) if G_roads is not None else 0} edges", flush=True)
     else:
         # Fallback: усе через Overpass.
         # IMPORTANT: 4 simultaneous Overpass requests from one IP get rate-limited
