@@ -962,16 +962,16 @@ export function SimpleControlPanel({
         <>
           <div className="h-20 lg:hidden" aria-hidden="true" />
           <StickyActionBar
-            // Ціну показуємо ЛИШЕ на кроці оформлення (OrderDialog), не під час
-            // створення — ліворуч тихий продукт-лейбл, price=null.
-            priceLabel={tOrder("prodMap")}
-            price={null}
+            // Орієнтовна ціна завжди на видноті (фолбек з SIMPLE_SIZES, ніколи «—»)
+            // — щоб покупець не тиснув «Замовити» наосліп (головна втрата конверсії).
+            priceLabel={t("estPrice")}
+            price={orderPriceText}
             actionLabel={
               downloadUrl
-                ? t("orderPrint")
+                ? t("orderShort")
                 : isGenerating
                   ? `${t("generating")} ${progress}%`
-                  : t("generateShort") /* короткий лейбл для sticky (без «модель») — не переноситься у 2 рядки */
+                  : t("generateShort") /* короткі лейбли для sticky — щоб поряд із ціною не обрізались */
             }
             busy={isGenerating}
             // НЕ блокуємо коли зона не вибрана — інакше на мобільному тап по єдиній
@@ -993,7 +993,7 @@ export function SimpleControlPanel({
             //  • готово → «Завантажити» поряд із «Замовити»;
             //  • до/під час генерації → «Замовити» (order-now: фонова генерація
             //    + форма одразу, без очікування 1-3 хв).
-            secondaryLabel={downloadUrl ? t("downloadShort") : (selectedArea ? t("orderPrint") : undefined)}
+            secondaryLabel={downloadUrl ? t("downloadShort") : (selectedArea ? t("orderShort") : undefined)}
             onSecondary={downloadUrl ? doGatedDownload : (selectedArea ? orderNow : undefined)}
           />
         </>

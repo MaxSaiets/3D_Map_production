@@ -1481,9 +1481,10 @@ export function KeychainControlPanel({
         {/* Мобільний sticky-бар: ціна завжди видима + головна дія стану */}
         <div className="h-20 lg:hidden" aria-hidden="true" />
         <StickyActionBar
-          // Ціну показуємо ЛИШЕ на кроці оформлення (OrderDialog), не тут.
+          // Орієнтовна ціна завжди на видноті (фолбек ≈120₴ поки вантажиться quote)
+          // — покупець бачить вартість ще до форми замовлення.
           priceLabel={t("sticky.priceLabel")}
-          price={null}
+          price={quote?.formatted ?? "≈ 120 ₴"}
           actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
           busy={isGenerating}
           // НЕ блокуємо коли зона не вибрана / є print-issue — інакше на мобільному

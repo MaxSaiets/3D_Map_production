@@ -48,18 +48,20 @@ export function StickyActionBar({
             лейбл+ціна, праворуч кнопки. Під час створення (price=null) лейбл
             «3D-мапа» лише крав місце й обрізався до «3…» — тож прибираємо його, а
             дві кнопки розтягуємо на всю ширину (flex-1): великі й без обрізання. */}
+        {/* Ціна — НАТУРАЛЬНА ширина (shrink-0, nowrap): ніколи не обрізається. Кнопки
+            ділять решту (flex-1, truncate, менший padding), тож «≈390₴» завжди видно. */}
         {price != null && (
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{priceLabel}</div>
-            <div className="truncate text-[17px] font-bold leading-tight text-[var(--text-primary)]">{price}</div>
+          <div className="shrink-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">{priceLabel}</div>
+            <div className="whitespace-nowrap text-[16px] font-bold leading-tight text-[var(--text-primary)]">{price}</div>
           </div>
         )}
-        <div className={`flex items-center gap-2 ${price != null ? "shrink-0" : "w-full"}`}>
+        <div className={`flex min-w-0 items-center gap-2 ${price != null ? "flex-1" : "w-full"}`}>
           {secondaryLabel && onSecondary && (
             <button
               type="button"
               onClick={onSecondary}
-              className={`inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--text-primary)] transition hover:bg-white/70 ${price != null ? "" : "flex-1"}`}
+              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center truncate rounded-full border border-[var(--surface-border)] bg-white px-3 py-3 text-sm font-bold text-[var(--text-primary)] transition hover:bg-white/70"
             >
               {secondaryLabel}
             </button>
@@ -68,10 +70,10 @@ export function StickyActionBar({
             type="button"
             onClick={onAction}
             disabled={disabled}
-            className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(11,92,87,0.28)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400 ${price != null ? "" : "flex-1"}`}
+            className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-full bg-[var(--accent-strong)] px-3 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(11,92,87,0.28)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            {actionLabel}
+            {busy && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
+            <span className="truncate">{actionLabel}</span>
           </button>
         </div>
       </div>
