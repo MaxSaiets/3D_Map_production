@@ -499,9 +499,10 @@ app.mount("/api/public_media", VideoStatic(directory=PUBLIC_MEDIA_DIR), name="ap
 async def _tiktok_oauth_callback(code: str = "", state: str = "", error: str = ""):
     """OAuth redirect для TikTok (localhost не підтримується TikTok). Зберігає code у
     DATA_DIR/tiktok_code.json, звідки publisher-бот його забирає й обмінює на токен."""
+    import json as _json
     try:
         (DATA_DIR / "tiktok_code.json").write_text(
-            json.dumps({"code": code, "state": state, "error": error}), encoding="utf-8")
+            _json.dumps({"code": code, "state": state, "error": error}), encoding="utf-8")
     except Exception:
         pass
     body = "TikTok авторизовано — можна закрити цю вкладку." if code else f"Помилка: {error}"
