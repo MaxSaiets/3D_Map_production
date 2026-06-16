@@ -155,17 +155,24 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
 
         let totalVertices = 0;
         let totalMeshes = 0;
+        // Превʼю-палітра = ДРУК (backend COLOR_MAP), щоб «що бачиш = що друкується»
+        // і кожен шар ЧІТКО відрізнявся (скарга: на рельєфі будинки зливались із
+        // землею). Будинки — сірі (0x787878 = друк), НЕ світло-сірі.
         const colorMap: Record<string, number> = {
-          base: 0xc8b48e,
+          baseback: 0xc8b48e,
+          base: 0xc8b48e,    // рельєф/основа — бежевий (земля)
           terrain: 0xc8b48e,
-          roads: 0x3c3c3c,
-          buildings: 0xe3e3e3,
-          water: 0x6496c8,
-          parks: 0x649664,
+          buildings: 0x787878, // будинки — СІРІ (контраст із бежевою землею), = друк
+          roads: 0x3c3c3c,   // дороги — темно-сірі
+          water: 0x6496c8,   // вода — блакитна
+          parks: 0x649664,   // парки/зелень — зелені
           green: 0x649664,
+          poi: 0xf0a030,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
+          maplabel: 0x191919,
           rim: 0x191919,   // ободок брелка — ЧОРНИЙ (друкується чорним)
           text: 0x191919,  // текст/назва — ЧОРНИЙ
+          text2: 0x191919,
         };
 
         group.traverse((child) => {
@@ -195,14 +202,18 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
 
           for (const material of materials) {
             if (!material) continue;
-            const maybeColored = material as THREE.Material & { color?: THREE.Color };
-            // track/rim/text форсуємо завжди (щоб превʼю = друк: червоний трек,
-            // чорний ободок і текст), навіть якщо 3MF віддав сірий матеріал;
-            // решта шарів — лише коли матеріал білий (не перебиваємо AMS-кольори).
-            if ((partKey === "track" || partKey === "rim" || partKey === "text") && partColor !== null && maybeColored.color) {
+            const maybeColored = material as THREE.Material & { color?: THREE.Color; map?: unknown; metalness?: number; roughness?: number };
+            // ФОРСУЄМО кольори ВСІХ розпізнаних шарів (не лише track/rim/text), щоб
+            // превʼю було ЧІТКИМ — «що бачиш = що друкується». Раніше решта шарів
+            // фарбувалась лише коли матеріал білий → на рельєфі будинки приходили з
+            // земляним матеріалом (не білим) і зливались із бежевою основою
+            // («не зрозуміло що і як»). Тепер кожен шар має свій чіткий колір.
+            if (partColor !== null && maybeColored.color) {
               maybeColored.color.setHex(partColor);
-            } else if (partColor !== null && maybeColored.color?.getHex() === 0xffffff) {
-              maybeColored.color.setHex(partColor);
+              // Прибираємо текстуру/металік, що могли б перебити суцільний колір.
+              if ("map" in maybeColored) (maybeColored as any).map = null;
+              if (typeof maybeColored.metalness === "number") maybeColored.metalness = 0.0;
+              if (typeof maybeColored.roughness === "number") maybeColored.roughness = 0.85;
             }
             material.side = THREE.DoubleSide;
             material.needsUpdate = true;
