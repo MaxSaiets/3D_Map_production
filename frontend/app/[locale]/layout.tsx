@@ -55,9 +55,12 @@ export async function generateMetadata({ params }: { params: { locale: string } 
     creator: "Monadruk",
     keywords: t("keywords").split(",").map((s) => s.trim()),
     alternates: { canonical: localePath(locale), languages },
-    verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
-      : undefined,
+    verification: {
+      ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+        ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+        : {}),
+      other: { "p:domain_verify": "d57db6841e30b47e8c24e654e0b0e049" },
+    },
     robots: {
       index: true, follow: true,
       googleBot: { index: true, follow: true, "max-image-preview": "large" },
