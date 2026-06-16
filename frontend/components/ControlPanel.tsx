@@ -136,17 +136,21 @@ function AccordionButton({
   icon: Icon,
   isOpen,
   onClick,
+  panelId,
 }: {
   title: string;
   description: string;
   icon: typeof Route;
   isOpen: boolean;
   onClick: () => void;
+  panelId?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-expanded={isOpen}
+      aria-controls={panelId}
       className="flex w-full items-center justify-between gap-3 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3 text-left transition hover:border-[rgba(11,92,87,0.25)] hover:bg-white"
     >
       <div className="flex items-start gap-3">
@@ -666,9 +670,10 @@ export function ControlPanel({
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label={t("modeGroupLabel")}>
             <button
               type="button"
+              aria-pressed={!showHexGrid}
               onClick={() => {
                 setShowHexGrid(false);
                 setSelectedZones([]);
@@ -691,6 +696,7 @@ export function ControlPanel({
 
             <button
               type="button"
+              aria-pressed={showHexGrid}
               onClick={() => {
                 setShowHexGrid(true);
                 setError(null);
@@ -801,11 +807,12 @@ export function ControlPanel({
 
               <div className="flex flex-col gap-2 sm:items-end">
                 {/* Preview / Full mode toggle — show prominently above Generate */}
-                <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-1 text-xs">
+                <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-1 text-xs" role="group" aria-label={t("renderModeGroupLabel")}>
                   <button
                     type="button"
                     onClick={() => setPreviewMode(true)}
                     disabled={isGenerating}
+                    aria-pressed={previewMode}
                     className={`rounded-full px-3 py-1.5 font-semibold transition ${
                       previewMode
                         ? "bg-[var(--accent-strong)] text-white shadow"
@@ -819,6 +826,7 @@ export function ControlPanel({
                     type="button"
                     onClick={() => setPreviewMode(false)}
                     disabled={isGenerating}
+                    aria-pressed={!previewMode}
                     className={`rounded-full px-3 py-1.5 font-semibold transition ${
                       !previewMode
                         ? "bg-[var(--accent-strong)] text-white shadow"
@@ -1015,9 +1023,10 @@ export function ControlPanel({
             icon={Route}
             isOpen={openPanels.roads}
             onClick={() => togglePanel("roads")}
+            panelId="cp-panel-roads"
           />
           {openPanels.roads && (
-            <div className="space-y-3">
+            <div className="space-y-3" id="cp-panel-roads" role="region" aria-label={t("roadsTitle")}>
               <SliderField
                 label={t("roadWidth")}
                 valueLabel={roadWidthMultiplier.toFixed(1)}
@@ -1055,9 +1064,10 @@ export function ControlPanel({
             icon={Building2}
             isOpen={openPanels.buildings}
             onClick={() => togglePanel("buildings")}
+            panelId="cp-panel-buildings"
           />
           {openPanels.buildings && (
-            <div className="space-y-3">
+            <div className="space-y-3" id="cp-panel-buildings" role="region" aria-label={t("buildingsTitle")}>
               <SliderField
                 label={t("buildingMinHeight")}
                 valueLabel={t("metersFloat", { m: buildingMinHeight.toFixed(1) })}
@@ -1104,9 +1114,10 @@ export function ControlPanel({
             icon={Mountain}
             isOpen={openPanels.terrain}
             onClick={() => togglePanel("terrain")}
+            panelId="cp-panel-terrain"
           />
           {openPanels.terrain && (
-            <div className="space-y-3">
+            <div className="space-y-3" id="cp-panel-terrain" role="region" aria-label={t("terrainTitle")}>
               <SliderField
                 label={t("waterDepth")}
                 valueLabel={t("millimeters", { mm: waterDepth.toFixed(1) })}
@@ -1194,9 +1205,10 @@ export function ControlPanel({
             icon={Layers3}
             isOpen={openPanels.preview}
             onClick={() => togglePanel("preview")}
+            panelId="cp-panel-preview"
           />
           {openPanels.preview && (
-            <div className="space-y-3">
+            <div className="space-y-3" id="cp-panel-preview" role="region" aria-label={t("previewComponentsTitle")}>
               <CheckboxRow
                 label={t("previewTerrain")}
                 description={t("previewTerrainDesc")}

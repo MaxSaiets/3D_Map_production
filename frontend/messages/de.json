@@ -346,7 +346,22 @@
       "region": "Lieferregion",
       "method": "Liefermethode"
     },
-    "phEmail": "E-Mail (optional)"
+    "phEmail": "E-Mail (optional)",
+    "errPhoneFormat": "Telefonnummer prüfen — sie scheint unvollständig",
+    "errEmail": "E-Mail prüfen — scheint fehlerhaft",
+    "errEuCountry": "Lieferland wählen",
+    "errCity": "Lieferstadt angeben",
+    "errBranchEu": "Nova-Post-Filialnummer angeben",
+    "errAddressEu": "Vollständige Lieferadresse angeben",
+    "errUkrAddress": "Für Ukrposhta auch Straße und Haus angeben",
+    "deliveryHeading": "Lieferung",
+    "deliveryHint": "Wir versenden in die Ukraine und EU. Methode und Kosten bestätigt der Operator.",
+    "priceIncludes": "Preis gilt für den Artikel. Versand wird separat bei Erhalt bezahlt.",
+    "trustNoPrepay": "Keine Vorkasse",
+    "trustNoPrepayDesc": "Zahlung nach Bestellbestätigung",
+    "trustOperator": "Ein Operator klärt die Details vor dem Druck",
+    "trustSecure": "Ihre Daten sind sicher und nur für die Bestellung",
+    "submitReassure": "Mit dem Klick zahlen Sie noch nichts — nur eine Anfrage"
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -558,7 +573,16 @@
     "gridMeters": "{n} m",
     "gridCells": "{n} Zellen",
     "open": "Öffnen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "loadError": "Kontodaten konnten nicht geladen werden. Verbindung prüfen.",
+    "retry": "Erneut",
+    "stlUnavailable": "STL ist für dieses Modell nicht verfügbar — versuchen Sie 3MF.",
+    "detailType": "Typ",
+    "detailDate": "Datum",
+    "detailLocation": "Ort",
+    "downloadAria": "Modell herunterladen (Format wählen)",
+    "downloadFormat3mf": "3MF herunterladen",
+    "downloadFormatStl": "STL herunterladen"
   },
   "tour": {
     "hintAria": "Hinweis",
@@ -617,7 +641,12 @@
     "detailHigh": "hohe Detailtiefe",
     "detailGood": "gute Detailtiefe",
     "detailOverview": "Übersichtsmaßstab",
-    "zoneClamp": "Bereich auf ~{mx} m begrenzt (max. für ein {cm}-cm-Modell, Maßstab 1:10000). Für einen größeren Bereich das Modell vergrößern."
+    "zoneClamp": "Bereich auf ~{mx} m begrenzt (max. für ein {cm}-cm-Modell, Maßstab 1:10000). Für einen größeren Bereich das Modell vergrößern.",
+    "a11yLayerToggle": "Kartentyp: Karte oder Satellit",
+    "a11yRotateGroup": "Form auf der Karte drehen",
+    "a11yRotateLeft": "Um 15° gegen den Uhrzeigersinn drehen",
+    "a11yRotateRight": "Um 15° im Uhrzeigersinn drehen",
+    "a11yRotateValue": "Drehwinkel: {deg}°"
   },
   "kc": {
     "tabs": {
@@ -1086,7 +1115,9 @@
     "contactLimitMessage": "Ich habe meine 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte melde dich.",
     "qaBaseNotWatertight": "die Basis ist nicht vollständig wasserdicht — der Slicer druckt sie trotzdem, aber prüfe das Modell besser",
     "qaSlicerNotFound": "der Slicer ist auf dem Server nicht verfügbar — die Prüfung wurde übersprungen",
-    "qaLayerNotWatertight": "{layer}: die Schicht ist nicht vollständig wasserdicht"
+    "qaLayerNotWatertight": "{layer}: die Schicht ist nicht vollständig wasserdicht",
+    "modeGroupLabel": "Auswahlmodus",
+    "renderModeGroupLabel": "Generierungsmodus: Vorschau oder Vollmodell"
   },
   "kcp": {
     "loadingMap": "Karte wird geladen...",
@@ -1121,7 +1152,8 @@
       "step2Body": "Token 55×30, klassisch oder quadratisch — antippen, und die Maße werden automatisch gesetzt.",
       "step3Title": "Beschriftung hinzufügen",
       "step3Body": "Gib Text ein (z. B. den Stadtnamen), verschiebe oder drehe ihn. Drücke dann „Generieren“."
-    }
+    },
+    "layoutEyebrow": "Produkt-Layout"
   },
   "cities": {
     "Kyiv": "Kyiv",
@@ -1275,7 +1307,28 @@
     "markPaid": "Als bezahlt markieren",
     "withoutDelivery": "ohne Versand",
     "payShown": "Zahlungs-Button angezeigt — Zahlungseingang prüfen",
-    "payManual": "Manuelle Zahlung (online noch nicht angebunden)"
+    "payManual": "Manuelle Zahlung (online noch nicht angebunden)",
+    "searchPlaceholder": "Suche: Telefon, Nr. oder Name",
+    "filterStatus": "Nach Status filtern",
+    "filterAllStatuses": "Alle Status",
+    "exportCsv": "CSV-Export",
+    "ordersShown": "{shown} von {total}",
+    "noMatchingOrders": "Keine passenden Bestellungen.",
+    "expand": "Aufklappen",
+    "collapse": "Einklappen",
+    "detailModels": "Modelle",
+    "detailOrders": "Bestellungen",
+    "detailLastActivity": "Letzte Aktivität",
+    "detailDownloads": "Downloads",
+    "csvOrder": "Nummer",
+    "csvDate": "Datum",
+    "csvStatus": "Status",
+    "csvName": "Name",
+    "csvPhone": "Telefon",
+    "csvEmail": "E-Mail",
+    "csvProduct": "Produkt",
+    "csvPrice": "Betrag",
+    "csvDelivery": "Lieferung"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -1284,5 +1337,9 @@
     "home": "Zur Startseite",
     "createMap": "3D-Karte erstellen",
     "contacts": "Kontakt"
+  },
+  "viewer3d": {
+    "model": "Interaktives 3D-Modell",
+    "modelLabeled": "3D-Modell: {label}"
   }
 }

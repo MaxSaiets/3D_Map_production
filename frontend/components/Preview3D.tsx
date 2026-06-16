@@ -571,6 +571,18 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedTestModel, setHasLoadedTestModel] = useState(false);
 
+  // PERF: батч-прев'ю має перезавантажувати тайли ЛИШЕ коли змінився набір
+  // ЗАВЕРШЕНИХ зон. Раніше ефект залежав від JSON.stringify(taskStatuses), тож
+  // кожен progress-тік під час полінгу повторно завантажував усі GLB/3MF блоби.
+  // Стабільний підпис (відсортовані completed-id) усуває ці зайві ре-фетчі.
+  const completedSignature = useMemo(() => {
+    if (!showAllZones || !taskIds || taskIds.length < 2) return "";
+    return taskIds
+      .filter((id) => (taskStatuses as any)?.[id]?.status === "completed")
+      .sort()
+      .join(",");
+  }, [showAllZones, taskIds, taskStatuses]);
+
   // Surface the load error to the HTML layer (Preview3D) — components inside the
   // R3F <Canvas> can only render three.js objects, so a visible message has to
   // live outside the canvas. Previously a failed load showed only empty lights.
@@ -766,7 +778,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAllZones, taskIds.join(","), JSON.stringify(taskStatuses)]);
+  }, [showAllZones, taskIds.join(","), completedSignature]);
 
   useEffect(() => {
     if (showAllZones) return;

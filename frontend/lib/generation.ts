@@ -1,6 +1,8 @@
 // Shared builder for the map generation request, so the simple panel, the full
 // ControlPanel and the capture route all produce identical payloads.
 
+import { MAP_SIZE_PRICES_UAH, type MapSizeMm } from "@/lib/mapPrices";
+
 export interface MapRequestParams {
   north: number; south: number; east: number; west: number;
   roadWidthMultiplier?: number;
@@ -92,11 +94,13 @@ export function buildMapRequest(p: MapRequestParams) {
 export const GPX_MAX_M_PER_MM = 35;
 
 // Curated size options for the simple flow (mm + estimated price in ₴).
-// price = fallback, узгоджено з backend/pricing.json (живу ціну дає /api/quote).
+// `price` — fallback (живу ціну дає /api/quote). ЦІНА НЕ задається тут вручну:
+// береться з канонічної таблиці MAP_SIZE_PRICES_UAH (lib/mapPrices.ts), яка
+// дзеркалить backend/pricing.json. Так fallback фізично не може розійтися з
+// прайсом і з SEO-схемами — одне джерело на всі три місця.
 export const SIMPLE_SIZES = [
-  // Fallback-ціни = backend/pricing.json (живу ціну дає /api/quote)
-  { key: "s",  label: "S", mm: 55,  cm: "5.5 см", price: 250 },
-  { key: "m",  label: "M", mm: 80,  cm: "8 см",   price: 390 },
-  { key: "l",  label: "L", mm: 110, cm: "11 см",  price: 590 },
-  { key: "xl", label: "XL", mm: 150, cm: "15 см", price: 890 },
-] as const;
+  { key: "s",  label: "S",  mm: 55,  cm: "5.5 см", price: MAP_SIZE_PRICES_UAH[55] },
+  { key: "m",  label: "M",  mm: 80,  cm: "8 см",   price: MAP_SIZE_PRICES_UAH[80] },
+  { key: "l",  label: "L",  mm: 110, cm: "11 см",  price: MAP_SIZE_PRICES_UAH[110] },
+  { key: "xl", label: "XL", mm: 150, cm: "15 см",  price: MAP_SIZE_PRICES_UAH[150] },
+] as const satisfies ReadonlyArray<{ key: string; label: string; mm: MapSizeMm; cm: string; price: number }>;

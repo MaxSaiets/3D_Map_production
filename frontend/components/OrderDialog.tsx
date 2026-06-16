@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2, CheckCircle2, Truck, Package } from "lucide-react";
+import { X, Loader2, CheckCircle2, Truck, Package, ShieldCheck, Lock, PhoneCall, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { capturePreviewImages } from "@/lib/capturePreview";
 import { useAuth } from "@/components/AuthProvider";
@@ -140,15 +140,19 @@ export function OrderDialog({
   const submit = async () => {
     if (!name.trim()) { setError(t("errName")); return; }
     if (!phone.trim()) { setError(t("errPhone")); return; }
+    // Базова перевірка телефону: лишаємо тільки цифри, очікуємо ≥10 (UA +380 = 12).
+    if (phone.replace(/\D/g, "").length < 10) { setError(t("errPhoneFormat")); return; }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError(t("errEmail")); return; }
     if (region === "eu") {
-      if (!euCountry || !city.trim() || (!branch.trim() && !address.trim())) {
-        setError(t("errEu"));
-        return;
-      }
-    } else if (delivery !== "pickup" && (!city.trim() || !branch.trim() || (delivery === "ukr" && !address.trim()))) {
+      if (!euCountry) { setError(t("errEuCountry")); return; }
+      if (!city.trim()) { setError(t("errCity")); return; }
+      if (delivery === "novapost_eu" && !branch.trim()) { setError(t("errBranchEu")); return; }
+      if (delivery === "meest" && !address.trim()) { setError(t("errAddressEu")); return; }
+    } else if (delivery !== "pickup") {
+      if (!city.trim()) { setError(t("errCity")); return; }
+      if (!branch.trim()) { setError(delivery === "nova" ? t("errNova") : t("errUkr")); return; }
       // Укрпошта потребує і місто+індекс, і вулицю/будинок (інакше недоставне).
-      setError(delivery === "nova" ? t("errNova") : t("errUkr"));
-      return;
+      if (delivery === "ukr" && !address.trim()) { setError(t("errUkrAddress")); return; }
     }
     setError(null);
     setSending(true);
@@ -285,26 +289,30 @@ export function OrderDialog({
               {/* Email необовʼязковий — для підтвердження замовлення на пошту. */}
               <input className={fieldCls} placeholder={t("phEmail")} aria-label={t("phEmail")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
 
-              <div role="radiogroup" aria-label={t("aria.region")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
-                  <button key={k} type="button" role="radio" aria-checked={region === k}
-                    onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
-                    className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
-                    {lbl}
-                  </button>
-                ))}
-              </div>
+              <div className="space-y-1.5">
+                <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("deliveryHeading")}</p>
+                <div role="radiogroup" aria-label={t("aria.region")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+                  {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
+                    <button key={k} type="button" role="radio" aria-checked={region === k}
+                      onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
+                      className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
 
-              <div role="radiogroup" aria-label={t("aria.method")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                {(region === "ua"
-                  ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
-                  : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
-                ).map(([k, lbl]) => (
-                  <button key={k} type="button" role="radio" aria-checked={delivery === k} onClick={() => setDelivery(k)}
-                    className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
-                    {lbl}
-                  </button>
-                ))}
+                <div role="radiogroup" aria-label={t("aria.method")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
+                  {(region === "ua"
+                    ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
+                    : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
+                  ).map(([k, lbl]) => (
+                    <button key={k} type="button" role="radio" aria-checked={delivery === k} onClick={() => setDelivery(k)}
+                      className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                <p className="px-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("deliveryHint")}</p>
               </div>
 
               {region === "eu" && (
@@ -334,9 +342,13 @@ export function OrderDialog({
 
               <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} aria-label={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />
 
-              <div className="flex items-center justify-between rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-sm">
-                <span className="font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
-                <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
+              <div className="rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
+                  <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
+                </div>
+                {/* Що входить у ціну — знімає невизначеність «а доставка окремо?». */}
+                <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("priceIncludes")}</p>
               </div>
 
               <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">
@@ -349,12 +361,24 @@ export function OrderDialog({
                 </span>
               </div>
 
-              {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+              {/* Сигнали довіри — знижують відмову на останньому кроці воронки:
+                  замовлення без передоплати, оператор підтверджує, дані захищені. */}
+              <ul className="grid gap-1.5 rounded-2xl border border-[rgba(11,92,87,0.16)] bg-[rgba(15,118,110,0.05)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">
+                <li className="flex items-center gap-2"><Wallet size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustNoPrepay")}</b> — {t("trustNoPrepayDesc")}</span></li>
+                <li className="flex items-center gap-2"><PhoneCall size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustOperator")}</span></li>
+                <li className="flex items-center gap-2"><Lock size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustSecure")}</span></li>
+              </ul>
+
+              {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
 
               <button onClick={submit} disabled={sending}
                 className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">
                 {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("sending")}</>) : t("submit")}
               </button>
+              <p className="flex items-center justify-center gap-1.5 text-center text-[11px] leading-4 text-[var(--text-secondary)]">
+                <ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" />
+                {t("submitReassure")}
+              </p>
             </div>
           </>
         )}

@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2, AlertTriangle, ChevronDown } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
@@ -44,10 +44,16 @@ export default function AccountPage() {
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
   const [quota, setQuota] = useState<Quota | null>(null);
   const [models, setModels] = useState<AccModel[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null); // task_id, що зараз качається
   const [notice, setNotice] = useState<string | null>(null);
   const [grids, setGrids] = useState<CityGrid[]>([]);
   const [orders, setOrders] = useState<AccOrder[]>([]);
+  // Завантаження даних кабінету могло впасти (мережа / бекенд) — показуємо
+  // дружній повтор, а не порожню сторінку.
+  const [loadError, setLoadError] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  // task_id моделі, для якої відкрите меню вибору формату (3MF/STL).
+  const [fmtMenu, setFmtMenu] = useState<string | null>(null);
   // Замовлення друку з раніше згенерованої моделі (генеруй зараз — замов потім).
   const [orderModel, setOrderModel] = useState<AccModel | null>(null);
   // Safety: ніколи не лишаємо вічний спінер. Якщо Firebase не відповів за 3.5с
@@ -57,19 +63,39 @@ export default function AccountPage() {
     const t = setTimeout(() => setGracePassed(true), 3500);
     return () => clearTimeout(t);
   }, []);
+  // Закриваємо меню вибору формату при кліку поза ним / Esc.
+  useEffect(() => {
+    if (!fmtMenu) return;
+    const close = () => setFmtMenu(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFmtMenu(null); };
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("click", close); window.removeEventListener("keydown", onKey); };
+  }, [fmtMenu]);
 
   const load = useCallback(async () => {
     const token = await getIdToken();
     if (!token) return;
+    setLoadingData(true); setLoadError(false);
+    // Квота й моделі — критичні (без них екран порожній): їх збій = показуємо
+    // повтор. Сітки й замовлення другорядні — їх падіння не валить кабінет.
+    const fetchJson = (path: string) =>
+      fetch(`${API_BASE}/api/account/${path}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
     try {
-      const [q, m, g, o] = await Promise.all([
-        fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-        fetch(`${API_BASE}/api/account/models`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-        listGrids(token),
-        fetch(`${API_BASE}/api/account/orders`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ orders: [] })),
+      const [q, m] = await Promise.all([fetchJson("quota"), fetchJson("models")]);
+      setQuota(q.quota); setModels(m.models || []);
+      // другорядні дані — м'який збій
+      const [g, o] = await Promise.all([
+        listGrids(token).catch(() => [] as CityGrid[]),
+        fetchJson("orders").catch(() => ({ orders: [] })),
       ]);
-      setQuota(q.quota); setModels(m.models || []); setGrids(g || []); setOrders(o.orders || []);
-    } catch {/* ignore */}
+      setGrids(g || []); setOrders(o.orders || []);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoadingData(false);
+    }
   }, [getIdToken]);
 
   const removeGrid = useCallback(async (id: string) => {
@@ -79,18 +105,41 @@ export default function AccountPage() {
 
   useEffect(() => { if (user) load(); }, [user, load]);
 
-  const download = async (m: AccModel) => {
-    setBusy(true); setNotice(null);
+  const download = async (m: AccModel, format: "3mf" | "stl" = "3mf") => {
+    setFmtMenu(null); setBusy(m.task_id); setNotice(null);
+    // Квота-гейт + реєстрація завантаження йдуть через спільний gatedDownload
+    // (він віддає 3MF — головний формат). Для STL після проходження гейту
+    // дотягуємо STL-файл з публічного format-ендпойнту (той самий task_id),
+    // тож ліміт усе одно враховано рівно один раз.
     const res = await gatedDownload({
       taskId: m.task_id, downloadUrl: m.download_url,
       meta: { title: m.title, city: m.city, product_type: (m.product_type as any) || "map" },
       getIdToken, openLogin: signIn,
       onLimit: () => setNotice(t("limitNotice")),
     });
-    // gatedDownload повертає лише {remaining} з X-Quota-Remaining header — НЕ перезаписуємо
-    // повний quota-обʼєкт (інакше downloads/limit/is_admin стають undefined). Перечитуємо.
-    if (res.status === "ok") load();
-    setBusy(false);
+    if (res.status === "ok") {
+      if (format === "stl") {
+        try {
+          const r = await fetch(`${API_BASE}/api/download/${m.task_id}?format=stl`);
+          if (r.ok) {
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `${(m.title || m.city || "monadruk").replace(/[^\w.-]+/g, "_")}_${m.task_id.slice(0, 8)}.stl`;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+          } else {
+            setNotice(t("stlUnavailable"));
+          }
+        } catch {
+          setNotice(t("stlUnavailable"));
+        }
+      }
+      // gatedDownload повертає лише {remaining} з X-Quota-Remaining header — НЕ перезаписуємо
+      // повний quota-обʼєкт (інакше downloads/limit/is_admin стають undefined). Перечитуємо.
+      load();
+    }
+    setBusy(null);
   };
 
   return (
@@ -190,6 +239,16 @@ export default function AccountPage() {
 
           {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{notice}</div>}
 
+          {loadError && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <span className="inline-flex items-center gap-2"><AlertTriangle size={16} /> {t("loadError")}</span>
+              <button onClick={load} disabled={loadingData}
+                className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-[13px] font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60">
+                {loadingData ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} {t("retry")}
+              </button>
+            </div>
+          )}
+
           {orders.length > 0 && (
             <>
               <h3 className="mb-3 mt-8 font-serif text-xl text-ink">{t("myOrders")}</h3>
@@ -248,7 +307,25 @@ export default function AccountPage() {
                   </div>
                   <div className="p-4 pt-3">
                   <div className="font-serif text-[17px] text-ink">{m.title || m.city || (m.product_type === "keychain" ? t("keychain") : t("map3d"))}</div>
-                  <div className="text-[12px] text-ink-3">{m.product_type === "keychain" ? t("keychain") : t("mapShort")}{m.ts ? ` · ${new Date(m.ts * 1000).toLocaleDateString("uk")}` : ""}</div>
+                  {/* Деталі моделі: тип · дата · місто/локація */}
+                  <dl className="mt-1 space-y-0.5 text-[12px] text-ink-3">
+                    <div className="flex items-center gap-1.5">
+                      <dt className="text-ink-3">{t("detailType")}:</dt>
+                      <dd className="font-medium text-ink-2">{m.product_type === "keychain" ? t("keychain") : t("mapShort")}</dd>
+                    </div>
+                    {m.ts ? (
+                      <div className="flex items-center gap-1.5">
+                        <dt className="text-ink-3">{t("detailDate")}:</dt>
+                        <dd className="font-medium text-ink-2">{new Date(m.ts * 1000).toLocaleDateString("uk")}</dd>
+                      </div>
+                    ) : null}
+                    {m.city ? (
+                      <div className="flex items-center gap-1.5">
+                        <dt className="text-ink-3">{t("detailLocation")}:</dt>
+                        <dd className="truncate font-medium text-ink-2">{m.city}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
                   <div className="mt-3 flex gap-2">
                     {/* Замовити друк цієї моделі (управління+покупка: генеруй зараз, замов потім) */}
                     <button onClick={() => setOrderModel(m)}
@@ -256,11 +333,31 @@ export default function AccountPage() {
                       style={{ background: "var(--bronze,#8E6B3D)" }}>
                       <ShoppingBag size={15} /> {t("orderPrint")}
                     </button>
-                    <button onClick={() => download(m)} disabled={busy}
-                      title={t("downloadTitle")}
-                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-bg-2 disabled:opacity-60">
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download size={15} />}
-                    </button>
+                    {/* Завантаження з вибором формату (3MF за замовч. або STL) */}
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setFmtMenu((cur) => (cur === m.task_id ? null : m.task_id))}
+                        disabled={busy === m.task_id}
+                        title={t("downloadTitle")}
+                        aria-label={t("downloadAria")}
+                        aria-haspopup="menu"
+                        aria-expanded={fmtMenu === m.task_id}
+                        className="inline-flex min-h-10 items-center justify-center gap-1 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-bg-2 disabled:opacity-60">
+                        {busy === m.task_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Download size={15} /><ChevronDown size={13} /></>}
+                      </button>
+                      {fmtMenu === m.task_id && busy !== m.task_id && (
+                        <div role="menu" className="absolute right-0 z-10 mt-1 w-44 overflow-hidden rounded-xl border border-line bg-paper py-1 shadow-lg">
+                          <button role="menuitem" onClick={() => download(m, "3mf")}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-ink hover:bg-bg-2">
+                            <Download size={14} className="text-ink-3" /> {t("downloadFormat3mf")}
+                          </button>
+                          <button role="menuitem" onClick={() => download(m, "stl")}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-ink hover:bg-bg-2">
+                            <Download size={14} className="text-ink-3" /> {t("downloadFormatStl")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   </div>
                 </div>

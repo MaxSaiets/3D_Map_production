@@ -3,6 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import * as THREE from "three";
 
 /** Heavy per-model prep (geometry clone + mirror + normals) done ONCE per URL and
@@ -56,6 +57,7 @@ function Model({ url, mirror = true, lieFlat = false, onReady }: { url: string; 
 export default function Model3DViewer({
   url, height = 360, allowZoom = false, autoRotate = true, label, onActivate, flat,
 }: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void; flat?: boolean }) {
+  const t = useTranslations("viewer3d");
   const ref = useRef<HTMLDivElement | null>(null);
   const down = useRef<{ x: number; y: number } | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -86,11 +88,15 @@ export default function Model3DViewer({
       style={{ height, width: "100%", cursor: onActivate ? "pointer" : undefined }}
       className="relative touch-none"
       role={onActivate ? "button" : "img"}
-      aria-label={label ? `3D-модель: ${label}` : "Інтерактивна 3D-модель"}
+      tabIndex={onActivate ? 0 : undefined}
+      aria-label={label ? t("modelLabeled", { label }) : t("model")}
       onPointerDown={onActivate ? (e) => { down.current = { x: e.clientX, y: e.clientY }; } : undefined}
       onPointerUp={onActivate ? (e) => {
         const d = down.current; down.current = null;
         if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) onActivate();
+      } : undefined}
+      onKeyDown={onActivate ? (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onActivate(); }
       } : undefined}
     >
       {label && <span className="sr-only">{label}</span>}

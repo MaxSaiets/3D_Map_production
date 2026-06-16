@@ -12,6 +12,60 @@ from services.groove_pipeline import prepare_road_cut_mask
 from services.terrain_generator import create_terrain_mesh
 
 
+def _iter_extrudable_polygons(geom: Any, min_area_m2: float = 1e-6) -> list:
+    """Витягує список ВАЛІДНИХ, не-вироджених Polygon-ів з будь-якої геометрії
+    (Polygon / MultiPolygon / GeometryCollection) для безпечної екструзії.
+
+    Захист для AMS-бази: water-split через `.difference()` може дати MultiPolygon,
+    GeometryCollection (з лініями/точками), невалідні self-intersecting полігони
+    або вироджені «волоски» нульової площі. trimesh.extrude_polygon на такому
+    кидає виняток → база зникає. Тут чистимо (make_valid → buffer(0)) і фільтруємо
+    вироджене, повертаючи лише те, що реально екструдується.
+    """
+    if geom is None or getattr(geom, "is_empty", True):
+        return []
+
+    gt = getattr(geom, "geom_type", "")
+    out: list = []
+    if gt in ("MultiPolygon", "GeometryCollection"):
+        for g in getattr(geom, "geoms", []):
+            out.extend(_iter_extrudable_polygons(g, min_area_m2))
+        return out
+    if gt != "Polygon":
+        # LineString / Point / тощо — не екструдується.
+        return []
+
+    poly = geom
+    # Чистимо невалідну геометрію (self-intersection після difference).
+    if not poly.is_valid:
+        cleaned = None
+        try:
+            from shapely.validation import make_valid  # type: ignore
+
+            cleaned = make_valid(poly)
+        except Exception:  # noqa: BLE001
+            try:
+                cleaned = poly.buffer(0)
+            except Exception:  # noqa: BLE001
+                cleaned = None
+        if cleaned is None or cleaned.is_empty:
+            return []
+        if getattr(cleaned, "geom_type", "") != "Polygon":
+            # make_valid міг розпасти на MultiPolygon/Collection — рекурсія.
+            return _iter_extrudable_polygons(cleaned, min_area_m2)
+        poly = cleaned
+
+    # Відкидаємо вироджене (нульова площа / занадто мало точок у кільці).
+    try:
+        if poly.area <= min_area_m2:
+            return []
+        if len(poly.exterior.coords) < 4:
+            return []
+    except Exception:  # noqa: BLE001
+        return []
+    return [poly]
+
+
 @dataclass
 class GenerationPipelineResult:
     terrain_mesh: Optional[trimesh.Trimesh]
@@ -84,27 +138,36 @@ def process_generation_stage(
 
                     water_union = unary_union(list(gdf_water_local.geometry.values))
                     if water_union and not water_union.is_empty:
-                        poly_to_extrude = poly_to_extrude.difference(water_union)
-                        print(f"[INFO] {zone_prefix} AMS Mode: Subtracted water from flat land terrain.")
+                        diffed = poly_to_extrude.difference(water_union)
+                        # Якщо вода ПОВНІСТЮ зʼїла зону (плитка цілком у воді) —
+                        # difference дає порожнечу → бази не буде. Лишаємо суходіл як є
+                        # (краще плоска база, ніж відсутня модель).
+                        if diffed is not None and not diffed.is_empty:
+                            poly_to_extrude = diffed
+                            print(f"[INFO] {zone_prefix} AMS Mode: Subtracted water from flat land terrain.")
+                        else:
+                            print(f"[WARN] {zone_prefix} AMS Mode: water covers whole zone — keeping land base un-subtracted.")
                 except Exception as exc:
                     print(f"[WARN] {zone_prefix} AMS Mode: Failed to subtract water from land: {exc}")
 
             # Вода могла РОЗБИТИ зону (річка через всю плитку) → difference дає
-            # MultiPolygon, а extrude_polygon чекає ОДИН Polygon → виняток →
-            # terrain_mesh=None → AMS-мапа БЕЗ бази (непридатна). Екструдуємо КОЖНУ
-            # частину окремо й зшиваємо.
-            if getattr(poly_to_extrude, "geom_type", "") == "Polygon":
-                terrain_mesh = trimesh.creation.extrude_polygon(poly_to_extrude, height=land_height_m)
-            else:
-                _parts = [g for g in getattr(poly_to_extrude, "geoms", [])
-                          if getattr(g, "geom_type", "") == "Polygon" and not g.is_empty]
-                _meshes = []
-                for _g in _parts:
-                    try:
-                        _meshes.append(trimesh.creation.extrude_polygon(_g, height=land_height_m))
-                    except Exception:
-                        pass
-                terrain_mesh = trimesh.util.concatenate(_meshes) if _meshes else None
+            # MultiPolygon/GeometryCollection, а extrude_polygon чекає ОДИН валідний
+            # Polygon → виняток → terrain_mesh=None → AMS-мапа БЕЗ бази (непридатна).
+            # Витягуємо КОЖЕН валідний, не-вироджений полігон, чистимо й екструдуємо
+            # окремо, потім зшиваємо.
+            _polys = _iter_extrudable_polygons(poly_to_extrude)
+            if not _polys:
+                print(f"[WARN] {zone_prefix} AMS Mode: no extrudable polygon after water-split — falling back to bbox plate.")
+                _polys = _iter_extrudable_polygons(box(*bbox_meters))
+            _meshes = []
+            for _g in _polys:
+                try:
+                    _meshes.append(trimesh.creation.extrude_polygon(_g, height=land_height_m))
+                except Exception as _ex:
+                    print(f"[WARN] {zone_prefix} AMS Mode: extrude_polygon skipped a part: {_ex}")
+            terrain_mesh = trimesh.util.concatenate(_meshes) if _meshes else None
+            if terrain_mesh is None:
+                print(f"[ERROR] {zone_prefix} AMS Mode: all parts failed to extrude — no base mesh.")
             terrain_provider = None
         except Exception as exc:
             print(f"[ERROR] {zone_prefix} AMS Terrain creation failed: {exc}")

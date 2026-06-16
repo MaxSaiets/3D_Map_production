@@ -1,12 +1,53 @@
-// Канонічний діапазон цін МАПИ для structured-data (AggregateOffer на 138 city-pages
-// + create/keychains LD-схеми). ⚠ ТРИМАТИ В СИНХРОНІ з backend/pricing.json → map.sizes_mm
-// (зараз S250 … XL890 UAH). EU = позиційний курс ~×0.024 (як на лендінгу), НЕ ФХ.
-// Централізовано тут, щоб зміна цін не «дрейфувала» у 138 сторінках structured-data
-// (Google Merchant «price mismatch»).
+// ──────────────────────────────────────────────────────────────────────────
+// ЄДИНЕ ДЖЕРЕЛО ПРАВДИ для цін МАПИ на фронті.
+// ⚠ ТРИМАТИ В СИНХРОНІ з backend/pricing.json → map.sizes_mm (жива ціна йде з
+// /api/quote; це fallback + structured-data). Усе нижче (SIMPLE_SIZES у
+// generation.ts, AggregateOffer на 138 city-pages, create/keychains LD-схеми)
+// читає ОДНУ цю таблицю, щоб ціни не «дрейфували» між місцями (Google Merchant
+// «price mismatch» + розбіжність UI vs реальний прайс).
+//
+// Як змінити ціни:
+//   1) backend/pricing.json → map.sizes_mm (runtime-джерело, оператор бачить)
+//   2) MAP_SIZE_PRICES_UAH нижче (фронт-fallback + SEO) — мають збігатися
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Канонічна таблиця ЦІН МАПИ за розміром: ребро моделі (мм) → ціна (UAH).
+ *  Дзеркало backend/pricing.json → map.sizes_mm. 60мм = магніт (окремий SKU,
+ *  не входить у звичайну S/M/L/XL лінійку, тому тут немає). */
+export const MAP_SIZE_PRICES_UAH = {
+  55: 250,  // S
+  80: 390,  // M
+  110: 590, // L
+  150: 890, // XL
+} as const;
+
+export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
+
+/** Магніт-мапа (60мм) — окремий SKU. UAH. Дзеркало pricing.json map.sizes_mm["60"]. */
+export const MAP_MAGNET_PRICE_UAH = 180;
+
+/** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
+export const MAP_RELIEF_ADDON_UAH = 100;
+
+/** Позиційний курс UAH→EUR (як на лендінгу, НЕ біржовий ФХ). Округлюємо до
+ *  «гарних» євро так само, як це робилось вручну (250₴≈6€, 890₴≈21€). */
+export const EUR_PER_UAH = 0.024;
+
+/** Ціна розміру у EUR (позиційний курс, округлення до цілого євро). */
+export function mapPriceEur(uah: number): number {
+  return Math.round(uah * EUR_PER_UAH);
+}
+
+const _uahValues = Object.values(MAP_SIZE_PRICES_UAH);
+const _lowUah = Math.min(..._uahValues);
+const _highUah = Math.max(..._uahValues);
+
+// Діапазон цін для structured-data (AggregateOffer). Виводиться з таблиці вище —
+// одна зміна ціни оновлює і UI, і SEO одночасно.
 export const MAP_PRICE_RANGE = {
-  offerCount: "4",
-  uk: { currency: "UAH", low: "250", high: "890" },
-  eu: { currency: "EUR", low: "6", high: "21" },
+  offerCount: String(_uahValues.length),
+  uk: { currency: "UAH", low: String(_lowUah), high: String(_highUah) },
+  eu: { currency: "EUR", low: String(mapPriceEur(_lowUah)), high: String(mapPriceEur(_highUah)) },
 } as const;
 
 export function mapPriceRange(locale: string) {

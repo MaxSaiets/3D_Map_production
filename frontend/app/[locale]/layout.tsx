@@ -96,7 +96,9 @@ export default async function LocaleLayout({
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "Organization",
+        // Org + LocalBusiness/Store у ОДНОМУ вузлі (multi-type) → краще для
+        // локальної комерції: contacts + offers + geo + ціновий діапазон.
+        "@type": ["Organization", "Store", "OnlineStore"],
         "@id": `${BASE}/#org`,
         name: "Monadruk",
         legalName: BUSINESS.ownerFull,
@@ -107,6 +109,9 @@ export default async function LocaleLayout({
         email: BUSINESS.email,
         telephone: BUSINESS.phone,
         vatID: BUSINESS.taxId,
+        currenciesAccepted: "UAH, EUR",
+        paymentAccepted: "Visa, Mastercard, Apple Pay, Google Pay",
+        priceRange: "₴₴",
         address: {
           "@type": "PostalAddress",
           addressCountry: "UA",
@@ -114,6 +119,13 @@ export default async function LocaleLayout({
           addressLocality: "Хмельницький",
           streetAddress: "вул. Завадського, 38",
         },
+        // Координати магазину (Хмельницький, вул. Завадського, 38) — для
+        // локального пошуку/Maps rich-results.
+        geo: { "@type": "GeoCoordinates", latitude: 49.4229, longitude: 26.9871 },
+        areaServed: [
+          { "@type": "Country", name: "Ukraine" },
+          { "@type": "AdministrativeArea", name: "European Union" },
+        ],
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer support",
@@ -122,6 +134,25 @@ export default async function LocaleLayout({
           areaServed: ["UA", "EU"],
           availableLanguage: ["uk", "en", "pl", "de"],
         },
+        // Каталог пропозицій магазину — окремий продукт-офер на кожен товар.
+        makesOffer: [
+          {
+            "@type": "Offer",
+            name: t("offerKeychain"),
+            priceCurrency: "UAH",
+            price: "120",
+            url: `${BASE}/keychains`,
+            availability: "https://schema.org/InStock",
+          },
+          {
+            "@type": "Offer",
+            name: t("offerMap"),
+            priceCurrency: "UAH",
+            price: "250",
+            url: `${BASE}/create`,
+            availability: "https://schema.org/InStock",
+          },
+        ],
         sameAs: ["https://t.me/monadruk"],
       },
       {

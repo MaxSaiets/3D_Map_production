@@ -16,6 +16,7 @@ import json
 import os
 import random
 import re
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -65,13 +66,37 @@ def _existing_order_numbers() -> set[str]:
     return nums
 
 
+# Allocation of order numbers must be atomic: two orders arriving at the same
+# time both read the journal, both pick the same "free" number and both write it
+# → duplicate #1234. We serialize allocation with a process lock AND keep an
+# in-memory set of numbers handed out this run but not yet flushed to the journal
+# (a record is appended a few lines later in create_order). 4 digits → up to ~9000
+# numbers; if the space ever saturates we widen to 5 digits so we never loop forever.
+_order_num_lock = threading.Lock()
+_reserved_order_numbers: set[str] = set()
+
+
 def _new_order_number() -> str:
-    used = _existing_order_numbers()
-    for _ in range(50):
-        n = f"{random.randint(1000, 9999)}"
-        if n not in used:
-            return n
-    return f"{random.randint(1000, 9999)}"
+    with _order_num_lock:
+        used = _existing_order_numbers() | _reserved_order_numbers
+        # 4-digit space first, then 5-digit fallback once it is crowded.
+        for lo, hi in ((1000, 9999), (10000, 99999)):
+            # bounded random attempts, then a deterministic scan so a nearly-full
+            # space still returns the first free slot instead of failing.
+            for _ in range(200):
+                n = f"{random.randint(lo, hi)}"
+                if n not in used:
+                    _reserved_order_numbers.add(n)
+                    return n
+            for cand in range(lo, hi + 1):
+                n = str(cand)
+                if n not in used:
+                    _reserved_order_numbers.add(n)
+                    return n
+        # Astronomically unlikely (≈99k orders): fall back to a timestamp tail.
+        n = f"{int(time.time()) % 1000000}"
+        _reserved_order_numbers.add(n)
+        return n
 
 
 def _tg_post(method: str, **kwargs) -> bool:

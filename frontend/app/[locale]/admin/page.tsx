@@ -2,9 +2,9 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3, CheckCircle2, Search, Download, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { setOwnerOptOut } from "@/lib/analytics";
 
@@ -30,6 +30,11 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
   // order_number, що зараз оновлюється (показуємо спінер на його select).
   const [savingStatus, setSavingStatus] = useState<string | null>(null);
+  // Пошук/фільтр замовлень: текст (телефон / № / ім'я) + статус.
+  const [orderQuery, setOrderQuery] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<"" | OrderStatus>("");
+  // uid користувача, чий рядок розгорнуто (деталі: моделі/замовлення/активність).
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   // Зміна статусу замовлення на сервері + оптимістичне оновлення картки.
   const setOrderStatus = useCallback(async (orderNumber: string | number, status: OrderStatus) => {
@@ -72,6 +77,67 @@ export default function AdminPage() {
   }, [getIdToken]);
 
   useEffect(() => { if (user) load(); }, [user, load]);
+
+  // Лише справжні замовлення (платіжні події type:"payment" — не замовлення).
+  const realOrders = useMemo(() => orders.filter((o) => o.type !== "payment"), [orders]);
+
+  // Застосовуємо пошук (телефон / № / ім'я / email) + фільтр статусу.
+  const filteredOrders = useMemo(() => {
+    const q = orderQuery.trim().toLowerCase();
+    return realOrders.filter((o) => {
+      if (orderStatusFilter) {
+        const st = (ORDER_STATUSES as readonly string[]).includes(o.status) ? o.status : "new";
+        if (st !== orderStatusFilter) return false;
+      }
+      if (!q) return true;
+      const hay = [o.order_number, o.phone, o.name, o.user_email]
+        .filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [realOrders, orderQuery, orderStatusFilter]);
+
+  // Кількість замовлень на користувача (за email) — для розгортання рядка.
+  const ordersByEmail = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const o of realOrders) {
+      const key = (o.user_email || "").toLowerCase();
+      if (!key) continue;
+      (map[key] ||= []).push(o);
+    }
+    return map;
+  }, [realOrders]);
+
+  // Експорт відфільтрованих замовлень у CSV (клієнтський, без бекенда).
+  const exportOrdersCsv = useCallback(() => {
+    const cols = [
+      ["order_number", ta("csvOrder")],
+      ["created_at", ta("csvDate")],
+      ["status", ta("csvStatus")],
+      ["name", ta("csvName")],
+      ["phone", ta("csvPhone")],
+      ["user_email", ta("csvEmail")],
+      ["product_type", ta("csvProduct")],
+      ["est_price", ta("csvPrice")],
+      ["delivery_method", ta("csvDelivery")],
+    ] as const;
+    const cell = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map(([, label]) => cell(label)).join(",");
+    const rows = filteredOrders.map((o) =>
+      cols.map(([key]) => cell(o[key])).join(","),
+    );
+    // BOM, щоб Excel коректно читав кирилицю.
+    const csv = "﻿" + [header, ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `monadruk_orders_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }, [filteredOrders, ta]);
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[1100px] px-5 py-8 lg:px-8">
@@ -172,13 +238,47 @@ export default function AdminPage() {
 
           {tab === "orders" && (
             <div className="mt-5 space-y-3">
-              {/* Платіжні події у журналі (type:"payment") не є замовленнями — ховаємо. */}
-              {orders.filter((o) => o.type !== "payment").length === 0 ? <p className="text-ink-3">Поки немає замовлень.</p> : orders.filter((o) => o.type !== "payment").map((o, i) => {
+              {/* Пошук / фільтр / експорт CSV */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative min-w-[220px] flex-1">
+                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+                  <input
+                    value={orderQuery}
+                    onChange={(e) => setOrderQuery(e.target.value)}
+                    placeholder={ta("searchPlaceholder")}
+                    aria-label={ta("searchPlaceholder")}
+                    className="w-full rounded-full border border-line bg-paper py-2 pl-9 pr-3 text-[13px] text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-forest/30"
+                  />
+                </div>
+                <select
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value as "" | OrderStatus)}
+                  aria-label={ta("filterStatus")}
+                  className="rounded-full border border-line bg-paper px-3 py-2 text-[13px] font-semibold text-ink-2"
+                >
+                  <option value="">{ta("filterAllStatuses")}</option>
+                  {ORDER_STATUSES.map((s) => (
+                    <option key={s} value={s}>{ts(ORDER_STATUS_KEYS[s])}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={exportOrdersCsv}
+                  disabled={filteredOrders.length === 0}
+                  className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-semibold text-ink-2 hover:bg-bg-2 disabled:opacity-50"
+                >
+                  <Download size={15} /> {ta("exportCsv")}
+                </button>
+              </div>
+              <div className="text-[12px] text-ink-3">{ta("ordersShown", { shown: filteredOrders.length, total: realOrders.length })}</div>
+
+              {realOrders.length === 0 ? <p className="text-ink-3">Поки немає замовлень.</p>
+                : filteredOrders.length === 0 ? <p className="text-ink-3">{ta("noMatchingOrders")}</p>
+                : filteredOrders.map((o, i) => {
                 const status: OrderStatus = (ORDER_STATUSES as readonly string[]).includes(o.status) ? o.status : "new";
                 const saving = savingStatus === String(o.order_number);
                 const deliveryParts = [o.delivery_country, o.delivery_city, o.delivery_branch, o.delivery_address].filter(Boolean).join(", ");
                 return (
-                  <div key={i} className="rounded-[14px] border border-line bg-paper p-4">
+                  <div key={`${o.order_number}-${i}`} className="rounded-[14px] border border-line bg-paper p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-serif text-[17px] text-ink">#{o.order_number} · {o.name || "—"}</div>
                       <div className="text-[12px] text-ink-3">{o.created_at ? new Date(o.created_at).toLocaleString("uk") : ""}</div>
@@ -237,17 +337,74 @@ export default function AdminPage() {
             <div className="mt-5 overflow-x-auto">
               <table className="w-full text-left text-[14px]">
                 <thead className="text-[12px] uppercase text-ink-3">
-                  <tr><th className="py-2">Email</th><th className="py-2">Завантажень</th><th className="py-2">Моделей</th><th className="py-2">Дата</th></tr>
+                  <tr>
+                    <th className="py-2 pl-1 pr-2"><span className="sr-only">{ta("expand")}</span></th>
+                    <th className="py-2">Email</th><th className="py-2">Завантажень</th><th className="py-2">Моделей</th><th className="py-2">Дата</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
-                    <tr key={u.uid} className="border-t border-line">
-                      <td className="py-2 text-ink">{u.email || u.uid.slice(0, 8)}</td>
-                      <td className="py-2 text-ink-2">{u.downloads}</td>
-                      <td className="py-2 text-ink-2">{u.models}</td>
-                      <td className="py-2 text-ink-3">{u.created_at ? new Date(u.created_at * 1000).toLocaleDateString("uk") : ""}</td>
-                    </tr>
-                  ))}
+                  {users.map((u) => {
+                    const open = expandedUser === u.uid;
+                    const userOrders = ordersByEmail[(u.email || "").toLowerCase()] || [];
+                    // Остання активність: новіше з реєстрації та останнього замовлення.
+                    const lastOrderTs = userOrders.reduce((mx: number, o: any) => {
+                      const t = o.created_at ? Date.parse(o.created_at) : NaN;
+                      return Number.isFinite(t) ? Math.max(mx, t) : mx;
+                    }, 0);
+                    const regTs = u.created_at ? u.created_at * 1000 : 0;
+                    const lastActivity = Math.max(lastOrderTs, regTs);
+                    return (
+                      <Fragment key={u.uid}>
+                        <tr
+                          className="cursor-pointer border-t border-line hover:bg-bg-2"
+                          onClick={() => setExpandedUser(open ? null : u.uid)}
+                        >
+                          <td className="py-2 pl-1 pr-2 text-ink-3">
+                            <button
+                              type="button"
+                              aria-label={open ? ta("collapse") : ta("expand")}
+                              aria-expanded={open}
+                              className="inline-flex items-center justify-center rounded p-0.5 hover:text-ink"
+                              onClick={(e) => { e.stopPropagation(); setExpandedUser(open ? null : u.uid); }}
+                            >
+                              {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                            </button>
+                          </td>
+                          <td className="py-2 text-ink">{u.email || u.uid.slice(0, 8)}</td>
+                          <td className="py-2 text-ink-2">{u.downloads}</td>
+                          <td className="py-2 text-ink-2">{u.models}</td>
+                          <td className="py-2 text-ink-3">{u.created_at ? new Date(u.created_at * 1000).toLocaleDateString("uk") : ""}</td>
+                        </tr>
+                        {open && (
+                          <tr className="border-t border-line bg-bg-2/40">
+                            <td />
+                            <td colSpan={4} className="py-3 pr-2">
+                              <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="rounded-[12px] border border-line bg-paper p-3">
+                                  <div className="text-[11px] uppercase tracking-wide text-ink-3">{ta("detailModels")}</div>
+                                  <div className="mt-0.5 font-serif text-[20px] text-ink">{u.models}</div>
+                                </div>
+                                <div className="rounded-[12px] border border-line bg-paper p-3">
+                                  <div className="text-[11px] uppercase tracking-wide text-ink-3">{ta("detailOrders")}</div>
+                                  <div className="mt-0.5 font-serif text-[20px] text-ink">{userOrders.length}</div>
+                                </div>
+                                <div className="rounded-[12px] border border-line bg-paper p-3">
+                                  <div className="text-[11px] uppercase tracking-wide text-ink-3">{ta("detailLastActivity")}</div>
+                                  <div className="mt-0.5 text-[14px] font-semibold text-ink">
+                                    {lastActivity ? new Date(lastActivity).toLocaleDateString("uk") : "—"}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="mt-2 text-[12px] text-ink-3">
+                                {ta("detailDownloads")}: <span className="font-semibold text-ink-2">{u.downloads}</span>
+                                {" · "}UID: <span className="font-mono text-ink-2">{u.uid.slice(0, 12)}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

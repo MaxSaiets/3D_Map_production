@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
+import { Play } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import ModelModal, { type ModalModel } from "@/components/ModelModal";
 
@@ -14,12 +15,12 @@ const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), {
 });
 
 const MODELS_BASE = [
-  { id: "keychain-fea", labelKey: "mKey", url: "/models/keychain-fea.glb", kind: "key" as const },
-  { id: "keychain-home", labelKey: "mHome", url: "/models/keychain-home.glb", kind: "key" as const },
-  { id: "keychain-water", labelKey: "mWater", url: "/models/keychain-water.glb", kind: "key" as const },
-  { id: "keychain-bridge", labelKey: "mBridge", url: "/models/keychain-bridge.glb", kind: "key" as const },
-  { id: "map-dense", labelKey: "mBlock", url: "/models/map-dense.glb", kind: "map" as const },
-  { id: "map-district", labelKey: "mDistrict", url: "/models/map-district.glb", kind: "map" as const },
+  { id: "keychain-fea", labelKey: "mKey", url: "/models/keychain-fea.glb", kind: "key" as const, poster: "/showcase/keychain-1.png" },
+  { id: "keychain-home", labelKey: "mHome", url: "/models/keychain-home.glb", kind: "key" as const, poster: "/showcase/keychain-2.png" },
+  { id: "keychain-water", labelKey: "mWater", url: "/models/keychain-water.glb", kind: "key" as const, poster: "/showcase/keychain-3.png" },
+  { id: "keychain-bridge", labelKey: "mBridge", url: "/models/keychain-bridge.glb", kind: "key" as const, poster: "/showcase/keychain-4.png" },
+  { id: "map-dense", labelKey: "mBlock", url: "/models/map-dense.glb", kind: "map" as const, poster: "/showcase/map-1.png" },
+  { id: "map-district", labelKey: "mDistrict", url: "/models/map-district.glb", kind: "map" as const, poster: "/showcase/map-2.png" },
 ];
 
 const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
@@ -76,6 +77,28 @@ export default function ShowcaseSection() {
   const active = models.find((m) => m.id === activeId) || models[0];
   const [modal, setModal] = useState<ModalModel | null>(null);
 
+  // LCP guard: WebGL (react-three-fiber Canvas + Draco GLTF) is expensive and was
+  // booting on first client paint even though Showcase sits below the fold. Gate
+  // the live viewer behind an IntersectionObserver — show a static poster until
+  // the section nears the viewport, then mount the canvas. Users can also tap the
+  // poster to load it early. The marquee rows below are plain lazy <img>, so cheap.
+  const viewerRef = useRef<HTMLDivElement | null>(null);
+  const [viewerLive, setViewerLive] = useState(false);
+  useEffect(() => {
+    if (viewerLive) return;
+    const el = viewerRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") { setViewerLive(true); return; }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) { setViewerLive(true); io.disconnect(); }
+      },
+      { rootMargin: "200px" }, // почати завантаження трохи до появи у в'юпорті
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [viewerLive]);
+
   const tileToModel = (tile: Tile): ModalModel =>
     tile.kind === "key"
       ? { url: WEB_KEY[tile.idx % WEB_KEY.length], label: t("keyItem"), kind: "key", price: t("keyPrice") }
@@ -92,14 +115,42 @@ export default function ShowcaseSection() {
       {/* Interactive 3D */}
       <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_1fr]">
         <div
-          className="overflow-hidden rounded-[28px] border border-line bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3] shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
+          ref={viewerRef}
+          className="relative overflow-hidden rounded-[28px] border border-line bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3] shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
           title={t("rotate3d")}
         >
-          <Model3DViewer
-            url={active.url}
-            height={420}
-            onActivate={() => setModal({ url: active.url, label: active.label, kind: active.kind })}
-          />
+          {viewerLive ? (
+            <Model3DViewer
+              url={active.url}
+              height={420}
+              onActivate={() => setModal({ url: active.url, label: active.label, kind: active.kind })}
+            />
+          ) : (
+            // Static poster (no WebGL) until the section nears the viewport, so the
+            // landing LCP isn't blocked by Three.js boot. Tapping it loads early.
+            <button
+              type="button"
+              onClick={() => setViewerLive(true)}
+              className="group relative block h-[420px] w-full"
+              aria-label={t("rotate3d")}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={active.poster}
+                alt={active.label}
+                width={640}
+                height={420}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/10">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-[13px] font-bold text-ink shadow-soft">
+                  <Play size={14} className="text-forest" fill="currentColor" /> {t("rotate3d")}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
         <div>
           <h3 className="font-serif text-2xl text-ink">{active.label}</h3>

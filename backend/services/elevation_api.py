@@ -13,6 +13,58 @@ def _debug(msg: str):
         print(msg)
 
 
+def _backfill_voids(Z: np.ndarray, zfill_fallback: float, label: str = "") -> np.ndarray:
+    """Заповнює NaN-дірки (океан / краї тайлів / nodata) РОЗУМНО.
+
+    Раніше дірки заливались глобальним zmin → у прибережних/морських зонах, де
+    NaN — велика частка плитки, виростав штучний РІВНИЙ floor на найнижчій точці
+    суходолу (артефактна «полиця»). Тепер:
+      1) сусідська інтерполяція (nearest finite) щоб берегова лінія була гладкою;
+      2) залишкові дірки → ЛОКАЛЬНА nanmedian (а не глобальний zmin);
+      3) лог-попередження, якщо >VOID_WARN_PCT% плитки було порожнє.
+
+    Повертає Z без NaN. Якщо валідних точок немає зовсім — повертає zfill_fallback.
+    """
+    nan_mask = ~np.isfinite(Z)
+    n_total = Z.size
+    n_void = int(nan_mask.sum())
+    if n_total == 0:
+        return Z
+    void_pct = 100.0 * n_void / n_total
+    try:
+        warn_pct = float(os.getenv("ELEVATION_VOID_WARN_PCT", "10"))
+    except Exception:  # noqa: BLE001
+        warn_pct = 10.0
+    if void_pct > warn_pct:
+        print(f"[WARN] elevation: {label or 'tile'} має {void_pct:.1f}% порожніх точок "
+              f"(океан/край тайла/nodata) — заповнюю локальною медіаною, не глобальним мінімумом.")
+    if n_void == 0:
+        return Z
+    finite = Z[~nan_mask]
+    if finite.size == 0:
+        # Уся плитка порожня (наприклад, відкрите море) → рівний fallback-рівень.
+        return np.full_like(Z, float(zfill_fallback))
+    local_median = float(np.nanmedian(finite))
+    filled = Z.copy()
+    # 1) Спроба сусідської інтерполяції (гладкий берег) — лише якщо є scipy.
+    try:
+        from scipy.ndimage import distance_transform_edt  # type: ignore
+
+        idx = distance_transform_edt(
+            nan_mask, return_distances=False, return_indices=True
+        )
+        filled = Z[tuple(idx)]
+        # distance_transform міг лишити NaN там, де ВСІ були NaN (не цей випадок,
+        # бо finite.size>0) — підстраховка нижче.
+    except Exception:  # noqa: BLE001 — scipy відсутній або помилка → крок 2
+        pass
+    # 2) Будь-що, що лишилось NaN → локальна медіана (НЕ глобальний zmin).
+    still = ~np.isfinite(filled)
+    if np.any(still):
+        filled[still] = local_median
+    return filled
+
+
 def get_elevation_from_api(
     bbox: Tuple[float, float, float, float],
     resolution: int = 100,
@@ -202,8 +254,9 @@ def get_elevation_abs_meters_from_api(
         zmax = float(np.nanmax(Z)) if np.any(~np.isnan(Z)) else 0.0
         _debug(f"[elevation] {provider} abs_range={zmin:.2f}..{zmax:.2f}m (absolute, cleaned, not normalized)")
 
-        # Дірки (NaN) → рівень землі (мін очищеного), а не fake-горб посередині.
-        Z = np.where(np.isnan(Z), zmin, Z)
+        # Дірки (NaN: океан / краї тайлів) → ЛОКАЛЬНА медіана + згладжений берег,
+        # а не глобальний zmin (той робив штучну «полицю» у прибережних зонах).
+        Z = _backfill_voids(Z, zfill_fallback=zmin, label=f"{provider} abs")
         return Z
     except Exception as e:
         print(f"[WARN] elevation API failed: {e}")
@@ -247,8 +300,9 @@ def get_elevation_data_from_api(
                 zmin = float(np.nanmin(Z)) if np.any(~np.isnan(Z)) else 0.0
                 zmax = float(np.nanmax(Z)) if np.any(~np.isnan(Z)) else 0.0
                 _debug(f"[elevation] GeoTIFF '{dem_path}' ok: abs_range={zmin:.2f}..{zmax:.2f}m")
+                # nodata-дірки → локальна медіана (в абсолютних метрах) перед нормалізацією.
+                Z = _backfill_voids(Z, zfill_fallback=zmin, label="GeoTIFF")
                 Z = (Z - zmin) * float(z_scale)
-                Z = np.where(np.isnan(Z), 0.0, Z)
                 _debug(f"[elevation] GeoTIFF normalized: rel_range={float(np.min(Z)):.2f}..{float(np.max(Z)):.2f}m (z_scale={z_scale})")
                 return Z
 
@@ -303,11 +357,13 @@ def get_elevation_data_from_api(
         zmin = float(np.nanmin(Z)) if np.any(~np.isnan(Z)) else 0.0
         zmax = float(np.nanmax(Z)) if np.any(~np.isnan(Z)) else 0.0
         _debug(f"[elevation] {provider} abs_range={zmin:.2f}..{zmax:.2f}m")
+
+        # Дірки (NaN: океан/краї тайлів) заповнюємо ще в АБСОЛЮТНИХ метрах локальною
+        # медіаною (а не пост-нормалізаційним 0.0, що садив берег на найнижчий рівень).
+        Z = _backfill_voids(Z, zfill_fallback=zmin, label=f"{provider} rel")
+
         Z = (Z - zmin) * float(z_scale)
         _debug(f"[elevation] {provider} normalized rel_range={float(np.nanmin(Z)):.2f}..{float(np.nanmax(Z)):.2f}m (z_scale={z_scale})")
-
-        # Заповнюємо NaN
-        Z = np.where(np.isnan(Z), 0.0, Z)
         return Z
     except Exception as e:
         print(f"[WARN] elevation API failed: {e}")

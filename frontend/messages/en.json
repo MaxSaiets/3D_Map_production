@@ -346,7 +346,22 @@
       "region": "Delivery region",
       "method": "Delivery method"
     },
-    "phEmail": "Email (optional)"
+    "phEmail": "Email (optional)",
+    "errPhoneFormat": "Check the phone number — it looks incomplete",
+    "errEmail": "Check the email — there seems to be a typo",
+    "errEuCountry": "Select the delivery country",
+    "errCity": "Enter the delivery city",
+    "errBranchEu": "Enter the Nova Post branch №",
+    "errAddressEu": "Enter the full delivery address",
+    "errUkrAddress": "For Ukrposhta, also enter street and house",
+    "deliveryHeading": "Delivery",
+    "deliveryHint": "We ship across Ukraine and the EU. The operator confirms method and cost.",
+    "priceIncludes": "Price is for the item. Delivery is paid separately on receipt.",
+    "trustNoPrepay": "No prepayment",
+    "trustNoPrepayDesc": "pay after order confirmation",
+    "trustOperator": "An operator will contact you to confirm details before printing",
+    "trustSecure": "Your data is secure and used only for the order",
+    "submitReassure": "By clicking you pay nothing yet — you just send a request"
   },
   "contact": {
     "errPhone": "Enter a phone number",
@@ -558,7 +573,16 @@
     "gridMeters": "{n} m",
     "gridCells": "{n} cells",
     "open": "Open",
-    "delete": "Delete"
+    "delete": "Delete",
+    "loadError": "Couldn’t load account data. Check your connection.",
+    "retry": "Retry",
+    "stlUnavailable": "STL isn’t available for this model — try 3MF.",
+    "detailType": "Type",
+    "detailDate": "Date",
+    "detailLocation": "Location",
+    "downloadAria": "Download model (choose format)",
+    "downloadFormat3mf": "Download 3MF",
+    "downloadFormatStl": "Download STL"
   },
   "tour": {
     "hintAria": "Hint",
@@ -617,7 +641,12 @@
     "detailHigh": "high detail",
     "detailGood": "good detail",
     "detailOverview": "overview scale",
-    "zoneClamp": "Zone limited to ~{mx} m (max for a {cm} cm model, scale 1:10000). Increase the model size for a larger zone."
+    "zoneClamp": "Zone limited to ~{mx} m (max for a {cm} cm model, scale 1:10000). Increase the model size for a larger zone.",
+    "a11yLayerToggle": "Map type: scheme or satellite",
+    "a11yRotateGroup": "Rotate the shape on the map",
+    "a11yRotateLeft": "Rotate 15° counter-clockwise",
+    "a11yRotateRight": "Rotate 15° clockwise",
+    "a11yRotateValue": "Rotation angle: {deg}°"
   },
   "kc": {
     "tabs": {
@@ -1086,7 +1115,9 @@
     "contactLimitMessage": "I've used up my 5 free downloads. I want more / printing — please get in touch.",
     "qaBaseNotWatertight": "the base isn't fully watertight — the slicer will print it anyway, but it's better to check the model",
     "qaSlicerNotFound": "the slicer isn't available on the server — the check was skipped",
-    "qaLayerNotWatertight": "{layer}: the layer isn't fully watertight"
+    "qaLayerNotWatertight": "{layer}: the layer isn't fully watertight",
+    "modeGroupLabel": "Area selection mode",
+    "renderModeGroupLabel": "Generation mode: quick preview or full model"
   },
   "kcp": {
     "loadingMap": "Loading map...",
@@ -1121,7 +1152,8 @@
       "step2Body": "Token 55×30, classic or square — tap it and the dimensions will be set automatically.",
       "step3Title": "Add a label",
       "step3Body": "Enter text (e.g. the city name), move or rotate it. Then press “Generate”."
-    }
+    },
+    "layoutEyebrow": "Product layout"
   },
   "cities": {
     "Kyiv": "Kyiv",
@@ -1275,7 +1307,28 @@
     "markPaid": "Mark as paid",
     "withoutDelivery": "excl. delivery",
     "payShown": "Pay button shown — check for incoming payment",
-    "payManual": "Manual payment (online not connected yet)"
+    "payManual": "Manual payment (online not connected yet)",
+    "searchPlaceholder": "Search: phone, № or name",
+    "filterStatus": "Filter by status",
+    "filterAllStatuses": "All statuses",
+    "exportCsv": "Export CSV",
+    "ordersShown": "Showing {shown} of {total}",
+    "noMatchingOrders": "No orders match this query.",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "detailModels": "Models",
+    "detailOrders": "Orders",
+    "detailLastActivity": "Last activity",
+    "detailDownloads": "Downloads",
+    "csvOrder": "Number",
+    "csvDate": "Date",
+    "csvStatus": "Status",
+    "csvName": "Name",
+    "csvPhone": "Phone",
+    "csvEmail": "Email",
+    "csvProduct": "Product",
+    "csvPrice": "Amount",
+    "csvDelivery": "Delivery"
   },
   "error": {
     "title": "Something went wrong",
@@ -1284,5 +1337,9 @@
     "home": "Home",
     "createMap": "Create a 3D map",
     "contacts": "Contact us"
+  },
+  "viewer3d": {
+    "model": "Interactive 3D model",
+    "modelLabeled": "3D model: {label}"
   }
 }

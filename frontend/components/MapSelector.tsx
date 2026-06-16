@@ -1014,12 +1014,15 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         <InvalidateOnResize />
       </MapContainer>
       <div
+        role="group"
+        aria-label={t("a11yLayerToggle")}
         className="pointer-events-auto absolute left-2 top-[50px] flex overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur sm:top-2"
         style={{ zIndex: 10_000 }}
       >
         <button
           type="button"
           onClick={() => setTileMode("map")}
+          aria-pressed={tileMode === "map"}
           className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "map" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
           {t("layerMap")}
@@ -1027,6 +1030,7 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         <button
           type="button"
           onClick={() => setTileMode("satellite")}
+          aria-pressed={tileMode === "satellite"}
           className={`min-h-[30px] rounded-full px-2.5 text-[11px] font-semibold transition ${tileMode === "satellite" ? "bg-white text-[#050a18]" : "text-white/80"}`}
         >
           {t("layerSatellite")}
@@ -1039,6 +1043,8 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
+        aria-pressed={expanded}
+        aria-label={expanded ? t("collapse") : t("fullscreen")}
         className="pointer-events-auto absolute left-2 top-[92px] flex min-h-[32px] items-center gap-1 rounded-full border border-white/50 bg-[#050a18]/90 px-3 text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(15,23,42,0.3)] backdrop-blur transition hover:bg-[#050a18] sm:top-[46px]"
         style={{ zIndex: 10_000 }}
         title={t("fullscreen")}
@@ -1047,6 +1053,8 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
       </button>
       {keychainCrop ? (
         <div
+          role="group"
+          aria-label={t("a11yRotateGroup")}
           className="pointer-events-auto absolute right-2 top-[50px] flex items-center overflow-hidden rounded-full border border-white/50 bg-[#050a18]/85 p-0.5 shadow-[0_8px_20px_rgba(15,23,42,0.22)] backdrop-blur sm:top-2"
           style={{ zIndex: 10_000 }}
         >
@@ -1054,18 +1062,23 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
             type="button"
             onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) - 15))}
             className="min-h-[30px] px-2 text-sm font-black text-white/90 transition hover:bg-white/10"
-            aria-label="−15°" title="−15°"
+            aria-label={t("a11yRotateLeft")} title="−15°"
           >
             ↺
           </button>
-          <div className="grid min-w-[40px] place-items-center px-0.5 text-[11px] font-bold text-white tabular-nums">
+          <div
+            className="grid min-w-[40px] place-items-center px-0.5 text-[11px] font-bold text-white tabular-nums"
+            role="status"
+            aria-live="polite"
+            aria-label={t("a11yRotateValue", { deg: normalizeAngle(keychainCrop.rotationDeg || 0) })}
+          >
             {normalizeAngle(keychainCrop.rotationDeg || 0)}°
           </div>
           <button
             type="button"
             onClick={() => keychainCrop.onRotationChange?.(normalizeAngle((keychainCrop.rotationDeg || 0) + 15))}
             className="min-h-[30px] px-2 text-sm font-black text-white/90 transition hover:bg-white/10"
-            aria-label="+15°" title="+15°"
+            aria-label={t("a11yRotateRight")} title="+15°"
           >
             ↻
           </button>

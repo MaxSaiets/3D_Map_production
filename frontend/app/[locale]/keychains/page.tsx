@@ -147,6 +147,20 @@ export default function KeychainsPage() {
     return () => clearTimeout(timer);
   }, [design, label, currentCityKey]);
 
+  // Deep-link city: /keychains?city=<key> вибирає місто (паритет з /create).
+  // Виконуємо ПІСЛЯ відновлення чернетки — query-param має пріоритет над localStorage.
+  useEffect(() => {
+    try {
+      const cityParam = new URLSearchParams(window.location.search).get("city");
+      if (cityParam && CITIES[cityParam]) {
+        setCurrentCityKey(cityParam);
+        setLabel(CITIES[cityParam].defaultText);
+        setSelectedArea(null);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Якщо користувач змінює шаблон (Token 45×26, 35×55, тощо) — мапа має інший
   // aspect ratio для карти. Скидаємо crop щоб MapSelector перерахував його під
   // новий aspect (вертикальний vs горизонтальний). Інакше залишається стара форма.
@@ -380,7 +394,7 @@ export default function KeychainsPage() {
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
                     <Layers3 size={14} />
-                    Product Layout
+                    {t("layoutEyebrow")}
                   </p>
                   <h2 className="mt-1 font-title text-lg font-semibold text-[var(--text-primary)]">
                     {t("layoutTitle")}

@@ -295,29 +295,41 @@ def _make_export_basename(
 ) -> str:
     """Build descriptive file basename. 4-tier graceful fallback:
 
-    1. Batch with row/col   → `model_<grid>_<mm>_<row>_<col>` (e.g. model_300_80_38_40)
-    2. Batch w/o row/col    → `model_<grid>_<mm>_<uuid8>`
-    3. Single endpoint      → `model_<mm>_<uuid8>`
+    1. Batch with row/col   → `model_<grid>_<mm>_<row>_<col>_<tok>` (e.g. model_300_80_38_40_a1b2c3d4)
+    2. Batch w/o row/col    → `model_<grid>_<mm>_<uuid8>_<tok>`
+    3. Single endpoint      → `model_<mm>_<uuid8>_<tok>`
     4. Nothing known        → original `task_id` (legacy UUID)
 
     The frontend reads basename from backend's download_url and uses it as
     the download filename, so the slicer label matches the descriptive name.
+
+    SECURITY (#7 — model enumeration): files are served statically by basename
+    (`/files/<basename>.3mf`). Without the token the grid/keychain naming is fully
+    predictable (`model_300_80_38_40.3mf`), so anyone could enumerate every other
+    user's model by guessing grid/mm/row/col. We append a random secrets token
+    (`secrets.token_hex(4)` → 8 hex chars, 32 bits) so the URL is unguessable.
+    The descriptive prefix is kept for a readable slicer label. Tile/panel lookup
+    never parses the filename — it keys on stored path + task_id (panel_batches
+    .json), so the token does not break the panel zip; the on-disk recovery parser
+    below treats the trailing hex token as part of the identity.
     """
+    import secrets
     short = task_id.replace("-", "")[:8] if task_id else "single"
+    tok = secrets.token_hex(4)
     try:
         if all(v is not None for v in (hex_size_m, model_size_mm, zone_row, zone_col)):
             return (
                 f"model_{int(round(float(hex_size_m)))}_"
                 f"{int(round(float(model_size_mm)))}_"
-                f"{int(zone_row)}_{int(zone_col)}"
+                f"{int(zone_row)}_{int(zone_col)}_{tok}"
             )
         if hex_size_m is not None and model_size_mm is not None:
             return (
                 f"model_{int(round(float(hex_size_m)))}_"
-                f"{int(round(float(model_size_mm)))}_{short}"
+                f"{int(round(float(model_size_mm)))}_{short}_{tok}"
             )
         if model_size_mm is not None:
-            return f"model_{int(round(float(model_size_mm)))}_{short}"
+            return f"model_{int(round(float(model_size_mm)))}_{short}_{tok}"
     except (TypeError, ValueError):
         pass
     return task_id
@@ -527,18 +539,27 @@ async def startup_event():
         
         # Parse filename — supports two formats:
         #   legacy:      <uuid>[_<part>].<ext>             → task_id = uuid
-        #   descriptive: model_<grid>_<mm>_<row>_<col>[_<part>].<ext>
-        #                                                  → task_id = the full 5-token basename
+        #   descriptive: model_<grid>_<mm>_<row>_<col>_<tok>[_<part>].<ext>
+        #                (or model_<mm>_<uuid8>_<tok>[_<part>])
+        #                                                  → task_id = full basename up to <part>
+        # The basename now carries a random hex token (anti-enumeration, see
+        # _make_export_basename), so we CANNOT assume a fixed token count. Instead
+        # we split off a recognized trailing PART suffix (base/roads/.../print_layout,
+        # optionally `_part_NNN`) and treat everything before it as the task_id.
         name = file_path.name
         stem = file_path.stem
         if stem.startswith("model_"):
             parts = stem.split("_")
-            if len(parts) >= 5:
-                task_id = "_".join(parts[:5])
-                part_part = "_".join(parts[5:]) if len(parts) > 5 else None
-            else:
-                task_id = stem
-                part_part = None
+            _PART_KEYS = {"base", "roads", "buildings", "parks", "water",
+                          "print", "layout", "acceptance", "assembly", "package", "part"}
+            # find the first token that begins a part-suffix; everything before is id
+            cut = len(parts)
+            for i in range(2, len(parts)):  # never strip "model" or the first id token
+                if parts[i] in _PART_KEYS:
+                    cut = i
+                    break
+            task_id = "_".join(parts[:cut]) if cut > 1 else stem
+            part_part = "_".join(parts[cut:]) if cut < len(parts) else None
         else:
             if "_" in stem:
                 task_id, part_part = stem.split("_", 1)
@@ -973,9 +994,16 @@ async def create_order_endpoint(
 ):
     """Accept a customer order and push it to the Telegram CRM (card + file + screenshots)."""
     from services.order_service import create_order
+    # Чіткі 4xx замість 500 на неповному запиті (порожні поля / невідомий продукт).
     if not (order.name or "").strip():
         raise HTTPException(status_code=422, detail="Вкажіть ім'я")
+    if not (order.phone or "").strip():
+        raise HTTPException(status_code=422, detail="Вкажіть номер телефону для звʼязку")
+    _ptype = (order.product_type or "map").strip().lower()
+    if _ptype not in ("map", "keychain"):
+        raise HTTPException(status_code=422, detail="Невідомий тип виробу (очікується «map» або «keychain»).")
     payload = order.model_dump()
+    payload["product_type"] = _ptype
     # Мʼяка привʼязка до акаунта: якщо клієнт залогінений — замовлення видно в кабінеті.
     try:
         from services.auth_service import verify_token
@@ -1231,9 +1259,86 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                "pct": round(100.0 * funnel_counter.get(st, 0) / first, 1)} for st in FUNNEL_STEPS]
     # Топ-6 сторінок за к-стю кліків (для теплокарти) + топ елементів.
     top_click_paths = sorted(click_points.items(), key=lambda kv: -len(kv[1]))[:6]
+
+    # ── Замовлення + дохід (щоб адмін бачив гроші, а не лише трафік) ────────
+    # orders.jsonl містить по записі замовлення + окремі type:payment події.
+    # Беремо ПОТОЧНИЙ стан кожного замовлення (останній запис з його order_number),
+    # рахуємо кількість, суму est_price (перше число з рядка «≈ 390 ₴») і розбивку
+    # за статусом. Оплачений дохід = сума по замовленнях у статусах paid/printed/
+    # shipped/done. Best-effort: будь-яка помилка лишає нулі, не валить дашборд.
+    orders_summary = {
+        "count": 0, "byStatus": {}, "byProduct": {},
+        "revenueEstimated": 0.0, "revenuePaid": 0.0, "currency": "₴",
+    }
+    try:
+        import re as _re
+        from services.order_service import ORDERS_LOG as _ORDERS_LOG, ORDER_STATUSES as _ORDER_STATUSES
+
+        def _price_num(s: Any) -> float:
+            m = _re.search(r"-?\d[\d\s]*[.,]?\d*", str(s or "").replace(" ", " "))
+            if not m:
+                return 0.0
+            try:
+                return float(m.group(0).replace(" ", "").replace(",", "."))
+            except ValueError:
+                return 0.0
+
+        latest: Dict[str, Dict[str, Any]] = {}  # order_number -> поточний стан замовлення
+        if _ORDERS_LOG.exists():
+            for line in _ORDERS_LOG.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                onum = str(rec.get("order_number") or "")
+                if not onum:
+                    continue
+                if rec.get("type") == "payment":
+                    # подія оплати: позначаємо замовлення оплаченим (статус paid),
+                    # якщо вже бачили саме замовлення.
+                    if rec.get("paid") and onum in latest:
+                        latest[onum]["_paid"] = True
+                        if latest[onum].get("status") in (None, "new"):
+                            latest[onum]["status"] = "paid"
+                    continue
+                # запис замовлення (можливо оновлений статус) — найсвіжіший виграє
+                cur = latest.get(onum) or {}
+                cur.update(rec)
+                latest[onum] = cur
+
+        paid_states = {"paid", "printed", "shipped", "done"}
+        prod_counter: Counter = Counter()
+        status_counter: Counter = Counter()
+        rev_est = 0.0
+        rev_paid = 0.0
+        for onum, rec in latest.items():
+            status = str(rec.get("status") or "new").lower()
+            if status not in _ORDER_STATUSES:
+                status = "new"
+            status_counter[status] += 1
+            prod_counter[str(rec.get("product_type") or "map")] += 1
+            price = _price_num(rec.get("est_price"))
+            rev_est += price
+            if status in paid_states or rec.get("_paid"):
+                rev_paid += price
+        orders_summary = {
+            "count": len(latest),
+            "byStatus": dict(status_counter),
+            "byProduct": dict(prod_counter),
+            "revenueEstimated": round(rev_est, 2),
+            "revenuePaid": round(rev_paid, 2),
+            "currency": "₴",
+        }
+    except Exception as _oe:  # noqa: BLE001
+        print(f"[admin/stats] orders aggregation failed (non-fatal): {_oe}")
+
     return {
         "totals": totals,
         "byDay": series,
+        "orders": orders_summary,
         "topEvents": ev_counter.most_common(15),
         "topPaths": path_counter.most_common(15),
         "byLocale": locale_counter.most_common(10),
@@ -1544,6 +1649,22 @@ async def generate_model(
     """
     try:
         print(f"[INFO] РћС‚СЂРёРјР°РЅРѕ Р·Р°РїРёС‚ РЅР° РіРµРЅРµСЂР°С†С–СЋ: north={request.north}, south={request.south}, east={request.east}, west={request.west}")
+        # ── Bbox sanity guard ───────────────────────────────────────────
+        # Чітка 4xx замість 500 при невалідних координатах (None/NaN/перевернутий
+        # bbox). Pydantic уже привів типи, але не ловить інверсію/нескінченність.
+        try:
+            _bn, _bs = float(request.north), float(request.south)
+            _be, _bw = float(request.east), float(request.west)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="Координати ділянки мають бути числами (north/south/east/west).")
+        if not all(np.isfinite(v) for v in (_bn, _bs, _be, _bw)):
+            raise HTTPException(status_code=422, detail="Координати ділянки недійсні (NaN/Inf).")
+        if not (-90.0 <= _bs < _bn <= 90.0) or not (-180.0 <= _bw < _be <= 180.0):
+            raise HTTPException(
+                status_code=400,
+                detail=("Невірна ділянка: north має бути більше south, east більше west, "
+                        "усі в межах широти ±90° і довготи ±180°. Перемалюйте рамку."),
+            )
         # ── Zone size guard (fixed 1:10000 scale) ───────────────────────
         # Max real-world zone scales with the model size at a constant 1:10000
         # scale (0.1 mm/m): 80mm model ↔ 800m zone, and +100m per +1cm. This keeps
@@ -2482,9 +2603,22 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
         
         print(f"[INFO] Р“РµРЅРµСЂР°С†С–СЏ РЅРѕРІРѕС— СЃС–С‚РєРё: north={request.north}, south={request.south}, east={request.east}, west={request.west}, hex_size_m={request.hex_size_m}")
         
-        # РџРµСЂРµРІС–СЂРєР° РІР°Р»С–РґРЅРѕСЃС‚С– РєРѕРѕСЂРґРёРЅР°С‚
-        if request.north <= request.south or request.east <= request.west:
-            raise ValueError(f"РќРµРІС–СЂРЅС– РєРѕРѕСЂРґРёРЅР°С‚Рё: north={request.north} <= south={request.south} Р°Р±Рѕ east={request.east} <= west={request.west}")
+        # Перевірка валідності координат → чітка 4xx (а не 500) з українським поясненням.
+        try:
+            _n, _s = float(request.north), float(request.south)
+            _e, _w = float(request.east), float(request.west)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="Координати області мають бути числами (north/south/east/west).")
+        if not all(np.isfinite(v) for v in (_n, _s, _e, _w)):
+            raise HTTPException(status_code=422, detail="Координати області недійсні (NaN/Inf).")
+        if _n <= _s or _e <= _w:
+            raise HTTPException(
+                status_code=400,
+                detail=(f"Невірні координати області: north ({_n}) має бути більше south ({_s}), "
+                        f"а east ({_e}) більше west ({_w}). Перемалюйте рамку області."),
+            )
+        if float(request.hex_size_m) <= 0:
+            raise HTTPException(status_code=400, detail="Розмір клітинки сітки має бути додатнім числом.")
         
         # РљРѕРЅРІРµСЂС‚СѓС”РјРѕ lat/lon bbox РІ UTM РґР»СЏ РіРµРЅРµСЂР°С†С–С— СЃС–С‚РєРё
         from services.crs_utils import bbox_latlon_to_utm
@@ -2556,11 +2690,13 @@ async def generate_hexagonal_grid_endpoint(request: HexagonalGridRequest):
             print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ Р·Р±РµСЂРµРіС‚Рё СЃС–С‚РєСѓ РІ РєРµС€: {e}")
         
         return response
+    except HTTPException:
+        raise  # 4xx валідації (невірні координати/розмір) не маскуємо під 500
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
         print(f"[ERROR] РџРѕРјРёР»РєР° РіРµРЅРµСЂР°С†С–С— СЃС–С‚РєРё: {e}\n{error_trace}")
-        raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° РіРµРЅРµСЂР°С†С–С— СЃС–С‚РєРё: {str(e)}")
+        raise HTTPException(status_code=500, detail="Не вдалося згенерувати сітку. Спробуйте меншу область або інший розмір клітинки.")
 
 
 class ZoneGenerationRequest(BaseModel):
