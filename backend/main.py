@@ -986,6 +986,40 @@ class OrderRequest(BaseModel):
         return self
 
 
+async def _deliver_order_model_when_ready(order_number, name: str, task_id: str) -> None:
+    """Фоновий вотчер: order-now шле картку ОДРАЗУ (3MF ще генерується). Коли повна
+    генерація завершиться — дошлемо оператору друкарський .3mf окремим повідомленням.
+    Полимо до ~6 хв; ніколи не шлемо GLB (лише .3mf/.stl)."""
+    import asyncio as _aio
+    from services.order_service import send_model_document
+    for _ in range(72):  # ~6 хв (72 × 5с)
+        await _aio.sleep(5)
+        try:
+            path = None
+            t = tasks.get(task_id)
+            if t is not None:
+                files = getattr(t, "output_files", {}) or {}
+                cand = files.get("3mf") or files.get("stl")
+                if not cand:
+                    _of = getattr(t, "output_file", None)
+                    if _of and str(_of).lower().endswith((".3mf", ".stl")):
+                        cand = _of
+                if cand and Path(cand).exists():
+                    path = Path(cand)
+            if path is None:
+                p = _find_file_on_disk_by_task_id(task_id, "3mf")
+                if p is not None and str(p).lower().endswith((".3mf", ".stl")) and Path(p).exists():
+                    path = Path(p)
+            if path is not None:
+                send_model_document(order_number, name, path)
+                return
+            # Якщо задача впала — припиняємо чекати.
+            if t is not None and getattr(t, "status", "") in ("failed", "error"):
+                return
+        except Exception:  # noqa: BLE001
+            continue
+
+
 @app.post("/api/order")
 async def create_order_endpoint(
     order: OrderRequest,
@@ -1046,16 +1080,33 @@ async def create_order_endpoint(
     if pay_url:
         payload["payment_url"] = pay_url
     # Resolve the on-disk model file from the in-memory task if available.
+    # ЛИШЕ друкарський .3mf/.stl — НІКОЛИ GLB-прев'ю (інакше оператор отримає
+    # «битий» файл .3mf із GLB-вмістом). Якщо 3MF ще генерується — output_file не
+    # ставимо; фоновий вотчер нижче дошле файл оператору, щойно він буде готовий.
     try:
         t = tasks.get(order.task_id) if order.task_id else None
         if t is not None:
-            of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
+            files = getattr(t, "output_files", {}) or {}
+            of = files.get("3mf") or files.get("stl")
+            if not of:
+                _of = getattr(t, "output_file", None)
+                if _of and str(_of).lower().endswith((".3mf", ".stl")):
+                    of = _of
             if of:
                 payload["output_file"] = of
     except Exception:  # noqa: BLE001
         pass
     try:
         result = create_order(payload)
+        # Фоновий вотчер: якщо друкарський 3MF ще генерувався на момент замовлення
+        # (order-now), дошлемо оператору файл окремо, щойно генерація завершиться.
+        if order.task_id and "output_file" not in payload:
+            try:
+                import asyncio as _aio
+                _aio.create_task(_deliver_order_model_when_ready(
+                    result.get("order_number"), order.name or "", order.task_id))
+            except Exception:  # noqa: BLE001
+                pass
         # ОПЛАТА: динамічний LiqPay-checkout (якщо ключі налаштовані) має пріоритет над
         # статичним посиланням з конфігу.
         # ПЛАТІЖНА ЦІЛІСНІСТЬ: суму до сплати рахуємо НА СЕРВЕРІ з pricing.json та
@@ -1503,24 +1554,31 @@ class DownloadGrantRequest(BaseModel):
 
 
 def _resolve_model_path(req: "DownloadGrantRequest") -> Optional[Path]:
-    """Find the on-disk full model file for a download request."""
-    # from in-memory task
+    """Find the on-disk ДРУКАРСЬКИЙ model file (.3mf/.stl) for a download.
+    КРИТИЧНО: НІКОЛИ не віддаємо GLB-прев'ю — слайсер його не відкриє, юзер бачить
+    «битий файл». Якщо є лише GLB (preview-таск) і немає .3mf — повертаємо None,
+    щоб віддати чесну помилку «ще готується», а не зламаний файл."""
+    def _is_print(pth) -> bool:
+        return bool(pth) and str(pth).lower().endswith((".3mf", ".stl"))
+    # from in-memory task — лише друкарські формати
     t = tasks.get(req.task_id) if req.task_id else None
     if t is not None:
-        of = getattr(t, "output_file", None) or (getattr(t, "output_files", {}) or {}).get("3mf")
-        if of and Path(of).exists():
-            return Path(of)
-    # from a provided /files/<name> url
+        files = getattr(t, "output_files", {}) or {}
+        for cand in (files.get("3mf"), files.get("stl"), getattr(t, "output_file", None)):
+            if _is_print(cand) and Path(cand).exists():
+                return Path(cand)
+    # from a provided /files/<name> url — лише якщо це .3mf/.stl
     if req.download_url:
         name = req.download_url.split("/")[-1].split("?")[0]
-        p = OUTPUT_DIR / name
-        if p.exists():
-            return p
-    # by task-id on disk
+        if _is_print(name):
+            p = OUTPUT_DIR / name
+            if p.exists():
+                return p
+    # by task-id on disk — шукаємо саме .3mf
     if req.task_id:
-        p = _find_file_on_disk_by_task_id(req.task_id)
-        if p is not None:
-            return p
+        p = _find_file_on_disk_by_task_id(req.task_id, "3mf")
+        if _is_print(p) and Path(p).exists():
+            return Path(p)
     return None
 
 

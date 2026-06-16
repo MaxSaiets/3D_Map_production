@@ -114,10 +114,14 @@ def _tg_post(method: str, **kwargs) -> bool:
 
 
 def _find_model_file(task_id: Optional[str], output_file: Optional[str]) -> Optional[Path]:
-    # explicit path from caller (task.output_files) wins
+    # КРИТИЧНО: оператору надсилаємо ЛИШЕ друкарський .3mf/.stl, НІКОЛИ GLB-прев'ю —
+    # бо файл називається .3mf (нижче), і GLB-вміст у .3mf не відкриється у слайсері
+    # («битий файл»). Якщо output_file = .glb (preview-таск) — ігноруємо й шукаємо
+    # справжній .3mf по task_id; якщо його ще нема — None (оператор отримає файл
+    # окремо, коли догенерується, або повідомлення «не знайдено»).
     if output_file:
         p = Path(output_file)
-        if p.exists():
+        if p.exists() and p.suffix.lower() in (".3mf", ".stl"):
             return p
     if not task_id:
         return None
@@ -135,6 +139,24 @@ def _find_model_file(task_id: Optional[str], output_file: Optional[str]) -> Opti
         candidates.sort(key=lambda x: (("model_" not in x.name), -x.stat().st_mtime))
         return candidates[0]
     return None
+
+
+def send_model_document(order_number: Any, name: str, model_path: Any) -> bool:
+    """Догенерований друкарський 3MF → окремим повідомленням оператору (фоновий вотчер
+    у main.py викликає це, коли order-now-генерація завершилась ПІСЛЯ відправки картки)."""
+    try:
+        p = Path(model_path)
+        if not p.exists() or p.suffix.lower() not in (".3mf", ".stl"):
+            return False
+        fname = f"{_sanitize_filename(name or 'model')}_{order_number}{p.suffix.lower()}"
+        with open(p, "rb") as fh:
+            _tg_post("sendDocument", chat_id=_chat(),
+                     caption=f"✅ Модель замовлення #{order_number} — друкарський файл готовий",
+                     files={"document": (fname, fh, "model/3mf")})
+        return True
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] send_model_document error: {e}")
+        return False
 
 
 def list_orders_for_uid(uid: str, limit: int = 20) -> List[Dict[str, Any]]:
@@ -268,7 +290,7 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
         lines.append("⚠️ Оплата — узгодити з клієнтом (онлайн-оплата ще не підключена).")
     _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML", text="\n".join(lines))
 
-    # 2) model file
+    # 2) model file (ЛИШЕ друкарський .3mf — _find_model_file НЕ віддасть GLB)
     model_path = _find_model_file(task_id, output_file)
     if model_path and model_path.exists():
         fname = f"{_sanitize_filename(name)}_{date_str}_{order_number}.3mf"
@@ -279,6 +301,11 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
                          files={"document": (fname, fh, "model/3mf")})
         except Exception as e:  # noqa: BLE001
             print(f"[ORDER] sendDocument error: {e}")
+    elif task_id:
+        # 3MF ще генерується (order-now: повна якість стартує при відкритті форми).
+        # Фоновий вотчер у main.py дошле файл, щойно він буде готовий.
+        _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",
+                 text=f"⏳ Модель #{order_number} ще генерується — друкарський 3MF надійде окремо щойно буде готовий.")
     else:
         _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",
                  text=f"⚠️ Файл моделі для #{order_number} не знайдено (task_id={task_id}).")
