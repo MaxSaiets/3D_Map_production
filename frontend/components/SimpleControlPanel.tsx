@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag } from "lucide-react";
+import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
@@ -73,6 +73,12 @@ export function SimpleControlPanel({
   // E4 ШЕРИНГ: рендер моделі → /share/{task} з og:image
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // «Більше опцій» (магніт/GPX/панно) сховані за замовчанням — Просто-режим має
+  // бути коротким: Місто → Район → Стиль → Розмір → Створити. Авто-розкривається,
+  // якщо одна з опцій уже активна (відновлена зі store), щоб вибір не «зник».
+  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0;
+  const [moreOpen, setMoreOpen] = useState(advancedActive);
+  useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
 
   const doShare = async () => {
     if (!taskGroupId) return;
@@ -570,14 +576,10 @@ export function SimpleControlPanel({
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                     }`}
                   >
-                    <span className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-[11px] bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]">
-                      <MapPin size={15} className="opacity-45" />
-                      <img
-                        src={`/templates/${t.id}.webp`}
-                        alt={t.district}
-                        className="absolute inset-0 h-full w-full object-cover"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                      />
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] transition ${
+                      active ? "bg-[var(--accent-strong)] text-white" : "bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]"
+                    }`}>
+                      <MapPin size={16} className={active ? "" : "opacity-70"} />
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.district}</span>
@@ -657,6 +659,25 @@ export function SimpleControlPanel({
           </div>
         </div>
 
+        {/* Більше опцій — магніт/GPX/панно сховані за замовчанням, щоб Просто-режим
+            лишався коротким. Розкривається кліком або авто (якщо щось уже активне). */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+            data-testid="more-options"
+            className="flex w-full items-center justify-between rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-4 py-2.5 text-[13px] font-semibold transition hover:border-[rgba(11,92,87,0.25)]"
+          >
+            <span className="flex items-center gap-2 text-[var(--text-secondary)]">
+              <Sliders size={14} /> {t("moreOptions")}
+              {advancedActive && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" aria-hidden />}
+            </span>
+            <ChevronDown size={16} className={`text-[var(--text-secondary)] transition ${moreOpen ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+        {moreOpen && (
+        <>
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
@@ -795,6 +816,8 @@ export function SimpleControlPanel({
             {panelMode > 0 ? t("panelHintOn", { tiles: panelMode * panelMode }) : t("panelHint")}
           </p>
         </div>
+        </>
+        )}
 
         {/* Generate */}
         <div className="space-y-3">

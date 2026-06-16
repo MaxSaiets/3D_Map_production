@@ -418,6 +418,7 @@
     "downloadFile": "Télécharger 3MF",
     "downloadShort": "Télécharger",
     "mapLabelPh": "Texte sur le magnet (ex. KYIV) — optionnel",
+    "moreOptions": "Plus d'options (magnet, GPX, panneau)",
     "magnetToggle": "Magnet de frigo",
     "magnetHint": "Format plat de 6 cm avec 4 logements pour aimants Ø4×2 mm au dos (près des coins). Les aimants se collent après l'impression.",
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",

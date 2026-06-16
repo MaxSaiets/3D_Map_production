@@ -418,6 +418,7 @@
     "downloadFile": "Download 3MF",
     "downloadShort": "Download",
     "mapLabelPh": "Label on the magnet (e.g. KYIV) — optional",
+    "moreOptions": "More options (magnet, GPX, panel)",
     "magnetToggle": "Fridge magnet",
     "magnetHint": "Flat 6 cm format with 4 pockets for Ø4×2 mm disc magnets in the bottom (near the corners). Glue the magnets in after printing.",
     "advancedHint": "Need a series of zones (hexagons / squares)? Open “Pro” mode →",

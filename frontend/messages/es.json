@@ -418,6 +418,7 @@
     "downloadFile": "Descargar 3MF",
     "downloadShort": "Descargar",
     "mapLabelPh": "Texto en el imán (p. ej. KYIV) — opcional",
+    "moreOptions": "Más opciones (imán, GPX, panel)",
     "magnetToggle": "Imán de nevera",
     "magnetHint": "Formato plano de 6 cm con 4 huecos para imanes Ø4×2 mm en la base (en las esquinas). Los imanes se pegan tras la impresión.",
     "advancedHint": "¿Necesitas una serie de zonas (hexágonos / cuadrados)? Abre el modo «Pro» →",

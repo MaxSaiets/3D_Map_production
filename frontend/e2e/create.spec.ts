@@ -34,11 +34,15 @@ test.describe("Конструктор мап /create", () => {
     // Єдиний fixed-бар із дією генерації (раніше було два портали)
     const sticky = page.locator("div.fixed").filter({
       has: page.locator("button", { hasText: /Згенерувати|Замовити/ }),
-    }).first();
-    await expect(sticky).toBeVisible();
-    // Ліворуч — тихий продукт-лейбл, БЕЗ ціни (ціна лише на кроці оформлення)
-    await expect(sticky).toContainText(/3D-мапа/);
-    await expect(sticky).not.toContainText(/₴/);
+    });
+    // Рівно ОДИН закріплений CTA-портал (раніше монтувалось два → дубль кнопок)
+    await expect(sticky).toHaveCount(1);
+    await expect(sticky.first()).toBeVisible();
+    await expect(sticky.first()).toContainText(/Згенерувати|Замовити/);
+    // Ціну НЕ показуємо під час створення (лише на кроці оформлення). Продукт-лейбл
+    // теж прибрано — на мобільному він обрізався до «3…» і крав місце (див. StickyActionBar:
+    // price=null → дві кнопки на всю ширину), тож головне — відсутність «₴».
+    await expect(sticky.first()).not.toContainText(/₴/);
   });
 
   test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {
@@ -108,6 +112,8 @@ test.describe("Конструктор мап /create", () => {
   });
 
   test("магніт: перемикач + поле підпису + жива/фолбек ціна в кнопці замовлення", async ({ page }) => {
+    // Магніт/GPX/панно сховані під «Більше опцій» (Просто-режим лишається коротким)
+    await page.locator('[data-testid="more-options"]').first().click();
     const magnet = page.getByRole("button", { name: /Магніт на холодильник/ }).first();
     await expect(magnet).toBeVisible();
     await magnet.click();
@@ -146,6 +152,7 @@ test.describe("Конструктор мап /create", () => {
 
   test("GPX: завантаження треку показує назву і кількість точок", async ({ page }) => {
     // Панель рендериться двічі (desktop sidebar + mobile tabs) — беремо першу
+    await page.locator('[data-testid="more-options"]').first().click();
     await expect(page.getByText(/GPX-маршрут на мапі/).first()).toBeVisible();
     const gpx = `<?xml version="1.0"?><gpx><trk><name>Ранкова пробіжка</name><trkseg>${Array.from(
       { length: 30 },
@@ -165,12 +172,13 @@ test.describe("Конструктор мап /create", () => {
   });
 
   test("панно: чипи Вимк/2×2/3×3 + підказка з кількістю плиток", async ({ page }) => {
+    await page.locator('[data-testid="more-options"]').first().click();
     const chips = page.locator('[data-testid="panel-chips"]').first();
     await expect(chips).toBeVisible();
-    await expect(chips.getByRole("button", { name: "2×2" })).toBeVisible();
-    await chips.getByRole("button", { name: "3×3" }).click();
+    await expect(chips.getByRole("radio", { name: "2×2" })).toBeVisible();
+    await chips.getByRole("radio", { name: "3×3" }).click();
     await expect(page.getByText(/9 плиток з ідеальними швами/).first()).toBeVisible();
-    await chips.getByRole("button", { name: "2×2" }).click();
+    await chips.getByRole("radio", { name: "2×2" }).click();
     await expect(page.getByText(/4 плиток з ідеальними швами/).first()).toBeVisible();
   });
 
@@ -185,15 +193,24 @@ test.describe("Конструктор мап /create", () => {
   });
 
   test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
+    // Тур-оверлей («Підказка») і cookie-банер перехоплюють кліки в модалці —
+    // вимикаємо обидва (як в order-now тесті), щоб клік по «Європа» доходив.
+    await page.addInitScript(() => {
+      localStorage.setItem("onb_create_v1", "1");
+      document.cookie = "mnd_consent=denied;path=/";
+    });
+    await page.goto("/uk/create");
+    await page.waitForTimeout(800);
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
     const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });
     await expect(dialog).toBeVisible();
     // ціна: жива (≈ N ₴) або статичний fallback (від N ₴)
     await expect(dialog.getByText(/[≈від]+\s*\d+\s*₴/)).toBeVisible();
 
-    await dialog.getByRole("button", { name: /Європа/ }).click();
-    await expect(dialog.getByRole("button", { name: "Nova Post (EU)" })).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Meest" })).toBeVisible();
+    // Регіон і служба доставки — це role="radio" (a11y), не button
+    await dialog.getByRole("radio", { name: /Європа/ }).click();
+    await expect(dialog.getByRole("radio", { name: "Nova Post (EU)" })).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: "Meest" })).toBeVisible();
     const options = dialog.locator("select option");
     await expect(options).toHaveCount(16); // плейсхолдер + 15 країн
   });

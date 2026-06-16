@@ -418,6 +418,7 @@
     "downloadFile": "Pobierz 3MF",
     "downloadShort": "Pobierz",
     "mapLabelPh": "Napis na magnesie (np. KYIV) — opcjonalnie",
+    "moreOptions": "Więcej opcji (magnes, GPX, panel)",
     "magnetToggle": "Magnes na lodówkę",
     "magnetHint": "Płaski format 6 cm z 4 kieszeniami na magnesy Ø4×2 mm w spodzie (przy rogach). Magnesy wkleja się po druku.",
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
