@@ -6,6 +6,7 @@ import { X, Loader2, CheckCircle2, Truck, Package, ShieldCheck, Lock, PhoneCall,
 import { useTranslations } from "next-intl";
 import { capturePreviewImages } from "@/lib/capturePreview";
 import { useAuth } from "@/components/AuthProvider";
+import { NovaPoshtaPicker } from "@/components/NovaPoshtaPicker";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -323,6 +324,11 @@ export function OrderDialog({
               )}
 
               {delivery !== "pickup" && (
+                region === "ua" && delivery === "nova" ? (
+                  // Нова Пошта: пошук міста + відділення через API (фолбек на ручне
+                  // введення, якщо ключ NOVA_POSHTA_API_KEY не налаштовано на сервері).
+                  <NovaPoshtaPicker city={city} branch={branch} setCity={setCity} setBranch={setBranch} inputCls={fieldCls} />
+                ) : (
                 <>
                   <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} value={city} onChange={(e) => setCity(e.target.value)} />
                   {region === "ua" ? (
@@ -338,6 +344,7 @@ export function OrderDialog({
                     <input className={fieldCls} placeholder={t("phAddressEu")} aria-label={t("phAddressEu")} value={address} onChange={(e) => setAddress(e.target.value)} />
                   )}
                 </>
+                )
               )}
 
               <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} aria-label={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />

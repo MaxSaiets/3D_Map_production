@@ -1034,6 +1034,38 @@ async def _deliver_order_model_when_ready(order_number, name: str, task_id: str)
             continue
 
 
+# ── Nova Poshta: пошук міста + відділення для форми замовлення ──────────────
+# Ключ читається server-side (NOVA_POSHTA_API_KEY). Без ключа → configured:false
+# → фронт показує ручне введення (як було). Проксі ховає ключ від клієнта.
+@app.get("/api/delivery/np/status")
+async def np_status():
+    from services import nova_poshta as _np
+    return {"configured": _np.is_configured()}
+
+
+@app.get("/api/delivery/np/cities")
+async def np_cities(
+    q: str = "",
+    _rl: None = Depends(rate_limit("np", [(90, 60.0), (1500, 3600.0)])),
+):
+    from services import nova_poshta as _np
+    if not _np.is_configured():
+        return {"configured": False, "items": []}
+    return {"configured": True, "items": _np.search_cities(q)}
+
+
+@app.get("/api/delivery/np/warehouses")
+async def np_warehouses(
+    cityRef: str = "",
+    q: str = "",
+    _rl: None = Depends(rate_limit("np", [(90, 60.0), (1500, 3600.0)])),
+):
+    from services import nova_poshta as _np
+    if not _np.is_configured():
+        return {"configured": False, "items": []}
+    return {"configured": True, "items": _np.search_warehouses(cityRef, q)}
+
+
 @app.post("/api/order")
 async def create_order_endpoint(
     order: OrderRequest,
