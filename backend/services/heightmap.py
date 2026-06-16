@@ -293,7 +293,11 @@ def get_elevation_data(
     # Конвертація до відносних висот
     convert_start = time.time()
     if elevation_ref_m is not None and np.isfinite(elevation_ref_m):
-        # Використовуємо задану референсну висоту
+        # Використовуємо задану референсну висоту. zmin МУСИТЬ бути визначений і тут,
+        # інакше return нижче (`'zmin' in locals()`) тихо віддавав 0.0 замість бази —
+        # ламало спільний вертикальний рівень панно/мультизон (elevation_ref_m передається
+        # саме щоб усі плитки мали однаковий «нуль»).
+        zmin = float(elevation_ref_m)
         print(f"[HEIGHTMAP] Конвертація з elevation_ref_m: {elevation_ref_m:.3f}m")
         Z_rel = (Z_abs - float(elevation_ref_m)) * z_scale
     else:

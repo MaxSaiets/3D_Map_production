@@ -371,6 +371,13 @@ def generate_3d_map(
                 global_center=global_center,
                 min_width_m=min_road_width_m,
                 building_polygons=building_union,
+                # Зелень/кладовища (LOCAL-геометрія) → дороги не «заливають» дрібні
+                # сквери/кладовища через road island-fill (скарга юзера, task #35).
+                preserve_polygons=(
+                    gdf_green_local.geometry.unary_union
+                    if gdf_green_local is not None and not gdf_green_local.empty
+                    else None
+                ),
             )
         except Exception as e:
             print(f"[WARN] Road mesh generation failed: {e}")

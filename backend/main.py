@@ -2135,6 +2135,12 @@ async def download_model(
     task_id: str,
     format: Optional[str] = Query(default=None, description="Optional: stl Р°Р±Рѕ 3mf"),
     part: Optional[str] = Query(default=None, description="Optional preview part: base|roads|buildings|water"),
+    # ЩЕДРИЙ анти-DoS ліміт per-IP. Ендпойнт двоїстий: окрім завантажень він віддає
+    # ЖИВЕ превʼю (glb + 3mf-fallback на task) і мініатюри /account (glb на кожну модель),
+    # тож легітимний сплеск = десятки запитів. 240/хв та 2000/год НЕ зачіпають реальних
+    # користувачів, але обрізають масовий харвест/bandwidth-DoS. (Квоту тут НЕ гейтимо —
+    # це зламало б анонімне превʼю; див. memory download-quota-gate.)
+    _rl: None = Depends(rate_limit("download", [(240, 60.0), (2000, 3600.0)])),
 ):
     """
     Р—Р°РІР°РЅС‚Р°Р¶СѓС” Р·РіРµРЅРµСЂРѕРІР°РЅРёР№ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–

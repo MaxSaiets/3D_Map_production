@@ -11,6 +11,7 @@ import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { fetchQuote, type Quote } from "@/lib/pricing";
+import { MAP_MAGNET_PRICE_UAH, MAP_RELIEF_ADDON_UAH } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -154,8 +155,9 @@ export function SimpleControlPanel({
     const near = SIMPLE_SIZES.reduce((best, z) =>
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
     // Рельєф додає надбавку (як у бекенд-quote) — інакше fallback недооцінює.
-    const reliefAddon = (MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain && !magnetMode) ? 100 : 0;
-    const unit = magnetMode ? 180 : near.price + reliefAddon; // магніт = окремий продукт 180₴
+    // Ціни з єдиного джерела mapPrices.ts (не хардкод) — щоб fallback не розходився з quote.
+    const reliefAddon = (MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain && !magnetMode) ? MAP_RELIEF_ADDON_UAH : 0;
+    const unit = magnetMode ? MAP_MAGNET_PRICE_UAH : near.price + reliefAddon; // магніт = окремий продукт
     return fmtPrice(unit * orderTiles, "UAH");
   })();
 

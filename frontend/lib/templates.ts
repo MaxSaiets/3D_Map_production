@@ -162,5 +162,5 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplateDef[] = [
   },
 ];
 
-// pricing (estimate, ₴) — adjust later
-export const SIZE_PRICES = { s: 1990, m: 2890, l: 4290, xl: 6490 } as const;
+// (Видалено мертвий SIZE_PRICES зі застарілими цінами {s:1990…} — ніде не
+//  імпортувався; єдине джерело цін = MAP_SIZE_PRICES_UAH у lib/mapPrices.ts.)

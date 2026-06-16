@@ -3175,7 +3175,10 @@ def run_flat_plate_pipeline(
             if _gpx_poly is not None:
                 # ВРІЗАНИЙ маршрут: верх вставки flush з поверхнею (base_top), тіло
                 # втоплене у базу на ~recess. Раніше був ПІДВИЩЕНИЙ над дорогами.
-                _gpx_recess_m = _model_mm_to_world_m(0.6, export_scale_factor)
+                # Глибина врізу = request.gpx_raise_mm (0.2–1.5мм), а НЕ хардкод —
+                # full_generation_pipeline теж читає цей параметр (паритет рельєф/флет).
+                _gpx_recess_mm = float(getattr(request, "gpx_raise_mm", 0.6) or 0.6)
+                _gpx_recess_m = _model_mm_to_world_m(_gpx_recess_mm, export_scale_factor)
                 gpx_track_mesh = build_flat_layer_mesh_from_mask(
                     _clip_geometry(_gpx_poly, content_area),
                     bottom_z_m=max(base_top_m - _gpx_recess_m, 0.0),
@@ -3184,7 +3187,7 @@ def run_flat_plate_pipeline(
                     min_area_m2=max(_model_mm_to_world_m(0.3, export_scale_factor) ** 2, 1e-12),
                 )
                 if gpx_track_mesh is not None:
-                    print(f"[GPX] Flat track INLAY built (flush, recess 0.6mm)")
+                    print(f"[GPX] Flat track INLAY built (flush, recess {_gpx_recess_mm:.2f}mm)")
         except Exception as exc:
             print(f"[GPX] flat track failed (non-fatal): {exc}")
 

@@ -633,7 +633,7 @@ function heartLoopGussetPath(value: KeychainDesignerConfig): string | null {
  *  Повне серце будується на подвійній ширині, кліпається по x=cut, прямий
  *  сегмент розрізу замінюється на knob (l, назовні) / notch (r, всередину). */
 function heartHalfPoints(minX: number, minY: number, w: number, h: number, side: "l" | "r"): Array<[number, number]> {
-  const n = 192;
+  const n = 160; // СИНХРОН з беком (flat_plate_pipeline _hn=160) і solo heartShapePoints — інакше превʼю≠модель на шві розрізу/замку
   const raw: Array<[number, number]> = [];
   for (let i = 0; i < n; i++) {
     const t = (2 * Math.PI * i) / n;

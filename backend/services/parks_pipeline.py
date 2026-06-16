@@ -17,6 +17,42 @@ from services.green_processor import _add_strong_faceted_texture, _create_high_r
 from services.processing_results import GreenAreaProcessingResult, ParkLayerResult
 
 
+def _ensure_printable_park_mesh(mesh: Any, *, zone_prefix: str = "") -> Any:
+    """Парки, як вода/дороги/будівлі, мусять бути герметичні перед 3MF-експортом,
+    інакше слайсер відкидає обʼєкт або тихо фейлить (відсутній рельєф парку). На
+    відміну від water_layer (_is_printable_water_mesh) тут парки НЕ просто
+    валідуються — спершу РЕМОНТУЄМО (merge+winding+fill_holes+fix_normals), щоб
+    зберегти рельєф, і дропаємо ЛИШЕ якщо меш справді вироджений (0 фейсів/обʼєму)."""
+    if mesh is None:
+        return None
+    try:
+        faces = getattr(mesh, "faces", None)
+        if faces is None or len(faces) == 0:
+            return None
+        if not bool(getattr(mesh, "is_watertight", False)):
+            mesh.merge_vertices()
+            try:
+                mesh.update_faces(mesh.nondegenerate_faces())
+                mesh.remove_unreferenced_vertices()
+            except Exception:
+                pass
+            trimesh.repair.fix_winding(mesh)
+            trimesh.repair.fill_holes(mesh)
+            mesh.fix_normals()
+        # Дроп лише при справжній виродженості (захист слайсу), не при дрібній негерметичності.
+        if getattr(mesh, "faces", None) is None or len(mesh.faces) < 4:
+            print(f"[WARN] {zone_prefix} parks mesh degenerate after repair — dropped to protect slice")
+            return None
+        vol = float(getattr(mesh, "volume", 0.0) or 0.0)
+        if not (vol == vol) or vol <= 1e-9:
+            print(f"[WARN] {zone_prefix} parks mesh has ~zero volume (vol={vol:.3g}) — dropped to protect slice")
+            return None
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix} parks mesh validation failed (keeping as-is): {exc}")
+        return mesh
+    return mesh
+
+
 def _iter_polygons(geometry: BaseGeometry | None) -> list[Any]:
     if geometry is None or getattr(geometry, "is_empty", True):
         return []
@@ -307,6 +343,7 @@ def process_park_layer(
             except Exception as exc:
                 print(f"[WARN] AMS Parks lifting failed: {exc}")
 
+        parks_mesh = _ensure_printable_park_mesh(parks_mesh, zone_prefix=zone_prefix)
         return ParkLayerResult(mesh=parks_mesh, parks_result=parks_result)
     except Exception as exc:
         print(f"[WARN] extras layers failed: {exc}")

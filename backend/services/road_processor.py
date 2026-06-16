@@ -1,4 +1,4 @@
-﻿"""
+"""
 РЎРµСЂРІС–СЃ РґР»СЏ РѕР±СЂРѕР±РєРё РґРѕСЂС–Рі Р· Р±СѓС„РµСЂРёР·Р°С†С–С”СЋ С‚Р° РѕР±'С”РґРЅР°РЅРЅСЏРј
 РџРѕРєСЂР°С‰РµРЅР° РІРµСЂСЃС–СЏ Р· С„С–Р·РёС‡РЅРѕСЋ С€РёСЂРёРЅРѕСЋ РґРѕСЂС–Рі С‚Р° РїС–РґС‚СЂРёРјРєРѕСЋ РјРѕСЃС‚С–РІ
 Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС” trimesh.creation.extrude_polygon РґР»СЏ РЅР°РґС–Р№РЅРѕС— С‚СЂС–Р°РЅРіСѓР»СЏС†С–С—
@@ -2517,6 +2517,7 @@ def process_roads(
     clip_polygon: Optional[object] = None,  # Zone polygon in LOCAL coords (for pre-clipping)
     city_cache_key: Optional[str] = None,  # City cache key for cross-zone bridge detection
     building_polygons: Optional[object] = None,  # Building footprints (LOCAL) to subtract from roads
+    preserve_polygons: Optional[object] = None,  # Зелень/кладовища (LOCAL): захист від road island-fill
     return_result: bool = False,
 ) -> Optional[trimesh.Trimesh | RoadProcessingResult]:
     """
@@ -2651,6 +2652,22 @@ def process_roads(
         except Exception:
             pass
 
+    # PRESERVE-маска для hole-fill = будівлі ∪ зелень/кладовища. Без зелені дрібні
+    # кладовища/сквери, ≥98.5% оточені дорогами, «заливались» дорогою (скарга юзера).
+    # Каноніч. пайплайн віднімає зелень з масок окремо; це — захист legacy-меш-шляху.
+    # preserve_polygons=None (дефолт) → поведінка НЕ змінюється (golden-safe).
+    preserve_mask = building_mask
+    if preserve_polygons is not None:
+        try:
+            green_mask = _to_local_geom(preserve_polygons)
+            if green_mask is not None and not getattr(green_mask, "is_empty", True):
+                preserve_mask = (
+                    green_mask if building_mask is None
+                    else unary_union([building_mask, green_mask]).buffer(0)
+                )
+        except Exception:
+            preserve_mask = building_mask
+
     # РЇРєС‰Рѕ С” СЂРµР»СЊС”С„ вЂ” РєР»С–РїРёРјРѕ РґРѕСЂРѕРіРё РІ РјРµР¶С– СЂРµР»СЊС”С„Сѓ (Р±СѓС„РµСЂРёР·Р°С†С–СЏ РјРѕР¶Рµ РІРёС…РѕРґРёС‚Рё Р·Р° bbox С– РґР°РІР°С‚Рё "РїСЂРѕРІР°Р»Рё")
     if terrain_provider is not None:
         try:
@@ -2674,7 +2691,7 @@ def process_roads(
                     gap_fill_m=float(gap_merge_m or 0.0),
                     min_feature_m=float(cleanup_threshold_m),
                     trim_width_m=float(trim_width_m),
-                    preserve_geom=building_mask,
+                    preserve_geom=preserve_mask,
                     zone_polygon=clip,
                     orphan_hole_width_m=float(orphan_hole_width_m),
                 )

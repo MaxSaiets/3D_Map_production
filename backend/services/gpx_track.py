@@ -1,9 +1,10 @@
-"""D4 GPX-ТРЕК: маршрут користувача (біг/похід/вело) як підвищена «дорога»
-поверх мапи. Фронт парсить .gpx сам і шле gpx_track=[[lon,lat],...]; тут трек
-перетворюється на буферизований полігон у локальних метрах і:
-  • повний пайплайн — друкована «шапка» по рельєфу (create_road_surface_cap),
-    шар ПОВЕРХ терейну без булевих врізань (перекриття зварює слайсер);
-  • flat-пайплайн — звичайний плаский шар над дорогами.
+"""D4 GPX-ТРЕК: маршрут користувача (біг/похід/вело) як ВРІЗАНИЙ (recessed) інлей
+у поверхню мапи (раніше був підвищений над дорогами — змінено). Фронт парсить .gpx
+сам і шле gpx_track=[[lon,lat],...]; тут трек перетворюється на буферизований
+полігон у локальних метрах і:
+  • повний пайплайн — врізана червона вставка по рельєфу (build_gpx_track_inlay_on_terrain),
+    верх flush з поверхнею, тіло втоплене у базу на ~recess;
+  • flat-пайплайн — плаский врізаний інлей (верх flush з base_top).
 """
 from __future__ import annotations
 
@@ -240,6 +241,21 @@ def build_gpx_track_inlay_on_terrain(
         if not ins_meshes:
             return None, None
         insert = ins_meshes[0] if len(ins_meshes) == 1 else trimesh.util.concatenate(ins_meshes)
+        # INSERT — це ДРУКОВАНА червона вставка. create_road_surface_cap робить лише
+        # fix_normals, тож тут даємо ту саму послідовність ремонту, що й cutter нижче
+        # (інакше негерметична/вироджена вставка ламає слайс). Ремонтуємо ДО фарбування,
+        # бо merge/update_faces змінюють кількість фейсів → tile фарб має йти на новий лік.
+        try:
+            insert.merge_vertices()
+            insert.update_faces(insert.nondegenerate_faces())
+            insert.remove_unreferenced_vertices()
+            trimesh.repair.fix_winding(insert)
+            trimesh.repair.fill_holes(insert)
+            insert.fix_normals()
+            if not bool(insert.is_volume):
+                print("[GPX] track insert not watertight after repair — slicer may auto-fix")
+        except Exception:
+            pass
         insert.visual = trimesh.visual.ColorVisuals(
             face_colors=np.tile(TRACK_COLOR, (len(insert.faces), 1))
         )
