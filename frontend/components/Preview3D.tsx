@@ -254,17 +254,25 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
         group.updateMatrixWorld(true);
         let totalVertices = 0;
         let totalMeshes = 0;
+        // ЧІТКА палітра превʼю (flat MeshBasic) — кожен шар УНІКАЛЬНИЙ за яскравістю,
+        // щоб «видно що і як». БУЛО: будинки 0xe3e3e3 (світло-сірі) ≈ бежева земля →
+        // зливались. ТЕПЕР: земля бежева (світла), будинки СІРІ (темніші, = друк),
+        // дороги майже чорні, вода блакитна, парки зелені. baseback/maplabel/poi теж.
         const colorMap: Record<string, { color: number; part: string }> = {
-          base: { color: 0xc8b48e, part: "base" },
+          baseback: { color: 0xc8b48e, part: "base" },
+          base: { color: 0xc8b48e, part: "base" },       // земля — бежева (світла)
           terrain: { color: 0xc8b48e, part: "terrain" },
-          roads: { color: 0x3c3c3c, part: "roads" },
-          buildings: { color: 0xe3e3e3, part: "buildings" },
-          water: { color: 0x6496c8, part: "water" },
-          parks: { color: 0x649664, part: "parks" },
-          green: { color: 0x649664, part: "parks" },
-          track: { color: 0xdc2626, part: "track" },
-          rim: { color: 0x191919, part: "rim" },   // ободок — чорний
-          text: { color: 0x191919, part: "text" },  // текст — чорний
+          buildings: { color: 0x787878, part: "buildings" }, // будинки — СІРІ (= друк, контраст)
+          roads: { color: 0x2e2e2e, part: "roads" },     // дороги — майже чорні
+          water: { color: 0x5b93cc, part: "water" },     // вода — блакитна
+          parks: { color: 0x5fa35a, part: "parks" },     // парки — зелені
+          green: { color: 0x5fa35a, part: "parks" },
+          poi: { color: 0xf0a030, part: "poi" },
+          track: { color: 0xdc2626, part: "track" },     // GPX — червоний
+          maplabel: { color: 0x191919, part: "maplabel" },
+          rim: { color: 0x191919, part: "rim" },         // ободок — чорний
+          text: { color: 0x191919, part: "text" },       // текст — чорний
+          text2: { color: 0x191919, part: "text2" },
         };
         group.traverse((child) => {
           if (!(child instanceof THREE.Mesh)) return;
