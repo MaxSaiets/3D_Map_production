@@ -199,7 +199,26 @@ def fetch_extras(
             return green
     except Exception as e:
         print(f"[WARN] Помилка використання preloaded даних для extras: {e}, використовуємо звичайний режим")
-    
+
+    # Локальна DuckDB parks (швидко ~0.3с, офлайн, надійно) — те саме джерело, що й
+    # buildings/roads/water у data_loader. РАНІШЕ green ходив у Overpass (2-10с, а
+    # при недоступності — таймаут до 180с × 2 ендпойнти = 6 хв «завантаження даних»!),
+    # хоча БД має повну таблицю parks (park/forest/grass/cemetery/scrub/...). Тепер
+    # парки/зелень тягнуться з тієї ж локальної БД — без мережі й таймаутів.
+    try:
+        from services.local_osm_db import is_available as _db_ok, get_gdf as _db_gdf
+        if _db_ok():
+            green = _db_gdf("parks", north, south, east, west, target_crs=target_crs)
+            if green is not None and not getattr(green, "empty", True):
+                green = green[green.geometry.notna()]
+                green = green[green.geom_type.isin(["Polygon", "MultiPolygon"])]
+            if green is None:
+                green = gpd.GeoDataFrame(geometry=[], crs=target_crs or "EPSG:4326")
+            print(f"[LOCAL OSM DB] parks/green from DuckDB: {len(green)} polygons", flush=True)
+            return green
+    except Exception as _e:
+        print(f"[WARN] DuckDB parks недоступні ({_e}); fallback на Overpass/PBF")
+
     source = resolve_osm_source()
 
     cached = _load_from_cache(
