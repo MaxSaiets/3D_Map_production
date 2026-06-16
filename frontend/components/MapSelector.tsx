@@ -706,12 +706,20 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
     const onMapGoto = (e: Event) => {
-      const d = (e as CustomEvent).detail as { lat: number; lon: number } | undefined;
+      const d = (e as CustomEvent).detail as { lat: number; lon: number; widthM?: number } | undefined;
       if (!d || !Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
       const center = L.latLng(d.lat, d.lon);
-      const cur = currentBoundsRef.current;
-      const size = cur ? boundsSizeMeters(cur) : { widthM: Math.min(80, safeSize.widthM), heightM: Math.min(80, safeSize.heightM) };
-      const widthM = Math.min(Math.max(size.widthM, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      let widthM: number;
+      if (typeof d.widthM === "number" && d.widthM > 0) {
+        // ЯВНА ширина зони (готовий район/приклад): ставимо рівно стільки (зона = розмір
+        // моделі 1:10000), не обмежуючи поточним станом — щоб приклад був точним.
+        widthM = d.widthM;
+      } else {
+        // Геокодер-пошук: зберігаємо поточний розмір зони, лише переносимо центр.
+        const cur = currentBoundsRef.current;
+        const size = cur ? boundsSizeMeters(cur) : { widthM: Math.min(80, safeSize.widthM), heightM: Math.min(80, safeSize.heightM) };
+        widthM = Math.min(Math.max(size.widthM, Math.min(80, safeSize.widthM)), safeSize.widthM);
+      }
       updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
       try {
         map.invalidateSize();

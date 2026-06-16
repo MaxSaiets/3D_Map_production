@@ -84,21 +84,26 @@ export interface MapTemplate {
   center: [number, number];
   // ~radius in degrees around center for a ~1.5 km² district view
   span: number;
+  // ІДЕАЛЬНИЙ ПРИКЛАД: куровані налаштування, що ставляться при кліку на район —
+  // стиль (preset id з MAP_STYLE_PRESETS) і розмір моделі (мм). Так клік дає
+  // одразу готову до генерації сцену (карта летить + зона + стиль + розмір).
+  style?: "full" | "relief" | "minimal" | "nature";
+  sizeMm?: number;        // 55 | 80 | 110 | 150
 }
 
 export const MAP_TEMPLATES: MapTemplate[] = [
-  { id: "kyiv-podil",     cityKey: "Kyiv",   city: "Київ",   district: "Поділ",            tag: "Бестселер", blurb: "Старе серце Києва — звивисті вулиці та Андріївський узвіз.", center: [50.4660, 30.5170], span: 0.012 },
-  { id: "kyiv-pechersk",  cityKey: "Kyiv",   city: "Київ",   district: "Печерськ",          tag: "Новинка",   blurb: "Лаврські пагорби, Маріїнський парк, парадні проспекти.",   center: [50.4280, 30.5430], span: 0.012 },
-  { id: "kyiv-khreshchatyk", cityKey: "Kyiv", city: "Київ", district: "Хрещатик",          tag: "",          blurb: "Центральна вісь міста та Майдан Незалежності.",            center: [50.4490, 30.5230], span: 0.011 },
-  { id: "lviv-rynok",     cityKey: "Lviv",   city: "Львів",  district: "Площа Ринок",       tag: "Бестселер", blurb: "Ратуша, бруківка та щільна сітка кварталів старого міста.", center: [49.8419, 24.0315], span: 0.009 },
-  { id: "lviv-citadel",   cityKey: "Lviv",   city: "Львів",  district: "Цитадель",          tag: "",          blurb: "Пагорб з парком, обвитий серпантином історичних вулиць.",  center: [49.8330, 24.0240], span: 0.010 },
-  { id: "odesa-deribasivska", cityKey: "Odesa", city: "Одеса", district: "Дерибасівська",   tag: "Бестселер", blurb: "Серце Одеси: Дерибасівська, Міський сад, бульвари.",        center: [46.4846, 30.7400], span: 0.011 },
-  { id: "odesa-prymorsky",cityKey: "Odesa",  city: "Одеса",  district: "Приморський",       tag: "",          blurb: "Дюк, схил до Потьомкінських сходів і морський фасад.",      center: [46.4880, 30.7430], span: 0.011 },
-  { id: "kharkiv-svobody",cityKey: "Kharkiv",city: "Харків", district: "Площа Свободи",     tag: "",          blurb: "Держпром і промениста сітка проспектів центру.",           center: [49.9988, 36.2300], span: 0.013 },
-  { id: "dnipro-naberezhna", cityKey: "Dnipro", city: "Дніпро", district: "Набережна",      tag: "",          blurb: "Широка дуга Дніпра, мости й хвиля висоток.",                center: [48.4570, 35.0530], span: 0.013 },
-  { id: "chernivtsi-rez", cityKey: "Chernivtsi", city: "Чернівці", district: "Резиденція",  tag: "",          blurb: "Резиденція митрополитів і кам'яні фасади навколо.",         center: [48.2960, 25.9240], span: 0.010 },
-  { id: "ivano-center",   cityKey: "IvanoFrankivsk", city: "Івано-Франківськ", district: "Стометрівка", tag: "", blurb: "Пішохідний центр і ратуша на площі Ринок.",          center: [48.9226, 24.7111], span: 0.010 },
-  { id: "uzhhorod-old",   cityKey: "Uzhhorod", city: "Ужгород", district: "Старе місто",    tag: "",          blurb: "Набережна Ужа, замок і найдовша липова алея Європи.",       center: [48.6210, 22.2980], span: 0.010 },
+  { id: "kyiv-podil",     cityKey: "Kyiv",   city: "Київ",   district: "Поділ",            tag: "Бестселер", blurb: "Старе серце Києва — звивисті вулиці та Андріївський узвіз.", center: [50.4660, 30.5170], span: 0.012, style: "full",   sizeMm: 80 },
+  { id: "kyiv-pechersk",  cityKey: "Kyiv",   city: "Київ",   district: "Печерськ",          tag: "Новинка",   blurb: "Лаврські пагорби, Маріїнський парк, парадні проспекти.",   center: [50.4280, 30.5430], span: 0.012, style: "relief", sizeMm: 110 },
+  { id: "kyiv-khreshchatyk", cityKey: "Kyiv", city: "Київ", district: "Хрещатик",          tag: "",          blurb: "Центральна вісь міста та Майдан Незалежності.",            center: [50.4490, 30.5230], span: 0.011, style: "full",   sizeMm: 80 },
+  { id: "lviv-rynok",     cityKey: "Lviv",   city: "Львів",  district: "Площа Ринок",       tag: "Бестселер", blurb: "Ратуша, бруківка та щільна сітка кварталів старого міста.", center: [49.8419, 24.0315], span: 0.009, style: "full",   sizeMm: 80 },
+  { id: "lviv-citadel",   cityKey: "Lviv",   city: "Львів",  district: "Цитадель",          tag: "",          blurb: "Пагорб з парком, обвитий серпантином історичних вулиць.",  center: [49.8330, 24.0240], span: 0.010, style: "relief", sizeMm: 80 },
+  { id: "odesa-deribasivska", cityKey: "Odesa", city: "Одеса", district: "Дерибасівська",   tag: "Бестселер", blurb: "Серце Одеси: Дерибасівська, Міський сад, бульвари.",        center: [46.4846, 30.7400], span: 0.011, style: "full",   sizeMm: 80 },
+  { id: "odesa-prymorsky",cityKey: "Odesa",  city: "Одеса",  district: "Приморський",       tag: "",          blurb: "Дюк, схил до Потьомкінських сходів і морський фасад.",      center: [46.4880, 30.7430], span: 0.011, style: "relief", sizeMm: 80 },
+  { id: "kharkiv-svobody",cityKey: "Kharkiv",city: "Харків", district: "Площа Свободи",     tag: "",          blurb: "Держпром і промениста сітка проспектів центру.",           center: [49.9988, 36.2300], span: 0.013, style: "full",   sizeMm: 110 },
+  { id: "dnipro-naberezhna", cityKey: "Dnipro", city: "Дніпро", district: "Набережна",      tag: "",          blurb: "Широка дуга Дніпра, мости й хвиля висоток.",                center: [48.4570, 35.0530], span: 0.013, style: "nature", sizeMm: 110 },
+  { id: "chernivtsi-rez", cityKey: "Chernivtsi", city: "Чернівці", district: "Резиденція",  tag: "",          blurb: "Резиденція митрополитів і кам'яні фасади навколо.",         center: [48.2960, 25.9240], span: 0.010, style: "full",   sizeMm: 80 },
+  { id: "ivano-center",   cityKey: "IvanoFrankivsk", city: "Івано-Франківськ", district: "Стометрівка", tag: "", blurb: "Пішохідний центр і ратуша на площі Ринок.",          center: [48.9226, 24.7111], span: 0.010, style: "full",   sizeMm: 80 },
+  { id: "uzhhorod-old",   cityKey: "Uzhhorod", city: "Ужгород", district: "Старе місто",    tag: "",          blurb: "Набережна Ужа, замок і найдовша липова алея Європи.",       center: [48.6210, 22.2980], span: 0.010, style: "nature", sizeMm: 80 },
 ];
 
 // ---- Map "style" presets (layers + look) ----

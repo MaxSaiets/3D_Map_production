@@ -350,16 +350,27 @@ export function SimpleControlPanel({
     return () => clearTimeout(timer);
   }, [selectedArea, styleId, modelSizeMm]);
 
-  const pickTemplate = async (id: string) => {
+  const pickTemplate = (id: string) => {
     const tpl = MAP_TEMPLATES.find((t) => t.id === id);
     if (!tpl) return;
     setActiveTemplate(id);
     setError(null);
+    // ІДЕАЛЬНИЙ ПРИКЛАД одним кліком: ставимо куровані СТИЛЬ + РОЗМІР, ЛЕТИМО картою
+    // до району і ставимо зону точно під розмір моделі (1:10000 → мм×10 м). Раніше
+    // pickTemplate робив лише setSelectedArea → карта НЕ рухалась і налаштування НЕ
+    // мінялись («не працює»). Тепер клік готує сцену до генерації повністю.
+    if (tpl.style) applyStyle(tpl.style);
+    const sizeMm = tpl.sizeMm ?? modelSizeMm ?? 80;
+    if (tpl.sizeMm) setModelSizeMm(tpl.sizeMm);
     const [lat, lon] = tpl.center;
-    const span = tpl.span;
-    const lonPad = span / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
-    const L = await import("leaflet");
-    setSelectedArea(new L.LatLngBounds([lat - span, lon - lonPad], [lat + span, lon + lonPad]) as any);
+    // Затримка — щоб зміна розміру встигла перебудувати оверлей зони ДО map-goto,
+    // інакше ребілд міг би перетерти щойно поставлену зону. map-goto з явним widthM
+    // летить до району + ставить зону рівно sizeMm×10 м (handler ігнорує clamp).
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
+        detail: { lat, lon, widthM: sizeMm * 10 },
+      }));
+    }, 180);
   };
 
   // Будує запит карти. forPrint=true → ПОВНА друкарська якість (preview_mode=false,
