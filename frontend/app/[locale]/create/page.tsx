@@ -422,7 +422,7 @@ export default function Home() {
       ? tc("areaReady")
       : tc("markOneArea");
   const statusLabel = isGenerating
-    ? `${progress}% • ${status || tc("generationInProgress")}`
+    ? `${progress}% • ${progress >= 90 ? tc("almostDone") : (status || tc("generationInProgress"))}`
     : downloadUrl
       ? tc("fileReady")
       : tc("readyToConfigure");

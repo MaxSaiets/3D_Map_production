@@ -223,6 +223,7 @@
     "areaReady": "Área lista para generar",
     "markOneArea": "Marca un área",
     "generationInProgress": "Generación en curso",
+    "almostDone": "Casi listo · procesamiento final (unos segundos)",
     "fileReady": "Archivo listo para descargar",
     "readyToConfigure": "Listo para configurar",
     "tourCityTitle": "Elige una ciudad",

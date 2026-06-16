@@ -223,6 +223,7 @@
     "areaReady": "Area ready to generate",
     "markOneArea": "Mark one area",
     "generationInProgress": "Generation in progress",
+    "almostDone": "Almost done · final processing (a few seconds)",
     "fileReady": "File ready to download",
     "readyToConfigure": "Ready to configure",
     "tourCityTitle": "Choose a city",

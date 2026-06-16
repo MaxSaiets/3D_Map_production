@@ -223,6 +223,7 @@
     "areaReady": "Zone prête à générer",
     "markOneArea": "Marque une zone",
     "generationInProgress": "Génération en cours",
+    "almostDone": "Presque fini · traitement final (quelques secondes)",
     "fileReady": "Fichier prêt à télécharger",
     "readyToConfigure": "Prêt à configurer",
     "tourCityTitle": "Choisis une ville",
