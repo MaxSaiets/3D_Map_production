@@ -1002,6 +1002,31 @@ async def create_order_endpoint(
     _ptype = (order.product_type or "map").strip().lower()
     if _ptype not in ("map", "keychain"):
         raise HTTPException(status_code=422, detail="Невідомий тип виробу (очікується «map» або «keychain»).")
+    # СЕРВЕР-САЙД валідація доставки (дзеркало OrderDialog.tsx) — щоб обхід форми
+    # через прямий API не створював недоставних замовлень (без міста/відділення).
+    _dm = (order.delivery_method or "").strip().lower()
+    _dcountry = (order.delivery_country or "").strip()
+    _dcity = (order.delivery_city or "").strip()
+    _dbranch = (order.delivery_branch or "").strip()
+    _daddress = (order.delivery_address or "").strip()
+    _EU_METHODS = {"novapost_eu", "meest"}
+    if _dm in _EU_METHODS:
+        if not _dcountry:
+            raise HTTPException(status_code=422, detail="Вкажіть країну доставки")
+        if not _dcity:
+            raise HTTPException(status_code=422, detail="Вкажіть місто доставки")
+        if _dm == "novapost_eu" and not _dbranch:
+            raise HTTPException(status_code=422, detail="Вкажіть відділення Nova Post")
+        if _dm == "meest" and not _daddress:
+            raise HTTPException(status_code=422, detail="Вкажіть адресу доставки")
+    elif _dm != "pickup":
+        # Будь-який не-самовивіз (nova/ukr/порожній метод): потрібні місто + відділення.
+        if not _dcity:
+            raise HTTPException(status_code=422, detail="Вкажіть місто доставки")
+        if not _dbranch:
+            raise HTTPException(status_code=422, detail="Вкажіть відділення пошти")
+        if _dm == "ukr" and not _daddress:
+            raise HTTPException(status_code=422, detail="Вкажіть адресу (вулиця/будинок) для Укрпошти")
     payload = order.model_dump()
     payload["product_type"] = _ptype
     # Мʼяка привʼязка до акаунта: якщо клієнт залогінений — замовлення видно в кабінеті.

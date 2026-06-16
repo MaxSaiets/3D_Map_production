@@ -49,10 +49,11 @@ export function OnboardingTour({
   return (
     // Мобільний: піднято НАД sticky-баром (≈80px) і відцентровано, щоб не
     // перекривати ціну+CTA. Десктоп: як було — внизу праворуч.
-    <div className="pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-3 pb-[104px] pt-3 sm:justify-end sm:p-6">
+    <div className="pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-3 pb-[calc(104px+env(safe-area-inset-bottom))] pt-3 sm:justify-end sm:p-6 sm:pb-6">
       <div
         className="pointer-events-auto w-full max-w-[360px] rounded-[18px] border border-line bg-paper-2 p-5 shadow-lift fade-up"
         role="dialog"
+        aria-modal="true"
         aria-label={t("hintAria")}
       >
         <div className="mb-3 flex items-start justify-between">
@@ -80,8 +81,8 @@ export function OnboardingTour({
             </button>
           )}
         </div>
-        {/* progress dots */}
-        <div className="mt-4 flex justify-center gap-1.5">
+        {/* progress dots — декоративні; крок озвучується текстовим лічильником (hintCounter) вище */}
+        <div className="mt-4 flex justify-center gap-1.5" aria-hidden="true">
           {steps.map((_, i) => (
             <span key={i} className="h-1.5 rounded-full transition-all"
               style={{ width: i === idx ? 18 : 6, background: i === idx ? "var(--forest)" : "var(--line-2)" }} />

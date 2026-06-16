@@ -104,7 +104,7 @@ export default function SiteAnalytics() {
       )}
 
       {ready && consent === null && (
-        <div className="fixed inset-x-3 bottom-[96px] z-[60] mx-auto max-w-[680px] rounded-2xl border border-line bg-paper/95 p-4 shadow-lift backdrop-blur sm:bottom-3 sm:flex sm:items-center sm:gap-4">
+        <div className="fixed inset-x-3 bottom-[96px] z-[50] mx-auto max-w-[680px] rounded-2xl border border-line bg-paper/95 p-4 shadow-lift backdrop-blur sm:bottom-3 sm:flex sm:items-center sm:gap-4">
           <p className="text-[13px] leading-relaxed text-ink-2">
             {t("text")}{" "}
             <Link href="/privacy" className="font-semibold text-forest underline">{t("more")}</Link>
@@ -112,13 +112,13 @@ export default function SiteAnalytics() {
           <div className="mt-3 flex shrink-0 gap-2 sm:mt-0">
             <button
               onClick={() => decide("denied")}
-              className="min-h-[40px] flex-1 rounded-full border border-line px-4 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 sm:flex-none"
+              className="min-h-[44px] flex-1 rounded-full border border-line px-4 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 sm:flex-none"
             >
               {t("decline")}
             </button>
             <button
               onClick={() => decide("granted")}
-              className="min-h-[40px] flex-1 rounded-full bg-forest px-5 text-[13px] font-bold text-[#F4EFE4] transition hover:brightness-110 sm:flex-none"
+              className="min-h-[44px] flex-1 rounded-full bg-forest px-5 text-[13px] font-bold text-[#F4EFE4] transition hover:brightness-110 sm:flex-none"
             >
               {t("accept")}
             </button>

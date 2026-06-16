@@ -895,6 +895,14 @@ def build_keychain_layout(
             pull = d - outer_m * 0.7
             loop_center_x -= dx / d * pull
             loop_center_y -= dy / d * pull
+            # Симетричний дах (house): nearest_points на піку обирає одну з ДВОХ
+            # рівновіддалених граней → зносить вушко вбік (док. баг «вушко будинку
+            # справа»). Якщо петля була на центр. осі — повертаємо X строго в центр,
+            # щоб тягло вертикально вниз, а не навскоси. Інші форми / зміщені петлі не чіпаємо.
+            if shape_norm == "house":
+                _cx = (body_w_mm / 2.0) * layout_scale_m_per_mm
+                if abs(loop_center_x_mm_safe * layout_scale_m_per_mm - _cx) < 2.5 * layout_scale_m_per_mm:
+                    loop_center_x = _cx
     except Exception:
         pass
     # (б) Отвір усередині тіла — ЛИШЕ для жетона (token): перемичка до краю ≥2.0мм,
