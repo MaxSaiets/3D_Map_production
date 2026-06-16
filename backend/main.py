@@ -460,8 +460,14 @@ from starlette.responses import PlainTextResponse as _PlainText
 class SafeStatic(StaticFiles):
     """StaticFiles, що віддає ЛИШЕ артефакти моделей за розширенням. Захист у
     глибину: навіть якщо у OUTPUT_DIR опиниться .json/.jsonl/.env/.py — він НЕ
-    віддасться (раніше відкритий mount зливав users.json/orders.jsonl)."""
-    _ALLOWED = {".3mf", ".stl", ".glb", ".gltf", ".obj", ".png", ".jpg", ".jpeg", ".webp", ".zip"}
+    віддасться (раніше відкритий mount зливав users.json/orders.jsonl).
+
+    Друкарські формати (.3mf/.stl) НАВМИСНО прибрані з allowlist (task #70):
+    повноякісний друк-файл не має віддаватись напряму за basename з download_url
+    в обхід квоти. Превʼю йде через /api/download (in-memory task), а реальне
+    завантаження — через POST /api/account/download (стрімить server-side, квота).
+    Жоден фронт-консюмер НЕ робить прямий GET /files/<name>.3mf (перевірено)."""
+    _ALLOWED = {".glb", ".gltf", ".obj", ".png", ".jpg", ".jpeg", ".webp", ".zip"}
 
     async def get_response(self, path, scope):
         ext = os.path.splitext(path)[1].lower()
