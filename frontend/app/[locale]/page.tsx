@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 const ShowcaseSection = dynamic(() => import("@/components/ShowcaseSection"), { ssr: false });
+const RealPrints = dynamic(() => import("@/components/RealPrints"), { ssr: false });
 const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), { ssr: false });
 
 /* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
@@ -107,6 +108,7 @@ export default function HomePage() {
       <HowItWorks />
       <TemplatesGallery />
       <Craft />
+      <RealPrints />
       <Testimonials />
       <Faq />
       <SeoTextBlock />

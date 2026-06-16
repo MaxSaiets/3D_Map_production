@@ -96,6 +96,13 @@
       "spec4t": "Format 3MF",
       "spec4d": "Prêt pour Bambu / Prusa"
     },
+    "prints": {
+      "title": "À quoi ça ressemble imprimé",
+      "sub": "Vraies photos de produits finis — texture des couches, taille en main, bioplastique Eco PLA.",
+      "guarantee": "60 jours de garantie · réimpression gratuite si défaut",
+      "soon": "Photo bientôt",
+      "alt": "Produit imprimé en 3D {n}"
+    },
     "testimonials": {
       "title": "Ce que disent les clients",
       "sub": "Fais défiler pour voir plus d'avis →",
@@ -364,6 +371,8 @@
     "costEu": "Nova Post / Meest — dès 8 € selon le tarif du transporteur",
     "costPickup": "Retrait — gratuit",
     "priceIncludes": "Prix de l’article. La livraison se paie séparément à la réception.",
+    "trustGuarantee": "Garantie qualité",
+    "trustGuaranteeDesc": "60 jours ; réimpression gratuite si défaut",
     "trustNoPrepay": "Sans acompte",
     "trustNoPrepayDesc": "paiement après confirmation",
     "trustOperator": "Un opérateur confirmera les détails avant l’impression",

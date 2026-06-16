@@ -96,6 +96,13 @@
       "spec4t": "Format 3MF",
       "spec4d": "Gotowe dla Bambu / Prusa"
     },
+    "prints": {
+      "title": "Jak to wygląda po wydruku",
+      "sub": "Prawdziwe zdjęcia gotowych wyrobów — tekstura warstw, rozmiar w dłoni, bioplastik Eco PLA.",
+      "guarantee": "60 dni gwarancji · darmowy przedruk przy wadzie",
+      "soon": "Zdjęcie wkrótce",
+      "alt": "Wydrukowany wyrób 3D {n}"
+    },
     "testimonials": {
       "title": "Co mówią klienci",
       "sub": "Przewiń, aby zobaczyć więcej opinii →",
@@ -364,6 +371,8 @@
     "costEu": "Nova Post / Meest — od 8 € wg taryfy przewoźnika",
     "costPickup": "Odbiór — za darmo",
     "priceIncludes": "Cena za wyrób. Dostawę opłacasz osobno przy odbiorze.",
+    "trustGuarantee": "Gwarancja jakości",
+    "trustGuaranteeDesc": "60 dni; darmowy przedruk przy wadzie",
     "trustNoPrepay": "Bez przedpłaty",
     "trustNoPrepayDesc": "płatność po potwierdzeniu zamówienia",
     "trustOperator": "Operator skontaktuje się i ustali szczegóły przed drukiem",

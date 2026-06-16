@@ -96,6 +96,13 @@
       "spec4t": "3MF-Format",
       "spec4d": "Bambu / Prusa bereit"
     },
+    "prints": {
+      "title": "So sieht es gedruckt aus",
+      "sub": "Echte Fotos fertiger Produkte — Schichttextur, Größe in der Hand, Eco-PLA-Biokunststoff.",
+      "guarantee": "60 Tage Garantie · kostenloser Nachdruck bei Mängeln",
+      "soon": "Foto folgt",
+      "alt": "3D-gedrucktes Produkt {n}"
+    },
     "testimonials": {
       "title": "Was Kunden sagen",
       "sub": "Wische, um mehr Bewertungen zu sehen →",
@@ -364,6 +371,8 @@
     "costEu": "Nova Post / Meest — ab 8 € nach Tarif des Zustellers",
     "costPickup": "Abholung — kostenlos",
     "priceIncludes": "Preis gilt für den Artikel. Versand wird separat bei Erhalt bezahlt.",
+    "trustGuarantee": "Qualitätsgarantie",
+    "trustGuaranteeDesc": "60 Tage; kostenloser Nachdruck bei Mängeln",
     "trustNoPrepay": "Keine Vorkasse",
     "trustNoPrepayDesc": "Zahlung nach Bestellbestätigung",
     "trustOperator": "Ein Operator klärt die Details vor dem Druck",

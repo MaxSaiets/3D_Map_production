@@ -96,6 +96,13 @@
       "spec4t": "3MF format",
       "spec4d": "Bambu / Prusa ready"
     },
+    "prints": {
+      "title": "What it looks like printed",
+      "sub": "Real photos of finished products — layer texture, size in hand, Eco PLA bioplastic.",
+      "guarantee": "60-day guarantee · free reprint if defective",
+      "soon": "Photo coming soon",
+      "alt": "3D-printed product {n}"
+    },
     "testimonials": {
       "title": "What customers say",
       "sub": "Swipe to see more reviews →",
@@ -364,6 +371,8 @@
     "costEu": "Nova Post / Meest — from €8 by carrier tariff",
     "costPickup": "Pickup — free",
     "priceIncludes": "Price is for the item. Delivery is paid separately on receipt.",
+    "trustGuarantee": "Quality guarantee",
+    "trustGuaranteeDesc": "60 days; free reprint if defective",
     "trustNoPrepay": "No prepayment",
     "trustNoPrepayDesc": "pay after order confirmation",
     "trustOperator": "An operator will contact you to confirm details before printing",
