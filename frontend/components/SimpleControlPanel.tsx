@@ -109,6 +109,9 @@ export function SimpleControlPanel({
   const setActiveTemplate = s.setSimpleTemplate;
   const [orderOpen, setOrderOpen] = useState(false);
   const [dlBusy, setDlBusy] = useState(false);
+  // Прогрес фонової генерації друкарського 3MF при завантаженні стандартної карти
+  // (на екрані — швидкий GLB-прев'ю; друкарський файл готуємо на вимогу). null = не йде.
+  const [printPrep, setPrintPrep] = useState<number | null>(null);
   const { getIdToken, openLogin } = useAuth();
   const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
 
@@ -163,20 +166,46 @@ export function SimpleControlPanel({
 
   const doGatedDownload = async () => {
     setDlBusy(true);
-    const res = await gatedDownload({
-      taskId: taskGroupId, downloadUrl,
-      meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
-      getIdToken, openLogin,
-      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-        detail: { message: t("limitMsg") },
-      })),
-    });
-    if (res.quota && typeof res.quota.remaining === "number") {
-      setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
-    } else if (res.status === "ok") {
-      refreshQuota();
+    setError(null);
+    try {
+      let dlTaskId = taskGroupId;
+      let dlUrl = downloadUrl;
+      // Стандартна карта на екрані = ШВИДКИЙ GLB-прев'ю. Завантаження мусить дати
+      // ДРУКАРСЬКИЙ 3MF (вимога: адміни + юзери з безкоштовними/докупленими качають 3MF).
+      // Магніт/панно/брелки вже завжди 3MF — їх віддаємо напряму.
+      if (dlUrl && /\.glb(\?|$)/i.test(dlUrl)) {
+        // Не запускаємо дорогу 3MF-генерацію (1-3 хв), якщо юзер не залогінений або
+        // вичерпав ліміт — перевіряємо ПЕРЕД генерацією, щоб не змусити чекати намарно.
+        const token = await getIdToken().catch(() => null);
+        if (!token) { openLogin(); setDlBusy(false); return; }
+        if (quota && !quota.isAdmin && quota.remaining <= 0) {
+          window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: t("limitMsg") } }));
+          setDlBusy(false); return;
+        }
+        setPrintPrep(0);
+        const print = await generatePrint3mf((p) => setPrintPrep(p));
+        setPrintPrep(null);
+        if (!print) { setError(t("errGen")); setDlBusy(false); return; }
+        dlTaskId = print.taskId;
+        dlUrl = print.url;
+      }
+      const res = await gatedDownload({
+        taskId: dlTaskId, downloadUrl: dlUrl,
+        meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
+        getIdToken, openLogin,
+        onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
+          detail: { message: t("limitMsg") },
+        })),
+      });
+      if (res.quota && typeof res.quota.remaining === "number") {
+        setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
+      } else if (res.status === "ok") {
+        refreshQuota();
+      }
+    } finally {
+      setPrintPrep(null);
+      setDlBusy(false);
     }
-    setDlBusy(false);
   };
 
   const cityKeys = availableCities ? Object.keys(availableCities) : [];
@@ -333,60 +362,86 @@ export function SimpleControlPanel({
     setSelectedArea(new L.LatLngBounds([lat - span, lon - lonPad], [lat + span, lon + lonPad]) as any);
   };
 
-  const handleGenerate = async () => {
+  // Будує запит карти. forPrint=true → ПОВНА друкарська якість (preview_mode=false,
+  // export 3mf) для завантаження/замовлення; інакше — швидке GLB-прев'ю на екрані.
+  // Стандартна карта на екрані рендериться як легкий GLB; друкарський 3MF
+  // генерується НА ВИМОГУ при download/order (магніт/панно вже завжди 3MF).
+  const buildSingleMapReq = (forPrint: boolean) => {
+    const preset = MAP_STYLE_PRESETS.find((p) => p.id === styleId);
+    const layerTerrain = preset ? preset.layers.terrain : s.terrainEnabled;
+    const layerBuildings = preset ? preset.layers.buildings : s.previewIncludeBuildings;
+    const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
+    const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
+    const layerParks = preset ? preset.layers.parks : s.previewIncludeParks;
+    // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
+    let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
+    let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
+    const zpoly = s.zonePolygonCoords;
+    if (panelMode === 0 && zpoly && zpoly.length >= 3) {
+      for (const [lon, lat] of zpoly) {
+        fN = Math.max(fN, lat); fS = Math.min(fS, lat);
+        fE = Math.max(fE, lon); fW = Math.min(fW, lon);
+      }
+    }
+    return buildMapRequest({
+      north: fN, south: fS,
+      east: fE, west: fW,
+      roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
+      buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
+      buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
+      waterDepth: s.waterDepth, terrainEnabled: magnetMode ? false : layerTerrain, terrainZScale: s.terrainZScale,
+      terrainBaseThicknessMm: magnetMode ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
+      terrariumZoom: s.terrariumZoom,
+      // forPrint → друкарський 3MF (не GLB-прев'ю).
+      exportFormat: forPrint ? "3mf" : s.exportFormat,
+      modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
+      isAmsMode: s.isAmsMode,
+      // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово
+      flatPlateMode: panelMode > 0 ? false : magnetMode ? true : s.flatPlateMode,
+      // forPrint → ЗАВЖДИ повна якість; інакше швидке прев'ю лише для стандартної карти.
+      previewMode: forPrint ? false : (panelMode > 0 || magnetMode ? false : s.previewMode),
+      magnetPocket: panelMode > 0 ? false : magnetMode,
+      mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
+      gpxTrack,
+      previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
+      previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
+      previewIncludeParks: layerParks,
+      // Панно: плитки ріжуться строго по своїх bbox — фігурний полігон
+      // (rounded-rect/коло/серце з /create) сюди потрапляти НЕ повинен.
+      zonePolygonCoords: panelMode > 0 ? null : s.zonePolygonCoords,
+    });
+  };
+
+  // Генерує ДРУКАРСЬКИЙ 3MF стандартної карти НА ВИМОГУ (download/order), не чіпаючи
+  // GLB-прев'ю на екрані. Повертає {taskId, url} 3MF або null. onProg(0..100) для UI.
+  const generatePrint3mf = async (onProg?: (p: number) => void): Promise<{ taskId: string; url: string } | null> => {
+    try {
+      const { api } = await import("@/lib/api");
+      const req = buildSingleMapReq(true);
+      const r = await api.generateModel(req as any);
+      for (let i = 0; i < 90; i++) {
+        await new Promise((res) => setTimeout(res, 4000));
+        let st: any;
+        try { st = await api.getStatus(r.task_id); } catch { continue; }
+        if (typeof st?.progress === "number") onProg?.(st.progress);
+        if (st?.status === "completed") {
+          const url = st.download_url_3mf || st.download_url || "";
+          return url ? { taskId: r.task_id, url } : null;
+        }
+        if (st?.status === "failed" || st?.status === "error") return null;
+      }
+      return null;
+    } catch { return null; }
+  };
+
+  const handleGenerate = async (opts?: { forPrint?: boolean }) => {
     if (!selectedArea) { setError(t("errSelectArea")); return; }
     setError(null);
     setGenerating(true);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
     import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map" } }); m.trackFunnel("generate"); }).catch(() => {});
     try {
-      // Derive layer flags from the CURRENTLY SELECTED style preset, not from the
-      // store. The store can lag the visible selection (it isn't synced on mount),
-      // which previously sent terrain_enabled=false even when "З рельєфом" was
-      // highlighted → flat model. Reading the preset guarantees payload == UI.
-      const preset = MAP_STYLE_PRESETS.find((p) => p.id === styleId);
-      const layerTerrain = preset ? preset.layers.terrain : s.terrainEnabled;
-      const layerBuildings = preset ? preset.layers.buildings : s.previewIncludeBuildings;
-      const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
-      const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
-      const layerParks = preset ? preset.layers.parks : s.previewIncludeParks;
-      // ПОВЕРНУТА мапа: selectedArea — це bbox НЕповернутого прямокутника, але
-      // реальна зона (zonePolygonCoords) повернута → її кути стирчать ЗА цей bbox.
-      // Якщо фетчити OSM лише по selectedArea, кути виходять порожні (без будинків/
-      // доріг). Розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
-      let fN = selectedArea.getNorth(), fS = selectedArea.getSouth();
-      let fE = selectedArea.getEast(), fW = selectedArea.getWest();
-      const zpoly = s.zonePolygonCoords;
-      if (panelMode === 0 && zpoly && zpoly.length >= 3) {
-        for (const [lon, lat] of zpoly) {
-          fN = Math.max(fN, lat); fS = Math.min(fS, lat);
-          fE = Math.max(fE, lon); fW = Math.min(fW, lon);
-        }
-      }
-      const req = buildMapRequest({
-        north: fN, south: fS,
-        east: fE, west: fW,
-        roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
-        buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
-        buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-        waterDepth: s.waterDepth, terrainEnabled: magnetMode ? false : layerTerrain, terrainZScale: s.terrainZScale,
-        terrainBaseThicknessMm: magnetMode ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
-        terrariumZoom: s.terrariumZoom, exportFormat: s.exportFormat,
-        modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
-        isAmsMode: s.isAmsMode,
-        // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово
-        flatPlateMode: panelMode > 0 ? false : magnetMode ? true : s.flatPlateMode,
-        previewMode: panelMode > 0 || magnetMode ? false : s.previewMode,
-        magnetPocket: panelMode > 0 ? false : magnetMode,
-        mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
-        gpxTrack,
-        previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
-        previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
-        previewIncludeParks: layerParks,
-        // Панно: плитки ріжуться строго по своїх bbox — фігурний полігон
-        // (rounded-rect/коло/серце з /create) сюди потрапляти НЕ повинен.
-        zonePolygonCoords: panelMode > 0 ? null : s.zonePolygonCoords,
-      });
+      const req = buildSingleMapReq(opts?.forPrint ?? false);
       const { api } = await import("@/lib/api");
       // D3 ПАННО: ділимо зону на R×C плиток (row 0 = ПІВНІЧ, col 0 = захід)
       // і шлемо batch у /api/generate-zones — бек гарантує ідеальні шви
@@ -445,7 +500,11 @@ export function SimpleControlPanel({
   // завершеної генерації).
   const orderNow = () => {
     if (!selectedArea) { setError(t("errSelectArea")); return; }
-    if (!downloadUrl && !isGenerating) handleGenerate();
+    // Замовлення = ПОВНА друкарська якість: оператор має отримати готовий 3MF, а не
+    // GLB-прев'ю. Якщо на екрані лише прев'ю (GLB) або нічого — стартуємо повну
+    // генерацію у фоні (покупець заповнює контакти, поки 3MF готується; order несе task).
+    const needPrint = !downloadUrl || /\.glb(\?|$)/i.test(downloadUrl);
+    if (needPrint && !isGenerating) handleGenerate({ forPrint: true });
     setOrderOpen(true);
   };
 
@@ -738,7 +797,7 @@ export function SimpleControlPanel({
               для покупця. */}
           <button
             type="button"
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             disabled={!selectedArea || isGenerating}
             className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
@@ -810,7 +869,9 @@ export function SimpleControlPanel({
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/70 disabled:opacity-60"
             >
               {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{" "}
-              {downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}
+              {printPrep !== null
+                ? `${t("generating")} 3MF ${printPrep}%`
+                : downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}
             </button>
           )}
 
@@ -887,7 +948,10 @@ export function SimpleControlPanel({
             // видимій кнопці нічого не робить (глухий кут). Замість цього даємо фідбек.
             disabled={isGenerating}
             onAction={() => {
-              if (downloadUrl) { setOrderOpen(true); return; }
+              // «Замовити» → orderNow (а не голий setOrderOpen): якщо на екрані лише
+              // GLB-прев'ю, orderNow стартує ПОВНУ 3MF-генерацію у фоні, щоб оператор
+              // отримав друкарський файл, а не чорновик.
+              if (downloadUrl) { orderNow(); return; }
               if (!selectedArea) {
                 setError(t("errSelectArea"));
                 window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", ns: "simple", key: "errSelectArea" } }));
