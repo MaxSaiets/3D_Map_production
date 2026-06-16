@@ -88,11 +88,11 @@ export const es: LegalSet = {
     title: "Pago y entrega",
     sections: [
       { h: "Productos y precios", blocks: [
-        { p: "Precios orientativos (el importe definitivo se muestra en el paso de tramitación):" },
+        { p: "Precios de los productos (el envío se cobra aparte según la tarifa del transportista):" },
         { ul: [
           "Llavero-mapa: desde 120 ₴ (≈ 3 €).",
-          "Mapa 3D de barrio: S 5,5 cm — 250 ₴, M 8 cm — 390 ₴, L 11 cm — 590 ₴, XL 15 cm — 890 ₴ (mapas: desde 6 €).",
-          "Imán de nevera (mapa): 180 ₴.",
+          "Mapa 3D de barrio: S 5,5 cm — 150 ₴, M 8 cm — 240 ₴, L 11 cm — 360 ₴, XL 15 cm — 550 ₴ (mapas: desde 4 €).",
+          "Imán de nevera (mapa): 150 ₴.",
           "Descarga del archivo terminado 3MF/STL para imprimirlo por tu cuenta: gratuita dentro del límite de la cuenta.",
         ] },
       ] },

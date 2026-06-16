@@ -156,7 +156,7 @@ export function SimpleControlPanel({
   // брав суму однієї). Магніт-fallback = 180₴ (не ціна мапи). Quote вже per-tile.
   const orderTiles = panelMode > 0 ? panelMode * panelMode : 1;
   const fmtPrice = (n: number, currency: string) =>
-    currency === "EUR" ? `≈ €${n}` : `≈ ${n} ₴`;
+    currency === "EUR" ? `€${n}` : `${n} ₴`;
   const orderPriceText = (() => {
     if (quote) {
       return orderTiles > 1 ? fmtPrice(quote.price * orderTiles, quote.currency) : quote.formatted;

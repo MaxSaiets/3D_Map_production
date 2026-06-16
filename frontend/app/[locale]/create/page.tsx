@@ -567,11 +567,14 @@ export default function Home() {
             </div>
           </aside>
 
-          <section className="flex min-h-0 flex-1 flex-col gap-3">
+          {/* Десктоп (xl): карта і 3D-превʼю ПОРЯД (а не одне під одним) — раніше
+              карта стискалась до ~300px, а превʼю падало нижче згину. Тепер обидва
+              високі й видимі без скролу, ширина екрана використана. */}
+          <section className="flex min-h-0 flex-1 flex-col gap-3 xl:grid xl:grid-cols-2 xl:items-stretch xl:gap-4">
             <div id="panel-map" className={mapPanelClasses}>
               {/* Карта — головна взаємодія: на десктопі домінує (≈60% висоти
                   вікна), щоб рамку було зручно тягати (раніше ~270px). */}
-              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh]">
+              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh] xl:min-h-[80vh]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -718,7 +721,7 @@ export default function Home() {
             </div>
 
             <div id="panel-preview" className={previewPanelClasses}>
-              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px]">
+              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px] xl:min-h-[80vh]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">

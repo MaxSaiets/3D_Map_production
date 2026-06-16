@@ -15,22 +15,22 @@
  *  Дзеркало backend/pricing.json → map.sizes_mm. 60мм = магніт (окремий SKU,
  *  не входить у звичайну S/M/L/XL лінійку, тому тут немає). */
 export const MAP_SIZE_PRICES_UAH = {
-  55: 250,  // S
-  80: 390,  // M
-  110: 590, // L
-  150: 890, // XL
+  55: 150,  // S  (5.5 см)
+  80: 240,  // M  (8 см) — якірна ціна від власника
+  110: 360, // L  (11 см)
+  150: 550, // XL (15 см)
 } as const;
 
 export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
 
 /** Магніт-мапа (60мм) — окремий SKU. UAH. Дзеркало pricing.json map.sizes_mm["60"]. */
-export const MAP_MAGNET_PRICE_UAH = 180;
+export const MAP_MAGNET_PRICE_UAH = 150;
 
 /** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
-export const MAP_RELIEF_ADDON_UAH = 100;
+export const MAP_RELIEF_ADDON_UAH = 60;
 
 /** Позиційний курс UAH→EUR (як на лендінгу, НЕ біржовий ФХ). Округлюємо до
- *  «гарних» євро так само, як це робилось вручну (250₴≈6€, 890₴≈21€). */
+ *  «гарних» євро (150₴≈4€, 550₴≈13€). */
 export const EUR_PER_UAH = 0.024;
 
 /** Ціна розміру у EUR (позиційний курс, округлення до цілого євро). */

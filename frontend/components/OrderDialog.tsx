@@ -314,6 +314,17 @@ export function OrderDialog({
                   ))}
                 </div>
                 <p className="px-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("deliveryHint")}</p>
+                {/* Орієнтовна вартість доставки за тарифом перевізника (2025-12):
+                    НП ~70₴, Укрпошта ~45₴, ЄС ~€8 — знімає страх «приховані витрати». */}
+                <p className="px-1 text-[11px] font-semibold leading-4 text-[var(--accent-strong)]">
+                  {delivery === "pickup"
+                    ? t("costPickup")
+                    : delivery === "nova"
+                      ? t("costNova")
+                      : delivery === "ukr"
+                        ? t("costUkr")
+                        : t("costEu")}
+                </p>
               </div>
 
               {region === "eu" && (

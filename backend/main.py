@@ -858,8 +858,8 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     return {
         "currency": p.get("currency", "UAH"),
         "price": price,
-        "formatted": f"≈ {price} {sym}",
-        "approx": True,
+        "formatted": f"{price} {sym}",
+        "approx": False,
     }
 
 
@@ -923,9 +923,9 @@ def _compute_authoritative_amount(
     # Невідомий розмір (немає задачі) → беремо стартову ціну `from`, а НЕ
     # найдешевший рядок (інакше випадково взяли б ціну магніта "60"=180).
     if size_mm is None:
-        base = float(map_cfg.get("from", 250) or 250)
+        base = float(map_cfg.get("from", 150) or 150)
     else:
-        base = float(_nearest_map_price(sizes, size_mm) or map_cfg.get("from", 250))
+        base = float(_nearest_map_price(sizes, size_mm) or map_cfg.get("from", 150))
     if relief:
         base += float(map_cfg.get("relief_addon", 0) or 0)
 
