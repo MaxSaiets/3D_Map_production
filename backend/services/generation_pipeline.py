@@ -232,14 +232,21 @@ def process_generation_stage(
         # (крихко/гостро)). Якоримо 80мм→28мм і масштабуємо: рельєф ≈ 35% висоти
         # моделі, клемп [14..55]мм. Так гори виглядають однаково виразно на S/M/L/XL.
         _max_relief_m = None
+        # Цільовий ВИДИМИЙ рельєф (рівнинні міста підсилюються до нього). ~10% ширини
+        # моделі, але не вище 0.7×кап (щоб ніколи не злитись із компресією гір).
+        _target_relief_m = None
         try:
             _base_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
             _model_mm = float(getattr(request, "model_size_mm", 80.0) or 80.0)
             _max_relief_mm = max(14.0, min(_base_relief_mm * (_model_mm / 80.0), 55.0))
+            _target_pct = float(os.getenv("TERRAIN_TARGET_RELIEF_PCT", "0.10"))
+            _target_relief_mm = max(6.0, min(_target_pct * _model_mm, 0.7 * _max_relief_mm))
             if scale_factor and float(scale_factor) > 0 and _max_relief_mm > 0:
                 _max_relief_m = _max_relief_mm / float(scale_factor)
+                _target_relief_m = _target_relief_mm / float(scale_factor)
         except Exception:
             _max_relief_m = None
+            _target_relief_m = None
         terrain_mesh, terrain_provider = create_terrain_mesh(
             bbox_meters,
             z_scale=_z_scale,
@@ -251,6 +258,7 @@ def process_generation_stage(
             baseline_offset_m=baseline_offset_m,
             base_thickness=(float(request.terrain_base_thickness_mm) / float(scale_factor)) if scale_factor else 5.0,
             max_relief_m=_max_relief_m,
+            target_relief_m=_target_relief_m,
             flatten_buildings=bool(getattr(request, 'flatten_buildings_on_terrain', True)),
             building_geometries=building_geometries_for_flatten,
             flatten_roads=False,

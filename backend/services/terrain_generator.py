@@ -232,6 +232,41 @@ def create_grid_faces(rows: int, cols: int) -> np.ndarray:
     return faces.astype(np.int64)
 
 
+def lift_relief_to_target(Z, target_relief_m, max_amp=None):
+    """Адаптивне підсилення рельєфу для рівнинних міст.
+
+    Емпірично більшість міст має реальний перепад лише 30-70 м на зону ~1 км → у
+    моделі це 3-7 мм (ледь помітно). Якщо перепад НИЖЧИЙ за цільовий друкований
+    рельєф target_relief_m — лінійно підсилюємо його (ЗБЕРІГАЮЧИ ФОРМУ) до цілі.
+
+    Захист:
+      • NOISE_FLOOR (max(3м, 4% цілі)) — нижче перепад вважається DEM-шумом і НЕ
+        чіпається (інакше джитер тайлів роздувся б у фейкові пагорби);
+      • MAX_AMP (env TERRAIN_MAX_AMP, дефолт 3.5) — стеля підсилення, щоб рівнина
+        не стала «горами».
+    Спрацьовує ТІЛЬКИ для перепаду в (noise_floor, target): справжні пагорби/гори
+    (перепад ≥ target) лишаються натуральними. Чиста функція (тестується окремо).
+    """
+    target_relief_m = float(target_relief_m)
+    if not (target_relief_m > 0):
+        return Z
+    if max_amp is None:
+        try:
+            max_amp = float(os.getenv("TERRAIN_MAX_AMP", "3.5"))
+        except Exception:
+            max_amp = 3.5
+    z_lo = float(np.nanmin(Z))
+    rel = Z - z_lo
+    cur_range = float(np.nanmax(rel))
+    noise_floor_m = max(3.0, 0.04 * target_relief_m)
+    if noise_floor_m < cur_range < target_relief_m:
+        gain = min(target_relief_m / cur_range, float(max_amp))
+        print(f"[TERRAIN] Relief lifted {cur_range:.0f}m -> {cur_range*gain:.0f}m "
+              f"(gain {gain:.2f}, target {target_relief_m:.0f}m) — flat city made visible")
+        return z_lo + rel * gain
+    return Z
+
+
 def create_terrain_mesh(
     bbox_meters: Tuple[float, float, float, float],
     z_scale: float = 1.0,
@@ -260,6 +295,9 @@ def create_terrain_mesh(
     # Друкований максимум рельєфу у СВІТОВИХ метрах. Якщо перепад вищий — рельєф
     # стискається (гори → друковано і стабільно для boolean-грувів). None = без капу.
     max_relief_m: Optional[float] = None,
+    # Цільовий ВИДИМИЙ рельєф у світових метрах. Якщо реальний перепад НИЖЧИЙ —
+    # підсилюємо його до цілі (рівнинні міста стають видимими). None = без підсилення.
+    target_relief_m: Optional[float] = None,
 ) -> Tuple[Optional[trimesh.Trimesh], Optional[TerrainProvider]]:
     
     total_start = time.time()
@@ -367,6 +405,23 @@ def create_terrain_mesh(
                       f"(factor {factor:.2f}) — printable + boolean-stable for steep terrain")
         except Exception as _exc:
             print(f"[TERRAIN] relief compression skipped: {_exc}")
+
+    # АДАПТИВНЕ ПІДСИЛЕННЯ РЕЛЬЄФУ (рівнинні міста). Емпірично більшість міст має
+    # реальний перепад лише 30-70 м на зону ~1 км → у моделі це 3-7 мм (ледь
+    # помітно — типова скарга «рельєфу майже нема»). Якщо перепад НИЖЧИЙ за
+    # цільовий друкований рельєф — підсилюємо його (лінійно, ЗБЕРІГАЮЧИ ФОРМУ) до
+    # target_relief_m, щоб рельєф був видимим на КОЖНІЙ мапі. Захист:
+    #  • NOISE_FLOOR — нижче цього перепад вважається DEM-шумом, НЕ підсилюємо
+    #    (інакше 1-2 м джитеру тайлів роздулись би у фейкові пагорби);
+    #  • MAX_AMP — стеля підсилення (рівнинне місто не стане «горами»).
+    # Працює ТІЛЬКИ коли перепад < target → справжні пагорби/гори лишаються
+    # натуральними (а вище капляться компресією). Компресія і підсилення
+    # взаємовиключні: target_relief_m завжди < max_relief_m (див. виклик).
+    if target_relief_m and target_relief_m > 0:
+        try:
+            Z = lift_relief_to_target(Z, float(target_relief_m))
+        except Exception as _exc:
+            print(f"[TERRAIN] relief lift skipped: {_exc}")
 
     # Зберігаємо оригінальні висоти
     Z_original = Z.copy()

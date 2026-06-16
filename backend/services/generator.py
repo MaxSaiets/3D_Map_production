@@ -305,14 +305,21 @@ def generate_3d_map(
     # виглядали однаково виразно на S/M/L/XL (раніше жорсткі 28мм: пласко на XL,
     # крихко на S). Те саме у generation_pipeline.process_generation_stage.
     _max_relief_m = None
+    # Цільовий ВИДИМИЙ рельєф (рівнинні міста підсилюються до нього). ~10% ширини
+    # моделі, ≤0.7×кап. Те саме у generation_pipeline.process_generation_stage.
+    _target_relief_m = None
     try:
         _base_relief_mm = float(os.getenv("TERRAIN_MAX_RELIEF_MM", "28"))
         _model_mm = float(getattr(params, "model_size_mm", 80.0) or 80.0)
         _max_relief_mm = max(14.0, min(_base_relief_mm * (_model_mm / 80.0), 55.0))
+        _target_pct = float(os.getenv("TERRAIN_TARGET_RELIEF_PCT", "0.10"))
+        _target_relief_mm = max(6.0, min(_target_pct * _model_mm, 0.7 * _max_relief_mm))
         if scale_factor and float(scale_factor) > 0 and _max_relief_mm > 0:
             _max_relief_m = _max_relief_mm / float(scale_factor)
+            _target_relief_m = _target_relief_mm / float(scale_factor)
     except Exception:
         _max_relief_m = None
+        _target_relief_m = None
 
     terrain_mesh, terrain_provider = create_terrain_mesh(
         bbox_meters,
@@ -323,6 +330,7 @@ def generate_3d_map(
         terrarium_zoom=params.terrarium_zoom,
         base_thickness=base_thickness_m,
         max_relief_m=_max_relief_m,
+        target_relief_m=_target_relief_m,
         flatten_buildings=bool(getattr(params, 'flatten_buildings_on_terrain', True)),
         building_geometries=building_geoms or None,
         flatten_roads=False,
