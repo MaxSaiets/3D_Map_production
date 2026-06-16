@@ -10,7 +10,7 @@ import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WizardSteps } from "@/components/WizardSteps";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
-import { MAP_TEMPLATES } from "@/lib/templates";
+import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
 import { useTranslations } from "next-intl";
@@ -130,6 +130,18 @@ export default function Home() {
     useGenerationStore.getState().setSelectedArea(null);
     setCurrentCityKey(key);
   }, []);
+
+  // Магнітний підпис (гравіювання) слідує за обраним містом через БУДЬ-ЯКИЙ шлях
+  // зміни currentCityKey — дропдаун, ?city=, ?template=, відновлення сітки (Рома:
+  // «щоб назви правильно брались для міст»). Перезаписуємо лише АВТО-значення:
+  // порожнє поле або назву якогось міста зі списку. Власний підпис користувача
+  // (напр. «ROMA ❤️») не збігається з жодною назвою → лишається недоторканим.
+  useEffect(() => {
+    const store = useGenerationStore.getState();
+    const cur = (store.simpleMapLabel || "").trim();
+    const isAuto = !cur || Object.keys(CITIES).some((k) => cityKeychainText(k) === cur);
+    if (isAuto) store.setSimpleMapLabel(cityKeychainText(currentCityKey));
+  }, [currentCityKey]);
 
   const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea,
     modelSizeMm, cropRotationDeg, setCropRotationDeg, setZonePolygonCoords } = useGenerationStore();

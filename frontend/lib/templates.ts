@@ -43,6 +43,36 @@ export const CITY_LABELS: Record<string, string> = Object.fromEntries(
   CITIES.map((c) => [c.key, c.label]),
 );
 
+// Cyrillic→Latin transliteration — MIRRORS backend _CYR_TO_LAT in
+// services/flat_plate_pipeline.py. The keychain/magnet engraving font is latin
+// only (DejaVu Sans), so the backend transliterates anyway; doing it here too
+// means the text the user SEES in the label field equals what gets printed.
+// Keep these two tables in sync.
+const CYR_TO_LAT: Record<string, string> = {
+  А: "A", Б: "B", В: "V", Г: "H", Ґ: "G", Д: "D", Е: "E", Є: "YE",
+  Ж: "ZH", З: "Z", И: "Y", І: "I", Ї: "YI", Й: "Y", К: "K", Л: "L",
+  М: "M", Н: "N", О: "O", П: "P", Р: "R", С: "S", Т: "T", У: "U",
+  Ф: "F", Х: "KH", Ц: "TS", Ч: "CH", Ш: "SH", Щ: "SHCH", Ь: "",
+  Ю: "YU", Я: "YA",
+};
+
+/** Uppercase latin transliteration of a (Ukrainian) string. Latin chars pass
+ *  through unchanged, so it is safe to call on names already in latin. */
+export function transliterateUA(text: string): string {
+  return (text || "")
+    .toUpperCase()
+    .split("")
+    .map((ch) => (ch in CYR_TO_LAT ? CYR_TO_LAT[ch] : ch))
+    .join("");
+}
+
+/** Canonical latin engraving text for a city key (e.g. "Lviv" → "LVIV").
+ *  Single source of truth for the keychain label and the magnet map label. */
+export function cityKeychainText(key: CityKey): string {
+  const c = CITIES.find((x) => x.key === key);
+  return c ? transliterateUA(c.label) : "CITY";
+}
+
 // ---- Map district templates: famous places, ready to generate ----
 export interface MapTemplate {
   id: string;
