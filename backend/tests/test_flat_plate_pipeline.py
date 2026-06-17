@@ -463,9 +463,11 @@ def test_heart_pair_halves_assemble_into_full_heart():
     # L: замок стирчить за грань розрізу, але лишається в контурі повного серця
     assert left.bounds[2] > W + 1.0
     assert full.buffer(0.2).covers(left)
-    # Кожна половинка сходить у ГОСТРИЙ кінчик рівно на шві (низ не «кривий»)
+    # Кожна половинка сходить на шві у МАЛЕНЬКИЙ ПЛАСКИЙ кінчик (~1.7мм зрізано):
+    # 0-ширинна голка не друкувалась/відламувалась → зрізаємо у друкований флет,
+    # серце все одно читається гострим. Низ біля шва (x≈W), піднятий на _tip_flat.
     lowest = min(left.exterior.coords, key=lambda c: c[1])
-    assert abs(lowest[0] - W) < 0.3 and lowest[1] < 0.3, f"низ L не на шві: {lowest}"
+    assert abs(lowest[0] - W) < 0.8 and 0.3 < lowest[1] < 2.2, f"низ L не на пласкому шві: {lowest}"
     # Стиковка: жодного перетину тіл при складанні
     overlap = translate(right, xoff=W).intersection(left).area
     assert overlap < 0.5, f"половинки перетинаються на {overlap:.3f}мм²"

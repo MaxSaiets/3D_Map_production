@@ -647,7 +647,12 @@ def _keychain_body_shape(
     *,
     radius_m: float,
     shape: str,
+    mm_to_world: float = 1.0,
 ) -> BaseGeometry:
+    # КРИТИЧНО: minx..maxy у build_keychain_layout = СВІТОВІ одиниці (mm·layout_scale,
+    # ~16 м/мм), НЕ мм! Тож фіксовані-мм-літерали (кліренс +0.05мм, зріз вістря 1.7мм)
+    # ОБОВʼЯЗКОВО множити на mm_to_world=layout_scale_m_per_mm, інакше у реальній
+    # генерації вони ~0 (баг: shapely-тест на мм-bounds проходив, а друк — ні).
     shape_name = (shape or "rounded").lower().replace("_", "-")
     width = max(maxx - minx, 1e-6)
     height = max(maxy - miny, 1e-6)
@@ -759,7 +764,7 @@ def _keychain_body_shape(
         # Кліренс пазу = пропорційний (0.6% грані) + ФІКСОВАНІ 0.05мм/бік (фідбек
         # власника: трохи легше складати половинки). 0.05мм у model-mm = 0.05мм
         # на друці (FDM лишається щільним клацом, але розʼємним).
-        clearance = elen * 0.006 + 0.05
+        clearance = elen * 0.006 + 0.05 * mm_to_world
         knob_cx = cut + k * 0.95
         knob = unary_union([
             Point(knob_cx, cy).buffer(k, resolution=48),
@@ -769,7 +774,7 @@ def _keychain_body_shape(
         # маленьким плоским дном ~0.6мм: серце все одно читається гострим, але кінчик
         # стає друкованим. _tip_flat у mm (body-shape простір). Синхрон у KeychainDesigner
         # heartHalfPoints (превʼю=друк). Соло-серце не зачіпається (інша гілка).
-        _tip_flat = min(1.7, height * 0.05)
+        _tip_flat = min(1.7 * mm_to_world, height * 0.05)
         if shape_name == "heart-l":
             half = full.intersection(box(minx - width, miny + _tip_flat, cut, maxy + height))
             tab = knob.intersection(full)  # лишається в межах серця
@@ -796,7 +801,7 @@ def _keychain_body_shape(
             return unary_union([rect, tab]).buffer(0)
         # Кліренс пазу = пропорційний (0.8% min-сторони) + ФІКСОВАНІ 0.05мм/бік
         # (фідбек власника: легше зчіпати пазл-пару). Та сама механіка, що серце.
-        clearance = min(width, height) * 0.008 + 0.05
+        clearance = min(width, height) * 0.008 + 0.05 * mm_to_world
         knob_cx = minx + k * 0.95
         notch = unary_union([
             Point(knob_cx, cy).buffer(k, resolution=48),
@@ -978,7 +983,7 @@ def build_keychain_layout(
     map_maxy = body_maxy - map_top
     map_miny = map_maxy - max(map_h, 1e-6)
 
-    body = _keychain_body_shape(body_minx, body_miny, body_maxx, body_maxy, radius_m=corner_m, shape=base_shape)
+    body = _keychain_body_shape(body_minx, body_miny, body_maxx, body_maxy, radius_m=corner_m, shape=base_shape, mm_to_world=layout_scale_m_per_mm)
     loop_margin_mm = max(float(loop_outer_radius_mm) * 0.85, 4.0)
     loop_center_x_mm_safe = min(
         max(float(loop_center_x_mm if loop_center_x_mm is not None else body_w_mm / 2.0), -loop_margin_mm),
