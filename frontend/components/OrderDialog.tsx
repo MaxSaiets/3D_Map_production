@@ -360,14 +360,9 @@ export function OrderDialog({
 
               <textarea className={`${fieldCls} min-h-[64px] resize-none`} placeholder={t("phComment")} aria-label={t("phComment")} value={comment} onChange={(e) => setComment(e.target.value)} />
 
-              <div className="rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
-                  <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
-                </div>
-                {/* Що входить у ціну — знімає невизначеність «а доставка окремо?». */}
-                <p className="mt-1 text-[12px] leading-5 text-[var(--text-secondary)]">{t("priceIncludes")}</p>
-              </div>
+              {/* Ціна переїхала у sticky-футер (завжди на видноті, без скролу до кінця);
+                  тут лишилось ЩО входить у ціну — знімає страх «а доставка окремо?». */}
+              <p className="rounded-2xl border border-[rgba(176,141,87,0.35)] bg-[rgba(176,141,87,0.16)] px-4 py-3 text-[12px] leading-5 text-[var(--text-secondary)]">{t("priceIncludes")}</p>
 
               <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[12px] leading-5 text-[var(--text-secondary)]">
                 <Truck size={14} className="mt-0.5 shrink-0 text-[var(--accent-strong)]" />
@@ -388,16 +383,24 @@ export function OrderDialog({
                 <li className="flex items-center gap-2"><Lock size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustSecure")}</span></li>
               </ul>
 
-              {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
-
-              <button onClick={submit} disabled={sending}
-                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">
-                {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("sending")}</>) : t("submit")}
-              </button>
               <p className="flex items-center justify-center gap-1.5 text-center text-[12px] leading-5 text-[var(--text-secondary)]">
                 <ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" />
                 {t("submitReassure")}
               </p>
+
+              {/* Sticky-футер: ЦІНА + CTA завжди на видноті — не треба скролити крізь
+                  усю форму до кнопки. Лишається приклеєним до низу скрол-панелі. */}
+              <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-[var(--surface-border)] bg-[var(--surface-panel,#fff)] px-5 pb-4 pt-3">
+                {error && <div role="alert" className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
+                  <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
+                </div>
+                <button onClick={submit} disabled={sending}
+                  className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">
+                  {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("sending")}</>) : t("submit")}
+                </button>
+              </div>
             </div>
           </>
         )}
