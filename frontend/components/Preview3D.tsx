@@ -309,9 +309,16 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           }
           const isSurfaceDecal =
             entry?.part === "roads" || entry?.part === "parks" || entry?.part === "water";
-          child.material = new THREE.MeshBasicMaterial({
+          // LIT матеріал (було MeshBasicMaterial-unlit) — інакше будинки малювались
+          // ПЛОСКИМ кольором без тіней і ЗЛИВАЛИСЬ з білою основою. MeshStandard +
+          // flatShading (гострі грані, без smooth-градієнта) → directional-світло
+          // затінює БОКИ будинків → видно обʼєм, будинки виділяються на основі.
+          child.material = new THREE.MeshStandardMaterial({
             color: entry?.color ?? 0x9a9a9a,
             side: THREE.DoubleSide,
+            flatShading: true,
+            roughness: 1.0,
+            metalness: 0.0,
             polygonOffset: isSurfaceDecal,
             polygonOffsetFactor: -2,
             polygonOffsetUnits: -2,
