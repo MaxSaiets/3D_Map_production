@@ -962,6 +962,7 @@ export function KeychainTemplateStrip({
 export function KeychainDesigner({
   value,
   label,
+  backLabel = "",
   onChange,
   mapBounds,
   cropRotationDeg = 0,
@@ -969,6 +970,8 @@ export function KeychainDesigner({
 }: {
   value: KeychainDesignerConfig;
   label: string;
+  /** Текст на ЗВОРОТІ брелка (engraved). Показуємо у back-превʼю читабельно. */
+  backLabel?: string;
   onChange: (value: KeychainDesignerConfig) => void;
   /** Bounds of the selected area on the main map. When provided, KeychainDesigner
    *  shows a real OSM tile preview inside the map area instead of generic stripes. */
@@ -1387,16 +1390,35 @@ export function KeychainDesigner({
           ) : (
             <g pointerEvents="none">
               <path d={innerBodyPath(value)} fill="rgba(255,255,255,0.035)" stroke="rgba(94,234,212,0.28)" strokeDasharray="1.8 1.4" strokeWidth={0.28} />
-              <text
-                x={bodyCx}
-                y={Math.max(value.bodyHeightMm - 4, value.bodyHeightMm / 2)}
-                textAnchor="middle"
-                fill="rgba(248,250,252,0.64)"
-                fontSize={2.1}
-                fontWeight={800}
-              >
-                back side / mirrored check
-              </text>
+              {backLabel.trim() ? (
+                /* Реальний текст звороту — ЧИТАБЕЛЬНО (як читаєш, тримаючи зворот).
+                   У геометрії він дзеркалиться, щоб читався при перевертанні. */
+                <text
+                  x={bodyCx}
+                  y={bodyCy}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="rgba(94,234,212,0.95)"
+                  fontSize={Math.min(5.5, (value.bodyWidthMm * 0.82) / Math.max(backLabel.trim().length * 0.6, 1))}
+                  fontWeight={800}
+                  fontFamily="monospace"
+                  letterSpacing={0.3}
+                >
+                  {backLabel.trim()}
+                </text>
+              ) : (
+                <text
+                  x={bodyCx}
+                  y={bodyCy}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="rgba(248,250,252,0.34)"
+                  fontSize={2.1}
+                  fontWeight={700}
+                >
+                  {t("designer.backEmpty")}
+                </text>
+              )}
             </g>
           )}
 

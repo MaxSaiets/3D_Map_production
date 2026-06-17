@@ -86,6 +86,9 @@ type MobileTab = "map" | "settings" | "design";
 export default function KeychainsPage() {
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [label, setLabel] = useState("KYIV");
+  // backLabel піднято сюди (а не у KeychainControlPanel), щоб back-превʼю дизайнера
+  // показував реальний напис звороту, а не плейсхолдер.
+  const [backLabel, setBackLabel] = useState("");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const [sidePreview, setSidePreview] = useState<"slicer" | "model3d">("model3d");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
@@ -390,6 +393,8 @@ export default function KeychainsPage() {
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
+              backLabel={backLabel}
+              onBackLabelChange={setBackLabel}
               design={design}
               onDesignChange={setDesign}
               cropRotationDeg={cropRotationDeg}
@@ -425,6 +430,7 @@ export default function KeychainsPage() {
                     <KeychainDesigner
                       value={design}
                       label={label}
+                      backLabel={backLabel}
                       onChange={setDesign}
                       cropRotationDeg={cropRotationDeg}
                       cropPolygon={cropPolygon}

@@ -959,6 +959,7 @@
     "designer": {
       "hintFront": "Ziehe die Karte, den Text, die Öse oder den Griff unten rechts",
       "hintBack": "Rückseite: Loch, Rand und Innentext steuern",
+      "backEmpty": "Rückseitentext erscheint hier",
       "front": "Vorderseite",
       "back": "Rückseite",
       "pickArea": "Wähle einen Bereich auf der Karte"

@@ -959,6 +959,7 @@
     "designer": {
       "hintFront": "Faites glisser la carte, le texte, l'anneau ou la poignée en bas à droite",
       "hintBack": "Dos : contrôlez le trou, le bord et le texte intérieur",
+      "backEmpty": "Le texte du dos apparaît ici",
       "front": "Recto",
       "back": "Verso",
       "pickArea": "Choisissez une zone sur la carte"

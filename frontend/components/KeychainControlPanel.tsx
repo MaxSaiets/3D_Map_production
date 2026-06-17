@@ -327,6 +327,8 @@ function shrinkBoundsToMeters(
 export function KeychainControlPanel({
   label,
   onLabelChange,
+  backLabel,
+  onBackLabelChange,
   design,
   onDesignChange,
   cropRotationDeg = 0,
@@ -334,6 +336,9 @@ export function KeychainControlPanel({
 }: {
   label: string;
   onLabelChange: (value: string) => void;
+  /** Текст звороту брелка — піднято на сторінку, щоб back-превʼю показав його. */
+  backLabel: string;
+  onBackLabelChange: (value: string) => void;
   design: KeychainDesignerConfig;
   onDesignChange: (value: KeychainDesignerConfig) => void;
   /** Поворот рамки вибору ділянки на карті (з MapSelector). Додається до
@@ -371,7 +376,7 @@ export function KeychainControlPanel({
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [label2, setLabel2] = useState("");
-  const [backLabel, setBackLabel] = useState("");
+  // backLabel піднято на сторінку (prop) — щоб back-превʼю дизайнера його показав.
   const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
   // C3 ТОПО-БРЕЛОК: рельєф висот замість карти (Карпати/Альпи)
   const [topoMode, setTopoMode] = useState(false);
@@ -1377,7 +1382,7 @@ export function KeychainControlPanel({
             <div className="flex items-stretch gap-2">
               <input
                 value={backLabel}
-                onChange={(event) => setBackLabel(event.target.value.toUpperCase().slice(0, 28))}
+                onChange={(event) => onBackLabelChange(event.target.value.toUpperCase().slice(0, 28))}
                 placeholder={t("label.backPlaceholder")}
                 className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
               />
@@ -1391,7 +1396,7 @@ export function KeychainControlPanel({
                   const c = selectedArea.getCenter();
                   const ns = c.lat >= 0 ? "N" : "S";
                   const ew = c.lng >= 0 ? "E" : "W";
-                  setBackLabel(`${Math.abs(c.lat).toFixed(4)}°${ns} ${Math.abs(c.lng).toFixed(4)}°${ew}`.slice(0, 28));
+                  onBackLabelChange(`${Math.abs(c.lat).toFixed(4)}°${ns} ${Math.abs(c.lng).toFixed(4)}°${ew}`.slice(0, 28));
                 }}
                 className="shrink-0 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-3 text-lg transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
               >

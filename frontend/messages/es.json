@@ -959,6 +959,7 @@
     "designer": {
       "hintFront": "Arrastra el mapa, el texto, la argolla o el tirador inferior derecho",
       "hintBack": "Reverso: controla el orificio, el borde y el texto interior",
+      "backEmpty": "El texto del reverso aparece aquí",
       "front": "Anverso",
       "back": "Reverso",
       "pickArea": "Elige un área en el mapa"

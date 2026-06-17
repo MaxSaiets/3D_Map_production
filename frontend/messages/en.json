@@ -959,6 +959,7 @@
     "designer": {
       "hintFront": "Drag the map, text, loop or the bottom-right handle",
       "hintBack": "Back: control the hole, rim and inner text",
+      "backEmpty": "Back text appears here",
       "front": "Front",
       "back": "Back",
       "pickArea": "Pick an area on the map"

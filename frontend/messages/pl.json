@@ -959,6 +959,7 @@
     "designer": {
       "hintFront": "Przeciągnij mapę, tekst, uszko lub uchwyt w prawym dolnym rogu",
       "hintBack": "Rewers: kontrola otworu, obwódki i tekstu wewnętrznego",
+      "backEmpty": "Tekst z tyłu pojawi się tutaj",
       "front": "Awers",
       "back": "Rewers",
       "pickArea": "Wybierz obszar na mapie"
