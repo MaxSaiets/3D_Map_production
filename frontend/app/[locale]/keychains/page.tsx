@@ -378,7 +378,7 @@ export default function KeychainsPage() {
                 </p>
               </div>
             </div>
-            <div className="min-h-[400px] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
+            <div className="min-h-[56dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[400px] sm:p-3 lg:min-h-0">
               <div className="h-full overflow-hidden rounded-[24px]">
                 <MapSelector center={currentCity.center} keychainCrop={keychainCrop} />
               </div>

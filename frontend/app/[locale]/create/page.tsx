@@ -575,12 +575,12 @@ export default function Home() {
               {/* Карта — головна взаємодія: на десктопі домінує (≈60% висоти
                   вікна), щоб рамку було зручно тягати (раніше ~270px). */}
               <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh] xl:min-h-[56vh]">
-                <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
+                <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                    <p className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:block">
                       {showHexGrid ? tc("seriesSelection") : tc("singleArea")}
                     </p>
-                    <h2 className="mt-1 font-title text-xl font-semibold text-[var(--text-primary)]">
+                    <h2 className="font-title text-base font-semibold text-[var(--text-primary)] sm:mt-1 sm:text-xl">
                       {showHexGrid ? tc("pickZonesForSeries") : tc("markAreaOnMap")}
                     </h2>
                     <p className="mt-1 hidden text-sm text-[var(--text-secondary)] sm:block">
@@ -609,34 +609,34 @@ export default function Home() {
                     «Серія зон» була схована за «Профі», і люди її не знаходили).
                     «Серія зон» вмикає сітку гексагонів + експертну панель з
                     параметрами та пакетною генерацією одним кліком. */}
-                <div className="mx-4 mt-3 grid grid-cols-2 gap-2" role="tablist" aria-label={tc("selectionModeAria")}>
+                <div className="mx-4 mt-2 grid grid-cols-2 gap-2 sm:mt-3" role="tablist" aria-label={tc("selectionModeAria")}>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={!showHexGrid}
                     onClick={() => { setShowHexGridPersist(false); toggleProMode(false); }}
-                    className={`rounded-[16px] border px-3 py-2.5 text-left transition ${
+                    className={`rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       !showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
                     }`}
                   >
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("singleAreaTab")}</span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{tc("singleAreaSubtitle")}</span>
+                    <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("singleAreaSubtitle")}</span>
                   </button>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={showHexGrid}
                     onClick={() => { setShowHexGridPersist(true); toggleProMode(true); }}
-                    className={`rounded-[16px] border px-3 py-2.5 text-left transition ${
+                    className={`rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
                     }`}
                   >
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("seriesTab")}</span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{tc("seriesSubtitle")}</span>
+                    <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("seriesSubtitle")}</span>
                   </button>
                 </div>
 
@@ -678,14 +678,14 @@ export default function Home() {
                 )}
 
                 {!showHexGrid && (
-                  <div className="mx-4 mt-3 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
+                  <div className="mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:flex-wrap sm:overflow-visible sm:pb-0">
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
                     {FIGURE_SHAPES.map((sh) => (
                       <button
                         key={sh.id}
                         type="button"
                         onClick={() => setFigureShape(sh.id)}
-                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition ${
                           figureShape === sh.id
                             ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.14)] text-[var(--text-primary)]"
                             : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
@@ -697,7 +697,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="min-h-[460px] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:p-3 lg:min-h-0">
+                <div className="min-h-[60dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини
