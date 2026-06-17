@@ -102,42 +102,63 @@ check "frontend" "$FRONTEND_URL" "3dmap-frontend"
 # chunk the served HTML actually references and confirm it returns 200; if not,
 # a restart re-syncs `next start` to the on-disk build. Only runs while the
 # frontend is up (so it never races a deploy that intentionally stopped it).
+# Returns a one-line reason string if the running frontend is desynced from the
+# on-disk build, else empty. Two independent signals:
+#  (A) served HTML references a webpack JS chunk that is NOT on disk (build deleted
+#      it) → 400 → all client JS dies.
+#  (B) STALE STATIC MANIFEST: a CSS/JS asset the served HTML references returns
+#      non-200 from the RUNNING server even though the file IS on disk — happens
+#      when `next start` booted BEFORE a build finished, so its static manifest
+#      predates the new hashed files → unstyled site (the /admin-css-404 incident).
+#      We probe multiple routes because route-specific CSS hashes differ.
+_frontend_desync_reason() {
+  local chunks_dir="/opt/3dmap/frontend/.next/static/chunks"
+  local route html ref asset code
+  for route in /keychains /admin /create; do
+    html=$(curl -s --max-time 12 "http://127.0.0.1:3000$route" 2>/dev/null)
+    [ -n "$html" ] || continue
+    # (A) webpack chunk on disk?
+    ref=$(echo "$html" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
+    if [ -n "$ref" ] && [ ! -f "$chunks_dir/$ref" ]; then
+      echo "webpack $ref (route $route) absent on disk"; return 0
+    fi
+    # (B) does the running server actually serve the CSS it references? (200 expected)
+    for asset in $(echo "$html" | grep -oE '/_next/static/css/[a-f0-9]+\.css' | sort -u); do
+      code=$(curl -s --max-time 12 -o /dev/null -w "%{http_code}" "http://127.0.0.1:3000$asset" 2>/dev/null)
+      [ "$code" = "200" ] || { echo "CSS $asset (route $route) → $code from running server (stale manifest)"; return 0; }
+    done
+  done
+  return 0
+}
+
 check_frontend_assets() {
   local cfile="$STATE_DIR/fail_frontend_assets"
-  local chunks_dir="/opt/3dmap/frontend/.next/static/chunks"
   # process up? (/ returns 200) — else skip, the "frontend" check owns downtime.
   # During a deploy the frontend is intentionally stopped → "/" is down → we skip,
   # so we NEVER restart mid-build (that was the cause of build flip-flop).
   local up; up=$(curl -s --max-time 12 -o /dev/null -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null)
   [ "$up" = "200" ] || return 0
-  # Which webpack chunk does the SERVED html reference?
-  local ref; ref=$(curl -s --max-time 12 "http://127.0.0.1:3000/keychains" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
-  [ -n "$ref" ] || return 0
-  # PRECISE check (no HTTP flakiness): does that chunk FILE exist on disk?
-  # If yes → the running process matches the on-disk build → healthy. A transient
-  # HTTP 400/500 during a pm2 memory-restart no longer triggers a false restart.
-  if [ -f "$chunks_dir/$ref" ]; then
+  local reason; reason=$(_frontend_desync_reason)
+  if [ -z "$reason" ]; then
     rm -f "$cfile" 2>/dev/null
     clear_alert "frontend_assets"
     return 0
   fi
-  # REAL desync: served html references a chunk that is NOT on disk. Require TWO
-  # consecutive detections (~the cron interval apart) so a single deploy-window
-  # blip can't trigger it.
+  # REAL desync. Require TWO consecutive detections (~the cron interval apart) so a
+  # single deploy-window blip can't trigger it.
   local n; n=$(( $(cat "$cfile" 2>/dev/null || echo 0) + 1 ))
   echo "$n" > "$cfile"
-  log "FRONTEND DESYNC: served ref $ref absent on disk [$n/2]"
+  log "FRONTEND DESYNC: $reason [$n/2]"
   [ "$n" -lt 2 ] && return 0
   rm -f "$cfile" 2>/dev/null
-  log "STALE BUILD confirmed ($ref not on disk) — restarting 3dmap-frontend to re-sync"
+  log "STALE BUILD confirmed ($reason) — restarting 3dmap-frontend to re-sync"
   pm2 restart 3dmap-frontend --update-env >/dev/null 2>&1
   sleep 8
-  ref=$(curl -s --max-time 12 "http://127.0.0.1:3000/keychains" | grep -oE 'webpack-[a-z0-9]+\.js' | head -1)
-  if [ -n "$ref" ] && [ -f "$chunks_dir/$ref" ]; then
-    log "RECOVERED frontend after restart ($ref)"
-    notify "✅ <b>Фронтенд</b>: застарілий білд виявлено й авто-перезапущено (карта/вхід відновлено)." "frontend_assets"
+  if [ -z "$(_frontend_desync_reason)" ]; then
+    log "RECOVERED frontend after restart"
+    notify "✅ <b>Фронтенд</b>: застарілий білд виявлено й авто-перезапущено (стилі/карта/вхід відновлено)." "frontend_assets"
   else
-    log "STILL STALE frontend ($ref) after restart — needs rebuild"
+    log "STILL STALE frontend after restart — needs rebuild"
     notify "❌ <b>Фронтенд</b>: білд досі неузгоджений після перезапуску — потрібен rebuild." "frontend_assets"
   fi
 }
