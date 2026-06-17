@@ -451,6 +451,58 @@ def _sanitize_layer_mask(
     return cleaned
 
 
+def _drop_thin_footprints_gdf(gdf, *, erode_m: float, min_iso_ratio: float = 0.10):
+    """Прибирає будівлі-«волосини» (slivers) ДВОМА тестами:
+    (1) ІЗОПЕРИМЕТРИЧНИЙ коефіцієнт 4π·area/perimeter² — БЕЗРОЗМІРНИЙ (scale-free):
+        ~0.78 для квадрата, →0 для довгої нитки. <min_iso_ratio = витягнута нитка
+        (типовий clip-artifact: будинок розрізаний краєм вікна карти в смужку
+        0.06×60мм, aspect >25:1) → викидаємо. Працює НЕЗАЛЕЖНО від масштабу —
+        тому надійніше за ерозію (масштаб карти брелка ≠ scale_factor).
+    (2) ЕРОЗІЯ на erode_m: footprint, що зникає (всюди тонший за 2·erode_m).
+    Реальні будівлі (компактні/товсті) лишаються БЕЗ ЗМІН — форму не чіпаємо."""
+    import math
+    if gdf is None or getattr(gdf, "empty", True):
+        return gdf
+    keep = []
+    for idx, geom in gdf.geometry.items():
+        try:
+            if geom is None or geom.is_empty:
+                continue
+            per = float(geom.length); area = float(geom.area)
+            if per > 0 and (4.0 * math.pi * area / (per * per)) < float(min_iso_ratio):
+                continue  # витягнута нитка (scale-free) — викидаємо
+            if erode_m > 0:
+                core = geom.buffer(-float(erode_m))
+                if core is None or core.is_empty or float(core.area) <= 0.0:
+                    continue  # всюди тонший за 2·erode_m — викидаємо
+            keep.append(idx)
+        except Exception:
+            keep.append(idx)  # на помилці лишаємо (консервативно)
+    if not keep:
+        return gdf.iloc[0:0]
+    return gdf.loc[keep].copy()
+
+
+def _mesh_footprint_min_width_m(mesh) -> float:
+    """Мін-ширина footprint меша (orientation-invariant) через короткий бік
+    minimum_rotated_rectangle опуклої оболонки XY-проєкції. Ловить ВОЛОСИНИ за
+    будь-якої орієнтації (на відміну від AABB). Для увігнутих (L) оболонка
+    заповнює — реальна будівля лишається; для нитки оболонка ≈ нитка → мала ширина."""
+    try:
+        from shapely.geometry import MultiPoint
+        xy = mesh.vertices[:, :2]
+        pts = MultiPoint([(float(x), float(y)) for x, y in xy])
+        hull = pts.convex_hull
+        if hull.is_empty or hull.geom_type != "Polygon":
+            return 1.0e9
+        cs = list(hull.minimum_rotated_rectangle.exterior.coords)
+        edges = [((cs[i][0] - cs[i + 1][0]) ** 2 + (cs[i][1] - cs[i + 1][1]) ** 2) ** 0.5
+                 for i in range(len(cs) - 1)]
+        return min(edges) if edges else 1.0e9
+    except Exception:
+        return 1.0e9  # на помилці лишаємо (не викидаємо)
+
+
 def _mask_union_from_geometries(geometries: Any) -> Optional[BaseGeometry]:
     if geometries is None:
         return None
@@ -506,15 +558,23 @@ def build_magnet_pocket_geometry(
     кандидат відкидається, якщо кишеня + 0.6мм бічної стінки не вміщується
     в тіло; якщо лишилось <2 — fallback до однієї в центроїді."""
     import math
-    r_m = _model_mm_to_world_m(max(float(diameter_mm), 1.0) / 2.0, export_scale_factor)
+    # +0.05мм/бік кліренс під магніт-шайбу (легша посадка під клей; фідбек власника).
+    r_m = _model_mm_to_world_m(max(float(diameter_mm), 1.0) / 2.0 + 0.05, export_scale_factor)
     if zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True):
         return None
     cnt = max(int(count or 1), 1)
     c = zone_polygon_local.centroid
+    wall_m = _model_mm_to_world_m(0.8, export_scale_factor)  # ≥0.8мм стінка (було 0.6 — ламке)
     if cnt <= 1:
-        return Point(c.x, c.y).buffer(r_m, resolution=48)
+        center = Point(c.x, c.y)
+        # Якщо кишеня+стінка пробиває контур (увігнуте тіло/мала зона) — у найглибшу
+        # внутрішню точку (representative_point ГАРАНТОВАНО всередині). Для нормального
+        # тіла центроїд проходить → поведінка незмінна (golden-сумісність збережена).
+        if not zone_polygon_local.contains(center.buffer(r_m + wall_m, resolution=24)):
+            rp = zone_polygon_local.representative_point()
+            center = Point(rp.x, rp.y)
+        return center.buffer(r_m, resolution=48)
     inset_m = _model_mm_to_world_m(max(float(inset_mm), 1.0), export_scale_factor)
-    wall_m = _model_mm_to_world_m(0.6, export_scale_factor)
     bminx, bminy, bmaxx, bmaxy = zone_polygon_local.bounds
     ring_r = min(bmaxx - bminx, bmaxy - bminy) / 2.0 - inset_m
     centers = []
@@ -693,7 +753,10 @@ def _keychain_body_shape(
         # виглядає як ОДНЕ ціле серце.
         k = elen * 0.14
         nw = k * 0.60
-        clearance = elen * 0.006
+        # Кліренс пазу = пропорційний (0.6% грані) + ФІКСОВАНІ 0.05мм/бік (фідбек
+        # власника: трохи легше складати половинки). 0.05мм у model-mm = 0.05мм
+        # на друці (FDM лишається щільним клацом, але розʼємним).
+        clearance = elen * 0.006 + 0.05
         knob_cx = cut + k * 0.95
         knob = unary_union([
             Point(knob_cx, cy).buffer(k, resolution=48),
@@ -723,7 +786,9 @@ def _keychain_body_shape(
                 box(maxx - k * 0.2, cy - nw, knob_cx, cy + nw),
             ])
             return unary_union([rect, tab]).buffer(0)
-        clearance = min(width, height) * 0.008
+        # Кліренс пазу = пропорційний (0.8% min-сторони) + ФІКСОВАНІ 0.05мм/бік
+        # (фідбек власника: легше зчіпати пазл-пару). Та сама механіка, що серце.
+        clearance = min(width, height) * 0.008 + 0.05
         knob_cx = minx + k * 0.95
         notch = unary_union([
             Point(knob_cx, cy).buffer(k, resolution=48),
@@ -1494,8 +1559,11 @@ def build_keychain_label_mesh(
                 if min_stroke > 0:
                     natural_stroke = 0.16 * float(text_height_m)
                     grow = (min_stroke - natural_stroke) * 0.5
-                    # Не дилейтимо надміру: cap на 0.12 × cap height щоб counters не закрились.
-                    grow = min(max(grow, 0.0), 0.12 * float(text_height_m))
+                    # Cap на 0.20 × cap height: старий 0.12 ТИХО не давав дійти до
+                    # 0.8мм мінімуму для тексту <2мм (1.6мм→штрих 0.64мм, ламкий).
+                    # 0.20 робить 0.8мм досяжним до ~1.4мм; counters лишаються
+                    # відкритими завдяки re-cut нижче (ерозія holes на grow·0.5).
+                    grow = min(max(grow, 0.0), 0.20 * float(text_height_m))
                     if grow > 1e-9:
                         # COUNTER-SAFE дилейт: buffer(+grow) товщає штрихи, але
                         # ЗАКРИВАЄ внутрішні дірки (counters A/P/R/O/B). Тому
@@ -2156,6 +2224,24 @@ def build_flat_building_meshes(
                 )
             except Exception as e:
                 print(f"[MEMORY-GUARD] Building filter failed: {e}; proceeding with full set")
+
+    # ПРИБИРАЄМО будівлі-волосини (ТІЛЬКИ keychain — на дрібному масштабі край
+    # вікна карти ріже будинки в нитки 0.06–0.5мм, які не друкуються/відламуються;
+    # емпірично: 72 компоненти <0.4мм у 31×40мм брелку). Повна мапа НЕ зачіпається
+    # (більший масштаб + golden), тож golden лишається без змін.
+    if is_keychain and gdf_buildings_for_mesh is not None and not gdf_buildings_for_mesh.empty:
+        _before_thin = len(gdf_buildings_for_mesh)
+        # ВАЖЛИВО: footprint у body-layout-просторі, що масштабується export_scale_factor
+        # у фінальні мм (як магніти/база) — НЕ scale_factor (то детальний масштаб мапи).
+        # erode 0.25мм/бік → викидаємо будівлі тонші за 0.5мм у ФІНАЛЬНОМУ друці.
+        gdf_buildings_for_mesh = _drop_thin_footprints_gdf(
+            gdf_buildings_for_mesh,
+            erode_m=model_mm_to_world_m(0.25, float(export_scale_factor or scale_factor)),
+        )
+        _after_thin = len(gdf_buildings_for_mesh)
+        if _after_thin < _before_thin:
+            print(f"[KEYCHAIN] Dropped {_before_thin - _after_thin} thin building slivers (<0.5mm wide) — anti break-off")
+
     height_scale_factor = float(
         getattr(request, "buildings_height_scale", None)
         or getattr(request, "building_height_multiplier", 1.0)
@@ -2229,6 +2315,17 @@ def build_flat_building_meshes(
         mesh.apply_translation([0.0, 0.0, float(base_top_m)])
         _with_color(mesh, LAYER_COLORS["buildings"])
         meshes.append(mesh)
+
+    # ФІНАЛЬНИЙ mesh-level фільтр волосин (ТІЛЬКИ keychain): process_buildings
+    # внутрішньо створює slivers (parent − parts), яких footprint-фільтр вище не
+    # бачить. Тут міряємо РЕАЛЬНУ мін-ширину готового меша і викидаємо <0.5мм
+    # (фінал) — не друкується/відламується. Повна мапа не зачіпається → golden ОК.
+    if is_keychain and meshes:
+        _minw_m = model_mm_to_world_m(0.5, float(export_scale_factor or scale_factor))
+        _before = len(meshes)
+        meshes = [m for m in meshes if _mesh_footprint_min_width_m(m) >= _minw_m]
+        if len(meshes) < _before:
+            print(f"[KEYCHAIN] Dropped {_before - len(meshes)} thin building meshes (<0.5mm min-width) — anti break-off")
     return meshes
 
 
@@ -2468,6 +2565,12 @@ def run_flat_plate_pipeline(
     if keychain_layout is not None and terrain_mesh is not None:
         rim_width_mm = float(getattr(request, "keychain_rim_width_mm", 0.0) or 0.0)
         rim_height_mm = float(getattr(request, "keychain_rim_height_mm", 0.0) or 0.0)
+        # Друкований мінімум ободка: якщо увімкнено (>0) — ширина ≥0.8мм (одинарний
+        # периметр тонший делямінується), висота ≥0.4мм (2 шари 0.2). 0 = вимкнено.
+        # Дефолт 1.2×0.45 не зачіпається; клампимо лише тонкі значення зі слайдера.
+        if rim_width_mm > 0:
+            rim_width_mm = max(rim_width_mm, 0.8)
+            rim_height_mm = max(rim_height_mm, 0.4)
         keychain_rim_mesh = build_keychain_rim_mesh(
             base_geometry=keychain_layout["base"],
             bottom_z_m=base_top_m,

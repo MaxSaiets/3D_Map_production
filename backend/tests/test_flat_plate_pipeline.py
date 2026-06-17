@@ -491,7 +491,8 @@ def test_magnet_pockets_four_corner_ring_inside_square():
     assert len(parts) == 4
     import math
     for p in parts:
-        assert p.area == pytest.approx(math.pi * 2.2 ** 2, rel=0.02)
+        # r = diameter/2 + 0.05мм кліренс/бік (легша посадка шайби) → 2.25мм
+        assert p.area == pytest.approx(math.pi * 2.25 ** 2, rel=0.02)
         # кишеня + бічна стінка цілком у тілі
         assert zone.contains(p.buffer(0.5))
 
