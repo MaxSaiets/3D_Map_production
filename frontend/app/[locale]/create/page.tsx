@@ -160,6 +160,9 @@ export default function Home() {
     { id: "heart", label: tc("shapeHeart") },
   ] as const;
   const [figureShape, setFigureShape] = useState<string>("rounded");
+  // Прямокутник за замовчуванням — ГОСТРІ кути 90° (фідбек власника). Тумблер
+  // вмикає заокруглення (лише для прямокутника; решта форм заокруглені своєю суттю).
+  const [roundCorners, setRoundCorners] = useState(false);
   // GPX: коли трек завантажено, дозволяємо зоні розширюватись понад 1:10000
   // (до GPX_MAX_M_PER_MM) — інакше довгий маршрут фізично не влазив і юзер
   // не міг збільшити зону.
@@ -171,13 +174,13 @@ export default function Home() {
     mapWidthMm: modelSizeMm || 80,
     mapHeightMm: modelSizeMm || 80,
     baseShape: figureShape as any,
-    cornerRadiusMm: figureShape === "rounded" ? 6 : 0,
+    cornerRadiusMm: figureShape === "rounded" && roundCorners ? 6 : 0,
     cropToShape: true,
     followGpxFocus: true,
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),
-  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape, gpxLoaded]);
+  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape, roundCorners, gpxLoaded]);
 
   // Clear the rotated polygon when switching INTO grid mode (grid has its own
   // zone logic) so a stale figure crop can't leak into grid generation.
@@ -694,6 +697,23 @@ export default function Home() {
                         {sh.label}
                       </button>
                     ))}
+                    {/* Прямокутник: за замовчуванням гострі 90° кути; тумблер вмикає заокруглення. */}
+                    {figureShape === "rounded" && (
+                      <button
+                        type="button"
+                        aria-pressed={roundCorners}
+                        data-testid="round-corners-toggle"
+                        onClick={() => setRoundCorners((v) => !v)}
+                        title={tc("roundCornersHint")}
+                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                          roundCorners
+                            ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.14)] text-[var(--text-primary)]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                        }`}
+                      >
+                        {roundCorners ? "✓ " : ""}{tc("roundCorners")}
+                      </button>
+                    )}
                   </div>
                 )}
 

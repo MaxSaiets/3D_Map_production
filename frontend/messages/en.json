@@ -204,6 +204,8 @@
     "loadingMap": "Loading map...",
     "loadingGrid": "Loading grid...",
     "shapeRect": "▭ Rectangle",
+    "roundCorners": "Round the corners",
+    "roundCornersHint": "The rectangle prints with sharp 90° corners. Turn on to round them.",
     "shapeCircle": "⬤ Circle",
     "shapeHexagon": "⬡ Hexagon",
     "shapeOctagon": "⯃ Octagon",

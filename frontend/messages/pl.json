@@ -204,6 +204,8 @@
     "loadingMap": "Ładowanie mapy...",
     "loadingGrid": "Ładowanie siatki...",
     "shapeRect": "▭ Prostokąt",
+    "roundCorners": "Zaokrąglij rogi",
+    "roundCornersHint": "Prostokąt drukuje się z ostrymi rogami 90°. Włącz, aby zaokrąglić.",
     "shapeCircle": "⬤ Koło",
     "shapeHexagon": "⬡ Sześciokąt",
     "shapeOctagon": "⯃ Ośmiokąt",

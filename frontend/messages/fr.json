@@ -204,6 +204,8 @@
     "loadingMap": "Chargement de la carte...",
     "loadingGrid": "Chargement de la grille...",
     "shapeRect": "▭ Rectangle",
+    "roundCorners": "Arrondir les coins",
+    "roundCornersHint": "Le rectangle s'imprime avec des coins droits à 90°. Activez pour arrondir.",
     "shapeCircle": "⬤ Cercle",
     "shapeHexagon": "⬡ Hexagone",
     "shapeOctagon": "⯃ Octogone",

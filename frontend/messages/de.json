@@ -204,6 +204,8 @@
     "loadingMap": "Karte wird geladen...",
     "loadingGrid": "Raster wird geladen...",
     "shapeRect": "▭ Rechteck",
+    "roundCorners": "Ecken abrunden",
+    "roundCornersHint": "Das Rechteck wird mit scharfen 90°-Ecken gedruckt. Zum Abrunden einschalten.",
     "shapeCircle": "⬤ Kreis",
     "shapeHexagon": "⬡ Sechseck",
     "shapeOctagon": "⯃ Achteck",

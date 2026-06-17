@@ -204,6 +204,8 @@
     "loadingMap": "Cargando mapa...",
     "loadingGrid": "Cargando cuadrícula...",
     "shapeRect": "▭ Rectángulo",
+    "roundCorners": "Redondear esquinas",
+    "roundCornersHint": "El rectángulo se imprime con esquinas rectas de 90°. Actívalo para redondear.",
     "shapeCircle": "⬤ Círculo",
     "shapeHexagon": "⬡ Hexágono",
     "shapeOctagon": "⯃ Octágono",
