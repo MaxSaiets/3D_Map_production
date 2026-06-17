@@ -70,13 +70,13 @@ async function loadStlAsMesh(blob: Blob, color: number): Promise<THREE.Mesh> {
 async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" | "buildings" | "water", Blob>>): Promise<THREE.Group> {
   const group = new THREE.Group();
   const colors: Record<string, number> = {
-    base: 0xc8b48e,
-    terrain: 0xc8b48e,
-    roads: 0x3c3c3c,
-    buildings: 0xe3e3e3,
-    water: 0x6496c8,
-    parks: 0x649664,
-    green: 0x649664,
+    base: 0xf2f2f2,
+    terrain: 0xf2f2f2,
+    roads: 0x141414,
+    buildings: 0xf2f2f2,
+    water: 0x2f6fd6,
+    parks: 0x3f7a3f,
+    green: 0x3f7a3f,
   };
 
   const entries = Object.entries(blobs) as Array<[keyof typeof blobs, Blob]>;
@@ -158,15 +158,18 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
         // Превʼю-палітра = ДРУК (backend COLOR_MAP), щоб «що бачиш = що друкується»
         // і кожен шар ЧІТКО відрізнявся (скарга: на рельєфі будинки зливались із
         // землею). Будинки — сірі (0x787878 = друк), НЕ світло-сірі.
+        // Палітра за фідбеком власника (2026-06-17): основа+рельєф+БУДИНКИ = БІЛІ
+        // (один колір; форму будинків видно за висотою/тінями), вода СИНЯ, зелені
+        // зони ТЕМНІШИЙ зелений, дороги ЧОРНІ.
         const colorMap: Record<string, number> = {
-          baseback: 0xc8b48e,
-          base: 0xc8b48e,    // рельєф/основа — бежевий (земля)
-          terrain: 0xc8b48e,
-          buildings: 0x787878, // будинки — СІРІ (контраст із бежевою землею), = друк
-          roads: 0x3c3c3c,   // дороги — темно-сірі
-          water: 0x6496c8,   // вода — блакитна
-          parks: 0x649664,   // парки/зелень — зелені
-          green: 0x649664,
+          baseback: 0xf2f2f2,
+          base: 0xf2f2f2,    // основа/рельєф — БІЛА
+          terrain: 0xf2f2f2,
+          buildings: 0xf2f2f2, // будинки — БІЛІ (як основа, видно за 3D-формою)
+          roads: 0x141414,   // дороги — ЧОРНІ
+          water: 0x2f6fd6,   // вода — СИНЯ
+          parks: 0x3f7a3f,   // парки/зелень — темніший зелений
+          green: 0x3f7a3f,
           poi: 0xf0a030,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
           marker: 0xc44110, // маркер «особливе місце» — теракотовий
@@ -232,7 +235,12 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           return;
         }
 
-// removed-debug-log
+        // КЛАСти ПЛОСКО, як у житті: 3mf (як STL/GLB) у Z-up просторі trimesh —
+        // треба повернути на -90° по X у Y-up three.js, інакше брелок/мапа СТОЇТЬ
+        // вертикально (скарга «мапа стоїть, а має лежати»). loadGLB і STL це вже
+        // роблять; load3MF цей поворот пропускав.
+        group.rotation.x = -Math.PI / 2;
+        group.updateMatrixWorld(true);
         resolve(group);
       },
       undefined,
@@ -265,15 +273,17 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
         // щоб «видно що і як». БУЛО: будинки 0xe3e3e3 (світло-сірі) ≈ бежева земля →
         // зливались. ТЕПЕР: земля бежева (світла), будинки СІРІ (темніші, = друк),
         // дороги майже чорні, вода блакитна, парки зелені. baseback/maplabel/poi теж.
+        // Палітра за фідбеком власника (2026-06-17): основа+рельєф+будинки = БІЛІ
+        // (один колір), вода СИНЯ, зелень ТЕМНІШЕ, дороги ЧОРНІ.
         const colorMap: Record<string, { color: number; part: string }> = {
-          baseback: { color: 0xc8b48e, part: "base" },
-          base: { color: 0xc8b48e, part: "base" },       // земля — бежева (світла)
-          terrain: { color: 0xc8b48e, part: "terrain" },
-          buildings: { color: 0x787878, part: "buildings" }, // будинки — СІРІ (= друк, контраст)
-          roads: { color: 0x2e2e2e, part: "roads" },     // дороги — майже чорні
-          water: { color: 0x5b93cc, part: "water" },     // вода — блакитна
-          parks: { color: 0x5fa35a, part: "parks" },     // парки — зелені
-          green: { color: 0x5fa35a, part: "parks" },
+          baseback: { color: 0xf2f2f2, part: "base" },
+          base: { color: 0xf2f2f2, part: "base" },       // основа — БІЛА
+          terrain: { color: 0xf2f2f2, part: "terrain" },
+          buildings: { color: 0xf2f2f2, part: "buildings" }, // будинки — БІЛІ (як основа)
+          roads: { color: 0x141414, part: "roads" },     // дороги — ЧОРНІ
+          water: { color: 0x2f6fd6, part: "water" },     // вода — СИНЯ
+          parks: { color: 0x3f7a3f, part: "parks" },     // парки — темніший зелений
+          green: { color: 0x3f7a3f, part: "parks" },
           poi: { color: 0xf0a030, part: "poi" },
           track: { color: 0xdc2626, part: "track" },     // GPX — червоний
           marker: { color: 0xc44110, part: "marker" },   // маркер «особливе місце» — теракотовий
