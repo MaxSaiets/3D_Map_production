@@ -743,6 +743,9 @@
       "secondHint": "Kleinerer Schriftgrad direkt unter der Hauptbeschriftung. 📍 fügt die Koordinaten des gewählten Bereichs ein.",
       "backTitle": "Rückseiten-Text · Gravur",
       "backAutoCoords": "Koordinaten der Kartenmitte einfügen",
+      "markerTitle": "Marker „besonderer Ort“",
+      "markerNone": "Kein",
+      "markerHint": "Erhebt sich in der Kartenmitte — markiere Zuhause, das Kennenlernen oder die Hochzeit",
       "backPlaceholder": "NAME · DATUM",
       "backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar."
     },

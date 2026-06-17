@@ -169,6 +169,7 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           green: 0x649664,
           poi: 0xf0a030,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
+          marker: 0xc44110, // маркер «особливе місце» — теракотовий
           maplabel: 0x191919,
           rim: 0x191919,   // ободок брелка — ЧОРНИЙ (друкується чорним)
           text: 0x191919,  // текст/назва — ЧОРНИЙ
@@ -269,6 +270,7 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           green: { color: 0x5fa35a, part: "parks" },
           poi: { color: 0xf0a030, part: "poi" },
           track: { color: 0xdc2626, part: "track" },     // GPX — червоний
+          marker: { color: 0xc44110, part: "marker" },   // маркер «особливе місце» — теракотовий
           maplabel: { color: 0x191919, part: "maplabel" },
           rim: { color: 0x191919, part: "rim" },         // ободок — чорний
           text: { color: 0x191919, part: "text" },       // текст — чорний

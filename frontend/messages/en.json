@@ -743,6 +743,9 @@
       "secondHint": "Smaller size right under the main caption. 📍 inserts the coordinates of the selected area.",
       "backTitle": "Back caption · engraving",
       "backAutoCoords": "Insert map center coordinates",
+      "markerTitle": "“Special place” marker",
+      "markerNone": "None",
+      "markerHint": "Rises at the map center — mark home, where you met, or your wedding",
       "backPlaceholder": "NAME · DATE",
       "backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D."
     },

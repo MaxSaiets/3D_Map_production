@@ -743,6 +743,9 @@
       "secondHint": "Taille plus petite juste sous la légende principale. 📍 insère les coordonnées de la zone sélectionnée.",
       "backTitle": "Légende au dos · gravure",
       "backAutoCoords": "Insérer les coordonnées du centre de la carte",
+      "markerTitle": "Marqueur « lieu spécial »",
+      "markerNone": "Aucun",
+      "markerHint": "S'élève au centre de la carte — marquez la maison, votre rencontre ou le mariage",
       "backPlaceholder": "NOM · DATE",
       "backHint": "Gravé dans la face inférieure sur 0,5 mm (en miroir — lisible lorsque le porte-clés est retourné). Visible après la génération en 3D."
     },

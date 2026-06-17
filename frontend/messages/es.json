@@ -743,6 +743,9 @@
       "secondHint": "Tamaño menor justo debajo del texto principal. 📍 inserta las coordenadas del área seleccionada.",
       "backTitle": "Texto del reverso · grabado",
       "backAutoCoords": "Insertar coordenadas del centro del mapa",
+      "markerTitle": "Marcador «lugar especial»",
+      "markerNone": "Ninguno",
+      "markerHint": "Se eleva en el centro del mapa — marca tu casa, dónde os conocisteis o la boda",
       "backPlaceholder": "NOMBRE · FECHA",
       "backHint": "Se graba en la cara inferior a 0,5 mm (en espejo — legible al voltear el llavero). Visible tras la generación en 3D."
     },

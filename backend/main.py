@@ -796,6 +796,10 @@ class GenerationRequest(BaseModel):
     # висота рельєфу над базою.
     keychain_topo_mode: bool = False
     keychain_relief_mm: float = Field(default=2.2, ge=0.6, le=4.0)
+    # МАРКЕР «особливе місце»: піднята фігурка (heart/star/circle) у центрі карти
+    # (= точка, яку шукав користувач). Окремий теракотовий шар. "" = вимкнено.
+    keychain_place_marker: str = Field(default="", max_length=12)
+    keychain_place_marker_size_mm: float = Field(default=6.0, ge=3.0, le=14.0)
     # D4 GPX-ТРЕК: маршрут [[lon,lat],...] як підвищений шар поверх мапи
     # (фронт парсить .gpx сам). Ріжеться по зоні; на рельєфі — шапка по терейну.
     gpx_track: Optional[List[List[float]]] = Field(default=None, max_length=8000)

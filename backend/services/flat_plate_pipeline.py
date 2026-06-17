@@ -30,6 +30,9 @@ LAYER_COLORS = {
     # зливається у пляму — стара скарга Роми). На печать це фактично чорний.
     "rim": [25, 25, 25, 255],
     "text": [25, 25, 25, 255],
+    # Маркер «особливе місце» — теплий теракотовий (виділяється на карті, як
+    # шпилька-маркер; той самий тон, що GPX-трек #c44110).
+    "marker": [196, 65, 16, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -3564,13 +3567,41 @@ def run_flat_plate_pipeline(
             precomputed_polygon=map_label_letter_poly,
         )
 
+    # МАРКЕР «особливе місце»: піднята фігурка (heart/star/circle) у ЦЕНТРІ карти
+    # (= точка, яку шукав користувач, бо мапа заповнює все тіло). Окремий шар.
+    keychain_marker_mesh = None
+    _mk = str(getattr(request, "keychain_place_marker", "") or "").lower().strip()
+    if keychain_mode and _mk and _mk not in ("none", "off") and keychain_layout is not None:
+        try:
+            _mk_shape = {"dot": "circle", "pin": "circle", "round": "circle"}.get(_mk, _mk)
+            if _mk_shape not in ("heart", "star", "circle"):
+                _mk_shape = "heart"
+            _mk_size = float(getattr(request, "keychain_place_marker_size_mm", 6.0) or 6.0)
+            _mk_half = _model_mm_to_world_m(_mk_size / 2.0, export_scale_factor)
+            _bodyc = keychain_layout["body"].centroid
+            _mk_poly = _keychain_body_shape(
+                _bodyc.x - _mk_half, _bodyc.y - _mk_half, _bodyc.x + _mk_half, _bodyc.y + _mk_half,
+                radius_m=_mk_half * 0.3, shape=_mk_shape,
+            )
+            if _mk_poly is not None and not _mk_poly.is_empty:
+                # Дно на base_top, висота 1.5мм → стоїть НАД мапою (дороги/будівлі ~0.8мм).
+                keychain_marker_mesh = build_flat_layer_mesh_from_mask(
+                    _mk_poly, bottom_z_m=base_top_m,
+                    thickness_m=_model_mm_to_world_m(1.5, export_scale_factor),
+                    color=LAYER_COLORS["marker"], min_area_m2=1e-9,
+                )
+                if keychain_marker_mesh is not None:
+                    print(f"[KEYCHAIN] Place marker '{_mk_shape}' {_mk_size:.1f}mm at map center")
+        except Exception as _mkexc:
+            print(f"[KEYCHAIN] place marker failed (non-fatal): {_mkexc}")
+
     if keychain_layout is not None:
         layout_rotation_deg = float(getattr(request, "keychain_layout_rotation_deg", 0.0) or 0.0)
         if layout_rotation_deg:
             try:
                 minx, miny, maxx, maxy = keychain_layout["body"].bounds
                 _rotate_meshes_for_keychain_layout(
-                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh],
+                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh, keychain_marker_mesh],
                     building_meshes=building_meshes,
                     angle_deg=layout_rotation_deg,
                     origin_xy=((minx + maxx) * 0.5, (miny + maxy) * 0.5),
@@ -3651,6 +3682,7 @@ def run_flat_plate_pipeline(
                 ("Rim", keychain_rim_mesh),
                 ("Text", keychain_text_mesh),
                 ("Text2", keychain_text2_mesh),
+                ("Marker", keychain_marker_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),
                 ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),

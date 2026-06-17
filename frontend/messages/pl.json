@@ -743,6 +743,9 @@
       "secondHint": "Mniejszy stopień tuż pod głównym podpisem. 📍 wstawia współrzędne wybranego obszaru.",
       "backTitle": "Napis na rewersie · grawer",
       "backAutoCoords": "Wstaw współrzędne środka mapy",
+      "markerTitle": "Znacznik „wyjątkowe miejsce”",
+      "markerNone": "Brak",
+      "markerHint": "Wznosi się na środku mapy — zaznacz dom, miejsce poznania lub ślub",
       "backPlaceholder": "IMIĘ · DATA",
       "backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D."
     },

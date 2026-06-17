@@ -372,6 +372,7 @@ export function KeychainControlPanel({
   const [quote, setQuote] = useState<Quote | null>(null);
   const [label2, setLabel2] = useState("");
   const [backLabel, setBackLabel] = useState("");
+  const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
   // C3 ТОПО-БРЕЛОК: рельєф висот замість карти (Карпати/Альпи)
   const [topoMode, setTopoMode] = useState(false);
   const [reliefMm, setReliefMm] = useState(2.2);
@@ -860,6 +861,8 @@ export function KeychainControlPanel({
         keychain_label: label,
         keychain_label2: label2,
         keychain_back_label: backLabel,
+        keychain_place_marker: placeMarker,
+        keychain_place_marker_size_mm: 6,
         keychain_base_shape: design.baseShape,
         keychain_layout_rotation_deg: design.layoutRotationDeg,
         keychain_loop_style: design.loopStyle,
@@ -1394,6 +1397,16 @@ export function KeychainControlPanel({
               </button>
             </div>
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.backHint")}</p>
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.markerTitle")}</div>
+            <div className="grid grid-cols-4 gap-2">
+              {([["", t("label.markerNone")], ["heart", "❤"], ["star", "★"], ["circle", "●"]] as Array<["" | "heart" | "star" | "circle", string]>).map(([m, lbl]) => (
+                <ChoiceButton key={m || "none"} label={lbl} active={placeMarker === m} onClick={() => setPlaceMarker(m)} />
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.markerHint")}</p>
           </div>
         </section>
 
