@@ -765,11 +765,16 @@ def _keychain_body_shape(
             Point(knob_cx, cy).buffer(k, resolution=48),
             box(cut - k * 0.2, cy - nw, knob_cx, cy + nw),
         ])
+        # Зрізаємо гостру ГОЛКУ-вістря на шві (0-ширини → не друкується/відламується)
+        # маленьким плоским дном ~0.6мм: серце все одно читається гострим, але кінчик
+        # стає друкованим. _tip_flat у mm (body-shape простір). Синхрон у KeychainDesigner
+        # heartHalfPoints (превʼю=друк). Соло-серце не зачіпається (інша гілка).
+        _tip_flat = min(1.7, height * 0.05)
         if shape_name == "heart-l":
-            half = full.intersection(box(minx - width, miny - height, cut, maxy + height))
+            half = full.intersection(box(minx - width, miny + _tip_flat, cut, maxy + height))
             tab = knob.intersection(full)  # лишається в межах серця
             return unary_union([half, tab]).buffer(0)
-        half = full.intersection(box(cut, miny - height, minx + 2.0 * width + width, maxy + height))
+        half = full.intersection(box(cut, miny + _tip_flat, minx + 2.0 * width + width, maxy + height))
         notch = knob.buffer(clearance, join_style=1)
         half = half.difference(notch).buffer(0)
         return affinity.translate(half, xoff=-width)

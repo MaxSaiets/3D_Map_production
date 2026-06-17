@@ -671,6 +671,11 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
     fullMinX + ((px - x0) / (x1 - x0)) * (2 * w),
     minY + ((y1 - py) / (y1 - y0)) * h, // y-вниз СВГ: лоби зверху, вістря знизу
   ] as [number, number]);
+  // Зрізаємо гостру ГОЛКУ-вістря на шві (дзеркало бекенду _tip_flat): клампимо
+  // точки нижче лінії зрізу → плаский кінчик ~0.6мм (друкований; превʼю=модель).
+  const yCut = minY + h - Math.min(1.7, h * 0.05);
+  const clampTip = (arr: Array<[number, number]>): Array<[number, number]> =>
+    arr.map(([px, py]) => [px, Math.min(py, yCut)] as [number, number]);
   // БЕЗ заокруглення вістря: гостре вістря по центру → кожна половинка сходить у
   // чистий кінчик на шві (заокруглений низ давав 90°-«гачок» біля шва). Дзеркало
   // бекенду, де heart-l/r будує full без _round_polygon_tip.
@@ -697,7 +702,7 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
       break;
     }
   }
-  if (i1 < 0) return clipped; // fallback: без замка
+  if (i1 < 0) return clampTip(clipped); // fallback: без замка
   const A = clipped[i1], B = clipped[(i1 + 1) % clipped.length];
   const yLo = Math.min(A[1], B[1]), yHi = Math.max(A[1], B[1]);
   const elen = yHi - yLo;
@@ -730,7 +735,7 @@ function heartHalfPoints(minX: number, minY: number, w: number, h: number, side:
   for (let i = 0; i <= i1; i++) out.push(clipped[i]);
   out.push(...lock);
   for (let i = i1 + 1; i < clipped.length; i++) out.push(clipped[i]);
-  return out;
+  return clampTip(out);
 }
 
 function bodyPath(value: KeychainDesignerConfig) {
