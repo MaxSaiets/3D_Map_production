@@ -1370,12 +1370,29 @@ export function KeychainControlPanel({
 
           <div className="mt-4">
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.backTitle")}</div>
-            <input
-              value={backLabel}
-              onChange={(event) => setBackLabel(event.target.value.toUpperCase().slice(0, 28))}
-              placeholder={t("label.backPlaceholder")}
-              className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
-            />
+            <div className="flex items-stretch gap-2">
+              <input
+                value={backLabel}
+                onChange={(event) => setBackLabel(event.target.value.toUpperCase().slice(0, 28))}
+                placeholder={t("label.backPlaceholder")}
+                className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
+              />
+              <button
+                type="button"
+                title={t("label.backAutoCoords")}
+                disabled={!selectedArea}
+                onClick={() => {
+                  if (!selectedArea || typeof (selectedArea as any).getCenter !== "function") return;
+                  const c = selectedArea.getCenter();
+                  const ns = c.lat >= 0 ? "N" : "S";
+                  const ew = c.lng >= 0 ? "E" : "W";
+                  setBackLabel(`${Math.abs(c.lat).toFixed(4)}°${ns} ${Math.abs(c.lng).toFixed(4)}°${ew}`.slice(0, 28));
+                }}
+                className="shrink-0 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-3 text-lg transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                📍
+              </button>
+            </div>
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.backHint")}</p>
           </div>
         </section>
@@ -1554,6 +1571,10 @@ export function KeychainControlPanel({
                   ["capsule", t("shape.capsule")],
                   ["tag", t("shape.tag")],
                   ["octagon", t("shape.octagon")],
+                  ["circle", t("shape.circle")],
+                  ["hexagon", t("shape.hexagon")],
+                  ["shield", t("shape.shield")],
+                  ["star", t("shape.star")],
                   ["heart", t("shape.heart")],
                   ["house", t("shape.house")],
                   ["puzzle-l", t("shape.puzzleL")],

@@ -742,6 +742,7 @@
       "insertCoords": "Koordinaten der Bereichsmitte einfügen",
       "secondHint": "Kleinerer Schriftgrad direkt unter der Hauptbeschriftung. 📍 fügt die Koordinaten des gewählten Bereichs ein.",
       "backTitle": "Rückseiten-Text · Gravur",
+      "backAutoCoords": "Koordinaten der Kartenmitte einfügen",
       "backPlaceholder": "NAME · DATUM",
       "backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar."
     },
@@ -794,6 +795,10 @@
       "token": "Token",
       "capsule": "Kapsel",
       "octagon": "Achteck",
+      "circle": "Kreis",
+      "hexagon": "Sechseck",
+      "shield": "Schild",
+      "star": "Stern",
       "heart": "Herz ♥",
       "house": "Haus",
       "puzzleL": "Puzzle L 🧩",

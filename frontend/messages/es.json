@@ -742,6 +742,7 @@
       "insertCoords": "Insertar coordenadas del centro del área",
       "secondHint": "Tamaño menor justo debajo del texto principal. 📍 inserta las coordenadas del área seleccionada.",
       "backTitle": "Texto del reverso · grabado",
+      "backAutoCoords": "Insertar coordenadas del centro del mapa",
       "backPlaceholder": "NOMBRE · FECHA",
       "backHint": "Se graba en la cara inferior a 0,5 mm (en espejo — legible al voltear el llavero). Visible tras la generación en 3D."
     },
@@ -794,6 +795,10 @@
       "token": "Ficha",
       "capsule": "Cápsula",
       "octagon": "Octágono",
+      "circle": "Círculo",
+      "hexagon": "Hexágono",
+      "shield": "Escudo",
+      "star": "Estrella",
       "heart": "Corazón ♥",
       "house": "Casa",
       "puzzleL": "Puzle L 🧩",

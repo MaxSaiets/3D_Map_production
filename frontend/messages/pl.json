@@ -742,6 +742,7 @@
       "insertCoords": "Wstaw współrzędne środka obszaru",
       "secondHint": "Mniejszy stopień tuż pod głównym podpisem. 📍 wstawia współrzędne wybranego obszaru.",
       "backTitle": "Napis na rewersie · grawer",
+      "backAutoCoords": "Wstaw współrzędne środka mapy",
       "backPlaceholder": "IMIĘ · DATA",
       "backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D."
     },
@@ -794,6 +795,10 @@
       "token": "Żeton",
       "capsule": "Kapsuła",
       "octagon": "Ośmiokąt",
+      "circle": "Koło",
+      "hexagon": "Sześciokąt",
+      "shield": "Tarcza",
+      "star": "Gwiazda",
       "heart": "Serce ♥",
       "house": "Domek",
       "puzzleL": "Puzzel L 🧩",

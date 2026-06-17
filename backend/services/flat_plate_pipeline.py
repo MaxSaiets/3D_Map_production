@@ -808,6 +808,45 @@ def _keychain_body_shape(
                 (minx, maxy - roof_h),
             ]
         ).buffer(0)
+    if shape_name in {"circle", "ellipse", "round"}:
+        # Коло/еліпс, вписаний у bbox (несиметричне тіло → овал).
+        from shapely.affinity import scale as _affscale
+        cx = (minx + maxx) / 2.0; cy = (miny + maxy) / 2.0
+        unit = Point(0.0, 0.0).buffer(1.0, resolution=72)
+        return affinity.translate(_affscale(unit, xfact=width / 2.0, yfact=height / 2.0), xoff=cx, yoff=cy)
+    if shape_name == "hexagon":
+        import math
+        cx = (minx + maxx) / 2.0; cy = (miny + maxy) / 2.0
+        rx = width / 2.0; ry = height / 2.0
+        pts = [(cx + rx * math.cos(math.pi / 2 + i * math.pi / 3),
+                cy + ry * math.sin(math.pi / 2 + i * math.pi / 3)) for i in range(6)]
+        r = min(width, height) * 0.06
+        return Polygon(pts).buffer(-r, join_style=1).buffer(r, join_style=1).buffer(0)
+    if shape_name == "shield":
+        # Щит: широкі плечі зверху (бік петлі), сходиться у заокруглене вістря внизу.
+        cx = (minx + maxx) / 2.0
+        pts = [
+            (minx, maxy), (maxx, maxy),
+            (maxx, miny + height * 0.45),
+            (cx, miny),
+            (minx, miny + height * 0.45),
+        ]
+        r = min(width, height) * 0.05
+        return Polygon(pts).buffer(-r, join_style=1).buffer(r, join_style=1).buffer(0)
+    if shape_name == "star":
+        # 5-кутна зірка з ЗАОКРУГЛЕНИМИ вершинами (інакше 5 гострих голок →
+        # не друкуються/відламуються). Opening (−r,+r) згладжує опуклі вістря.
+        import math
+        cx = (minx + maxx) / 2.0; cy = (miny + maxy) / 2.0
+        rx = width / 2.0; ry = height / 2.0
+        ri = 0.45  # внутрішній радіус (частка зовнішнього)
+        pts = []
+        for i in range(10):
+            ang = math.pi / 2 + i * math.pi / 5
+            rr = 1.0 if i % 2 == 0 else ri
+            pts.append((cx + rx * rr * math.cos(ang), cy + ry * rr * math.sin(ang)))
+        r = min(width, height) * 0.045
+        return Polygon(pts).buffer(-r, join_style=1).buffer(r, join_style=1).buffer(0)
     return _rounded_rect(minx, miny, maxx, maxy, radius_m)
 
 

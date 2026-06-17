@@ -742,6 +742,7 @@
       "insertCoords": "Insert coordinates of the area center",
       "secondHint": "Smaller size right under the main caption. 📍 inserts the coordinates of the selected area.",
       "backTitle": "Back caption · engraving",
+      "backAutoCoords": "Insert map center coordinates",
       "backPlaceholder": "NAME · DATE",
       "backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D."
     },
@@ -794,6 +795,10 @@
       "token": "Token",
       "capsule": "Capsule",
       "octagon": "Octagon",
+      "circle": "Circle",
+      "hexagon": "Hexagon",
+      "shield": "Shield",
+      "star": "Star",
       "heart": "Heart ♥",
       "house": "House",
       "puzzleL": "Puzzle L 🧩",

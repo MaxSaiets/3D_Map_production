@@ -159,7 +159,7 @@ type KeychainCropSpec = {
   mapWidthMm: number;
   mapHeightMm: number;
   /** Форма брелка — впливає на полігон виділення на карті. */
-  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
+  baseShape?: "rounded" | "capsule" | "tag" | "octagon" | "token" | "circle" | "hexagon" | "shield" | "star" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
   /** When true, the polygon sent to the backend is the actual (rotated) SHAPE
    *  outline, not the axis-aligned bbox — so the model is cut to that shape
    *  (heart/circle/…). Keychains keep bbox (their base shape is separate). */

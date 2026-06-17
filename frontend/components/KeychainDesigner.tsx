@@ -13,7 +13,7 @@ const LiveCitySvgPaths = dynamic(
   { ssr: false, loading: () => null },
 );
 
-export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r";
+export type KeychainBaseShape = "rounded" | "capsule" | "tag" | "octagon" | "token" | "heart" | "house" | "puzzle-l" | "puzzle-r" | "heart-l" | "heart-r" | "circle" | "hexagon" | "shield" | "star";
 export type KeychainLoopStyle = "round" | "teardrop" | "slot" | "side-tab";
 export type KeychainLabelFontStyle = "block" | "wide" | "condensed";
 
@@ -500,6 +500,30 @@ export function shapePath(
       `V ${cy + nw} L ${xi.toFixed(2)} ${cy + nw} A ${k} ${k} 0 1 0 ${xi.toFixed(2)} ${cy - nw} L ${minX} ${cy - nw} ` +
       `V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`
     );
+  }
+  if (value.baseShape === "circle") {
+    const rxx = w / 2, ryy = h / 2, cx = minX + rxx, cy = minY + ryy;
+    return `M ${(cx - rxx).toFixed(2)} ${cy.toFixed(2)} A ${rxx.toFixed(2)} ${ryy.toFixed(2)} 0 1 0 ${(cx + rxx).toFixed(2)} ${cy.toFixed(2)} A ${rxx.toFixed(2)} ${ryy.toFixed(2)} 0 1 0 ${(cx - rxx).toFixed(2)} ${cy.toFixed(2)} Z`;
+  }
+  if (value.baseShape === "hexagon") {
+    // pointy-top, вертикально симетричний → y-фліп не впливає (дзеркало бека).
+    const cx = minX + w / 2, cy = minY + h / 2, rx = w / 2, ry = h / 2;
+    const pts: Array<[number, number]> = [];
+    for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + (i * Math.PI) / 3; pts.push([cx + rx * Math.cos(a), cy - ry * Math.sin(a)]); }
+    return pts.map(([px, py], i) => `${i === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`).join(" ") + " Z";
+  }
+  if (value.baseShape === "shield") {
+    // плечі зверху (бік петлі = minY у SVG), вістря внизу (maxY). Дзеркало бека.
+    const cx = minX + w / 2;
+    const pts: Array<[number, number]> = [[minX, minY], [maxX, minY], [maxX, maxY - 0.45 * h], [cx, maxY], [minX, maxY - 0.45 * h]];
+    return pts.map(([px, py], i) => `${i === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`).join(" ") + " Z";
+  }
+  if (value.baseShape === "star") {
+    // 5-кутна зірка, вістря вгору (maxy на беку = minY у SVG → −sin). Дзеркало бека.
+    const cx = minX + w / 2, cy = minY + h / 2, rx = w / 2, ry = h / 2, ri = 0.45;
+    const pts: Array<[number, number]> = [];
+    for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + (i * Math.PI) / 5; const rr = i % 2 === 0 ? 1 : ri; pts.push([cx + rx * rr * Math.cos(a), cy - ry * rr * Math.sin(a)]); }
+    return pts.map(([px, py], i) => `${i === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`).join(" ") + " Z";
   }
   return `M ${minX + r} ${minY} H ${maxX - r} Q ${maxX} ${minY} ${maxX} ${minY + r} V ${maxY - r} Q ${maxX} ${maxY} ${maxX - r} ${maxY} H ${minX + r} Q ${minX} ${maxY} ${minX} ${maxY - r} V ${minY + r} Q ${minX} ${minY} ${minX + r} ${minY} Z`;
 }
