@@ -440,6 +440,8 @@
     "moreOptions": "Więcej opcji (magnes, GPX, panel)",
     "magnetToggle": "Magnes na lodówkę",
     "magnetHint": "Płaski format 6 cm z 4 kieszeniami na magnesy Ø4×2 mm w spodzie (przy rogach). Magnesy wkleja się po druku.",
+    "flatAmsToggle": "Płaska kolorowa (AMS)",
+    "flatAmsHint": "Płaska wielokolorowa płytka: każda warstwa to osobny kolor filamentu (podstawa · woda · parki · drogi · budynki), solidna podstawa 3 mm. Bez reliefu i łączników — drukuje się płasko, idealne do Bambu AMS.",
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
     "orderPrint": "Zamów druk",
     "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt.",

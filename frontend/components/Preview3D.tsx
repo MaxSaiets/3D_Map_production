@@ -73,7 +73,7 @@ async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" 
     base: 0xf2f2f2,
     terrain: 0xf2f2f2,
     roads: 0x141414,
-    buildings: 0xf2f2f2,
+    buildings: 0xc4c4c4,
     water: 0x2f6fd6,
     parks: 0x3f7a3f,
     green: 0x3f7a3f,
@@ -155,17 +155,17 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
 
         let totalVertices = 0;
         let totalMeshes = 0;
-        // Превʼю-палітра = ДРУК (backend COLOR_MAP), щоб «що бачиш = що друкується»
-        // і кожен шар ЧІТКО відрізнявся (скарга: на рельєфі будинки зливались із
-        // землею). Будинки — сірі (0x787878 = друк), НЕ світло-сірі.
-        // Палітра за фідбеком власника (2026-06-17): основа+рельєф+БУДИНКИ = БІЛІ
-        // (один колір; форму будинків видно за висотою/тінями), вода СИНЯ, зелені
-        // зони ТЕМНІШИЙ зелений, дороги ЧОРНІ.
+        // Превʼю-палітра ≈ ДРУК (backend COLOR_MAP), щоб «що бачиш = що друкується»
+        // і кожен шар ЧІТКО відрізнявся (скарга: на білій основі будинки зливались).
+        // Палітра за фідбеком власника (2026-06-17): основа+рельєф = БІЛІ, вода СИНЯ,
+        // зелені зони ТЕМНІШИЙ зелений, дороги ЧОРНІ. ЄДИНЕ відхилення превʼю↔друк:
+        // будинки у ПРЕВʼЮ світло-СІРІ 0xc4c4c4 (щоб ВИДНО на білій основі — інакше
+        // білий-на-білому невидимий), а в ДРУЦІ лишаються білі (COLOR_MAP).
         const colorMap: Record<string, number> = {
           baseback: 0xf2f2f2,
           base: 0xf2f2f2,    // основа/рельєф — БІЛА
           terrain: 0xf2f2f2,
-          buildings: 0xf2f2f2, // будинки — БІЛІ (як основа, видно за 3D-формою)
+          buildings: 0xc4c4c4, // будинки — світло-СІРІ у ПРЕВʼЮ (видно на білій основі; друк = білі)
           roads: 0x141414,   // дороги — ЧОРНІ
           water: 0x2f6fd6,   // вода — СИНЯ
           parks: 0x3f7a3f,   // парки/зелень — темніший зелений
@@ -279,7 +279,7 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           baseback: { color: 0xf2f2f2, part: "base" },
           base: { color: 0xf2f2f2, part: "base" },       // основа — БІЛА
           terrain: { color: 0xf2f2f2, part: "terrain" },
-          buildings: { color: 0xf2f2f2, part: "buildings" }, // будинки — БІЛІ (як основа)
+          buildings: { color: 0xc4c4c4, part: "buildings" }, // будинки — світло-СІРІ у ПРЕВʼЮ (видно на білій основі; друк = білі)
           roads: { color: 0x141414, part: "roads" },     // дороги — ЧОРНІ
           water: { color: 0x2f6fd6, part: "water" },     // вода — СИНЯ
           parks: { color: 0x3f7a3f, part: "parks" },     // парки — темніший зелений

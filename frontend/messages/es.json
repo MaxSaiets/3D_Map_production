@@ -440,6 +440,8 @@
     "moreOptions": "Más opciones (imán, GPX, panel)",
     "magnetToggle": "Imán de nevera",
     "magnetHint": "Formato plano de 6 cm con 4 huecos para imanes Ø4×2 mm en la base (en las esquinas). Los imanes se pegan tras la impresión.",
+    "flatAmsToggle": "Plano a color (AMS)",
+    "flatAmsHint": "Placa plana multicolor: cada capa un color de filamento (base · agua · parques · calles · edificios), base resistente de 3 mm. Sin relieve ni conectores — se imprime plano, ideal para Bambu AMS.",
     "advancedHint": "¿Necesitas una serie de zonas (hexágonos / cuadrados)? Abre el modo «Pro» →",
     "orderPrint": "Pedir impresión",
     "limitMsg": "He usado mis 5 descargas gratuitas. Quiero más / impresión — contáctame, por favor.",

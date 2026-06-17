@@ -420,9 +420,16 @@ def _apply_default_canonical_bundle_if_needed(
 def _compute_safe_base_thickness_mm(request: "GenerationRequest") -> float:
     if bool(getattr(request, "flat_plate_mode", False)):
         try:
-            # Знижено з 1.6 → 1.0мм. 1.0мм = 5 шарів × 0.2мм, мінімально жорстко
-            # для брелка але можливо. Користувач сам відповідальний за warping.
-            floor = 1.0 if bool(getattr(request, "keychain_mode", False)) else 0.2
+            # Брелок: 1.0мм = 5 шарів × 0.2мм, мінімально жорстко. Плоска кольорова
+            # AMS-карта (is_ams_mode, не брелок): міцна основа 3мм (велика плитка не
+            # повинна гнутись/коробитись). Магніт (is_ams=false): свій 0.2 floor +
+            # окрема логіка глибини кишені нижче по пайплайну.
+            if bool(getattr(request, "keychain_mode", False)):
+                floor = 1.0
+            elif bool(getattr(request, "is_ams_mode", False)):
+                floor = 3.0
+            else:
+                floor = 0.2
             return max(float(request.terrain_base_thickness_mm), floor)
         except Exception:
             return 1.0 if bool(getattr(request, "keychain_mode", False)) else 0.2

@@ -440,6 +440,8 @@
     "moreOptions": "Plus d'options (magnet, GPX, panneau)",
     "magnetToggle": "Magnet de frigo",
     "magnetHint": "Format plat de 6 cm avec 4 logements pour aimants Ø4×2 mm au dos (près des coins). Les aimants se collent après l'impression.",
+    "flatAmsToggle": "Plat couleur (AMS)",
+    "flatAmsHint": "Plaque plate multicolore : chaque couche une couleur de filament (base · eau · parcs · routes · bâtiments), base solide de 3 mm. Sans relief ni connecteurs — impression à plat, idéale pour Bambu AMS.",
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
     "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi.",

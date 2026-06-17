@@ -440,6 +440,8 @@
     "moreOptions": "Mehr Optionen (Magnet, GPX, Panel)",
     "magnetToggle": "Kühlschrankmagnet",
     "magnetHint": "Flaches 6-cm-Format mit 4 Taschen für Ø4×2-mm-Scheibenmagnete im Boden (an den Ecken). Magnete nach dem Druck einkleben.",
+    "flatAmsToggle": "Flach farbig (AMS)",
+    "flatAmsHint": "Flache mehrfarbige Kachel: jede Schicht eine eigene Filamentfarbe (Basis · Wasser · Parks · Straßen · Gebäude), stabile 3-mm-Basis. Kein Relief, keine Verbinder — druckt flach, ideal für Bambu AMS.",
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",
     "orderPrint": "Druck bestellen",
     "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich.",

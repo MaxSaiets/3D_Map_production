@@ -64,6 +64,8 @@ export function SimpleControlPanel({
   const setMapLabel = s.setSimpleMapLabel;
   const panelMode = s.simplePanelMode;
   const setPanelMode = s.setSimplePanelMode;
+  const flatAmsMode = s.simpleFlatAms;
+  const setFlatAmsMode = s.setSimpleFlatAms;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -390,6 +392,9 @@ export function SimpleControlPanel({
     const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
     const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
     const layerParks = preset ? preset.layers.parks : s.previewIncludeParks;
+    // «Плоска кольорова (AMS)»: пласка багатокольорова плитка-карта (terrain off,
+    // окремі кольорові шари, основа 3мм). Лише для одиночної карти (не панно/магніт).
+    const flatAms = panelMode === 0 && !magnetMode && s.simpleFlatAms;
     // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
     let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
     let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
@@ -406,17 +411,19 @@ export function SimpleControlPanel({
       roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
       buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
       buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-      waterDepth: s.waterDepth, terrainEnabled: magnetMode ? false : layerTerrain, terrainZScale: s.terrainZScale,
-      terrainBaseThicknessMm: magnetMode ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
+      waterDepth: s.waterDepth, terrainEnabled: (magnetMode || flatAms) ? false : layerTerrain, terrainZScale: s.terrainZScale,
+      terrainBaseThicknessMm: (magnetMode || flatAms) ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
       terrariumZoom: s.terrariumZoom,
       // forPrint → друкарський 3MF (не GLB-прев'ю).
       exportFormat: forPrint ? "3mf" : s.exportFormat,
       modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
-      isAmsMode: s.isAmsMode,
-      // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово
-      flatPlateMode: panelMode > 0 ? false : magnetMode ? true : s.flatPlateMode,
+      isAmsMode: flatAms ? true : s.isAmsMode,
+      // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово.
+      // flatAms → пласка кольорова плитка (flat_plate колірні шари).
+      flatPlateMode: panelMode > 0 ? false : (magnetMode || flatAms) ? true : s.flatPlateMode,
       // forPrint → ЗАВЖДИ повна якість; інакше швидке прев'ю лише для стандартної карти.
-      previewMode: forPrint ? false : (panelMode > 0 || magnetMode ? false : s.previewMode),
+      // flatAms = повний кольоровий 3MF у прев'ю (flat_plate сам і є прев'ю, не GLB).
+      previewMode: forPrint ? false : (panelMode > 0 || magnetMode || flatAms ? false : s.previewMode),
       magnetPocket: panelMode > 0 ? false : magnetMode,
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
       gpxTrack,
@@ -678,6 +685,35 @@ export function SimpleControlPanel({
         </div>
         {moreOpen && (
         <>
+        {/* Плоска кольорова (AMS): пласка багатокольорова плитка-карта — кожен шар
+            окремий колір-філамент (Base/Вода/Парки/Дороги/Будинки), міцна основа 3мм.
+            БЕЗ рельєфу, БЕЗ з'єднувачів-пазів. Друк плоско = ідеально для Bambu AMS. */}
+        <button
+          type="button"
+          aria-pressed={flatAmsMode}
+          data-testid="flat-ams-toggle"
+          onClick={() => {
+            const next = !flatAmsMode;
+            setFlatAmsMode(next);
+            // Взаємовиключно з магнітом/панно (різні плоскі формати).
+            if (next) {
+              if (magnetMode) setMagnetMode(false);
+              if (panelMode > 0) setPanelMode(0);
+            }
+          }}
+          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+            flatAmsMode
+              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+          }`}
+        >
+          <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+            🎨 {t("flatAmsToggle")}
+            {flatAmsMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>
+        </button>
+
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
@@ -685,6 +721,7 @@ export function SimpleControlPanel({
           onClick={() => {
             const next = !magnetMode;
             setMagnetMode(next);
+            if (next && flatAmsMode) setFlatAmsMode(false);
             // Магніт і панно — взаємовиключні (панно = багато плиток, магніт = одна
             // плитка з кишенею). Раніше можна було лишити обидва ON → генерувалось
             // панно, але ціна показувала магніт (180₴) — мовчазна підміна продукту.
@@ -794,6 +831,7 @@ export function SimpleControlPanel({
                   aria-checked={panelMode === mode}
                   onClick={() => {
                     setPanelMode(mode);
+                    if (mode > 0 && flatAmsMode) setFlatAmsMode(false);
                     // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
                     if (mode > 0 && (magnetMode || gpxTrack)) {
                       setMagnetMode(false);
