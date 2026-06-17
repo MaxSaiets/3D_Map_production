@@ -1133,14 +1133,16 @@ export function KeychainDesigner({
         <button
           type="button"
           onClick={() => setPreviewSide("front")}
-          className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+          aria-pressed={previewSide === "front"}
+          className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/72"}`}
         >
           {t("designer.front")}
         </button>
         <button
           type="button"
           onClick={() => setPreviewSide("back")}
-          className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+          aria-pressed={previewSide === "back"}
+          className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
         >
           {t("designer.back")}
         </button>

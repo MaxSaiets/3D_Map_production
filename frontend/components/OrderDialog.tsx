@@ -296,7 +296,7 @@ export function OrderDialog({
                   {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
                     <button key={k} type="button" role="radio" aria-checked={region === k}
                       onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
-                      className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
+                      className={`flex-1 min-h-11 rounded-xl px-2 py-2 text-sm font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                       {lbl}
                     </button>
                   ))}
@@ -308,7 +308,7 @@ export function OrderDialog({
                     : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
                   ).map(([k, lbl]) => (
                     <button key={k} type="button" role="radio" aria-checked={delivery === k} onClick={() => setDelivery(k)}
-                      className={`flex-1 rounded-xl px-2 py-2 font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
+                      className={`flex-1 min-h-11 rounded-xl px-2 py-2 text-sm font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                       {lbl}
                     </button>
                   ))}
@@ -366,10 +366,10 @@ export function OrderDialog({
                   <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
                 </div>
                 {/* Що входить у ціну — знімає невизначеність «а доставка окремо?». */}
-                <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("priceIncludes")}</p>
+                <p className="mt-1 text-[12px] leading-5 text-[var(--text-secondary)]">{t("priceIncludes")}</p>
               </div>
 
-              <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">
+              <div className="flex items-start gap-2 rounded-2xl bg-[rgba(46,74,58,0.06)] px-3 py-2.5 text-[12px] leading-5 text-[var(--text-secondary)]">
                 <Truck size={14} className="mt-0.5 shrink-0 text-[var(--accent-strong)]" />
                 <span>
                   {/* UX: чіткі строки знімають головний страх «коли отримаю?» */}
@@ -381,7 +381,7 @@ export function OrderDialog({
 
               {/* Сигнали довіри — знижують відмову на останньому кроці воронки:
                   замовлення без передоплати, оператор підтверджує, дані захищені. */}
-              <ul className="grid gap-1.5 rounded-2xl border border-[rgba(11,92,87,0.16)] bg-[rgba(15,118,110,0.05)] px-3 py-2.5 text-[11px] leading-4 text-[var(--text-secondary)]">
+              <ul className="grid gap-1.5 rounded-2xl border border-[rgba(11,92,87,0.16)] bg-[rgba(15,118,110,0.05)] px-3 py-2.5 text-[12px] leading-5 text-[var(--text-secondary)]">
                 <li className="flex items-center gap-2"><ShieldCheck size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustGuarantee")}</b> — {t("trustGuaranteeDesc")}</span></li>
                 <li className="flex items-center gap-2"><Wallet size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustNoPrepay")}</b> — {t("trustNoPrepayDesc")}</span></li>
                 <li className="flex items-center gap-2"><PhoneCall size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustOperator")}</span></li>
@@ -391,10 +391,10 @@ export function OrderDialog({
               {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
 
               <button onClick={submit} disabled={sending}
-                className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">
+                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">
                 {sending ? (<><Loader2 className="h-4 w-4 animate-spin" /> {t("sending")}</>) : t("submit")}
               </button>
-              <p className="flex items-center justify-center gap-1.5 text-center text-[11px] leading-4 text-[var(--text-secondary)]">
+              <p className="flex items-center justify-center gap-1.5 text-center text-[12px] leading-5 text-[var(--text-secondary)]">
                 <ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" />
                 {t("submitReassure")}
               </p>

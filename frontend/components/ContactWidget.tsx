@@ -75,7 +75,7 @@ export function ContactWidget() {
     <>
       {/* Popup */}
       {open && (
-        <div ref={popupRef} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="fixed bottom-[210px] right-3 z-[95] w-[calc(100vw-1.5rem)] max-w-[340px] rounded-[22px] border border-[var(--surface-border,#e3dccb)] bg-[var(--paper-2,#fff)] p-5 shadow-[0_24px_64px_rgba(15,23,42,0.28)] fade-up sm:bottom-24 sm:right-4">
+        <div ref={popupRef} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="fixed bottom-[210px] right-3 z-[95] max-h-[70dvh] overflow-y-auto w-[calc(100vw-1.5rem)] max-w-[340px] rounded-[22px] border border-[var(--surface-border,#e3dccb)] bg-[var(--paper-2,#fff)] p-5 shadow-[0_24px_64px_rgba(15,23,42,0.28)] fade-up sm:bottom-24 sm:right-4">
           {done ? (
             <div className="py-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -115,7 +115,7 @@ export function ContactWidget() {
         type="button"
         aria-label={t("title")}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-[150px] right-3 z-[85] flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(46,74,58,0.4)] transition hover:scale-105 sm:bottom-5 sm:right-4 sm:h-14 sm:w-14"
+        className="fixed bottom-[150px] right-3 z-[40] flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(46,74,58,0.4)] transition hover:scale-105 sm:bottom-5 sm:right-4 sm:h-14 sm:w-14"
         style={{ background: "var(--forest, #2E4A3A)" }}
       >
         {open ? <X size={20} /> : <MessageCircle size={20} />}

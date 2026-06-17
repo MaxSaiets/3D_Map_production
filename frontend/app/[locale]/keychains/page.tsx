@@ -264,6 +264,7 @@ export default function KeychainsPage() {
                 </div>
                 <select
                   value={currentCityKey}
+                  aria-label={t("city")}
                   onChange={(event) => {
                     const nextKey = event.target.value;
                     // Скидаємо рамку СТАРОГО міста, інакше crop-overlay робить
@@ -273,7 +274,7 @@ export default function KeychainsPage() {
                     setCurrentCityKey(nextKey);
                     setLabel(CITIES[nextKey]?.defaultText ?? "CITY");
                   }}
-                  className="mt-1 min-h-[32px] w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
+                  className="mt-1 min-h-[44px] w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
                 >
                   {Object.keys(CITIES).map((cityKey) => (
                     <option key={cityKey} value={cityKey}>
@@ -449,14 +450,16 @@ export default function KeychainsPage() {
                   <button
                     type="button"
                     onClick={() => setSidePreview("model3d")}
-                    className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "model3d" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
+                    aria-pressed={sidePreview === "model3d"}
+                    className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${sidePreview === "model3d" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
                   >
                     3D{downloadUrl ? " ●" : ""}
                   </button>
                   <button
                     type="button"
                     onClick={() => setSidePreview("slicer")}
-                    className={`min-h-[32px] rounded-full px-3 text-[11px] font-semibold ${sidePreview === "slicer" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
+                    aria-pressed={sidePreview === "slicer"}
+                    className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${sidePreview === "slicer" ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}
                   >
                     {t("layers")}
                   </button>

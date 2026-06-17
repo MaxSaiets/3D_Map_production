@@ -18,18 +18,18 @@ export function SiteFooter() {
           <div className="flex items-center gap-2 font-serif text-lg text-ink">
             <Box size={18} className="text-forest" /> monadruk
           </div>
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+          <div className="flex flex-wrap justify-center gap-x-2 gap-y-2">
             {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
-            <Link href="/create" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("create")}</Link>
-            <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("keychains")}</Link>
-            <Link href="/maps" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("maps")}</Link>
-            <Link href="/account" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("account")}</Link>
-            <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("delivery")}</Link>
-            <Link href="/refund" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("refund")}</Link>
-            <Link href="/offer" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("offer")}</Link>
-            <Link href="/contacts" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("contacts")}</Link>
-            <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("privacy")}</Link>
-            <Link href="/terms" className="inline-flex min-h-[44px] items-center px-1 hover:text-ink">{t("terms")}</Link>
+            <Link href="/create" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("create")}</Link>
+            <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("keychains")}</Link>
+            <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
+            <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
+            <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>
+            <Link href="/refund" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("refund")}</Link>
+            <Link href="/offer" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("offer")}</Link>
+            <Link href="/contacts" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("contacts")}</Link>
+            <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("privacy")}</Link>
+            <Link href="/terms" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("terms")}</Link>
           </div>
         </div>
         {/* Контакти + реквізити продавця — вимога платіжних систем (LiqPay). */}

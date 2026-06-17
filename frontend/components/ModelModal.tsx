@@ -77,7 +77,7 @@ export default function ModelModal({ model, onClose }: { model: ModalModel | nul
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex w-full max-w-[920px] flex-col overflow-hidden rounded-[24px] border border-white/15 bg-gradient-to-b from-[#f4efe3] to-[#e7ddc9] shadow-2xl"
+        className="relative flex w-full max-w-[920px] flex-col max-h-[92dvh] overflow-y-auto overflow-hidden rounded-[24px] border border-white/15 bg-gradient-to-b from-[#f4efe3] to-[#e7ddc9] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -88,8 +88,8 @@ export default function ModelModal({ model, onClose }: { model: ModalModel | nul
         >
           <X size={18} />
         </button>
-        <Model3DViewer url={model.url} height={520} allowZoom autoRotate />
-        <div className="flex items-center justify-between gap-3 border-t border-black/5 bg-white/55 px-5 py-4">
+        <Model3DViewer url={model.url} height={typeof window !== 'undefined' ? Math.min(520, Math.round(window.innerHeight * 0.55)) : 520} allowZoom autoRotate />
+        <div className="flex flex-col gap-2 sm:flex-row items-center justify-between gap-3 border-t border-black/5 bg-white/55 px-5 py-4">
           <div>
             <div id={titleId} className="font-serif text-lg text-ink">{model.label}</div>
             <div className="text-[12px] text-ink-3">
@@ -98,7 +98,7 @@ export default function ModelModal({ model, onClose }: { model: ModalModel | nul
           </div>
           <Link
             href={model.kind === "key" ? "/keychains" : "/create"}
-            className="shrink-0 rounded-full bg-forest px-5 py-2.5 text-sm font-bold text-white hover:brightness-110"
+            className="w-full sm:w-auto shrink-0 rounded-full bg-forest px-5 py-2.5 text-sm font-bold text-white hover:brightness-110"
           >
             {model.price || (model.kind === "key" ? t("ctaKey") : t("ctaMap")) } →
           </Link>

@@ -176,3 +176,5 @@ input[type="range"] {
 .marquee-left .marquee-track { animation: marquee-left 48s linear infinite; }
 .marquee-right .marquee-track { animation: marquee-right 56s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee:active .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none !important; } }

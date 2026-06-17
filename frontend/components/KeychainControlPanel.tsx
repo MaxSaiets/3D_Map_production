@@ -1111,7 +1111,7 @@ export function KeychainControlPanel({
                     : "text-[var(--text-secondary)] hover:bg-white/80"
                 }`}
               >
-                <span className="hidden sm:inline">{section.id === "advanced" ? "" : `${index + 1}. `}</span>{t(section.labelKey)}
+                <span className="inline">{section.id === "advanced" ? "" : `${index + 1}. `}</span>{t(section.labelKey)}
               </button>
             ))}
           </div>
@@ -1357,6 +1357,7 @@ export function KeychainControlPanel({
               <button
                 type="button"
                 title={t("label.insertCoords")}
+                aria-label={t("label.insertCoords")}
                 disabled={!selectedArea}
                 onClick={() => {
                   if (!selectedArea) return;
@@ -1383,6 +1384,7 @@ export function KeychainControlPanel({
               <button
                 type="button"
                 title={t("label.backAutoCoords")}
+                aria-label={t("label.backAutoCoords")}
                 disabled={!selectedArea}
                 onClick={() => {
                   if (!selectedArea || typeof (selectedArea as any).getCenter !== "function") return;

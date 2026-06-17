@@ -23,11 +23,15 @@ export function MapSearchBox() {
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
+    const onDoc = (e: MouseEvent | TouchEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("touchstart", onDoc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("touchstart", onDoc);
+    };
   }, []);
 
   const runSearch = (value: string) => {
@@ -93,14 +97,14 @@ export function MapSearchBox() {
         />
         {busy && <Loader2 size={15} className="shrink-0 animate-spin text-white/70" />}
         {q && !busy && (
-          <button type="button" onClick={() => { setQ(""); setResults([]); setOpen(false); }} className="shrink-0 text-white/60 hover:text-white" aria-label={t("clear")}>
+          <button type="button" onClick={() => { setQ(""); setResults([]); setOpen(false); }} className="grid h-9 w-9 shrink-0 place-items-center text-white/60 hover:text-white" aria-label={t("clear")}>
             <X size={15} />
           </button>
         )}
         <button
           type="button"
           onClick={useMyLocation}
-          className="ml-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+          className="ml-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
           title={t("myLocation")}
           aria-label={t("myLocation")}
         >

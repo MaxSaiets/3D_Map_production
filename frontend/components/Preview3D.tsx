@@ -1171,7 +1171,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
         </div>
       )}
       {!capture && toolsOpen && <div className="pointer-events-none absolute inset-x-3 top-16 z-20 flex justify-end">
-        <div className="pointer-events-auto w-full max-w-[320px] rounded-[24px] border border-white/10 bg-[rgba(2,6,23,0.74)] px-3 py-3 text-white shadow-[0_20px_55px_rgba(2,6,23,0.45)] backdrop-blur">
+        <div className="pointer-events-auto w-full max-w-[320px] max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-[24px] border border-white/10 bg-[rgba(2,6,23,0.74)] px-3 py-3 text-white shadow-[0_20px_55px_rgba(2,6,23,0.45)] backdrop-blur">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
@@ -1457,7 +1457,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
       </CanvasErrorBoundary>
       {/* Visible localized message when a model fails to load (404/empty/parse). */}
       {loadError && !isGenerating && !capture && (
-        <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center px-4">
+        <div className="absolute inset-x-0 bottom-[92px] sm:bottom-3 z-20 flex justify-center px-4">
           <div className="max-w-[340px] rounded-[16px] border border-red-400/30 bg-red-950/70 px-4 py-2.5 text-center text-[12px] leading-4 text-red-100 backdrop-blur">
             {t("modelLoadError")}
           </div>

@@ -120,11 +120,11 @@ export function NovaPoshtaPicker({
           autoComplete="off"
           value={cityQuery}
           onChange={(e) => { setCityQuery(e.target.value); setCityOpen(true); setCityRef(""); setBranch(""); setWhQuery(""); }}
-          onFocus={() => setCityOpen(true)}
+          onFocus={(e) => { setCityOpen(true); e.target.scrollIntoView({ block: 'center' }); }}
           onBlur={() => setTimeout(() => setCityOpen(false), 160)}
         />
         {cityOpen && cityResults.length > 0 && (
-          <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+          <ul className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
             {cityResults.map((c) => (
               <li key={c.ref}>
                 <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pickCity(c)}
@@ -148,11 +148,11 @@ export function NovaPoshtaPicker({
             autoComplete="off"
             value={whQuery}
             onChange={(e) => { setWhQuery(e.target.value); setWhOpen(true); }}
-            onFocus={() => { setWhOpen(true); if (!whResults.length) loadWarehouses(cityRef, ""); }}
+            onFocus={(e) => { setWhOpen(true); if (!whResults.length) loadWarehouses(cityRef, ""); e.target.scrollIntoView({ block: 'center' }); }}
             onBlur={() => setTimeout(() => setWhOpen(false), 160)}
           />
           {whOpen && whResults.length > 0 && (
-            <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+            <ul className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
               {whResults.map((w) => (
                 <li key={w.ref}>
                   <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setBranch(w.name); setWhQuery(w.name); setWhOpen(false); }}

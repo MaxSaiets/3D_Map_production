@@ -160,7 +160,7 @@ export default function ShowcaseSection() {
               <button
                 key={m.id}
                 onClick={() => setActiveId(m.id)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   active.id === m.id ? "border-forest bg-forest text-white" : "border-line bg-paper text-ink-2 hover:border-forest/40"
                 }`}
               >
@@ -178,7 +178,7 @@ export default function ShowcaseSection() {
       <div className="mt-16">
         <div className="mb-5 flex items-end justify-between">
           <h3 className="font-serif text-2xl text-ink">{t("galleryTitle")}</h3>
-          <Link href="/showcase" className="text-sm font-semibold text-forest hover:underline">{t("allGallery")} →</Link>
+          <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2 text-sm font-semibold text-forest hover:underline">{t("allGallery")} →</Link>
         </div>
         <div className="space-y-3">
           <Row tiles={ROW_A} dir="right" onOpen={(tl) => setModal(tileToModel(tl))} rotateLabel={t("rotate3d")} keyAlt={t("keyItem")} mapAlt={t("mapItem")} />

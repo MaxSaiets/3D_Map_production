@@ -82,7 +82,7 @@ export function WizardSteps({
   return (
     <nav
       aria-label={t("aria")}
-      className="flex items-stretch gap-1.5 overflow-x-auto rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.7)] p-1.5 backdrop-blur sm:gap-2"
+      className="flex items-stretch gap-1.5 flex-wrap rounded-[22px] border border-[var(--surface-border)] bg-[rgba(255,255,255,0.7)] p-1.5 backdrop-blur sm:gap-2"
     >
       {steps.map((step, i) => {
         const Icon = step.icon;
@@ -93,7 +93,7 @@ export function WizardSteps({
           <Tag
             key={step.key}
             {...(onStepClick ? { type: "button", onClick: () => onStepClick(step.key) } : {})}
-            className={`flex min-w-fit flex-1 items-center gap-2.5 rounded-[16px] px-3 py-2 text-left transition ${
+            className={`flex min-w-fit flex-1 items-center gap-1.5 rounded-[16px] px-2 py-2 text-left transition sm:gap-2.5 sm:px-3 ${
               onStepClick ? "cursor-pointer hover:opacity-90" : ""
             } ${
               isCurrent
@@ -104,7 +104,7 @@ export function WizardSteps({
             }`}
           >
             <span
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold sm:h-7 sm:w-7 ${
                 isCurrent
                   ? "bg-white/20 text-white"
                   : isDone
@@ -115,13 +115,13 @@ export function WizardSteps({
               {isDone ? <Check size={14} /> : <Icon size={14} />}
             </span>
             <span className="min-w-0">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
+              <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-[0.16em]">
                 {t("step", { n: i + 1 })}
               </span>
               <span className="block truncate text-[13px] font-semibold leading-tight">{step.label}</span>
               <span
-                className={`block truncate text-[11px] leading-tight ${
-                  isCurrent ? "text-white/80" : "opacity-70"
+                className={`hidden sm:block truncate text-[11px] leading-tight ${
+                  isCurrent ? "text-white/80" : ""
                 }`}
               >
                 {step.hint}

@@ -659,7 +659,7 @@ export function SimpleControlPanel({
                   }`}
                 >
                   <span className="block text-base font-bold text-[var(--text-primary)]">{sz.label}</span>
-                  <span className="block text-[10px] text-[var(--text-secondary)]">{sz.cm}</span>
+                  <span className="block text-[11px] text-[var(--text-secondary)]">{sz.cm}</span>
                 </button>
               );
             })}
@@ -839,7 +839,7 @@ export function SimpleControlPanel({
                       window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "magnetOffForPanel" } }));
                     }
                   }}
-                  className={`rounded-full border px-3 py-1 text-[12px] font-semibold transition ${
+                  className={`min-h-[36px] rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition ${
                     panelMode === mode
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
                       : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
@@ -867,7 +867,7 @@ export function SimpleControlPanel({
             type="button"
             onClick={() => handleGenerate()}
             disabled={!selectedArea || isGenerating}
-            className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isGenerating ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>
@@ -897,7 +897,7 @@ export function SimpleControlPanel({
           <button
             type="button"
             onClick={() => setOrderOpen(true)}
-            className="inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
           >
             <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
           </button>

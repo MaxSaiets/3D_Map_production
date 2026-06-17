@@ -49,7 +49,7 @@ export function OnboardingTour({
   return (
     // Мобільний: піднято НАД sticky-баром (≈80px) і відцентровано, щоб не
     // перекривати ціну+CTA. Десктоп: як було — внизу праворуч.
-    <div className="pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-3 pb-[calc(104px+env(safe-area-inset-bottom))] pt-3 sm:justify-end sm:p-6 sm:pb-6">
+    <div className="pointer-events-none fixed inset-0 z-[70] flex items-start justify-center pt-[64px] px-3 sm:items-end sm:justify-end sm:p-6">
       <div
         className="pointer-events-auto w-full max-w-[360px] rounded-[18px] border border-line bg-paper-2 p-5 shadow-lift fade-up"
         role="dialog"
@@ -63,7 +63,7 @@ export function OnboardingTour({
             </span>
             <span className="eyebrow">{t("hintCounter", { current: idx + 1, total: steps.length })}</span>
           </div>
-          <button onClick={close} aria-label={t("closeAria")} className="rounded-md p-1 text-ink-3 transition hover:bg-bg-2 hover:text-ink">
+          <button onClick={close} aria-label={t("closeAria")} className="grid h-9 w-9 place-items-center rounded-md text-ink-3 transition hover:bg-bg-2 hover:text-ink">
             <X size={16} />
           </button>
         </div>

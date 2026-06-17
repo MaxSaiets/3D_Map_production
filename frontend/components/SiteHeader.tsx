@@ -71,7 +71,7 @@ export function SiteHeader() {
           <div className="hidden sm:block"><LanguageSwitcher /></div>
           <Link
             href="/account"
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+            className="hidden sm:inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
             title={configured && user ? (user.email || user.phoneNumber || t("account")) : t("login")}
           >
             <User size={15} />
