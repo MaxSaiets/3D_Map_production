@@ -237,7 +237,7 @@ export default function KeychainsPage() {
                 <h1 className="font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl">
                   {t("title")}
                 </h1>
-                <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:block sm:text-[15px]">
+                <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] xl:block xl:text-[15px]">
                   {t("subtitle")}
                 </p>
               </div>
@@ -350,7 +350,7 @@ export default function KeychainsPage() {
               );
             })}
           </div>
-          <p className="mt-2 px-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+          <p className="mt-2 px-1 text-[11px] leading-4 text-[var(--text-secondary)] lg:hidden">
             {t.rich("dragHint", {
               rotate: (chunks) => <span className="font-semibold text-[var(--accent-strong)]">{chunks}</span>,
               b: (chunks) => <span className="font-semibold">{chunks}</span>,
@@ -362,8 +362,12 @@ export default function KeychainsPage() {
             обидва (повна висота), а design (рядок1) і 3D-превʼю (рядок2) ділять висоту
             навпіл — контент скролиться всередині (overflow-hidden). Раніше превʼю
             виштовхувалось на цілий екран нижче (повновисотна карта розтягувала рядок1). */}
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-24 lg:h-[calc(100dvh-150px)] lg:flex-none lg:overflow-hidden lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-0">
-          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:min-h-0`}>
+        {/* ЛЕПТОП-ФІКС: рядки за КОНТЕНТОМ (auto), а не 1fr/1fr від висоти екрана —
+            інакше на низькому ноуті grid ділив ~600px навпіл (~300px/панель) і
+            overflow-hidden РІЗАВ налаштування/превʼю (скарга «все закріплено, нічого
+            не видно»). Тепер кожна панель = своя висота, сторінка СКРОЛИТЬСЯ. */}
+        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-24 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
+          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:h-[calc(100dvh-150px)] lg:min-h-[440px]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
@@ -381,7 +385,7 @@ export default function KeychainsPage() {
             </div>
           </div>
 
-          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:backdrop-blur`}>
+          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:overflow-y-auto lg:backdrop-blur`}>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -393,7 +397,7 @@ export default function KeychainsPage() {
           </aside>
 
           {/* PRODUCT LAYOUT — редактор форми. Перед картою (order-1). */}
-          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:min-h-0`}>
+          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:h-[calc(100dvh-150px)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
@@ -436,7 +440,7 @@ export default function KeychainsPage() {
           </section>
 
           {/* 3D-ВІДОБРАЖЕННЯ — окремо, ПІСЛЯ кнопки «Створити» (order-4). */}
-          <section id="kc-preview3d" className={`${designPanelClasses} order-4 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-4 lg:col-start-3 lg:row-start-2 lg:min-h-0`}>
+          <section id="kc-preview3d" className={`${designPanelClasses} order-4 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-4 lg:col-start-1 lg:col-span-3 lg:row-start-2 lg:min-h-[420px]`}>
               <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
                   <Layers3 size={16} /> {t("preview3dTitle")}
