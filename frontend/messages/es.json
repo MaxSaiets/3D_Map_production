@@ -748,6 +748,9 @@
       "markerTitle": "Marcador «lugar especial»",
       "markerNone": "Ninguno",
       "markerHint": "Se eleva en el centro del mapa — marca tu casa, dónde os conocisteis o la boda",
+      "highlightTitle": "Resaltar un edificio",
+      "highlightToggle": "Resaltar el edificio central",
+      "highlightHint": "El edificio del centro del mapa se vuelve una pieza de bronce aparte — imprímela con otro filamento y colócala.",
       "backPlaceholder": "NOMBRE · FECHA",
       "backHint": "Se graba en la cara inferior a 0,5 mm (en espejo — legible al voltear el llavero). Visible tras la generación en 3D."
     },

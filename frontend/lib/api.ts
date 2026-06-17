@@ -163,6 +163,7 @@ export interface GenerationRequest {
   keychain_relief_mm?: number;
   keychain_place_marker?: "" | "heart" | "star" | "circle";
   keychain_place_marker_size_mm?: number;
+  keychain_highlight_building?: boolean;
   keychain_layout_rotation_deg?: number;
   keychain_loop_style?: "round" | "teardrop" | "slot" | "side-tab";
   keychain_loop_angle_deg?: number;

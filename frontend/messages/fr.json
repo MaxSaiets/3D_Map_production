@@ -748,6 +748,9 @@
       "markerTitle": "Marqueur « lieu spécial »",
       "markerNone": "Aucun",
       "markerHint": "S'élève au centre de la carte — marquez la maison, votre rencontre ou le mariage",
+      "highlightTitle": "Mettre en valeur un bâtiment",
+      "highlightToggle": "Mettre en valeur le bâtiment central",
+      "highlightHint": "Le bâtiment au centre devient une pièce bronze séparée — imprimez-la avec un autre filament et placez-la.",
       "backPlaceholder": "NOM · DATE",
       "backHint": "Gravé dans la face inférieure sur 0,5 mm (en miroir — lisible lorsque le porte-clés est retourné). Visible après la génération en 3D."
     },

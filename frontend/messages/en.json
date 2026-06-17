@@ -748,6 +748,9 @@
       "markerTitle": "“Special place” marker",
       "markerNone": "None",
       "markerHint": "Rises at the map center — mark home, where you met, or your wedding",
+      "highlightTitle": "Highlight a building",
+      "highlightToggle": "Highlight the center building",
+      "highlightHint": "The building at the map center becomes a separate bronze part — print it in another filament and place it in.",
       "backPlaceholder": "NAME · DATE",
       "backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D."
     },

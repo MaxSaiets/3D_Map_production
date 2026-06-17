@@ -33,6 +33,9 @@ LAYER_COLORS = {
     # Маркер «особливе місце» — теплий теракотовий (виділяється на карті, як
     # шпилька-маркер; той самий тон, що GPX-трек #c44110).
     "marker": [196, 65, 16, 255],
+    # Підсвічений будинок (твій дім/орієнтир) — БРОНЗА/ЗОЛОТО: друкується окремою
+    # деталлю іншим філаментом, помітно виділяється на білій карті.
+    "highlight": [142, 107, 61, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -3577,6 +3580,40 @@ def run_flat_plate_pipeline(
             precomputed_polygon=map_label_letter_poly,
         )
 
+    # ПІДСВІТКА БУДИНКУ: будинок у ЦЕНТРІ карти → ОКРЕМА деталь іншого кольору
+    # (бронза), прибрана з шару buildings. Друкується окремо/іншим філаментом і
+    # стає на пласку пляму, що лишилась. v2 (наступне) додасть паз+peg.
+    highlight_building_mesh = None
+    if (
+        keychain_mode
+        and bool(getattr(request, "keychain_highlight_building", False))
+        and building_meshes
+        and keychain_layout is not None
+    ):
+        try:
+            _hb_ctr = keychain_layout["body"].centroid
+            _hb_best_i = None
+            _hb_best_d = float("inf")
+            for _hb_i, _hb_m in enumerate(building_meshes):
+                if _hb_m is None or len(getattr(_hb_m, "faces", [])) == 0:
+                    continue
+                _hb_b = _hb_m.bounds
+                _hb_cx = (_hb_b[0][0] + _hb_b[1][0]) * 0.5
+                _hb_cy = (_hb_b[0][1] + _hb_b[1][1]) * 0.5
+                # Будинок, чий bbox НАКРИВАЄ центр — пріоритет (d=0); інакше найближчий.
+                _hb_inside = (_hb_b[0][0] <= _hb_ctr.x <= _hb_b[1][0]) and (_hb_b[0][1] <= _hb_ctr.y <= _hb_b[1][1])
+                _hb_d = 0.0 if _hb_inside else (_hb_cx - _hb_ctr.x) ** 2 + (_hb_cy - _hb_ctr.y) ** 2
+                if _hb_d < _hb_best_d:
+                    _hb_best_d = _hb_d
+                    _hb_best_i = _hb_i
+            if _hb_best_i is not None:
+                _hb_mesh = building_meshes.pop(_hb_best_i).copy()
+                _with_color(_hb_mesh, LAYER_COLORS["highlight"])
+                highlight_building_mesh = _hb_mesh
+                print(f"[KEYCHAIN] Highlight building separated (idx {_hb_best_i}) → bronze 'Highlight' part, removed from buildings layer")
+        except Exception as _hbexc:
+            print(f"[KEYCHAIN] highlight building failed (non-fatal): {_hbexc}")
+
     # МАРКЕР «особливе місце»: піднята фігурка (heart/star/circle) у ЦЕНТРІ карти
     # (= точка, яку шукав користувач, бо мапа заповнює все тіло). Окремий шар.
     keychain_marker_mesh = None
@@ -3611,7 +3648,7 @@ def run_flat_plate_pipeline(
             try:
                 minx, miny, maxx, maxy = keychain_layout["body"].bounds
                 _rotate_meshes_for_keychain_layout(
-                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh, keychain_marker_mesh],
+                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh, keychain_marker_mesh, highlight_building_mesh],
                     building_meshes=building_meshes,
                     angle_deg=layout_rotation_deg,
                     origin_xy=((minx + maxx) * 0.5, (miny + maxy) * 0.5),
@@ -3693,6 +3730,7 @@ def run_flat_plate_pipeline(
                 ("Text", keychain_text_mesh),
                 ("Text2", keychain_text2_mesh),
                 ("Marker", keychain_marker_mesh),
+                ("Highlight", highlight_building_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),
                 ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),

@@ -378,6 +378,8 @@ export function KeychainControlPanel({
   const [label2, setLabel2] = useState("");
   // backLabel піднято на сторінку (prop) — щоб back-превʼю дизайнера його показав.
   const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
+  // Підсвітка будинку в центрі: окрема бронзова деталь (друк іншим філаментом).
+  const [highlightBuilding, setHighlightBuilding] = useState(false);
   // C3 ТОПО-БРЕЛОК: рельєф висот замість карти (Карпати/Альпи)
   const [topoMode, setTopoMode] = useState(false);
   const [reliefMm, setReliefMm] = useState(2.2);
@@ -868,6 +870,7 @@ export function KeychainControlPanel({
         keychain_back_label: backLabel,
         keychain_place_marker: placeMarker,
         keychain_place_marker_size_mm: 6,
+        keychain_highlight_building: highlightBuilding,
         keychain_base_shape: design.baseShape,
         keychain_layout_rotation_deg: design.layoutRotationDeg,
         keychain_loop_style: design.loopStyle,
@@ -1414,6 +1417,27 @@ export function KeychainControlPanel({
               ))}
             </div>
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.markerHint")}</p>
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.highlightTitle")}</div>
+            <button
+              type="button"
+              aria-pressed={highlightBuilding}
+              data-testid="highlight-building-toggle"
+              onClick={() => setHighlightBuilding((v) => !v)}
+              className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
+                highlightBuilding
+                  ? "border-[rgba(142,107,61,0.55)] bg-[rgba(142,107,61,0.12)]"
+                  : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(142,107,61,0.35)]"
+              }`}
+            >
+              <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+                🏛 {t("label.highlightToggle")}
+                {highlightBuilding && <span className="text-base text-[#8E6B3D]">✓</span>}
+              </span>
+            </button>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.highlightHint")}</p>
           </div>
         </section>
 

@@ -748,6 +748,9 @@
       "markerTitle": "Znacznik „wyjątkowe miejsce”",
       "markerNone": "Brak",
       "markerHint": "Wznosi się na środku mapy — zaznacz dom, miejsce poznania lub ślub",
+      "highlightTitle": "Podświetl budynek",
+      "highlightToggle": "Wyróżnij środkowy budynek",
+      "highlightHint": "Budynek na środku mapy staje się osobną brązową częścią — wydrukuj ją innym filamentem i włóż na miejsce.",
       "backPlaceholder": "IMIĘ · DATA",
       "backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D."
     },

@@ -748,6 +748,9 @@
       "markerTitle": "Marker „besonderer Ort“",
       "markerNone": "Kein",
       "markerHint": "Erhebt sich in der Kartenmitte — markiere Zuhause, das Kennenlernen oder die Hochzeit",
+      "highlightTitle": "Gebäude hervorheben",
+      "highlightToggle": "Mittleres Gebäude hervorheben",
+      "highlightHint": "Das Gebäude in der Kartenmitte wird ein separates Bronzeteil — mit anderem Filament drucken und einsetzen.",
       "backPlaceholder": "NAME · DATUM",
       "backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar."
     },
