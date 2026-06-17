@@ -10,6 +10,23 @@ import { setOwnerOptOut } from "@/lib/analytics";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
+// Топ-кліки: бек дає "/шлях · <ярлик>". Коли клік був по елементу БЕЗ тексту
+// (карта/контейнер/іконка), ярлик = голий тег (div/canvas/path) — незрозуміло
+// «що тикали». Замінюємо голі теги на людські описи; справжні текст-ярлики
+// (з пробілами/великими літерами) проходять без змін.
+const CLICK_TAG_LABELS: Record<string, string> = {
+  div: "область/контейнер", canvas: "🗺 карта або 3D-превʼю", section: "секція",
+  path: "іконка (SVG)", svg: "іконка", a: "посилання", button: "кнопка",
+  img: "зображення", span: "напис", li: "пункт списку", ul: "список",
+};
+function prettyClicks(rows?: [string, number][]): [string, number][] {
+  if (!Array.isArray(rows)) return [];
+  return rows.map(([label, count]) => {
+    const m = /^(.*) · ([a-z]+)$/.exec(label || "");
+    return m && CLICK_TAG_LABELS[m[2]] ? [`${m[1]} · ${CLICK_TAG_LABELS[m[2]]}`, count] : [label, count];
+  });
+}
+
 // Статуси замовлення (серверні значення) → ключі account-неймспейсу (вже перекладені).
 const ORDER_STATUSES = ["new", "paid", "printed", "shipped", "done"] as const;
 type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -192,19 +209,23 @@ export default function AdminPage() {
                   {(stats.byDay?.length > 0) && (
                     <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
                       <div className="mb-3 text-[13px] font-semibold text-ink-2">Перегляди за днями</div>
-                      <div className="flex items-stretch gap-1.5" style={{ height: 120 }}>
-                        {stats.byDay.map((d: any) => {
+                      {/* ПІКСЕЛЬНІ висоти (не %!) — % резолвиться проти батька з
+                          визначеною висотою і капризно виходив 0 (порожній графік
+                          повторювався). Px + число НАД баром = завжди читабельно. */}
+                      <div className="flex items-end gap-1.5" style={{ minHeight: 132 }}>
+                        {(() => {
                           const max = Math.max(...stats.byDay.map((x: any) => x.pageviews || 0), 1);
-                          // h-full на колонці ОБОВ'ЯЗКОВЕ: стовпчик має % висоту,
-                          // а % резолвиться лише проти батька з ВИЗНАЧЕНОЮ висотою.
-                          // Без цього (старий items-end → колонка стискалась до
-                          // контенту) усі бари виходили 0 → графік порожній.
-                          return (
-                            <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end" title={`${d.day}: ${d.pageviews} переглядів, ${d.visitors} відвідувачів`}>
-                              <div className="w-full rounded-t bg-forest/80" style={{ height: `${Math.round(((d.pageviews || 0) / max) * 100)}%`, minHeight: d.pageviews ? 3 : 0 }} />
-                            </div>
-                          );
-                        })}
+                          return stats.byDay.map((d: any) => {
+                            const pv = d.pageviews || 0;
+                            const px = pv ? Math.max(Math.round((pv / max) * 108), 4) : 0;
+                            return (
+                              <div key={d.day} className="flex flex-1 flex-col items-center justify-end" title={`${d.day}: ${pv} переглядів`}>
+                                <span className="mb-0.5 text-[9px] font-bold text-ink-2">{pv || ""}</span>
+                                <div className="w-full rounded-t bg-forest/80" style={{ height: px }} />
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                       <div className="mt-1.5 flex justify-between text-[10px] text-ink-3">
                         <span>{stats.byDay[0]?.day}</span><span>{stats.byDay[stats.byDay.length - 1]?.day}</span>
@@ -223,7 +244,7 @@ export default function AdminPage() {
 
                   <div className="mt-4 grid gap-4 md:grid-cols-2">
                     <StatList title="Звідки прийшли (реферери)" rows={stats.topRefs} />
-                    <StatList title="Топ кліків (елемент)" rows={stats.topClicks} />
+                    <StatList title="Топ кліків (де тикали)" rows={prettyClicks(stats.topClicks)} />
                   </div>
 
                   {stats.clicksByPath && Object.keys(stats.clicksByPath).length > 0 && (
