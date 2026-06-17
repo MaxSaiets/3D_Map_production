@@ -216,6 +216,12 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
               if (typeof maybeColored.metalness === "number") maybeColored.metalness = 0.0;
               if (typeof maybeColored.roughness === "number") maybeColored.roughness = 0.85;
             }
+            // FLAT SHADING на ВСІХ шарах: ThreeMFLoader дефолтно дає smooth-нормалі,
+            // які на плоскій верхній грані ЗМІШУЮТЬ нормаль кепа зі стінкою на
+            // спільних граничних вершинах → «віяло»-градієнт на парках/дорогах, ніби
+            // меш кривий і йде з однієї точки (скарга власника). Per-face нормалі =
+            // кожен трикутник рівний → плоский верх однотонний, як друк.
+            if ("flatShading" in maybeColored) (maybeColored as any).flatShading = true;
             material.side = THREE.DoubleSide;
             material.needsUpdate = true;
           }
