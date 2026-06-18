@@ -67,6 +67,13 @@ interface GenerationState {
   simpleConnector: boolean;
   // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
   simpleFrame: boolean;
+  // РЕЛЬЄФ (висоти землі): окремий перемикач для УСІХ режимів карт. Джерело правди
+  // для terrain_enabled у Просто-флоу (стиль лише задає дефолт). Вмикається лише на
+  // 3D-карті (повний пайплайн); плоскі режими (AMS/магніт/конектор/рамка) — без рельєфу.
+  simpleRelief: boolean;
+  // ПЛАСКІ БУДИНКИ: у плоских режимах будинки = тонкі footprint-плити одної висоти
+  // (чистіший AMS-друк) замість лог-масштабованих блоків. Opt-in.
+  simpleFlatBuildings: boolean;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -100,6 +107,8 @@ interface GenerationState {
   setSimpleFlatAms: (on: boolean) => void;
   setSimpleConnector: (on: boolean) => void;
   setSimpleFrame: (on: boolean) => void;
+  setSimpleRelief: (on: boolean) => void;
+  setSimpleFlatBuildings: (on: boolean) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -189,6 +198,8 @@ const initialState = {
   simpleFlatAms: false,
   simpleConnector: false,
   simpleFrame: false,
+  simpleRelief: false,
+  simpleFlatBuildings: false,
   gpxName: null,
   gpxNote: null,
 
@@ -219,6 +230,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleFlatAms: (on) => set({ simpleFlatAms: on }),
   setSimpleConnector: (on) => set({ simpleConnector: on }),
   setSimpleFrame: (on) => set({ simpleFrame: on }),
+  setSimpleRelief: (on) => set({ simpleRelief: on }),
+  setSimpleFlatBuildings: (on) => set({ simpleFlatBuildings: on }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

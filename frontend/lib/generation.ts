@@ -16,6 +16,9 @@ export interface MapRequestParams {
   terrainEnabled?: boolean;
   terrainZScale?: number;
   terrainBaseThicknessMm?: number;
+  /** Пласкі будинки у плоских режимах: усі однакової низької висоти (footprint-плити). */
+  flatUniformBuildingHeight?: boolean;
+  flatMaxBuildingHeightMm?: number;
   terrainResolution?: number;
   terrariumZoom?: number;
   exportFormat?: "stl" | "3mf";
@@ -61,6 +64,8 @@ export function buildMapRequest(p: MapRequestParams) {
     terrain_enabled: p.terrainEnabled ?? true,
     terrain_z_scale: p.terrainZScale ?? 1.0,
     terrain_base_thickness_mm: p.terrainBaseThicknessMm ?? 0.3,
+    flat_uniform_building_height: Boolean(p.flatUniformBuildingHeight),
+    ...(p.flatMaxBuildingHeightMm ? { flat_max_building_height_mm: p.flatMaxBuildingHeightMm } : {}),
     terrain_resolution: p.terrainResolution ?? 180,
     terrarium_zoom: p.terrariumZoom ?? 15,
     flatten_buildings_on_terrain: false,

@@ -72,6 +72,12 @@ export function SimpleControlPanel({
   // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
   const frameMode = s.simpleFrame;
   const setFrameMode = s.setSimpleFrame;
+  // РЕЛЬЄФ (висоти землі): окремий перемикач для усіх режимів (3D-карта).
+  const reliefMode = s.simpleRelief;
+  const setReliefMode = s.setSimpleRelief;
+  // ПЛАСКІ БУДИНКИ у плоских режимах (тонкі footprint-плити).
+  const flatBuildingsMode = s.simpleFlatBuildings;
+  const setFlatBuildingsMode = s.setSimpleFlatBuildings;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -151,13 +157,13 @@ export function SimpleControlPanel({
   // Жива орієнтовна ціна — оновлюється при зміні розміру/стилю (relief = +надбавка).
   useEffect(() => {
     let alive = true;
-    const relief = MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain ?? false;
+    const relief = reliefMode;  // окремий перемикач «Рельєф» — джерело правди
     // Магніт — окремий продукт із фіксованою ціною (ключ розміру 60 = 180₴), а
     // НЕ звичайна мапа за вибраним S/M/L/XL. Без цього у формі показувалась ціна
     // мапи (напр. 250₴ замість 180₴). Генерація теж форсує modelSizeMm=60.
     fetchQuote("map", magnetMode ? 60 : modelSizeMm, magnetMode ? false : relief).then((q) => { if (alive) setQuote(q); });
     return () => { alive = false; };
-  }, [modelSizeMm, styleId, magnetMode]);
+  }, [modelSizeMm, styleId, magnetMode, reliefMode]);
 
   // Ціна для форми замовлення. КРИТИЧНО: для панно множимо на кількість плиток —
   // 3×3 = 9 окремих мап, раніше коштувало як 1 плитка → ~9× недозбір (і LiqPay
@@ -173,7 +179,7 @@ export function SimpleControlPanel({
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
     // Рельєф додає надбавку (як у бекенд-quote) — інакше fallback недооцінює.
     // Ціни з єдиного джерела mapPrices.ts (не хардкод) — щоб fallback не розходився з quote.
-    const reliefAddon = (MAP_STYLE_PRESETS.find((p) => p.id === styleId)?.layers.terrain && !magnetMode) ? MAP_RELIEF_ADDON_UAH : 0;
+    const reliefAddon = (reliefMode && !magnetMode) ? MAP_RELIEF_ADDON_UAH : 0;
     const unit = magnetMode ? MAP_MAGNET_PRICE_UAH : near.price + reliefAddon; // магніт = окремий продукт
     return fmtPrice(unit * orderTiles, "UAH");
   })();
@@ -322,6 +328,8 @@ export function SimpleControlPanel({
     setPreviewIncludeWater(preset.layers.water);
     setPreviewIncludeParks(preset.layers.parks);
     setTerrainEnabled(preset.layers.terrain);
+    // Стиль задає ДЕФОЛТ рельєфу; далі окремий перемикач «Рельєф» — джерело правди.
+    setReliefMode(preset.layers.terrain);
   };
 
   // Чернетка конструктора: зона/стиль/розмір переживають перезавантаження.
@@ -393,7 +401,6 @@ export function SimpleControlPanel({
   // генерується НА ВИМОГУ при download/order (магніт/панно вже завжди 3MF).
   const buildSingleMapReq = (forPrint: boolean) => {
     const preset = MAP_STYLE_PRESETS.find((p) => p.id === styleId);
-    const layerTerrain = preset ? preset.layers.terrain : s.terrainEnabled;
     const layerBuildings = preset ? preset.layers.buildings : s.previewIncludeBuildings;
     const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
     const layerWater = preset ? preset.layers.water : s.previewIncludeWater;
@@ -409,6 +416,11 @@ export function SimpleControlPanel({
     // (магніт уже плоский); несумісна лише з панно (3D-плитки, інший пайплайн).
     const frame = panelMode === 0 && s.simpleFrame;
     const flatPlate = flatAms || connector || frame;
+    // РЕЛЬЄФ (висоти землі) — окремий перемикач, джерело правди для terrain. Працює
+    // на 3D-карті (стандарт + панно); плоскі режими/магніт фізично без рельєфу.
+    const relief = !magnetMode && !flatPlate && reliefMode;
+    // ПЛАСКІ БУДИНКИ — лише у плоских режимах (footprint-плити одної низької висоти).
+    const flatBuildings = (flatPlate || magnetMode) && flatBuildingsMode;
     // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
     let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
     let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
@@ -425,9 +437,11 @@ export function SimpleControlPanel({
       roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
       buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
       buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-      waterDepth: s.waterDepth, terrainEnabled: (magnetMode || flatPlate) ? false : layerTerrain, terrainZScale: s.terrainZScale,
+      waterDepth: s.waterDepth, terrainEnabled: relief, terrainZScale: s.terrainZScale,
       terrainBaseThicknessMm: (magnetMode || flatPlate) ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
       terrariumZoom: s.terrariumZoom,
+      flatUniformBuildingHeight: flatBuildings,
+      flatMaxBuildingHeightMm: flatBuildings ? 0.8 : undefined,
       // forPrint → друкарський 3MF (не GLB-прев'ю).
       exportFormat: forPrint ? "3mf" : s.exportFormat,
       modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
@@ -682,6 +696,37 @@ export function SimpleControlPanel({
           </div>
         </div>
 
+        {/* РЕЛЬЄФ (висоти землі) — окремий перемикач для УСІХ режимів карт. Завжди
+            видимий (не ховається під «Більше опцій»). Рельєф = 3D-карта (повний
+            пайплайн); тому взаємовиключний з плоскими режимами (AMS/магніт/конектор/
+            рамка). Працює зі стандартною картою та панно. */}
+        <button
+          type="button"
+          aria-pressed={reliefMode}
+          data-testid="relief-toggle"
+          onClick={() => {
+            const next = !reliefMode;
+            setReliefMode(next);
+            if (next) {
+              if (flatAmsMode) setFlatAmsMode(false);
+              if (magnetMode) setMagnetMode(false);
+              if (connectorMode) setConnectorMode(false);
+              if (frameMode) setFrameMode(false);
+            }
+          }}
+          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+            reliefMode
+              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+          }`}
+        >
+          <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+            🏔 {t("reliefToggle")}
+            {reliefMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("reliefHint")}</span>
+        </button>
+
         {/* Більше опцій — магніт/GPX/панно сховані за замовчанням, щоб Просто-режим
             лишався коротким. Розкривається кліком або авто (якщо щось уже активне). */}
         <div>
@@ -711,10 +756,12 @@ export function SimpleControlPanel({
           onClick={() => {
             const next = !flatAmsMode;
             setFlatAmsMode(next);
-            // Взаємовиключно з магнітом/панно (різні плоскі формати).
+            // Взаємовиключно з магнітом/панно (різні плоскі формати) і з рельєфом
+            // (рельєф = 3D-карта, flat-AMS = плоска).
             if (next) {
               if (magnetMode) setMagnetMode(false);
               if (panelMode > 0) setPanelMode(0);
+              if (reliefMode) setReliefMode(false);
             }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
@@ -730,6 +777,22 @@ export function SimpleControlPanel({
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>
         </button>
 
+        {/* ПЛАСКІ БУДИНКИ (#6): у плоских режимах будинки = тонкі footprint-плити
+            одної низької висоти (чистіший AMS-друк) замість лог-блоків. Показуємо
+            лише коли активний плоский режим (де це має сенс). Opt-in. */}
+        {(flatAmsMode || connectorMode || frameMode || magnetMode) && (
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[14px] border border-[var(--surface-border)] bg-white/60 px-4 py-2.5">
+            <span className="text-[13px] font-medium text-[var(--text-secondary)]">🏢 {t("flatBuildingsToggle")}</span>
+            <input
+              type="checkbox"
+              data-testid="flat-buildings-toggle"
+              checked={flatBuildingsMode}
+              onChange={(e) => setFlatBuildingsMode(e.target.checked)}
+              className="h-4 w-4 shrink-0 accent-[var(--accent-strong)]"
+            />
+          </label>
+        )}
+
         {/* З'єднувач-пази (метелик): «ластівчин-хвіст» пази на гранях + окрема
             деталь-ключ, щоб стикувати дві плоскі карти у диптих/панно. Паз у ДНІ
             3мм основи → спереду шов непомітний. Сумісний з flat-AMS (кольорова
@@ -744,6 +807,7 @@ export function SimpleControlPanel({
             if (next) {
               if (magnetMode) setMagnetMode(false);
               if (panelMode > 0) setPanelMode(0);
+              if (reliefMode) setReliefMode(false);
             }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
@@ -770,6 +834,7 @@ export function SimpleControlPanel({
             const next = !frameMode;
             setFrameMode(next);
             if (next && panelMode > 0) setPanelMode(0);
+            if (next && reliefMode) setReliefMode(false);
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             frameMode
@@ -793,6 +858,7 @@ export function SimpleControlPanel({
             setMagnetMode(next);
             if (next && flatAmsMode) setFlatAmsMode(false);
             if (next && connectorMode) setConnectorMode(false);
+            if (next && reliefMode) setReliefMode(false);
             // Магніт і панно — взаємовиключні (панно = багато плиток, магніт = одна
             // плитка з кишенею). Раніше можна було лишити обидва ON → генерувалось
             // панно, але ціна показувала магніт (180₴) — мовчазна підміна продукту.

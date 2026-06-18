@@ -159,6 +159,26 @@ test.describe("Конструктор мап /create", () => {
     await expect(frame).toHaveAttribute("aria-pressed", "false");
   });
 
+  test("рельєф: окремий перемикач вмикається й взаємовиключний з плоскими режимами", async ({ page }) => {
+    const relief = page.locator('[data-testid="relief-toggle"]').first();
+    await expect(relief).toBeVisible();  // завжди видимий, не під «Більше опцій»
+    await expect(relief).toHaveAttribute("aria-pressed", "false");
+    await relief.click();
+    await expect(relief).toHaveAttribute("aria-pressed", "true");
+    // Увімкнення плоского режиму гасить рельєф (рельєф = 3D, flat-AMS = плоско)
+    await page.locator('[data-testid="more-options"]').first().click();
+    const flatAms = page.locator('[data-testid="flat-ams-toggle"]').first();
+    await flatAms.click();
+    await expect(flatAms).toHaveAttribute("aria-pressed", "true");
+    await expect(relief).toHaveAttribute("aria-pressed", "false");
+    // Пласкі будинки — суб-перемикач з'являється у плоскому режимі
+    await expect(page.locator('[data-testid="flat-buildings-toggle"]').first()).toBeVisible();
+    // …і зникає коли рельєф знову вмикається (плоский режим вимкнено)
+    await relief.click();
+    await expect(flatAms).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator('[data-testid="flat-buildings-toggle"]')).toHaveCount(0);
+  });
+
   test("REGRESSION: чернетка з plain-object зоною НЕ валить /create і /keychains", async ({ page }) => {
     // JSON.parse(draft) повертає plain object замість L.LatLngBounds — раніше
     // це крешило обидві сторінки («getNorth/getCenter is not a function»).
