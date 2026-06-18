@@ -492,6 +492,7 @@
     "panelOffForMagnet": "Panel wyłączony — magnes to pojedyncza płytka z wnęką",
     "optGroupFlat": "Płaska kolorowa mapa",
     "optGroupOther": "Inne formaty",
+    "addonsTitle": "Dodatki (łącznik, ramka, dom)",
     "reliefDisabledOthers": "Relief = mapa 3D, tryby płaskie wyłączono",
     "magnetOffForPanel": "Magnes i GPX wyłączone — panel generuje pełne kafelki"
   },

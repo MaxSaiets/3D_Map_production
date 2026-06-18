@@ -492,6 +492,7 @@
     "panelOffForMagnet": "Panel turned off — a magnet is a single tile with a pocket",
     "optGroupFlat": "Color flat map",
     "optGroupOther": "Other formats",
+    "addonsTitle": "Add-ons (joiner, frame, mark home)",
     "reliefDisabledOthers": "Relief = 3D map, so flat modes were turned off",
     "magnetOffForPanel": "Magnet and GPX turned off — a panel generates full tiles"
   },

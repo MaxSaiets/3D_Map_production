@@ -492,6 +492,7 @@
     "panelOffForMagnet": "Panel desactivado — un imán es una sola placa con hueco",
     "optGroupFlat": "Mapa plano a color",
     "optGroupOther": "Otros formatos",
+    "addonsTitle": "Extras (conector, marco, casa)",
     "reliefDisabledOthers": "Relieve = mapa 3D, los modos planos se desactivaron",
     "magnetOffForPanel": "Imán y GPX desactivados — un panel genera mosaicos completos"
   },

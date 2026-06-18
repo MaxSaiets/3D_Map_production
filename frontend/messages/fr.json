@@ -492,6 +492,7 @@
     "panelOffForMagnet": "Panneau désactivé — un aimant est une seule plaque avec logement",
     "optGroupFlat": "Carte plate couleur",
     "optGroupOther": "Autres formats",
+    "addonsTitle": "Extras (connecteur, cadre, maison)",
     "reliefDisabledOthers": "Relief = carte 3D, les modes plats ont été désactivés",
     "magnetOffForPanel": "Aimant et GPX désactivés — un panneau génère des tuiles complètes"
   },

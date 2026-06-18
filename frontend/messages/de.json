@@ -492,6 +492,7 @@
     "panelOffForMagnet": "Panel deaktiviert — ein Magnet ist eine einzelne Platte mit Aussparung",
     "optGroupFlat": "Farbige flache Karte",
     "optGroupOther": "Andere Formate",
+    "addonsTitle": "Extras (Verbinder, Rahmen, Zuhause)",
     "reliefDisabledOthers": "Relief = 3D-Karte, flache Modi wurden deaktiviert",
     "magnetOffForPanel": "Magnet und GPX deaktiviert — ein Panel erzeugt volle Kacheln"
   },

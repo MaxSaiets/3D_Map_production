@@ -98,6 +98,11 @@ export function SimpleControlPanel({
   const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode || frameMode || highlightMode;
   const [moreOpen, setMoreOpen] = useState(advancedActive);
   useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
+  // Рідковживані додатки (з'єднувач/рамка/виділити дім) сховані під розкривачем,
+  // щоб не лякати стіною тумблерів; авто-відкриваються, якщо щось уже активне.
+  const addonsActive = connectorMode || frameMode || highlightMode;
+  const [addonsOpen, setAddonsOpen] = useState(addonsActive);
+  useEffect(() => { if (addonsActive) setAddonsOpen(true); }, [addonsActive]);
 
   const doShare = async () => {
     if (!taskGroupId) return;
@@ -811,6 +816,20 @@ export function SimpleControlPanel({
           </label>
         )}
 
+        {/* ДОДАТКИ (рідковживані) — за компактним розкривачем, щоб не лякати стіною
+            тумблерів. Розкриваються кліком або авто, якщо щось уже активне. */}
+        <button
+          type="button"
+          onClick={() => setAddonsOpen((v) => !v)}
+          aria-expanded={addonsOpen}
+          data-testid="addons-toggle"
+          className="flex w-full items-center justify-between rounded-[16px] border border-dashed border-[var(--surface-border)] bg-white/50 px-4 py-2 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.25)]"
+        >
+          <span>➕ {t("addonsTitle")}{addonsActive ? " ●" : ""}</span>
+          <ChevronDown size={15} className={`transition ${addonsOpen ? "rotate-180" : ""}`} />
+        </button>
+        {addonsOpen && (
+        <>
         {/* З'єднувач-пази (метелик): «ластівчин-хвіст» пази на гранях + окрема
             деталь-ключ, щоб стикувати дві плоскі карти у диптих/панно. Паз у ДНІ
             3мм основи → спереду шов непомітний. Сумісний з flat-AMS (кольорова
@@ -909,6 +928,8 @@ export function SimpleControlPanel({
             </div>
           )}
         </div>
+        </>
+        )}
 
         <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("optGroupOther")}</div>
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
