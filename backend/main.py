@@ -538,6 +538,18 @@ async def _ttl_cleanup_loop():
 async def startup_event():
     import asyncio as _asyncio
     _asyncio.create_task(_ttl_cleanup_loop())
+
+    # Прогрів локальної OSM-БД (DuckDB) у фоні — перший конект ~5с; інакше перший
+    # /api/building-at (підсвітка будинку) або генерація після рестарту гальмують.
+    def _warm_osm_db():
+        try:
+            from services.local_osm_db import is_available, _get_conn
+            if is_available():
+                _get_conn()
+                print("[STARTUP] Local OSM DuckDB connection warmed")
+        except Exception as _wexc:
+            print(f"[STARTUP] OSM DB warm skipped: {_wexc}")
+    _threading.Thread(target=_warm_osm_db, daemon=True).start()
     """Р’С–РґРЅРѕРІР»СЋС”РјРѕ СЃС‚Р°РЅ Р·Р°РґР°С‡ РЅР° РѕСЃРЅРѕРІС– С„Р°Р№Р»С–РІ Сѓ РґРёСЂРµРєС‚РѕСЂС–С— output С‚Р° РїРµСЂРµРІС–СЂСЏС”РјРѕ Firebase"""
     
     # Р†РЅС–С†С–Р°Р»С–Р·Р°С†С–СЏ Firebase С‚Р° РІРёРІС–Рґ СЃС‚Р°С‚СѓСЃСѓ
