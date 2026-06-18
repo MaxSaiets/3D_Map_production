@@ -718,11 +718,15 @@ export function SimpleControlPanel({
             const next = !reliefMode;
             setReliefMode(next);
             if (next) {
+              // Рельєф = 3D-карта → плоскі режими несумісні. Раніше вони тихо
+              // вимикались і покупець думав, що щось зламалось. Тепер — тост.
+              const off = flatAmsMode || magnetMode || connectorMode || frameMode || highlightMode;
               if (flatAmsMode) setFlatAmsMode(false);
               if (magnetMode) setMagnetMode(false);
               if (connectorMode) setConnectorMode(false);
               if (frameMode) setFrameMode(false);
               if (highlightMode) setHighlightMode(false);
+              if (off) window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "reliefDisabledOthers" } }));
             }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
@@ -757,6 +761,9 @@ export function SimpleControlPanel({
         </div>
         {moreOpen && (
         <>
+        {/* Групуємо опції, щоб не лякати покупця стіною тумблерів: спочатку все про
+            плоску кольорову карту (+ її додатки), далі — інші формати. */}
+        <div className="px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("optGroupFlat")}</div>
         {/* Плоска кольорова (AMS): пласка багатокольорова плитка-карта — кожен шар
             окремий колір-філамент (Base/Вода/Парки/Дороги/Будинки), міцна основа 3мм.
             БЕЗ рельєфу, БЕЗ з'єднувачів-пазів. Друк плоско = ідеально для Bambu AMS. */}
@@ -903,6 +910,7 @@ export function SimpleControlPanel({
           )}
         </div>
 
+        <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("optGroupOther")}</div>
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"

@@ -569,7 +569,9 @@ export function KeychainControlPanel({
         // OK = можна друкувати (matched backend floor 1.0mm).
         // Тонкі брелки можуть гнутись/зламатись, але це вибір користувача.
         ok: baseThicknessMm >= 1.0 && design.rimWidthMm >= 0.4,
-        tone: baseThicknessMm >= 1.8 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.2 && design.rimWidthMm >= 0.6 ? "warn" : "warn",
+        // 1.5мм = свідомий дефолт власника → «good» (не лякаємо warn'ом на дефолті);
+        // 1.0–1.5 = warn (тонкувато), <1.0 = bad (гнеться/ламається).
+        tone: baseThicknessMm >= 1.5 && design.rimWidthMm >= 0.8 ? "good" : baseThicknessMm >= 1.0 && design.rimWidthMm >= 0.5 ? "warn" : "bad",
         label: t("check.base.label"),
         detail: t("check.base.detail", { base: baseThicknessMm.toFixed(1), rim: design.rimWidthMm.toFixed(1) }),
       },
