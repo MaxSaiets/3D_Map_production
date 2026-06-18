@@ -78,6 +78,9 @@ interface GenerationState {
   // → highlightPoints [[lon,lat],...] → КОЖЕН окрема ЧЕРВОНА вставна деталь. Плоский режим.
   mapHighlightBuilding: boolean;
   highlightPoints: Array<[number, number]>;
+  // Контури обраних будівель (паралельно highlightPoints, той самий індекс) — щоб
+  // підсвітити на карті РЕАЛЬНИЙ контур будинку, а не лише крапку. null = ще не завантажено.
+  highlightFootprints: Array<Array<[number, number]> | null>;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -114,8 +117,9 @@ interface GenerationState {
   setSimpleRelief: (on: boolean) => void;
   setSimpleFlatBuildings: (on: boolean) => void;
   setMapHighlightBuilding: (on: boolean) => void;
-  setHighlightPoints: (pts: Array<[number, number]>) => void;
+  clearHighlights: () => void;
   addHighlightPoint: (pt: [number, number]) => void;
+  setHighlightFootprint: (pt: [number, number], poly: Array<[number, number]>) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -209,6 +213,7 @@ const initialState = {
   simpleFlatBuildings: false,
   mapHighlightBuilding: false,
   highlightPoints: [],
+  highlightFootprints: [],
   gpxName: null,
   gpxNote: null,
 
@@ -242,8 +247,18 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleRelief: (on) => set({ simpleRelief: on }),
   setSimpleFlatBuildings: (on) => set({ simpleFlatBuildings: on }),
   setMapHighlightBuilding: (on) => set({ mapHighlightBuilding: on }),
-  setHighlightPoints: (pts) => set({ highlightPoints: pts }),
-  addHighlightPoint: (pt) => set((st) => ({ highlightPoints: [...st.highlightPoints, pt].slice(0, 12) })),
+  clearHighlights: () => set({ highlightPoints: [], highlightFootprints: [] }),
+  addHighlightPoint: (pt) => set((st) => (st.highlightPoints.length >= 12 ? st : ({
+    highlightPoints: [...st.highlightPoints, pt],
+    highlightFootprints: [...st.highlightFootprints, null],
+  }))),
+  setHighlightFootprint: (pt, poly) => set((st) => {
+    const i = st.highlightPoints.findIndex((p) => p[0] === pt[0] && p[1] === pt[1]);
+    if (i < 0) return st;
+    const f = [...st.highlightFootprints];
+    f[i] = poly;
+    return { highlightFootprints: f };
+  }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

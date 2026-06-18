@@ -709,18 +709,30 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     // ВИДІЛЕНІ БУДІВЛІ: червоні маркери обраних точок. Коли увімкнено режим вибору
     // будинку — клік по карті ДОДАЄ точку (нижче у handleMapClick), а не переносить
     // зону. Маркери синхронізуються зі store.highlightPoints (по одному на кожну).
-    const applyHighlightPoints = (pts: Array<[number, number]>) => {
+    const applyHighlights = (pts: Array<[number, number]>, foots: Array<Array<[number, number]> | null>) => {
       if (highlightLayerRef.current) { highlightLayerRef.current.clearLayers(); }
       else { highlightLayerRef.current = L.layerGroup().addTo(map); }
       (pts || []).forEach(([lon, lat], i) => {
-        L.circleMarker([lat, lon], {
-          radius: 8, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
-        }).addTo(highlightLayerRef.current!);
+        const foot = foots && foots[i];
+        if (foot && foot.length >= 3) {
+          // РЕАЛЬНИЙ контур будівлі — червоний обвід із заливкою (як на скрині)
+          L.polygon(foot.map(([fx, fy]) => [fy, fx] as [number, number]), {
+            color: "#ce2626", weight: 2.5, fillColor: "#ce2626", fillOpacity: 0.35, interactive: false,
+          }).addTo(highlightLayerRef.current!);
+        } else {
+          // ще вантажиться контур → тимчасова крапка
+          L.circleMarker([lat, lon], {
+            radius: 7, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
+          }).addTo(highlightLayerRef.current!);
+        }
       });
     };
-    applyHighlightPoints(useGenerationStore.getState().highlightPoints);
+    const _st0 = useGenerationStore.getState();
+    applyHighlights(_st0.highlightPoints, _st0.highlightFootprints);
     const unsubHl = useGenerationStore.subscribe((st, prev) => {
-      if (st.highlightPoints !== prev.highlightPoints) applyHighlightPoints(st.highlightPoints);
+      if (st.highlightPoints !== prev.highlightPoints || st.highlightFootprints !== prev.highlightFootprints) {
+        applyHighlights(st.highlightPoints, st.highlightFootprints);
+      }
     });
 
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
@@ -868,8 +880,15 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       }
       if (Date.now() - lastDragEndedAtRef.current < MAP_CLICK_SUPPRESS_AFTER_DRAG_MS) return;
       // Режим вибору будинку: клік ДОДАЄ точку (свій будинок), а не переносить зону.
+      // Одразу крапка, далі підвантажуємо РЕАЛЬНИЙ контур будівлі (Overpass) → обвід.
       if (useGenerationStore.getState().mapHighlightBuilding) {
-        useGenerationStore.getState().addHighlightPoint([event.latlng.lng, event.latlng.lat]);
+        const pt: [number, number] = [event.latlng.lng, event.latlng.lat];
+        useGenerationStore.getState().addHighlightPoint(pt);
+        import("@/lib/buildings").then(({ fetchBuildingAt }) =>
+          fetchBuildingAt(event.latlng.lat, event.latlng.lng).then((poly) => {
+            if (poly && poly.length >= 3) useGenerationStore.getState().setHighlightFootprint(pt, poly);
+          }).catch(() => {}),
+        );
         return;
       }
       const current = currentBoundsRef.current ?? initialBounds;

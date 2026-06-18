@@ -980,6 +980,54 @@ def _compute_authoritative_amount(
     return round(base * max(1, int(tile_count)), 2), currency
 
 
+@app.get("/api/building-at")
+async def building_at(
+    lat: float = Query(..., ge=-90.0, le=90.0),
+    lon: float = Query(..., ge=-180.0, le=180.0),
+    _rl: None = Depends(rate_limit("building_at", [(120, 60.0)])),
+):
+    """Контур будівлі у точці (для підсвітки «свій будинок» на карті). Бере той
+    самий локальний OSM-DuckDB, що й генератор → ШВИДКО (без Overpass) і ТОЧНО
+    збігається з тим, що надрукується. Повертає {"footprint": [[lon,lat],...]} або None."""
+    try:
+        from services.local_osm_db import get_gdf, is_available
+        if not is_available():
+            return {"footprint": None}
+        import math as _math
+        from shapely.geometry import Point as _Pt
+        _m = 70.0
+        _dlat = _m / 111320.0
+        _dlon = _m / (111320.0 * max(_math.cos(_math.radians(lat)), 0.05))
+        gdf = get_gdf("buildings", lat + _dlat, lat - _dlat, lon + _dlon, lon - _dlon)
+        if gdf is None or gdf.empty:
+            return {"footprint": None}
+        pt = _Pt(lon, lat)
+        best, best_d = None, float("inf")
+        for geom in gdf.geometry.values:
+            if geom is None or getattr(geom, "is_empty", True):
+                continue
+            try:
+                if geom.contains(pt):  # клік усередині будівлі — точний вибір
+                    best = geom
+                    break
+                d = geom.distance(pt)
+                if d < best_d:
+                    best_d, best = d, geom
+            except Exception:
+                continue
+        if best is None:
+            return {"footprint": None}
+        if best.geom_type == "MultiPolygon":
+            best = max(best.geoms, key=lambda g: g.area)
+        if best.geom_type != "Polygon":
+            return {"footprint": None}
+        coords = [[float(x), float(y)] for x, y in best.exterior.coords]
+        return {"footprint": coords}
+    except Exception as exc:
+        print(f"[BUILDING-AT] failed: {exc}")
+        return {"footprint": None}
+
+
 @app.get("/api/health")
 async def health():
     """Lightweight health probe for monitoring/alerting.

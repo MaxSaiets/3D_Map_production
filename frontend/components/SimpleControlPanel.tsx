@@ -82,7 +82,7 @@ export function SimpleControlPanel({
   const highlightMode = s.mapHighlightBuilding;
   const setHighlightMode = s.setMapHighlightBuilding;
   const highlightPoints = s.highlightPoints;
-  const setHighlightPoints = s.setHighlightPoints;
+  const clearHighlights = s.clearHighlights;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -877,7 +877,7 @@ export function SimpleControlPanel({
                 if (panelMode > 0) setPanelMode(0);
                 if (reliefMode) setReliefMode(false);
               } else {
-                setHighlightPoints([]);  // вимкнули → прибрати маркери/точки
+                clearHighlights();  // вимкнули → прибрати маркери/контури
               }
             }}
             className="w-full text-left"
@@ -894,7 +894,7 @@ export function SimpleControlPanel({
                 {highlightPoints.length ? `📍 ${t("highlightPicked", { count: highlightPoints.length })}` : t("highlightPickHint")}
               </span>
               {highlightPoints.length > 0 && (
-                <button type="button" data-testid="highlight-clear" onClick={() => setHighlightPoints([])}
+                <button type="button" data-testid="highlight-clear" onClick={() => clearHighlights()}
                         className="shrink-0 font-semibold text-red-700 hover:underline">
                   {t("highlightClear")}
                 </button>
