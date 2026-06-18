@@ -477,6 +477,7 @@
     "generateTiles": "Generate {tiles} panel tiles",
     "etaSingle": "≈ 1–3 min · the 3D preview appears automatically",
     "etaTiles": "≈ 2 min per tile · about {tiles} × 2 min total",
+    "etaFlat": "≈ 2–4 min · full print-ready tile",
     "cancelGen": "Cancel generation",
     "errStale": "Lost track of the task (the server may have restarted). Please generate again.",
     "quotaLeft": "{n} of {limit} free downloads left",
@@ -761,6 +762,8 @@
       "highlightToggle": "Highlight the center building",
       "highlightHint": "The building at the map center becomes a separate bronze part — print it in another filament and place it in.",
       "backPlaceholder": "NAME · DATE",
+      "mainPlaceholder": "KYIV",
+      "secondPlaceholder": "12.06.2026",
       "backHint": "Engraved into the bottom face by 0.5 mm (mirrored — readable when the keychain is flipped). Visible after generation in 3D."
     },
     "review": {
@@ -802,6 +805,7 @@
       "replace": "Replace",
       "pickFile": "Choose file",
       "loaded": "✓ {name} · {count} points",
+      "offForTopo": "Route removed — topo mode shows terrain heights instead of the map",
       "remove": "Remove",
       "privacy": "🔒 Your route is only used to build the model. We don't publish or share it.",
       "hint": "A run/hike track — a line over the map. The area auto-focuses on the route.",

@@ -477,6 +477,7 @@
     "generateTiles": "Wygeneruj {tiles} kafelków panelu",
     "etaSingle": "≈ 1–3 min · podgląd 3D pojawi się automatycznie",
     "etaTiles": "≈ 2 min na kafelek · łącznie ok. {tiles} × 2 min",
+    "etaFlat": "≈ 2–4 min · pełna płytka gotowa do druku",
     "cancelGen": "Anuluj generowanie",
     "errStale": "Utracono kontakt z zadaniem (restart serwera?). Wygeneruj ponownie.",
     "quotaLeft": "{n} z {limit} darmowych pobrań pozostało",
@@ -761,6 +762,8 @@
       "highlightToggle": "Wyróżnij środkowy budynek",
       "highlightHint": "Budynek na środku mapy staje się osobną brązową częścią — wydrukuj ją innym filamentem i włóż na miejsce.",
       "backPlaceholder": "IMIĘ · DATA",
+      "mainPlaceholder": "WARSZAWA",
+      "secondPlaceholder": "12.06.2026",
       "backHint": "Grawerowany w dolną ściankę na 0,5 mm (lustrzanie — czytelny po odwróceniu breloka). Widoczny po wygenerowaniu w 3D."
     },
     "review": {
@@ -802,6 +805,7 @@
       "replace": "Zamień",
       "pickFile": "Wybierz plik",
       "loaded": "✓ {name} · {count} punktów",
+      "offForTopo": "Trasa usunięta — tryb topo pokazuje wysokości terenu zamiast mapy",
       "remove": "Usuń",
       "privacy": "🔒 Twoja trasa służy tylko do zbudowania modelu. Nie publikujemy jej ani nie udostępniamy.",
       "hint": "Trasa biegu/wędrówki — linia nad mapą. Obszar automatycznie ustawi się na trasę.",

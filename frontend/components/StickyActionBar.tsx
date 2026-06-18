@@ -51,7 +51,7 @@ export function StickyActionBar({
         {/* Ціна — НАТУРАЛЬНА ширина (shrink-0, nowrap): ніколи не обрізається. Кнопки
             ділять решту (flex-1, truncate, менший padding), тож «≈390₴» завжди видно. */}
         {price != null && (
-          <div className="shrink-0">
+          <div className="shrink-0" aria-live="polite" aria-atomic="true">
             <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">{priceLabel}</div>
             <div className="whitespace-nowrap text-[16px] font-bold leading-tight text-[var(--text-primary)]">{price}</div>
           </div>

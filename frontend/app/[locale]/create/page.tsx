@@ -681,12 +681,14 @@ export default function Home() {
                 )}
 
                 {!showHexGrid && (
-                  <div className="mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:flex-wrap sm:overflow-visible sm:pb-0">
+                  <div role="radiogroup" aria-label={tc("shapeFieldLabel")} className="mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:flex-wrap sm:overflow-visible sm:pb-0">
                     <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
                     {FIGURE_SHAPES.map((sh) => (
                       <button
                         key={sh.id}
                         type="button"
+                        role="radio"
+                        aria-checked={figureShape === sh.id}
                         onClick={() => setFigureShape(sh.id)}
                         className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition ${
                           figureShape === sh.id

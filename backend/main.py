@@ -2540,9 +2540,15 @@ async def merge_zones_endpoint(
     task_ids: List[str] = Query(..., description="РЎРїРёСЃРѕРє task_id Р·РѕРЅ РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ"),
     format: str = Query(default="3mf", description="Р¤РѕСЂРјР°С‚ РІРёС…С–РґРЅРѕРіРѕ С„Р°Р№Р»Сѓ (stl Р°Р±Рѕ 3mf)"),
     authorization: Optional[str] = Header(default=None),
+    # Анти-DoS: завантаження+конкатенація мешів синхронно у потоці запиту — без
+    # ліміту авторизований юзер може ганяти важкі merge нескінченно (як інші важкі POST).
+    _rl: None = Depends(rate_limit("merge_zones", [(10, 60.0), (60, 3600.0)])),
 ):
     # БЕЗПЕКА: створює файл з чужих задач → потрібен валідний токен.
     _require_user(authorization)
+    # Обмежуємо кількість зон на виклик, щоб обмежити вартість конкатенації.
+    if len(task_ids) > 64:
+        raise HTTPException(status_code=400, detail="Too many zones (max 64)")
     """
     РћР±'С”РґРЅСѓС” РєС–Р»СЊРєР° Р·РѕРЅ РІ РѕРґРёРЅ С„Р°Р№Р» РґР»СЏ РІС–РґРѕР±СЂР°Р¶РµРЅРЅСЏ СЂР°Р·РѕРј.
     

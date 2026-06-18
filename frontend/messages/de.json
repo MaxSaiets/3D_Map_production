@@ -477,6 +477,7 @@
     "generateTiles": "{tiles} Paneel-Kacheln generieren",
     "etaSingle": "≈ 1–3 Min · die 3D-Vorschau erscheint automatisch",
     "etaTiles": "≈ 2 Min pro Kachel · insgesamt ca. {tiles} × 2 Min",
+    "etaFlat": "≈ 2–4 Min · vollständige druckfertige Kachel",
     "cancelGen": "Generierung abbrechen",
     "errStale": "Verbindung zur Aufgabe verloren (Server-Neustart?). Bitte erneut generieren.",
     "quotaLeft": "{n} von {limit} kostenlosen Downloads übrig",
@@ -761,6 +762,8 @@
       "highlightToggle": "Mittleres Gebäude hervorheben",
       "highlightHint": "Das Gebäude in der Kartenmitte wird ein separates Bronzeteil — mit anderem Filament drucken und einsetzen.",
       "backPlaceholder": "NAME · DATUM",
+      "mainPlaceholder": "BERLIN",
+      "secondPlaceholder": "12.06.2026",
       "backHint": "Wird 0,5 mm in die Unterseite graviert (gespiegelt — lesbar, wenn der Anhänger umgedreht wird). Nach der Generierung in 3D sichtbar."
     },
     "review": {
@@ -802,6 +805,7 @@
       "replace": "Ersetzen",
       "pickFile": "Datei wählen",
       "loaded": "✓ {name} · {count} Punkte",
+      "offForTopo": "Route entfernt — der Topo-Modus zeigt Geländehöhen statt der Karte",
       "remove": "Entfernen",
       "privacy": "🔒 Deine Route dient nur zum Erstellen des Modells. Wir veröffentlichen oder teilen sie nicht.",
       "hint": "Eine Lauf-/Wanderstrecke — eine Linie über der Karte. Der Bereich richtet sich automatisch auf die Route aus.",

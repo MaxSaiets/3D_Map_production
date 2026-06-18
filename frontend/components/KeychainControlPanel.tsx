@@ -1193,7 +1193,18 @@ export function KeychainControlPanel({
               <input
                 type="checkbox"
                 checked={topoMode}
-                onChange={(event) => setTopoMode(event.target.checked)}
+                onChange={(event) => {
+                  const on = event.target.checked;
+                  setTopoMode(on);
+                  // Топо несумісний з GPX (рельєф замість карти): прибираємо
+                  // завантажений трек і повідомляємо — інакше він тихо випадав із
+                  // моделі, а червона лінія лишалась на карті (вводило в оману).
+                  if (on && gpxTrack) {
+                    setGpxName(null);
+                    setGpxFocus(null);
+                    window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "kc", key: "gpx.offForTopo" } }));
+                  }
+                }}
                 className="h-5 w-5 accent-[var(--accent-strong)]"
               />
               <span>
@@ -1315,7 +1326,7 @@ export function KeychainControlPanel({
           <input
             value={label}
             onChange={(event) => onLabelChange(event.target.value.toUpperCase().slice(0, 28))}
-            placeholder="KYIV"
+            placeholder={t("label.mainPlaceholder")}
             className="mt-4 w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
           />
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -1359,7 +1370,7 @@ export function KeychainControlPanel({
               <input
                 value={label2}
                 onChange={(event) => setLabel2(event.target.value.toUpperCase().slice(0, 28))}
-                placeholder="12.06.2026"
+                placeholder={t("label.secondPlaceholder")}
                 className="min-w-0 flex-1 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
               />
               <button

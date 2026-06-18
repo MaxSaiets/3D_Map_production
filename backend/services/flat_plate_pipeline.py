@@ -1424,8 +1424,19 @@ def _clip_geometry(geometry: Optional[BaseGeometry], clip: Optional[BaseGeometry
         if clipped is None or clipped.is_empty:
             return None
         return clipped.buffer(0)
-    except Exception:
-        return geometry
+    except Exception as exc:
+        # Fail-open лишали мовчки → шар міг вийти за межі тіла без жодного сліду.
+        # Спершу пробуємо repair-then-clip (типова причина — невалідний OSM-полігон);
+        # лише як останній засіб віддаємо ОРИГІНАЛ (не None — щоб не згубити цілий шар
+        # на тимчасовій топологічній помилці, яку нижній sanitize/повторний clip ще лікують).
+        print(f"[FLAT PLATE] _clip_geometry intersection failed ({exc}); repair-then-clip")
+        try:
+            repaired = geometry.buffer(0).intersection(clip.buffer(0))
+            if repaired is None or repaired.is_empty:
+                return None
+            return repaired.buffer(0)
+        except Exception:
+            return geometry
 
 
 def _fit_geometry_into_bounds(

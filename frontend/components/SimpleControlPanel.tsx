@@ -1019,7 +1019,11 @@ export function SimpleControlPanel({
           {/* UX: чесне очікування — час генерації відомий заздалегідь */}
           {!isGenerating && (
             <p className="-mt-1 text-center text-[11px] text-[var(--text-secondary)]">
-              {panelMode > 0 ? t("etaTiles", { tiles: panelMode * panelMode }) : t("etaSingle")}
+              {panelMode > 0
+                ? t("etaTiles", { tiles: panelMode * panelMode })
+                : (flatAmsMode || connectorMode || frameMode || magnetMode)
+                  ? t("etaFlat")
+                  : t("etaSingle")}
             </p>
           )}
           {isGenerating && (

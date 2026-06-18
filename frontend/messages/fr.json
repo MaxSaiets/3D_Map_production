@@ -477,6 +477,7 @@
     "generateTiles": "Générer {tiles} tuiles du panneau",
     "etaSingle": "≈ 1–3 min · l'aperçu 3D apparaît automatiquement",
     "etaTiles": "≈ 2 min par tuile · environ {tiles} × 2 min au total",
+    "etaFlat": "≈ 2–4 min · plaque prête à imprimer",
     "cancelGen": "Annuler la génération",
     "errStale": "Lien avec la tâche perdu (redémarrage du serveur ?). Veuillez régénérer.",
     "quotaLeft": "{n} sur {limit} téléchargements gratuits restants",
@@ -761,6 +762,8 @@
       "highlightToggle": "Mettre en valeur le bâtiment central",
       "highlightHint": "Le bâtiment au centre devient une pièce bronze séparée — imprimez-la avec un autre filament et placez-la.",
       "backPlaceholder": "NOM · DATE",
+      "mainPlaceholder": "PARIS",
+      "secondPlaceholder": "12.06.2026",
       "backHint": "Gravé dans la face inférieure sur 0,5 mm (en miroir — lisible lorsque le porte-clés est retourné). Visible après la génération en 3D."
     },
     "review": {
@@ -802,6 +805,7 @@
       "replace": "Remplacer",
       "pickFile": "Choisir un fichier",
       "loaded": "✓ {name} · {count} points",
+      "offForTopo": "Itinéraire supprimé — le mode topo affiche le relief au lieu de la carte",
       "remove": "Retirer",
       "privacy": "🔒 Votre itinéraire sert uniquement à construire le modèle. Nous ne le publions ni ne le partageons.",
       "hint": "Une trace de course/randonnée — une ligne sur la carte. La zone se recentre automatiquement sur l'itinéraire.",
