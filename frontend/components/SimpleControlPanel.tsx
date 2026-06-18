@@ -66,6 +66,9 @@ export function SimpleControlPanel({
   const setPanelMode = s.setSimplePanelMode;
   const flatAmsMode = s.simpleFlatAms;
   const setFlatAmsMode = s.setSimpleFlatAms;
+  // З'ЄДНУВАЧ-ПАЗИ (метелик): стикує дві плоскі карти; стан у store (панель ×2).
+  const connectorMode = s.simpleConnector;
+  const setConnectorMode = s.setSimpleConnector;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -78,7 +81,7 @@ export function SimpleControlPanel({
   // «Більше опцій» (магніт/GPX/панно) сховані за замовчанням — Просто-режим має
   // бути коротким: Місто → Район → Стиль → Розмір → Створити. Авто-розкривається,
   // якщо одна з опцій уже активна (відновлена зі store), щоб вибір не «зник».
-  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0;
+  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode;
   const [moreOpen, setMoreOpen] = useState(advancedActive);
   useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
 
@@ -395,6 +398,10 @@ export function SimpleControlPanel({
     // «Плоска кольорова (AMS)»: пласка багатокольорова плитка-карта (terrain off,
     // окремі кольорові шари, основа 3мм). Лише для одиночної карти (не панно/магніт).
     const flatAms = panelMode === 0 && !magnetMode && s.simpleFlatAms;
+    // З'ЄДНУВАЧ-ПАЗИ: вимагає плоского режиму (3мм основа, паз у дні). Сумісний
+    // з flatAms (кольорова плитка з пазами), несумісний з магнітом/панно.
+    const connector = panelMode === 0 && !magnetMode && s.simpleConnector;
+    const flatPlate = flatAms || connector;
     // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
     let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
     let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
@@ -411,20 +418,21 @@ export function SimpleControlPanel({
       roadWidthMultiplier: s.roadWidthMultiplier, roadHeightMm: s.roadHeightMm, roadEmbedMm: s.roadEmbedMm,
       buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
       buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
-      waterDepth: s.waterDepth, terrainEnabled: (magnetMode || flatAms) ? false : layerTerrain, terrainZScale: s.terrainZScale,
-      terrainBaseThicknessMm: (magnetMode || flatAms) ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
+      waterDepth: s.waterDepth, terrainEnabled: (magnetMode || flatPlate) ? false : layerTerrain, terrainZScale: s.terrainZScale,
+      terrainBaseThicknessMm: (magnetMode || flatPlate) ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
       terrariumZoom: s.terrariumZoom,
       // forPrint → друкарський 3MF (не GLB-прев'ю).
       exportFormat: forPrint ? "3mf" : s.exportFormat,
       modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
       isAmsMode: flatAms ? true : s.isAmsMode,
       // Панно = повні 3D-плитки: магніт/превʼю вимикаються примусово.
-      // flatAms → пласка кольорова плитка (flat_plate колірні шари).
-      flatPlateMode: panelMode > 0 ? false : (magnetMode || flatAms) ? true : s.flatPlateMode,
+      // flatAms/connector → пласка плитка (flat_plate колірні шари + пази у дні).
+      flatPlateMode: panelMode > 0 ? false : (magnetMode || flatPlate) ? true : s.flatPlateMode,
       // forPrint → ЗАВЖДИ повна якість; інакше швидке прев'ю лише для стандартної карти.
-      // flatAms = повний кольоровий 3MF у прев'ю (flat_plate сам і є прев'ю, не GLB).
-      previewMode: forPrint ? false : (panelMode > 0 || magnetMode || flatAms ? false : s.previewMode),
+      // flatAms/connector = повний кольоровий 3MF у прев'ю (flat_plate сам і є прев'ю, не GLB).
+      previewMode: forPrint ? false : (panelMode > 0 || magnetMode || flatPlate ? false : s.previewMode),
       magnetPocket: panelMode > 0 ? false : magnetMode,
+      mapConnector: connector,
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
@@ -714,6 +722,35 @@ export function SimpleControlPanel({
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>
         </button>
 
+        {/* З'єднувач-пази (метелик): «ластівчин-хвіст» пази на гранях + окрема
+            деталь-ключ, щоб стикувати дві плоскі карти у диптих/панно. Паз у ДНІ
+            3мм основи → спереду шов непомітний. Сумісний з flat-AMS (кольорова
+            плитка з пазами), несумісний з магнітом/панно (інший формат дна). */}
+        <button
+          type="button"
+          aria-pressed={connectorMode}
+          data-testid="connector-toggle"
+          onClick={() => {
+            const next = !connectorMode;
+            setConnectorMode(next);
+            if (next) {
+              if (magnetMode) setMagnetMode(false);
+              if (panelMode > 0) setPanelMode(0);
+            }
+          }}
+          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+            connectorMode
+              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+          }`}
+        >
+          <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+            🧩 {t("connectorToggle")}
+            {connectorMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("connectorHint")}</span>
+        </button>
+
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
@@ -722,6 +759,7 @@ export function SimpleControlPanel({
             const next = !magnetMode;
             setMagnetMode(next);
             if (next && flatAmsMode) setFlatAmsMode(false);
+            if (next && connectorMode) setConnectorMode(false);
             // Магніт і панно — взаємовиключні (панно = багато плиток, магніт = одна
             // плитка з кишенею). Раніше можна було лишити обидва ON → генерувалось
             // панно, але ціна показувала магніт (180₴) — мовчазна підміна продукту.
@@ -832,6 +870,7 @@ export function SimpleControlPanel({
                   onClick={() => {
                     setPanelMode(mode);
                     if (mode > 0 && flatAmsMode) setFlatAmsMode(false);
+                    if (mode > 0 && connectorMode) setConnectorMode(false);
                     // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
                     if (mode > 0 && (magnetMode || gpxTrack)) {
                       setMagnetMode(false);

@@ -38,6 +38,10 @@ export interface MapRequestParams {
   mapLabel?: string;
   /** D4 GPX-трек [[lon,lat],...] — підвищений шар-маршрут поверх мапи. */
   gpxTrack?: Array<[number, number]> | null;
+  /** З'єднувач-пази (метелик): «ластівчин-хвіст» пази на серединах граней +
+   *  окрема деталь-ключ. Дві плоскі карти стикуються пазами (паз у дні 3мм
+   *  основи → спереду непомітно). Лише плоский режим. */
+  mapConnector?: boolean;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -85,6 +89,8 @@ export function buildMapRequest(p: MapRequestParams) {
       : {}),
     ...(p.mapLabel && p.mapLabel.trim() ? { map_label: p.mapLabel.trim() } : {}),
     ...(p.gpxTrack && p.gpxTrack.length >= 2 ? { gpx_track: p.gpxTrack } : {}),
+    // З'єднувач-пази: бек має дефолти (NSEW, 10×15×2мм, кліренс 0.2) — шлемо лише прапор.
+    ...(p.mapConnector ? { map_connector: true } : {}),
   };
 }
 

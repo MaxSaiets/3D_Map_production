@@ -762,6 +762,16 @@ class GenerationRequest(BaseModel):
     # Підпис на плоскій мапі/магніті: рельєфний текст у смузі внизу плити.
     map_label: str = Field(default="", max_length=40)
     map_label_text_height_mm: float = Field(default=5.0, ge=2.5, le=12.0)
+    # З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie): універсальні «ластівчин-хвіст» пази на
+    # серединах граней плоскої карти + окрема деталь-ключ. Дві карти/плитки
+    # стикуються пазами; паз ріжеться у ДНІ ≥3мм основи → спереду шов непомітний.
+    # build_map_connector_geometry (flat_plate_pipeline); FDM-кліренс 0.2мм/бік.
+    map_connector: bool = False
+    map_connector_edges: str = Field(default="NSEW", max_length=4)
+    map_connector_span_mm: float = Field(default=10.0, ge=4.0, le=30.0)
+    map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
+    map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
+    map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -2960,6 +2970,16 @@ class ZoneGenerationRequest(BaseModel):
     # Підпис на плоскій мапі/магніті: рельєфний текст у смузі внизу плити.
     map_label: str = Field(default="", max_length=40)
     map_label_text_height_mm: float = Field(default=5.0, ge=2.5, le=12.0)
+    # З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie): універсальні «ластівчин-хвіст» пази на
+    # серединах граней плоскої карти + окрема деталь-ключ. Дві карти/плитки
+    # стикуються пазами; паз ріжеться у ДНІ ≥3мм основи → спереду шов непомітний.
+    # build_map_connector_geometry (flat_plate_pipeline); FDM-кліренс 0.2мм/бік.
+    map_connector: bool = False
+    map_connector_edges: str = Field(default="NSEW", max_length=4)
+    map_connector_span_mm: float = Field(default=10.0, ge=4.0, le=30.0)
+    map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
+    map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
+    map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)

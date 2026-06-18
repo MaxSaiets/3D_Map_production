@@ -62,6 +62,9 @@ interface GenerationState {
   // «Плоска кольорова (AMS)» — пласка багатокольорова плитка-карта (кожен шар
   // окремий колір-філамент), міцна основа 3мм. Стан спільний (панель ×2).
   simpleFlatAms: boolean;
+  // З'ЄДНУВАЧ-ПАЗИ (метелик): «ластівчин-хвіст» пази на гранях + деталь-ключ,
+  // щоб стикувати дві плоскі карти. Стан спільний (панель монтується двічі).
+  simpleConnector: boolean;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -93,6 +96,7 @@ interface GenerationState {
   setSimpleStyleId: (id: string) => void;
   setSimpleTemplate: (id: string | null) => void;
   setSimpleFlatAms: (on: boolean) => void;
+  setSimpleConnector: (on: boolean) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -180,6 +184,7 @@ const initialState = {
   simpleStyleId: "full",
   simpleTemplate: null,
   simpleFlatAms: false,
+  simpleConnector: false,
   gpxName: null,
   gpxNote: null,
 
@@ -208,6 +213,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleStyleId: (id) => set({ simpleStyleId: id }),
   setSimpleTemplate: (id) => set({ simpleTemplate: id }),
   setSimpleFlatAms: (on) => set({ simpleFlatAms: on }),
+  setSimpleConnector: (on) => set({ simpleConnector: on }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

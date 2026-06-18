@@ -595,6 +595,93 @@ def build_magnet_pocket_geometry(
     return unary_union([p.buffer(r_m, resolution=48) for p in centers])
 
 
+def build_map_connector_geometry(
+    base_polygon: BaseGeometry,
+    *,
+    edges: str,
+    span_mm: float,
+    length_mm: float,
+    waist_frac: float,
+    clearance_mm: float,
+    export_scale_factor: float,
+) -> tuple[Optional[BaseGeometry], Optional[BaseGeometry]]:
+    """З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie) на серединах граней плоскої карти-плитки.
+
+    Повертає (notch_union, keys_union) у локально-метровій системі base_polygon:
+      * notch_union — РІЖЕТЬСЯ у НИЖНІЙ шар бази (через _build_keychain_base_parts
+        back_text_poly), тож ЛИЦЕ карти лишається суцільним → шов спереду НЕ видно;
+      * keys_union — окремі ПОВНІ метелики-ключі, розкладені рядком ПІД картою,
+        друкуються поруч і вставляються у спільний паз двох сусідніх плиток.
+
+    Геометрія = «ластівчин хвіст»: вузько біля шва (талія), широко всередині —
+    тримає дві плитки в площині (звичайний прямокутний шип просто висковзнув би).
+    Дзеркальність гарантує збіг: КОЖНА грань має однаковий half-notch, тож сусід
+    завжди стикується. Розміри в model-мм; +clearance_mm/бік FDM-зазор (0.2≈щільно).
+    Перевірено shapely (debug/validate_connectors.py): key⊂(recA∪recB), зазор-кільце>0,
+    база лишається single-polygon навіть із 4 пазами одночасно."""
+    if base_polygon is None or getattr(base_polygon, "is_empty", True):
+        return None, None
+    # w = глибина лопаті у плитку; h0 = півдовжина широкого кінця вздовж шва.
+    w = _model_mm_to_world_m(max(float(span_mm), 4.0) / 2.0, export_scale_factor)
+    h0 = _model_mm_to_world_m(max(float(length_mm), 6.0) / 2.0, export_scale_factor)
+    clr = _model_mm_to_world_m(max(float(clearance_mm), 0.0), export_scale_factor)
+    min_h = _model_mm_to_world_m(2.0, export_scale_factor)
+    hw_frac = min(max(float(waist_frac), 0.2), 0.8)
+    minx, miny, maxx, maxy = base_polygon.bounds
+    cx, cy = (minx + maxx) / 2.0, (miny + maxy) / 2.0
+    bw, bh = maxx - minx, maxy - miny
+
+    def _half(h: float) -> BaseGeometry:
+        # Локально: шов на x=0, нутро плитки на +x; трапеція (вузька на шві, широка
+        # всередині) + кліренс. join_style=2 (mitre) — рівні кути ластівчиного хвоста.
+        hw = h * hw_frac
+        return Polygon([(0.0, hw), (w, h), (w, -h), (0.0, -hw)]).buffer(clr, join_style=2)
+
+    def _key(h: float) -> BaseGeometry:
+        hw = h * hw_frac
+        return Polygon([(-w, -h), (-w, h), (0.0, hw), (w, h), (w, -h), (0.0, -hw)]).buffer(0)
+
+    notches: list[BaseGeometry] = []
+    keys: list[BaseGeometry] = []
+    edges_set = set((edges or "NSEW").upper())
+    margin = _model_mm_to_world_m(6.0, export_scale_factor)
+    key_pitch = 2.0 * w + margin
+    key_slot = 0
+    for e in ("N", "S", "E", "W"):
+        if e not in edges_set:
+            continue
+        # Обмежуємо довжину пазу до 60% грані (2h ≤ 0.6·сторона), щоб на S-картах
+        # паз не зʼїдав усю грань.
+        h = min(h0, (bh if e in ("E", "W") else bw) * 0.30)
+        if h < min_h:
+            continue
+        half = _half(h)
+        if e == "W":
+            placed = affinity.translate(half, xoff=minx, yoff=cy)
+        elif e == "E":
+            placed = affinity.translate(affinity.rotate(half, 180.0, origin=(0, 0)), xoff=maxx, yoff=cy)
+        elif e == "S":
+            placed = affinity.translate(affinity.rotate(half, 90.0, origin=(0, 0)), xoff=cx, yoff=miny)
+        else:  # N
+            placed = affinity.translate(affinity.rotate(half, -90.0, origin=(0, 0)), xoff=cx, yoff=maxy)
+        # Лишаємо лише частину всередині бази (зрізаємо кліренс-навіс за швом).
+        clipped = placed.intersection(base_polygon).buffer(0)
+        if clipped is None or getattr(clipped, "is_empty", True):
+            continue
+        notches.append(clipped)
+        # Ключ-метелик у вільному рядку ПІД картою (поза footprint основи).
+        kx = minx + key_slot * key_pitch + w
+        ky = miny - margin - h0
+        keys.append(affinity.translate(_key(h), xoff=kx, yoff=ky))
+        key_slot += 1
+
+    if not notches:
+        return None, None
+    notch_union = unary_union(notches).buffer(0)
+    keys_union = unary_union(keys).buffer(0) if keys else None
+    return notch_union, keys_union
+
+
 def _round_polygon_tip(pts: list, *, tip_index: int, radius: float, samples: int = 16) -> list:
     """Заокруглення одного гострого вузла замкнутого контуру: вершини в радіусі
     `radius` від кінчика замінюються семплами квадратичної Безьє (контрольна
@@ -2457,6 +2544,13 @@ def run_flat_plate_pipeline(
         _mag_depth_mm = float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0)
         base_thickness_mm = max(base_thickness_mm, _mag_depth_mm + 0.8)
 
+    # З'ЄДНУВАЧ-ПАЗИ: паз ріжеться у ДНО — лишаємо ≥1мм суцільного лиця над ним,
+    # тож основа мусить бути ≥ (глибина пазу + 1мм) і ≥3мм (узгоджено з flat-AMS).
+    map_connector = bool(getattr(request, "map_connector", False)) and not keychain_mode
+    if map_connector:
+        _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+        base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.0, 3.0)
+
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     content_area = zone.zone_polygon_local
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
@@ -2464,6 +2558,7 @@ def run_flat_plate_pipeline(
     keychain_text_mesh: Optional[trimesh.Trimesh] = None
     keychain_text2_mesh: Optional[trimesh.Trimesh] = None
     keychain_base_bottom_mesh: Optional[trimesh.Trimesh] = None
+    connector_mesh: Optional[trimesh.Trimesh] = None
     map_text_mesh: Optional[trimesh.Trimesh] = None
     keychain_back_poly: Optional[BaseGeometry] = None
     keychain_back_engrave_m: float = 0.0
@@ -2626,6 +2721,51 @@ def run_flat_plate_pipeline(
                 print("[MAGNET] Base too thin for pocket — solid base fallback")
         except Exception as exc:
             print(f"[MAGNET] pocket failed (non-fatal): {exc}")
+            terrain_mesh = build_flat_zone_base_mesh(
+                zone.zone_polygon_local,
+                bbox_meters=zone.bbox_meters,
+                thickness_m=base_top_m,
+            )
+    elif map_connector:
+        # З'ЄДНУВАЧ-ПАЗИ: ластівчин-хвіст у ДНІ основи + окремий ключ-метелик.
+        # Той самий прийом, що магніт/зворот-гравіювання — паз ріжеться у нижній
+        # шар (back_text_poly), лице лишається суцільним → шов спереду непомітний.
+        try:
+            _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _conn_depth_mm = min(_conn_depth_mm, max(base_thickness_mm - 1.0, 0.0))  # ≥1мм лиця
+            _conn_depth_m = _model_mm_to_world_m(_conn_depth_mm, export_scale_factor)
+            _notches, _keys = build_map_connector_geometry(
+                zone.zone_polygon_local,
+                edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
+                span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
+                length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
+                waist_frac=0.5,
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
+                export_scale_factor=export_scale_factor,
+            )
+            terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
+                zone.zone_polygon_local,
+                base_top_m=base_top_m,
+                back_text_poly=_notches if (_notches is not None and _conn_depth_m > 1e-9) else None,
+                engrave_m=_conn_depth_m,
+            )
+            # Ключ-метелик окремою деталлю «Connector» (товщина = глибина пазу,
+            # тож вкладається у спільну порожнину двох плиток урівень з дном).
+            if _keys is not None and not getattr(_keys, "is_empty", True) and _conn_depth_m > 1e-9:
+                connector_mesh = build_flat_layer_mesh_from_mask(
+                    _keys, bottom_z_m=0.0, thickness_m=_conn_depth_m,
+                    color=LAYER_COLORS["base"], min_area_m2=1e-9,
+                )
+            if _notches is not None and keychain_base_bottom_mesh is not None:
+                _ne = len(getattr(_notches, "geoms", [None]))
+                print(f"[CONNECTOR] {max(_ne, 1)} butterfly notch(es) carved into base bottom "
+                      f"(depth {_conn_depth_mm:.2f}mm, face {base_thickness_mm - _conn_depth_mm:.2f}mm); "
+                      f"key part={'OK' if connector_mesh is not None else 'None'}")
+            else:
+                print("[CONNECTOR] No valid notches (base too thin / edges empty) — solid base")
+        except Exception as exc:
+            print(f"[CONNECTOR] connector failed (non-fatal): {exc}")
+            connector_mesh = None
             terrain_mesh = build_flat_zone_base_mesh(
                 zone.zone_polygon_local,
                 bbox_meters=zone.bbox_meters,
@@ -3783,6 +3923,7 @@ def run_flat_plate_pipeline(
                 ("Text2", keychain_text2_mesh),
                 ("Marker", keychain_marker_mesh),
                 ("Highlight", highlight_building_mesh),
+                ("Connector", connector_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),
                 ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),

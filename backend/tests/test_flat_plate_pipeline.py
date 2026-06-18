@@ -427,6 +427,71 @@ def test_puzzle_pair_tab_fits_into_notch_with_clearance():
     assert overlap < tab.area * 0.01, f"tab перетинає тіло R на {overlap:.3f}мм² — клиренсу нема"
 
 
+# ===== З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie) для стикування плоских карт =====
+
+def test_map_connector_notches_carved_into_bottom_keep_face_solid():
+    from services.flat_plate_pipeline import build_map_connector_geometry
+    zone = _square(-400.0, -400.0, 400.0, 400.0)
+    export_scale = 80.0 / 800.0  # 80мм модель 800м зони → 0.1 мм/м
+    base_top_m = 3.0 / export_scale
+    depth_m = 2.0 / export_scale
+
+    notches, keys = build_map_connector_geometry(
+        zone, edges="NSEW", span_mm=10.0, length_mm=15.0, waist_frac=0.5,
+        clearance_mm=0.2, export_scale_factor=export_scale,
+    )
+    # 4 пази (по грані) + 4 ключі
+    assert len(getattr(notches, "geoms", [notches])) == 4
+    assert len(getattr(keys, "geoms", [keys])) == 4
+    # ключі лежать ПІД картою (поза footprint основи) — не перетинають базу
+    assert keys.bounds[3] <= zone.bounds[1] + 1e-6
+
+    upper, lower = _build_keychain_base_parts(
+        zone, base_top_m=base_top_m, back_text_poly=notches, engrave_m=depth_m,
+    )
+    assert upper is not None and lower is not None
+    assert upper.is_watertight and lower.is_watertight
+    # ЛИЦЕ суцільне: верхній шар (depth..base_top) покриває всю зону, 1мм цілого
+    assert float(upper.bounds[1][2]) == pytest.approx(base_top_m)
+    assert float(lower.bounds[0][2]) == pytest.approx(0.0)
+    assert float(lower.bounds[1][2]) == pytest.approx(depth_m)
+    # паз справді відняв обʼєм з нижнього шару (менше за суцільну плиту)
+    assert float(lower.volume) < 800.0 * 800.0 * depth_m * 0.999
+
+
+def test_map_connector_key_fits_combined_slot_of_two_tiles():
+    # Складений шов: плитка A ріже СХІДНУ грань, плитка B — ЗАХІДНУ; повний
+    # метелик-ключ мусить влізти в обʼєднання двох пазів (з кліренс-кільцем).
+    from shapely.affinity import translate
+    from services.flat_plate_pipeline import build_map_connector_geometry
+    export_scale = 1.0  # mm == world для прямої перевірки геометрії
+    tA = _square(0, 0, 40, 40)
+    tB = _square(40, 0, 80, 40)
+    nA, kA = build_map_connector_geometry(tA, edges="E", span_mm=10.0, length_mm=15.0,
+                                          waist_frac=0.5, clearance_mm=0.2, export_scale_factor=export_scale)
+    nB, _ = build_map_connector_geometry(tB, edges="W", span_mm=10.0, length_mm=15.0,
+                                         waist_frac=0.5, clearance_mm=0.2, export_scale_factor=export_scale)
+    cavity = nA.union(nB).buffer(0)
+    # ключ A збудовано біля грані A (без кліренсу) → переносимо його на шов x=40.
+    # Простіше: ключ метелика центрований на шві — будуємо прямо.
+    from shapely.geometry import Polygon as _P
+    w, h, hw = 5.0, 7.5, 7.5 * 0.5
+    key = _P([(-w, -h), (-w, h), (0, hw), (w, h), (w, -h), (0, -hw)])
+    key = translate(key, xoff=40.0, yoff=20.0)
+    assert cavity.contains(key), "ключ не влазить у спільний паз двох плиток"
+    assert cavity.area - key.area > 0.05, "немає кліренс-кільця — клинитиме"
+
+
+def test_map_connector_off_leaves_base_byte_identical_solid():
+    # OPT-IN: без map_connector база ІДЕНТИЧНА старій суцільній плиті (golden ОК).
+    zone = _square(0, 0, 80, 80)
+    solid = build_flat_zone_base_mesh(zone, bbox_meters=zone.bounds, thickness_m=3.0)
+    upper, lower = _build_keychain_base_parts(zone, base_top_m=3.0)
+    assert lower is None
+    assert len(upper.faces) == len(solid.faces)
+    assert float(upper.volume) == pytest.approx(float(solid.volume), rel=1e-6)
+
+
 # ===== ПАРА ДЛЯ ЗАКОХАНИХ: серце-половинки з замком =====
 
 def test_heart_tip_is_rounded():

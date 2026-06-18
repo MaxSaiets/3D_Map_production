@@ -125,6 +125,23 @@ test.describe("Конструктор мап /create", () => {
     await expect(orderBtn).toBeVisible();
   });
 
+  test("з'єднувач-пази: тумблер вмикається, сумісний з flat-AMS, гаситься магнітом", async ({ page }) => {
+    await page.locator('[data-testid="more-options"]').first().click();
+    const connector = page.locator('[data-testid="connector-toggle"]').first();
+    await expect(connector).toBeVisible();
+    await expect(connector).toHaveAttribute("aria-pressed", "false");
+    await connector.click();
+    await expect(connector).toHaveAttribute("aria-pressed", "true");
+    // Сумісний з flat-AMS (кольорова плитка з пазами) — обидва лишаються ON
+    const flatAms = page.locator('[data-testid="flat-ams-toggle"]').first();
+    await flatAms.click();
+    await expect(flatAms).toHaveAttribute("aria-pressed", "true");
+    await expect(connector).toHaveAttribute("aria-pressed", "true");
+    // Магніт несумісний (інше дно) → гасить з'єднувач
+    await page.getByRole("button", { name: /Магніт на холодильник/ }).first().click();
+    await expect(connector).toHaveAttribute("aria-pressed", "false");
+  });
+
   test("REGRESSION: чернетка з plain-object зоною НЕ валить /create і /keychains", async ({ page }) => {
     // JSON.parse(draft) повертає plain object замість L.LatLngBounds — раніше
     // це крешило обидві сторінки («getNorth/getCenter is not a function»).
