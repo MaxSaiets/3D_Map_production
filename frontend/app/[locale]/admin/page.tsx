@@ -247,6 +247,10 @@ export default function AdminPage() {
                     <StatList title="Топ кліків (де тикали)" rows={prettyClicks(stats.topClicks)} />
                   </div>
 
+                  {Array.isArray(stats.recentVisitors) && stats.recentVisitors.length > 0 && (
+                    <RecentVisits visitors={stats.recentVisitors} />
+                  )}
+
                   {stats.clicksByPath && Object.keys(stats.clicksByPath).length > 0 && (
                     <ClickMaps clicksByPath={stats.clicksByPath} />
                   )}
@@ -490,6 +494,42 @@ function Funnel({ funnel }: { funnel: { step: string; count: number; pct: number
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function RecentVisits({ visitors }: { visitors: any[] }) {
+  const fmt = (iso: string) => {
+    try { return new Date(iso).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+    catch { return (iso || "").slice(5, 16).replace("T", " "); }
+  };
+  const flag = (cc: string) => {
+    if (!cc || cc.length !== 2) return "🌐";
+    try { return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)); }
+    catch { return cc; }
+  };
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Останні візити (анонімні)</div>
+      <div className="mb-3 text-[11px] text-ink-3">Кожен рядок = ОДИН відвідувач (без cookie/IP). Видно: звідки прийшов, з якої країни, які сторінки дивився, коли.</div>
+      <div className="space-y-1.5">
+        {visitors.map((v, i) => (
+          <div key={(v.id || "") + i} className="flex flex-col gap-1 rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px] sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex items-center gap-2 sm:w-40 sm:shrink-0">
+              <span className="text-base leading-none">{flag(v.cc)}</span>
+              <span className="font-semibold text-ink-2">{v.cc}</span>
+              <span className="font-mono text-[10px] text-ink-3">#{v.id}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-ink-2"><span className="text-ink-3">звідки:</span> <b>{v.ref}</b></div>
+              <div className="truncate text-[11px] text-ink-3">{(v.paths || []).join("  ›  ") || "—"}</div>
+            </div>
+            <div className="shrink-0 text-left text-[11px] text-ink-3 sm:text-right">
+              <span className="sm:block">{v.events} подій · </span><span>{fmt(v.last)}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

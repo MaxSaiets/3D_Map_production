@@ -1348,6 +1348,9 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     click_label_counter: Counter = Counter()  # (path, label) → к-сть кліків
     visitors: set = set()
     day_visitors: Dict[str, set] = {}
+    # Стрічка ВІЗИТІВ: групуємо події за анонімним visitor-хешем → бачимо кожного
+    # відвідувача (анонім) ОКРЕМО: країна, ЗВІДКИ (реферер), які сторінки, коли.
+    visitor_sessions: Dict[str, Dict] = {}
     FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"]
     try:
         if ANALYTICS_LOG.exists():
@@ -1387,6 +1390,26 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                 if vis:
                     visitors.add(vis)
                     day_visitors.setdefault(d, set()).add(vis)
+                    _ts = r.get("ts", "")
+                    vs = visitor_sessions.setdefault(vis, {
+                        "id": vis[:6], "cc": "", "ref": "", "paths": [], "events": 0,
+                        "first": _ts, "last": _ts, "locale": "",
+                    })
+                    vs["events"] += 1
+                    if _ts > vs["last"]:
+                        vs["last"] = _ts
+                    if _ts and _ts < vs["first"]:
+                        vs["first"] = _ts
+                    if not vs["cc"] and r.get("cc"):
+                        vs["cc"] = r["cc"]
+                    if not vs["locale"] and r.get("locale"):
+                        vs["locale"] = r["locale"]
+                    if not vs["ref"]:  # реферер входу = перший непорожній не-monadruk
+                        _rf = (r.get("ref") or "").split("?")[0][:60]
+                        if _rf and "monadruk" not in _rf:
+                            vs["ref"] = _rf
+                    if ev == "pageview" and path and path not in vs["paths"] and len(vs["paths"]) < 12:
+                        vs["paths"].append(path)
                 bd = by_day.setdefault(d, {"day": d, "events": 0, "pageviews": 0})
                 bd["events"] += 1
                 if ev == "pageview":
@@ -1479,6 +1502,21 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     except Exception as _oe:  # noqa: BLE001
         print(f"[admin/stats] orders aggregation failed (non-fatal): {_oe}")
 
+    # Стрічка останніх ВІЗИТІВ (анонім): сортуємо за останньою активністю.
+    recent_visitors = sorted(
+        visitor_sessions.values(), key=lambda v: v.get("last", ""), reverse=True
+    )[:30]
+    recent_visitors = [{
+        "id": v["id"],
+        "cc": v["cc"] or "—",
+        "ref": v["ref"] or "(прямий/закладка)",
+        "paths": v["paths"][:8],
+        "events": v["events"],
+        "locale": v["locale"] or "",
+        "first": v["first"],
+        "last": v["last"],
+    } for v in recent_visitors]
+
     return {
         "totals": totals,
         "byDay": series,
@@ -1489,6 +1527,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "byCountry": country_counter.most_common(15),
         "topRefs": ref_counter.most_common(10),
         "funnel": funnel,
+        "recentVisitors": recent_visitors,
         "clicksByPath": {p: pts for p, pts in top_click_paths},
         "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
     }
