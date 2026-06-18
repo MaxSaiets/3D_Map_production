@@ -15,6 +15,10 @@ import { MAP_MAGNET_PRICE_UAH, MAP_RELIEF_ADDON_UAH } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
+// Взаємовиключний базовий формат моделі (сегмент-контрол). Дзеркалить тип у
+// generation-store.simpleFormat — тримаємо локально, щоб не плодити імпорти.
+type GenerationFormat = "relief3d" | "flat" | "magnet" | "panno";
+
 /**
  * Simple, preset-first map builder shown by default.
  * Three decisions: location (featured district card or draw) → style → size → Generate.
@@ -58,6 +62,11 @@ export function SimpleControlPanel({
   // МАГНІТ/ПАННО/GPX — у zustand store, НЕ useState: панель змонтована двічі
   // (desktop + mobile), локальний стан розсинхронізовувався між копіями і
   // вибір губився при генерації з іншої копії.
+  // ФОРМАТ — взаємовиключний базовий вибір (3D / плоска / магніт / панно). Єдине
+  // джерело правди; setFormat похідно синхронізує усі легасі-булеві нижче, тож
+  // вони лишаються рендереними add-on контролами + джерелом aria-pressed для e2e.
+  const format = s.simpleFormat;
+  const setFormat = s.setSimpleFormat;
   const magnetMode = s.simpleMagnetMode;
   const setMagnetMode = s.setSimpleMagnetMode;
   const mapLabel = s.simpleMapLabel;
@@ -711,28 +720,69 @@ export function SimpleControlPanel({
           </div>
         </div>
 
-        {/* РЕЛЬЄФ (висоти землі) — окремий перемикач для УСІХ режимів карт. Завжди
-            видимий (не ховається під «Більше опцій»). Рельєф = 3D-карта (повний
-            пайплайн); тому взаємовиключний з плоскими режимами (AMS/магніт/конектор/
-            рамка). Працює зі стандартною картою та панно. */}
+        {/* ФОРМАТ — взаємовиключний базовий вибір продукту (сегмент-контрол). Один
+            із: «Об'ємна 3D» / «Плоска кольорова» / «Магніт» / «Панно». setFormat
+            похідно синхронізує усі легасі-булеві (рельєф/flat-AMS/магніт/панно),
+            тож запит до бека лишається байт-в-байт тим самим, що й раніше. */}
+        <div>
+          <div id="simple-format-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+            {t("fmtTitle")}
+          </div>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("fmtAria")} data-testid="format-seg">
+            {([
+              ["relief3d", t("fmtStandard")],
+              ["flat", t("fmtFlat")],
+              ["magnet", t("fmtMagnet")],
+              ["panno", t("fmtPanel")],
+            ] as Array<[GenerationFormat, string]>).map(([id, label]) => {
+              const active = format === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  data-testid={`format-${id}`}
+                  onClick={() => {
+                    setFormat(id);
+                    // Чип «Плоска кольорова» = первинний індикатор: вмикаємо flat-AMS
+                    // як дефолтний вигляд плоскої карти (додатки керуються окремо).
+                    if (id === "flat") setFlatAmsMode(true);
+                  }}
+                  className={`min-h-[40px] rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
+                    active
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
+                      : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
+            {format === "flat" ? t("fmtFlatHint")
+              : format === "magnet" ? t("fmtMagnetHint")
+              : format === "panno" ? t("fmtPanelHint")
+              : t("fmtStandardHint")}
+          </p>
+        </div>
+
+        {/* РЕЛЬЄФ (висоти землі) — окремий перемикач, ЗАВЖДИ видимий (не ховається
+            під «Більше опцій» і не зникає при зміні формату). Рельєф = повний 3D-
+            пайплайн; вмикання повертає базу до «Об'ємна 3D» (setFormat гасить
+            плоскі режими). Лишаємо завжди в DOM, щоб з плоского формату можна було
+            одним кліком повернутись у 3D. */}
         <button
           type="button"
           aria-pressed={reliefMode}
           data-testid="relief-toggle"
           onClick={() => {
             const next = !reliefMode;
-            setReliefMode(next);
-            if (next) {
-              // Рельєф = 3D-карта → плоскі режими несумісні. Раніше вони тихо
-              // вимикались і покупець думав, що щось зламалось. Тепер — тост.
-              const off = flatAmsMode || magnetMode || connectorMode || frameMode || highlightMode;
-              if (flatAmsMode) setFlatAmsMode(false);
-              if (magnetMode) setMagnetMode(false);
-              if (connectorMode) setConnectorMode(false);
-              if (frameMode) setFrameMode(false);
-              if (highlightMode) setHighlightMode(false);
-              if (off) window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "reliefDisabledOthers" } }));
-            }
+            // Увімкнення рельєфу = повернення до 3D-формату (setFormat('relief3d')
+            // лишає поточний simpleRelief через st-passthrough), далі форсуємо true.
+            if (next) { setFormat("relief3d"); setReliefMode(true); }
+            else setReliefMode(false);
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             reliefMode
@@ -778,13 +828,15 @@ export function SimpleControlPanel({
           data-testid="flat-ams-toggle"
           onClick={() => {
             const next = !flatAmsMode;
-            setFlatAmsMode(next);
-            // Взаємовиключно з магнітом/панно (різні плоскі формати) і з рельєфом
-            // (рельєф = 3D-карта, flat-AMS = плоска).
             if (next) {
-              if (magnetMode) setMagnetMode(false);
-              if (panelMode > 0) setPanelMode(0);
-              if (reliefMode) setReliefMode(false);
+              // Вмикаємо flat-AMS → переводимо базу у «flat» (setFormat гасить
+              // рельєф/магніт/панно, інші flat-додатки лишає) і ставимо сам тумблер.
+              setFormat("flat");
+              setFlatAmsMode(true);
+            } else {
+              // Вимкнення лише flat-AMS — інші flat-додатки (конектор/рамка/дім)
+              // самі тримають плоску базу; не чіпаємо формат.
+              setFlatAmsMode(false);
             }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
@@ -816,8 +868,9 @@ export function SimpleControlPanel({
           </label>
         )}
 
-        {/* ДОДАТКИ (рідковживані) — за компактним розкривачем, щоб не лякати стіною
-            тумблерів. Розкриваються кліком або авто, якщо щось уже активне. */}
+        {/* ДОДАТКИ плоскої карти (з'єднувач/рамка/виділити дім) — заголовок секції.
+            Тумблери рендеряться одразу під ним (без другого розкривача), щоб
+            покупець не клікав двічі. data-testid лишаємо для сумісності з e2e. */}
         <button
           type="button"
           onClick={() => setAddonsOpen((v) => !v)}
@@ -828,7 +881,8 @@ export function SimpleControlPanel({
           <span>➕ {t("addonsTitle")}{addonsActive ? " ●" : ""}</span>
           <ChevronDown size={15} className={`transition ${addonsOpen ? "rotate-180" : ""}`} />
         </button>
-        {addonsOpen && (
+        {/* fragment без addonsOpen-гейту: додатки видимі одразу при відкритому
+            «Більше опцій» (e2e клікає connector/frame/highlight без другого кліку). */}
         <>
         {/* З'єднувач-пази (метелик): «ластівчин-хвіст» пази на гранях + окрема
             деталь-ключ, щоб стикувати дві плоскі карти у диптих/панно. Паз у ДНІ
@@ -840,12 +894,11 @@ export function SimpleControlPanel({
           data-testid="connector-toggle"
           onClick={() => {
             const next = !connectorMode;
+            // Конектор — додаток плоскої карти: вмикаючи на не-плоскому форматі,
+            // спершу переводимо базу у «flat» (setFormat гасить рельєф/магніт/панно),
+            // далі вмикаємо сам тумблер.
+            if (next && format !== "flat") setFormat("flat");
             setConnectorMode(next);
-            if (next) {
-              if (magnetMode) setMagnetMode(false);
-              if (panelMode > 0) setPanelMode(0);
-              if (reliefMode) setReliefMode(false);
-            }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             connectorMode
@@ -869,9 +922,10 @@ export function SimpleControlPanel({
           data-testid="frame-toggle"
           onClick={() => {
             const next = !frameMode;
+            // Рамка сумісна і з flat, і з магнітом — переводимо у flat лише якщо база
+            // ще не плоска (relief3d/panno). На магніті лишаємо магніт.
+            if (next && format !== "flat" && format !== "magnet") setFormat("flat");
             setFrameMode(next);
-            if (next && panelMode > 0) setPanelMode(0);
-            if (next && reliefMode) setReliefMode(false);
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             frameMode
@@ -898,13 +952,11 @@ export function SimpleControlPanel({
             data-testid="highlight-toggle"
             onClick={() => {
               const next = !highlightMode;
+              // Виділення дому — додаток плоскої карти: на не-плоскому форматі
+              // спершу переводимо базу у «flat», далі вмикаємо тумблер.
+              if (next && format !== "flat") setFormat("flat");
               setHighlightMode(next);
-              if (next) {
-                if (panelMode > 0) setPanelMode(0);
-                if (reliefMode) setReliefMode(false);
-              } else {
-                clearHighlights();  // вимкнули → прибрати маркери/контури
-              }
+              if (!next) clearHighlights();  // вимкнули → прибрати маркери/контури
             }}
             className="w-full text-left"
           >
@@ -929,26 +981,19 @@ export function SimpleControlPanel({
           )}
         </div>
         </>
-        )}
 
         <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("optGroupOther")}</div>
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
           aria-pressed={magnetMode}
+          data-testid="magnet-toggle"
           onClick={() => {
+            // «Перемкнути на магніт» — через setFormat: ставить simpleMagnetMode=true,
+            // гасить flat-AMS/конектор/highlight/панно/GPX/рельєф (несумісні), але
+            // ЛИШАЄ рамку (сумісна). Вимкнення → стандартна об'ємна 3D.
             const next = !magnetMode;
-            setMagnetMode(next);
-            if (next && flatAmsMode) setFlatAmsMode(false);
-            if (next && connectorMode) setConnectorMode(false);
-            if (next && reliefMode) setReliefMode(false);
-            // Магніт і панно — взаємовиключні (панно = багато плиток, магніт = одна
-            // плитка з кишенею). Раніше можна було лишити обидва ON → генерувалось
-            // панно, але ціна показувала магніт (180₴) — мовчазна підміна продукту.
-            if (next && panelMode > 0) {
-              setPanelMode(0);
-              window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "panelOffForMagnet" } }));
-            }
+            setFormat(next ? "magnet" : "relief3d");
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
             magnetMode
@@ -990,8 +1035,9 @@ export function SimpleControlPanel({
                   const parsed = parseGpx(await file.text());
                   if (!parsed) { setGpxName(null); setGpxNote(null); setGpxFocus(null); setError(t("gpxErr")); return; }
                   setError(null);
-                  // GPX несумісний з панно (трек на одній мапі, не на наборі плиток).
-                  if (panelMode > 0) setPanelMode(0);
+                  // GPX несумісний з панно (трек на одній мапі, не на наборі плиток):
+                  // якщо завантажують трек на панно — переводимо у сумісний 3D-формат.
+                  if (format === "panno") setFormat("relief3d");
                   setGpxName(parsed.name || file.name.replace(/\.gpx$/i, ""));
                   // Авто-фокус: зона і карта їдуть до треку (раніше трек з іншого
                   // міста мовчки обрізався по чужій зоні → у моделі його не було).
@@ -1051,17 +1097,11 @@ export function SimpleControlPanel({
                   role="radio"
                   aria-checked={panelMode === mode}
                   onClick={() => {
-                    setPanelMode(mode);
-                    if (mode > 0 && flatAmsMode) setFlatAmsMode(false);
-                    if (mode > 0 && connectorMode) setConnectorMode(false);
-                    if (mode > 0 && frameMode) setFrameMode(false);
-                    if (mode > 0 && highlightMode) setHighlightMode(false);
-                    // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
-                    if (mode > 0 && (magnetMode || gpxTrack)) {
-                      setMagnetMode(false);
-                      setGpxName(null); setGpxNote(null); setGpxFocus(null);
-                      window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "simple", key: "magnetOffForPanel" } }));
-                    }
+                    // Off (0) → стандартна об'ємна 3D; 2×2/3×3 → панно. setFormat
+                    // гасить flat-AMS/конектор/рамку/виділення/магніт/GPX (несумісні
+                    // з панно) одним set(); далі ставимо конкретну сітку плиток.
+                    if (mode === 0) { setFormat("relief3d"); }
+                    else { setFormat("panno"); setPanelMode(mode); }
                   }}
                   className={`min-h-[36px] rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition ${
                     panelMode === mode

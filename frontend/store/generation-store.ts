@@ -59,6 +59,12 @@ interface GenerationState {
   // ресайзі або генерації з іншої копії застосовувався б старий стиль.
   simpleStyleId: string;
   simpleTemplate: string | null;
+  // ЄДИНЕ ДЖЕРЕЛО ПРАВДИ для взаємовиключного базового ФОРМАТУ моделі у Просто-флоу
+  // (/create). Сегмент-контрол вибирає рівно один із: «Об'ємна 3D» / «Плоска
+  // кольорова» / «Магніт» / «Панно». setSimpleFormat похідно синхронізує усі
+  // ЛЕГАСІ-булеві (simpleRelief/simpleFlatAms/simpleMagnetMode/simplePanelMode) як
+  // ДЗЕРКАЛА, щоб buildSingleMapReq/applyStyle/fetchQuote/e2e лишились без змін.
+  simpleFormat: "relief3d" | "flat" | "magnet" | "panno";
   // «Плоска кольорова (AMS)» — пласка багатокольорова плитка-карта (кожен шар
   // окремий колір-філамент), міцна основа 3мм. Стан спільний (панель ×2).
   simpleFlatAms: boolean;
@@ -111,6 +117,7 @@ interface GenerationState {
   setSimpleMapLabel: (label: string) => void;
   setSimpleStyleId: (id: string) => void;
   setSimpleTemplate: (id: string | null) => void;
+  setSimpleFormat: (f: GenerationState["simpleFormat"]) => void;
   setSimpleFlatAms: (on: boolean) => void;
   setSimpleConnector: (on: boolean) => void;
   setSimpleFrame: (on: boolean) => void;
@@ -207,6 +214,8 @@ const initialState = {
   simpleMapLabel: "",
   simpleStyleId: "full",
   simpleTemplate: null,
+  // Дефолт = «Об'ємна 3D» = сьогоднішній стан з усіма спецрежимами ВИМКНЕНО.
+  simpleFormat: "relief3d" as GenerationState["simpleFormat"],
   simpleFlatAms: false,
   simpleConnector: false,
   simpleFrame: false,
@@ -242,6 +251,36 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleMapLabel: (label) => set({ simpleMapLabel: label }),
   setSimpleStyleId: (id) => set({ simpleStyleId: id }),
   setSimpleTemplate: (id) => set({ simpleTemplate: id }),
+  // ВЗАЄМОВИКЛЮЧНИЙ формат: один set() похідно синхронізує УСІ легасі-булеві, щоб
+  // buildSingleMapReq лишився без змін і генерувався той самий запит, що й раніше:
+  //  • panno  → simplePanelMode 2|3 (зберігає поточний, дефолт 2), решта off, рельєф лишається;
+  //  • magnet → simpleMagnetMode=true, тримає frame (сумісний), гасить connector/highlight/GPX;
+  //  • flat   → плоска база: гасить рельєф/магніт/панно, flat-AMS і додатки лишає;
+  //  • relief3d → усе off (= сьогоднішній all-off стан), рельєф лишається.
+  // simpleFlatBuildings навмисно НЕ скидаємо — у білдері він під гейтом (flatPlate||magnet),
+  // тож на relief3d/panno інертний.
+  setSimpleFormat: (f) => set((st) => ({
+    simpleFormat: f,
+    simplePanelMode: f === "panno" ? (st.simplePanelMode > 0 ? st.simplePanelMode : 2) : 0,
+    simpleMagnetMode: f === "magnet",
+    // flat: лишаємо поточний flat-AMS (його окремо вмикає чип «Плоска» / тумблер
+    // flat-ams); інші формати — гасимо. flat-AMS це лише ОДИН зі способів плоскої
+    // карти, тож конектор/рамка/дім самі вмикають flat_plate навіть без flat-AMS.
+    simpleFlatAms: f === "flat" ? st.simpleFlatAms : false,
+    simpleRelief: (f === "relief3d" || f === "panno") ? st.simpleRelief : false,
+    ...(f !== "flat"
+      ? {
+          simpleConnector: false,
+          simpleFrame: f === "magnet" ? st.simpleFrame : false,
+          mapHighlightBuilding: false,
+          highlightPoints: [],
+          highlightFootprints: [],
+        }
+      : {}),
+    ...((f === "panno" || f === "magnet")
+      ? { gpxFocus: null, gpxName: null, gpxNote: null }
+      : {}),
+  })),
   setSimpleFlatAms: (on) => set({ simpleFlatAms: on }),
   setSimpleConnector: (on) => set({ simpleConnector: on }),
   setSimpleFrame: (on) => set({ simpleFrame: on }),

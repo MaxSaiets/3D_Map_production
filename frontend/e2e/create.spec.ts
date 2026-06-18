@@ -39,10 +39,10 @@ test.describe("Конструктор мап /create", () => {
     await expect(sticky).toHaveCount(1);
     await expect(sticky.first()).toBeVisible();
     await expect(sticky.first()).toContainText(/Згенерувати|Замовити/);
-    // Ціну НЕ показуємо під час створення (лише на кроці оформлення). Продукт-лейбл
-    // теж прибрано — на мобільному він обрізався до «3…» і крав місце (див. StickyActionBar:
-    // price=null → дві кнопки на всю ширину), тож головне — відсутність «₴».
-    await expect(sticky.first()).not.toContainText(/₴/);
+    // Орієнтовну ціну показуємо ЗАВЖДИ (фолбек з SIMPLE_SIZES, ніколи «—») — щоб
+    // покупець не тиснув «Згенерувати»/«Замовити» наосліп (конверсія). Тому sticky
+    // має містити символ валюти.
+    await expect(sticky.first()).toContainText(/₴/);
   });
 
   test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {
@@ -186,8 +186,8 @@ test.describe("Конструктор мап /create", () => {
     await expect(hl).toHaveAttribute("aria-pressed", "false");
     await hl.click();
     await expect(hl).toHaveAttribute("aria-pressed", "true");
-    // підказка «клікни свій будинок» з'являється
-    await expect(page.getByText(/Клікни свій будинок/).first()).toBeVisible();
+    // підказка «клікни свої будинки» з'являється
+    await expect(page.getByText(/Клікни сво/).first()).toBeVisible();
     // клік по карті ставить точку → з'являється статус (Обрано: N) + кнопка очищення
     await page.locator(".leaflet-container").first().click({ position: { x: 200, y: 180 } });
     await expect(page.getByText(/Обрано:/).first()).toBeVisible();
@@ -252,6 +252,20 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/9 плиток з ідеальними швами/).first()).toBeVisible();
     await chips.getByRole("radio", { name: "2×2" }).click();
     await expect(page.getByText(/4 плиток з ідеальними швами/).first()).toBeVisible();
+  });
+
+  test("формат: сегмент-контрол з 4 варіантів, вибір «Плоска» вмикає flat-AMS", async ({ page }) => {
+    const seg = page.locator('[data-testid="format-seg"]').first();
+    await expect(seg).toBeVisible();
+    // Рівно 4 взаємовиключні radio: 3D / Плоска / Магніт / Панно
+    await expect(seg.getByRole("radio")).toHaveCount(4);
+    // Дефолт = «Об'ємна 3D» (усі спецрежими off)
+    await expect(page.locator('[data-testid="format-relief3d"]').first()).toHaveAttribute("aria-checked", "true");
+    // Вибір «Плоска кольорова» → flat-AMS-тумблер під «Більше опцій» стає ON
+    await page.locator('[data-testid="format-flat"]').first().click();
+    await expect(page.locator('[data-testid="format-flat"]').first()).toHaveAttribute("aria-checked", "true");
+    await page.locator('[data-testid="more-options"]').first().click();
+    await expect(page.locator('[data-testid="flat-ams-toggle"]').first()).toHaveAttribute("aria-pressed", "true");
   });
 
   test("share-сторінка: og:image з /api/og, noindex, CTA", async ({ page }) => {
