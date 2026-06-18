@@ -42,6 +42,9 @@ export interface MapRequestParams {
    *  окрема деталь-ключ. Дві плоскі карти стикуються пазами (паз у дні 3мм
    *  основи → спереду непомітно). Лише плоский режим. */
   mapConnector?: boolean;
+  /** Преміум-рамка: компас + масштабна лінійка + координати центру окремою
+   *  чорною деталлю поверх плоскої карти. Лише плоский режим. */
+  mapFrame?: boolean;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -91,6 +94,8 @@ export function buildMapRequest(p: MapRequestParams) {
     ...(p.gpxTrack && p.gpxTrack.length >= 2 ? { gpx_track: p.gpxTrack } : {}),
     // З'єднувач-пази: бек має дефолти (NSEW, 10×15×2мм, кліренс 0.2) — шлемо лише прапор.
     ...(p.mapConnector ? { map_connector: true } : {}),
+    // Преміум-рамка: бек має дефолти (компас+лінійка+координати) — шлемо лише прапор.
+    ...(p.mapFrame ? { map_frame: true } : {}),
   };
 }
 

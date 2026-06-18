@@ -65,6 +65,8 @@ interface GenerationState {
   // З'ЄДНУВАЧ-ПАЗИ (метелик): «ластівчин-хвіст» пази на гранях + деталь-ключ,
   // щоб стикувати дві плоскі карти. Стан спільний (панель монтується двічі).
   simpleConnector: boolean;
+  // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
+  simpleFrame: boolean;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -97,6 +99,7 @@ interface GenerationState {
   setSimpleTemplate: (id: string | null) => void;
   setSimpleFlatAms: (on: boolean) => void;
   setSimpleConnector: (on: boolean) => void;
+  setSimpleFrame: (on: boolean) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -185,6 +188,7 @@ const initialState = {
   simpleTemplate: null,
   simpleFlatAms: false,
   simpleConnector: false,
+  simpleFrame: false,
   gpxName: null,
   gpxNote: null,
 
@@ -214,6 +218,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleTemplate: (id) => set({ simpleTemplate: id }),
   setSimpleFlatAms: (on) => set({ simpleFlatAms: on }),
   setSimpleConnector: (on) => set({ simpleConnector: on }),
+  setSimpleFrame: (on) => set({ simpleFrame: on }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

@@ -142,6 +142,23 @@ test.describe("Конструктор мап /create", () => {
     await expect(connector).toHaveAttribute("aria-pressed", "false");
   });
 
+  test("преміум-рамка: тумблер вмикається й співіснує з flat-AMS, гаситься панно", async ({ page }) => {
+    await page.locator('[data-testid="more-options"]').first().click();
+    const frame = page.locator('[data-testid="frame-toggle"]').first();
+    await expect(frame).toBeVisible();
+    await expect(frame).toHaveAttribute("aria-pressed", "false");
+    await frame.click();
+    await expect(frame).toHaveAttribute("aria-pressed", "true");
+    // Сумісна з flat-AMS — обидва ON
+    const flatAms = page.locator('[data-testid="flat-ams-toggle"]').first();
+    await flatAms.click();
+    await expect(flatAms).toHaveAttribute("aria-pressed", "true");
+    await expect(frame).toHaveAttribute("aria-pressed", "true");
+    // Панно (3D-плитки) гасить рамку
+    await page.locator('[data-testid="panel-chips"]').first().getByRole("radio", { name: "2×2" }).click();
+    await expect(frame).toHaveAttribute("aria-pressed", "false");
+  });
+
   test("REGRESSION: чернетка з plain-object зоною НЕ валить /create і /keychains", async ({ page }) => {
     // JSON.parse(draft) повертає plain object замість L.LatLngBounds — раніше
     // це крешило обидві сторінки («getNorth/getCenter is not a function»).

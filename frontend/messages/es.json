@@ -446,6 +446,8 @@
     "flatAmsHint": "Placa plana multicolor: cada capa un color de filamento (base · agua · parques · calles · edificios), base resistente de 3 mm. Sin relieve — se imprime plano, ideal para Bambu AMS.",
     "connectorToggle": "Conector (mariposa)",
     "connectorHint": "Encajes en cola de milano en los bordes + pieza-llave aparte — une dos mapas planos (díptico / panel de pared). La muesca se talla en la parte inferior de la base de 3 mm, así la junta es invisible de frente. Combinable con «Plano a color (AMS)».",
+    "frameToggle": "Marco (brújula · escala · coords)",
+    "frameHint": "Añade una brújula (N), una barra de escala (0…N m) y las coordenadas del centro como pieza negra aparte sobre el mapa plano — aspecto cartográfico premium. Funciona con «Plano a color (AMS)», conector o imán.",
     "advancedHint": "¿Necesitas una serie de zonas (hexágonos / cuadrados)? Abre el modo «Pro» →",
     "orderPrint": "Pedir impresión",
     "limitMsg": "He usado mis 5 descargas gratuitas. Quiero más / impresión — contáctame, por favor.",

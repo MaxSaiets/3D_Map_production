@@ -772,6 +772,13 @@ class GenerationRequest(BaseModel):
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
     map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
     map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
+    # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
+    # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
+    map_frame: bool = False
+    map_frame_compass: bool = True
+    map_frame_scale: bool = True
+    map_frame_coords: bool = True
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -2980,6 +2987,13 @@ class ZoneGenerationRequest(BaseModel):
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
     map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
     map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
+    # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
+    # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
+    map_frame: bool = False
+    map_frame_compass: bool = True
+    map_frame_scale: bool = True
+    map_frame_coords: bool = True
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)

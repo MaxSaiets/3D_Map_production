@@ -446,6 +446,8 @@
     "flatAmsHint": "Flache mehrfarbige Kachel: jede Schicht eine eigene Filamentfarbe (Basis · Wasser · Parks · Straßen · Gebäude), stabile 3-mm-Basis. Kein Relief — druckt flach, ideal für Bambu AMS.",
     "connectorToggle": "Verbinder (Schmetterling)",
     "connectorHint": "Schwalbenschwanz-Zinken an den Kachelkanten + separates Schlüsselteil — zwei flache Karten zusammenstecken (Diptychon / Wandpaneel). Die Nut sitzt in der Unterseite der 3-mm-Basis, die Naht ist von vorne unsichtbar. Mit „Flach farbig (AMS)“ kombinierbar.",
+    "frameToggle": "Rahmen (Kompass · Maßstab · Koordinaten)",
+    "frameHint": "Fügt einen Kompass (N), einen Maßstabsbalken (0…N m) und die Mittelpunktkoordinaten als separates schwarzes Teil über der flachen Karte hinzu — Premium-Kartenlook. Funktioniert mit „Flach farbig (AMS)“, Verbinder oder Magnet.",
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",
     "orderPrint": "Druck bestellen",
     "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich.",

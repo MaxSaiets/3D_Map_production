@@ -492,6 +492,46 @@ def test_map_connector_off_leaves_base_byte_identical_solid():
     assert float(upper.volume) == pytest.approx(float(solid.volume), rel=1e-6)
 
 
+# ===== ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати =====
+
+def test_map_frame_overlay_has_compass_scale_coords_inside_base():
+    from services.flat_plate_pipeline import build_map_frame_overlay
+    zone = _square(-400.0, -400.0, 400.0, 400.0)
+    es = 80.0 / 800.0
+    overlay = build_map_frame_overlay(
+        zone, north=50.4550, south=50.4480, east=30.5270, west=30.5180,
+        export_scale_factor=es, want_compass=True, want_scale=True, want_coords=True,
+    )
+    assert overlay is not None and not overlay.is_empty
+    # все в межах плити
+    assert zone.buffer(1e-6).contains(overlay)
+    # три кластери елементів (компас NE, лінійка SW, координати SE) → багато частин
+    parts = list(getattr(overlay, "geoms", [overlay]))
+    assert len(parts) >= 3
+    # компас угорі-праворуч, лінійка внизу-ліворуч
+    cx, cy = 0.0, 0.0
+    ne = [p for p in parts if p.centroid.x > cx and p.centroid.y > cy]
+    sw = [p for p in parts if p.centroid.x < cx and p.centroid.y < cy]
+    assert ne, "немає елементів у верхньому-правому куті (компас)"
+    assert sw, "немає елементів у нижньому-лівому куті (лінійка)"
+
+
+def test_map_frame_each_subfeature_can_be_disabled():
+    from services.flat_plate_pipeline import build_map_frame_overlay
+    zone = _square(-400.0, -400.0, 400.0, 400.0)
+    es = 80.0 / 800.0
+    kw = dict(north=50.45, south=50.448, east=30.527, west=30.518, export_scale_factor=es)
+    only_compass = build_map_frame_overlay(zone, want_compass=True, want_scale=False, want_coords=False, **kw)
+    only_scale = build_map_frame_overlay(zone, want_compass=False, want_scale=True, want_coords=False, **kw)
+    none = build_map_frame_overlay(zone, want_compass=False, want_scale=False, want_coords=False, **kw)
+    assert only_compass is not None and not only_compass.is_empty
+    assert only_scale is not None and not only_scale.is_empty
+    assert none is None
+    # компас угорі-праворуч, лінійка внизу-ліворуч → центроїди в різних кутах
+    assert only_compass.centroid.y > 0 and only_compass.centroid.x > 0
+    assert only_scale.centroid.y < 0 and only_scale.centroid.x < 0
+
+
 # ===== ПАРА ДЛЯ ЗАКОХАНИХ: серце-половинки з замком =====
 
 def test_heart_tip_is_rounded():

@@ -682,6 +682,144 @@ def build_map_connector_geometry(
     return notch_union, keys_union
 
 
+def _frame_place_text(
+    text: str, *, height_m: float, x: float, y: float, ha: str = "center", va: str = "center",
+) -> Optional[BaseGeometry]:
+    """TTF-текст у локально-метровій системі, заякорений у (x,y) за ha/va.
+    ha: left|center|right (горизонт.), va: bottom|center|top (верт.)."""
+    if not text or height_m <= 0:
+        return None
+    polys = _ttf_text_polygons(text, height_m=height_m, font_family="DejaVu Sans")
+    if not polys:
+        return None
+    u = unary_union(polys).buffer(0)
+    if u is None or u.is_empty:
+        return None
+    b = u.bounds
+    ax = {"left": b[0], "center": (b[0] + b[2]) / 2.0, "right": b[2]}.get(ha, (b[0] + b[2]) / 2.0)
+    ay = {"bottom": b[1], "center": (b[1] + b[3]) / 2.0, "top": b[3]}.get(va, (b[1] + b[3]) / 2.0)
+    return affinity.translate(u, xoff=x - ax, yoff=y - ay)
+
+
+def _nice_round_number(value: float) -> float:
+    """Найближче «гарне» число (1/2/5×10ⁿ) ≤ value — для довжини масштабної лінійки."""
+    import math
+    if value <= 0:
+        return 0.0
+    exp = math.floor(math.log10(value))
+    base = 10.0 ** exp
+    for m in (5.0, 2.0, 1.0):
+        if m * base <= value:
+            return m * base
+    return base
+
+
+def build_map_frame_overlay(
+    base_polygon: BaseGeometry,
+    *,
+    north: float, south: float, east: float, west: float,
+    export_scale_factor: float,
+    want_compass: bool = True,
+    want_scale: bool = True,
+    want_coords: bool = True,
+) -> Optional[BaseGeometry]:
+    """ПРЕМІУМ-РАМКА плоскої карти: компас (стрілка-N), масштабна лінійка
+    (шахова + підписи 0…N м) і координати центру (lat/lon) — як ОДИН підведений
+    полігон у кутах/краях, що потім екструдується окремою чорною деталлю «Frame»
+    і вирізається з шарів карти (як map_label) щоб читалось чисто.
+
+    Координати world-метрів: base_polygon.bounds = (west..east)×(south..north).
+    Розміри елементів у model-мм → _model_mm_to_world_m. Реальна довжина лінійки
+    рахується від РЕАЛЬНОЇ ширини карти (метри широти/довготи)."""
+    if base_polygon is None or getattr(base_polygon, "is_empty", True):
+        return None
+    minx, miny, maxx, maxy = base_polygon.bounds
+    bw, bh = maxx - minx, maxy - miny
+    if bw <= 0 or bh <= 0:
+        return None
+    mm = lambda v: _model_mm_to_world_m(v, export_scale_factor)  # noqa: E731
+    margin = mm(4.0)
+    stroke = mm(0.8)
+    parts: list[BaseGeometry] = []
+
+    # ── Масштабна лінійка (нижній-лівий кут): шахова смуга + підписи 0 / N м.
+    if want_scale:
+        try:
+            import math
+            # РЕАЛЬНА ширина карти в метрах (середня широта для м/градус довготи).
+            lat_c = math.radians((north + south) / 2.0)
+            real_w_m = abs(east - west) * 111320.0 * max(math.cos(lat_c), 0.05)
+            target = _nice_round_number(real_w_m * 0.28)  # ~чверть ширини, кругле
+            if target > 0:
+                # переводимо реальні метри → world-юніти (world = real m × ширина_world/real)
+                bar_len = bw * (target / real_w_m) if real_w_m > 1e-6 else bw * 0.28
+                bar_h = mm(2.2)
+                lab_h = mm(3.2)
+                x0 = minx + margin
+                y0 = miny + margin + lab_h * 1.25  # підписи нижче смуги
+                n_seg = 4
+                seg_w = bar_len / n_seg
+                bar_parts = []
+                for i in range(n_seg):  # шахові залиті сегменти
+                    if i % 2 == 0:
+                        bar_parts.append(box(x0 + i * seg_w, y0, x0 + (i + 1) * seg_w, y0 + bar_h))
+                outer = box(x0, y0, x0 + bar_len, y0 + bar_h)
+                inner = box(x0 + stroke, y0 + stroke, x0 + bar_len - stroke, y0 + bar_h - stroke)
+                bar_parts.append(outer.difference(inner).buffer(0))  # контур навколо всіх сегментів
+                lab0 = _frame_place_text("0", height_m=lab_h, x=x0, y=y0 - lab_h * 0.5, ha="center", va="top")
+                unit = f"{int(target)} m" if target < 1000 else f"{target/1000:g} km"
+                labN = _frame_place_text(unit, height_m=lab_h, x=x0 + bar_len, y=y0 - lab_h * 0.5, ha="center", va="top")
+                bar_parts += [p for p in (lab0, labN) if p is not None]
+                sb = unary_union([p for p in bar_parts if p is not None]).buffer(0)
+                if sb is not None and not sb.is_empty:
+                    parts.append(sb)
+        except Exception as exc:
+            print(f"[MAP FRAME] scale bar failed (non-fatal): {exc}")
+
+    # ── Компас (верхній-правий кут): стрілка-N вгору (північ) + літера «N».
+    if want_compass:
+        try:
+            size = mm(11.0)
+            cx = maxx - margin - size * 0.5
+            cy = maxy - margin - size * 0.6
+            ax_w = size * 0.42
+            arrow = Polygon([
+                (cx, cy + size * 0.5),               # вістря (північ)
+                (cx - ax_w * 0.5, cy - size * 0.5),
+                (cx, cy - size * 0.18),               # вирізана «ластівка» хвоста
+                (cx + ax_w * 0.5, cy - size * 0.5),
+            ]).buffer(0)
+            nlet = _frame_place_text("N", height_m=size * 0.42, x=cx, y=cy + size * 0.5 + mm(1.6), ha="center", va="bottom")
+            comp = unary_union([p for p in (arrow, nlet) if p is not None]).buffer(0)
+            if comp is not None and not comp.is_empty:
+                parts.append(comp)
+        except Exception as exc:
+            print(f"[MAP FRAME] compass failed (non-fatal): {exc}")
+
+    # ── Координати центру (нижній-правий кут): «50.45°N 30.52°E».
+    if want_coords:
+        try:
+            lat_c = (north + south) / 2.0
+            lon_c = (east + west) / 2.0
+            ns = "N" if lat_c >= 0 else "S"
+            ew = "E" if lon_c >= 0 else "W"
+            txt = f"{abs(lat_c):.4f}°{ns} {abs(lon_c):.4f}°{ew}"
+            ct = _frame_place_text(txt, height_m=mm(2.6), x=maxx - margin, y=miny + margin, ha="right", va="bottom")
+            if ct is not None and not ct.is_empty:
+                parts.append(ct)
+        except Exception as exc:
+            print(f"[MAP FRAME] coords failed (non-fatal): {exc}")
+
+    if not parts:
+        return None
+    overlay = unary_union(parts).buffer(0)
+    # тримаємо все в межах плити
+    overlay = overlay.intersection(base_polygon).buffer(0)
+    if overlay is None or overlay.is_empty:
+        return None
+    return overlay
+
+
 def _round_polygon_tip(pts: list, *, tip_index: int, radius: float, samples: int = 16) -> list:
     """Заокруглення одного гострого вузла замкнутого контуру: вершини в радіусі
     `radius` від кінчика замінюються семплами квадратичної Безьє (контрольна
@@ -2559,6 +2697,8 @@ def run_flat_plate_pipeline(
     keychain_text2_mesh: Optional[trimesh.Trimesh] = None
     keychain_base_bottom_mesh: Optional[trimesh.Trimesh] = None
     connector_mesh: Optional[trimesh.Trimesh] = None
+    map_frame_mesh: Optional[trimesh.Trimesh] = None
+    map_frame_hull: Optional[BaseGeometry] = None
     map_text_mesh: Optional[trimesh.Trimesh] = None
     keychain_back_poly: Optional[BaseGeometry] = None
     keychain_back_engrave_m: float = 0.0
@@ -3383,6 +3523,51 @@ def run_flat_plate_pipeline(
         else:
             label_clear_band = None
 
+    # ПРЕМІУМ-РАМКА (компас + масштабна лінійка + координати): рахуємо ДО побудови
+    # шарів, щоб вирізати її silhouette з road/parks/water (як map_label) — текст/
+    # стрілка читаються чисто на тлі бази. Окрема чорна деталь «Frame» зверху.
+    if not keychain_mode and bool(getattr(request, "map_frame", False)):
+        try:
+            map_frame_overlay = build_map_frame_overlay(
+                zone.zone_polygon_local,
+                north=float(getattr(request, "north", 0.0) or 0.0),
+                south=float(getattr(request, "south", 0.0) or 0.0),
+                east=float(getattr(request, "east", 0.0) or 0.0),
+                west=float(getattr(request, "west", 0.0) or 0.0),
+                export_scale_factor=export_scale_factor,
+                want_compass=bool(getattr(request, "map_frame_compass", True)),
+                want_scale=bool(getattr(request, "map_frame_scale", True)),
+                want_coords=bool(getattr(request, "map_frame_coords", True)),
+            )
+            if map_frame_overlay is not None and not map_frame_overlay.is_empty:
+                map_frame_hull = map_frame_overlay.convex_hull.buffer(
+                    _model_mm_to_world_m(0.6, export_scale_factor), join_style=1
+                ).buffer(0)
+                # Розбиваємо на per-елемент опуклі оболонки (компас/лінійка/координати
+                # у різних кутах) — спільна опукла оболонка з'їла б половину карти.
+                _clears = []
+                for _g in (map_frame_overlay.geoms if hasattr(map_frame_overlay, "geoms") else [map_frame_overlay]):
+                    try:
+                        _clears.append(_g.convex_hull.buffer(_model_mm_to_world_m(0.6, export_scale_factor), join_style=1))
+                    except Exception:
+                        pass
+                map_frame_hull = unary_union(_clears).buffer(0) if _clears else map_frame_hull
+                if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                    road_mask = _subtract_geometry(road_mask, map_frame_hull)
+                if parks_mask is not None and not getattr(parks_mask, "is_empty", True):
+                    parks_mask = _subtract_geometry(parks_mask, map_frame_hull)
+                if water_mask is not None and not getattr(water_mask, "is_empty", True):
+                    water_mask = _subtract_geometry(water_mask, map_frame_hull)
+                map_frame_mesh = build_flat_layer_mesh_from_mask(
+                    map_frame_overlay, bottom_z_m=base_top_m,
+                    thickness_m=_model_mm_to_world_m(0.6, export_scale_factor),
+                    color=LAYER_COLORS.get("rim", [25, 25, 25, 255]), min_area_m2=1e-12,
+                )
+                print(f"[MAP FRAME] compass/scale/coords ready ({len(getattr(map_frame_overlay,'geoms',[1]))} elems), carved from map layers")
+        except Exception as exc:
+            print(f"[MAP FRAME] failed (non-fatal): {exc}")
+            map_frame_mesh = None
+
     # ВОДА = ОДИН ВЕРХНІЙ ШАР, врівень із землею (НЕ на всю глибину).
     # Юзер: "вода важається до кінця моделі з іншої сторони — треба тільки один
     # шар". Раніше water заповнювала 0 → base_top (вся товщина) і її було видно
@@ -3583,6 +3768,26 @@ def run_flat_plate_pipeline(
         gdf_buildings_local=gdf_buildings_local,
         base_top_m=base_top_m,
     )
+    # ПРЕМІУМ-РАМКА: прибираємо будівлі під компасом/лінійкою/координатами, щоб
+    # вони не стирчали крізь чорну деталь (маски road/water/parks вже вирізано).
+    if map_frame_hull is not None and not getattr(map_frame_hull, "is_empty", True) and building_meshes:
+        try:
+            _before_bf = len(building_meshes)
+            _kept = []
+            for _bm in building_meshes:
+                try:
+                    _bb = _bm.bounds
+                    _foot = box(float(_bb[0][0]), float(_bb[0][1]), float(_bb[1][0]), float(_bb[1][1]))
+                    if map_frame_hull.intersects(_foot):
+                        continue  # будівля під рамкою → прибрати
+                except Exception:
+                    pass
+                _kept.append(_bm)
+            building_meshes = _kept
+            if len(building_meshes) < _before_bf:
+                print(f"[MAP FRAME] Dropped {_before_bf - len(building_meshes)} building(s) under frame")
+        except Exception as exc:
+            print(f"[MAP FRAME] building drop failed (non-fatal): {exc}")
     if keychain_layout is not None:
         # RAISED TEXT — текст підіймається над базою як рельєф (попередня логіка).
         text_raise_mm = float(getattr(request, "keychain_label_raise_mm", KEYCHAIN_TEXT_RAISE_MM) or KEYCHAIN_TEXT_RAISE_MM)
@@ -3924,6 +4129,7 @@ def run_flat_plate_pipeline(
                 ("Marker", keychain_marker_mesh),
                 ("Highlight", highlight_building_mesh),
                 ("Connector", connector_mesh),
+                ("Frame", map_frame_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),
                 ("MapLabel", map_text_mesh),
                 ("Bridges", locals().get("bridge_mesh") if keychain_mode else None),

@@ -446,6 +446,8 @@
     "flatAmsHint": "Plaque plate multicolore : chaque couche une couleur de filament (base · eau · parcs · routes · bâtiments), base solide de 3 mm. Sans relief — impression à plat, idéale pour Bambu AMS.",
     "connectorToggle": "Connecteur (papillon)",
     "connectorHint": "Tenons en queue d'aronde sur les bords + pièce-clé séparée — assemblez deux cartes plates (diptyque / panneau mural). L'encoche est creusée dans le dessous de la base de 3 mm, la jonction est invisible de face. Combinable avec « Plat couleur (AMS) ».",
+    "frameToggle": "Cadre (boussole · échelle · coords)",
+    "frameHint": "Ajoute une boussole (N), une échelle (0…N m) et les coordonnées du centre comme pièce noire séparée sur la carte plate — rendu cartographique premium. Compatible avec « Plat couleur (AMS) », connecteur ou aimant.",
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
     "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi.",

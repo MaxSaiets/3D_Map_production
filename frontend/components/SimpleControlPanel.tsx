@@ -69,6 +69,9 @@ export function SimpleControlPanel({
   // З'ЄДНУВАЧ-ПАЗИ (метелик): стикує дві плоскі карти; стан у store (панель ×2).
   const connectorMode = s.simpleConnector;
   const setConnectorMode = s.setSimpleConnector;
+  // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
+  const frameMode = s.simpleFrame;
+  const setFrameMode = s.setSimpleFrame;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -81,7 +84,7 @@ export function SimpleControlPanel({
   // «Більше опцій» (магніт/GPX/панно) сховані за замовчанням — Просто-режим має
   // бути коротким: Місто → Район → Стиль → Розмір → Створити. Авто-розкривається,
   // якщо одна з опцій уже активна (відновлена зі store), щоб вибір не «зник».
-  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode;
+  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode || frameMode;
   const [moreOpen, setMoreOpen] = useState(advancedActive);
   useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
 
@@ -401,7 +404,11 @@ export function SimpleControlPanel({
     // З'ЄДНУВАЧ-ПАЗИ: вимагає плоского режиму (3мм основа, паз у дні). Сумісний
     // з flatAms (кольорова плитка з пазами), несумісний з магнітом/панно.
     const connector = panelMode === 0 && !magnetMode && s.simpleConnector;
-    const flatPlate = flatAms || connector;
+    // ПРЕМІУМ-РАМКА: компас+лінійка+координати поверх плоскої карти. Будується у
+    // flat_plate (тож вимагає плоского режиму). Сумісна з flatAms/connector/магнітом
+    // (магніт уже плоский); несумісна лише з панно (3D-плитки, інший пайплайн).
+    const frame = panelMode === 0 && s.simpleFrame;
+    const flatPlate = flatAms || connector || frame;
     // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
     let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
     let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
@@ -433,6 +440,7 @@ export function SimpleControlPanel({
       previewMode: forPrint ? false : (panelMode > 0 || magnetMode || flatPlate ? false : s.previewMode),
       magnetPocket: panelMode > 0 ? false : magnetMode,
       mapConnector: connector,
+      mapFrame: frame,
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
@@ -751,6 +759,31 @@ export function SimpleControlPanel({
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("connectorHint")}</span>
         </button>
 
+        {/* Преміум-рамка: компас + масштабна лінійка + координати центру окремою
+            чорною деталлю поверх плоскої карти. Сумісна з усіма плоскими режимами
+            (flat-AMS / з'єднувач / магніт), несумісна з панно (3D-плитки). */}
+        <button
+          type="button"
+          aria-pressed={frameMode}
+          data-testid="frame-toggle"
+          onClick={() => {
+            const next = !frameMode;
+            setFrameMode(next);
+            if (next && panelMode > 0) setPanelMode(0);
+          }}
+          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+            frameMode
+              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+          }`}
+        >
+          <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+            🧭 {t("frameToggle")}
+            {frameMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("frameHint")}</span>
+        </button>
+
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
@@ -871,6 +904,7 @@ export function SimpleControlPanel({
                     setPanelMode(mode);
                     if (mode > 0 && flatAmsMode) setFlatAmsMode(false);
                     if (mode > 0 && connectorMode) setConnectorMode(false);
+                    if (mode > 0 && frameMode) setFrameMode(false);
                     // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
                     if (mode > 0 && (magnetMode || gpxTrack)) {
                       setMagnetMode(false);
