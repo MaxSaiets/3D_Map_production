@@ -33,9 +33,10 @@ LAYER_COLORS = {
     # Маркер «особливе місце» — теплий теракотовий (виділяється на карті, як
     # шпилька-маркер; той самий тон, що GPX-трек #c44110).
     "marker": [196, 65, 16, 255],
-    # Підсвічений будинок (твій дім/орієнтир) — БРОНЗА/ЗОЛОТО: друкується окремою
-    # деталлю іншим філаментом, помітно виділяється на білій карті.
-    "highlight": [142, 107, 61, 255],
+    # Підсвічений будинок (твій дім/орієнтир) — ЧЕРВОНИЙ: друкується окремою
+    # вставною деталлю іншим філаментом, яскраво виділяється на білій карті
+    # (фідбек власника: «зробив його червоним»).
+    "highlight": [206, 38, 38, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -593,6 +594,119 @@ def build_magnet_pocket_geometry(
     if len(centers) < 2:
         centers = [Point(c.x, c.y)]
     return unary_union([p.buffer(r_m, resolution=48) for p in centers])
+
+
+def _mesh_xy_footprint(mesh: trimesh.Trimesh, *, simplify_m: float = 0.0) -> Optional[BaseGeometry]:
+    """РЕАЛЬНИЙ XY-контур (увігнуто-стійкий) екструдованого будинку = об'єднання
+    проєкцій усіх трикутників на площину XY. Опукла оболонка заповнила б L/U-виїмки;
+    цей контур зберігає справжню форму → точний паз/peg. Повертає найбільший полігон."""
+    try:
+        verts = np.asarray(mesh.vertices, dtype=float)
+        tris = []
+        for f in mesh.faces:
+            v = verts[f]
+            p = Polygon([(v[0][0], v[0][1]), (v[1][0], v[1][1]), (v[2][0], v[2][1])])
+            if p.is_valid and p.area > 1e-12:
+                tris.append(p)
+        if not tris:
+            return None
+        foot = unary_union(tris).buffer(0)
+        if simplify_m > 0:  # зварити числові шви, майже не округлюючи реальні кути
+            foot = foot.buffer(simplify_m).buffer(-simplify_m).buffer(0)
+        if foot is None or getattr(foot, "is_empty", True):
+            return None
+        if hasattr(foot, "geoms"):
+            foot = max(foot.geoms, key=lambda g: g.area)
+        return foot
+    except Exception:
+        return None
+
+
+def _select_highlight_building_index(
+    building_meshes: list, *, target_xy: Optional[tuple[float, float]],
+) -> Optional[int]:
+    """Індекс будинку для виділення: чий bbox МІСТИТЬ target_xy (клік юзера по
+    своєму будинку / центр карти), серед них — найближчий центроїд; якщо жоден не
+    містить — просто найближчий центроїд. target_xy у тій же системі, що меші."""
+    if not building_meshes or target_xy is None:
+        return None
+    tx, ty = float(target_xy[0]), float(target_xy[1])
+    best_i, best_d, best_inside = None, float("inf"), False
+    for i, m in enumerate(building_meshes):
+        if m is None or len(getattr(m, "faces", [])) == 0:
+            continue
+        b = m.bounds
+        cx = (b[0][0] + b[1][0]) * 0.5
+        cy = (b[0][1] + b[1][1]) * 0.5
+        inside = (b[0][0] <= tx <= b[1][0]) and (b[0][1] <= ty <= b[1][1])
+        d = (cx - tx) ** 2 + (cy - ty) ** 2
+        if inside and not best_inside:
+            best_inside, best_i, best_d = True, i, d  # перша «накрита» — пріоритет
+        elif inside == best_inside and d < best_d:
+            best_i, best_d = i, d
+    return best_i
+
+
+def build_highlight_insert(
+    building_mesh: trimesh.Trimesh,
+    *,
+    base_top_m: float,
+    export_scale_factor: float,
+    depth_mm: float = 0.8,
+    lip_mm: float = 0.5,
+    clearance_mm: float = 0.2,
+    z_clear_mm: float = 0.2,
+) -> tuple[trimesh.Trimesh, Optional[BaseGeometry], float]:
+    """Виділений будинок → ВСТАВНА деталь (механічна вставка у паз бази, БЕЗ клею).
+    Повертає (highlight_mesh, pocket_poly, pocket_depth_m):
+      * highlight_mesh = будинок + peg-ніжка (під базу), колір highlight (ЧЕРВОНИЙ);
+      * pocket_poly/pocket_depth_m → виріз ПАЗУ у ВЕРХ бази через
+        _build_keychain_base_parts(top_cut_poly=pocket_poly, top_cut_depth_m=depth).
+
+    Дизайн «counterbore» (точна посадка + чисте лице) — досліджено
+    debug/research_highlight_pocket.py:
+      footprint  = РЕАЛЬНИЙ контур будинку (увігнутості L/U збережено);
+      pocket     = footprint − lip      (паз ВУЖЧИЙ за будинок → будинок лягає
+                                         бортиком на плече урівень = надійний стоп,
+                                         зазор сховано під навісом будинку);
+      peg        = pocket − clearance   (ніжка з боковим зазором ≈0.2мм/бік — щільно);
+      peg_height = depth − z_clear      (ніжка нижча за паз → сідає на плече, не в дно).
+    Будинок замалий (offset зжер контур) → glue-on (pocket=None, деталь без peg)."""
+    out = building_mesh.copy()
+    none_ret = (_with_color(out, LAYER_COLORS["highlight"]), None, 0.0)
+    if depth_mm <= 0:
+        return none_ret
+    depth = min(_model_mm_to_world_m(depth_mm, export_scale_factor),
+                max(base_top_m - _model_mm_to_world_m(0.6, export_scale_factor), 0.0))
+    if depth <= 1e-9:
+        return none_ret
+    lip = _model_mm_to_world_m(lip_mm, export_scale_factor)
+    clear = _model_mm_to_world_m(clearance_mm, export_scale_factor)
+    z_clear = _model_mm_to_world_m(z_clear_mm, export_scale_factor)
+    foot = _mesh_xy_footprint(out, simplify_m=_model_mm_to_world_m(0.05, export_scale_factor))
+    if foot is None or getattr(foot, "is_empty", True):
+        from shapely.geometry import MultiPoint as _MP
+        foot = _MP([(float(v[0]), float(v[1])) for v in out.vertices]).convex_hull
+    pocket_poly = foot.buffer(-lip, join_style=2)
+    if pocket_poly is None or pocket_poly.is_empty:
+        return none_ret  # замалий → glue-on
+    if hasattr(pocket_poly, "geoms"):
+        pocket_poly = max(pocket_poly.geoms, key=lambda g: g.area)
+    peg_poly = pocket_poly.buffer(-clear, join_style=2)
+    if peg_poly is None or peg_poly.is_empty:
+        return none_ret  # замалий → glue-on
+    if hasattr(peg_poly, "geoms"):
+        peg_poly = max(peg_poly.geoms, key=lambda g: g.area)
+    peg_h = max(depth - z_clear, _model_mm_to_world_m(0.2, export_scale_factor))
+    peg = build_flat_layer_mesh_from_mask(
+        peg_poly, bottom_z_m=base_top_m - peg_h, thickness_m=peg_h,
+        color=LAYER_COLORS["highlight"], min_area_m2=1e-12,
+    )
+    if peg is None:
+        return none_ret
+    out = trimesh.util.concatenate([out, peg])
+    _with_color(out, LAYER_COLORS["highlight"])
+    return out, pocket_poly, depth
 
 
 def build_map_connector_geometry(
@@ -2700,7 +2814,16 @@ def run_flat_plate_pipeline(
         _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
         base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.0, 3.0)
 
+    # ВИДІЛЕНА БУДІВЛЯ (карта): паз 0.8мм у ВЕРХ бази + лице ≥0.6мм → база ≥1.6мм.
+    map_highlight_building = bool(getattr(request, "map_highlight_building", False)) and not keychain_mode
+    if map_highlight_building:
+        base_thickness_mm = max(base_thickness_mm, 1.6)
+
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
+    # Нижній виріз бази (магніт-кишеня / конектор-пази) — запам'ятовуємо, щоб при
+    # додаванні ВЕРХНЬОГО пазу під виділену будівлю ПЕРЕБУДувати базу не втративши його.
+    _flat_base_bottom_poly: Optional[BaseGeometry] = None
+    _flat_base_bottom_depth_m: float = 0.0
     content_area = zone.zone_polygon_local
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
     keychain_rim_mesh: Optional[trimesh.Trimesh] = None
@@ -2859,6 +2982,8 @@ def run_flat_plate_pipeline(
                 inset_mm=_pocket_inset_mm,
                 export_scale_factor=export_scale_factor,
             )
+            if _pocket is not None and _pocket_depth_m > 1e-9:
+                _flat_base_bottom_poly, _flat_base_bottom_depth_m = _pocket, _pocket_depth_m
             terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
                 zone.zone_polygon_local,
                 base_top_m=base_top_m,
@@ -2894,6 +3019,8 @@ def run_flat_plate_pipeline(
                 clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
                 export_scale_factor=export_scale_factor,
             )
+            if _notches is not None and _conn_depth_m > 1e-9:
+                _flat_base_bottom_poly, _flat_base_bottom_depth_m = _notches, _conn_depth_m
             terrain_mesh, keychain_base_bottom_mesh = _build_keychain_base_parts(
                 zone.zone_polygon_local,
                 base_top_m=base_top_m,
@@ -3956,9 +4083,9 @@ def run_flat_plate_pipeline(
             precomputed_polygon=map_label_letter_poly,
         )
 
-    # ПІДСВІТКА БУДИНКУ: будинок у ЦЕНТРІ карти → ОКРЕМА деталь іншого кольору
-    # (бронза), прибрана з шару buildings. Друкується окремо/іншим філаментом і
-    # стає на пласку пляму, що лишилась. v2 (наступне) додасть паз+peg.
+    # ПІДСВІТКА БУДИНКУ (брелок): будинок у ЦЕНТРІ тіла → ОКРЕМА ЧЕРВОНА вставна
+    # деталь (паз+peg, механічна вставка БЕЗ клею) — друкується окремим філаментом,
+    # вставляється у паз бази; економить час/філамент проти AMS на один будинок.
     highlight_building_mesh = None
     if (
         keychain_mode
@@ -3968,59 +4095,68 @@ def run_flat_plate_pipeline(
     ):
         try:
             _hb_ctr = keychain_layout["body"].centroid
-            _hb_best_i = None
-            _hb_best_d = float("inf")
-            for _hb_i, _hb_m in enumerate(building_meshes):
-                if _hb_m is None or len(getattr(_hb_m, "faces", [])) == 0:
-                    continue
-                _hb_b = _hb_m.bounds
-                _hb_cx = (_hb_b[0][0] + _hb_b[1][0]) * 0.5
-                _hb_cy = (_hb_b[0][1] + _hb_b[1][1]) * 0.5
-                # Будинок, чий bbox НАКРИВАЄ центр — пріоритет (d=0); інакше найближчий.
-                _hb_inside = (_hb_b[0][0] <= _hb_ctr.x <= _hb_b[1][0]) and (_hb_b[0][1] <= _hb_ctr.y <= _hb_b[1][1])
-                _hb_d = 0.0 if _hb_inside else (_hb_cx - _hb_ctr.x) ** 2 + (_hb_cy - _hb_ctr.y) ** 2
-                if _hb_d < _hb_best_d:
-                    _hb_best_d = _hb_d
-                    _hb_best_i = _hb_i
+            _hb_best_i = _select_highlight_building_index(building_meshes, target_xy=(_hb_ctr.x, _hb_ctr.y))
             if _hb_best_i is not None:
-                _hb_mesh = building_meshes.pop(_hb_best_i).copy()
-                # ПАЗ+PEG (v2): footprint = XY-опукла оболонка меша; клиренс 0.2мм/бік.
-                # Паз у ВЕРХ бази (hull+0.2), peg на деталі (hull−0.2, опускається у паз)
-                # → механічна вставка зверху. Якщо будинок замалий для peg — glue-on.
-                from shapely.geometry import MultiPoint as _MP
-                _hb_clear = _model_mm_to_world_m(0.2, export_scale_factor)
-                _hb_depth = min(
-                    _model_mm_to_world_m(0.8, export_scale_factor),
-                    max(base_top_m - _model_mm_to_world_m(0.6, export_scale_factor), 0.0),
+                _hb_src = building_meshes.pop(_hb_best_i)
+                _hb_mesh, _hb_pocket, _hb_depth = build_highlight_insert(
+                    _hb_src, base_top_m=base_top_m, export_scale_factor=export_scale_factor,
                 )
-                _hb_peg = None
-                try:
-                    _hb_hull = _MP([(float(v[0]), float(v[1])) for v in _hb_mesh.vertices]).convex_hull
-                    if _hb_hull is not None and not _hb_hull.is_empty and _hb_depth > 1e-9:
-                        _peg_poly = _hb_hull.buffer(-_hb_clear, join_style=1)
-                        if _peg_poly is not None and not _peg_poly.is_empty:
-                            _hb_peg = build_flat_layer_mesh_from_mask(
-                                _peg_poly, bottom_z_m=base_top_m - _hb_depth, thickness_m=_hb_depth,
-                                color=LAYER_COLORS["highlight"], min_area_m2=1e-12,
-                            )
-                        if _hb_peg is not None:  # паз ставимо ЛИШЕ якщо є реальний peg
-                            _new_t, _new_b = _build_keychain_base_parts(
-                                keychain_layout["base"], base_top_m=base_top_m,
-                                back_text_poly=keychain_back_poly, engrave_m=keychain_back_engrave_m,
-                                top_cut_poly=_hb_hull.buffer(_hb_clear, join_style=1), top_cut_depth_m=_hb_depth,
-                            )
-                            if _new_t is not None:
-                                terrain_mesh, keychain_base_bottom_mesh = _new_t, _new_b
-                except Exception as _pgx:
-                    print(f"[KEYCHAIN] highlight pocket/peg skipped ({_pgx}); glue-on fallback")
-                    _hb_peg = None
-                if _hb_peg is not None:
-                    _hb_mesh = trimesh.util.concatenate([_hb_mesh, _hb_peg])
-                _with_color(_hb_mesh, LAYER_COLORS["highlight"])
+                if _hb_pocket is not None and _hb_depth > 1e-9:
+                    _new_t, _new_b = _build_keychain_base_parts(
+                        keychain_layout["base"], base_top_m=base_top_m,
+                        back_text_poly=keychain_back_poly, engrave_m=keychain_back_engrave_m,
+                        top_cut_poly=_hb_pocket, top_cut_depth_m=_hb_depth,
+                    )
+                    if _new_t is not None:
+                        terrain_mesh, keychain_base_bottom_mesh = _new_t, _new_b
                 highlight_building_mesh = _hb_mesh
-                print(f"[KEYCHAIN] Highlight building (idx {_hb_best_i}) → bronze 'Highlight' part" + (" + peg + base pocket (механічна вставка)" if _hb_peg is not None else " (glue-on, замалий для peg)"))
+                print(f"[KEYCHAIN] Highlight building (idx {_hb_best_i}) → red 'Highlight' part"
+                      + (" + peg + base pocket (механічна вставка)" if _hb_pocket is not None else " (glue-on, замалий для peg)"))
         except Exception as _hbexc:
             print(f"[KEYCHAIN] highlight building failed (non-fatal): {_hbexc}")
+
+    # ВИДІЛЕНА БУДІВЛЯ (КАРТА): користувач КЛІКАЄ свій будинок на карті (highlight_point
+    # [lon,lat]) → беремо ту будівлю (інакше — у центрі карти) як ОКРЕМУ ЧЕРВОНУ вставну
+    # деталь (паз+peg). Друкується окремим філаментом, вставляється у паз → економія
+    # часу/філаменту проти AMS заради одного будинку. Базу ПЕРЕБУДовуємо з пазом,
+    # зберігаючи нижній виріз (магніт/конектор) якщо був.
+    if map_highlight_building and building_meshes and not keychain_mode:
+        try:
+            _mh_target = None
+            _hp = getattr(request, "highlight_point", None)
+            if _hp and len(_hp) >= 2:
+                try:
+                    # ПАСТКА: to_local приймає UTM — спершу to_utm(lon,lat) (як GPX).
+                    _ux, _uy = global_center.to_utm(float(_hp[0]), float(_hp[1]))
+                    _lx, _ly = global_center.to_local(_ux, _uy)
+                    _mh_target = (float(_lx), float(_ly))
+                except Exception as _hpx:
+                    print(f"[MAP HIGHLIGHT] point→local failed ({_hpx}); using map center")
+                    _mh_target = None
+            if _mh_target is None:  # fallback: центр зони
+                _zc = zone.zone_polygon_local.centroid
+                _mh_target = (float(_zc.x), float(_zc.y))
+            _mh_i = _select_highlight_building_index(building_meshes, target_xy=_mh_target)
+            if _mh_i is not None:
+                _mh_src = building_meshes.pop(_mh_i)
+                _mh_mesh, _mh_pocket, _mh_depth = build_highlight_insert(
+                    _mh_src, base_top_m=base_top_m, export_scale_factor=export_scale_factor,
+                )
+                if _mh_pocket is not None and _mh_depth > 1e-9:
+                    _new_t, _new_b = _build_keychain_base_parts(
+                        zone.zone_polygon_local, base_top_m=base_top_m,
+                        back_text_poly=_flat_base_bottom_poly, engrave_m=_flat_base_bottom_depth_m,
+                        top_cut_poly=_mh_pocket, top_cut_depth_m=_mh_depth,
+                    )
+                    if _new_t is not None:
+                        terrain_mesh = _new_t
+                        if _new_b is not None:
+                            keychain_base_bottom_mesh = _new_b
+                highlight_building_mesh = _mh_mesh
+                print(f"[MAP HIGHLIGHT] building (idx {_mh_i}) → red 'Highlight' part"
+                      + (" + peg + base pocket (механічна вставка)" if _mh_pocket is not None else " (glue-on, замалий для peg)"))
+        except Exception as _mhexc:
+            print(f"[MAP HIGHLIGHT] highlight building failed (non-fatal): {_mhexc}")
 
     # МАРКЕР «особливе місце»: піднята фігурка (heart/star/circle) у ЦЕНТРІ карти
     # (= точка, яку шукав користувач, бо мапа заповнює все тіло). Окремий шар.

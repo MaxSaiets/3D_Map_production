@@ -532,6 +532,62 @@ def test_map_frame_each_subfeature_can_be_disabled():
     assert only_scale.centroid.y < 0 and only_scale.centroid.x < 0
 
 
+# ===== ВИДІЛЕНА БУДІВЛЯ: окрема червона вставна деталь (паз + peg, counterbore) =====
+
+def _building_mesh(poly, base_top, height):
+    import trimesh
+    m = trimesh.creation.extrude_polygon(poly, height=height)
+    m.apply_translation([0, 0, base_top])
+    return m
+
+
+def test_highlight_insert_counterbore_peg_below_building_above():
+    from services.flat_plate_pipeline import build_highlight_insert, _mesh_xy_footprint
+    es = 80.0 / 800.0
+    base_top = 3.0 / es
+    # L-shaped (concave) building — convex hull would over-cover the notch
+    Lpoly = Polygon([(-30, -24), (30, -24), (30, 0), (0, 0), (0, 24), (-30, 24)])
+    b = _building_mesh(Lpoly, base_top, 2.0 / es)
+    hi, pocket, depth = build_highlight_insert(b, base_top_m=base_top, export_scale_factor=es)
+    assert hi is not None and pocket is not None and depth > 0
+    assert hi.is_watertight
+    # peg dips below base_top (plugs into pocket); building stays above
+    assert float(hi.bounds[0][2]) < base_top - 1e-6
+    assert float(hi.bounds[1][2]) > base_top + 1e-6
+    # counterbore: pocket opening is SMALLER than the real footprint (shoulder to rest on)
+    foot = _mesh_xy_footprint(b, simplify_m=0.05 / es)
+    assert pocket.area < foot.area
+    assert foot.buffer(1e-6).contains(pocket)
+
+
+def test_highlight_pocket_carves_into_base_top_watertight():
+    from services.flat_plate_pipeline import build_highlight_insert
+    es = 80.0 / 800.0
+    base_top = 3.0 / es
+    b = _building_mesh(_square(-20, -20, 20, 20), base_top, 2.0 / es)
+    _, pocket, depth = build_highlight_insert(b, base_top_m=base_top, export_scale_factor=es)
+    zone = _square(-400, -400, 400, 400)
+    top, bottom = _build_keychain_base_parts(zone, base_top_m=base_top, top_cut_poly=pocket, top_cut_depth_m=depth)
+    solid = build_flat_zone_base_mesh(zone, bbox_meters=zone.bounds, thickness_m=base_top)
+    assert top is not None and top.is_watertight
+    assert bottom is None  # top-cut only → no BaseBack
+    assert len(top.faces) > len(solid.faces)  # pocket walls carved in
+
+
+def test_highlight_select_by_point_and_tiny_glue_on():
+    from services.flat_plate_pipeline import build_highlight_insert, _select_highlight_building_index
+    es = 80.0 / 800.0
+    base_top = 3.0 / es
+    far = _building_mesh(_square(100, 100, 140, 140), base_top, 2.0 / es)
+    near = _building_mesh(_square(-20, -20, 20, 20), base_top, 2.0 / es)
+    # point inside `near` selects index 1, not the far one
+    assert _select_highlight_building_index([far, near], target_xy=(0.0, 0.0)) == 1
+    # tiny building → glue-on (pocket None), no crash, mesh still returned
+    tiny = _building_mesh(_square(-1, -1, 1, 1), base_top, 2.0 / es)
+    hi, pocket, depth = build_highlight_insert(tiny, base_top_m=base_top, export_scale_factor=es)
+    assert hi is not None and pocket is None
+
+
 # ===== ПАРА ДЛЯ ЗАКОХАНИХ: серце-половинки з замком =====
 
 def test_heart_tip_is_rounded():

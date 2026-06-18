@@ -779,6 +779,11 @@ class GenerationRequest(BaseModel):
     map_frame_compass: bool = True
     map_frame_scale: bool = True
     map_frame_coords: bool = True
+    # ВИДІЛЕНА БУДІВЛЯ на карті: користувач обирає свій будинок (highlight_point
+    # [lon,lat] від кліку по карті; інакше — будинок у центрі) → ОКРЕМА ЧЕРВОНА
+    # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).
+    map_highlight_building: bool = False
+    highlight_point: Optional[List[float]] = Field(default=None, max_length=2)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -3000,6 +3005,11 @@ class ZoneGenerationRequest(BaseModel):
     map_frame_compass: bool = True
     map_frame_scale: bool = True
     map_frame_coords: bool = True
+    # ВИДІЛЕНА БУДІВЛЯ на карті: користувач обирає свій будинок (highlight_point
+    # [lon,lat] від кліку по карті; інакше — будинок у центрі) → ОКРЕМА ЧЕРВОНА
+    # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).
+    map_highlight_building: bool = False
+    highlight_point: Optional[List[float]] = Field(default=None, max_length=2)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)

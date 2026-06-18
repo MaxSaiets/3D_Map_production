@@ -520,6 +520,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const rectDragCleanupRef = useRef<(() => void) | null>(null);
   // D4 GPX: полілінія завантаженого треку на карті
   const gpxLineRef = useRef<L.Polyline | null>(null);
+  // ВИДІЛЕНА БУДІВЛЯ: червоний маркер обраної точки (клік по своєму будинку)
+  const highlightMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
   const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
@@ -704,6 +706,21 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       });
     }
 
+    // ВИДІЛЕНА БУДІВЛЯ: маркер обраної точки (червоне коло). Коли увімкнено режим
+    // вибору будинку — клік по карті ставить точку (нижче у handleMapClick), а не
+    // переносить зону. Маркер синхронізується зі store.highlightPoint.
+    const applyHighlightPoint = (pt: [number, number] | null) => {
+      if (highlightMarkerRef.current) { highlightMarkerRef.current.remove(); highlightMarkerRef.current = null; }
+      if (!pt) return;
+      highlightMarkerRef.current = L.circleMarker([pt[1], pt[0]], {
+        radius: 8, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
+      }).addTo(map);
+    };
+    applyHighlightPoint(useGenerationStore.getState().highlightPoint);
+    const unsubHl = useGenerationStore.subscribe((st, prev) => {
+      if (st.highlightPoint !== prev.highlightPoint) applyHighlightPoint(st.highlightPoint);
+    });
+
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
     const onMapGoto = (e: Event) => {
       const d = (e as CustomEvent).detail as { lat: number; lon: number; widthM?: number } | undefined;
@@ -848,6 +865,11 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         return;
       }
       if (Date.now() - lastDragEndedAtRef.current < MAP_CLICK_SUPPRESS_AFTER_DRAG_MS) return;
+      // Режим вибору будинку: клік СТАВИТЬ точку (свій будинок), а не переносить зону.
+      if (useGenerationStore.getState().mapHighlightBuilding) {
+        useGenerationStore.getState().setHighlightPoint([event.latlng.lng, event.latlng.lat]);
+        return;
+      }
       const current = currentBoundsRef.current ?? initialBounds;
       const size = boundsSizeMeters(current);
       const widthM = Math.min(Math.max(size.widthM, Math.min(80, safeSize.widthM)), safeSize.widthM);
@@ -906,9 +928,12 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       label.remove();
       clearTimeout(fitTimer);
       unsubGpx?.();
+      unsubHl?.();
       window.removeEventListener("monadruk:map-goto", onMapGoto as EventListener);
       gpxLineRef.current?.remove();
       gpxLineRef.current = null;
+      highlightMarkerRef.current?.remove();
+      highlightMarkerRef.current = null;
     };
   }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange, t]);
 

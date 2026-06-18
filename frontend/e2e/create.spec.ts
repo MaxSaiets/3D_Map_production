@@ -179,6 +179,24 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.locator('[data-testid="flat-buildings-toggle"]')).toHaveCount(0);
   });
 
+  test("виділення будинку: тумблер, клік по карті ставить точку, очищення", async ({ page }) => {
+    await page.locator('[data-testid="more-options"]').first().click();
+    const hl = page.locator('[data-testid="highlight-toggle"]').first();
+    await expect(hl).toBeVisible();
+    await expect(hl).toHaveAttribute("aria-pressed", "false");
+    await hl.click();
+    await expect(hl).toHaveAttribute("aria-pressed", "true");
+    // підказка «клікни свій будинок» з'являється
+    await expect(page.getByText(/Клікни свій будинок/).first()).toBeVisible();
+    // клік по карті ставить точку → з'являється статус + кнопка очищення
+    await page.locator(".leaflet-container").first().click({ position: { x: 200, y: 180 } });
+    await expect(page.getByText(/Будинок обрано/).first()).toBeVisible();
+    const clear = page.locator('[data-testid="highlight-clear"]').first();
+    await expect(clear).toBeVisible();
+    await clear.click();
+    await expect(page.locator('[data-testid="highlight-clear"]')).toHaveCount(0);
+  });
+
   test("REGRESSION: чернетка з plain-object зоною НЕ валить /create і /keychains", async ({ page }) => {
     // JSON.parse(draft) повертає plain object замість L.LatLngBounds — раніше
     // це крешило обидві сторінки («getNorth/getCenter is not a function»).

@@ -78,6 +78,11 @@ export function SimpleControlPanel({
   // ПЛАСКІ БУДИНКИ у плоских режимах (тонкі footprint-плити).
   const flatBuildingsMode = s.simpleFlatBuildings;
   const setFlatBuildingsMode = s.setSimpleFlatBuildings;
+  // ВИДІЛЕНА БУДІВЛЯ: клік по своєму будинку → окрема червона вставна деталь.
+  const highlightMode = s.mapHighlightBuilding;
+  const setHighlightMode = s.setMapHighlightBuilding;
+  const highlightPoint = s.highlightPoint;
+  const setHighlightPoint = s.setHighlightPoint;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -90,7 +95,7 @@ export function SimpleControlPanel({
   // «Більше опцій» (магніт/GPX/панно) сховані за замовчанням — Просто-режим має
   // бути коротким: Місто → Район → Стиль → Розмір → Створити. Авто-розкривається,
   // якщо одна з опцій уже активна (відновлена зі store), щоб вибір не «зник».
-  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode || frameMode;
+  const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode || frameMode || highlightMode;
   const [moreOpen, setMoreOpen] = useState(advancedActive);
   useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
 
@@ -415,7 +420,10 @@ export function SimpleControlPanel({
     // flat_plate (тож вимагає плоского режиму). Сумісна з flatAms/connector/магнітом
     // (магніт уже плоский); несумісна лише з панно (3D-плитки, інший пайплайн).
     const frame = panelMode === 0 && s.simpleFrame;
-    const flatPlate = flatAms || connector || frame;
+    // ВИДІЛЕНА БУДІВЛЯ: окрема червона вставна деталь — будується у flat_plate, тож
+    // вимагає плоского режиму (вмикає flatPlate). Сумісна з flatAms/конектор/рамка/магніт.
+    const highlight = panelMode === 0 && s.mapHighlightBuilding;
+    const flatPlate = flatAms || connector || frame || highlight;
     // РЕЛЬЄФ (висоти землі) — окремий перемикач, джерело правди для terrain. Працює
     // на 3D-карті (стандарт + панно); плоскі режими/магніт фізично без рельєфу.
     const relief = !magnetMode && !flatPlate && reliefMode;
@@ -455,6 +463,8 @@ export function SimpleControlPanel({
       magnetPocket: panelMode > 0 ? false : magnetMode,
       mapConnector: connector,
       mapFrame: frame,
+      mapHighlightBuilding: highlight,
+      highlightPoint: highlight ? s.highlightPoint : null,
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
@@ -712,6 +722,7 @@ export function SimpleControlPanel({
               if (magnetMode) setMagnetMode(false);
               if (connectorMode) setConnectorMode(false);
               if (frameMode) setFrameMode(false);
+              if (highlightMode) setHighlightMode(false);
             }
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
@@ -849,6 +860,49 @@ export function SimpleControlPanel({
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("frameHint")}</span>
         </button>
 
+        {/* ВИДІЛЕНА БУДІВЛЯ: користувач клікає свій будинок на карті → окрема ЧЕРВОНА
+            вставна деталь (паз+peg). Друк окремим філаментом + вставка = економія
+            часу/філаменту проти AMS заради одного будинку. Плоский режим (вмикає його).
+            Несумісна з рельєфом (3D) і панно. */}
+        <div className="rounded-[18px] border px-4 py-3 transition"
+             style={{ borderColor: highlightMode ? "rgba(11,92,87,0.4)" : "var(--surface-border)", background: highlightMode ? "rgba(15,118,110,0.1)" : "rgba(255,255,255,0.8)" }}>
+          <button
+            type="button"
+            aria-pressed={highlightMode}
+            data-testid="highlight-toggle"
+            onClick={() => {
+              const next = !highlightMode;
+              setHighlightMode(next);
+              if (next) {
+                if (panelMode > 0) setPanelMode(0);
+                if (reliefMode) setReliefMode(false);
+              } else {
+                setHighlightPoint(null);  // вимкнули → прибрати маркер/точку
+              }
+            }}
+            className="w-full text-left"
+          >
+            <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+              🏠 {t("highlightToggle")}
+              {highlightMode && <Check size={16} className="text-[var(--accent-strong)]" />}
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("highlightHint")}</span>
+          </button>
+          {highlightMode && (
+            <div className="mt-2 flex items-center justify-between gap-2 text-[12px]">
+              <span className="font-semibold" style={{ color: highlightPoint ? "var(--accent-strong)" : "var(--text-secondary)" }}>
+                {highlightPoint ? `📍 ${t("highlightPicked")}` : t("highlightPickHint")}
+              </span>
+              {highlightPoint && (
+                <button type="button" data-testid="highlight-clear" onClick={() => setHighlightPoint(null)}
+                        className="shrink-0 font-semibold text-red-700 hover:underline">
+                  {t("highlightClear")}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
         <button
           type="button"
@@ -971,6 +1025,7 @@ export function SimpleControlPanel({
                     if (mode > 0 && flatAmsMode) setFlatAmsMode(false);
                     if (mode > 0 && connectorMode) setConnectorMode(false);
                     if (mode > 0 && frameMode) setFrameMode(false);
+                    if (mode > 0 && highlightMode) setHighlightMode(false);
                     // Панно вимикає магніт + GPX (несумісні: панно = набір повних плиток).
                     if (mode > 0 && (magnetMode || gpxTrack)) {
                       setMagnetMode(false);
@@ -1021,7 +1076,7 @@ export function SimpleControlPanel({
             <p className="-mt-1 text-center text-[11px] text-[var(--text-secondary)]">
               {panelMode > 0
                 ? t("etaTiles", { tiles: panelMode * panelMode })
-                : (flatAmsMode || connectorMode || frameMode || magnetMode)
+                : (flatAmsMode || connectorMode || frameMode || magnetMode || highlightMode)
                   ? t("etaFlat")
                   : t("etaSingle")}
             </p>
