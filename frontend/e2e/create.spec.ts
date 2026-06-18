@@ -188,9 +188,9 @@ test.describe("Конструктор мап /create", () => {
     await expect(hl).toHaveAttribute("aria-pressed", "true");
     // підказка «клікни свій будинок» з'являється
     await expect(page.getByText(/Клікни свій будинок/).first()).toBeVisible();
-    // клік по карті ставить точку → з'являється статус + кнопка очищення
+    // клік по карті ставить точку → з'являється статус (Обрано: N) + кнопка очищення
     await page.locator(".leaflet-container").first().click({ position: { x: 200, y: 180 } });
-    await expect(page.getByText(/Будинок обрано/).first()).toBeVisible();
+    await expect(page.getByText(/Обрано:/).first()).toBeVisible();
     const clear = page.locator('[data-testid="highlight-clear"]').first();
     await expect(clear).toBeVisible();
     await clear.click();

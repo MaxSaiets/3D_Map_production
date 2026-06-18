@@ -48,10 +48,10 @@ export interface MapRequestParams {
   /** Преміум-рамка: компас + масштабна лінійка + координати центру окремою
    *  чорною деталлю поверх плоскої карти. Лише плоский режим. */
   mapFrame?: boolean;
-  /** Виділена будівля: окрема ЧЕРВОНА вставна деталь (паз+peg). Плоский режим. */
+  /** Виділені будівлі: окремі ЧЕРВОНІ вставні деталі (паз+peg). Плоский режим. */
   mapHighlightBuilding?: boolean;
-  /** [lon,lat] обраної будівлі (клік по карті); інакше — будинок у центрі. */
-  highlightPoint?: [number, number] | null;
+  /** [[lon,lat],...] обраних будівель (кліки по карті); інакше — будинок у центрі. */
+  highlightPoints?: Array<[number, number]>;
 }
 
 export function buildMapRequest(p: MapRequestParams) {
@@ -105,10 +105,10 @@ export function buildMapRequest(p: MapRequestParams) {
     ...(p.mapConnector ? { map_connector: true } : {}),
     // Преміум-рамка: бек має дефолти (компас+лінійка+координати) — шлемо лише прапор.
     ...(p.mapFrame ? { map_frame: true } : {}),
-    // Виділена будівля: прапор + точка [lon,lat] обраної будівлі (якщо клікнули).
+    // Виділені будівлі: прапор + точки [[lon,lat],...] обраних будівель (якщо клікнули).
     ...(p.mapHighlightBuilding ? { map_highlight_building: true } : {}),
-    ...(p.mapHighlightBuilding && p.highlightPoint && p.highlightPoint.length === 2
-      ? { highlight_point: p.highlightPoint }
+    ...(p.mapHighlightBuilding && p.highlightPoints && p.highlightPoints.length > 0
+      ? { highlight_points: p.highlightPoints }
       : {}),
   };
 }

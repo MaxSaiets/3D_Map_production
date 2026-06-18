@@ -520,8 +520,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const rectDragCleanupRef = useRef<(() => void) | null>(null);
   // D4 GPX: полілінія завантаженого треку на карті
   const gpxLineRef = useRef<L.Polyline | null>(null);
-  // ВИДІЛЕНА БУДІВЛЯ: червоний маркер обраної точки (клік по своєму будинку)
-  const highlightMarkerRef = useRef<L.CircleMarker | null>(null);
+  // ВИДІЛЕНІ БУДІВЛІ: червоні маркери обраних точок (кліки по своїх будинках)
+  const highlightLayerRef = useRef<L.LayerGroup | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
   const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
@@ -706,19 +706,21 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       });
     }
 
-    // ВИДІЛЕНА БУДІВЛЯ: маркер обраної точки (червоне коло). Коли увімкнено режим
-    // вибору будинку — клік по карті ставить точку (нижче у handleMapClick), а не
-    // переносить зону. Маркер синхронізується зі store.highlightPoint.
-    const applyHighlightPoint = (pt: [number, number] | null) => {
-      if (highlightMarkerRef.current) { highlightMarkerRef.current.remove(); highlightMarkerRef.current = null; }
-      if (!pt) return;
-      highlightMarkerRef.current = L.circleMarker([pt[1], pt[0]], {
-        radius: 8, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
-      }).addTo(map);
+    // ВИДІЛЕНІ БУДІВЛІ: червоні маркери обраних точок. Коли увімкнено режим вибору
+    // будинку — клік по карті ДОДАЄ точку (нижче у handleMapClick), а не переносить
+    // зону. Маркери синхронізуються зі store.highlightPoints (по одному на кожну).
+    const applyHighlightPoints = (pts: Array<[number, number]>) => {
+      if (highlightLayerRef.current) { highlightLayerRef.current.clearLayers(); }
+      else { highlightLayerRef.current = L.layerGroup().addTo(map); }
+      (pts || []).forEach(([lon, lat], i) => {
+        L.circleMarker([lat, lon], {
+          radius: 8, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
+        }).addTo(highlightLayerRef.current!);
+      });
     };
-    applyHighlightPoint(useGenerationStore.getState().highlightPoint);
+    applyHighlightPoints(useGenerationStore.getState().highlightPoints);
     const unsubHl = useGenerationStore.subscribe((st, prev) => {
-      if (st.highlightPoint !== prev.highlightPoint) applyHighlightPoint(st.highlightPoint);
+      if (st.highlightPoints !== prev.highlightPoints) applyHighlightPoints(st.highlightPoints);
     });
 
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
@@ -865,9 +867,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         return;
       }
       if (Date.now() - lastDragEndedAtRef.current < MAP_CLICK_SUPPRESS_AFTER_DRAG_MS) return;
-      // Режим вибору будинку: клік СТАВИТЬ точку (свій будинок), а не переносить зону.
+      // Режим вибору будинку: клік ДОДАЄ точку (свій будинок), а не переносить зону.
       if (useGenerationStore.getState().mapHighlightBuilding) {
-        useGenerationStore.getState().setHighlightPoint([event.latlng.lng, event.latlng.lat]);
+        useGenerationStore.getState().addHighlightPoint([event.latlng.lng, event.latlng.lat]);
         return;
       }
       const current = currentBoundsRef.current ?? initialBounds;
@@ -932,8 +934,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       window.removeEventListener("monadruk:map-goto", onMapGoto as EventListener);
       gpxLineRef.current?.remove();
       gpxLineRef.current = null;
-      highlightMarkerRef.current?.remove();
-      highlightMarkerRef.current = null;
+      highlightLayerRef.current?.remove();
+      highlightLayerRef.current = null;
     };
   }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange, t]);
 

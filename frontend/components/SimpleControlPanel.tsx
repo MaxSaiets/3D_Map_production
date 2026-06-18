@@ -78,11 +78,11 @@ export function SimpleControlPanel({
   // ПЛАСКІ БУДИНКИ у плоских режимах (тонкі footprint-плити).
   const flatBuildingsMode = s.simpleFlatBuildings;
   const setFlatBuildingsMode = s.setSimpleFlatBuildings;
-  // ВИДІЛЕНА БУДІВЛЯ: клік по своєму будинку → окрема червона вставна деталь.
+  // ВИДІЛЕНІ БУДІВЛІ: кліки по своїх будинках → окремі червоні вставні деталі.
   const highlightMode = s.mapHighlightBuilding;
   const setHighlightMode = s.setMapHighlightBuilding;
-  const highlightPoint = s.highlightPoint;
-  const setHighlightPoint = s.setHighlightPoint;
+  const highlightPoints = s.highlightPoints;
+  const setHighlightPoints = s.setHighlightPoints;
   // D4 GPX-трек: точки живуть у gpxFocus (їх же використовує карта-оверлей)
   const gpxTrack = s.gpxFocus?.points ?? null;
   const gpxName = s.gpxName;
@@ -464,7 +464,7 @@ export function SimpleControlPanel({
       mapConnector: connector,
       mapFrame: frame,
       mapHighlightBuilding: highlight,
-      highlightPoint: highlight ? s.highlightPoint : null,
+      highlightPoints: highlight ? s.highlightPoints : [],
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
@@ -877,7 +877,7 @@ export function SimpleControlPanel({
                 if (panelMode > 0) setPanelMode(0);
                 if (reliefMode) setReliefMode(false);
               } else {
-                setHighlightPoint(null);  // вимкнули → прибрати маркер/точку
+                setHighlightPoints([]);  // вимкнули → прибрати маркери/точки
               }
             }}
             className="w-full text-left"
@@ -890,11 +890,11 @@ export function SimpleControlPanel({
           </button>
           {highlightMode && (
             <div className="mt-2 flex items-center justify-between gap-2 text-[12px]">
-              <span className="font-semibold" style={{ color: highlightPoint ? "var(--accent-strong)" : "var(--text-secondary)" }}>
-                {highlightPoint ? `📍 ${t("highlightPicked")}` : t("highlightPickHint")}
+              <span className="font-semibold" style={{ color: highlightPoints.length ? "var(--accent-strong)" : "var(--text-secondary)" }}>
+                {highlightPoints.length ? `📍 ${t("highlightPicked", { count: highlightPoints.length })}` : t("highlightPickHint")}
               </span>
-              {highlightPoint && (
-                <button type="button" data-testid="highlight-clear" onClick={() => setHighlightPoint(null)}
+              {highlightPoints.length > 0 && (
+                <button type="button" data-testid="highlight-clear" onClick={() => setHighlightPoints([])}
                         className="shrink-0 font-semibold text-red-700 hover:underline">
                   {t("highlightClear")}
                 </button>

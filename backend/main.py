@@ -784,6 +784,9 @@ class GenerationRequest(BaseModel):
     # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).
     map_highlight_building: bool = False
     highlight_point: Optional[List[float]] = Field(default=None, max_length=2)
+    # Кілька будинків: список [[lon,lat],...] (дім, робота, орієнтири) — кожен окрема
+    # ЧЕРВОНА вставна деталь. Має пріоритет над highlight_point. Кап 12 у пайплайні.
+    highlight_points: Optional[List[List[float]]] = Field(default=None, max_length=12)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)
@@ -3010,6 +3013,9 @@ class ZoneGenerationRequest(BaseModel):
     # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).
     map_highlight_building: bool = False
     highlight_point: Optional[List[float]] = Field(default=None, max_length=2)
+    # Кілька будинків: список [[lon,lat],...] (дім, робота, орієнтири) — кожен окрема
+    # ЧЕРВОНА вставна деталь. Має пріоритет над highlight_point. Кап 12 у пайплайні.
+    highlight_points: Optional[List[List[float]]] = Field(default=None, max_length=12)
     keychain_mode: bool = False
     keychain_label: str = Field(default="", max_length=64)
     keychain_base_shape: str = Field(default="rounded", max_length=24)

@@ -74,10 +74,10 @@ interface GenerationState {
   // ПЛАСКІ БУДИНКИ: у плоских режимах будинки = тонкі footprint-плити одної висоти
   // (чистіший AMS-друк) замість лог-масштабованих блоків. Opt-in.
   simpleFlatBuildings: boolean;
-  // ВИДІЛЕНА БУДІВЛЯ: користувач обирає свій будинок (клік по карті → highlightPoint
-  // [lon,lat]) → окрема ЧЕРВОНА вставна деталь (паз+peg). Плоский режим.
+  // ВИДІЛЕНІ БУДІВЛІ: користувач клікає свої будинки (дім/робота/орієнтири) на карті
+  // → highlightPoints [[lon,lat],...] → КОЖЕН окрема ЧЕРВОНА вставна деталь. Плоский режим.
   mapHighlightBuilding: boolean;
-  highlightPoint: [number, number] | null;
+  highlightPoints: Array<[number, number]>;
   gpxName: string | null;
   gpxNote: string | null;
 
@@ -114,7 +114,8 @@ interface GenerationState {
   setSimpleRelief: (on: boolean) => void;
   setSimpleFlatBuildings: (on: boolean) => void;
   setMapHighlightBuilding: (on: boolean) => void;
-  setHighlightPoint: (pt: [number, number] | null) => void;
+  setHighlightPoints: (pts: Array<[number, number]>) => void;
+  addHighlightPoint: (pt: [number, number]) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
   setCropRotationDeg: (deg: number) => void;
@@ -207,7 +208,7 @@ const initialState = {
   simpleRelief: false,
   simpleFlatBuildings: false,
   mapHighlightBuilding: false,
-  highlightPoint: null,
+  highlightPoints: [],
   gpxName: null,
   gpxNote: null,
 
@@ -241,7 +242,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleRelief: (on) => set({ simpleRelief: on }),
   setSimpleFlatBuildings: (on) => set({ simpleFlatBuildings: on }),
   setMapHighlightBuilding: (on) => set({ mapHighlightBuilding: on }),
-  setHighlightPoint: (pt) => set({ highlightPoint: pt }),
+  setHighlightPoints: (pts) => set({ highlightPoints: pts }),
+  addHighlightPoint: (pt) => set((st) => ({ highlightPoints: [...st.highlightPoints, pt].slice(0, 12) })),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),

@@ -624,16 +624,19 @@ def _mesh_xy_footprint(mesh: trimesh.Trimesh, *, simplify_m: float = 0.0) -> Opt
 
 def _select_highlight_building_index(
     building_meshes: list, *, target_xy: Optional[tuple[float, float]],
+    exclude: Optional[set] = None,
 ) -> Optional[int]:
     """Індекс будинку для виділення: чий bbox МІСТИТЬ target_xy (клік юзера по
     своєму будинку / центр карти), серед них — найближчий центроїд; якщо жоден не
-    містить — просто найближчий центроїд. target_xy у тій же системі, що меші."""
+    містить — просто найближчий центроїд. target_xy у тій же системі, що меші.
+    `exclude` — індекси вже обраних будинків (щоб два кліки не взяли той самий)."""
     if not building_meshes or target_xy is None:
         return None
+    _ex = exclude or set()
     tx, ty = float(target_xy[0]), float(target_xy[1])
     best_i, best_d, best_inside = None, float("inf"), False
     for i, m in enumerate(building_meshes):
-        if m is None or len(getattr(m, "faces", [])) == 0:
+        if i in _ex or m is None or len(getattr(m, "faces", [])) == 0:
             continue
         b = m.bounds
         cx = (b[0][0] + b[1][0]) * 0.5
@@ -4125,46 +4128,70 @@ def run_flat_plate_pipeline(
         except Exception as _hbexc:
             print(f"[KEYCHAIN] highlight building failed (non-fatal): {_hbexc}")
 
-    # ВИДІЛЕНА БУДІВЛЯ (КАРТА): користувач КЛІКАЄ свій будинок на карті (highlight_point
-    # [lon,lat]) → беремо ту будівлю (інакше — у центрі карти) як ОКРЕМУ ЧЕРВОНУ вставну
-    # деталь (паз+peg). Друкується окремим філаментом, вставляється у паз → економія
-    # часу/філаменту проти AMS заради одного будинку. Базу ПЕРЕБУДовуємо з пазом,
-    # зберігаючи нижній виріз (магніт/конектор) якщо був.
+    # ВИДІЛЕНІ БУДІВЛІ (КАРТА): користувач КЛІКАЄ свої будинки на карті
+    # (highlight_points [[lon,lat],...] — дім, робота, орієнтири) → КОЖЕН стає ОКРЕМОЮ
+    # ЧЕРВОНОЮ вставною деталлю (паз+peg). Усі — в ОДИН part «Highlight», усі пази —
+    # одним вирізом у базі (зберігаючи нижній виріз магніт/конектор). Друкуються
+    # окремим філаментом, вставляються → економія часу/філаменту проти AMS.
     if map_highlight_building and building_meshes and not keychain_mode:
         try:
-            _mh_target = None
-            _hp = getattr(request, "highlight_point", None)
-            if _hp and len(_hp) >= 2:
+            # Збираємо точки-цілі (lon,lat → to_utm → to_local). Підтримуємо і список
+            # highlight_points, і одиночний highlight_point (бекв-сумісність).
+            _raw_pts = list(getattr(request, "highlight_points", None) or [])
+            _single = getattr(request, "highlight_point", None)
+            if not _raw_pts and _single and len(_single) >= 2:
+                _raw_pts = [_single]
+            _targets: list[tuple[float, float]] = []
+            for _hp in _raw_pts[:12]:  # кап 12 будівель
+                if not _hp or len(_hp) < 2:
+                    continue
                 try:
-                    # ПАСТКА: to_local приймає UTM — спершу to_utm(lon,lat) (як GPX).
                     _ux, _uy = global_center.to_utm(float(_hp[0]), float(_hp[1]))
                     _lx, _ly = global_center.to_local(_ux, _uy)
-                    _mh_target = (float(_lx), float(_ly))
+                    _targets.append((float(_lx), float(_ly)))
                 except Exception as _hpx:
-                    print(f"[MAP HIGHLIGHT] point→local failed ({_hpx}); using map center")
-                    _mh_target = None
-            if _mh_target is None:  # fallback: центр зони
+                    print(f"[MAP HIGHLIGHT] point→local failed ({_hpx}); skip point")
+            if not _targets:  # без кліків → будинок у центрі зони
                 _zc = zone.zone_polygon_local.centroid
-                _mh_target = (float(_zc.x), float(_zc.y))
-            _mh_i = _select_highlight_building_index(building_meshes, target_xy=_mh_target)
-            if _mh_i is not None:
-                _mh_src = building_meshes.pop(_mh_i)
-                _mh_mesh, _mh_pocket, _mh_depth = build_highlight_insert(
-                    _mh_src, base_top_m=base_top_m, export_scale_factor=export_scale_factor,
-                )
-                if _mh_pocket is not None and _mh_depth > 1e-9:
+                _targets = [(float(_zc.x), float(_zc.y))]
+
+            _chosen: list[int] = []
+            for _t in _targets:
+                _i = _select_highlight_building_index(building_meshes, target_xy=_t, exclude=set(_chosen))
+                if _i is not None and _i not in _chosen:
+                    _chosen.append(_i)
+            if _chosen:
+                _hl_meshes, _pockets = [], []
+                for _i in _chosen:  # будуємо вставки (НЕ видаляємо поки — індекси стабільні)
+                    _m, _pk, _d = build_highlight_insert(
+                        building_meshes[_i], base_top_m=base_top_m, export_scale_factor=export_scale_factor,
+                    )
+                    if _m is not None:
+                        _hl_meshes.append(_m)
+                    if _pk is not None and _d > 1e-9:
+                        _pockets.append(_pk)
+                        _mh_depth = _d
+                # прибираємо обрані будинки з шару Buildings
+                _chosen_set = set(_chosen)
+                building_meshes[:] = [b for j, b in enumerate(building_meshes) if j not in _chosen_set]
+                if _pockets:  # ОДИН виріз усіх пазів (+ збережений нижній виріз)
+                    _pocket_union = unary_union(_pockets).buffer(0)
                     _new_t, _new_b = _build_keychain_base_parts(
                         zone.zone_polygon_local, base_top_m=base_top_m,
                         back_text_poly=_flat_base_bottom_poly, engrave_m=_flat_base_bottom_depth_m,
-                        top_cut_poly=_mh_pocket, top_cut_depth_m=_mh_depth,
+                        top_cut_poly=_pocket_union, top_cut_depth_m=_mh_depth,
                     )
                     if _new_t is not None:
                         terrain_mesh = _new_t
                         if _new_b is not None:
                             keychain_base_bottom_mesh = _new_b
-                highlight_building_mesh = _mh_mesh
-                print(f"[MAP HIGHLIGHT] building (idx {_mh_i}) → red 'Highlight' part"
-                      + (" + peg + base pocket (механічна вставка)" if _mh_pocket is not None else " (glue-on, замалий для peg)"))
+                if _hl_meshes:
+                    highlight_building_mesh = (
+                        trimesh.util.concatenate(_hl_meshes) if len(_hl_meshes) > 1 else _hl_meshes[0]
+                    )
+                    _with_color(highlight_building_mesh, LAYER_COLORS["highlight"])
+                print(f"[MAP HIGHLIGHT] {len(_chosen)} building(s) → red 'Highlight' part"
+                      + (f" + {len(_pockets)} pocket(s) (механічна вставка)" if _pockets else " (glue-on)"))
         except Exception as _mhexc:
             print(f"[MAP HIGHLIGHT] highlight building failed (non-fatal): {_mhexc}")
 
