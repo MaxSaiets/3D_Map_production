@@ -1814,21 +1814,28 @@ def _build_keychain_base_parts(
     base_mask: BaseGeometry,
     *,
     base_top_m: float,
-    back_text_poly: Optional[BaseGeometry],
-    engrave_m: float,
+    back_text_poly: Optional[BaseGeometry] = None,
+    engrave_m: float = 0.0,
+    top_cut_poly: Optional[BaseGeometry] = None,
+    top_cut_depth_m: float = 0.0,
     min_area_m2: float = 0.001,
 ) -> tuple[Optional[trimesh.Trimesh], Optional[trimesh.Trimesh]]:
-    """База брелка. Без напису на звороті — одна суцільна плита (як раніше).
-    З написом — ДВА чистих watertight-екструди замість 3D-boolean:
-    нижній шар (0..engrave) з масти `base − дзеркальні літери` (гравіювання
-    видно знизу) + верхній суцільний шар (engrave..top). Слайсер зливає їх у
-    одне тіло; мікро-місточки над літерами ~0.5мм друкуються штатно."""
-    if (
-        back_text_poly is None
-        or getattr(back_text_poly, "is_empty", True)
-        or engrave_m <= 1e-9
-        or engrave_m >= base_top_m - 1e-9
-    ):
+    """База брелка (чисті watertift-екструди, БЕЗ 3D-boolean).
+    Без cut'ів — одна суцільна плита. `back_text_poly`+`engrave_m` → НИЖНІЙ шар
+    (0..engrave) з гравіюванням, видно знизу (також магніт-кишеня). НОВЕ:
+    `top_cut_poly`+`top_cut_depth_m` → ПАЗ у ВЕРХНЬОМУ шарі для вставки окремої
+    деталі-будинку зверху. Сумісно: коли top_cut=None — поведінка ІДЕНТИЧНА старій."""
+    has_back = (
+        back_text_poly is not None
+        and not getattr(back_text_poly, "is_empty", True)
+        and 1e-9 < engrave_m < base_top_m - 1e-9
+    )
+    has_top = (
+        top_cut_poly is not None
+        and not getattr(top_cut_poly, "is_empty", True)
+        and 1e-9 < top_cut_depth_m < base_top_m - 1e-9
+    )
+    if not has_back and not has_top:
         return (
             build_flat_layer_mesh_from_mask(
                 base_mask, bottom_z_m=0.0, thickness_m=base_top_m,
@@ -1837,19 +1844,32 @@ def _build_keychain_base_parts(
             None,
         )
     try:
-        bottom_mask = base_mask.difference(back_text_poly).buffer(0)
-        lower = build_flat_layer_mesh_from_mask(
-            bottom_mask, bottom_z_m=0.0, thickness_m=engrave_m,
-            color=LAYER_COLORS["base"], min_area_m2=1e-12,
-        )
-        upper = build_flat_layer_mesh_from_mask(
-            base_mask, bottom_z_m=engrave_m, thickness_m=base_top_m - engrave_m,
-            color=LAYER_COLORS["base"], min_area_m2=min_area_m2,
-        )
-        if lower is not None and upper is not None:
-            return upper, lower
+        bottom_mesh = None
+        mid_z0 = 0.0
+        if has_back:
+            bottom_mesh = build_flat_layer_mesh_from_mask(
+                base_mask.difference(back_text_poly).buffer(0), bottom_z_m=0.0,
+                thickness_m=engrave_m, color=LAYER_COLORS["base"], min_area_m2=1e-12,
+            )
+            mid_z0 = engrave_m
+        mid_top = (base_top_m - top_cut_depth_m) if has_top else base_top_m
+        main_layers = []
+        if mid_top - mid_z0 > 1e-9:
+            main_layers.append(build_flat_layer_mesh_from_mask(
+                base_mask, bottom_z_m=mid_z0, thickness_m=mid_top - mid_z0,
+                color=LAYER_COLORS["base"], min_area_m2=min_area_m2,
+            ))
+        if has_top:  # верхній шар з ПАЗОМ (mask − pocket)
+            main_layers.append(build_flat_layer_mesh_from_mask(
+                base_mask.difference(top_cut_poly).buffer(0), bottom_z_m=mid_top,
+                thickness_m=top_cut_depth_m, color=LAYER_COLORS["base"], min_area_m2=1e-12,
+            ))
+        main_layers = [m for m in main_layers if m is not None]
+        if main_layers and (not has_back or bottom_mesh is not None):
+            main = trimesh.util.concatenate(main_layers) if len(main_layers) > 1 else main_layers[0]
+            return main, bottom_mesh
     except Exception as exc:
-        print(f"[KEYCHAIN] back engrave base split failed ({exc}); solid base fallback")
+        print(f"[KEYCHAIN] base split (back/top cut) failed ({exc}); solid base fallback")
     return (
         build_flat_layer_mesh_from_mask(
             base_mask, bottom_z_m=0.0, thickness_m=base_top_m,
@@ -3608,9 +3628,41 @@ def run_flat_plate_pipeline(
                     _hb_best_i = _hb_i
             if _hb_best_i is not None:
                 _hb_mesh = building_meshes.pop(_hb_best_i).copy()
+                # ПАЗ+PEG (v2): footprint = XY-опукла оболонка меша; клиренс 0.2мм/бік.
+                # Паз у ВЕРХ бази (hull+0.2), peg на деталі (hull−0.2, опускається у паз)
+                # → механічна вставка зверху. Якщо будинок замалий для peg — glue-on.
+                from shapely.geometry import MultiPoint as _MP
+                _hb_clear = _model_mm_to_world_m(0.2, export_scale_factor)
+                _hb_depth = min(
+                    _model_mm_to_world_m(0.8, export_scale_factor),
+                    max(base_top_m - _model_mm_to_world_m(0.6, export_scale_factor), 0.0),
+                )
+                _hb_peg = None
+                try:
+                    _hb_hull = _MP([(float(v[0]), float(v[1])) for v in _hb_mesh.vertices]).convex_hull
+                    if _hb_hull is not None and not _hb_hull.is_empty and _hb_depth > 1e-9:
+                        _peg_poly = _hb_hull.buffer(-_hb_clear, join_style=1)
+                        if _peg_poly is not None and not _peg_poly.is_empty:
+                            _hb_peg = build_flat_layer_mesh_from_mask(
+                                _peg_poly, bottom_z_m=base_top_m - _hb_depth, thickness_m=_hb_depth,
+                                color=LAYER_COLORS["highlight"], min_area_m2=1e-12,
+                            )
+                        if _hb_peg is not None:  # паз ставимо ЛИШЕ якщо є реальний peg
+                            _new_t, _new_b = _build_keychain_base_parts(
+                                keychain_layout["base"], base_top_m=base_top_m,
+                                back_text_poly=keychain_back_poly, engrave_m=keychain_back_engrave_m,
+                                top_cut_poly=_hb_hull.buffer(_hb_clear, join_style=1), top_cut_depth_m=_hb_depth,
+                            )
+                            if _new_t is not None:
+                                terrain_mesh, keychain_base_bottom_mesh = _new_t, _new_b
+                except Exception as _pgx:
+                    print(f"[KEYCHAIN] highlight pocket/peg skipped ({_pgx}); glue-on fallback")
+                    _hb_peg = None
+                if _hb_peg is not None:
+                    _hb_mesh = trimesh.util.concatenate([_hb_mesh, _hb_peg])
                 _with_color(_hb_mesh, LAYER_COLORS["highlight"])
                 highlight_building_mesh = _hb_mesh
-                print(f"[KEYCHAIN] Highlight building separated (idx {_hb_best_i}) → bronze 'Highlight' part, removed from buildings layer")
+                print(f"[KEYCHAIN] Highlight building (idx {_hb_best_i}) → bronze 'Highlight' part" + (" + peg + base pocket (механічна вставка)" if _hb_peg is not None else " (glue-on, замалий для peg)"))
         except Exception as _hbexc:
             print(f"[KEYCHAIN] highlight building failed (non-fatal): {_hbexc}")
 
