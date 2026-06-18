@@ -586,6 +586,11 @@ def test_highlight_select_by_point_and_tiny_glue_on():
     tiny = _building_mesh(_square(-1, -1, 1, 1), base_top, 2.0 / es)
     hi, pocket, depth = build_highlight_insert(tiny, base_top_m=base_top, export_scale_factor=es)
     assert hi is not None and pocket is None
+    # SMALL building (~0.7mm, too small for the lip shoulder) still gets a peg via the
+    # no-lip tier 2 (key for typical city-map houses) — pocket present, not glue-on
+    small = _building_mesh(_square(-3.5, -3.5, 3.5, 3.5), base_top, 2.0 / es)
+    hi2, pocket2, depth2 = build_highlight_insert(small, base_top_m=base_top, export_scale_factor=es)
+    assert hi2 is not None and pocket2 is not None and depth2 > 0
 
 
 # ===== ПАРА ДЛЯ ЗАКОХАНИХ: серце-половинки з замком =====

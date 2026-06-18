@@ -687,17 +687,27 @@ def build_highlight_insert(
     if foot is None or getattr(foot, "is_empty", True):
         from shapely.geometry import MultiPoint as _MP
         foot = _MP([(float(v[0]), float(v[1])) for v in out.vertices]).convex_hull
-    pocket_poly = foot.buffer(-lip, join_style=2)
-    if pocket_poly is None or pocket_poly.is_empty:
-        return none_ret  # замалий → glue-on
-    if hasattr(pocket_poly, "geoms"):
-        pocket_poly = max(pocket_poly.geoms, key=lambda g: g.area)
-    peg_poly = pocket_poly.buffer(-clear, join_style=2)
-    if peg_poly is None or peg_poly.is_empty:
-        return none_ret  # замалий → glue-on
-    if hasattr(peg_poly, "geoms"):
-        peg_poly = max(peg_poly.geoms, key=lambda g: g.area)
-    peg_h = max(depth - z_clear, _model_mm_to_world_m(0.2, export_scale_factor))
+    def _largest(g):
+        if g is None or getattr(g, "is_empty", True):
+            return None
+        return max(g.geoms, key=lambda x: x.area) if hasattr(g, "geoms") else g
+    min_peg = _model_mm_to_world_m(0.2, export_scale_factor)
+    # 3-РІВНЕВА посадка (макс. покриття для МАЛИХ будинків карти, ~1–2мм):
+    #  T1 counterbore — паз=foot−lip (плече), peg=паз−clear, peg нижчий за паз;
+    #  T2 без-плеча     — паз=foot, peg=foot−clear, peg=ПОВНА глибина (впирається в
+    #                     дно → лице урівень), для будинків замалих на плече;
+    #  T3 glue-on       — занадто малий навіть на peg → деталь без паза (приклеїти).
+    pocket_poly, peg_poly, peg_h, _mode = None, None, 0.0, "glue"
+    _t1_pocket = _largest(foot.buffer(-lip, join_style=2))
+    _t1_peg = _largest(_t1_pocket.buffer(-clear, join_style=2)) if _t1_pocket is not None else None
+    if _t1_peg is not None:
+        pocket_poly, peg_poly, peg_h, _mode = _t1_pocket, _t1_peg, max(depth - z_clear, min_peg), "counterbore"
+    else:
+        _t2_peg = _largest(foot.buffer(-clear, join_style=2))
+        if _t2_peg is not None:
+            pocket_poly, peg_poly, peg_h, _mode = foot, _t2_peg, depth, "no-lip"
+    if peg_poly is None:
+        return none_ret  # T3: glue-on
     peg = build_flat_layer_mesh_from_mask(
         peg_poly, bottom_z_m=base_top_m - peg_h, thickness_m=peg_h,
         color=LAYER_COLORS["highlight"], min_area_m2=1e-12,
