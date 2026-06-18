@@ -88,6 +88,15 @@ class TestAPI:
         """Тест endpoint завантаження для неіснуючої задачі"""
         response = client.get("/api/download/nonexistent-task-id")
         assert response.status_code == 404
+
+    def test_building_at_returns_footprint_key(self, client):
+        """/api/building-at завжди 200 з ключем footprint (контур або None коли
+        локальної OSM-БД немає у тест-середовищі); валідатор bbox відкидає сміття."""
+        response = client.get("/api/building-at", params={"lat": 50.4501, "lon": 30.5234})
+        assert response.status_code == 200
+        assert "footprint" in response.json()
+        # за межами діапазону → 422 (pydantic Query ge/le)
+        assert client.get("/api/building-at", params={"lat": 999, "lon": 0}).status_code == 422
     
     def test_generate_endpoint_missing_fields(self, client):
         """Тест endpoint генерації з відсутніми полями"""

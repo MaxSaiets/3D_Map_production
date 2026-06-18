@@ -879,13 +879,41 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         return;
       }
       if (Date.now() - lastDragEndedAtRef.current < MAP_CLICK_SUPPRESS_AFTER_DRAG_MS) return;
-      // Режим вибору будинку: клік ДОДАЄ точку (свій будинок), а не переносить зону.
-      // Одразу крапка, далі підвантажуємо РЕАЛЬНИЙ контур будівлі (Overpass) → обвід.
+      // Режим вибору будинку: клік ПЕРЕМИКАЄ будинок (повторний клік по вже-обраному
+      // знімає виділення), інакше ДОДАЄ точку + підвантажує РЕАЛЬНИЙ контур (обвід).
       if (useGenerationStore.getState().mapHighlightBuilding) {
-        const pt: [number, number] = [event.latlng.lng, event.latlng.lat];
-        useGenerationStore.getState().addHighlightPoint(pt);
+        const lng = event.latlng.lng, lat = event.latlng.lat;
+        // Ігноруємо кліки ПОЗА рамкою друку — інакше підсвітився б випадковий
+        // будинок з краю зони (nearest-fallback), а карта його не містить.
+        const _zb = currentBoundsRef.current ?? initialBounds;
+        if (_zb && !_zb.contains(event.latlng)) return;
+        const st = useGenerationStore.getState();
+        // спершу шукаємо вже-обраний будинок під кліком (контур містить точку, або
+        // обрана точка дуже близько ~25м) → знімаємо виділення
+        const inRing = (ring: Array<[number, number]>) => {
+          let inside = false;
+          for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+            if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi || 1e-12) + xi) inside = !inside;
+          }
+          return inside;
+        };
+        const near = 0.00025; // ~25м у градусах
+        let removeIdx = -1;
+        for (let i = 0; i < st.highlightPoints.length; i++) {
+          const fp = st.highlightFootprints[i];
+          if (fp && fp.length >= 3 && inRing(fp)) { removeIdx = i; break; }
+          const p = st.highlightPoints[i];
+          if (Math.abs(p[0] - lng) < near && Math.abs(p[1] - lat) < near) { removeIdx = i; break; }
+        }
+        if (removeIdx >= 0) {
+          st.removeHighlightAt(removeIdx);
+          return;
+        }
+        const pt: [number, number] = [lng, lat];
+        st.addHighlightPoint(pt);
         import("@/lib/buildings").then(({ fetchBuildingAt }) =>
-          fetchBuildingAt(event.latlng.lat, event.latlng.lng).then((poly) => {
+          fetchBuildingAt(lat, lng).then((poly) => {
             if (poly && poly.length >= 3) useGenerationStore.getState().setHighlightFootprint(pt, poly);
           }).catch(() => {}),
         );

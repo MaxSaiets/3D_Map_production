@@ -77,6 +77,9 @@ async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" 
     water: 0x2f6fd6,
     parks: 0x3f7a3f,
     green: 0x3f7a3f,
+    highlight: 0xce2626, // виділений будинок — ЧЕРВОНИЙ (як друк)
+    frame: 0x191919,     // преміум-рамка — ЧОРНА
+    connector: 0xf2f2f2, // з'єднувач — колір основи
   };
 
   const entries = Object.entries(blobs) as Array<[keyof typeof blobs, Blob]>;
@@ -173,6 +176,9 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           poi: 0xf0a030,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
           marker: 0xc44110, // маркер «особливе місце» — теракотовий
+          highlight: 0xce2626, // виділений будинок — ЧЕРВОНИЙ (як друк)
+          frame: 0x191919,  // преміум-рамка — ЧОРНА
+          connector: 0xf2f2f2, // з'єднувач-метелик — колір основи
           maplabel: 0x191919,
           rim: 0x191919,   // ободок брелка — ЧОРНИЙ (друкується чорним)
           text: 0x191919,  // текст/назва — ЧОРНИЙ
@@ -287,6 +293,9 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           poi: { color: 0xf0a030, part: "poi" },
           track: { color: 0xdc2626, part: "track" },     // GPX — червоний
           marker: { color: 0xc44110, part: "marker" },   // маркер «особливе місце» — теракотовий
+          highlight: { color: 0xce2626, part: "highlight" }, // виділений будинок — ЧЕРВОНИЙ
+          frame: { color: 0x191919, part: "frame" },     // преміум-рамка — ЧОРНА
+          connector: { color: 0xf2f2f2, part: "connector" }, // з'єднувач — колір основи
           maplabel: { color: 0x191919, part: "maplabel" },
           rim: { color: 0x191919, part: "rim" },         // ободок — чорний
           text: { color: 0x191919, part: "text" },       // текст — чорний

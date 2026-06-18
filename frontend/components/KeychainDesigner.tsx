@@ -962,6 +962,7 @@ export function KeychainTemplateStrip({
 export function KeychainDesigner({
   value,
   label,
+  label2 = "",
   backLabel = "",
   onChange,
   mapBounds,
@@ -970,6 +971,8 @@ export function KeychainDesigner({
 }: {
   value: KeychainDesignerConfig;
   label: string;
+  /** Другий рядок (дата/координати, менший кегль) — показуємо під основним написом. */
+  label2?: string;
   /** Текст на ЗВОРОТІ брелка (engraved). Показуємо у back-превʼю читабельно. */
   backLabel?: string;
   onChange: (value: KeychainDesignerConfig) => void;
@@ -1456,6 +1459,25 @@ export function KeychainDesigner({
           >
             {label || "TEXT"}
           </text>
+          {/* ДРУГИЙ РЯДОК (дата/координати) — менший кегль, ПІД основним написом.
+              WYSIWYG: показуємо так само, як гравіюється (раніше не відображався). */}
+          {label2?.trim() ? (
+            <text
+              x={value.labelXMm}
+              y={value.labelYMm + Math.max(value.labelTextHeightMm, 2.4) * 0.85 + 1.4}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#141414"
+              fontSize={Math.max(2.4 / 0.7, 2.0)}
+              fontWeight={700}
+              fontFamily={value.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : value.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}
+              letterSpacing={value.labelFontStyle === "wide" ? 0.4 : 0.18}
+              transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+              pointerEvents="none"
+            >
+              {label2}
+            </text>
+          ) : null}
           {/* Rotate handle: великий кружок з ↻, на 6мм над текстом (далеко щоб
               не плутати з drag-move). Drag по ньому = поворот тексту. */}
           {(() => {

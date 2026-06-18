@@ -791,7 +791,7 @@ export function SimpleControlPanel({
         {/* ПЛАСКІ БУДИНКИ (#6): у плоских режимах будинки = тонкі footprint-плити
             одної низької висоти (чистіший AMS-друк) замість лог-блоків. Показуємо
             лише коли активний плоский режим (де це має сенс). Opt-in. */}
-        {(flatAmsMode || connectorMode || frameMode || magnetMode) && (
+        {(flatAmsMode || connectorMode || frameMode || magnetMode || highlightMode) && (
           <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[14px] border border-[var(--surface-border)] bg-white/60 px-4 py-2.5">
             <span className="text-[13px] font-medium text-[var(--text-secondary)]">🏢 {t("flatBuildingsToggle")}</span>
             <input
@@ -938,6 +938,7 @@ export function SimpleControlPanel({
             value={mapLabel}
             onChange={(e) => setMapLabel(e.target.value.toUpperCase().slice(0, 24))}
             placeholder={t("mapLabelPh")}
+            aria-label={t("mapLabelAria")}
             className="w-full rounded-[18px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.4)]"
           />
         )}

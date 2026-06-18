@@ -327,6 +327,8 @@ function shrinkBoundsToMeters(
 export function KeychainControlPanel({
   label,
   onLabelChange,
+  label2,
+  onLabel2Change,
   backLabel,
   onBackLabelChange,
   design,
@@ -336,6 +338,9 @@ export function KeychainControlPanel({
 }: {
   label: string;
   onLabelChange: (value: string) => void;
+  /** Другий рядок (дата/координати) — піднято на сторінку, щоб дизайнер показав його. */
+  label2: string;
+  onLabel2Change: (value: string) => void;
   /** Текст звороту брелка — піднято на сторінку, щоб back-превʼю показав його. */
   backLabel: string;
   onBackLabelChange: (value: string) => void;
@@ -375,7 +380,8 @@ export function KeychainControlPanel({
 
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [label2, setLabel2] = useState("");
+  // label2 піднято на сторінку (prop) — щоб дизайнер показав другий рядок у превʼю.
+  const setLabel2 = onLabel2Change;
   // backLabel піднято на сторінку (prop) — щоб back-превʼю дизайнера його показав.
   const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
   // Підсвітка будинку в центрі: окрема бронзова деталь (друк іншим філаментом).

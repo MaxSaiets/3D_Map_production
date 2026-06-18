@@ -119,6 +119,7 @@ interface GenerationState {
   setMapHighlightBuilding: (on: boolean) => void;
   clearHighlights: () => void;
   addHighlightPoint: (pt: [number, number]) => void;
+  removeHighlightAt: (index: number) => void;
   setHighlightFootprint: (pt: [number, number], poly: Array<[number, number]>) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
@@ -251,6 +252,10 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   addHighlightPoint: (pt) => set((st) => (st.highlightPoints.length >= 12 ? st : ({
     highlightPoints: [...st.highlightPoints, pt],
     highlightFootprints: [...st.highlightFootprints, null],
+  }))),
+  removeHighlightAt: (index) => set((st) => (index < 0 || index >= st.highlightPoints.length ? st : ({
+    highlightPoints: st.highlightPoints.filter((_, i) => i !== index),
+    highlightFootprints: st.highlightFootprints.filter((_, i) => i !== index),
   }))),
   setHighlightFootprint: (pt, poly) => set((st) => {
     const i = st.highlightPoints.findIndex((p) => p[0] === pt[0] && p[1] === pt[1]);

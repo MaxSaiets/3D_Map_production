@@ -875,12 +875,13 @@ def _load_pricing() -> Dict[str, Any]:
     except Exception as e:  # noqa: BLE001
         print(f"[PRICING] load failed: {e}")
         if _PRICING_CACHE["data"] is None:
-            # Аварійний fallback СИНХРОНІЗОВАНО з pricing.json (раніше застаріле
-            # 290/690 суперечило поточним цінам, якби pricing.json не прочитався).
+            # Аварійний fallback МУСИТЬ збігатися з pricing.json (інакше при збої
+            # читання файлу клієнт переплатив би ~40-67%). Звірено з pricing.json
+            # 2026-06-18: S150/M240(60мм магніт 150)/L360/XL550, рельєф +60, from 150.
             _PRICING_CACHE["data"] = {
                 "currency": "UAH", "currency_symbol": "₴",
-                "map": {"sizes_mm": {"55": 250, "60": 180, "80": 390, "110": 590, "150": 890},
-                        "relief_addon": 100, "from": 250},
+                "map": {"sizes_mm": {"55": 150, "60": 150, "80": 240, "110": 360, "150": 550},
+                        "relief_addon": 60, "from": 150},
                 "keychain": {"base": 120, "from": 120},
             }
     return _PRICING_CACHE["data"]

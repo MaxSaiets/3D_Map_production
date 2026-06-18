@@ -89,6 +89,9 @@ export default function KeychainsPage() {
   // backLabel піднято сюди (а не у KeychainControlPanel), щоб back-превʼю дизайнера
   // показував реальний напис звороту, а не плейсхолдер.
   const [backLabel, setBackLabel] = useState("");
+  // label2 (другий рядок — дата/координати) теж піднято сюди, щоб дизайнер показав
+  // його у превʼю (інакше гравіювалось без перегляду — WYSIWYG-розрив).
+  const [label2, setLabel2] = useState("");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const [sidePreview, setSidePreview] = useState<"slicer" | "model3d">("model3d");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
@@ -393,6 +396,8 @@ export default function KeychainsPage() {
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
+              label2={label2}
+              onLabel2Change={setLabel2}
               backLabel={backLabel}
               onBackLabelChange={setBackLabel}
               design={design}
@@ -430,6 +435,7 @@ export default function KeychainsPage() {
                     <KeychainDesigner
                       value={design}
                       label={label}
+                      label2={label2}
                       backLabel={backLabel}
                       onChange={setDesign}
                       cropRotationDeg={cropRotationDeg}
