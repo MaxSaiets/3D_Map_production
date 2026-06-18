@@ -1513,11 +1513,30 @@ def export_3mf(
             m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
         except Exception:  # noqa: BLE001
             pass
-        if key.split("_")[0].split(".")[0].lower() in _SOLID and not bool(getattr(m, "is_watertight", True)):
+        k = key.split("_")[0].split(".")[0].lower()
+        if k in _SOLID and not bool(getattr(m, "is_watertight", True)):
             try:
                 m.fill_holes()
                 if m.is_watertight:
                     print(f"[3MF EXPORT] repaired '{key}' -> watertight")
+            except Exception:  # noqa: BLE001
+                pass
+        # БАЗА РЕЛЬЄФНОЇ мапи: groove-вирізи доріг лишають відкриті ребра, які
+        # fill_holes не закриває (база не watertight). Застосовуємо self-guarding
+        # агресивний ремонт (dominant-component + fill + winding; повертає кращий
+        # меш або оригінал — НІКОЛИ не гірше). Плоскі бази вже watertight → no-op,
+        # тож golden/flat не зачеплені.
+        if k in ("base", "terrain") and not bool(getattr(m, "is_watertight", True)):
+            try:
+                _rep = repair_base_export_mesh_aggressive(m)
+                if _rep is not None and _rep.faces is not None and len(_rep.faces) > 0:
+                    if _rep.metadata is not None and m.metadata is not None and m.metadata.get("original_name"):
+                        _rep.metadata["original_name"] = m.metadata["original_name"]
+                    m = _rep
+                    if m.is_watertight:
+                        print(f"[3MF EXPORT] aggressive base repair '{key}' -> watertight")
+                    else:
+                        print(f"[3MF EXPORT] aggressive base repair '{key}' -> boundary edges reduced")
             except Exception:  # noqa: BLE001
                 pass
         return m
@@ -1527,7 +1546,7 @@ def export_3mf(
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
-        _repair_for_print(mesh, key)
+        mesh = _repair_for_print(mesh, key)
         _ensure_face_colors(mesh, key)
         name = mesh.metadata.get('original_name', key.capitalize()) if hasattr(mesh, 'metadata') else key.capitalize()
         scene.add_geometry(mesh, node_name=name, geom_name=name)
