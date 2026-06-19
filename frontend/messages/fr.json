@@ -521,7 +521,15 @@
     "ctaMap": "Créer la carte 3D de {city}",
     "ctaKeychain": "Porte-clés carte de {city}",
     "others": "Autres villes",
-    "breadcrumb": "Cartes des villes"
+    "breadcrumb": "Cartes des villes",
+    "factsTitle": "{city} en bref",
+    "fPopulation": "Population",
+    "fFounded": "Fondée",
+    "fFirstMention": "Première mention",
+    "fArea": "Superficie",
+    "fRiver": "Eau",
+    "fOblast": "Région",
+    "fLandmark": "Monument emblématique"
   },
   "share": {
     "title": "Ma carte 3D sur Monadruk",

@@ -521,7 +521,15 @@
     "ctaMap": "Створити 3D-мапу міста {city}",
     "ctaKeychain": "Брелок з картою міста {city}",
     "others": "Інші міста",
-    "breadcrumb": "Мапи міст"
+    "breadcrumb": "Мапи міст",
+    "factsTitle": "Коротко про {city}",
+    "fPopulation": "Населення",
+    "fFounded": "Засноване",
+    "fFirstMention": "Перша згадка",
+    "fArea": "Площа",
+    "fRiver": "Водойма",
+    "fOblast": "Область",
+    "fLandmark": "Візитівка"
   },
   "share": {
     "title": "Моя 3D-мапа на Monadruk",

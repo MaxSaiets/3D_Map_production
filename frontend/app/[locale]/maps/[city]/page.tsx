@@ -5,6 +5,7 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
+import { cityFacts } from "@/lib/cityFacts";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 
@@ -68,6 +69,11 @@ export default async function CityPage({
   const t = await getTranslations({ locale, namespace: "cityPages" });
   const name = city.names[locale];
 
+  // Унікальні факти + локалізація: числа через Intl, власні назви uk/latin.
+  const facts = cityFacts(city.slug);
+  const nf = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale);
+  const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
+
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
@@ -124,6 +130,31 @@ export default async function CityPage({
       <h1 className="mt-5 text-[clamp(28px,4vw,46px)] leading-tight">{t("h1", { city: name })}</h1>
       <p className="mt-5 text-[15px] leading-relaxed text-ink-2">{t("p1", { city: name })}</p>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t("p2", { city: name })}</p>
+
+      {/* Унікальні факти про місто (анти-doorway): кожна сторінка отримує
+          відмінні числа/назви, тож контент не byte-identical. Гард: якщо для
+          slug немає даних — секція не рендериться (поведінка як раніше). */}
+      {facts && (
+        <section className="mt-9 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
+          <h2 className="text-[16px] font-semibold text-ink">{t("factsTitle", { city: name })}</h2>
+          <dl className="mt-3 grid gap-x-7 gap-y-1.5 text-[14px] sm:grid-cols-2">
+            {[
+              [t("fPopulation"), `${nf.format(facts.population)} (${facts.populationYear})`],
+              [facts.firstMention ? t("fFirstMention") : t("fFounded"), String(facts.founded)],
+              [t("fArea"), `${nf.format(Math.round(facts.area_km2))} ${locale === "uk" ? "км²" : "km²"}`],
+              [t("fRiver"), pn(facts.river)],
+              [t("fOblast"), pn(facts.oblast)],
+              [t("fLandmark"), pn(facts.landmark)],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
+                <dt className="text-ink-3">{label}</dt>
+                <dd className="text-right font-semibold text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href={`/create?city=${city.key}`}

@@ -521,7 +521,15 @@
     "ctaMap": "Stwórz mapę 3D miasta {city}",
     "ctaKeychain": "Brelok z mapą miasta {city}",
     "others": "Inne miasta",
-    "breadcrumb": "Mapy miast"
+    "breadcrumb": "Mapy miast",
+    "factsTitle": "{city} w skrócie",
+    "fPopulation": "Ludność",
+    "fFounded": "Założone",
+    "fFirstMention": "Pierwsza wzmianka",
+    "fArea": "Powierzchnia",
+    "fRiver": "Woda",
+    "fOblast": "Obwód",
+    "fLandmark": "Symbol miasta"
   },
   "share": {
     "title": "Moja mapa 3D na Monadruk",
