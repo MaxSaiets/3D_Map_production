@@ -1168,10 +1168,13 @@ export function SimpleControlPanel({
             </button>
           )}
 
-          {/* «Замовити друк» — одразу після «Створити», завжди на видному місці */}
+          {/* «Замовити друк» — одразу після «Створити», завжди на видному місці.
+              orderNow() (а НЕ голий setOrderOpen): якщо на екрані лише GLB-прев'ю або
+              нічого — стартує ПОВНУ 3MF-генерацію у фоні, щоб оператор отримав готовий
+              файл (раніше десктоп-замовлення приходили з task_id=null — критичний баг). */}
           <button
             type="button"
-            onClick={() => setOrderOpen(true)}
+            onClick={orderNow}
             className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
           >
             <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
