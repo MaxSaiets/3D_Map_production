@@ -119,9 +119,11 @@ export function WizardSteps({
                 {t("step", { n: i + 1 })}
               </span>
               <span className="block truncate text-[13px] font-semibold leading-tight">{step.label}</span>
+              {/* Підказку АКТИВНОГО кроку показуємо і на мобільному (раніше hidden
+                  sm: → 375px-юзери, яких більшість, лишались без інструкції). */}
               <span
-                className={`hidden sm:block truncate text-[11px] leading-tight ${
-                  isCurrent ? "text-white/80" : ""
+                className={`truncate text-[11px] leading-tight ${
+                  isCurrent ? "block text-white/80" : "hidden sm:block"
                 }`}
               >
                 {step.hint}

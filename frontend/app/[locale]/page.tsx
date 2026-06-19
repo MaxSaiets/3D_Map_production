@@ -2,10 +2,22 @@
 
 import {
   ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler,
-  Sparkles, KeyRound, Download, Star,
+  Sparkles, KeyRound, Download, Star, Truck,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+
+// «Друкуємо й доставляємо · від 150 ₴» — конкретна пропозиція у героя (раніше герой
+// тільки про «завантаж файл», а реальний бізнес=друк+доставка був прихований). Inline
+// локалізований мап → без правок 6 messages-файлів.
+const SHIP_PILL: Record<string, string> = {
+  uk: "Друкуємо й доставляємо · від 150 ₴",
+  en: "We print & ship · from 150 ₴",
+  de: "Wir drucken & versenden · ab 150 ₴",
+  es: "Imprimimos y enviamos · desde 150 ₴",
+  fr: "Nous imprimons et livrons · dès 150 ₴",
+  pl: "Drukujemy i wysyłamy · od 150 ₴",
+};
 import { Link } from "@/i18n/navigation";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -122,6 +134,7 @@ export default function HomePage() {
 function Hero() {
   const t = useTranslations("home.hero");
   const tAlt = useTranslations("home.alt");
+  const locale = useLocale();
   return (
     <section className="border-b border-line-soft">
       <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
@@ -142,6 +155,9 @@ function Hero() {
               <KeyRound size={16} /> {t("ctaKeychain")}
             </Link>
           </div>
+          <Link href="/prices" className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-soft bg-paper/70 px-4 py-2 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink">
+            <Truck size={15} className="text-forest" /> {SHIP_PILL[locale] ?? SHIP_PILL.uk}
+          </Link>
           <div className="mt-12 flex flex-wrap gap-x-9 gap-y-5 border-t border-line-soft pt-8">
             <Stat n={t("stat1n")} l={t("stat1l")} />
             <Stat n={t("stat2n")} l={t("stat2l")} />

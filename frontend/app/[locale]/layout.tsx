@@ -11,6 +11,7 @@ import { ToastHost } from "@/components/ToastHost";
 import { GlobalFooter } from "@/components/SiteFooter";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
+import { MAP_PRICE_RANGE } from "@/lib/mapPrices";
 
 const BASE = "https://monadruk.com";
 
@@ -151,7 +152,7 @@ export default async function LocaleLayout({
             "@type": "Offer",
             name: t("offerMap"),
             priceCurrency: "UAH",
-            price: "250",
+            price: MAP_PRICE_RANGE.uk.low,
             url: `${BASE}/create`,
             availability: "https://schema.org/InStock",
           },
@@ -175,7 +176,7 @@ export default async function LocaleLayout({
         description: t("serviceDescription"),
         offers: [
           { "@type": "Offer", name: t("offerKeychain"), priceCurrency: "UAH", price: "120", url: `${BASE}/keychains`, availability: "https://schema.org/InStock" },
-          { "@type": "Offer", name: t("offerMap"), priceCurrency: "UAH", price: "250", url: `${BASE}/create`, availability: "https://schema.org/InStock" },
+          { "@type": "Offer", name: t("offerMap"), priceCurrency: "UAH", price: MAP_PRICE_RANGE.uk.low, url: `${BASE}/create`, availability: "https://schema.org/InStock" },
         ],
       },
     ],

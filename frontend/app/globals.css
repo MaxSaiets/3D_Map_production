@@ -12,8 +12,8 @@
 
   --ink: #1b2a22;       /* forest-tinted near black */
   --ink-2: #3a4a40;
-  --ink-3: #6b7669;
-  --ink-4: #98a099;
+  --ink-3: #5a655a;     /* WCAG AA: 5.3:1 на ivory (було #6b7669=4.14 — fail) — hint/ціна/доставка */
+  --ink-4: #6b7669;     /* 4.14:1 — для вторинного тексту замість #98a099 (2.34 fail); декор лише суцільний */
 
   --forest: #2e4a3a;    /* primary */
   --forest-2: #1f3328;  /* hover/pressed */
@@ -46,6 +46,15 @@
   --text-secondary: var(--ink-3);
   --accent: var(--forest);
   --accent-strong: var(--forest-2);
+}
+
+/* A11Y: глобальний видимий фокус-ринг для КЛАВІАТУРИ (раніше його не було ніде →
+   pay-воронка непрохідна без миші). :where() = специфічність 0, тож компоненти
+   можуть перевизначити. Лише :focus-visible → миша/тач не показують ринг. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 html {

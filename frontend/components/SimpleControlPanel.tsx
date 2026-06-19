@@ -756,7 +756,7 @@ export function SimpleControlPanel({
                     // як дефолтний вигляд плоскої карти (додатки керуються окремо).
                     if (id === "flat") setFlatAmsMode(true);
                   }}
-                  className={`min-h-[40px] rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
+                  className={`min-h-[44px] rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
                     active
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
                       : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.25)]"

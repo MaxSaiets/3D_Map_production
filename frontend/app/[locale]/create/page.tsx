@@ -618,7 +618,7 @@ export default function Home() {
                     role="tab"
                     aria-selected={!showHexGrid}
                     onClick={() => { setShowHexGridPersist(false); toggleProMode(false); }}
-                    className={`rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
+                    className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       !showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
@@ -632,7 +632,7 @@ export default function Home() {
                     role="tab"
                     aria-selected={showHexGrid}
                     onClick={() => { setShowHexGridPersist(true); toggleProMode(true); }}
-                    className={`rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
+                    className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
