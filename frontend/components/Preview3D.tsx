@@ -1176,14 +1176,10 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           >
             {isFs ? `✕ ${t("tools.collapse")}` : `⤢ ${t("tools.fullscreen")}`}
           </button>
-          <button
-            type="button"
-            onClick={() => setToolsOpen((v) => !v)}
-            className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/15 backdrop-blur transition ${toolsOpen ? "bg-white text-[#0b1020]" : "bg-[rgba(2,6,23,0.7)] text-white hover:bg-[rgba(2,6,23,0.9)]"}`}
-            title={t("tools.viewTools")}
-          >
-            ⚙
-          </button>
+          {/* ⚙ dev-tools панель ПРИБРАНА (власник: «максимально просто») — Orbit/Fly/
+              WASD/Grid/Axes/Smooth-Flat/шари були інженерні. Лишається перетягування
+              для обертання + повноекранний режим. Панель нижче лишена в коді під
+              toolsOpen (завжди false → не рендериться); тут НЕ показуємо кнопку. */}
         </div>
       )}
       {!capture && toolsOpen && <div className="pointer-events-none absolute inset-x-3 top-16 z-20 flex justify-end">

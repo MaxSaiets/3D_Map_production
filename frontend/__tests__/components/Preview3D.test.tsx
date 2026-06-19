@@ -59,9 +59,9 @@ describe("Preview3D", () => {
     render(<Preview3D />);
 
     expect(screen.getByTestId("canvas")).toBeInTheDocument();
-    // Тулзи сховані за ⚙ («Інструменти перегляду») — спершу відкриваємо панель
-    fireEvent.click(screen.getByTitle(/Інструменти перегляду/i));
-    expect(screen.getByText(/Швидке керування сценою/i)).toBeInTheDocument();
+    // ⚙ dev-tools панель ПРИБРАНА (UX «максимально просто»): немає кнопки
+    // «Інструменти перегляду». Лишається перетягування (обертання) + повноекран.
+    expect(screen.queryByTitle(/Інструменти перегляду/i)).not.toBeInTheDocument();
   });
 
   it("keeps the preview container styling", () => {
