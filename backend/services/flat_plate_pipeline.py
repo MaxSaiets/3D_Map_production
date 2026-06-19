@@ -774,23 +774,63 @@ def build_map_connector_geometry(
     margin = _model_mm_to_world_m(6.0, export_scale_factor)
     key_pitch = 2.0 * w + margin
     key_slot = 0
+
+    # ── Замок ставимо на РЕАЛЬНУ грань полігону, а НЕ на середину bbox ──────────
+    # Старий код брав середину сторони bounding-box (cx,maxy / minx,cy …) — для осе-
+    # орієнтованого ПРЯМОКУТНИКА це збігається з гранню, тож golden/тести НЕ
+    # змінюються. Але для повернутої рамки чи НЕпрямокутної зони (шестикутник,
+    # намальований полігон) точка bbox лежить за контуром → паз клипався у скалку
+    # «не там». Тепер для кожного напрямку N/S/E/W шукаємо грань, чия ЗОВНІШНЯ
+    # нормаль найкраще дивиться туди, і ставимо метелик на її середину вздовж
+    # справжньої нормалі. Для прямокутника результат байт-в-байт той самий.
+    import math
+    _poly = base_polygon
+    if getattr(_poly, "geom_type", "") == "MultiPolygon":
+        _poly = max(_poly.geoms, key=lambda g: g.area)
+    ring = list(getattr(getattr(_poly, "exterior", None), "coords", []))
+    if len(ring) < 4:
+        return None, None
+    # Орієнтуємо CCW (нутро ліворуч від напрямку грані) через знак площі (шнурівка).
+    _area2 = 0.0
+    for (ax, ay), (bx, by) in zip(ring[:-1], ring[1:]):
+        _area2 += ax * by - bx * ay
+    if _area2 < 0:
+        ring = ring[::-1]
+    segs = []  # (mid, inward_unit, outward_unit, length)
+    for (x0, y0), (x1, y1) in zip(ring[:-1], ring[1:]):
+        dx, dy = x1 - x0, y1 - y0
+        L = math.hypot(dx, dy)
+        if L < min_h:  # надто коротка грань — не вмістить замок
+            continue
+        inward = (-dy / L, dx / L)   # CCW: нутро = ліва нормаль грані
+        outward = (dy / L, -dx / L)
+        segs.append((((x0 + x1) / 2.0, (y0 + y1) / 2.0), inward, outward, L))
+
+    _CARD = {"N": (0.0, 1.0), "S": (0.0, -1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}
     for e in ("N", "S", "E", "W"):
         if e not in edges_set:
             continue
-        # Обмежуємо довжину пазу до 60% грані (2h ≤ 0.6·сторона), щоб на S-картах
-        # паз не зʼїдав усю грань.
-        h = min(h0, (bh if e in ("E", "W") else bw) * 0.30)
+        cardx, cardy = _CARD[e]
+        # Грань, чия зовнішня нормаль найбільше збігається з напрямком e (і реально
+        # туди дивиться, dot>0.15 — щоб не чіпляти майже-перпендикулярну грань).
+        best = None
+        best_score = 0.15
+        for mid, inward, outward, L in segs:
+            score = outward[0] * cardx + outward[1] * cardy
+            if score > best_score:
+                best_score, best = score, (mid, inward, L)
+        if best is None:
+            continue
+        (mx, my), inward, L = best
+        h = min(h0, L * 0.40)  # замок ≤40% РЕАЛЬНОЇ грані (а не сторони bbox)
         if h < min_h:
             continue
-        half = _half(h)
-        if e == "W":
-            placed = affinity.translate(half, xoff=minx, yoff=cy)
-        elif e == "E":
-            placed = affinity.translate(affinity.rotate(half, 180.0, origin=(0, 0)), xoff=maxx, yoff=cy)
-        elif e == "S":
-            placed = affinity.translate(affinity.rotate(half, 90.0, origin=(0, 0)), xoff=cx, yoff=miny)
-        else:  # N
-            placed = affinity.translate(affinity.rotate(half, -90.0, origin=(0, 0)), xoff=cx, yoff=maxy)
+        # _half: шов на x=0, нутро плитки на +x. Повертаємо так, щоб +x збіглося з
+        # внутрішньою нормаллю грані, далі ставимо на середину грані.
+        ang = math.degrees(math.atan2(inward[1], inward[0]))
+        placed = affinity.translate(
+            affinity.rotate(_half(h), ang, origin=(0.0, 0.0)), xoff=mx, yoff=my
+        )
         # Лишаємо лише частину всередині бази (зрізаємо кліренс-навіс за швом).
         clipped = placed.intersection(base_polygon).buffer(0)
         if clipped is None or getattr(clipped, "is_empty", True):
