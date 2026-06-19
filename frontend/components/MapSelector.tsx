@@ -735,6 +735,16 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       }
     });
 
+    // CROSSHAIR: коли увімкнено режим вибору будинку — курсор-хрестик на КАРТІ
+    // (тлі), щоб було видно «клікни сюди». Клас на контейнері, а не inline-style,
+    // щоб ручки resize/rotate/draw зберігали власні курсори (CSS у globals.css).
+    const mapEl = map.getContainer();
+    const applyPickCursor = (on: boolean) => mapEl.classList.toggle("mn-pick-home", on);
+    applyPickCursor(_st0.mapHighlightBuilding);
+    const unsubCursor = useGenerationStore.subscribe((st, prev) => {
+      if (st.mapHighlightBuilding !== prev.mapHighlightBuilding) applyPickCursor(st.mapHighlightBuilding);
+    });
+
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
     const onMapGoto = (e: Event) => {
       const d = (e as CustomEvent).detail as { lat: number; lon: number; widthM?: number } | undefined;
@@ -914,7 +924,20 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         st.addHighlightPoint(pt);
         import("@/lib/buildings").then(({ fetchBuildingAt }) =>
           fetchBuildingAt(lat, lng).then((poly) => {
-            if (poly && poly.length >= 3) useGenerationStore.getState().setHighlightFootprint(pt, poly);
+            const live = useGenerationStore.getState();
+            if (poly && poly.length >= 3) {
+              live.setHighlightFootprint(pt, poly);
+            } else {
+              // Жодної будівлі під кліком: прибрати тимчасову крапку (щоб не висіла
+              // червона позначка «у нікуди») і попередити користувача.
+              const idx = live.highlightPoints.findIndex((p) => p[0] === lng && p[1] === lat);
+              if (idx >= 0) live.removeHighlightAt(idx);
+              try {
+                window.dispatchEvent(new CustomEvent("monadruk:toast", {
+                  detail: { type: "warn", ns: "map", key: "highlightNotFound" },
+                }));
+              } catch { /* no-op */ }
+            }
           }).catch(() => {}),
         );
         return;
@@ -978,6 +1001,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       clearTimeout(fitTimer);
       unsubGpx?.();
       unsubHl?.();
+      unsubCursor?.();
+      try { map.getContainer().classList.remove("mn-pick-home"); } catch { /* no-op */ }
       window.removeEventListener("monadruk:map-goto", onMapGoto as EventListener);
       gpxLineRef.current?.remove();
       gpxLineRef.current = null;

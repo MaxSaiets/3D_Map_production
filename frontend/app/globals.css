@@ -119,6 +119,23 @@ input[type="range"] {
   box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
 }
 
+/* «Вибір будинку» — курсор-хрестик на тлі карти (тайли), щоб було видно «клікни
+   сюди». Клас вмикається/вимикається з MapSelector (KeychainCropOverlay).
+   Scoped: лишаємо власні курсори ручкам resize/rotate (.leaflet-marker-icon),
+   draw-кнопкам і інтерактивним об'єктам (grab/pointer не перебиваємо). */
+.leaflet-container.mn-pick-home,
+.leaflet-container.mn-pick-home .leaflet-tile-pane,
+.leaflet-container.mn-pick-home .leaflet-grab {
+  cursor: crosshair;
+}
+.leaflet-container.mn-pick-home .leaflet-marker-icon,
+.leaflet-container.mn-pick-home .leaflet-marker-draggable,
+.leaflet-container.mn-pick-home .leaflet-interactive,
+.leaflet-container.mn-pick-home .leaflet-control,
+.leaflet-container.mn-pick-home .leaflet-control a {
+  cursor: pointer;
+}
+
 /* ============ Premium component layer ============ */
 .eyebrow {
   font-family: var(--sans); font-size: 11px; letter-spacing: 0.18em;

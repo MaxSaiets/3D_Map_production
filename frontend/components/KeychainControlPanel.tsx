@@ -373,6 +373,12 @@ export function KeychainControlPanel({
     setDownloadUrl,
     setSelectedArea,
     gpxFocus, setGpxFocus, gpxName, setGpxName,
+    // ВИДІЛЕННЯ БУДИНКУ: стан у store (панель монтується ДВІЧІ — desktop+mobile —
+    // тож local useState розсинхронізувався б; ще критичніше: click-to-pick у
+    // MapSelector гейтиться на store.mapHighlightBuilding, тож тумблер МУСИТЬ
+    // писати у store, інакше кліки по карті мертві).
+    mapHighlightBuilding, setMapHighlightBuilding,
+    highlightPoints, clearHighlights,
   } = useGenerationStore();
   // D4 GPX-трек на брелку — точки живуть у store.gpxFocus (їх же використовує
   // карта-оверлей для авто-фокусу зони на маршрут).
@@ -384,8 +390,11 @@ export function KeychainControlPanel({
   const setLabel2 = onLabel2Change;
   // backLabel піднято на сторінку (prop) — щоб back-превʼю дизайнера його показав.
   const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
-  // Підсвітка будинку в центрі: окрема бронзова деталь (друк іншим філаментом).
-  const [highlightBuilding, setHighlightBuilding] = useState(false);
+  // Виділення будинку: користувач клікає СВІЙ будинок на карті → окрема ЧЕРВОНА
+  // вставна деталь. Прапор + точки живуть у store (mapHighlightBuilding/
+  // highlightPoints), бо панель монтується двічі та click-handler карти на них
+  // зав'язаний. Несумісне з топо-режимом (там немає карти для кліку).
+  const highlightBuilding = mapHighlightBuilding;
   // C3 ТОПО-БРЕЛОК: рельєф висот замість карти (Карпати/Альпи)
   const [topoMode, setTopoMode] = useState(false);
   const [reliefMm, setReliefMm] = useState(2.2);
@@ -878,7 +887,13 @@ export function KeychainControlPanel({
         keychain_back_label: backLabel,
         keychain_place_marker: placeMarker,
         keychain_place_marker_size_mm: 6,
-        keychain_highlight_building: highlightBuilding,
+        // Виділення будинку: лише поза топо-режимом (там немає карти). Шлемо прапор
+        // + обрані точки [[lon,lat],...] зі store (дзеркало того, як мапи шлють
+        // highlight_points). Без точок бек робить центроїд-фолбек (golden-safe).
+        keychain_highlight_building: highlightBuilding && !topoMode,
+        ...((highlightBuilding && !topoMode && highlightPoints.length > 0)
+          ? { highlight_points: highlightPoints }
+          : {}),
         keychain_base_shape: design.baseShape,
         keychain_layout_rotation_deg: design.layoutRotationDeg,
         keychain_loop_style: design.loopStyle,
@@ -1212,6 +1227,13 @@ export function KeychainControlPanel({
                     setGpxFocus(null);
                     window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", ns: "kc", key: "gpx.offForTopo" } }));
                   }
+                  // Топо замінює карту висотним рельєфом — кліку по будинку немає.
+                  // Гасимо режим виділення + чистимо обрані маркери (інакше прапор
+                  // лишився б увімкненим зі скритим UI, а click-handler карти активним).
+                  if (on && mapHighlightBuilding) {
+                    setMapHighlightBuilding(false);
+                    clearHighlights();
+                  }
                 }}
                 className="h-5 w-5 accent-[var(--accent-strong)]"
               />
@@ -1438,26 +1460,48 @@ export function KeychainControlPanel({
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.markerHint")}</p>
           </div>
 
+          {!topoMode && (
           <div className="mt-4">
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("label.highlightTitle")}</div>
             <button
               type="button"
               aria-pressed={highlightBuilding}
               data-testid="highlight-building-toggle"
-              onClick={() => setHighlightBuilding((v) => !v)}
+              onClick={() => {
+                const next = !highlightBuilding;
+                // ВМИК → пишемо прапор у store (активує click-handler карти в
+                // MapSelector, який гейтиться саме на store.mapHighlightBuilding).
+                // ВИМК → чистимо обрані маркери/контури.
+                setMapHighlightBuilding(next);
+                if (!next) clearHighlights();
+              }}
               className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
                 highlightBuilding
-                  ? "border-[rgba(142,107,61,0.55)] bg-[rgba(142,107,61,0.12)]"
-                  : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(142,107,61,0.35)]"
+                  ? "border-[rgba(206,38,38,0.55)] bg-[rgba(206,38,38,0.1)]"
+                  : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(206,38,38,0.35)]"
               }`}
             >
               <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
-                🏛 {t("label.highlightToggle")}
-                {highlightBuilding && <span className="text-base text-[#8E6B3D]">✓</span>}
+                🏠 {t("label.highlightToggle")}
+                {highlightBuilding && <span className="text-base text-[#ce2626]">✓</span>}
               </span>
             </button>
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("label.highlightHint")}</p>
+            {highlightBuilding && (
+              <div className="mt-2 flex items-center justify-between gap-2 text-[12px]">
+                <span className="font-semibold" style={{ color: highlightPoints.length ? "#ce2626" : "var(--text-secondary)" }}>
+                  {highlightPoints.length ? `📍 ${t("label.highlightPicked", { count: highlightPoints.length })}` : t("label.highlightPickHint")}
+                </span>
+                {highlightPoints.length > 0 && (
+                  <button type="button" data-testid="highlight-clear" onClick={() => clearHighlights()}
+                          className="shrink-0 font-semibold text-red-700 hover:underline">
+                    {t("label.highlightClear")}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+          )}
         </section>
 
         <section {...sectionProps("review")}>

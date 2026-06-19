@@ -626,27 +626,49 @@ def _select_highlight_building_index(
     building_meshes: list, *, target_xy: Optional[tuple[float, float]],
     exclude: Optional[set] = None,
 ) -> Optional[int]:
-    """Індекс будинку для виділення: чий bbox МІСТИТЬ target_xy (клік юзера по
-    своєму будинку / центр карти), серед них — найближчий центроїд; якщо жоден не
-    містить — просто найближчий центроїд. target_xy у тій же системі, що меші.
+    """Індекс будинку для виділення — ОДНАКОВА логіка з /api/building-at (main.py),
+    щоб червоний контур на карті = той самий будинок, що отримає вставку:
+      1) РЕАЛЬНИЙ XY-контур будинку (_mesh_xy_footprint) МІСТИТЬ target_xy → беремо
+         його одразу (клік юзера всередині свого будинку — точний вибір);
+      2) інакше — найближчий за ВІДСТАННЮ ДО КРАЮ (polygon.distance(point), як
+         geom.distance(pt) у /api/building-at), а не за центроїдом — у щільній
+         забудові центроїд може вказати на інший будинок.
+    Контур кешуємо лише дешевим bbox-фільтром: повний _mesh_xy_footprint рахуємо
+    тільки для кандидатів, чий bbox містить точку (contains) або поки шукаємо
+    найближчий. target_xy у тій же системі, що й меші (для брелка — unwrapped).
     `exclude` — індекси вже обраних будинків (щоб два кліки не взяли той самий)."""
     if not building_meshes or target_xy is None:
         return None
+    from shapely.geometry import Point as _SelPt
     _ex = exclude or set()
     tx, ty = float(target_xy[0]), float(target_xy[1])
-    best_i, best_d, best_inside = None, float("inf"), False
+    pt = _SelPt(tx, ty)
+    best_i, best_edge_d = None, float("inf")
     for i, m in enumerate(building_meshes):
         if i in _ex or m is None or len(getattr(m, "faces", [])) == 0:
             continue
         b = m.bounds
-        cx = (b[0][0] + b[1][0]) * 0.5
-        cy = (b[0][1] + b[1][1]) * 0.5
-        inside = (b[0][0] <= tx <= b[1][0]) and (b[0][1] <= ty <= b[1][1])
-        d = (cx - tx) ** 2 + (cy - ty) ** 2
-        if inside and not best_inside:
-            best_inside, best_i, best_d = True, i, d  # перша «накрита» — пріоритет
-        elif inside == best_inside and d < best_d:
-            best_i, best_d = i, d
+        # Дешевий bbox-відсів: точка має бути в bbox АБО ми ще шукаємо найближчий.
+        bbox_inside = (b[0][0] <= tx <= b[1][0]) and (b[0][1] <= ty <= b[1][1])
+        foot = _mesh_xy_footprint(m)
+        if foot is None or getattr(foot, "is_empty", True):
+            # fallback на bbox-центроїд, якщо контур не порахувався
+            if bbox_inside:
+                return i
+            cx = (b[0][0] + b[1][0]) * 0.5
+            cy = (b[0][1] + b[1][1]) * 0.5
+            d = math.hypot(cx - tx, cy - ty)
+            if d < best_edge_d:
+                best_i, best_edge_d = i, d
+            continue
+        try:
+            if foot.contains(pt):  # клік усередині будівлі — точний вибір (break)
+                return i
+            d = float(foot.distance(pt))  # ВІДСТАНЬ ДО КРАЮ (як /api/building-at)
+        except Exception:
+            continue
+        if d < best_edge_d:
+            best_i, best_edge_d = i, d
     return best_i
 
 
@@ -720,6 +742,71 @@ def build_highlight_insert(
     out = trimesh.util.concatenate([out, peg])
     _with_color(out, LAYER_COLORS["highlight"])
     return out, pocket_poly, depth
+
+
+def _ensure_no_through_hole(
+    *,
+    base_top_m: float,
+    top_cut_poly: Optional[BaseGeometry],
+    top_cut_depth_m: float,
+    bottom_cut_poly: Optional[BaseGeometry],
+    bottom_cut_depth_m: float,
+    export_scale_factor: float,
+    min_solid_mm: float = 0.4,
+    label: str = "HIGHLIGHT",
+) -> tuple[float, float]:
+    """THROUGH-HOLE GUARD (LATE, defensive): паз ЗВЕРХУ (highlight, ~0.8мм) та виріз
+    ЗНИЗУ (магніт-кишеня / конектор-паз / гравіювання звороту) у зоні XY-перекриття
+    лишають лише `base_top − top_depth − bottom_depth` суцільного матеріалу. Якщо
+    цього < min_solid_mm (0.4мм) — деталь стала б наскрізною дірою.
+
+    Базу тут НЕ чіпаємо (шари вже сидять на base_top_m — потовщення дало б floating
+    геометрію); замість цього РІЖЕМО ДЕФІЦИТ з ГЛИБШОГО вирізу (зазвичай нижній паз),
+    лишаючи його робочим, але не наскрізним. Основну роботу для map-кейсу робить
+    РАННІЙ guard (потовщує базу до побудови шарів); це — підстраховка та покриття
+    keychain-back-engrave. Без XY-перекриття або з достатнім матеріалом — НІЧОГО не
+    змінюємо (standalone байт-в-байт).
+
+    Повертає (top_cut_depth_m, bottom_cut_depth_m) — скориговані глибини (world-м)."""
+    if top_cut_poly is None or getattr(top_cut_poly, "is_empty", True):
+        return top_cut_depth_m, bottom_cut_depth_m
+    if bottom_cut_poly is None or getattr(bottom_cut_poly, "is_empty", True):
+        return top_cut_depth_m, bottom_cut_depth_m
+    if top_cut_depth_m <= 1e-9 or bottom_cut_depth_m <= 1e-9:
+        return top_cut_depth_m, bottom_cut_depth_m
+    try:
+        overlap = top_cut_poly.intersection(bottom_cut_poly)
+    except Exception:
+        # геометрія не перетнулась/збійна — буферимо на 0 і пробуємо ще раз
+        try:
+            overlap = top_cut_poly.buffer(0).intersection(bottom_cut_poly.buffer(0))
+        except Exception:
+            return top_cut_depth_m, bottom_cut_depth_m
+    if overlap is None or getattr(overlap, "is_empty", True) or float(getattr(overlap, "area", 0.0)) <= 1e-12:
+        return top_cut_depth_m, bottom_cut_depth_m  # XY не перекриваються
+    min_solid_m = _model_mm_to_world_m(min_solid_mm, export_scale_factor)
+    solid_m = base_top_m - top_cut_depth_m - bottom_cut_depth_m
+    if solid_m >= min_solid_m - 1e-9:
+        return top_cut_depth_m, bottom_cut_depth_m  # вже достатньо матеріалу
+    deficit_m = (min_solid_m - solid_m)
+    _esf = float(export_scale_factor)  # mm = world_m * scale_factor
+    # Ріжемо дефіцит з ГЛИБШОГО вирізу (лишаємо йому ≥0 глибини).
+    if bottom_cut_depth_m >= top_cut_depth_m:
+        new_bottom = max(bottom_cut_depth_m - deficit_m, 0.0)
+        new_top = top_cut_depth_m
+        cut_from = "bottom"
+    else:
+        new_top = max(top_cut_depth_m - deficit_m, 0.0)
+        new_bottom = bottom_cut_depth_m
+        cut_from = "top"
+    print(
+        f"[{label}] through-hole guard (late): top pocket overlaps bottom cut in XY "
+        f"(area {float(overlap.area):.4g}); solid {solid_m * _esf:.3f}mm < {min_solid_mm}mm → "
+        f"reduced {cut_from} cut by {deficit_m * _esf:.3f}mm "
+        f"(top {top_cut_depth_m * _esf:.2f}→{new_top * _esf:.2f}mm, "
+        f"bottom {bottom_cut_depth_m * _esf:.2f}→{new_bottom * _esf:.2f}mm)"
+    )
+    return new_top, new_bottom
 
 
 def build_map_connector_geometry(
@@ -2872,6 +2959,31 @@ def run_flat_plate_pipeline(
     if map_highlight_building:
         base_thickness_mm = max(base_thickness_mm, 1.6)
 
+    # THROUGH-HOLE GUARD (EARLY, worst-case): коли ПІДСВІТКА (паз 0.8мм у ВЕРХ)
+    # поєднується з МАГНІТ-кишенею або КОНЕКТОР-пазом (виріз у ДНО) і їхні footprint
+    # перетинаються у XY — між ними лишилось би лише (base − 0.8 − bottom_depth)
+    # суцільного матеріалу. Потовщуємо базу ТУТ (до побудови шарів зверху, тож
+    # будинки/текст/peg сідають на правильну висоту), щоб ЗАВЖДИ було ≥0.4мм навіть
+    # при повному перекритті. Глибину магніт/конектор-пазу НЕ зменшуємо (шайба/ключ
+    # сідають як треба). Спрацьовує лише у комбо-кейсі (highlight=opt-in → golden ОК).
+    _HL_TOP_POCKET_MM = 0.8  # = build_highlight_insert depth_mm default
+    _HL_MIN_SOLID_MM = 0.4
+    if map_highlight_building and (
+        bool(getattr(request, "magnet_pocket", False))
+        or bool(getattr(request, "map_connector", False))
+    ):
+        _bottom_depth_mm = 0.0
+        if bool(getattr(request, "magnet_pocket", False)):
+            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0))
+        if bool(getattr(request, "map_connector", False)):
+            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0))
+        _needed_mm = _HL_TOP_POCKET_MM + _bottom_depth_mm + _HL_MIN_SOLID_MM
+        if base_thickness_mm < _needed_mm - 1e-9:
+            print(f"[MAP HIGHLIGHT] through-hole guard (early): highlight 0.8mm top pocket + "
+                  f"{_bottom_depth_mm:.2f}mm bottom cut → base {base_thickness_mm:.2f}→{_needed_mm:.2f}mm "
+                  f"(keeps ≥{_HL_MIN_SOLID_MM}mm solid if footprints overlap)")
+            base_thickness_mm = _needed_mm
+
     base_top_m = _model_mm_to_world_m(base_thickness_mm, export_scale_factor)
     # Нижній виріз бази (магніт-кишеня / конектор-пази) — запам'ятовуємо, щоб при
     # додаванні ВЕРХНЬОГО пазу під виділену будівлю ПЕРЕБУДувати базу не втративши його.
@@ -2891,6 +3003,10 @@ def run_flat_plate_pipeline(
     keychain_back_engrave_m: float = 0.0
     source_bounds: Optional[tuple[float, float, float, float]] = None
     target_bounds: Optional[tuple[float, float, float, float]] = None
+    # Захоплений unwrap-transform брелка (закриття _xform, визначене нижче, коли є
+    # source/target bounds): потрібен, щоб highlight-точку (lon/lat→local) перевести
+    # у ТУ Ж unwrapped-систему, де лежать building_meshes (вони вже пройшли _xform).
+    _keychain_xform = None
     if keychain_mode:
         keychain_layout = build_keychain_layout(
             bbox_meters=zone.bbox_meters,
@@ -3213,6 +3329,10 @@ def run_flat_plate_pipeline(
                     target_bounds=target_bounds,
                     angle_deg=map_rotation_deg,
                 )
+
+        # Захоплюємо unwrap-transform для highlight-точок брелка (building_meshes
+        # будуються з gdf, що пройшов саме _xform — точку треба перевести так само).
+        _keychain_xform = _xform
 
         # Гарантуємо raw fallback'и: якщо canonical bundle порожній, беремо
         # сирі OSM дані (з preclip + road_geometry). Інакше для малих зон з
@@ -4136,9 +4256,13 @@ def run_flat_plate_pipeline(
             precomputed_polygon=map_label_letter_poly,
         )
 
-    # ПІДСВІТКА БУДИНКУ (брелок): будинок у ЦЕНТРІ тіла → ОКРЕМА ЧЕРВОНА вставна
-    # деталь (паз+peg, механічна вставка БЕЗ клею) — друкується окремим філаментом,
-    # вставляється у паз бази; економить час/філамент проти AMS на один будинок.
+    # ПІДСВІТКА БУДИНКУ (брелок): обрані будинки → ОКРЕМА ЧЕРВОНА вставна деталь
+    # (паз+peg, механічна вставка БЕЗ клею) — друкується окремим філаментом,
+    # вставляється у паз бази; економить час/філамент проти AMS.
+    #  • highlight_points [[lon,lat],...] (клік юзера по своєму будинку) →
+    #    КОЖЕН будинок окремо, ТОЧНО як у map-гілці (lon/lat→to_utm→to_local, далі
+    #    через ЗАХОПЛЕНИЙ unwrap _keychain_xform у систему building_meshes);
+    #  • БЕЗ точок → старий авто-пік будинку в ЦЕНТРІ тіла (golden-safe, байт-в-байт).
     highlight_building_mesh = None
     if (
         keychain_mode
@@ -4147,24 +4271,82 @@ def run_flat_plate_pipeline(
         and keychain_layout is not None
     ):
         try:
-            _hb_ctr = keychain_layout["body"].centroid
-            _hb_best_i = _select_highlight_building_index(building_meshes, target_xy=(_hb_ctr.x, _hb_ctr.y))
-            if _hb_best_i is not None:
-                _hb_src = building_meshes.pop(_hb_best_i)
-                _hb_mesh, _hb_pocket, _hb_depth = build_highlight_insert(
-                    _hb_src, base_top_m=base_top_m, export_scale_factor=export_scale_factor,
+            # Збираємо цілі. Точки кліку (lon/lat) переводимо у unwrapped-систему
+            # building_meshes тим самим transform, яким пройшли самі будівлі.
+            _kc_raw_pts = list(getattr(request, "highlight_points", None) or [])
+            _kc_single = getattr(request, "highlight_point", None)
+            if not _kc_raw_pts and _kc_single and len(_kc_single) >= 2:
+                _kc_raw_pts = [_kc_single]
+            _kc_targets: list[tuple[float, float]] = []
+            for _kc_hp in _kc_raw_pts[:12]:  # кап 12 будівель
+                if not _kc_hp or len(_kc_hp) < 2:
+                    continue
+                try:
+                    _kc_ux, _kc_uy = global_center.to_utm(float(_kc_hp[0]), float(_kc_hp[1]))
+                    _kc_lx, _kc_ly = global_center.to_local(_kc_ux, _kc_uy)
+                    _kc_cx, _kc_cy = float(_kc_lx), float(_kc_ly)
+                    if _keychain_xform is not None:
+                        # ВАЖЛИВО: _xform закінчується .buffer(0), що знищив би 0-площинну
+                        # точку → переводимо МАЛЕНЬКИЙ квадрат і беремо його центроїд
+                        # (той самий unwrap, що пройшли building_meshes).
+                        _kc_probe = _keychain_xform(Point(_kc_cx, _kc_cy).buffer(0.5))
+                        if _kc_probe is not None and not getattr(_kc_probe, "is_empty", True):
+                            _kc_pc = _kc_probe.centroid
+                            _kc_cx, _kc_cy = float(_kc_pc.x), float(_kc_pc.y)
+                    _kc_targets.append((_kc_cx, _kc_cy))
+                except Exception as _kc_hpx:
+                    print(f"[KEYCHAIN HIGHLIGHT] point→local failed ({_kc_hpx}); skip point")
+            if not _kc_targets:  # NO-POINTS FALLBACK — будинок у ЦЕНТРІ тіла (golden-safe)
+                _hb_ctr = keychain_layout["body"].centroid
+                _kc_targets = [(float(_hb_ctr.x), float(_hb_ctr.y))]
+
+            _kc_chosen: list[int] = []
+            for _kc_t in _kc_targets:
+                _kc_i = _select_highlight_building_index(
+                    building_meshes, target_xy=_kc_t, exclude=set(_kc_chosen)
                 )
-                if _hb_pocket is not None and _hb_depth > 1e-9:
+                if _kc_i is not None and _kc_i not in _kc_chosen:
+                    _kc_chosen.append(_kc_i)
+            if _kc_chosen:
+                _kc_hl_meshes, _kc_pockets, _kc_pocket_depth = [], [], 0.0
+                for _kc_i in _kc_chosen:  # індекси стабільні — НЕ видаляємо в циклі
+                    _kc_m, _kc_pk, _kc_d = build_highlight_insert(
+                        building_meshes[_kc_i], base_top_m=base_top_m,
+                        export_scale_factor=export_scale_factor,
+                    )
+                    if _kc_m is not None:
+                        _kc_hl_meshes.append(_kc_m)
+                    if _kc_pk is not None and _kc_d > 1e-9:
+                        _kc_pockets.append(_kc_pk)
+                        _kc_pocket_depth = _kc_d
+                # прибираємо обрані будинки з шару Buildings (стають вставкою)
+                _kc_chosen_set = set(_kc_chosen)
+                building_meshes[:] = [b for j, b in enumerate(building_meshes) if j not in _kc_chosen_set]
+                if _kc_pockets:
+                    _kc_pocket_union = unary_union(_kc_pockets).buffer(0)
+                    # THROUGH-HOLE GUARD: паз зверху + гравіювання звороту знизу не
+                    # повинні з'їсти базу наскрізь (≥0.4мм суцільного матеріалу). База
+                    # жетона фіксована (шари вже сидять зверху) → ріжемо глибший виріз.
+                    _kc_safe_top, _kc_safe_bot = _ensure_no_through_hole(
+                        base_top_m=base_top_m,
+                        top_cut_poly=_kc_pocket_union, top_cut_depth_m=_kc_pocket_depth,
+                        bottom_cut_poly=keychain_back_poly, bottom_cut_depth_m=keychain_back_engrave_m,
+                        export_scale_factor=export_scale_factor, label="KEYCHAIN HIGHLIGHT",
+                    )
                     _new_t, _new_b = _build_keychain_base_parts(
                         keychain_layout["base"], base_top_m=base_top_m,
-                        back_text_poly=keychain_back_poly, engrave_m=keychain_back_engrave_m,
-                        top_cut_poly=_hb_pocket, top_cut_depth_m=_hb_depth,
+                        back_text_poly=keychain_back_poly, engrave_m=_kc_safe_bot,
+                        top_cut_poly=_kc_pocket_union, top_cut_depth_m=_kc_safe_top,
                     )
                     if _new_t is not None:
                         terrain_mesh, keychain_base_bottom_mesh = _new_t, _new_b
-                highlight_building_mesh = _hb_mesh
-                print(f"[KEYCHAIN] Highlight building (idx {_hb_best_i}) → red 'Highlight' part"
-                      + (" + peg + base pocket (механічна вставка)" if _hb_pocket is not None else " (glue-on, замалий для peg)"))
+                if _kc_hl_meshes:
+                    highlight_building_mesh = (
+                        trimesh.util.concatenate(_kc_hl_meshes) if len(_kc_hl_meshes) > 1 else _kc_hl_meshes[0]
+                    )
+                    _with_color(highlight_building_mesh, LAYER_COLORS["highlight"])
+                print(f"[KEYCHAIN HIGHLIGHT] {len(_kc_chosen)} building(s) → red 'Highlight' part"
+                      + (f" + {len(_kc_pockets)} pocket(s) (механічна вставка)" if _kc_pockets else " (glue-on, замалий для peg)"))
         except Exception as _hbexc:
             print(f"[KEYCHAIN] highlight building failed (non-fatal): {_hbexc}")
 
@@ -4216,10 +4398,20 @@ def run_flat_plate_pipeline(
                 building_meshes[:] = [b for j, b in enumerate(building_meshes) if j not in _chosen_set]
                 if _pockets:  # ОДИН виріз усіх пазів (+ збережений нижній виріз)
                     _pocket_union = unary_union(_pockets).buffer(0)
+                    # THROUGH-HOLE GUARD (late): паз highlight (верх) ⨯ магніт/конектор
+                    # (низ) — гарантуємо ≥0.4мм суцільного матеріалу. Основну роботу
+                    # зробив РАННІЙ guard (потовщив базу), це — підстраховка: база вже
+                    # фіксована (шари сидять зверху), тож тут лише ріжемо глибший виріз.
+                    _mh_safe_top, _mh_safe_bot = _ensure_no_through_hole(
+                        base_top_m=base_top_m,
+                        top_cut_poly=_pocket_union, top_cut_depth_m=_mh_depth,
+                        bottom_cut_poly=_flat_base_bottom_poly, bottom_cut_depth_m=_flat_base_bottom_depth_m,
+                        export_scale_factor=export_scale_factor, label="MAP HIGHLIGHT",
+                    )
                     _new_t, _new_b = _build_keychain_base_parts(
                         zone.zone_polygon_local, base_top_m=base_top_m,
-                        back_text_poly=_flat_base_bottom_poly, engrave_m=_flat_base_bottom_depth_m,
-                        top_cut_poly=_pocket_union, top_cut_depth_m=_mh_depth,
+                        back_text_poly=_flat_base_bottom_poly, engrave_m=_mh_safe_bot,
+                        top_cut_poly=_pocket_union, top_cut_depth_m=_mh_safe_top,
                     )
                     if _new_t is not None:
                         terrain_mesh = _new_t
