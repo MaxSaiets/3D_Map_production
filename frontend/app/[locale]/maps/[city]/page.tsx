@@ -6,6 +6,7 @@ import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { mapPriceRange } from "@/lib/mapPrices";
+import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 
 /**
  * Programmatic SEO: статична сторінка під кожне місто (23 × 6 локалей).
@@ -99,6 +100,15 @@ export default async function CityPage({
     ],
   };
 
+  // Видимі ціни (раніше лише у JSON-LD AggregateOffer) — з єдиного каталогу
+  // (синхрон з /prices). Показуємо мапи S–XL + рельєф + магніт + брелок.
+  const cat = getCatalog(locale);
+  const priceItems = [
+    ...cat.categories[0].items, // 3D-мапи (S/M/L/XL + рельєф)
+    ...(cat.categories[1]?.items ?? []), // магніт
+    ...(cat.categories[2]?.items ?? []), // брелок
+  ];
+
   const others = CITY_PAGES.filter((c) => c.slug !== city.slug).slice(0, 12);
 
   return (
@@ -128,6 +138,24 @@ export default async function CityPage({
           {t("ctaKeychain", { city: name })}
         </Link>
       </div>
+      {/* Видимі ЦІНИ у гривнях — для покупця, SEO і перевірки LiqPay (115 сторінок). */}
+      <section className="mt-12 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
+        <h2 className="text-[17px] font-semibold text-ink">{cat.h1} — {name}</h2>
+        <ul className="mt-3 grid gap-x-7 gap-y-1.5 text-[14px] text-ink-2 sm:grid-cols-2">
+          {priceItems.map((it) => (
+            <li key={it.name} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
+              <span>{it.name}</span>
+              <span className="whitespace-nowrap font-semibold text-[var(--accent-strong)]">
+                {formatCatalogPrice(it.uah, it.kind, locale)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <Link href="/prices" className="mt-3 inline-block text-[13.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+          {cat.h1} →
+        </Link>
+      </section>
+
       <h2 className="mt-14 text-[20px] font-semibold">{t("others")}</h2>
       <ul className="mt-4 flex flex-wrap gap-2">
         {others.map((c) => (

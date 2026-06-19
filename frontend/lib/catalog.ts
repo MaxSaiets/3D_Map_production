@@ -10,6 +10,7 @@ import {
   MAP_MAGNET_PRICE_UAH,
   KEYCHAIN_PRICE_UAH,
   MAP_RELIEF_ADDON_UAH,
+  mapPriceEur,
 } from "@/lib/mapPrices";
 
 export type CatalogItem = {
@@ -359,4 +360,25 @@ const CATALOGS: Record<string, Catalog> = { uk, en, de, es, fr, pl };
 
 export function getCatalog(locale: string): Catalog {
   return CATALOGS[locale] ?? uk;
+}
+
+// Локалізовані слова цінника (спільні для /prices і price-band на сторінках міст).
+export const PRICE_WORDS: Record<string, { from: string; free: string }> = {
+  uk: { from: "від", free: "Безкоштовно*" },
+  en: { from: "from", free: "Free*" },
+  de: { from: "ab", free: "Kostenlos*" },
+  es: { from: "desde", free: "Gratis*" },
+  fr: { from: "dès", free: "Gratuit*" },
+  pl: { from: "od", free: "Bezpłatnie*" },
+};
+
+/** Єдине форматування ціни товару: «N ₴» (uk) / «N ₴ · ≈M €» (EU); «+N ₴» (addon);
+ *  «від N ₴» (from); «Безкоштовно*» (uah=0). Спільне для /prices і сторінок міст. */
+export function formatCatalogPrice(uah: number, kind: string | undefined, locale: string): string {
+  const w = PRICE_WORDS[locale] ?? PRICE_WORDS.uk;
+  if (uah === 0) return w.free;
+  if (kind === "addon") return `+${uah} ₴`;
+  const eur = locale !== "uk" ? ` · ≈${mapPriceEur(uah)} €` : "";
+  const base = `${uah} ₴${eur}`;
+  return kind === "from" ? `${w.from} ${base}` : base;
 }
