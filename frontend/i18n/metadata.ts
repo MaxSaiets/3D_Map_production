@@ -15,6 +15,15 @@ function isLocale(x: string): x is AppLocale {
 }
 
 /**
+ * schema.org `priceValidUntil` для Offer — рекомендований Google (інакше у
+ * Search Console попередження). Котиться на кінець поточного року; ці сторінки
+ * пререндеряться на білді, тож дата = рік білда (оновлюється щоребілда). ISO YYYY-MM-DD.
+ */
+export function priceValidUntil(): string {
+  return `${new Date().getFullYear()}-12-31`;
+}
+
+/**
  * Build localized SEO metadata for a page in one call.
  *
  *   export async function generateMetadata({ params }) {

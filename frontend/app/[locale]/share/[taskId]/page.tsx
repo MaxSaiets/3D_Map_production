@@ -53,7 +53,7 @@ export default async function SharePage({
   const ok = ID_RE.test(params.taskId);
 
   return (
-    <main className="mx-auto max-w-[720px] px-5 py-14 text-center lg:py-20">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-[720px] px-5 py-14 text-center lg:py-20">
       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">Monadruk</div>
       <h1 className="mt-3 text-[clamp(26px,4vw,40px)] leading-tight">{t("title")}</h1>
       <p className="mx-auto mt-4 max-w-[480px] text-[15px] leading-relaxed text-ink-2">{t("description")}</p>

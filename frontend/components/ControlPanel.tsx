@@ -886,6 +886,12 @@ export function ControlPanel({
             />
           </div>
 
+          {/* Завжди-змонтований polite live-region: озвучує статус генерації/готовності
+              незрячим (сам прогрес-блок нижче умовний → не озвучився б). */}
+          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {statusSummary}
+          </div>
+
           {isGenerating && (
             <div className="rounded-[24px] border border-[rgba(11,92,87,0.15)] bg-[rgba(11,92,87,0.06)] p-4">
               <div className="flex items-center justify-between gap-3">
@@ -1006,7 +1012,7 @@ export function ControlPanel({
           )}
 
           {error && (
-            <div className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div role="alert" className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}

@@ -62,6 +62,9 @@ export function OrderDialog({
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Яке поле спричинило помилку валідації → aria-invalid + aria-describedby на ньому
+  // (озвучення для незрячих, куди саме дивитись). null = немає / серверна помилка.
+  const [errorField, setErrorField] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   // payment: { provider?: "liqpay", action_url?, data?, signature?, url?, label? }
   const [payment, setPayment] = useState<any>(null);
@@ -75,7 +78,7 @@ export function OrderDialog({
   // і друге замовлення неможливо було оформити без перезавантаження. (контакт лишаємо.)
   useEffect(() => {
     if (open) {
-      setOrderNumber(null); setPayment(null); setError(null); setSending(false);
+      setOrderNumber(null); setPayment(null); setError(null); setErrorField(null); setSending(false);
       // Воронка: користувач відкрив форму замовлення (передостанній крок).
       import("@/lib/analytics").then((m) => m.trackFunnel("order_open")).catch(() => {});
     }
@@ -138,23 +141,30 @@ export function OrderDialog({
 
   if (!open) return null;
 
+  // aria-invalid + aria-describedby лише на полі, що спричинило поточну помилку
+  // (не на всіх — інакше describedby звучав би для кожного інпута).
+  const errAttrs = (field: string) =>
+    errorField === field ? ({ "aria-invalid": true, "aria-describedby": "order-error" } as const) : {};
+
   const submit = async () => {
-    if (!name.trim()) { setError(t("errName")); return; }
-    if (!phone.trim()) { setError(t("errPhone")); return; }
+    const fail = (field: string, msg: string) => { setErrorField(field); setError(msg); };
+    if (!name.trim()) { fail("name", t("errName")); return; }
+    if (!phone.trim()) { fail("phone", t("errPhone")); return; }
     // Базова перевірка телефону: лишаємо тільки цифри, очікуємо ≥10 (UA +380 = 12).
-    if (phone.replace(/\D/g, "").length < 10) { setError(t("errPhoneFormat")); return; }
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError(t("errEmail")); return; }
+    if (phone.replace(/\D/g, "").length < 10) { fail("phone", t("errPhoneFormat")); return; }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { fail("email", t("errEmail")); return; }
     if (region === "eu") {
-      if (!euCountry) { setError(t("errEuCountry")); return; }
-      if (!city.trim()) { setError(t("errCity")); return; }
-      if (delivery === "novapost_eu" && !branch.trim()) { setError(t("errBranchEu")); return; }
-      if (delivery === "meest" && !address.trim()) { setError(t("errAddressEu")); return; }
+      if (!euCountry) { fail("euCountry", t("errEuCountry")); return; }
+      if (!city.trim()) { fail("city", t("errCity")); return; }
+      if (delivery === "novapost_eu" && !branch.trim()) { fail("branch", t("errBranchEu")); return; }
+      if (delivery === "meest" && !address.trim()) { fail("address", t("errAddressEu")); return; }
     } else if (delivery !== "pickup") {
-      if (!city.trim()) { setError(t("errCity")); return; }
-      if (!branch.trim()) { setError(delivery === "nova" ? t("errNova") : t("errUkr")); return; }
+      if (!city.trim()) { fail("city", t("errCity")); return; }
+      if (!branch.trim()) { fail("branch", delivery === "nova" ? t("errNova") : t("errUkr")); return; }
       // Укрпошта потребує і місто+індекс, і вулицю/будинок (інакше недоставне).
-      if (delivery === "ukr" && !address.trim()) { setError(t("errUkrAddress")); return; }
+      if (delivery === "ukr" && !address.trim()) { fail("address", t("errUkrAddress")); return; }
     }
+    setErrorField(null);
     setError(null);
     setSending(true);
     try {
@@ -282,10 +292,10 @@ export function OrderDialog({
                   <span>{t("modelPending")}</span>
                 </div>
               )}
-              <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} value={name} onChange={(e) => setName(e.target.value)} />
-              <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+              <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} {...errAttrs("name")} value={name} onChange={(e) => setName(e.target.value)} />
+              <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} {...errAttrs("phone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
               {/* Email необовʼязковий — для підтвердження замовлення на пошту. */}
-              <input className={fieldCls} placeholder={t("phEmail")} aria-label={t("phEmail")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
+              <input className={fieldCls} placeholder={t("phEmail")} aria-label={t("phEmail")} {...errAttrs("email")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
 
               <div className="space-y-1.5">
                 <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("deliveryHeading")}</p>
@@ -325,7 +335,7 @@ export function OrderDialog({
               </div>
 
               {region === "eu" && (
-                <select className={fieldCls} aria-label={t("phCountry")} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
+                <select className={fieldCls} aria-label={t("phCountry")} {...errAttrs("euCountry")} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
                   <option value="">{t("phCountry")}</option>
                   {EU_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -338,18 +348,18 @@ export function OrderDialog({
                   <NovaPoshtaPicker city={city} branch={branch} setCity={setCity} setBranch={setBranch} inputCls={fieldCls} />
                 ) : (
                 <>
-                  <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} value={city} onChange={(e) => setCity(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} {...errAttrs("city")} value={city} onChange={(e) => setCity(e.target.value)} />
                   {region === "ua" ? (
                     <>
-                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} aria-label={delivery === "nova" ? t("phNova") : t("phUkr")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} aria-label={delivery === "nova" ? t("phNova") : t("phUkr")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
                       {delivery === "ukr" && (
-                        <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                        <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
                       )}
                     </>
                   ) : delivery === "novapost_eu" ? (
-                    <input className={fieldCls} placeholder={t("phBranchEu")} aria-label={t("phBranchEu")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                    <input className={fieldCls} placeholder={t("phBranchEu")} aria-label={t("phBranchEu")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
                   ) : (
-                    <input className={fieldCls} placeholder={t("phAddressEu")} aria-label={t("phAddressEu")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <input className={fieldCls} placeholder={t("phAddressEu")} aria-label={t("phAddressEu")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
                   )}
                 </>
                 )
@@ -388,7 +398,7 @@ export function OrderDialog({
               {/* Sticky-футер: ЦІНА + CTA завжди на видноті — не треба скролити крізь
                   усю форму до кнопки. Лишається приклеєним до низу скрол-панелі. */}
               <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-[var(--surface-border)] bg-[var(--surface-panel,#fff)] px-5 pb-4 pt-3">
-                {error && <div role="alert" className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+                {error && <div id="order-error" role="alert" className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[12px] font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
                   <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { pageMetadata, BASE, localeUrl } from "@/i18n/metadata";
+import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { mapPriceRange } from "@/lib/mapPrices";
 
@@ -33,12 +33,14 @@ export default async function CreateLayout({
         description: t("description"),
         image: `${BASE}/showcase/map-1.png`,
         brand: { "@type": "Brand", name: "Monadruk" },
+        sku: "MND-MAP",
         offers: {
           // Ціна-floor з ЄДИНОГО джерела (lib/mapPrices, синхрон з pricing.json +
           // city-сторінками) — раніше хардкод "250"/"6" не збігався з реальними 150/≈4.
           "@type": "Offer",
           priceCurrency: mapPriceRange(locale).currency,
           price: mapPriceRange(locale).low,
+          priceValidUntil: priceValidUntil(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/create"),
         },

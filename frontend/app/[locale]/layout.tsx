@@ -11,7 +11,8 @@ import { ToastHost } from "@/components/ToastHost";
 import { GlobalFooter } from "@/components/SiteFooter";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
-import { MAP_PRICE_RANGE } from "@/lib/mapPrices";
+import { mapPriceRange } from "@/lib/mapPrices";
+import { priceValidUntil } from "@/i18n/metadata";
 
 const BASE = "https://monadruk.com";
 
@@ -95,6 +96,10 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   const messages = await getMessages();
   const t = await getTranslations({ locale: locale as AppLocale, namespace: "meta" });
+  // Валюта/ціна офера = позиційні (UAH для uk, EUR для решти) — синхрон з
+  // create/keychains layout (раніше тут був хардкод UAH для всіх локалей).
+  const isUA = locale === "uk";
+  const al = locale as AppLocale;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -143,16 +148,18 @@ export default async function LocaleLayout({
           {
             "@type": "Offer",
             name: t("offerKeychain"),
-            priceCurrency: "UAH",
-            price: "120",
+            priceCurrency: isUA ? "UAH" : "EUR",
+            price: isUA ? "120" : "3",
+            priceValidUntil: priceValidUntil(),
             url: `${BASE}/keychains`,
             availability: "https://schema.org/InStock",
           },
           {
             "@type": "Offer",
             name: t("offerMap"),
-            priceCurrency: "UAH",
-            price: MAP_PRICE_RANGE.uk.low,
+            priceCurrency: mapPriceRange(al).currency,
+            price: mapPriceRange(al).low,
+            priceValidUntil: priceValidUntil(),
             url: `${BASE}/create`,
             availability: "https://schema.org/InStock",
           },
@@ -174,10 +181,8 @@ export default async function LocaleLayout({
         serviceType: t("serviceType"),
         provider: { "@id": `${BASE}/#org` },
         description: t("serviceDescription"),
-        offers: [
-          { "@type": "Offer", name: t("offerKeychain"), priceCurrency: "UAH", price: "120", url: `${BASE}/keychains`, availability: "https://schema.org/InStock" },
-          { "@type": "Offer", name: t("offerMap"), priceCurrency: "UAH", price: MAP_PRICE_RANGE.uk.low, url: `${BASE}/create`, availability: "https://schema.org/InStock" },
-        ],
+        // Офери НЕ дублюємо тут — вони живуть на вузлі Organization.makesOffer
+        // (Service.provider → #org). Дубль давав краулеру 2 конфліктні джерела.
       },
     ],
   };
@@ -188,6 +193,14 @@ export default async function LocaleLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body className="antialiased">
+        {/* Skip-to-content (WCAG 2.4.1): перший фокусований елемент, невидимий
+            доки не сфокусований; веде на <main id="main-content"> сторінки. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-forest focus:px-4 focus:py-2 focus:text-white focus:shadow-lift"
+        >
+          {t("skipToContent")}
+        </a>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}

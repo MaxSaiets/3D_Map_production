@@ -37,7 +37,7 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
   };
 
   return (
-    <main className="mx-auto max-w-[920px] px-5 py-14 lg:py-20">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-[920px] px-5 py-14 lg:py-20">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <h1 className="text-[clamp(28px,4vw,46px)] leading-tight">{t("title")}</h1>
       <p className="mt-4 max-w-[640px] text-[15px] leading-relaxed text-ink-2">{t("description")}</p>

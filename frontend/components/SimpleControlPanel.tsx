@@ -1179,7 +1179,7 @@ export function SimpleControlPanel({
           </button>
 
           {error && (
-            <div className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
+            <div role="alert" aria-atomic="true" className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
               <p>{error}</p>
               {selectedArea && !isGenerating && (
                 <button

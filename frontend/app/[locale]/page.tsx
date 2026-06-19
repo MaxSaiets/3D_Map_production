@@ -169,18 +169,22 @@ export default function HomePage() {
   return (
     <div className="min-h-[100dvh]">
       <SiteHeader />
-      <Hero />
-      <PathSelector />
-      <ShowcaseSection />
-      <HowItWorks />
-      <TemplatesGallery />
-      <Craft />
-      <RealPrints />
-      <Testimonials />
-      <Faq />
-      <SeoTextBlock />
-      <PopularCities />
-      <FinalCTA />
+      {/* Ціль skip-to-content (після хедера) — клавіатура/скрінрідер стрибає сюди,
+          оминаючи навігацію. tabIndex=-1 робить <main> програмно фокусованим. */}
+      <main id="main-content" tabIndex={-1}>
+        <Hero />
+        <PathSelector />
+        <ShowcaseSection />
+        <HowItWorks />
+        <TemplatesGallery />
+        <Craft />
+        <RealPrints />
+        <Testimonials />
+        <Faq />
+        <SeoTextBlock />
+        <PopularCities />
+        <FinalCTA />
+      </main>
       <SiteFooter />
     </div>
   );

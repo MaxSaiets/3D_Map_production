@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { pageMetadata, BASE, localeUrl } from "@/i18n/metadata";
-import { localeMeta, routing, defaultLocale, type AppLocale } from "@/i18n/routing";
+import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta" });
@@ -31,10 +31,12 @@ export default async function KeychainsLayout({
         description: t("description"),
         image: `${BASE}/showcase/keychain-5.png`,
         brand: { "@type": "Brand", name: "Monadruk" },
+        sku: "MND-KEYCHAIN",
         offers: {
           "@type": "Offer",
           priceCurrency: isUA ? "UAH" : "EUR",
           price: isUA ? "120" : "3",
+          priceValidUntil: priceValidUntil(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/keychains"),
         },
@@ -42,7 +44,7 @@ export default async function KeychainsLayout({
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: nav("createMap"), item: localeUrl(locale, "/") },
+          { "@type": "ListItem", position: 1, name: "Monadruk", item: localeUrl(locale, "/") },
           { "@type": "ListItem", position: 2, name: nav("keychains"), item: localeUrl(locale, "/keychains") },
         ],
       },

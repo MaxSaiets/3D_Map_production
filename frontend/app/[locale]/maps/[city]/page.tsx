@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { BASE, localeUrl } from "@/i18n/metadata";
+import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
@@ -83,6 +83,7 @@ export default async function CityPage({
         description: t("description", { city: name }),
         image: `${BASE}/showcase/map-1.png`,
         brand: { "@type": "Brand", name: "Monadruk" },
+        sku: `MND-MAP-${city.slug}`,
         offers: {
           // Сторінка про 3D-МАПУ міста → діапазон цін мапи (S–XL), а не брелка.
           // Ціни з єдиного джерела lib/mapPrices.ts (синхрон з pricing.json) — без дрейфу.
@@ -91,6 +92,7 @@ export default async function CityPage({
           lowPrice: mapPriceRange(locale).low,
           highPrice: mapPriceRange(locale).high,
           offerCount: mapPriceRange(locale).offerCount,
+          priceValidUntil: priceValidUntil(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, `/maps/${city.slug}`),
         },
@@ -118,7 +120,7 @@ export default async function CityPage({
   const others = CITY_PAGES.filter((c) => c.slug !== city.slug).slice(0, 12);
 
   return (
-    <main className="mx-auto max-w-[820px] px-5 py-14 lg:py-20">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-[820px] px-5 py-14 lg:py-20">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <nav className="text-[13px] text-ink-3" aria-label="breadcrumb">
         <Link href="/" className="hover:underline">Monadruk</Link>

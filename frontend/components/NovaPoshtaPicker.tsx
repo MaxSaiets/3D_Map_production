@@ -118,15 +118,19 @@ export function NovaPoshtaPicker({
           placeholder={t("npCityPh")}
           aria-label={t("npCityPh")}
           autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={cityOpen && cityResults.length > 0}
+          aria-controls="np-city-listbox"
           value={cityQuery}
           onChange={(e) => { setCityQuery(e.target.value); setCityOpen(true); setCityRef(""); setBranch(""); setWhQuery(""); }}
           onFocus={(e) => { setCityOpen(true); e.target.scrollIntoView({ block: 'center' }); }}
           onBlur={() => setTimeout(() => setCityOpen(false), 160)}
         />
         {cityOpen && cityResults.length > 0 && (
-          <ul className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+          <ul id="np-city-listbox" role="listbox" className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
             {cityResults.map((c) => (
-              <li key={c.ref}>
+              <li key={c.ref} role="option" aria-selected={false}>
                 <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pickCity(c)}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-[rgba(15,118,110,0.08)]">
                   <MapPin size={14} className="shrink-0 text-[var(--accent-strong)]" />
@@ -146,15 +150,19 @@ export function NovaPoshtaPicker({
             placeholder={t("npWhPh")}
             aria-label={t("npWhPh")}
             autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={whOpen && whResults.length > 0}
+            aria-controls="np-wh-listbox"
             value={whQuery}
             onChange={(e) => { setWhQuery(e.target.value); setWhOpen(true); }}
             onFocus={(e) => { setWhOpen(true); if (!whResults.length) loadWarehouses(cityRef, ""); e.target.scrollIntoView({ block: 'center' }); }}
             onBlur={() => setTimeout(() => setWhOpen(false), 160)}
           />
           {whOpen && whResults.length > 0 && (
-            <ul className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+            <ul id="np-wh-listbox" role="listbox" className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
               {whResults.map((w) => (
-                <li key={w.ref}>
+                <li key={w.ref} role="option" aria-selected={false}>
                   <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setBranch(w.name); setWhQuery(w.name); setWhOpen(false); }}
                     className="block w-full px-4 py-2.5 text-left text-sm hover:bg-[rgba(15,118,110,0.08)]">
                     <span className="line-clamp-2">{w.name}</span>

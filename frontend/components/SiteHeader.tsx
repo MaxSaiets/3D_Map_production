@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ArrowRight, KeyRound, Box, User, Menu, X, Globe } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -17,12 +17,16 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // useId → унікальний id меню на КОЖЕН інстанс (LanguageSwitcher монтується двічі:
+  // десктоп + мобільне меню) → без дублю id / неоднозначного aria-controls.
+  const menuId = useId();
   return (
     <div className="relative">
       <button
         type="button"
         aria-label={t("language")}
         aria-expanded={open}
+        aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
         className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
       >
@@ -32,7 +36,7 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
       {open && (
         <>
           <button aria-hidden className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-          <ul className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper p-1 shadow-lift">
+          <ul id={menuId} className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper p-1 shadow-lift">
             {locales.map((l) => (
               <li key={l}>
                 <button
@@ -104,6 +108,7 @@ export function SiteHeader() {
             type="button"
             aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
+            aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink md:hidden"
           >
@@ -114,7 +119,7 @@ export function SiteHeader() {
 
       {/* Mobile dropdown nav */}
       {open && (
-        <nav className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
+        <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
           <ul className="flex flex-col">
             {[
               { href: "/#how", label: t("how") },
