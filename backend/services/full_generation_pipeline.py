@@ -1186,6 +1186,95 @@ def run_full_generation_pipeline(
             print(f"[CONNECTOR] {zone_prefix}relief connector failed (non-fatal): {_cexc}")
             connector_key_mesh = None
 
+    # ── ВИДІЛЕННЯ ДОМУ на РЕЛЬЄФНІЙ карті (opt-in, map_highlight_building) ──────
+    # Той самий прийом, що конектор: обраний будинок стає ОКРЕМОЮ ЧЕРВОНОЮ деталлю
+    # (build_highlight_insert: будинок + peg-ніжка), а паз ріжеться у рельєф 3D-булеаном
+    # (manifold + graceful). base_top для peg = ВЛАСНА база будинку (його min-Z на
+    # рельєфі), щоб ніжка сіла рівно під будинок. cutter тягнемо від (base_z−depth) аж
+    # ВИЩЕ верху будинку → чисто прорізає (можливо похилу) поверхню рельєфу під footprint.
+    # Строго за map_highlight_building → звичайна генерація байт-в-байт. Сумнів boolean
+    # → рельєф лишаємо (деталь усе одно експортується — можна вставити/приклеїти).
+    highlight_meshes = []
+    if (getattr(request, "map_highlight_building", False) and terrain_mesh is not None
+            and building_meshes and _sf_c > 0):
+        try:
+            from services.flat_plate_pipeline import (
+                _select_highlight_building_index, build_highlight_insert,
+                build_flat_layer_mesh_from_mask,
+            )
+            import trimesh as _tmh
+            _hl_raw = list(getattr(request, "highlight_points", None) or [])
+            _hl_single = getattr(request, "highlight_point", None)
+            if not _hl_raw and _hl_single and len(_hl_single) >= 2:
+                _hl_raw = [_hl_single]
+            _hl_targets = []
+            for _hp in _hl_raw[:8]:
+                if not _hp or len(_hp) < 2:
+                    continue
+                try:
+                    _ux, _uy = global_center.to_utm(float(_hp[0]), float(_hp[1]))
+                    _lx, _ly = global_center.to_local(_ux, _uy)
+                    _hl_targets.append((float(_lx), float(_ly)))
+                except Exception:
+                    pass
+            _hl_chosen = []
+            for _t in _hl_targets:
+                _i = _select_highlight_building_index(building_meshes, target_xy=_t, exclude=set(_hl_chosen))
+                if _i is not None and _i not in _hl_chosen:
+                    _hl_chosen.append(_i)
+            if _hl_chosen:
+                _hl_pockets = []
+                for _i in _hl_chosen:
+                    _bm = building_meshes[_i]
+                    _base_z = float(_bm.bounds[0][2])   # будинок сидить на рельєфі тут
+                    _bm_top = float(_bm.bounds[1][2])
+                    _red, _pk, _d = build_highlight_insert(
+                        _bm, base_top_m=_base_z, export_scale_factor=_sf_c,
+                    )
+                    if _red is not None:
+                        highlight_meshes.append(_red)
+                    if _pk is not None and _d > 1e-9:
+                        _hl_pockets.append((_pk, _base_z, _d, _bm_top))
+                # прибираємо обрані з СІРИХ будівель (стають червоною вставкою)
+                _hl_cs = set(_hl_chosen)
+                building_meshes = [b for j, b in enumerate(building_meshes) if j not in _hl_cs]
+                # паз у рельєф (manifold, guarded — як конектор/GPX)
+                _eps_h = max((float(terrain_mesh.bounds[1][2]) - float(terrain_mesh.bounds[0][2])) * 0.02, 0.5 / _sf_c)
+                for (_pk, _base_z, _d, _bm_top) in _hl_pockets:
+                    try:
+                        _hbot = _base_z - _d
+                        _hthk = (_bm_top + _eps_h) - _hbot   # від під-пазу аж вище будинку
+                        _hcut = build_flat_layer_mesh_from_mask(
+                            _pk, bottom_z_m=_hbot, thickness_m=_hthk,
+                            color=[128, 128, 128], min_area_m2=1e-12,
+                        )
+                        if (_hcut is not None and bool(getattr(_hcut, "is_volume", False))
+                                and bool(getattr(terrain_mesh, "is_volume", False))):
+                            _hb0 = terrain_mesh.bounds
+                            _hres = _tmh.boolean.difference([terrain_mesh, _hcut], engine="manifold")
+                            if (_hres is not None and len(getattr(_hres, "faces", [])) > 0
+                                    and bool(getattr(_hres, "is_volume", False))):
+                                _hb1 = _hres.bounds
+                                _hdrift = max(abs(_hb1[0][i] - _hb0[0][i]) for i in range(2)) + \
+                                          max(abs(_hb1[1][i] - _hb0[1][i]) for i in range(2))
+                                if _hdrift < (5.0 / _sf_c):
+                                    terrain_mesh = _hres
+                    except Exception as _hpx:
+                        print(f"[HIGHLIGHT] {zone_prefix}pocket boolean failed (non-fatal, glue-on): {_hpx}")
+                print(f"[HIGHLIGHT] {zone_prefix}{len(highlight_meshes)} building(s) -> red insert part(s) on relief")
+        except Exception as _hexc:
+            print(f"[HIGHLIGHT] {zone_prefix}relief highlight failed (non-fatal): {_hexc}")
+            highlight_meshes = []
+
+    highlight_part = None
+    if highlight_meshes:
+        try:
+            import trimesh as _tmh2
+            highlight_part = (highlight_meshes[0] if len(highlight_meshes) == 1
+                              else _tmh2.util.concatenate(highlight_meshes))
+        except Exception:
+            highlight_part = highlight_meshes[0]
+
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     export_result = export_generation_outputs(
@@ -1201,6 +1290,7 @@ def run_full_generation_pipeline(
         extra_mesh_items=(
             ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
             + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
+            + ([("Highlight", highlight_part)] if highlight_part is not None else [])
         ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,

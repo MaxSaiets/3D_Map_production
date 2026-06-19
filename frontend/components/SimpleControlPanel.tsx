@@ -439,9 +439,9 @@ export function SimpleControlPanel({
     // ВИДІЛЕНА БУДІВЛЯ: окрема червона вставна деталь — будується у flat_plate, тож
     // вимагає плоского режиму (вмикає flatPlate). Сумісна з flatAms/конектор/рамка/магніт.
     const highlight = panelMode === 0 && s.mapHighlightBuilding;
-    // connector З рельєфом НЕ форсує flat (ріжеться у рельєфну базу 3D-булеаном);
-    // без рельєфу — форсує (пласка плитка з пазом). frame/highlight поки flat-only.
-    const flatPlate = flatAms || frame || highlight || (connector && !reliefMode);
+    // connector І highlight З рельєфом НЕ форсують flat (паз/виділення ріжуться у
+    // рельєф 3D-булеаном); без рельєфу — форсують (пласка база). frame поки flat-only.
+    const flatPlate = flatAms || frame || (connector && !reliefMode) || (highlight && !reliefMode);
     // РЕЛЬЄФ (висоти землі) — окремий перемикач, джерело правди для terrain. Працює
     // на 3D-карті (стандарт + панно); плоскі режими/магніт фізично без рельєфу.
     const relief = !magnetMode && !flatPlate && reliefMode;
@@ -959,9 +959,10 @@ export function SimpleControlPanel({
             data-testid="highlight-toggle"
             onClick={() => {
               const next = !highlightMode;
-              // Виділення дому — додаток плоскої карти: на не-плоскому форматі
-              // спершу переводимо базу у «flat», далі вмикаємо тумблер.
-              if (next && format !== "flat") setFormat("flat");
+              // Виділення дому працює і на «Об'ємна 3D» (паз ріжеться у рельєф
+              // 3D-булеаном) І на «Плоска». Несумісне лише з magnet/panno → звідти
+              // переводимо у flat. На relief3d/flat — лишаємо формат як є.
+              if (next && (format === "magnet" || format === "panno")) setFormat("flat");
               setHighlightMode(next);
               if (!next) clearHighlights();  // вимкнули → прибрати маркери/контури
             }}

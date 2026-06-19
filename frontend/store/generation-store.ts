@@ -273,8 +273,9 @@ export const useGenerationStore = create<GenerationState>((set) => ({
     simpleConnector: (f === "flat" || f === "relief3d") ? st.simpleConnector : false,
     // FRAME поки flat-only (форсує flat → гасить рельєф); лишаємо для flat і magnet.
     simpleFrame: (f === "flat" || f === "magnet") ? st.simpleFrame : false,
-    // HIGHLIGHT поки flat-only (рельєф+дім — окрема майбутня зміна); гасимо поза flat.
-    ...(f === "flat"
+    // HIGHLIGHT сумісний з flat І relief3d (рельєф+дім ріжеться у рельєф 3D-булеаном);
+    // гасимо лише на magnet/panno (інша база/пайплайн).
+    ...((f === "flat" || f === "relief3d")
       ? {}
       : { mapHighlightBuilding: false, highlightPoints: [], highlightFootprints: [] }),
     ...((f === "panno" || f === "magnet")
