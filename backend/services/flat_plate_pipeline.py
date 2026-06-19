@@ -1575,7 +1575,9 @@ def build_keychain_layout(
     # Прибрати мікро-порожнини (тонкі щілини від union-у містка ущелини на серці),
     # лишаючи СПРАВЖНІЙ отвір петлі — його площа на порядки більша за поріг.
     try:
-        _min_void = (0.8 * layout_scale_m_per_mm) ** 2  # < ~0.8мм² = артефакт, не отвір
+        # < ~1.44мм² = артефакт містка ущелини (0.688мм²-void серця проходив поріг 0.64
+        # → ~0.9мм наскрізний тунель біля петлі); СПРАВЖНІЙ отвір петлі на порядки більший.
+        _min_void = (1.2 * layout_scale_m_per_mm) ** 2
         def _drop_tiny_holes(poly: Polygon) -> Polygon:
             kept = [r for r in poly.interiors if Polygon(r).area >= _min_void]
             return Polygon(poly.exterior, kept) if len(kept) != len(list(poly.interiors)) else poly
@@ -4308,11 +4310,18 @@ def run_flat_plate_pipeline(
                 if _kc_i is not None and _kc_i not in _kc_chosen:
                     _kc_chosen.append(_kc_i)
             if _kc_chosen:
+                # Глибина пазу І peg-ніжки = ОДНЕ безпечне значення наперед: лишаємо
+                # ≥0.4мм суцільного над зворот-гравіюванням. Раніше peg будувався на
+                # повну 0.8мм, а through-hole-guard зрізав ЛИШЕ паз (0.8→0.6) → ніжка
+                # на 0.2мм довша за паз = вставка не сідала. Тепер обидва з depth_mm.
+                _kc_base_mm = base_top_m * export_scale_factor
+                _kc_eng_mm = ((keychain_back_engrave_m or 0.0) * export_scale_factor) if keychain_back_poly is not None else 0.0
+                _kc_hl_depth_mm = 0.8 if _kc_eng_mm <= 0 else max(min(0.8, _kc_base_mm - _kc_eng_mm - 0.4), 0.2)
                 _kc_hl_meshes, _kc_pockets, _kc_pocket_depth = [], [], 0.0
                 for _kc_i in _kc_chosen:  # індекси стабільні — НЕ видаляємо в циклі
                     _kc_m, _kc_pk, _kc_d = build_highlight_insert(
                         building_meshes[_kc_i], base_top_m=base_top_m,
-                        export_scale_factor=export_scale_factor,
+                        export_scale_factor=export_scale_factor, depth_mm=_kc_hl_depth_mm,
                     )
                     if _kc_m is not None:
                         _kc_hl_meshes.append(_kc_m)
