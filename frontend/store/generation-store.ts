@@ -268,15 +268,15 @@ export const useGenerationStore = create<GenerationState>((set) => ({
     // карти, тож конектор/рамка/дім самі вмикають flat_plate навіть без flat-AMS.
     simpleFlatAms: f === "flat" ? st.simpleFlatAms : false,
     simpleRelief: (f === "relief3d" || f === "panno") ? st.simpleRelief : false,
-    ...(f !== "flat"
-      ? {
-          simpleConnector: false,
-          simpleFrame: f === "magnet" ? st.simpleFrame : false,
-          mapHighlightBuilding: false,
-          highlightPoints: [],
-          highlightFootprints: [],
-        }
-      : {}),
+    // КОНЕКТОР сумісний з flat І з relief3d (рельєф+конектор тепер працює — паз
+    // ріжеться у дно рельєфної бази); гасимо лише для magnet/panno.
+    simpleConnector: (f === "flat" || f === "relief3d") ? st.simpleConnector : false,
+    // FRAME поки flat-only (форсує flat → гасить рельєф); лишаємо для flat і magnet.
+    simpleFrame: (f === "flat" || f === "magnet") ? st.simpleFrame : false,
+    // HIGHLIGHT поки flat-only (рельєф+дім — окрема майбутня зміна); гасимо поза flat.
+    ...(f === "flat"
+      ? {}
+      : { mapHighlightBuilding: false, highlightPoints: [], highlightFootprints: [] }),
     ...((f === "panno" || f === "magnet")
       ? { gpxFocus: null, gpxName: null, gpxNote: null }
       : {}),

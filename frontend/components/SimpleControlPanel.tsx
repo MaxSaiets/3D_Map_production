@@ -427,8 +427,10 @@ export function SimpleControlPanel({
     // «Плоска кольорова (AMS)»: пласка багатокольорова плитка-карта (terrain off,
     // окремі кольорові шари, основа 3мм). Лише для одиночної карти (не панно/магніт).
     const flatAms = panelMode === 0 && !magnetMode && s.simpleFlatAms;
-    // З'ЄДНУВАЧ-ПАЗИ: вимагає плоского режиму (3мм основа, паз у дні). Сумісний
-    // з flatAms (кольорова плитка з пазами), несумісний з магнітом/панно.
+    // З'ЄДНУВАЧ-ПАЗИ: «ластівчин хвіст» у дні основи + окремий ключ. Працює у ДВОХ
+    // режимах: (а) БЕЗ рельєфу → пласка плитка (flat_plate, паз = 2 призми); (б) З
+    // РЕЛЬЄФОМ → паз ріжеться у дно рельєфної бази 3D-булеаном (relief-пайплайн).
+    // Тож конектор САМ форсує flatPlate ЛИШЕ коли рельєф вимкнено (нижче).
     const connector = panelMode === 0 && !magnetMode && s.simpleConnector;
     // ПРЕМІУМ-РАМКА: компас+лінійка+координати поверх плоскої карти. Будується у
     // flat_plate (тож вимагає плоского режиму). Сумісна з flatAms/connector/магнітом
@@ -437,7 +439,9 @@ export function SimpleControlPanel({
     // ВИДІЛЕНА БУДІВЛЯ: окрема червона вставна деталь — будується у flat_plate, тож
     // вимагає плоского режиму (вмикає flatPlate). Сумісна з flatAms/конектор/рамка/магніт.
     const highlight = panelMode === 0 && s.mapHighlightBuilding;
-    const flatPlate = flatAms || connector || frame || highlight;
+    // connector З рельєфом НЕ форсує flat (ріжеться у рельєфну базу 3D-булеаном);
+    // без рельєфу — форсує (пласка плитка з пазом). frame/highlight поки flat-only.
+    const flatPlate = flatAms || frame || highlight || (connector && !reliefMode);
     // РЕЛЬЄФ (висоти землі) — окремий перемикач, джерело правди для terrain. Працює
     // на 3D-карті (стандарт + панно); плоскі режими/магніт фізично без рельєфу.
     const relief = !magnetMode && !flatPlate && reliefMode;
@@ -460,7 +464,10 @@ export function SimpleControlPanel({
       buildingMinHeight: s.buildingMinHeight, buildingHeightMultiplier: s.buildingHeightMultiplier,
       buildingFoundationMm: s.buildingFoundationMm, buildingEmbedMm: s.buildingEmbedMm,
       waterDepth: s.waterDepth, terrainEnabled: relief, terrainZScale: s.terrainZScale,
-      terrainBaseThicknessMm: (magnetMode || flatPlate) ? 3.0 : s.terrainBaseThicknessMm, terrainResolution: s.terrainResolution,
+      terrainBaseThicknessMm: (magnetMode || flatPlate) ? 3.0
+        : (relief && connector) ? Math.max(Number(s.terrainBaseThicknessMm) || 3.0, 3.0)
+        : s.terrainBaseThicknessMm,
+      terrainResolution: s.terrainResolution,
       terrariumZoom: s.terrariumZoom,
       flatUniformBuildingHeight: flatBuildings,
       flatMaxBuildingHeightMm: flatBuildings ? 0.8 : undefined,
@@ -894,10 +901,10 @@ export function SimpleControlPanel({
           data-testid="connector-toggle"
           onClick={() => {
             const next = !connectorMode;
-            // Конектор — додаток плоскої карти: вмикаючи на не-плоскому форматі,
-            // спершу переводимо базу у «flat» (setFormat гасить рельєф/магніт/панно),
-            // далі вмикаємо сам тумблер.
-            if (next && format !== "flat") setFormat("flat");
+            // Конектор сумісний з «Об'ємна 3D» (паз ріжеться у дно рельєфної бази
+            // 3D-булеаном) І з «Плоска». Несумісний лише з magnet/panno (інше дно) →
+            // звідти переводимо у flat. На relief3d/flat — лишаємо формат як є.
+            if (next && (format === "magnet" || format === "panno")) setFormat("flat");
             setConnectorMode(next);
           }}
           className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${

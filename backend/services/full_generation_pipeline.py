@@ -1122,6 +1122,70 @@ def run_full_generation_pipeline(
             print(f"[GPX] {zone_prefix}track build failed (non-fatal): {exc}")
             gpx_mesh = None
 
+    # ── З'ЄДНУВАЧ-ПАЗИ на РЕЛЬЄФНІЙ карті (opt-in, map_connector) ──────────────
+    # Раніше рельєф і конектори були взаємовиключні: конектор жив ЛИШЕ у плоскому
+    # конвеєрі (паз = дві пласкі призми). Тут ріжемо той самий «ластівчин хвіст» у
+    # ПЛАСКЕ ДНО рельєфної бази 3D-булеаном — той самий manifold + graceful-guard,
+    # що GPX-жолоб вище. Строго за map_connector → звичайна рельєфна генерація
+    # лишається БАЙТ-В-БАЙТ (golden не чіпається). Ключ-метелик = окрема деталь на
+    # рівні дна (floor_z), товщина = глибина пазу. Будь-який сумнів → лишаємо базу.
+    connector_key_mesh = None
+    _sf_c = float(getattr(zone, "scale_factor", 0.0) or 0.0)
+    if getattr(request, "map_connector", False) and terrain_mesh is not None and _sf_c > 0:
+        try:
+            from services.flat_plate_pipeline import (
+                build_map_connector_geometry, build_flat_layer_mesh_from_mask,
+            )
+            import trimesh as _tmc
+            _floor_z = float(terrain_mesh.bounds[0][2])
+            _model_h = float(terrain_mesh.bounds[1][2]) - _floor_z
+            _depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            # Глибина пазу: не глибше 60% висоти моделі (лишаємо суцільний матеріал).
+            _depth_m = min(_depth_mm / _sf_c, max(_model_h * 0.6, 0.0))
+            _ntc, _keyc = build_map_connector_geometry(
+                zone.zone_polygon_local,
+                edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
+                span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
+                length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
+                waist_frac=0.5,
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
+                export_scale_factor=_sf_c,
+            )
+            if _ntc is not None and _depth_m > 1e-6:
+                _eps = max(_model_h * 0.01, 0.5 / _sf_c)
+                _cutterc = build_flat_layer_mesh_from_mask(
+                    _ntc, bottom_z_m=_floor_z - _eps, thickness_m=_depth_m + _eps,
+                    color=[128, 128, 128], min_area_m2=1e-12,
+                )
+                if (_cutterc is not None and bool(getattr(_cutterc, "is_volume", False))
+                        and bool(getattr(terrain_mesh, "is_volume", False))):
+                    _b0 = terrain_mesh.bounds
+                    _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
+                    if (_cutc is not None and len(getattr(_cutc, "faces", [])) > 0
+                            and bool(getattr(_cutc, "is_volume", False))):
+                        _b1 = _cutc.bounds
+                        _driftc = max(abs(_b1[0][i] - _b0[0][i]) for i in range(2)) + \
+                                  max(abs(_b1[1][i] - _b0[1][i]) for i in range(2))
+                        if _driftc < (5.0 / _sf_c):
+                            terrain_mesh = _cutc
+                            print(f"[CONNECTOR] {zone_prefix}dovetail notch carved into relief base "
+                                  f"(manifold, depth {_depth_m * _sf_c:.2f}mm)")
+                        else:
+                            print(f"[CONNECTOR] {zone_prefix}notch rejected (drift {_driftc:.1f}) — base kept")
+                    else:
+                        print(f"[CONNECTOR] {zone_prefix}notch boolean not a volume — base kept")
+                else:
+                    print(f"[CONNECTOR] {zone_prefix}relief base not watertight — skip notch (base kept)")
+                # Окрема деталь-ключ на рівні дна рельєфної бази (НЕ z=0).
+                if _keyc is not None and not getattr(_keyc, "is_empty", True):
+                    connector_key_mesh = build_flat_layer_mesh_from_mask(
+                        _keyc, bottom_z_m=_floor_z, thickness_m=max(_depth_m, 0.4 / _sf_c),
+                        color=[242, 242, 242], min_area_m2=1e-12,
+                    )
+        except Exception as _cexc:
+            print(f"[CONNECTOR] {zone_prefix}relief connector failed (non-fatal): {_cexc}")
+            connector_key_mesh = None
+
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     export_result = export_generation_outputs(
@@ -1134,7 +1198,10 @@ def run_full_generation_pipeline(
         building_meshes=building_meshes,
         water_mesh=water_mesh,
         parks_mesh=parks_mesh,
-        extra_mesh_items=[("Track", gpx_mesh)] if gpx_mesh is not None else None,
+        extra_mesh_items=(
+            ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
+            + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
+        ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,
     )
