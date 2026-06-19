@@ -7,6 +7,9 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { locales, localeMeta } from "@/i18n/routing";
 import { useAuth } from "@/components/AuthProvider";
 
+// Локалізований лейбл сторінки «Ціни» (тримаємо тут, щоб не чіпати 6 messages-файлів).
+const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de: "Preise", es: "Precios", fr: "Tarifs", pl: "Cennik" };
+
 /* ---------- Language switcher ---------- */
 export function LanguageSwitcher({ compact }: { compact?: boolean }) {
   const t = useTranslations("nav");
@@ -53,6 +56,8 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
 export function SiteHeader() {
   const { user, configured } = useAuth();
   const t = useTranslations("nav");
+  const locale = useLocale();
+  const pricesLabel = PRICES_LABEL[locale] ?? PRICES_LABEL.uk;
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
@@ -64,6 +69,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
           <Link href="/#how" className="hover:text-ink">{t("how")}</Link>
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
+          <Link href="/prices" className="hover:text-ink">{pricesLabel}</Link>
           <Link href="/#templates" className="hover:text-ink">{t("templates")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
         </nav>
@@ -113,6 +119,7 @@ export function SiteHeader() {
             {[
               { href: "/#how", label: t("how") },
               { href: "/showcase", label: t("gallery") },
+              { href: "/prices", label: pricesLabel },
               { href: "/#templates", label: t("templates") },
               { href: "/keychains", label: t("keychains") },
               { href: "/account", label: configured && user ? t("account") : t("login") },

@@ -26,6 +26,9 @@ export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
 /** Магніт-мапа (60мм) — окремий SKU. UAH. Дзеркало pricing.json map.sizes_mm["60"]. */
 export const MAP_MAGNET_PRICE_UAH = 150;
 
+/** Брелок-мапа (3D-друк) — базова ціна. UAH. Дзеркало pricing.json keychain.base. */
+export const KEYCHAIN_PRICE_UAH = 120;
+
 /** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
 export const MAP_RELIEF_ADDON_UAH = 60;
 

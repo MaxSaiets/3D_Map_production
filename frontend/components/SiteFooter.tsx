@@ -1,9 +1,12 @@
 "use client";
 
 import { Box } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { BUSINESS } from "@/lib/legal";
+
+// Локалізований лейбл сторінки «Ціни» (без правок 6 messages-файлів).
+const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de: "Preise", es: "Precios", fr: "Tarifs", pl: "Cennik" };
 
 /* ---------- Footer ----------
    Shared global footer: legal links + ФОП requisites + contacts.
@@ -11,6 +14,7 @@ import { BUSINESS } from "@/lib/legal";
    gets a consistent footer + a way home. */
 export function SiteFooter() {
   const t = useTranslations("home.footer");
+  const pricesLabel = PRICES_LABEL[useLocale()] ?? PRICES_LABEL.uk;
   return (
     <footer className="border-t border-line-soft py-12">
       <div className="mx-auto flex max-w-[1360px] flex-col gap-6 px-5 text-sm text-ink-3 lg:px-8">
@@ -22,6 +26,7 @@ export function SiteFooter() {
             {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
             <Link href="/create" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("create")}</Link>
             <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("keychains")}</Link>
+            <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pricesLabel}</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
             <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
             <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>
