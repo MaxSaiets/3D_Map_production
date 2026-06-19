@@ -18,8 +18,28 @@ const SHIP_PILL: Record<string, string> = {
   fr: "Nous imprimons et livrons · dès 150 ₴",
   pl: "Drukujemy i wysyłamy · od 150 ₴",
 };
+
+// Блок «Популярні міста» на лендінгу — ПРЯМІ лінки з найавторитетнішої сторінки на
+// city-сторінки (раніше вони були ОРФАНАМИ: лише футер→/maps, 2 кліки → Google не
+// давав їм link-equity). Локалізовані заголовки inline (без правок 6 messages).
+const POP_CITIES_H: Record<string, string> = {
+  uk: "3D-мапи популярних міст", en: "3D maps of popular cities", de: "3D-Karten beliebter Städte",
+  es: "Mapas 3D de ciudades populares", fr: "Cartes 3D des villes populaires", pl: "Mapy 3D popularnych miast",
+};
+const POP_CITIES_SUB: Record<string, string> = {
+  uk: "Обери своє місто — або будь-яку точку світу у конструкторі.",
+  en: "Pick your city — or any point on Earth in the builder.",
+  de: "Wähle deine Stadt — oder einen beliebigen Punkt im Konfigurator.",
+  es: "Elige tu ciudad — o cualquier punto del mundo en el configurador.",
+  fr: "Choisis ta ville — ou n'importe quel point du monde dans le configurateur.",
+  pl: "Wybierz swoje miasto — lub dowolny punkt świata w kreatorze.",
+};
+const ALL_CITIES_L: Record<string, string> = {
+  uk: "Усі міста", en: "All cities", de: "Alle Städte", es: "Todas las ciudades", fr: "Toutes les villes", pl: "Wszystkie miasta",
+};
 import { Link } from "@/i18n/navigation";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
+import { CITY_PAGES } from "@/lib/cityPages";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -110,6 +130,41 @@ function SeoTextBlock() {
   );
 }
 
+/* ---------- Popular cities (internal links → de-orphan city pages) ---------- */
+function PopularCities() {
+  const locale = useLocale();
+  const cities = CITY_PAGES.slice(0, 16);
+  return (
+    <section className="border-t border-line-soft bg-bg-2/40">
+      <div className="mx-auto max-w-[1360px] px-5 py-14 lg:px-8 lg:py-20">
+        <h2 className="text-[clamp(22px,2.8vw,34px)]">{POP_CITIES_H[locale] ?? POP_CITIES_H.uk}</h2>
+        <p className="mt-3 text-[14.5px] text-ink-2">{POP_CITIES_SUB[locale] ?? POP_CITIES_SUB.uk}</p>
+        <ul className="mt-6 flex flex-wrap gap-2.5">
+          {cities.map((c) => (
+            <li key={c.slug}>
+              <Link
+                href={`/maps/${c.slug}`}
+                className="inline-flex min-h-[44px] items-center rounded-full border border-line-soft bg-paper/70 px-4 py-2 text-[14px] font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+              >
+                {(c.names as Record<string, string>)[locale] ?? c.names.uk}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link
+              href="/maps"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest/10 px-4 py-2 text-[14px] font-bold text-forest transition hover:bg-forest/15"
+              style={{ color: "var(--forest, #2E4A3A)" }}
+            >
+              {ALL_CITIES_L[locale] ?? ALL_CITIES_L.uk} <ArrowRight size={14} />
+            </Link>
+          </li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="min-h-[100dvh]">
@@ -124,6 +179,7 @@ export default function HomePage() {
       <Testimonials />
       <Faq />
       <SeoTextBlock />
+      <PopularCities />
       <FinalCTA />
       <SiteFooter />
     </div>
