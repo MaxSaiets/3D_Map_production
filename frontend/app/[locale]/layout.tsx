@@ -190,6 +190,11 @@ export default async function LocaleLayout({
   return (
     <html lang={localeMeta[locale as AppLocale].htmlLang} className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <head>
+        {/* Раннє резолвлення DNS для зовнішніх origin-ів карти (OSM-тайли +
+            cdnjs leaflet-маркери) — прискорює перший рендер карти на /create та
+            /keychains. Дешеві hint-и, без відкриття зайвих зʼєднань. */}
+        <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body className="antialiased">
