@@ -450,7 +450,7 @@
     "frameToggle": "Kompas i podziałka",
     "frameHint": "Dodaje kompas (N), podziałkę skali (0…N m) i współrzędne środka jako osobny czarny element na płaskiej mapie — premium wygląd kartograficzny. Działa z „Płaska kolorowa (AMS)”, łącznikiem lub magnesem.",
     "reliefToggle": "Rzeźba terenu (wysokości)",
-    "reliefHint": "Dodaje rzeczywiste wysokości terenu (wzgórza, zbocza) — mapa reliefu 3D. Wyłącza tryby płaskie (kolorowa płytka / magnes / łącznik / ramka), które są płaskie z założenia. Niewielka dopłata.",
+    "reliefHint": "Dodaje rzeczywiste wysokości terenu — wzgórza i zbocza. Niewielka dopłata.",
     "flatBuildingsToggle": "Płaskie budynki",
     "highlightToggle": "Zaznacz mój dom (czerwony element)",
     "highlightHint": "Wydrukuj swój budynek (np. dom) jako osobny CZERWONY element wpinany w gniazdo — jednym filamentem, podstawę mapy innym. Oszczędza filament i czas wobec pełnego wielokoloru. Tryb płaski.",

@@ -450,7 +450,7 @@
     "frameToggle": "Boussole et échelle",
     "frameHint": "Ajoute une boussole (N), une échelle (0…N m) et les coordonnées du centre comme pièce noire séparée sur la carte plate — rendu cartographique premium. Compatible avec « Plat couleur (AMS) », connecteur ou aimant.",
     "reliefToggle": "Relief du terrain (altitudes)",
-    "reliefHint": "Ajoute les altitudes réelles du terrain (collines, pentes) — une carte en relief 3D. Désactive les modes plats (plaque couleur / aimant / connecteur / cadre), plats par conception. Léger supplément.",
+    "reliefHint": "Ajoute les altitudes réelles du terrain — collines et pentes. Léger supplément.",
     "flatBuildingsToggle": "Bâtiments plats",
     "highlightToggle": "Marquer ma maison (pièce rouge)",
     "highlightHint": "Imprime ton bâtiment (p. ex. ta maison) comme pièce ROUGE séparée qui s'emboîte dans un logement — dans un filament, la base de la carte dans un autre. Économise filament et temps vs multicolore complet. Mode plat.",

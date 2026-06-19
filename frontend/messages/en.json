@@ -450,7 +450,7 @@
     "frameToggle": "Compass & scale bar",
     "frameHint": "Adds a compass (N), a scale bar (0…N m) and the centre coordinates as a separate black part on top of the flat map — a premium cartographic look. Works with Flat color (AMS), joining tabs or magnet.",
     "reliefToggle": "Terrain relief (heights)",
-    "reliefHint": "Adds real ground elevation (hills, slopes) — a 3D terrain map. Switches off the flat modes (colour tile / magnet / joining tabs / frame), which are flat by design. Small surcharge.",
+    "reliefHint": "Adds real ground elevation — hills and slopes. Small surcharge.",
     "flatBuildingsToggle": "Flat buildings",
     "highlightToggle": "Mark my home (red insert)",
     "highlightHint": "Print your building (e.g. your home) as a separate RED insert that clicks into a pocket — it in one filament, the map base in another. Saves filament and time vs full multi-colour. Flat mode.",

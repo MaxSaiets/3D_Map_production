@@ -35,8 +35,8 @@ export default function ShowcasePage() {
 
   type Item = { src: string; kind: "key" | "map" };
   const ITEMS: Item[] = [
-    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.png`, kind: "key" as const })),
-    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.png`, kind: "map" as const })),
+    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const })),
+    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const })),
   ];
   const items = ITEMS.filter((it) => filter === "all" || it.kind === filter);
   const viewModels = VIEW_MODELS.filter((m) => filter === "all" || m.kind === filter);

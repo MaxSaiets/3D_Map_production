@@ -15,12 +15,12 @@ const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), {
 });
 
 const MODELS_BASE = [
-  { id: "keychain-fea", labelKey: "mKey", url: "/models/keychain-fea.glb", kind: "key" as const, poster: "/showcase/keychain-1.png" },
-  { id: "keychain-home", labelKey: "mHome", url: "/models/keychain-home.glb", kind: "key" as const, poster: "/showcase/keychain-2.png" },
-  { id: "keychain-water", labelKey: "mWater", url: "/models/keychain-water.glb", kind: "key" as const, poster: "/showcase/keychain-3.png" },
-  { id: "keychain-bridge", labelKey: "mBridge", url: "/models/keychain-bridge.glb", kind: "key" as const, poster: "/showcase/keychain-4.png" },
-  { id: "map-dense", labelKey: "mBlock", url: "/models/map-dense.glb", kind: "map" as const, poster: "/showcase/map-1.png" },
-  { id: "map-district", labelKey: "mDistrict", url: "/models/map-district.glb", kind: "map" as const, poster: "/showcase/map-2.png" },
+  { id: "keychain-fea", labelKey: "mKey", url: "/models/keychain-fea.glb", kind: "key" as const, poster: "/showcase/keychain-1.webp" },
+  { id: "keychain-home", labelKey: "mHome", url: "/models/keychain-home.glb", kind: "key" as const, poster: "/showcase/keychain-2.webp" },
+  { id: "keychain-water", labelKey: "mWater", url: "/models/keychain-water.glb", kind: "key" as const, poster: "/showcase/keychain-3.webp" },
+  { id: "keychain-bridge", labelKey: "mBridge", url: "/models/keychain-bridge.glb", kind: "key" as const, poster: "/showcase/keychain-4.webp" },
+  { id: "map-dense", labelKey: "mBlock", url: "/models/map-dense.glb", kind: "map" as const, poster: "/showcase/map-1.webp" },
+  { id: "map-district", labelKey: "mDistrict", url: "/models/map-district.glb", kind: "map" as const, poster: "/showcase/map-2.webp" },
 ];
 
 const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
@@ -28,8 +28,8 @@ const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 // Перф: показуємо обмежений набір плиток (кожна ще й дублюється для marquee),
 // решта галереї доступна на /showcase. ~10 плиток × 2 = 20 <img> замість 38.
-const KEYCHAINS = Array.from({ length: 5 }, (_, i) => `/showcase/keychain-${i + 1}.png`);
-const MAPS = Array.from({ length: 5 }, (_, i) => `/showcase/map-${i + 1}.png`);
+const KEYCHAINS = Array.from({ length: 5 }, (_, i) => `/showcase/keychain-${i + 1}.webp`);
+const MAPS = Array.from({ length: 5 }, (_, i) => `/showcase/map-${i + 1}.webp`);
 
 type Tile = { src: string; kind: "key" | "map"; idx: number };
 const TILES: Tile[] = [

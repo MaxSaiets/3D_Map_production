@@ -450,7 +450,7 @@
     "frameToggle": "Brújula y escala",
     "frameHint": "Añade una brújula (N), una barra de escala (0…N m) y las coordenadas del centro como pieza negra aparte sobre el mapa plano — aspecto cartográfico premium. Funciona con «Plano a color (AMS)», conector o imán.",
     "reliefToggle": "Relieve del terreno (alturas)",
-    "reliefHint": "Añade alturas reales del terreno (colinas, pendientes) — un mapa de relieve 3D. Desactiva los modos planos (placa de color / imán / conector / marco), que son planos por diseño. Pequeño recargo.",
+    "reliefHint": "Añade alturas reales del terreno — colinas y pendientes. Pequeño recargo.",
     "flatBuildingsToggle": "Edificios planos",
     "highlightToggle": "Marcar mi casa (pieza roja)",
     "highlightHint": "Imprime tu edificio (p. ej. tu casa) como pieza ROJA aparte que encaja en un hueco — en un filamento, la base del mapa en otro. Ahorra filamento y tiempo frente al multicolor completo. Modo plano.",

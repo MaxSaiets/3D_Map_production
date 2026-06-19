@@ -775,26 +775,22 @@ export function SimpleControlPanel({
           </p>
         </div>
 
-        {/* РЕЛЬЄФ (висоти землі) — окремий перемикач, ЗАВЖДИ видимий (не ховається
-            під «Більше опцій» і не зникає при зміні формату). Рельєф = повний 3D-
-            пайплайн; вмикання повертає базу до «Об'ємна 3D» (setFormat гасить
-            плоскі режими). Лишаємо завжди в DOM, щоб з плоского формату можна було
-            одним кліком повернутись у 3D. */}
+        {/* РЕЛЬЄФ (висоти землі) — ПІД-ОПЦІЯ формату «Об'ємна 3D», а не окремий
+            конкуруючий перемикач. Показуємо ЛИШЕ коли вибрано 3D (для плоских
+            режимів/магніту рельєф фізично не існує). Вкладений вигляд (ліва
+            акцент-смужка) читається як «ця 3D-карта → з висотами місцевості?».
+            Щоб з плоского формату повернутись у 3D — клік на чип «Об'ємна 3D».
+            Показуємо для 3D і панно (панно = 3D-плитки, теж тримає simpleRelief). */}
+        {(format === "relief3d" || format === "panno") && (
         <button
           type="button"
           aria-pressed={reliefMode}
           data-testid="relief-toggle"
-          onClick={() => {
-            const next = !reliefMode;
-            // Увімкнення рельєфу = повернення до 3D-формату (setFormat('relief3d')
-            // лишає поточний simpleRelief через st-passthrough), далі форсуємо true.
-            if (next) { setFormat("relief3d"); setReliefMode(true); }
-            else setReliefMode(false);
-          }}
-          className={`w-full rounded-[18px] border px-4 py-3 text-left transition ${
+          onClick={() => setReliefMode(!reliefMode)}
+          className={`-mt-1 ml-1 block w-[calc(100%-0.25rem)] rounded-[16px] border-l-2 border-r border-y px-4 py-3 text-left transition ${
             reliefMode
-              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
-              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+              ? "border-l-[var(--accent-strong)] border-y-[rgba(11,92,87,0.4)] border-r-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+              : "border-l-[rgba(11,92,87,0.3)] border-y-[var(--surface-border)] border-r-[var(--surface-border)] bg-white/80 hover:border-l-[var(--accent-strong)]"
           }`}
         >
           <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
@@ -803,6 +799,7 @@ export function SimpleControlPanel({
           </span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("reliefHint")}</span>
         </button>
+        )}
 
         {/* Більше опцій — магніт/GPX/панно сховані за замовчанням, щоб Просто-режим
             лишався коротким. Розкривається кліком або авто (якщо щось уже активне). */}

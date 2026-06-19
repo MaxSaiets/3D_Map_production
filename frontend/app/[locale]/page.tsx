@@ -417,7 +417,7 @@ function TemplatesGallery() {
             <div className="relative aspect-[16/10] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/showcase/map-${(i % 11) + 1}.png`}
+                src={`/showcase/map-${(i % 11) + 1}.webp`}
                 alt={tAlt("districtMap", { district: tg(`district.${t.id}`), city: tCity(t.cityKey) })}
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
@@ -490,14 +490,14 @@ function Craft() {
         <div className="grid grid-cols-2 gap-4">
           {/* eslint-disable @next/next/no-img-element */}
           <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft">
-            <img src="/showcase/keychain-1.png" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
+            <img src="/showcase/keychain-1.webp" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-4">
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/map-2.png" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
+              <img src="/showcase/map-2.webp" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
             </div>
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/keychain-5.png" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
+              <img src="/showcase/keychain-5.webp" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
             </div>
           </div>
           {/* eslint-enable @next/next/no-img-element */}
@@ -569,7 +569,7 @@ function FinalCTA() {
         </div>
         <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)] bg-[rgba(244,239,228,0.06)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/showcase/map-1.png" alt={tAlt("cityMap")} loading="lazy" className="h-full w-full object-cover" />
+          <img src="/showcase/map-1.webp" alt={tAlt("cityMap")} loading="lazy" className="h-full w-full object-cover" />
         </div>
       </div>
     </section>

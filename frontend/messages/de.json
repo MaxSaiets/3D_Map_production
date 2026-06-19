@@ -450,7 +450,7 @@
     "frameToggle": "Kompass & Maßstab",
     "frameHint": "Fügt einen Kompass (N), einen Maßstabsbalken (0…N m) und die Mittelpunktkoordinaten als separates schwarzes Teil über der flachen Karte hinzu — Premium-Kartenlook. Funktioniert mit „Flach farbig (AMS)“, Verbinder oder Magnet.",
     "reliefToggle": "Geländerelief (Höhen)",
-    "reliefHint": "Fügt echte Geländehöhen (Hügel, Hänge) hinzu — eine 3D-Reliefkarte. Schaltet die flachen Modi (Farbkachel / Magnet / Verbinder / Rahmen) aus, die bauartbedingt flach sind. Kleiner Aufpreis.",
+    "reliefHint": "Fügt echte Geländehöhen hinzu — Hügel und Hänge. Kleiner Aufpreis.",
     "flatBuildingsToggle": "Flache Gebäude",
     "highlightToggle": "Mein Zuhause markieren (rotes Teil)",
     "highlightHint": "Drucke dein Gebäude (z. B. dein Zuhause) als separates ROTES Einsteckteil, das in eine Tasche einrastet — in einem Filament, die Kartenbasis in einem anderen. Spart Filament und Zeit ggü. vollem Mehrfarbdruck. Flacher Modus.",

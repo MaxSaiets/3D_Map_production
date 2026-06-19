@@ -159,23 +159,24 @@ test.describe("Конструктор мап /create", () => {
     await expect(frame).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("рельєф: окремий перемикач вмикається й взаємовиключний з плоскими режимами", async ({ page }) => {
+  test("рельєф: під-опція формату «Об'ємна 3D», ховається у плоских режимах", async ({ page }) => {
+    // Рельєф тепер ВКЛАДЕНА під-опція 3D-формату (не окремий конкуруючий тумблер).
+    // Дефолт = «Об'ємна 3D» → під-опція показана.
     const relief = page.locator('[data-testid="relief-toggle"]').first();
-    await expect(relief).toBeVisible();  // завжди видимий, не під «Більше опцій»
+    await expect(relief).toBeVisible();
     await expect(relief).toHaveAttribute("aria-pressed", "false");
     await relief.click();
     await expect(relief).toHaveAttribute("aria-pressed", "true");
-    // Увімкнення плоского режиму гасить рельєф (рельєф = 3D, flat-AMS = плоско)
+    // Перемикання у плоский формат → рельєф ЗНИКАЄ з DOM (під-опція лише 3D/панно)
+    await page.locator('[data-testid="format-flat"]').first().click();
+    await expect(page.locator('[data-testid="relief-toggle"]')).toHaveCount(0);
+    // Пласкі будинки — суб-перемикач плоского режиму (під «Більше опцій»)
     await page.locator('[data-testid="more-options"]').first().click();
-    const flatAms = page.locator('[data-testid="flat-ams-toggle"]').first();
-    await flatAms.click();
-    await expect(flatAms).toHaveAttribute("aria-pressed", "true");
-    await expect(relief).toHaveAttribute("aria-pressed", "false");
-    // Пласкі будинки — суб-перемикач з'являється у плоскому режимі
     await expect(page.locator('[data-testid="flat-buildings-toggle"]').first()).toBeVisible();
-    // …і зникає коли рельєф знову вмикається (плоский режим вимкнено)
-    await relief.click();
-    await expect(flatAms).toHaveAttribute("aria-pressed", "false");
+    // Повернення у 3D через чип формату → рельєф знову доступний і скинутий у false
+    await page.locator('[data-testid="format-relief3d"]').first().click();
+    await expect(relief).toBeVisible();
+    await expect(relief).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator('[data-testid="flat-buildings-toggle"]')).toHaveCount(0);
   });
 
