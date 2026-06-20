@@ -105,6 +105,11 @@ export function SimpleControlPanel({
   // бути коротким: Місто → Район → Стиль → Розмір → Створити. Авто-розкривається,
   // якщо одна з опцій уже активна (відновлена зі store), щоб вибір не «зник».
   const advancedActive = magnetMode || !!gpxTrack || panelMode > 0 || flatAmsMode || connectorMode || frameMode || highlightMode;
+  // Прев'ю (швидкий GLB) ≠ друк (повний 3MF) ЛИШЕ для стандартної карти зі
+  // швидким прев'ю: магніт/панно/flat-плитка вже й так генерують повний 3MF, тож
+  // окрема кнопка «Згенерувати 3MF для друку» потрібна тільки у цьому випадку.
+  const flatPlateUi = flatAmsMode || frameMode || (connectorMode && !reliefMode) || (highlightMode && !reliefMode);
+  const usesGlbPreview = panelMode === 0 && !magnetMode && !flatPlateUi && !!s.previewMode;
   const [moreOpen, setMoreOpen] = useState(advancedActive);
   useEffect(() => { if (advancedActive) setMoreOpen(true); }, [advancedActive]);
   // Рідковживані додатки (з'єднувач/рамка/виділити дім) сховані під розкривачем,
@@ -535,6 +540,10 @@ export function SimpleControlPanel({
         const N = selectedArea.getNorth(), S = selectedArea.getSouth();
         const E = selectedArea.getEast(), W = selectedArea.getWest();
         const G = panelMode;
+        // З'ЄДНУВАЧІ серії: замки ЛИШЕ на внутрішніх (спільних із сусідом) гранях
+        // кожної плитки → надруковані шматки стикуються «пазл-замком», а зовнішній
+        // периметр лишається чистим. row 0 = ПІВНІЧ, col 0 = захід.
+        const wantConn = s.simpleSeriesConnectors;
         const zones: any[] = [];
         for (let r = 0; r < G; r++) {
           for (let c = 0; c < G; c++) {
@@ -542,13 +551,24 @@ export function SimpleControlPanel({
             const zs = N - ((r + 1) * (N - S)) / G;
             const zw = W + (c * (E - W)) / G;
             const ze = W + ((c + 1) * (E - W)) / G;
+            let edges = "";
+            if (r > 0) edges += "N";
+            if (r < G - 1) edges += "S";
+            if (c > 0) edges += "W";
+            if (c < G - 1) edges += "E";
+            // Ключ випускаємо лише на S/E внутрішніх гранях → на спільний шов
+            // припадає РІВНО ОДИН ключ (а не по одному з кожної плитки). Паз —
+            // на всіх внутрішніх гранях (обом плиткам потрібен half-slot).
+            const keyEdges = edges.replace(/[NW]/g, "");
             zones.push({
               id: `tile_${r}_${c}`,
               geometry: { type: "Polygon", coordinates: [[[zw, zs], [ze, zs], [ze, zn], [zw, zn], [zw, zs]]] },
-              properties: { row: r, col: c },
+              properties: { row: r, col: c, ...(wantConn && edges ? { connector_edges: edges, connector_key_edges: keyEdges } : {}) },
             });
           }
         }
+        // Прапор для бекенда: вмикає з'єднувачі на плитках серії (грані — per-zone).
+        if (wantConn) (req as any).map_connector = true;
         const batch = await api.generateZones(zones, req as any);
         const ids = batch.all_task_ids?.length ? batch.all_task_ids : [batch.task_id];
         setTaskGroup(batch.task_id, ids);
@@ -740,9 +760,10 @@ export function SimpleControlPanel({
               ["relief3d", t("fmtStandard")],
               ["flat", t("fmtFlat")],
               ["magnet", t("fmtMagnet")],
-              ["panno", t("fmtPanel")],
             ] as Array<[GenerationFormat, string]>).map(([id, label]) => {
-              const active = format === id;
+              // «Кілька частин» (панно) = під-режим «Об'ємна 3D», тож тримаємо 3D
+              // підсвіченим, коли активне панно (формат-кнопки «Панно» більше нема).
+              const active = format === id || (id === "relief3d" && format === "panno");
               return (
                 <button
                   key={id}
@@ -801,7 +822,58 @@ export function SimpleControlPanel({
         </button>
         )}
 
-        {/* Більше опцій — магніт/GPX/панно сховані за замовчанням, щоб Просто-режим
+        {/* КІЛЬКА ЧАСТИН (панно) — ЄДИНИЙ зрозумілий контрол «велика мапа з N×N
+            шматків». Замінює формат-кнопку «Панно», дубль-чипи у «Більше опцій» і
+            (для звичайного юзера) експертну «Серію зон» (та лишилась у «Профі»).
+            Під-опція «Об'ємна 3D». З'єднувачі ON за замовчанням → шматки стикуються. */}
+        {(format === "relief3d" || format === "panno") && (
+          <div className="-mt-1 ml-1 w-[calc(100%-0.25rem)] rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
+            <div className="text-sm font-semibold text-[var(--text-primary)]">🧩 {t("piecesTitle")}</div>
+            <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("piecesTitle")} data-testid="pieces-seg">
+              {([[0, t("pieces1")], [2, "2×2"], [3, "3×3"]] as Array<[0 | 2 | 3, string]>).map(([mode, label]) => (
+                <button
+                  key={`pieces-${mode}`}
+                  type="button"
+                  role="radio"
+                  aria-checked={panelMode === mode}
+                  data-testid={`pieces-${mode}`}
+                  onClick={() => { if (mode === 0) setFormat("relief3d"); else { setFormat("panno"); setPanelMode(mode); } }}
+                  className={`min-h-[40px] rounded-[14px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
+                    panelMode === mode
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
+                      : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
+              {panelMode > 0 ? t("piecesHintOn", { tiles: panelMode * panelMode }) : t("piecesHint")}
+            </p>
+            {panelMode > 0 && (
+              <>
+                <button
+                  type="button"
+                  aria-pressed={s.simpleSeriesConnectors}
+                  data-testid="series-connectors-toggle"
+                  onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
+                  className={`mt-2 flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${
+                    s.simpleSeriesConnectors
+                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
+                      : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
+                  {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
+                </button>
+                <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("seriesConnectorsHint")}</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Більше опцій — магніт/GPX сховані за замовчанням, щоб Просто-режим
             лишався коротким. Розкривається кліком або авто (якщо щось уже активне). */}
         <div>
           <button
@@ -1090,39 +1162,8 @@ export function SimpleControlPanel({
           )}
         </div>
 
-        {/* D3 ПАННО: серія зшитих плиток 2×2/3×3 + zip зі схемою розкладки */}
-        <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
-          <div className="flex items-center justify-between gap-2 text-sm font-semibold text-[var(--text-primary)]">
-            <span>🖼 {t("panelToggle")}</span>
-            <div className="flex gap-1.5" data-testid="panel-chips" role="radiogroup" aria-label={t("panelToggle")}>
-              {([[0, t("panelOff")], [2, "2×2"], [3, "3×3"]] as Array<[0 | 2 | 3, string]>).map(([mode, label]) => (
-                <button
-                  key={`panel-${mode}`}
-                  type="button"
-                  role="radio"
-                  aria-checked={panelMode === mode}
-                  onClick={() => {
-                    // Off (0) → стандартна об'ємна 3D; 2×2/3×3 → панно. setFormat
-                    // гасить flat-AMS/конектор/рамку/виділення/магніт/GPX (несумісні
-                    // з панно) одним set(); далі ставимо конкретну сітку плиток.
-                    if (mode === 0) { setFormat("relief3d"); }
-                    else { setFormat("panno"); setPanelMode(mode); }
-                  }}
-                  className={`min-h-[36px] rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition ${
-                    panelMode === mode
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
-                      : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
-            {panelMode > 0 ? t("panelHintOn", { tiles: panelMode * panelMode }) : t("panelHint")}
-          </p>
-        </div>
+        {/* Панно перенесено у видимий контрол «Кілька частин» вище (під «Об'ємна
+            3D»), щоб не дублювати multi-tile у двох місцях. */}
         </>
         )}
 
@@ -1143,7 +1184,7 @@ export function SimpleControlPanel({
             ) : panelMode > 0 ? (
               <><Play className="h-4 w-4" /> {t("generateTiles", { tiles: panelMode * panelMode })}</>
             ) : (
-              <><Play className="h-4 w-4" /> {t("generate")}</>
+              <><Play className="h-4 w-4" /> {usesGlbPreview ? t("generatePreview") : t("generate")}</>
             )}
           </button>
           {/* UX: чесне очікування — час генерації відомий заздалегідь */}
@@ -1155,6 +1196,25 @@ export function SimpleControlPanel({
                   ? t("etaFlat")
                   : t("etaSingle")}
             </p>
+          )}
+          {/* ОКРЕМА генерація ДРУКАРСЬКОГО 3MF (повна якість) — лише коли на екрані
+              швидке GLB-прев'ю. Прев'ю вище = для всіх; ця кнопка віддає РЕАЛЬНИЙ
+              3MF на екран. Генерація відкрита всім — ліміт лише на ЗАВАНТАЖЕННЯ. */}
+          {usesGlbPreview && (
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={() => handleGenerate({ forPrint: true })}
+                disabled={!selectedArea || isGenerating}
+                data-testid="generate-print"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--accent-strong)] bg-white px-5 py-3 text-sm font-bold text-[var(--accent-strong)] transition hover:bg-[rgba(11,92,87,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" /> {t("generatePrint")}
+              </button>
+              {!isGenerating && (
+                <p className="text-center text-[11px] text-[var(--text-secondary)]">{t("etaPrint")}</p>
+              )}
+            </div>
           )}
           {isGenerating && (
             <button
@@ -1215,7 +1275,13 @@ export function SimpleControlPanel({
               {dlBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{" "}
               {printPrep !== null
                 ? `${t("generating")} 3MF ${printPrep}%`
-                : downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}
+                : `${downloadUrl?.includes("/download_all") ? t("panelZip") : t("downloadFile")}${
+                    quota == null
+                      ? ""
+                      : quota.isAdmin
+                        ? ` · ${t("dlUnlimited")}`
+                        : ` · ${t("dlCount", { n: Math.max(0, quota.remaining) })}`
+                  }`}
             </button>
           )}
 
@@ -1231,11 +1297,11 @@ export function SimpleControlPanel({
             </button>
           )}
 
-          {downloadUrl && quota && !quota.isAdmin && (
-            <div className={`-mt-1 text-center text-[12px] font-medium ${quota.remaining > 0 ? "text-[var(--text-secondary)]" : "text-amber-700"}`}>
-              {quota.remaining > 0
-                ? t("quotaLeft", { n: quota.remaining, limit: quota.limit })
-                : t("quotaExhausted")}
+          {/* Лічильник тепер НА кнопці завантаження (· залишилось N). Окремий рядок
+              лишаємо ЛИШЕ як попередження, коли безкоштовні завантаження вичерпано. */}
+          {downloadUrl && quota && !quota.isAdmin && quota.remaining <= 0 && (
+            <div className="-mt-1 text-center text-[12px] font-medium text-amber-700">
+              {t("quotaExhausted")}
             </div>
           )}
 

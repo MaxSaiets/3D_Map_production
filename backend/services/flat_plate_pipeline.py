@@ -818,6 +818,7 @@ def build_map_connector_geometry(
     waist_frac: float,
     clearance_mm: float,
     export_scale_factor: float,
+    key_edges: Optional[str] = None,
 ) -> tuple[Optional[BaseGeometry], Optional[BaseGeometry]]:
     """З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie) на серединах граней плоскої карти-плитки.
 
@@ -858,22 +859,35 @@ def build_map_connector_geometry(
     notches: list[BaseGeometry] = []
     keys: list[BaseGeometry] = []
     edges_set = set((edges or "NSEW").upper())
+    # «КОЖНА грань»: повний набір NSEW (дефолт фронта), порожньо або 'A'/'ALL' →
+    # з'єднувач на КОЖНІЙ реальній грані полігону. Раніше код мапив лише 4
+    # кардинальні напрямки на найкращу грань → шестикутник діставав 4 замки з 6,
+    # намальований/коловий контур — теж недокомплект («замки не на кожній грані»).
+    # Строга ПІДмножина (напр. лише 'NS') лишає стару поведінку «обрані боки».
+    want_all = (not edges_set) or ("A" in edges_set) or ({"N", "S", "E", "W"} <= edges_set)
+    # key_edges: грані, для яких ВИПУСКАЄМО ключ-метелик. None → ключ для КОЖНОГО пазу
+    # (single-tile: усі замки цієї плитки потребують ключа). Для СЕРІЇ передаємо лише
+    # S/E внутрішні грані → на спільний шов двох плиток припадає РІВНО ОДИН ключ
+    # (інакше кожна плитка друкувала б свій → 2 ключі/шов). Паз ріжемо на ВСІХ гранях.
+    key_edges_set = set(key_edges.upper()) if key_edges is not None else None
     margin = _model_mm_to_world_m(6.0, export_scale_factor)
     key_pitch = 2.0 * w + margin
     key_slot = 0
 
-    # ── Замок ставимо на РЕАЛЬНУ грань полігону, а НЕ на середину bbox ──────────
-    # Старий код брав середину сторони bounding-box (cx,maxy / minx,cy …) — для осе-
-    # орієнтованого ПРЯМОКУТНИКА це збігається з гранню, тож golden/тести НЕ
-    # змінюються. Але для повернутої рамки чи НЕпрямокутної зони (шестикутник,
-    # намальований полігон) точка bbox лежить за контуром → паз клипався у скалку
-    # «не там». Тепер для кожного напрямку N/S/E/W шукаємо грань, чия ЗОВНІШНЯ
-    # нормаль найкраще дивиться туди, і ставимо метелик на її середину вздовж
-    # справжньої нормалі. Для прямокутника результат байт-в-байт той самий.
+    # ── Замок ставимо на РЕАЛЬНУ грань полігону (середина грані + справжня нормаль).
     import math
     _poly = base_polygon
     if getattr(_poly, "geom_type", "") == "MultiPolygon":
         _poly = max(_poly.geoms, key=lambda g: g.area)
+    # Зливаємо майже-колінеарні дрібні сегменти (полігонізоване коло / спрощений
+    # малюнок), щоб КОЖНА реальна сторона давала ОДИН з'єднувач, а не десятки
+    # крихітних. Прямокутник/шестикутник зберігають усі справжні кути.
+    try:
+        _simp = _poly.simplify(max(min_h, w) * 0.75, preserve_topology=True)
+        if _simp is not None and not _simp.is_empty and getattr(_simp, "geom_type", "") == "Polygon":
+            _poly = _simp
+    except Exception:
+        pass
     ring = list(getattr(getattr(_poly, "exterior", None), "coords", []))
     if len(ring) < 4:
         return None, None
@@ -892,24 +906,37 @@ def build_map_connector_geometry(
         inward = (-dy / L, dx / L)   # CCW: нутро = ліва нормаль грані
         outward = (dy / L, -dx / L)
         segs.append((((x0 + x1) / 2.0, (y0 + y1) / 2.0), inward, outward, L))
+    if not segs:
+        return None, None
 
-    _CARD = {"N": (0.0, 1.0), "S": (0.0, -1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}
-    for e in ("N", "S", "E", "W"):
-        if e not in edges_set:
-            continue
-        cardx, cardy = _CARD[e]
-        # Грань, чия зовнішня нормаль найбільше збігається з напрямком e (і реально
-        # туди дивиться, dot>0.15 — щоб не чіпляти майже-перпендикулярну грань).
-        best = None
-        best_score = 0.15
-        for mid, inward, outward, L in segs:
-            score = outward[0] * cardx + outward[1] * cardy
-            if score > best_score:
-                best_score, best = score, (mid, inward, L)
-        if best is None:
-            continue
-        (mx, my), inward, L = best
-        h = min(h0, L * 0.40)  # замок ≤40% РЕАЛЬНОЇ грані (а не сторони bbox)
+    # Які грані дістануть з'єднувач.
+    if want_all:
+        chosen = list(segs)  # КОЖНА грань
+    else:
+        # Легасі: для кожного обраного кардинального боку — грань, чия зовнішня
+        # нормаль найкраще туди дивиться (dot>0.15), без дублів.
+        _CARD = {"N": (0.0, 1.0), "S": (0.0, -1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}
+        chosen = []
+        for e in ("N", "S", "E", "W"):
+            if e not in edges_set:
+                continue
+            cardx, cardy = _CARD[e]
+            best, best_score = None, 0.15
+            for seg in segs:
+                _, _, outward, _ = seg
+                score = outward[0] * cardx + outward[1] * cardy
+                if score > best_score:
+                    best_score, best = score, seg
+            if best is not None and best not in chosen:
+                chosen.append(best)
+
+    # Запобіжник від захаращення (дуже багатогранний контур) — найдовші грані.
+    MAX_CONN = 16
+    if len(chosen) > MAX_CONN:
+        chosen = sorted(chosen, key=lambda s: s[3], reverse=True)[:MAX_CONN]
+
+    for (mx, my), inward, _outward, L in chosen:
+        h = min(h0, L * 0.40)  # замок ≤40% РЕАЛЬНОЇ грані
         if h < min_h:
             continue
         # _half: шов на x=0, нутро плитки на +x. Повертаємо так, щоб +x збіглося з
@@ -923,11 +950,20 @@ def build_map_connector_geometry(
         if clipped is None or getattr(clipped, "is_empty", True):
             continue
         notches.append(clipped)
-        # Ключ-метелик у вільному рядку ПІД картою (поза footprint основи).
-        kx = minx + key_slot * key_pitch + w
-        ky = miny - margin - h0
-        keys.append(affinity.translate(_key(h), xoff=kx, yoff=ky))
-        key_slot += 1
+        # Ключ ЛИШЕ якщо ця грань у key_edges (None = усі). Кардинал грані — за
+        # домінантою зовнішньої нормалі (для прямокутника точний ±x/±y).
+        if key_edges_set is not None:
+            _cx, _cy = _outward
+            _card = max((("N", _cy), ("S", -_cy), ("E", _cx), ("W", -_cx)),
+                        key=lambda t: t[1])[0]
+        else:
+            _card = None
+        if key_edges_set is None or _card in key_edges_set:
+            # Ключ-метелик у вільному рядку ПІД картою (поза footprint основи).
+            kx = minx + key_slot * key_pitch + w
+            ky = miny - margin - h0
+            keys.append(affinity.translate(_key(h), xoff=kx, yoff=ky))
+            key_slot += 1
 
     if not notches:
         return None, None
@@ -3189,6 +3225,7 @@ def run_flat_plate_pipeline(
                 waist_frac=0.5,
                 clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
                 export_scale_factor=export_scale_factor,
+                key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
             )
             if _notches is not None and _conn_depth_m > 1e-9:
                 _flat_base_bottom_poly, _flat_base_bottom_depth_m = _notches, _conn_depth_m

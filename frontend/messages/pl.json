@@ -506,7 +506,18 @@
     "addonsHeader": "Dodatki",
     "addonsTitle": "Dodatki (łącznik, ramka, dom)",
     "reliefDisabledOthers": "Relief = mapa 3D, tryby płaskie wyłączono",
-    "magnetOffForPanel": "Magnes i GPX wyłączone — panel generuje pełne kafelki"
+    "magnetOffForPanel": "Magnes i GPX wyłączone — panel generuje pełne kafelki",
+    "generatePreview": "Wygeneruj podgląd",
+    "generatePrint": "Wygeneruj 3MF do druku",
+    "etaPrint": "≈ 1–3 min · pełny 3MF do druku",
+    "dlCount": "pozostało {n}",
+    "dlUnlimited": "bez limitu",
+    "piecesTitle": "Kilka części",
+    "pieces1": "1 (cała)",
+    "piecesHint": "Jeden model jako jedna część",
+    "piecesHintOn": "{tiles} kafelków — duża mapa z części",
+    "seriesConnectors": "Łączniki (zamki)",
+    "seriesConnectorsHint": "Sąsiednie części łączą się jak puzzle po wydruku"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
@@ -1198,7 +1209,10 @@
     "qaSlicerNotFound": "slicer jest niedostępny na serwerze — kontrolę pominięto",
     "qaLayerNotWatertight": "{layer}: warstwa nie jest w pełni szczelna",
     "modeGroupLabel": "Tryb zaznaczania obszaru",
-    "renderModeGroupLabel": "Tryb generowania: szybki podgląd lub pełny model"
+    "renderModeGroupLabel": "Tryb generowania: szybki podgląd lub pełny model",
+    "dlCount": "pozostało {n}",
+    "dlUnlimited": "bez limitu",
+    "dlExhausted": "Darmowe pobrania wykorzystane — złóż zamówienie druku"
   },
   "kcp": {
     "loadingMap": "Ładowanie mapy...",

@@ -154,9 +154,11 @@ test.describe("Конструктор мап /create", () => {
     await flatAms.click();
     await expect(flatAms).toHaveAttribute("aria-pressed", "true");
     await expect(frame).toHaveAttribute("aria-pressed", "true");
-    // Панно (3D-плитки) гасить рамку
-    await page.locator('[data-testid="panel-chips"]').first().getByRole("radio", { name: "2×2" }).click();
+    // «Кілька частин» (панно) доступне ЛИШЕ у 3D → перехід у «Об'ємна 3D» гасить рамку.
+    await page.locator('[data-testid="format-relief3d"]').first().click();
     await expect(frame).toHaveAttribute("aria-pressed", "false");
+    await page.locator('[data-testid="pieces-seg"]').first().getByRole("radio", { name: "2×2" }).click();
+    await expect(page.locator('[data-testid="pieces-2"]').first()).toHaveAttribute("aria-checked", "true");
   });
 
   test("рельєф: під-опція формату «Об'ємна 3D», ховається у плоских режимах", async ({ page }) => {
@@ -244,22 +246,24 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });
 
-  test("панно: чипи Вимк/2×2/3×3 + підказка з кількістю плиток", async ({ page }) => {
-    await page.locator('[data-testid="more-options"]').first().click();
-    const chips = page.locator('[data-testid="panel-chips"]').first();
-    await expect(chips).toBeVisible();
-    await expect(chips.getByRole("radio", { name: "2×2" })).toBeVisible();
-    await chips.getByRole("radio", { name: "3×3" }).click();
-    await expect(page.getByText(/9 плиток з ідеальними швами/).first()).toBeVisible();
-    await chips.getByRole("radio", { name: "2×2" }).click();
-    await expect(page.getByText(/4 плиток з ідеальними швами/).first()).toBeVisible();
+  test("кілька частин: чипи 1/2×2/3×3 + з'єднувачі ON за замовчуванням", async ({ page }) => {
+    // «Кілька частин» тепер ВИДИМИЙ контрол під форматом «Об'ємна 3D» (не у «Більше опцій»).
+    const seg = page.locator('[data-testid="pieces-seg"]').first();
+    await expect(seg).toBeVisible();
+    await expect(seg.getByRole("radio", { name: "2×2" })).toBeVisible();
+    await seg.getByRole("radio", { name: "3×3" }).click();
+    await expect(page.getByText(/9 плиток — велика мапа/).first()).toBeVisible();
+    // З'єднувачі серії з'являються при >1 частині й УВІМКНЕНІ за замовчуванням.
+    await expect(page.locator('[data-testid="series-connectors-toggle"]').first()).toHaveAttribute("aria-pressed", "true");
+    await seg.getByRole("radio", { name: "2×2" }).click();
+    await expect(page.getByText(/4 плиток — велика мапа/).first()).toBeVisible();
   });
 
-  test("формат: сегмент-контрол з 4 варіантів, вибір «Плоска» вмикає flat-AMS", async ({ page }) => {
+  test("формат: сегмент-контрол з 3 варіантів, вибір «Плоска» вмикає flat-AMS", async ({ page }) => {
     const seg = page.locator('[data-testid="format-seg"]').first();
     await expect(seg).toBeVisible();
-    // Рівно 4 взаємовиключні radio: 3D / Плоска / Магніт / Панно
-    await expect(seg.getByRole("radio")).toHaveCount(4);
+    // Рівно 3 взаємовиключні radio: 3D / Плоска / Магніт (панно винесено у «Кілька частин»)
+    await expect(seg.getByRole("radio")).toHaveCount(3);
     // Дефолт = «Об'ємна 3D» (усі спецрежими off)
     await expect(page.locator('[data-testid="format-relief3d"]').first()).toHaveAttribute("aria-checked", "true");
     // Вибір «Плоска кольорова» → flat-AMS-тумблер під «Більше опцій» стає ON

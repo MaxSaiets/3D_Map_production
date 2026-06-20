@@ -288,6 +288,21 @@ export function ControlPanel({
   const [internalSelectedZones, setInternalSelectedZones] = useState<any[]>([]);
   const [internalGridType, setInternalGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
   const [internalHexSizeM, setInternalHexSizeM] = useState(300.0);
+  // Лічильник залишку безкоштовних завантажень (на кнопці «Завантажити STL/3MF»).
+  const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
+  const refreshQuota = async () => {
+    try {
+      const token = await getIdToken().catch(() => null);
+      if (!token) { setQuota(null); return; }
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+      const r = await fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) { setQuota(null); return; }
+      const j = await r.json();
+      const q = j?.quota;
+      if (q) setQuota({ remaining: Number(q.remaining ?? 0), limit: Number(q.limit ?? 5), isAdmin: Boolean(q.is_admin) });
+    } catch { setQuota(null); }
+  };
+  useEffect(() => { refreshQuota(); /* on mount / after login */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const pollingInFlightRef = useRef(false);
   const [openPanels, setOpenPanels] = useState<Record<AdvancedPanel, boolean>>({
     roads: false,
@@ -488,6 +503,11 @@ export function ControlPanel({
       })),
     });
     if (res.status === "error") setError(t("errorDownload"));
+    if (res.quota && typeof res.quota.remaining === "number") {
+      setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
+    } else if (res.status === "ok") {
+      refreshQuota();
+    }
   };
 
   const kyivBounds = {
@@ -1007,8 +1027,17 @@ export function ControlPanel({
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-500"
             >
               <Download className="h-4 w-4" />
-              {t("downloadModel")}
+              {`${t("downloadModel")}${
+                quota == null
+                  ? ""
+                  : quota.isAdmin
+                    ? ` · ${t("dlUnlimited")}`
+                    : ` · ${t("dlCount", { n: Math.max(0, quota.remaining) })}`
+              }`}
             </button>
+          )}
+          {downloadUrl && quota && !quota.isAdmin && quota.remaining <= 0 && (
+            <p className="-mt-1 text-center text-[12px] font-medium text-amber-700">{t("dlExhausted")}</p>
           )}
 
           {error && (

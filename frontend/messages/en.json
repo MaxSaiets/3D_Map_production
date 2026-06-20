@@ -506,7 +506,18 @@
     "addonsHeader": "Add-ons",
     "addonsTitle": "Add-ons (joiner, frame, mark home)",
     "reliefDisabledOthers": "Relief = 3D map, so flat modes were turned off",
-    "magnetOffForPanel": "Magnet and GPX turned off — a panel generates full tiles"
+    "magnetOffForPanel": "Magnet and GPX turned off — a panel generates full tiles",
+    "generatePreview": "Generate preview",
+    "generatePrint": "Generate print 3MF",
+    "etaPrint": "≈ 1–3 min · full print 3MF",
+    "dlCount": "{n} left",
+    "dlUnlimited": "unlimited",
+    "piecesTitle": "Multiple pieces",
+    "pieces1": "1 (whole)",
+    "piecesHint": "One model as a single part",
+    "piecesHintOn": "{tiles} tiles — a large map in pieces",
+    "seriesConnectors": "Connectors (locks)",
+    "seriesConnectorsHint": "Adjacent pieces lock together like a puzzle when printed"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",
@@ -1198,7 +1209,10 @@
     "qaSlicerNotFound": "the slicer isn't available on the server — the check was skipped",
     "qaLayerNotWatertight": "{layer}: the layer isn't fully watertight",
     "modeGroupLabel": "Area selection mode",
-    "renderModeGroupLabel": "Generation mode: quick preview or full model"
+    "renderModeGroupLabel": "Generation mode: quick preview or full model",
+    "dlCount": "{n} left",
+    "dlUnlimited": "unlimited",
+    "dlExhausted": "Free downloads used up — place a print order"
   },
   "kcp": {
     "loadingMap": "Loading map...",

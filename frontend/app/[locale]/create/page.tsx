@@ -105,16 +105,18 @@ export default function Home() {
   const [proMode, setProMode] = useState(false);
   useEffect(() => {
     try {
-      setProMode(localStorage.getItem("3dmap_pro_mode") === "1");
-      // showHexGrid теж відновлюємо разом із proMode — інакше після
-      // перезавантаження «Серія зон» мовчки скидалась (proMode=true лишався, а
-      // сітка зникала → панель «Профі» показувала режим «Одна ділянка»).
-      if (localStorage.getItem("3dmap_hex_grid") === "1") setShowHexGrid(true);
+      const pro = localStorage.getItem("3dmap_pro_mode") === "1";
+      setProMode(pro);
+      // Серія-сітка (гекси) існує ЛИШЕ у «Профі». Відновлюємо її тільки разом із
+      // proMode, інакше у «Просто» карта має бути завжди = одна ділянка.
+      if (pro && localStorage.getItem("3dmap_hex_grid") === "1") setShowHexGrid(true);
     } catch {/* ignore */}
   }, []);
   const toggleProMode = (v: boolean) => {
     setProMode(v);
     try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
+    // Вихід у «Просто» → завжди одна ділянка (серія-сітка лишається у «Профі»).
+    if (!v) setShowHexGridPersist(false);
   };
   // showHexGrid зберігаємо у localStorage, щоб режим сітки переживав reload.
   const setShowHexGridPersist = (v: boolean) => {
@@ -608,10 +610,13 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* РЕЖИМ ВИБОРУ — першокласний, завжди видимий перемикач (раніше
-                    «Серія зон» була схована за «Профі», і люди її не знаходили).
-                    «Серія зон» вмикає сітку гексагонів + експертну панель з
-                    параметрами та пакетною генерацією одним кліком. */}
+                {/* РЕЖИМ ВИБОРУ (Одна ділянка / Серія-сітка гексів) — це ЕКСПЕРТНИЙ
+                    інструмент (колекція клітин, збереження сітки, докупівля сусідів).
+                    Звичайному користувачу він плутав «Панно» з «Серією зон». Тепер
+                    показуємо ЛИШЕ у «Профі»; у «Просто» карта завжди = одна ділянка,
+                    а «кілька частин» (панно) обирається у простій панелі одним
+                    зрозумілим контролом. */}
+                {proMode && (
                 <div className="mx-4 mt-2 grid grid-cols-2 gap-2 sm:mt-3" role="tablist" aria-label={tc("selectionModeAria")}>
                   <button
                     type="button"
@@ -642,6 +647,7 @@ export default function Home() {
                     <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("seriesSubtitle")}</span>
                   </button>
                 </div>
+                )}
 
                 {/* ВИБІР ФОРМИ КЛІТИНОК — видимий прямо у режимі сітки (раніше був
                     схований у «Профі»-панелі й на мобільному недоступний). */}

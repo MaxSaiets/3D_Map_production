@@ -1,4 +1,4 @@
-﻿"""
+"""
 Сервіс для обробки будівель з екструзією та покращеними дахами
 Покращено: додано посадку будівель на рельєф через TerrainProvider
 """
@@ -401,10 +401,17 @@ def process_buildings(
                         ground_min = float(np.min(heights))
                         ground_max = float(np.max(heights))
 
-                    # Visible building base follows the highest terrain point
-                    # under the footprint, then sinks by 0.1 model-mm so the
-                    # bottom plane cannot render as a floating seam.
-                    base_z = float(ground_max) - float(terrain_sink_m)
+                    # Visible building base follows the LOWEST terrain point under
+                    # the footprint — matches flatten_heightfield_under_buildings,
+                    # which flattens the pad to ref=min(h). Using ground_max made
+                    # buildings FLOAT above relief maps: on a coarse DEM grid the
+                    # flatten only sets whole cells to min, but the footprint's
+                    # sampled points interpolate across neighbouring un-flattened
+                    # (higher) cells, so ground_max > pad → the base hovered up to
+                    # several metres above the surface. ground_min seats the base on
+                    # the pad; on the high side terrain rises into the wall (natural
+                    # cut-in), never a gap. Sinks 0.1 model-mm to kill the seam.
+                    base_z = float(ground_min) - float(terrain_sink_m)
                     required_foundation_m = max(float(ground_max) - float(ground_min), 0.0) + float(terrain_sink_m)
                     foundation_depth_m = max(float(foundation_depth_eff), float(required_foundation_m), 0.05)
 
@@ -415,7 +422,7 @@ def process_buildings(
                     # Перевірка на валідність
                     if not np.isfinite(translate_z) or not np.isfinite(base_z):
                         print(f"  [WARN] Будівля {idx}: невалідні координати після обчислення, використовую fallback")
-                        base_z = float(ground_max)
+                        base_z = float(ground_min)
                         translate_z = float(base_z) - float(foundation_depth_m)
                         flat_base_z = float(base_z)
                 
@@ -556,7 +563,10 @@ def process_buildings(
                                     poly_ground_min = ground_min
                                     poly_ground_max = ground_max
 
-                                poly_base_z = float(poly_ground_max) - float(terrain_sink_m)
+                                # ground_min (not max) — seats base on the flattened
+                                # pad; ground_max floated the building (see single-poly
+                                # branch above for the full explanation).
+                                poly_base_z = float(poly_ground_min) - float(terrain_sink_m)
                                 poly_required_foundation_m = max(
                                     float(poly_ground_max) - float(poly_ground_min),
                                     0.0,

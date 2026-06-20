@@ -71,6 +71,9 @@ interface GenerationState {
   // З'ЄДНУВАЧ-ПАЗИ (метелик): «ластівчин-хвіст» пази на гранях + деталь-ключ,
   // щоб стикувати дві плоскі карти. Стан спільний (панель монтується двічі).
   simpleConnector: boolean;
+  // З'ЄДНУВАЧІ для СЕРІЇ (панно): замки на спільних гранях сусідніх плиток, ON за
+  // замовчуванням (друковані шматки стикуються). Окремо від single-tile simpleConnector.
+  simpleSeriesConnectors: boolean;
   // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
   simpleFrame: boolean;
   // РЕЛЬЄФ (висоти землі): окремий перемикач для УСІХ режимів карт. Джерело правди
@@ -120,6 +123,7 @@ interface GenerationState {
   setSimpleFormat: (f: GenerationState["simpleFormat"]) => void;
   setSimpleFlatAms: (on: boolean) => void;
   setSimpleConnector: (on: boolean) => void;
+  setSimpleSeriesConnectors: (on: boolean) => void;
   setSimpleFrame: (on: boolean) => void;
   setSimpleRelief: (on: boolean) => void;
   setSimpleFlatBuildings: (on: boolean) => void;
@@ -218,6 +222,7 @@ const initialState = {
   simpleFormat: "relief3d" as GenerationState["simpleFormat"],
   simpleFlatAms: false,
   simpleConnector: false,
+  simpleSeriesConnectors: true,
   simpleFrame: false,
   simpleRelief: false,
   simpleFlatBuildings: false,
@@ -284,6 +289,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   })),
   setSimpleFlatAms: (on) => set({ simpleFlatAms: on }),
   setSimpleConnector: (on) => set({ simpleConnector: on }),
+  setSimpleSeriesConnectors: (on) => set({ simpleSeriesConnectors: on }),
   setSimpleFrame: (on) => set({ simpleFrame: on }),
   setSimpleRelief: (on) => set({ simpleRelief: on }),
   setSimpleFlatBuildings: (on) => set({ simpleFlatBuildings: on }),

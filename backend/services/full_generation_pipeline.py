@@ -1211,6 +1211,7 @@ def run_full_generation_pipeline(
                 waist_frac=0.5,
                 clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
                 export_scale_factor=_sf_c,
+                key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
             )
             _notch_carved = False
             if _ntc is not None and _depth_m > 1e-6:
@@ -1219,26 +1220,76 @@ def run_full_generation_pipeline(
                     _ntc, bottom_z_m=_floor_z - _eps, thickness_m=_depth_m + _eps,
                     color=[128, 128, 128], min_area_m2=1e-12,
                 )
-                if (_cutterc is not None and bool(getattr(_cutterc, "is_volume", False))
-                        and bool(getattr(terrain_mesh, "is_volume", False))):
+                if _cutterc is not None and bool(getattr(_cutterc, "is_volume", False)):
+                    # РОБАСТНИЙ ВИРІЗ ПАЗУ. Раніше вимагали, щоб terrain_mesh був
+                    # герметичним (is_volume) — але рельєф ПІСЛЯ грувів доріг/парків
+                    # майже ЗАВЖДИ НЕ watertight (груви приймають до 512 відкритих
+                    # ребер), тож manifold-гілка тихо скипала → користувач НЕ діставав
+                    # ні пазу, ні ключа («рельєф + з'єднувачі не працюють»). Тепер три
+                    # рівні: (A) manifold коли герметично (швидко/точно); (B) ремонт
+                    # копії (fill_holes+fix_normals)→manifold (лише trimesh, працює без
+                    # Blender — важливо для прод-сервера); (C) Blender-boolean (той
+                    # самий рушій, що груви; ріже й негерметичні меші). Беремо перший
+                    # результат, що реально змінив геометрію в межах дрейф-ліміту.
                     _b0 = terrain_mesh.bounds
-                    _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
-                    if (_cutc is not None and len(getattr(_cutc, "faces", [])) > 0
-                            and bool(getattr(_cutc, "is_volume", False))):
+                    _faces0 = len(getattr(terrain_mesh, "faces", []))
+                    _cutc = None
+                    _via = None
+                    # (A) manifold на герметичному рельєфі
+                    if bool(getattr(terrain_mesh, "is_volume", False)):
+                        try:
+                            _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
+                            _via = "manifold"
+                        except Exception as _mexc:
+                            print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                            _cutc = None
+                    # (B) ремонт копії → manifold (без Blender)
+                    if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
+                        try:
+                            _rep = terrain_mesh.copy()
+                            _rep.merge_vertices()
+                            try:
+                                _rep.update_faces(_rep.nondegenerate_faces())
+                            except Exception:
+                                pass
+                            _rep.fill_holes()
+                            _rep.fix_normals()
+                            if bool(getattr(_rep, "is_volume", False)):
+                                _cutc = _tmc.boolean.difference([_rep, _cutterc], engine="manifold")
+                                _via = "repair+manifold"
+                        except Exception as _rexc:
+                            print(f"[CONNECTOR] {zone_prefix}repair+manifold notch failed ({_rexc})")
+                    # (C) Blender-boolean (терпить негерметичний рельєф)
+                    if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
+                        try:
+                            from services.terrain_cutter import _run_blender_boolean
+                            _bres = _run_blender_boolean(terrain_mesh, _cutterc, label="connector")
+                            # повертає ВХІДНИЙ меш при невдачі → приймаємо лише якщо
+                            # це інший об'єкт із гранями.
+                            if (_bres is not None and _bres is not terrain_mesh
+                                    and len(getattr(_bres, "faces", [])) > 0):
+                                _cutc = _bres
+                                _via = "blender"
+                        except Exception as _bexc:
+                            print(f"[CONNECTOR] {zone_prefix}Blender notch failed (non-fatal): {_bexc}")
+                    # Валідація: меш існує, реально змінився, межі не «втекли».
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
                         _driftc = max(abs(_b1[0][i] - _b0[0][i]) for i in range(2)) + \
                                   max(abs(_b1[1][i] - _b0[1][i]) for i in range(2))
-                        if _driftc < (5.0 / _sf_c):
+                        _changed = abs(len(_cutc.faces) - _faces0) > 0
+                        if _driftc < (5.0 / _sf_c) and _changed:
                             terrain_mesh = _cutc
                             _notch_carved = True
                             print(f"[CONNECTOR] {zone_prefix}dovetail notch carved into relief base "
-                                  f"(manifold, depth {_depth_m * _sf_c:.2f}mm)")
+                                  f"({_via}, depth {_depth_m * _sf_c:.2f}mm, drift {_driftc:.2f})")
                         else:
-                            print(f"[CONNECTOR] {zone_prefix}notch rejected (drift {_driftc:.1f}) — base kept")
+                            print(f"[CONNECTOR] {zone_prefix}notch rejected (drift {_driftc:.1f}, "
+                                  f"changed={_changed}) — base kept")
                     else:
-                        print(f"[CONNECTOR] {zone_prefix}notch boolean not a volume — base kept")
+                        print(f"[CONNECTOR] {zone_prefix}notch boolean produced nothing — base kept")
                 else:
-                    print(f"[CONNECTOR] {zone_prefix}relief base not watertight — skip notch (base kept)")
+                    print(f"[CONNECTOR] {zone_prefix}connector cutter not a volume — skip notch")
                 # Ключ-метелик ЛИШЕ якщо паз РЕАЛЬНО вирізано (інакше юзер отримає
                 # ключ без слоту — на не-watertight рельєфі паз пропускається).
                 if _notch_carved and _keyc is not None and not getattr(_keyc, "is_empty", True):

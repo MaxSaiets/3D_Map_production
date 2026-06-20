@@ -784,6 +784,9 @@ class GenerationRequest(BaseModel):
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
     map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
     map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
+    # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
+    map_connector_key_edges: str = Field(default="", max_length=4)
     # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
     # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
     # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
@@ -3062,6 +3065,9 @@ class ZoneGenerationRequest(BaseModel):
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
     map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
     map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
+    # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
+    map_connector_key_edges: str = Field(default="", max_length=4)
     # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
     # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
     # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
@@ -3358,7 +3364,18 @@ async def generate_zones_endpoint(
         # РЎС‚РІРѕСЂСЋС”РјРѕ GenerationRequest РґР»СЏ С†С–С”С— Р·РѕРЅРё
         # Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ РґРµС„РѕР»С‚РЅРµ Р·РЅР°С‡РµРЅРЅСЏ РґР»СЏ terrain_smoothing_sigma СЏРєС‰Рѕ None
         terrain_smoothing_sigma = request.terrain_smoothing_sigma if request.terrain_smoothing_sigma is not None else 2.0
-        
+
+        # З'ЄДНУВАЧІ СЕРІЇ: фронт вмикає request.map_connector + кладе у кожну зону
+        # properties.connector_edges = ВНУТРІШНІ (спільні з сусідом) грані цієї плитки
+        # (напр. "SE" для кутової). Ставимо замки ЛИШЕ на ці грані → сусідні шматки
+        # стикуються, а зовнішній периметр серії лишається чистим. Без edges (зовн.
+        # кутова без сусідів) — конектор пропускаємо.
+        _zprops = zone.get('properties', {}) or {}
+        _zone_conn_edges = str(_zprops.get('connector_edges') or '').upper()
+        # Ключі лише на S/E внутрішніх гранях (фронт рахує) → 1 ключ на спільний шов.
+        _zone_key_edges = str(_zprops.get('connector_key_edges') or '').upper()
+        _zone_conn = bool(getattr(request, 'map_connector', False)) and bool(_zone_conn_edges)
+
         zone_request = GenerationRequest(
             north=zone_bbox['north'],
             south=zone_bbox['south'],
@@ -3385,6 +3402,14 @@ async def generate_zones_endpoint(
             flatten_buildings_on_terrain=request.flatten_buildings_on_terrain,
             flatten_roads_on_terrain=request.flatten_roads_on_terrain if request.flatten_roads_on_terrain is not None else False,
             export_format=request.export_format,
+            # З'єднувачі-замки на ВНУТРІШНІХ гранях плитки серії (per-zone).
+            map_connector=_zone_conn,
+            map_connector_edges=(_zone_conn_edges or "NSEW"),
+            map_connector_key_edges=_zone_key_edges,
+            map_connector_span_mm=request.map_connector_span_mm,
+            map_connector_length_mm=request.map_connector_length_mm,
+            map_connector_depth_mm=request.map_connector_depth_mm,
+            map_connector_clearance_mm=request.map_connector_clearance_mm,
             context_padding_m=request.context_padding_m,
             terrain_only=bool(getattr(request, "terrain_only", False)),
             preview_mode=bool(getattr(request, "preview_mode", False)) and not bool(getattr(request, "flat_plate_mode", False)),

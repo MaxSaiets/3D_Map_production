@@ -506,7 +506,18 @@
     "addonsHeader": "Extras",
     "addonsTitle": "Extras (connecteur, cadre, maison)",
     "reliefDisabledOthers": "Relief = carte 3D, les modes plats ont été désactivés",
-    "magnetOffForPanel": "Aimant et GPX désactivés — un panneau génère des tuiles complètes"
+    "magnetOffForPanel": "Aimant et GPX désactivés — un panneau génère des tuiles complètes",
+    "generatePreview": "Générer l'aperçu",
+    "generatePrint": "Générer le 3MF d'impression",
+    "etaPrint": "≈ 1–3 min · 3MF d'impression complet",
+    "dlCount": "{n} restants",
+    "dlUnlimited": "illimité",
+    "piecesTitle": "Plusieurs pièces",
+    "pieces1": "1 (entière)",
+    "piecesHint": "Un modèle en une seule pièce",
+    "piecesHintOn": "{tiles} tuiles — grande carte en parties",
+    "seriesConnectors": "Connecteurs (verrous)",
+    "seriesConnectorsHint": "Les pièces adjacentes s'emboîtent comme un puzzle à l'impression"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
@@ -1198,7 +1209,10 @@
     "qaSlicerNotFound": "le slicer n'est pas disponible sur le serveur — la vérification a été ignorée",
     "qaLayerNotWatertight": "{layer} : la couche n'est pas totalement étanche",
     "modeGroupLabel": "Mode de sélection de zone",
-    "renderModeGroupLabel": "Mode de génération : aperçu rapide ou modèle complet"
+    "renderModeGroupLabel": "Mode de génération : aperçu rapide ou modèle complet",
+    "dlCount": "{n} restants",
+    "dlUnlimited": "illimité",
+    "dlExhausted": "Téléchargements gratuits épuisés — passez une commande d'impression"
   },
   "kcp": {
     "loadingMap": "Chargement de la carte...",
