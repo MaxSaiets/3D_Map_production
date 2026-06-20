@@ -596,6 +596,10 @@ export default function Home() {
           {/* map2model-стиль: ОДНА велика сцена на всю ширину — карта АБО 3D-рендер,
               перемикач зверху. Раніше карта+превʼю тіснились поруч (≈половина кожне). */}
           <section className="flex min-h-0 flex-1 flex-col gap-3">
+            {/* СЦЕНА (перемикач + карта/рендер) ПРИЛИПАЄ зверху на мобільному, поки
+                користувач гортає налаштування нижче — карта НЕ зникає. На десктопі
+                звичайний потік (lg:static), бо панель налаштувань — окремий aside. */}
+            <div className="order-1 flex min-h-0 flex-col gap-3 sticky top-[60px] z-[15] lg:static lg:top-auto lg:z-auto">
             {/* Перемикач сцени: Карта ⇄ 3D-модель (рендер доступний після генерації) */}
             <div className="order-0 flex shrink-0 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur">
               <button
@@ -837,6 +841,7 @@ export default function Home() {
               </div>
             </div>
             )}
+            </div>{/* /sticky stage wrapper */}
 
             <div id="panel-settings-mobile" className={settingsPanelClasses}>
               <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">

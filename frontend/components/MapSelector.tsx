@@ -721,9 +721,10 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       (pts || []).forEach(([lon, lat], i) => {
         const foot = foots && foots[i];
         if (foot && foot.length >= 3) {
-          // РЕАЛЬНИЙ контур будівлі — червоний обвід із заливкою (як на скрині)
+          // ЗАФІКСОВАНИЙ будинок — ЯСКРАВИЙ червоний обвід+заливка, ПОСТІЙНО (не
+          // зникає на mouseout, на відміну від амбер-ховера). Товстіший = «обрано».
           L.polygon(foot.map(([fx, fy]) => [fy, fx] as [number, number]), {
-            color: "#ce2626", weight: 2.5, fillColor: "#ce2626", fillOpacity: 0.35, interactive: false,
+            color: "#ce2626", weight: 3.5, fillColor: "#ce2626", fillOpacity: 0.45, interactive: false,
           }).addTo(highlightLayerRef.current!);
         } else {
           // Контур ще вантажиться АБО будівлю не знайдено точно під кліком —
@@ -935,6 +936,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         }
         const pt: [number, number] = [lng, lat];
         st.addHighlightPoint(pt);
+        // Клік ФІКСУЄ будинок ЧЕРВОНИМ назавжди (highlightLayer, не зникає на mouseout).
+        // Прибираємо ховер-обвід (амбер) → чиста передача «прев'ю → зафіксовано».
+        hoverLayerRef.current?.clearLayers();
         import("@/lib/buildings").then(({ fetchBuildingAt }) =>
           fetchBuildingAt(lat, lng).then((poly) => {
             const live = useGenerationStore.getState();
