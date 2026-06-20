@@ -276,6 +276,13 @@ export function SimpleControlPanel({
           const total = Number(r.total || 0);
           const done = Number(r.completed || 0);
           const subTasks: any[] = r.tasks || [];
+          // СКЛАДЕНЕ ПРЕВʼЮ: Preview3D шукає КОЖНУ під-задачу у taskStatuses за її
+          // task_id (а не лише батч). Раніше зберігали тільки батч → плитки ніколи
+          // не з'являлись у превʼю. setTaskStatuses ЗАМІНЮЄ весь обʼєкт, тож кладемо
+          // і батч, і всі під-задачі (оновлюється щотіку → плитки ростуть поступово).
+          const _subMap: Record<string, any> = { [r.task_id]: r };
+          for (const _st of subTasks) if (_st?.task_id) _subMap[String(_st.task_id)] = _st;
+          setTaskStatuses(_subMap);
           const avg = subTasks.length
             ? Math.round(subTasks.reduce((acc, st) => acc + Number(st.progress || 0), 0) / subTasks.length)
             : 0;
@@ -474,8 +481,12 @@ export function SimpleControlPanel({
         : s.terrainBaseThicknessMm,
       terrainResolution: s.terrainResolution,
       terrariumZoom: s.terrariumZoom,
-      flatUniformBuildingHeight: flatBuildings,
-      flatMaxBuildingHeightMm: flatBuildings ? 0.8 : undefined,
+      // НЕ форсуємо однакову висоту: бек робив усі будинки ОДНАКОВО плоскими
+      // (0.8мм), ігноруючи реальні OSM-висоти → «висоти неправильні». Тепер
+      // пропорційно за реальною висотою (бек: log-шкала), у пласкому режимі —
+      // низько але РІЗНО (cap 1.5мм), 3-поверховий і хмарочос виглядають по-різному.
+      flatUniformBuildingHeight: false,
+      flatMaxBuildingHeightMm: flatBuildings ? 1.5 : undefined,
       // forPrint → друкарський 3MF (не GLB-прев'ю).
       exportFormat: forPrint ? "3mf" : s.exportFormat,
       modelSizeMm: magnetMode ? 60 : s.modelSizeMm,

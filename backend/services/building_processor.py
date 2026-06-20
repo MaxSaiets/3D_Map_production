@@ -18,6 +18,12 @@ import re
 import gc  # For memory cleanup
 
 
+# Рендер визначних місць окремим БРОНЗОВИМ «Landmark»-шаром ВИМКНЕНО за рішенням
+# власника (2026-06-21): «не треба виділяти окремим кольором визначні місця».
+# Точні висоти будинків лишаються. Щоб повернути landmark-рендер → True.
+LANDMARK_RENDERING_ENABLED = False
+
+
 @dataclass
 class BuildingMeshRecord:
     mesh: trimesh.Trimesh
@@ -338,12 +344,15 @@ def process_buildings(
             try:
                 row = gdf_buildings.loc[idx]
                 geom = row.geometry
-                # Орієнтир (визначне місце) з OSM-тегу landmark; "" = звичайний будинок
-                try:
-                    _lm = row.get("landmark", "") if hasattr(row, "get") else getattr(row, "landmark", "")
-                    landmark_category = str(_lm).strip() if _lm is not None else ""
-                except Exception:
-                    landmark_category = ""
+                # Орієнтир (визначне місце) з OSM-тегу landmark; "" = звичайний будинок.
+                # Вимкнено власником → завжди "" (жоден будинок не виділяється кольором).
+                landmark_category = ""
+                if LANDMARK_RENDERING_ENABLED:
+                    try:
+                        _lm = row.get("landmark", "") if hasattr(row, "get") else getattr(row, "landmark", "")
+                        landmark_category = str(_lm).strip() if _lm is not None else ""
+                    except Exception:
+                        landmark_category = ""
 
                 # Пропускаємо невалідні геометрії
                 if geom is None:

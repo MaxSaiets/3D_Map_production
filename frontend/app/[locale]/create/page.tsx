@@ -550,7 +550,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
+        <div className="mt-3 flex flex-1 flex-col gap-3 lg:min-h-0 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
           <aside id="panel-settings" className="hidden min-h-0 lg:block">
             <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
@@ -595,7 +595,7 @@ export default function Home() {
 
           {/* map2model-стиль: ОДНА велика сцена на всю ширину — карта АБО 3D-рендер,
               перемикач зверху. Раніше карта+превʼю тіснились поруч (≈половина кожне). */}
-          <section className="flex min-h-0 flex-1 flex-col gap-3">
+          <section className="flex flex-1 flex-col gap-3 lg:min-h-0">
             {/* СЦЕНА (перемикач + карта/рендер) ПРИЛИПАЄ зверху на мобільному, поки
                 користувач гортає налаштування нижче — карта НЕ зникає. На десктопі
                 звичайний потік (lg:static), бо панель налаштувань — окремий aside. */}

@@ -86,9 +86,10 @@ def test_flat_buildings_keep_building_part_heights_and_sit_on_base_top():
     assert heights == [30.0, 90.0]
 
 
-def test_flat_buildings_split_landmarks_into_separate_list():
-    """Будівлі з landmark!='' (церкви/вежі/історичні) йдуть ОКРЕМИМ списком,
-    щоб у експорті стати частиною «Landmark» з бронзовим кольором."""
+def test_flat_buildings_landmark_render_disabled_no_split():
+    """Landmark-рендер ВИМКНЕНО власником (LANDMARK_RENDERING_ENABLED=False):
+    визначні місця НЕ виокремлюються в бронзову деталь — усі будинки звичайні,
+    landmark-список порожній."""
     ordinary = _square(0, 0, 10, 10)
     church = _square(40, 40, 50, 50)
     gdf = gpd.GeoDataFrame(
@@ -116,8 +117,8 @@ def test_flat_buildings_split_landmarks_into_separate_list():
         base_top_m=1.0,
     )
 
-    assert len(meshes) == 1      # звичайний будинок
-    assert len(landmarks) == 1   # церква → окремий landmark-список
+    assert len(landmarks) == 0   # рендер вимкнено → жодного окремого landmark-меша
+    assert len(meshes) == 2      # обидва будинки лишаються звичайними
 
 
 def test_keychain_layout_adds_reinforced_loop_and_reserved_label_band():

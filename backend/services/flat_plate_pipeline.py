@@ -2926,7 +2926,26 @@ def build_flat_building_meshes(
             except Exception:
                 mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         elif max_building_height_m > 0:
-            mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
+            # ПЛАСКА МАПА: ПРОПОРЦІЙНІ висоти (log-шкала) замість clamp-усіх-до-max.
+            # Раніше clamp робив усі будинки вищі за cap ОДНАКОВИМИ → користувач бачив
+            # «неправильні/однакові висоти». Тепер 3-поверховий НИЖЧИЙ за 15-поверховий,
+            # усе капається на max (друкарність). Та сама логіка, що для брелка, але з
+            # пласким cap (max_building_height_mm, напр. 1.5мм).
+            try:
+                bz = float(mesh.bounds[0][2]); tz = float(mesh.bounds[1][2])
+                osm_height_m = max(tz - bz, 0.1)
+                footprint_area_m2 = float(getattr(mesh, "area_faces", None) or 100.0)
+                if osm_height_m < 4.0:
+                    osm_height_m = max(6.0, min(60.0, footprint_area_m2 ** 0.42 * 1.5))
+                import math
+                _cap_mm = max(float(max_building_height_mm or 1.5), 1.0)
+                target_mm = 0.6 + math.log2(max(osm_height_m / 3.0, 1.0)) * 0.42
+                target_mm = max(0.6, min(target_mm, _cap_mm))
+                target_height_m = _model_mm_to_world_m(target_mm, float(export_scale_factor or scale_factor))
+                target_height_m = max(target_height_m, min_building_height_m)
+                mesh = _set_mesh_height(mesh, target_height_m=target_height_m)
+            except Exception:
+                mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         mesh.apply_translation([0.0, 0.0, float(base_top_m)])
         if landmark_category:
             _with_color(mesh, LAYER_COLORS["landmark"])

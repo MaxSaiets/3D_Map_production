@@ -828,6 +828,12 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     };
 
     const handleRectangleDown = (event: L.LeafletMouseEvent) => {
+      // РЕЖИМ ВИБОРУ БУДИНКУ: тіло зони (shape) накриває всі будинки, тож клік по
+      // будинку = клік по shape. Раніше цей drag-обробник перехоплював mousedown
+      // (L.DomEvent.stop + drag) → клік не доходив до handleMapClick і будинок НЕ
+      // підсвічувався. У режимі підсвітки НЕ стартуємо drag → клік бульбашиться у
+      // map 'click' → handleMapClick обирає будинок (червоний, лишається).
+      if (useGenerationStore.getState().mapHighlightBuilding) return;
       const bounds = currentBoundsRef.current ?? initialBounds;
       const size = boundsSizeMeters(bounds);
       const start = clientXY(event.originalEvent);
