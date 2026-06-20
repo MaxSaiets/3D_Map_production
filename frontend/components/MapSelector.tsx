@@ -522,6 +522,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const gpxLineRef = useRef<L.Polyline | null>(null);
   // ВИДІЛЕНІ БУДІВЛІ: червоні маркери обраних точок (кліки по своїх будинках)
   const highlightLayerRef = useRef<L.LayerGroup | null>(null);
+  // ХОВЕР-ПІДСВІТКА: будинок під курсором обводиться (пунктир) у режимі «мій дім».
+  const hoverLayerRef = useRef<L.LayerGroup | null>(null);
 
   const safeSize = useMemo(() => safeCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm]);
   const targetSize = useMemo(() => targetCropMeters(spec), [spec.aspectRatio, spec.mapHeightMm, spec.mapWidthMm, spec.maxMetersPerMm, spec.targetMetersPerMm]);
@@ -750,7 +752,10 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const applyPickCursor = (on: boolean) => mapEl.classList.toggle("mn-pick-home", on);
     applyPickCursor(_st0.mapHighlightBuilding);
     const unsubCursor = useGenerationStore.subscribe((st, prev) => {
-      if (st.mapHighlightBuilding !== prev.mapHighlightBuilding) applyPickCursor(st.mapHighlightBuilding);
+      if (st.mapHighlightBuilding !== prev.mapHighlightBuilding) {
+        applyPickCursor(st.mapHighlightBuilding);
+        if (!st.mapHighlightBuilding) hoverLayerRef.current?.clearLayers(); // вимкнули режим → прибрати hover-обвід
+      }
     });
 
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
@@ -959,6 +964,39 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     shape.on("mousedown", handleRectangleDown);
     shape.on("touchstart", handleRectangleDown as any);
     map.on("click", handleMapClick);
+    // ХОВЕР-ПІДСВІТКА БУДИНКУ (режим «мій дім»): наведення курсора ОБВОДИТЬ будинок
+    // під ним (пунктир-амбер) — видно, що саме виділиться, ще ДО кліку (як map2model).
+    // Дебаунс 160мс + кеш у lib/buildings → бек не спамиться.
+    let _hoverTimer: ReturnType<typeof setTimeout> | null = null;
+    let _hoverKey = "";
+    const handleMapHover = (event: L.LeafletMouseEvent) => {
+      if (!useGenerationStore.getState().mapHighlightBuilding) return;
+      const zb = currentBoundsRef.current ?? initialBounds;
+      if (zb && !zb.contains(event.latlng)) { hoverLayerRef.current?.clearLayers(); return; }
+      const lat = event.latlng.lat, lng = event.latlng.lng;
+      const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+      if (key === _hoverKey) return;
+      _hoverKey = key;
+      if (_hoverTimer) clearTimeout(_hoverTimer);
+      _hoverTimer = setTimeout(() => {
+        import("@/lib/buildings").then(({ fetchBuildingAt }) =>
+          fetchBuildingAt(lat, lng).then((poly) => {
+            if (!useGenerationStore.getState().mapHighlightBuilding) return;
+            if (!hoverLayerRef.current) hoverLayerRef.current = L.layerGroup().addTo(map);
+            hoverLayerRef.current.clearLayers();
+            if (poly && poly.length >= 3) {
+              L.polygon(poly.map(([fx, fy]) => [fy, fx] as [number, number]), {
+                color: "#f59e0b", weight: 2.5, dashArray: "5,4", fillColor: "#f59e0b",
+                fillOpacity: 0.18, interactive: false,
+              }).addTo(hoverLayerRef.current);
+            }
+          }).catch(() => {}),
+        );
+      }, 160);
+    };
+    const handleMapHoverOut = () => { hoverLayerRef.current?.clearLayers(); };
+    map.on("mousemove", handleMapHover);
+    map.on("mouseout", handleMapHoverOut);
     handle.on("mousedown", beginHandleInteraction);
     handle.on("touchstart", beginHandleInteraction);
     handle.on("mouseup", endHandleInteraction);
@@ -984,6 +1022,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       shape.off("mousedown", handleRectangleDown);
       shape.off("touchstart", handleRectangleDown as any);
       map.off("click", handleMapClick);
+      map.off("mousemove", handleMapHover);
+      map.off("mouseout", handleMapHoverOut);
+      if (_hoverTimer) clearTimeout(_hoverTimer);
       rectDragCleanupRef.current?.();
       rectDragCleanupRef.current = null;
       handle.off("mousedown", beginHandleInteraction);
@@ -1016,6 +1057,8 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       gpxLineRef.current = null;
       highlightLayerRef.current?.remove();
       highlightLayerRef.current = null;
+      hoverLayerRef.current?.remove();
+      hoverLayerRef.current = null;
     };
   }, [map, safeSize, setSelectedArea, spec.aspectRatio, spec.onRotationChange, t]);
 
