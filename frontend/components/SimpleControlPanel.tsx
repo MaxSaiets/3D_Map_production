@@ -791,7 +791,6 @@ export function SimpleControlPanel({
           <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
             {format === "flat" ? t("fmtFlatHint")
               : format === "magnet" ? t("fmtMagnetHint")
-              : format === "panno" ? t("fmtPanelHint")
               : t("fmtStandardHint")}
           </p>
         </div>

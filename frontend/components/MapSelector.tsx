@@ -720,9 +720,13 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
             color: "#ce2626", weight: 2.5, fillColor: "#ce2626", fillOpacity: 0.35, interactive: false,
           }).addTo(highlightLayerRef.current!);
         } else {
-          // ще вантажиться контур → тимчасова крапка
+          // Контур ще вантажиться АБО будівлю не знайдено точно під кліком —
+          // ЯСНА стійка позначка (велика крапка з білим обідком), щоб користувач
+          // ЗАВЖДИ бачив, що клік зареєстровано (раніше була ледь помітна 7px-крапка,
+          // що ще й зникала при невдачі — звідси «не видно, чи натиснув»).
           L.circleMarker([lat, lon], {
-            radius: 7, color: "#ce2626", weight: 3, fillColor: "#ce2626", fillOpacity: 0.55, interactive: false,
+            radius: 11, color: "#ffffff", weight: 3, fillColor: "#ce2626", fillOpacity: 0.95,
+            interactive: false,
           }).addTo(highlightLayerRef.current!);
         }
       });
@@ -928,10 +932,10 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
             if (poly && poly.length >= 3) {
               live.setHighlightFootprint(pt, poly);
             } else {
-              // Жодної будівлі під кліком: прибрати тимчасову крапку (щоб не висіла
-              // червона позначка «у нікуди») і попередити користувача.
-              const idx = live.highlightPoints.findIndex((p) => p[0] === lng && p[1] === lat);
-              if (idx >= 0) live.removeHighlightAt(idx);
+              // Будівлю не знайдено точно під кліком — АЛЕ позначку ЛИШАЄМО (раніше
+              // тихо видаляли → користувач не розумів, чи клік взагалі спрацював).
+              // Бек при генерації сам підтягне НАЙБЛИЖЧУ будівлю (snap ≤70м) або
+              // пропустить, якщо поруч нічого нема. Лише попереджаємо тостом.
               try {
                 window.dispatchEvent(new CustomEvent("monadruk:toast", {
                   detail: { type: "warn", ns: "map", key: "highlightNotFound" },

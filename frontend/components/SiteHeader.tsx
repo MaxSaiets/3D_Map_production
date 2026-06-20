@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowRight, KeyRound, Box, User, Menu, X, Globe } from "lucide-react";
+import { ArrowRight, Box, User, Menu, X, Globe } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { locales, localeMeta } from "@/i18n/routing";
@@ -70,11 +70,11 @@ export function SiteHeader() {
           <Box size={22} className="text-forest" />
           monadruk
         </Link>
+        {/* Спрощено: лише чіткі ПУНКТИ ПРИЗНАЧЕННЯ (без home-якорів #how/#templates,
+            що захаращували глобальне меню). Галерея · Ціни · Брелоки. */}
         <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
-          <Link href="/#how" className="hover:text-ink">{t("how")}</Link>
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
           <Link href="/prices" className="hover:text-ink">{pricesLabel}</Link>
-          <Link href="/#templates" className="hover:text-ink">{t("templates")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
         </nav>
         <div className="flex items-center gap-2.5">
@@ -87,13 +87,8 @@ export function SiteHeader() {
             <User size={15} />
             <span className="hidden sm:inline">{configured && user ? t("account") : t("login")}</span>
           </Link>
-          <Link
-            href="/keychains"
-            className="hidden min-h-[44px] items-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/20 sm:inline-flex"
-            style={{ borderColor: "rgba(142,107,61,0.4)", color: "var(--bronze, #8E6B3D)", background: "rgba(142,107,61,0.08)" }}
-          >
-            <KeyRound size={15} /> {t("keychain")}
-          </Link>
+          {/* Дубль-CTA «Брелок» прибрано — брелоки вже є пунктом меню; у шапці
+              лишається ОДНА головна дія «Створити мапу». */}
           <Link
             href="/create"
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-4 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
@@ -122,10 +117,8 @@ export function SiteHeader() {
         <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
           <ul className="flex flex-col">
             {[
-              { href: "/#how", label: t("how") },
               { href: "/showcase", label: t("gallery") },
               { href: "/prices", label: pricesLabel },
-              { href: "/#templates", label: t("templates") },
               { href: "/keychains", label: t("keychains") },
               { href: "/account", label: configured && user ? t("account") : t("login") },
             ].map((it) => (
@@ -140,11 +133,8 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <Link href="/keychains" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full border border-bronze/40 bg-bronze/10 text-sm font-semibold" style={{ color: "var(--bronze, #8E6B3D)" }}>
-              <KeyRound size={15} /> {t("keychain")}
-            </Link>
-            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
+          <div className="mt-3">
+            <Link href="/create" onClick={() => setOpen(false)} className="inline-flex min-h-[48px] w-full items-center justify-center gap-1.5 rounded-full bg-forest text-sm font-bold text-[#F4EFE4]" style={{ background: "var(--forest, #2E4A3A)" }}>
               {t("createMap")} <ArrowRight size={15} />
             </Link>
           </div>

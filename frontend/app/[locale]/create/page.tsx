@@ -123,6 +123,9 @@ export default function Home() {
     setShowHexGrid(v);
     try { localStorage.setItem("3dmap_hex_grid", v ? "1" : "0"); } catch {/* ignore */}
   };
+  // map2model-стиль: ОДНА велика сцена — карта АБО 3D-рендер (не тісно поруч).
+  // Перемикач зверху; авто-перехід на рендер, коли стартує генерація.
+  const [stageView, setStageView] = useState<"map" | "render">("map");
 
   // ЗМІНА МІСТА: скидаємо зону ПЕРЕД зміною center — інакше overlay після
   // ремаунта карти відновлює рамку зі СТАРОГО міста і fitBounds повертає
@@ -419,6 +422,22 @@ export default function Home() {
   const selectedCityLabel = tCity(currentCityKey);
   const hasMapSelection = Boolean(selectedArea);
   const zoneCount = selectedZones.length;
+  // Авто-перехід на 3D-рендер у мить старту генерації (rising edge). Назад на
+  // карту — лише ручним перемикачем (deps не міняються → ефект не вертає).
+  const prevGenStageRef = useRef(false);
+  useEffect(() => {
+    if (isGenerating && !prevGenStageRef.current) setStageView("render");
+    prevGenStageRef.current = isGenerating;
+  }, [isGenerating]);
+  const canShowRender = isGenerating || Boolean(downloadUrl);
+  const switchStage = (v: "map" | "render") => {
+    if (v === "render" && !canShowRender) return; // нема що показувати ще
+    setStageView(v);
+    // leaflet/three перерахують розмір, коли контейнер знову став видимим
+    if (typeof window !== "undefined") {
+      setTimeout(() => { try { window.dispatchEvent(new Event("resize")); } catch { /* no-op */ } }, 80);
+    }
+  };
   const selectionLabel = showHexGrid
     ? zoneCount > 0
       ? tc("zonesReady", { count: zoneCount })
@@ -436,8 +455,10 @@ export default function Home() {
   // разом у скрол-колонці на мобільному. Порядок: карта → налаштування →
   // превʼю (логічний потік). На десктопі налаштування у власному aside (тут
   // lg:hidden), а карта+превʼю стоять у правій колонці. Степер лише прокручує.
+  // Карта і рендер тепер ОДНА сцена (взаємовиключні) → обидва order-1, налаштування
+  // (мобільні) йдуть ПІСЛЯ сцени. Перемикач — order-0 (над сценою).
   const mapPanelClasses = "order-1 flex";
-  const previewPanelClasses = "order-3 flex";
+  const previewPanelClasses = "order-1 flex";
   const settingsPanelClasses = "order-2 flex lg:hidden";
 
   return (
@@ -572,11 +593,39 @@ export default function Home() {
             </div>
           </aside>
 
-          {/* Десктоп (xl): карта і 3D-превʼю ПОРЯД (а не одне під одним) — раніше
-              карта стискалась до ~300px, а превʼю падало нижче згину. Тепер обидва
-              високі й видимі без скролу, ширина екрана використана. */}
-          <section className="flex min-h-0 flex-1 flex-col gap-3 xl:grid xl:grid-cols-2 xl:items-stretch xl:gap-4">
-            <div id="panel-map" className={mapPanelClasses}>
+          {/* map2model-стиль: ОДНА велика сцена на всю ширину — карта АБО 3D-рендер,
+              перемикач зверху. Раніше карта+превʼю тіснились поруч (≈половина кожне). */}
+          <section className="flex min-h-0 flex-1 flex-col gap-3">
+            {/* Перемикач сцени: Карта ⇄ 3D-модель (рендер доступний після генерації) */}
+            <div className="order-0 flex shrink-0 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur">
+              <button
+                type="button"
+                onClick={() => switchStage("map")}
+                aria-pressed={stageView === "map"}
+                data-testid="stage-map"
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${stageView === "map" ? "bg-[var(--accent-strong)] text-white shadow" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
+              >
+                🗺 {tc("stageMap")}
+              </button>
+              <button
+                type="button"
+                onClick={() => switchStage("render")}
+                aria-pressed={stageView === "render"}
+                disabled={!canShowRender}
+                data-testid="stage-render"
+                title={canShowRender ? undefined : tc("stageRenderLocked")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  stageView === "render"
+                    ? "bg-[var(--accent-strong)] text-white shadow"
+                    : canShowRender
+                      ? "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      : "cursor-not-allowed text-[var(--text-secondary)] opacity-45"
+                }`}
+              >
+                🧊 {tc("stageRender")}{isGenerating ? ` · ${progress}%` : ""}
+              </button>
+            </div>
+            <div id="panel-map" className={`${mapPanelClasses} ${stageView === "map" ? "" : "hidden"}`}>
               {/* Карта — головна взаємодія: на десктопі домінує (≈60% висоти
                   вікна), щоб рамку було зручно тягати (раніше ~270px). */}
               <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh] xl:min-h-[56vh]">
@@ -748,6 +797,7 @@ export default function Home() {
               </div>
             </div>
 
+            {stageView === "render" && (
             <div id="panel-preview" className={previewPanelClasses}>
               <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px] xl:min-h-[56vh]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
@@ -786,6 +836,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            )}
 
             <div id="panel-settings-mobile" className={settingsPanelClasses}>
               <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">

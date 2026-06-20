@@ -246,17 +246,17 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });
 
-  test("кілька частин: чипи 1/2×2/3×3 + з'єднувачі ON за замовчуванням", async ({ page }) => {
-    // «Кілька частин» тепер ВИДИМИЙ контрол під форматом «Об'ємна 3D» (не у «Більше опцій»).
+  test("кілька зон: чипи 1/2×2/3×3 + з'єднувачі ON за замовчуванням", async ({ page }) => {
+    // «Кілька зон» — ВИДИМИЙ контрол під форматом «Об'ємна 3D» (не у «Більше опцій»).
     const seg = page.locator('[data-testid="pieces-seg"]').first();
     await expect(seg).toBeVisible();
     await expect(seg.getByRole("radio", { name: "2×2" })).toBeVisible();
     await seg.getByRole("radio", { name: "3×3" }).click();
-    await expect(page.getByText(/9 плиток — велика мапа/).first()).toBeVisible();
-    // З'єднувачі серії з'являються при >1 частині й УВІМКНЕНІ за замовчуванням.
+    await expect(page.getByText(/9 зон/).first()).toBeVisible();
+    // З'єднувачі серії з'являються при >1 зоні й УВІМКНЕНІ за замовчуванням.
     await expect(page.locator('[data-testid="series-connectors-toggle"]').first()).toHaveAttribute("aria-pressed", "true");
     await seg.getByRole("radio", { name: "2×2" }).click();
-    await expect(page.getByText(/4 плиток — велика мапа/).first()).toBeVisible();
+    await expect(page.getByText(/4 зон/).first()).toBeVisible();
   });
 
   test("формат: сегмент-контрол з 3 варіантів, вибір «Плоска» вмикає flat-AMS", async ({ page }) => {
