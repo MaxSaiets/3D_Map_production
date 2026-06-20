@@ -1054,6 +1054,40 @@ def run_full_generation_pipeline(
             highlight_meshes = []
             _hl_pockets = []
 
+    # ВИЗНАЧНІ МІСЦЯ (церкви/вежі/історичні/музеї) → окрема БРОНЗОВА «Landmark» деталь.
+    # Як highlight: вилучаємо їхні будинки ДО boolean-merge (інакше зливаються у рельєф
+    # і колір губиться) і віддаємо окремою частиною — export фарбує за назвою у бронзу.
+    # Без landmark-даних (старий DB / порожньо) блок no-op → вивід байт-ідентичний.
+    landmark_meshes = []
+    _landmark_centroids = getattr(detail_layers, "landmark_centroids", None) or []
+    if _landmark_centroids and building_meshes:
+        try:
+            from services.flat_plate_pipeline import _select_highlight_building_index, _mesh_xy_footprint
+            from shapely.geometry import Point as _LmPt
+            _lm_chosen = []
+            for (_cx, _cy) in _landmark_centroids:
+                _i = _select_highlight_building_index(building_meshes, target_xy=(_cx, _cy), exclude=set(_lm_chosen))
+                if _i is None or _i in _lm_chosen:
+                    continue
+                # центроїд орієнтира МАЄ лежати ВСЕРЕДИНІ обраного будинку — інакше це
+                # nearest-fallback (будинок орієнтира відсутній) → пропускаємо, щоб не
+                # пофарбувати у бронзу чужий будинок.
+                try:
+                    _foot = _mesh_xy_footprint(building_meshes[_i])
+                    if _foot is None or getattr(_foot, "is_empty", True) or not _foot.contains(_LmPt(_cx, _cy)):
+                        continue
+                except Exception:
+                    continue
+                _lm_chosen.append(_i)
+            if _lm_chosen:
+                _lm_set = set(_lm_chosen)
+                landmark_meshes = [building_meshes[j] for j in _lm_chosen]
+                building_meshes = [b for j, b in enumerate(building_meshes) if j not in _lm_set]
+                print(f"[LANDMARK] {zone_prefix}{len(landmark_meshes)} building(s) -> bronze Landmark part (relief, pre-merge)")
+        except Exception as _lmexc:
+            print(f"[LANDMARK] {zone_prefix}relief landmark extract failed (non-fatal): {_lmexc}")
+            landmark_meshes = []
+
     stage_start = time.perf_counter()
     merge_result = None  # defined for downstream debug_bundle/return value
     if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
@@ -1346,6 +1380,15 @@ def run_full_generation_pipeline(
         except Exception:
             highlight_part = highlight_meshes[0]
 
+    landmark_part = None
+    if landmark_meshes:
+        try:
+            import trimesh as _tmh3
+            landmark_part = (landmark_meshes[0] if len(landmark_meshes) == 1
+                             else _tmh3.util.concatenate([m for m in landmark_meshes if m is not None]))
+        except Exception:
+            landmark_part = landmark_meshes[0] if landmark_meshes else None
+
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     export_result = export_generation_outputs(
@@ -1362,6 +1405,7 @@ def run_full_generation_pipeline(
             ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
             + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
             + ([("Highlight", highlight_part)] if highlight_part is not None else [])
+            + ([("Landmark", landmark_part)] if landmark_part is not None else [])
         ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,

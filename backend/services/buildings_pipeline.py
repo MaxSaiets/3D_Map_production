@@ -222,6 +222,18 @@ def process_building_layer(
         scale_factor=scale_factor,
     )
     meshes = [record.mesh for record in building_records if getattr(record, "mesh", None) is not None]
+    # Центроїди визначних місць (локальні координати) → full_generation вилучає ці
+    # будинки до boolean-merge у бронзову «Landmark» деталь (рельєф).
+    landmark_centroids = []
+    for _rec in building_records:
+        _lm = getattr(_rec, "landmark", "") or ""
+        _fp = getattr(_rec, "footprint", None)
+        if _lm and _fp is not None and not getattr(_fp, "is_empty", True):
+            try:
+                _c = _fp.centroid
+                landmark_centroids.append((float(_c.x), float(_c.y)))
+            except Exception:
+                pass
     footprints = None
     try:
         footprint_parts = [
@@ -280,4 +292,5 @@ def process_building_layer(
         support_meshes=support_meshes,
         merged_mesh=merged_mesh,
         footprints=footprints,
+        landmark_centroids=landmark_centroids,
     )

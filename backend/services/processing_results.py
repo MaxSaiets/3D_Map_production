@@ -33,6 +33,7 @@ class BuildingLayerResult:
     support_meshes: Any = None
     merged_mesh: Optional[trimesh.Trimesh] = None
     footprints: Optional[BaseGeometry] = None
+    landmark_centroids: Optional[list] = None  # [(x,y),...] локальні центроїди визначних місць
 
 
 @dataclass

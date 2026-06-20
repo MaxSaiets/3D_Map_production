@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 import os
@@ -37,6 +37,7 @@ class DetailLayerPipelineResult:
     merged_building_mesh: Optional[trimesh.Trimesh]
     support_meshes: Any
     building_footprints: Optional[BaseGeometry]
+    landmark_centroids: Optional[list] = None  # центроїди визначних місць (бронзова Landmark-деталь)
 
 
 @dataclass
@@ -420,4 +421,5 @@ def process_detail_layers(
             if canonical_mask_bundle is not None and getattr(canonical_mask_bundle, "buildings_footprints", None) is not None
             else getattr(building_layer, "footprints", None)
         ),
+        landmark_centroids=getattr(building_layer, "landmark_centroids", None),
     )
