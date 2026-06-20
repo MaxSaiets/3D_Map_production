@@ -769,12 +769,18 @@ def get_building_height(row, min_height: float) -> float:
     if roof_h is not None and roof_h > 0:
         height = float(height or 0.0) + float(roof_h)
 
-    # Якщо тегів нема — лишаємося на min_height (щоб поведінка була прогнозована)
-    
-    # Якщо висота не знайдена, використовуємо мінімальну
+    # Якщо тегів нема — раніше ВСІ такі будинки ставали ОДНАКОВО плоскими (min_height)
+    # → рідко-тегований район виглядав як однакові плити. Тепер даємо ДЕТЕРМІНОВАНУ
+    # варіацію (+0..6м, ~0..2 поверхи) за id будівлі: цифри стабільні між генераціями,
+    # район виглядає живим, але БЕЗ вигаданих «хмарочосів». Будинки з реальними
+    # тегами (height/levels) цю гілку не зачіпає.
     if height is None or height < min_height:
-        height = min_height
-    
+        try:
+            seed = abs(int(float(row.get("id", 0) or 0)))
+        except Exception:
+            seed = 0
+        height = float(min_height) + float(seed % 4) * 2.0  # 0,2,4,6 м понад базу
+
     return height
 
 

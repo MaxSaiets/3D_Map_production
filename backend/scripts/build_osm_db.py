@@ -35,7 +35,7 @@ NATURAL_PARK = frozenset({"wood", "grassland", "scrub", "heath"})
 # Великий batch — DataFrame bulk insert у 100× швидше за executemany
 BATCH_SIZE = 200_000
 
-BUILDING_COLS = ["id", "levels", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
+BUILDING_COLS = ["id", "levels", "height", "landmark", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 ROAD_COLS = ["id", "highway", "bridge", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 BRIDGE_COLS = ["id", "highway", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 WATER_COLS = ["id", "type", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
@@ -109,7 +109,38 @@ class FastHandler(osmium.SimpleHandler):
                 levels = int(float(tags.get("building:levels") or 0))
             except Exception:
                 levels = 0
-            self.buildings.append((rid, levels, wkt, minlon, minlat, maxlon, maxlat))
+            # Явна висота у метрах (OSM height / building:height; "20", "20 m", "65 ft").
+            # Точніша за levels×3 — використовується першочергово у get_building_height.
+            height = 0.0
+            for hk in ("height", "building:height"):
+                hv = tags.get(hk)
+                if not hv:
+                    continue
+                m = re.search(r"[-+]?\d+(?:\.\d+)?", str(hv).replace(",", "."))
+                if not m:
+                    continue
+                try:
+                    h = float(m.group(0))
+                    sl = str(hv).lower()
+                    if "ft" in sl or "feet" in sl or "'" in sl:
+                        h *= 0.3048
+                    height = max(height, h)
+                except Exception:
+                    pass
+            # Орієнтир (визначне місце): церква/вежа/історична/пам'ятка → окрема
+            # категорія для кольору + збереження навіть малих footprint у генерації.
+            bt = tags.get("building") or ""
+            if tags.get("historic"):
+                landmark = "historic"
+            elif tags.get("man_made") == "tower" or bt == "tower":
+                landmark = "tower"
+            elif tags.get("amenity") == "place_of_worship" or bt in ("church", "cathedral", "chapel", "mosque", "temple", "synagogue"):
+                landmark = "worship"
+            elif tags.get("tourism") in ("attraction", "museum") or bt == "castle":
+                landmark = "attraction"
+            else:
+                landmark = ""
+            self.buildings.append((rid, levels, height, landmark, wkt, minlon, minlat, maxlon, maxlat))
         if is_water:
             self.water.append((rid, nat or wway or lu or "water", wkt, minlon, minlat, maxlon, maxlat))
         if is_park:
@@ -240,7 +271,7 @@ def main():
     conn.execute("SET memory_limit='2GB'")
     conn.execute("""
         CREATE TABLE buildings (
-            id BIGINT, levels INTEGER, wkt VARCHAR,
+            id BIGINT, levels INTEGER, height DOUBLE, landmark VARCHAR, wkt VARCHAR,
             minlon DOUBLE, minlat DOUBLE, maxlon DOUBLE, maxlat DOUBLE
         );
         CREATE TABLE roads (

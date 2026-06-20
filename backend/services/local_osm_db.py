@@ -92,8 +92,19 @@ def get_gdf(
     conn = _get_conn()
     if conn is None:
         return None
+    # Динамічно додаємо height/landmark до buildings, ЯКЩО вони є у схемі (DB
+    # зібрано НОВИМ build_osm_db). СТАРИЙ DB (лише id,levels,wkt) працює без змін —
+    # defensive: PRAGMA-перевірка наявності колонок, інакше fallback на levels.
+    _bcols = "id, levels, wkt"
+    try:
+        _avail = {r[1] for r in conn.execute("PRAGMA table_info('buildings')").fetchall()}
+        _extra = [c for c in ("height", "landmark") if c in _avail]
+        if _extra:
+            _bcols = "id, levels, " + ", ".join(_extra) + ", wkt"
+    except Exception:
+        pass
     cols_map = {
-        "buildings": "id, levels, wkt",
+        "buildings": _bcols,
         "roads":     "id, highway, bridge, wkt",
         "bridges":   "id, highway, wkt",
         "water":     "id, type, wkt",
