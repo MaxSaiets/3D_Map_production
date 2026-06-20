@@ -24,7 +24,11 @@ const nextConfig = {
     unoptimized: true,
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // SEO: API не має потрапляти в індекс (підстраховка поверх robots.txt).
+      { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
   webpack: (config) => {
     config.resolve.fallback = {

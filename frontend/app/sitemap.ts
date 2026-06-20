@@ -28,6 +28,12 @@ function url(locale: string, path: string) {
   return locale === defaultLocale ? `${BASE}${path || "/"}` : `${BASE}/${locale}${path}`;
 }
 
+// Статичні сторінки (міста, юр-доки) НЕ оновлюються щодеплою — даємо фіксовану дату
+// контенту, щоб не слати Google хибний сигнал «змінилось усе» на кожен білд. Лише
+// справді динамічні сторінки отримують now. Оновлювати STATIC_LASTMOD при зміні контенту.
+const STATIC_LASTMOD = new Date("2026-06-21");
+const DYNAMIC_PATHS = new Set(["", "/create", "/keychains", "/showcase"]);
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];
@@ -37,7 +43,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     for (const l of locales) {
       entries.push({
         url: url(l, path),
-        lastModified: now,
+        lastModified: DYNAMIC_PATHS.has(path) ? now : STATIC_LASTMOD,
         changeFrequency,
         priority: l === defaultLocale ? priority : Math.max(0.1, priority - 0.1),
         alternates: { languages },
