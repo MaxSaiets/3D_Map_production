@@ -682,7 +682,7 @@ def build_highlight_insert(
     export_scale_factor: float,
     depth_mm: float = 0.8,
     lip_mm: float = 0.5,
-    clearance_mm: float = 0.2,
+    clearance_mm: float = 0.15,   # = GROOVE_CLEARANCE_MM (дороги): вставка сідає з тим самим зазором
     z_clear_mm: float = 0.2,
 ) -> tuple[trimesh.Trimesh, Optional[BaseGeometry], float]:
     """Виділений будинок → ВСТАВНА деталь (механічна вставка у паз бази, БЕЗ клею).
@@ -727,6 +727,12 @@ def build_highlight_insert(
     #  T3 glue-on       — занадто малий навіть на peg → деталь без паза (приклеїти).
     pocket_poly, peg_poly, peg_h, _mode = None, None, 0.0, "glue"
     _t1_pocket = _largest(foot.buffer(-lip, join_style=2))
+    # ПАЗ ІЗ ЗАЗОРОМ ЯК У ДОРІГ: розширюємо паз на +clear (0.15мм/бік) перед вирізом пега.
+    # Тоді pocket = foot−lip+clear, peg = pocket−clear = foot−lip → вставка сідає з тим
+    # самим боковим зазором, що дорожня вставка у жолоб (раніше паз був рівно foot−lip
+    # без зазору під борт будинку → деталь заходила туго / не до кінця).
+    if _t1_pocket is not None:
+        _t1_pocket = _largest(_t1_pocket.buffer(clear, join_style=2))
     _t1_peg = _largest(_t1_pocket.buffer(-clear, join_style=2)) if _t1_pocket is not None else None
     if _t1_peg is not None:
         pocket_poly, peg_poly, peg_h, _mode = _t1_pocket, _t1_peg, max(depth - z_clear, min_peg), "counterbore"
@@ -2860,7 +2866,9 @@ def build_flat_building_meshes(
         or getattr(request, "building_height_multiplier", 1.0)
     )
     requested_min_height_m = float(getattr(request, "building_min_height", 2.0) or 2.0)
-    printable_min_height_m = _model_mm_to_world_m(0.8, float(scale_factor))
+    # Друкарський floor 0.8мм був зависокий → разом з log-шкалою «з'їдав» низ діапазону.
+    # 0.3мм дає більше варіації знизу (1-2 поверхи), лишаючись друкованим на пласкій основі.
+    printable_min_height_m = _model_mm_to_world_m(0.3, float(scale_factor))
     min_building_height_m = max(requested_min_height_m, printable_min_height_m)
     max_building_height_mm = float(getattr(request, "flat_max_building_height_mm", 0.0) or 0.0)
     if bool(getattr(request, "keychain_mode", False)):

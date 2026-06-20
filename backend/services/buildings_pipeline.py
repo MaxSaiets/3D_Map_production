@@ -203,7 +203,11 @@ def process_building_layer(
         or getattr(request, "building_height_multiplier", 1.0)
     )
     requested_min_height_m = float(getattr(request, "building_min_height", 2.0) or 2.0)
-    printable_min_height_m = (1.0 / scale_factor) if scale_factor > 0 else 2.0
+    # ВИСОТИ: раніше floor = 1.0/scale = 10м (при scale 0.1) → ВСІ будинки нижчі за 10м
+    # ставали ОДНАКОВО 10м (1-,2-,3-поверхові не відрізнялись = «висоти неправильні»).
+    # Знижуємо друкарський floor до 0.3мм-екв (≈3м при scale 0.1) → будинки 3-10м тепер
+    # рендеряться на СВОЇЙ висоті (реальна варіація), лишаючись друкованими.
+    printable_min_height_m = max((0.3 / scale_factor), 0.6) if scale_factor > 0 else 2.0
     min_building_height_m = max(requested_min_height_m, printable_min_height_m)
     building_embed_m = stl_extra_embed_m if not request.is_ams_mode else 0.0
     gdf_buildings_for_mesh = split_building_parts_from_parent_footprints(gdf_buildings_local)

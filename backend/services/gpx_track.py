@@ -38,6 +38,32 @@ def _chaikin_smooth(coords: list, passes: int) -> list:
     return out
 
 
+def _visvalingam_simplify(coords: list, area_threshold: float) -> list:
+    """Visvalingam-Whyatt спрощення: ітеративно прибирає внутрішню точку з НАЙМЕНШОЮ
+    площею трикутника (сусід-точка-сусід), поки min-площа < area_threshold (м²).
+    Краще за Douglas-Peucker прибирає дрібні «зубці»/хвилястість сирого GPS, зберігаючи
+    загальну форму → друкований трек, що НЕ виляє і не самоперетинається."""
+    if area_threshold <= 0 or len(coords) <= 3:
+        return coords
+    pts = [(float(c[0]), float(c[1])) for c in coords]
+
+    def _tri_area(a, b, c) -> float:
+        return abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) * 0.5
+
+    guard = len(pts) + 4
+    while len(pts) > 3 and guard > 0:
+        guard -= 1
+        min_i, min_a = -1, float("inf")
+        for i in range(1, len(pts) - 1):
+            a = _tri_area(pts[i - 1], pts[i], pts[i + 1])
+            if a < min_a:
+                min_a, min_i = a, i
+        if min_i < 0 or min_a >= area_threshold:
+            break
+        pts.pop(min_i)
+    return pts
+
+
 def _snap_coords_to_roads(coords: list, road_lines_local: list, snap_threshold_m: float) -> list:
     """Притягує точки треку до найближчої осі дороги (місто): для кожної точки
     шукаємо найближчу дорогу; якщо ближче за поріг — проєктуємо на неї, інакше
@@ -75,6 +101,7 @@ def gpx_track_to_local_geometry(
     smooth_passes: int = 0,
     road_lines_local: Optional[list] = None,
     snap_threshold_m: float = 0.0,
+    vw_area_threshold: float = 0.0,
 ) -> Optional[BaseGeometry]:
     """[[lon,lat],...] → LineString у локальних метрах (frame global_center).
     Розриви GPS (стрибок > 500м між сусідніми точками) ріжуть трек на сегменти.
@@ -121,6 +148,10 @@ def gpx_track_to_local_geometry(
                         coords = sc
                 except Exception:
                     pass
+            # 2b) Visvalingam — прибрати дрібні «зубці»/звивистість, що DP лишає на
+            # зиґзаґах (трек перестає виляти й налазити на сусідні фічі/рельєф).
+            if vw_area_threshold > 0 and len(coords) >= 4:
+                coords = _visvalingam_simplify(coords, vw_area_threshold)
             # 3) Чайкін — згладити злами у плавну криву
             if smooth_passes and smooth_passes > 0:
                 coords = _chaikin_smooth(coords, smooth_passes)
@@ -155,10 +186,16 @@ def build_gpx_track_polygon(
     # моделі (world = 0.6/sf), але не грубіше за пів-ширини треку.
     simplify_m = min(max(0.6 / sf, 0.5), half_w_m * 1.2)
     snap_threshold_m = (18.0 if road_lines_local else 0.0)  # місто: притягувати до доріг у радіусі ~18м
+    # Visvalingam де-хвилястість: прибираємо зиґзаґи дрібніші за ~пів-ширину треку.
+    # МІСТО (є дороги) — легше (трек уздовж осей доріг); ПРИРОДА (без доріг) — агресивніше
+    # + більше Чайкіна, бо лісові/гірські треки звивистіші й гірше друкуються.
+    _is_city = bool(road_lines_local)
+    vw_area_threshold = (half_w_m * (0.7 if _is_city else 1.3)) ** 2 * 0.5
     line = gpx_track_to_local_geometry(
         gpx_track, global_center,
-        simplify_m=simplify_m, smooth_passes=2,
+        simplify_m=simplify_m, smooth_passes=(2 if _is_city else 3),
         road_lines_local=road_lines_local, snap_threshold_m=snap_threshold_m,
+        vw_area_threshold=vw_area_threshold,
     )
     if line is None:
         return None

@@ -16,6 +16,10 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Zero-downtime деплой: build у ОКРЕМУ теку (NEXT_DIST_DIR=.next-build) поки старий
+  // фронт ще обслуговує з .next, потім атомарний swap + restart (~секунди замість ~6хв
+  // простою від rm -rf .next). За замовчуванням .next — звичайний build/start не зачеплено.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     unoptimized: true,
   },
