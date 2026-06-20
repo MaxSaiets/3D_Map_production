@@ -1200,7 +1200,7 @@ def run_full_generation_pipeline(
             import trimesh as _tmc
             _floor_z = float(terrain_mesh.bounds[0][2])
             _model_h = float(terrain_mesh.bounds[1][2]) - _floor_z
-            _depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
             # Глибина пазу: не глибше 60% висоти моделі (лишаємо суцільний матеріал).
             _depth_m = min(_depth_mm / _sf_c, max(_model_h * 0.6, 0.0))
             _ntc, _keyc = build_map_connector_geometry(
@@ -1209,7 +1209,7 @@ def run_full_generation_pipeline(
                 span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
                 length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
                 waist_frac=0.5,
-                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
                 export_scale_factor=_sf_c,
                 key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
             )

@@ -782,8 +782,8 @@ class GenerationRequest(BaseModel):
     map_connector_edges: str = Field(default="NSEW", max_length=4)
     map_connector_span_mm: float = Field(default=10.0, ge=4.0, le=30.0)
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
-    map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
-    map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    map_connector_depth_mm: float = Field(default=0.3, ge=0.2, le=4.0)
+    map_connector_clearance_mm: float = Field(default=0.03, ge=0.02, le=0.6)
     # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
     # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
     map_connector_key_edges: str = Field(default="", max_length=4)
@@ -3063,8 +3063,8 @@ class ZoneGenerationRequest(BaseModel):
     map_connector_edges: str = Field(default="NSEW", max_length=4)
     map_connector_span_mm: float = Field(default=10.0, ge=4.0, le=30.0)
     map_connector_length_mm: float = Field(default=15.0, ge=6.0, le=40.0)
-    map_connector_depth_mm: float = Field(default=2.0, ge=0.8, le=4.0)
-    map_connector_clearance_mm: float = Field(default=0.2, ge=0.05, le=0.6)
+    map_connector_depth_mm: float = Field(default=0.3, ge=0.2, le=4.0)
+    map_connector_clearance_mm: float = Field(default=0.03, ge=0.02, le=0.6)
     # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
     # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
     map_connector_key_edges: str = Field(default="", max_length=4)

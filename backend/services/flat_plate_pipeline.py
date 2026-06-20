@@ -2989,7 +2989,7 @@ def run_flat_plate_pipeline(
     # тож основа мусить бути ≥ (глибина пазу + 1мм) і ≥3мм (узгоджено з flat-AMS).
     map_connector = bool(getattr(request, "map_connector", False)) and not keychain_mode
     if map_connector:
-        _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+        _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
         base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.0, 3.0)
 
     # ВИДІЛЕНА БУДІВЛЯ (карта): паз 0.8мм у ВЕРХ бази + лице ≥0.6мм → база ≥1.6мм.
@@ -3014,7 +3014,7 @@ def run_flat_plate_pipeline(
         if bool(getattr(request, "magnet_pocket", False)):
             _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0))
         if bool(getattr(request, "map_connector", False)):
-            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0))
+            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3))
         _needed_mm = _HL_TOP_POCKET_MM + _bottom_depth_mm + _HL_MIN_SOLID_MM
         if base_thickness_mm < _needed_mm - 1e-9:
             print(f"[MAP HIGHLIGHT] through-hole guard (early): highlight 0.8mm top pocket + "
@@ -3214,7 +3214,7 @@ def run_flat_plate_pipeline(
         # Той самий прийом, що магніт/зворот-гравіювання — паз ріжеться у нижній
         # шар (back_text_poly), лице лишається суцільним → шов спереду непомітний.
         try:
-            _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
             _conn_depth_mm = min(_conn_depth_mm, max(base_thickness_mm - 1.0, 0.0))  # ≥1мм лиця
             _conn_depth_m = _model_mm_to_world_m(_conn_depth_mm, export_scale_factor)
             _notches, _keys = build_map_connector_geometry(
@@ -3223,7 +3223,7 @@ def run_flat_plate_pipeline(
                 span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
                 length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
                 waist_frac=0.5,
-                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.2) or 0.2),
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
                 export_scale_factor=export_scale_factor,
                 key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
             )

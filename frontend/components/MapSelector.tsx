@@ -538,7 +538,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
     const size = boundsSizeMeters(bounds);
     // Visual shape outline (oval for token, rounded rect etc)
     const shapeKind = spec.baseShape || "rounded";
-    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    // ?? (НЕ ||): cornerRadiusMm=0 = ГОСТРІ кути 90° (дефолт прямокутника). Раніше
+    // `|| 4` робив 0→4мм → прямокутник завжди заокруглений попри роздвоєний тумблер.
+    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm ?? 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
     shapeKindRef.current = shapeKind;
     cornerFracRef.current = cornerFrac;
     const visualPoints = rotatedShapePoints(center, size.widthM, size.heightM, rotationDeg, shapeKind, cornerFrac);
@@ -578,7 +580,9 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     const cropSize = { widthM, heightM };
     const shapeKind = spec.baseShape || "rounded";
-    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm || 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
+    // ?? (НЕ ||): cornerRadiusMm=0 = ГОСТРІ кути 90° (дефолт прямокутника). Раніше
+    // `|| 4` робив 0→4мм → прямокутник завжди заокруглений попри роздвоєний тумблер.
+    const cornerFrac = Math.min(0.45, Math.max(0.0, (spec.cornerRadiusMm ?? 4) / Math.max(spec.mapWidthMm, spec.mapHeightMm, 1)));
     shapeKindRef.current = shapeKind;
     cornerFracRef.current = cornerFrac;
     // UX-FIX: рамка була майже невидима на строкатій карті (weight 2 + бліда
