@@ -73,7 +73,7 @@ def test_flat_buildings_keep_building_part_heights_and_sit_on_base_top():
     )()
     base_top_m = 3.0
 
-    meshes = build_flat_building_meshes(
+    meshes, _landmarks = build_flat_building_meshes(
         request=request,
         scale_factor=0.2,
         gdf_buildings_local=gdf,
@@ -84,6 +84,40 @@ def test_flat_buildings_keep_building_part_heights_and_sit_on_base_top():
     assert sorted(round(float(mesh.bounds[0][2]), 6) for mesh in meshes) == [base_top_m, base_top_m]
     heights = sorted(round(float(mesh.bounds[1][2] - mesh.bounds[0][2]), 6) for mesh in meshes)
     assert heights == [30.0, 90.0]
+
+
+def test_flat_buildings_split_landmarks_into_separate_list():
+    """Будівлі з landmark!='' (церкви/вежі/історичні) йдуть ОКРЕМИМ списком,
+    щоб у експорті стати частиною «Landmark» з бронзовим кольором."""
+    ordinary = _square(0, 0, 10, 10)
+    church = _square(40, 40, 50, 50)
+    gdf = gpd.GeoDataFrame(
+        {
+            "building": ["yes", "church"],
+            "building:levels": [3, 2],
+            "landmark": ["", "worship"],
+            "geometry": [ordinary, church],
+        }
+    )
+    request = type(
+        "Request",
+        (),
+        {
+            "building_height_multiplier": 1.0,
+            "building_min_height": 2.0,
+            "include_buildings": True,
+        },
+    )()
+
+    meshes, landmarks = build_flat_building_meshes(
+        request=request,
+        scale_factor=0.2,
+        gdf_buildings_local=gdf,
+        base_top_m=1.0,
+    )
+
+    assert len(meshes) == 1      # звичайний будинок
+    assert len(landmarks) == 1   # церква → окремий landmark-список
 
 
 def test_keychain_layout_adds_reinforced_loop_and_reserved_label_band():
@@ -181,7 +215,7 @@ def test_keychain_buildings_are_clamped_to_keychain_height():
         },
     )()
 
-    meshes = build_flat_building_meshes(
+    meshes, _landmarks = build_flat_building_meshes(
         request=request,
         scale_factor=0.2,
         export_scale_factor=0.2,

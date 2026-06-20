@@ -37,6 +37,9 @@ LAYER_COLORS = {
     # вставною деталлю іншим філаментом, яскраво виділяється на білій карті
     # (фідбек власника: «зробив його червоним»).
     "highlight": [206, 38, 38, 255],
+    # Визначні місця (церкви/вежі/історичні/музеї) — БРОНЗА-ЯНТАР, окремий
+    # філамент: виділяються на білій карті, синхрон з model_exporter COLOR_MAP.
+    "landmark": [201, 144, 47, 255],
 }
 
 MIN_KEYCHAIN_PRINT_FEATURE_MM = 0.4
@@ -2798,11 +2801,13 @@ def build_flat_building_meshes(
     gdf_buildings_local: Optional[GeoDataFrame],
     base_top_m: float,
     export_scale_factor: Optional[float] = None,
-) -> list[trimesh.Trimesh]:
+) -> tuple[list[trimesh.Trimesh], list[trimesh.Trimesh]]:
+    """Повертає (ordinary_building_meshes, landmark_meshes). Орієнтири йдуть
+    окремим списком → у експорті стають частиною «Landmark» з бронзовим кольором."""
     if gdf_buildings_local is None or gdf_buildings_local.empty:
-        return []
+        return [], []
     if not getattr(request, "include_buildings", True):
-        return []
+        return [], []
 
     gdf_buildings_for_mesh = split_building_parts_from_parent_footprints(gdf_buildings_local)
 
@@ -2817,7 +2822,12 @@ def build_flat_building_meshes(
             try:
                 # Сортуємо за площею (більші першими) і беремо топ-N
                 areas = gdf_buildings_for_mesh.geometry.area
-                sorted_idx = areas.sort_values(ascending=False).index[:max_buildings]
+                sorted_idx = list(areas.sort_values(ascending=False).index[:max_buildings])
+                # Визначні місця ЗАВЖДИ лишаємо (навіть малі) — щоб орієнтири не зникали при OOM-кепі
+                if "landmark" in gdf_buildings_for_mesh.columns:
+                    _lm_mask = gdf_buildings_for_mesh["landmark"].fillna("").astype(str).str.strip() != ""
+                    _kept = set(sorted_idx)
+                    sorted_idx = sorted_idx + [i for i in gdf_buildings_for_mesh.index[_lm_mask] if i not in _kept]
                 original_count = len(gdf_buildings_for_mesh)
                 gdf_buildings_for_mesh = gdf_buildings_for_mesh.loc[sorted_idx].copy()
                 print(
@@ -2878,11 +2888,13 @@ def build_flat_building_meshes(
     )
 
     meshes: list[trimesh.Trimesh] = []
+    landmark_meshes: list[trimesh.Trimesh] = []
     is_keychain = bool(getattr(request, "keychain_mode", False))
     for record in records:
         mesh = getattr(record, "mesh", None)
         if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
             continue
+        landmark_category = getattr(record, "landmark", "") or ""
         mesh = mesh.copy()
         if uniform_height:
             mesh = _set_mesh_height(mesh, target_height_m=max(uniform_height_m, min_building_height_m))
@@ -2916,20 +2928,27 @@ def build_flat_building_meshes(
         elif max_building_height_m > 0:
             mesh = _clamp_mesh_height(mesh, min_height_m=min_building_height_m, max_height_m=max_building_height_m)
         mesh.apply_translation([0.0, 0.0, float(base_top_m)])
-        _with_color(mesh, LAYER_COLORS["buildings"])
-        meshes.append(mesh)
+        if landmark_category:
+            _with_color(mesh, LAYER_COLORS["landmark"])
+            landmark_meshes.append(mesh)
+        else:
+            _with_color(mesh, LAYER_COLORS["buildings"])
+            meshes.append(mesh)
 
     # ФІНАЛЬНИЙ mesh-level фільтр волосин (ТІЛЬКИ keychain): process_buildings
     # внутрішньо створює slivers (parent − parts), яких footprint-фільтр вище не
     # бачить. Тут міряємо РЕАЛЬНУ мін-ширину готового меша і викидаємо <0.5мм
     # (фінал) — не друкується/відламується. Повна мапа не зачіпається → golden ОК.
-    if is_keychain and meshes:
+    if is_keychain:
         _minw_m = model_mm_to_world_m(0.5, float(export_scale_factor or scale_factor))
-        _before = len(meshes)
+        _before = len(meshes) + len(landmark_meshes)
         meshes = [m for m in meshes if _mesh_footprint_min_width_m(m) >= _minw_m]
-        if len(meshes) < _before:
-            print(f"[KEYCHAIN] Dropped {_before - len(meshes)} thin building meshes (<0.5mm min-width) — anti break-off")
-    return meshes
+        # Орієнтири на БРЕЛКУ теж не можуть бути тоншими за 0.5мм (відламаються при друці)
+        landmark_meshes = [m for m in landmark_meshes if _mesh_footprint_min_width_m(m) >= _minw_m]
+        _after = len(meshes) + len(landmark_meshes)
+        if _after < _before:
+            print(f"[KEYCHAIN] Dropped {_before - _after} thin building meshes (<0.5mm min-width) — anti break-off")
+    return meshes, landmark_meshes
 
 
 def run_flat_plate_pipeline(
@@ -4111,7 +4130,7 @@ def run_flat_plate_pipeline(
     if keychain_mode:
         try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
         except Exception: pass
-    building_meshes = build_flat_building_meshes(
+    building_meshes, landmark_meshes = build_flat_building_meshes(
         request=request,
         scale_factor=scale_factor,
         export_scale_factor=export_scale_factor,
@@ -4507,7 +4526,7 @@ def run_flat_plate_pipeline(
             try:
                 minx, miny, maxx, maxy = keychain_layout["body"].bounds
                 _rotate_meshes_for_keychain_layout(
-                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh, keychain_marker_mesh, highlight_building_mesh],
+                    meshes=[terrain_mesh, road_mesh, water_mesh, parks_mesh, keychain_rim_mesh, keychain_text_mesh, keychain_text2_mesh, keychain_base_bottom_mesh, keychain_marker_mesh, highlight_building_mesh] + landmark_meshes,
                     building_meshes=building_meshes,
                     angle_deg=layout_rotation_deg,
                     origin_xy=((minx + maxx) * 0.5, (miny + maxy) * 0.5),
@@ -4533,6 +4552,12 @@ def run_flat_plate_pipeline(
         f"roads={base_thickness_mm + roads_layer_mm:.2f}mm, "
         f"parks={base_thickness_mm + parks_layer_mm:.2f}mm"
     )
+    combined_landmarks = None
+    if landmark_meshes:
+        try:
+            combined_landmarks = trimesh.util.concatenate([m for m in landmark_meshes if m is not None])
+        except Exception:
+            combined_landmarks = None
     if keychain_mode:
         try:
             combined_buildings = (
@@ -4565,6 +4590,7 @@ def run_flat_plate_pipeline(
                 "parks": _mesh_manifest(parks_mesh, scale_factor=export_scale_factor),
                 "roads": _mesh_manifest(road_mesh, scale_factor=export_scale_factor),
                 "buildings": _mesh_manifest(combined_buildings, scale_factor=export_scale_factor),
+                "landmark": _mesh_manifest(combined_landmarks, scale_factor=export_scale_factor),
                 "text": _mesh_manifest(keychain_text_mesh, scale_factor=export_scale_factor),
             },
         }
@@ -4590,6 +4616,7 @@ def run_flat_plate_pipeline(
                 ("Text2", keychain_text2_mesh),
                 ("Marker", keychain_marker_mesh),
                 ("Highlight", highlight_building_mesh),
+                ("Landmark", combined_landmarks),
                 ("Connector", connector_mesh),
                 ("Frame", map_frame_mesh),
                 ("BaseBack", keychain_base_bottom_mesh),

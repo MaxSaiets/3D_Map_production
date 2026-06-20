@@ -23,6 +23,7 @@ class BuildingMeshRecord:
     mesh: trimesh.Trimesh
     footprint: Optional[BaseGeometry]
     base_z: float
+    landmark: str = ""   # OSM-категорія орієнтиру: "historic"/"tower"/"worship"/"attraction"; "" = звичайний будинок
 
 
 def process_buildings(
@@ -71,9 +72,12 @@ def process_buildings(
     building_meshes = []
     building_records: List[BuildingMeshRecord] = []
 
-    def _geometry_meets_threshold(poly: Optional[Polygon]) -> bool:
+    def _geometry_meets_threshold(poly: Optional[Polygon], is_landmark: bool = False) -> bool:
         if poly is None or poly.is_empty:
             return False
+        # Орієнтири (церкви/вежі/історичні) НЕ відкидаємо за розміром — навіть малі мусять лишитись
+        if is_landmark:
+            return True
         if min_feature_m <= 0:
             return True
         try:
@@ -85,7 +89,7 @@ def process_buildings(
         except Exception:
             return True
 
-    def _clip_building_geometry(geometry: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
+    def _clip_building_geometry(geometry: Optional[BaseGeometry], landmark_category: str = "") -> Optional[BaseGeometry]:
         if geometry is None or getattr(geometry, "is_empty", True):
             return None
         if exclusion_polygons is None or getattr(exclusion_polygons, "is_empty", True):
@@ -132,12 +136,12 @@ def process_buildings(
             return None
         kept: List[Polygon] = []
         if isinstance(clipped, Polygon):
-            if _geometry_meets_threshold(clipped):
+            if _geometry_meets_threshold(clipped, is_landmark=bool(landmark_category)):
                 kept.append(clipped)
         elif isinstance(clipped, MultiPolygon) or hasattr(clipped, "geoms"):
             try:
                 for part in clipped.geoms:
-                    if isinstance(part, Polygon) and _geometry_meets_threshold(part):
+                    if isinstance(part, Polygon) and _geometry_meets_threshold(part, is_landmark=bool(landmark_category)):
                         kept.append(part)
             except Exception:
                 pass
@@ -151,6 +155,7 @@ def process_buildings(
         mesh: trimesh.Trimesh,
         footprint: Optional[BaseGeometry],
         base_z_override: Optional[float] = None,
+        landmark_category: str = "",
     ) -> None:
         if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
             return
@@ -173,6 +178,7 @@ def process_buildings(
                 mesh=mesh,
                 footprint=clean_footprint,
                 base_z=base_z,
+                landmark=landmark_category,
             )
         )
 
@@ -332,7 +338,13 @@ def process_buildings(
             try:
                 row = gdf_buildings.loc[idx]
                 geom = row.geometry
-                
+                # Орієнтир (визначне місце) з OSM-тегу landmark; "" = звичайний будинок
+                try:
+                    _lm = row.get("landmark", "") if hasattr(row, "get") else getattr(row, "landmark", "")
+                    landmark_category = str(_lm).strip() if _lm is not None else ""
+                except Exception:
+                    landmark_category = ""
+
                 # Пропускаємо невалідні геометрії
                 if geom is None:
                     continue
@@ -353,7 +365,7 @@ def process_buildings(
                     print(f"  [WARN] Помилка перевірки геометрії будівлі {idx}: {e}")
                     continue
 
-                geom = _clip_building_geometry(geom)
+                geom = _clip_building_geometry(geom, landmark_category=landmark_category)
                 if geom is None or getattr(geom, "is_empty", True):
                     continue
                 
@@ -514,7 +526,7 @@ def process_buildings(
                             print(f"  [WARN] Будівля {idx}: помилка виправлення mesh: {fix_error}")
                         
                         if mesh and len(mesh.faces) > 0 and len(mesh.vertices) > 0:
-                            _append_building_mesh(mesh, geom, base_z_override=flat_base_z)
+                            _append_building_mesh(mesh, geom, base_z_override=flat_base_z, landmark_category=landmark_category)
                         else:
                             print(f"  [SKIP] Будівля {idx}: mesh невалідний після обробки")
                     except Exception as e:
@@ -527,7 +539,7 @@ def process_buildings(
                             if mesh:
                                 mesh.apply_translation([0, 0, translate_z])
                                 if len(mesh.faces) > 0:
-                                    _append_building_mesh(mesh, geom)
+                                    _append_building_mesh(mesh, geom, landmark_category=landmark_category)
                         except Exception:
                             pass
                 # ВИПРАВЛЕННЯ: Якщо MultiPolygon, обробляємо кожен полігон окремо з ОКРЕМИМ translate_z
@@ -653,7 +665,7 @@ def process_buildings(
                                 pass
 
                             if mesh and len(mesh.faces) > 0 and len(mesh.vertices) > 0:
-                                _append_building_mesh(mesh, poly, base_z_override=poly_flat_base_z)
+                                _append_building_mesh(mesh, poly, base_z_override=poly_flat_base_z, landmark_category=landmark_category)
                         except Exception as e:
                             # Fallback
                             try:
@@ -661,7 +673,7 @@ def process_buildings(
                                 if mesh:
                                     mesh.apply_translation([0, 0, poly_translate_z])
                                     if mesh and len(mesh.faces) > 0:
-                                        _append_building_mesh(mesh, poly, base_z_override=poly_flat_base_z)
+                                        _append_building_mesh(mesh, poly, base_z_override=poly_flat_base_z, landmark_category=landmark_category)
                             except Exception:
                                 continue
             except Exception as e:

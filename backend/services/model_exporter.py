@@ -1459,6 +1459,7 @@ def export_3mf(
         "track": [222, 28, 28, 255],       # Червоний GPX-маршрут
         "marker": [196, 65, 16, 255],      # Теракотовий маркер «особливе місце»
         "highlight": [206, 38, 38, 255],   # ЧЕРВОНИЙ — підсвічений будинок (окрема вставна деталь)
+        "landmark": [201, 144, 47, 255],   # БРОНЗА-ЯНТАР — визначні місця (церкви/вежі/історичні/музеї)
         "connector": [242, 242, 242, 255], # З'єднувач-метелик = колір основи
         # ободок/текст — ЧОРНІ (синхрон з canonical LAYER_COLORS 0x191919)
         "rim": [25, 25, 25, 255],
@@ -1489,7 +1490,7 @@ def export_3mf(
     # IMPORTANT: всі parts ВЖЕ позиціоновані в одному mm-просторі через
     # prepare_scene_parts → transform_matrix. Тому Bambu бачить їх як ОДИН
     # зібраний об'єкт із кількома материалами, а не як розкидані частини.
-    NAME_ORDER = ["base", "terrain", "rim", "water", "parks", "green", "roads", "buildings", "text"]
+    NAME_ORDER = ["base", "terrain", "rim", "water", "parks", "green", "roads", "buildings", "landmark", "text"]
     ordered_keys = sorted(
         preview_parts.keys(),
         key=lambda k: NAME_ORDER.index(k.lower()) if k.lower() in NAME_ORDER else 999,
@@ -1809,6 +1810,7 @@ def export_glb(
         "terrain": [200, 180, 140, 255],
         "roads": [60, 60, 60, 255],
         "buildings": [227, 227, 227, 255],
+        "landmark": [214, 158, 66, 255],
         "water": [100, 150, 200, 255],
         "parks": [100, 150, 100, 255],
         "green": [100, 150, 100, 255],
@@ -1908,6 +1910,7 @@ def export_scene(
             "connector": [200, 180, 140, 255], # З'єднувач-метелик = колір основи (як base тут)
             "frame": [20, 20, 20, 255],        # Преміум-рамка = чорна (як текст)
             "highlight": [206, 38, 38, 255],   # Підсвічений будинок = червоний
+            "landmark": [201, 144, 47, 255],   # Визначні місця = бронза-янтар
         }
         
         colored_items = []
