@@ -177,6 +177,7 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
           marker: 0xc44110, // маркер «особливе місце» — теракотовий
           highlight: 0xce2626, // виділений будинок — ЧЕРВОНИЙ (як друк)
+          landmark: 0xd69e42, // визначні місця (церкви/вежі/історичні) — БРОНЗА (друк #C9902F)
           frame: 0x191919,  // преміум-рамка — ЧОРНА
           connector: 0xf2f2f2, // з'єднувач-метелик — колір основи
           maplabel: 0x191919,
@@ -294,6 +295,7 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           track: { color: 0xdc2626, part: "track" },     // GPX — червоний
           marker: { color: 0xc44110, part: "marker" },   // маркер «особливе місце» — теракотовий
           highlight: { color: 0xce2626, part: "highlight" }, // виділений будинок — ЧЕРВОНИЙ
+          landmark: { color: 0xd69e42, part: "landmark" }, // визначні місця — БРОНЗА (друк #C9902F)
           frame: { color: 0x191919, part: "frame" },     // преміум-рамка — ЧОРНА
           connector: { color: 0xf2f2f2, part: "connector" }, // з'єднувач — колір основи
           maplabel: { color: 0x191919, part: "maplabel" },
