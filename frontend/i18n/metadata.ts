@@ -37,10 +37,15 @@ export async function pageMetadata({
   locale: rawLocale,
   path,
   ns,
+  ogImage,
 }: {
   locale: string;
   path: string;
   ns: string;
+  /** OG image URL. Omit → default brand OG card (так info/юр-сторінки теж мають
+   *  картку у соцмережах). Pass `false` → НЕ задавати images, щоб не перебити
+   *  colocated opengraph-image.tsx маршруту (create/keychains мають власні). */
+  ogImage?: string | false;
 }): Promise<Metadata> {
   const locale: AppLocale = isLocale(rawLocale) ? rawLocale : defaultLocale;
   const t = await getTranslations({ locale, namespace: ns });
@@ -67,6 +72,7 @@ export async function pageMetadata({
       type: "website",
       locale: localeMeta[locale].ogLocale,
       alternateLocale: locales.filter((l) => l !== locale).map((l) => localeMeta[l].ogLocale),
+      ...(ogImage === false ? {} : { images: [ogImage ?? `${BASE}/opengraph-image`] }),
     },
     twitter: { card: "summary_large_image", title, description },
   };

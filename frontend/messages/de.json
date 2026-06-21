@@ -2,7 +2,7 @@
   "meta": {
     "skipToContent": "Zum Inhalt springen",
     "homeTitle": "Monadruk — 3D-Karten deiner Stadt zum Drucken",
-    "homeDescription": "Wähle ein Viertel deiner Stadt, passe das Modell an und lade eine druckfertige 3D-Datei herunter. Taktile Architekturkarten mit echten Gebäudehöhen, Parks und Flüssen. Schlüsselanhänger mit Stadtkarte auf Bestellung.",
+    "homeDescription": "3D-Karte deiner Stadt: Viertel wählen, Modell anpassen und druckfertige Datei laden. Taktile Karten mit echten Höhen. Druck & Anhänger auf Bestellung.",
     "ogTitle": "Monadruk — 3D-Karten deiner Stadt",
     "ogDescription": "Verwandle jeden Ort der Erde in eine taktile 3D-Karte zum Drucken.",
     "keywords": "3D Stadtkarte, Stadtplan 3D Druck, Stadtkarte drucken, Schlüsselanhänger Stadtkarte, personalisierter Schlüsselanhänger Karte, STL Stadtplan, 3MF Karte, topografische Karte 3D, Reliefkarte Druck, Kühlschrankmagnet Stadtkarte, personalisiertes Geschenk Karte, Jahrestagsgeschenk Karte, taktile Karte, Bambu Studio, PrusaSlicer",
@@ -180,7 +180,7 @@
   },
   "keychainsMeta": {
     "title": "Schlüsselanhänger mit Stadtkarte — individuell",
-    "description": "Ein Karten-Schlüsselanhänger deiner Stadt: persönlicher 3D-Anhänger mit Straßen, Gebäuden und eigenem Text — oder ein Topo-Anhänger mit echtem Gebirgsrelief (Alpen, Karpaten). Online erstellen, 3MF herunterladen oder Druck in Eco PLA bestellen.",
+    "description": "Karten-Anhänger deiner Stadt: 3D-Anhänger mit Straßen und eigenem Text oder Topo-Anhänger mit Gebirgsrelief. Online erstellen oder Druck bestellen.",
     "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
@@ -533,7 +533,14 @@
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",
     "description": "Fertige 3D-Stadtkarten ukrainischer Städte zum Drucken: Kiew, Lemberg, Odessa, Charkiw, Dnipro und 18 weitere. Wähle eine Stadt und erstelle ein taktiles 3D-Modell oder einen Karten-Schlüsselanhänger.",
-    "keywords": "3d stadtkarten ukraine, 3d karte ukrainische stadt, stadtkarte 3d druck, schlüsselanhänger ukrainische stadt"
+    "keywords": "3d stadtkarten ukraine, 3d karte ukrainische stadt, stadtkarte 3d druck, schlüsselanhänger ukrainische stadt",
+    "h2how": "So funktioniert eine 3D-Stadtkarte",
+    "pHow": "Wir nutzen OpenStreetMap-Daten: Straßen, Gebäude mit echten Höhen, Parks und Gewässer. Der Konfigurator macht aus dem gewählten Bereich ein taktiles Modell und liefert eine fertige 3MF- oder STL-Datei für Bambu Studio oder PrusaSlicer — oder wir drucken es und senden es dir.",
+    "h2cities": "Wähle deine Stadt",
+    "h2gift": "Ein Geschenk mit der Karte deiner Heimatstadt",
+    "pGift": "Eine 3D-Karte oder ein Karten-Anhänger ist ein persönliches Geschenk zum Einzug, Jubiläum oder Abschied. Wähle ein Viertel mit Bedeutung — wir machen daraus ein Modell, das sich gut anfühlt.",
+    "ctaCreate": "3D-Karte erstellen",
+    "ctaKeychain": "Karten-Anhänger"
   },
   "cityPages": {
     "title": "3D-Karte von {city} — drucken oder als Schlüsselanhänger",
@@ -552,7 +559,9 @@
     "fArea": "Fläche",
     "fRiver": "Gewässer",
     "fOblast": "Region",
-    "fLandmark": "Wahrzeichen"
+    "fLandmark": "Wahrzeichen",
+    "factsProse": "Das 3D-Modell zeigt deutlich das Hauptgewässer der Stadt ({river}) und ihr architektonisches Wahrzeichen ({landmark}) — genau diese Details machen die Karte auf den ersten Blick erkennbar.",
+    "districtsTitle": "Stadtteile & Wahrzeichen"
   },
   "share": {
     "title": "Meine 3D-Karte auf Monadruk",

@@ -70,7 +70,7 @@ export default function PricesPage({ params }: { params: { locale: string } }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <Link href="/" className="text-[13px] font-semibold text-ink-2 hover:text-ink">← monadruk</Link>
 
-      <h1 className="mt-4 font-serif text-3xl font-semibold text-ink lg:text-4xl">{c.h1}</h1>
+      <h1 className="mt-4 font-serif text-3xl font-semibold text-ink lg:text-4xl">{c.metaTitle}</h1>
       <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-ink-2">{c.intro}</p>
 
       {c.categories.map((cat) => (

@@ -5,7 +5,8 @@ import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
-import { cityFacts } from "@/lib/cityFacts";
+import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
+import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 
@@ -81,7 +82,7 @@ export default async function CityPage({
         "@type": "Product",
         name: t("title", { city: name }),
         description: t("description", { city: name }),
-        image: `${BASE}/showcase/map-1.png`,
+        image: `${BASE}/showcase/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-MAP-${city.slug}`,
         offers: {
@@ -117,7 +118,25 @@ export default async function CityPage({
     ...(cat.categories[2]?.items ?? []), // брелок
   ];
 
-  const others = CITY_PAGES.filter((c) => c.slug !== city.slug).slice(0, 12);
+  // Споріднені міста: найближчі за відстанню (локальний кластер) + кілька
+  // найбільших за населенням — щоб блок був УНІКАЛЬНИМ на кожній сторінці
+  // (не той самий фіксований список) і давав осмислену внутрішню перелінковку.
+  const hav = (a: readonly [number, number], b: readonly [number, number]) => {
+    const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+  const rest = CITY_PAGES.filter((c) => c.slug !== city.slug);
+  const nearest = [...rest].sort((a, b) => hav(city.center, a.center) - hav(city.center, b.center)).slice(0, 9);
+  const biggest = [...rest]
+    .sort((a, b) => (CITY_FACTS[b.slug]?.population ?? 0) - (CITY_FACTS[a.slug]?.population ?? 0))
+    .filter((c) => !nearest.some((n) => n.slug === c.slug))
+    .slice(0, 3);
+  const others = [...nearest, ...biggest];
+
+  // Райони міста (rank 3): унікальні prose-блерби + глибокі лінки на /create?template=
+  const districts = MAP_TEMPLATES.filter((tpl) => tpl.cityKey === city.key);
 
   return (
     <main id="main-content" tabIndex={-1} className="mx-auto max-w-[820px] px-5 py-14 lg:py-20">
@@ -132,6 +151,13 @@ export default async function CityPage({
       <h1 className="mt-5 text-[clamp(28px,4vw,46px)] leading-tight">{t("h1", { city: name })}</h1>
       <p className="mt-5 text-[15px] leading-relaxed text-ink-2">{t("p1", { city: name })}</p>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t("p2", { city: name })}</p>
+      {/* Унікальна prose-фраза на основі фактів (анти-doorway): дужкова конструкція
+          уникає відмінкових/родових узгоджень з власними назвами у 6 мовах. */}
+      {facts && (
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+          {t("factsProse", { river: pn(facts.river), landmark: pn(facts.landmark) })}
+        </p>
+      )}
 
       {/* Унікальні факти про місто (анти-doorway): кожна сторінка отримує
           відмінні числа/назви, тож контент не byte-identical. Гард: якщо для
@@ -171,6 +197,30 @@ export default async function CityPage({
           {t("ctaKeychain", { city: name })}
         </Link>
       </div>
+
+      {/* Райони міста (rank 3): унікальний контент + глибокі лінки на готову сцену
+          конструктора (/create?template=). Блерби uk-only → решта локалей лише назва. */}
+      {districts.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-[20px] font-semibold">{t("districtsTitle")}</h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {districts.map((d) => (
+              <li key={d.id}>
+                <Link
+                  href={`/create?template=${d.id}`}
+                  className="block h-full rounded-[16px] border border-line-soft bg-white/70 px-4 py-3 transition hover:border-[var(--accent)]"
+                >
+                  <span className="text-[15px] font-semibold text-ink">{d.district}</span>
+                  {locale === "uk" && d.blurb ? (
+                    <span className="mt-1 block text-[13px] leading-snug text-ink-2">{d.blurb}</span>
+                  ) : null}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Видимі ЦІНИ у гривнях — для покупця, SEO і перевірки LiqPay (115 сторінок). */}
       <section className="mt-12 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
         <h2 className="text-[17px] font-semibold text-ink">{cat.h1} — {name}</h2>

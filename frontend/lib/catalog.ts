@@ -51,7 +51,7 @@ const PR = {
 };
 
 const uk: Catalog = {
-  metaTitle: "Ціни на 3D-мапи, магніти та брелоки — Monadruk",
+  metaTitle: "Ціни на 3D-мапи, магніти та брелоки",
   metaDescription:
     "Актуальні ціни в гривнях: 3D-мапа міста від 150 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
   h1: "Ціни",
@@ -102,7 +102,7 @@ const uk: Catalog = {
 };
 
 const en: Catalog = {
-  metaTitle: "Prices for 3D city maps, magnets & keychains — Monadruk",
+  metaTitle: "Prices for 3D city maps, magnets & keychains",
   metaDescription:
     "Current prices in UAH: 3D city map from 150 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
   h1: "Prices",
@@ -153,7 +153,7 @@ const en: Catalog = {
 };
 
 const de: Catalog = {
-  metaTitle: "Preise für 3D-Stadtkarten, Magnete & Schlüsselanhänger — Monadruk",
+  metaTitle: "Preise für 3D-Stadtkarten, Magnete & Schlüsselanhänger",
   metaDescription:
     "Aktuelle Preise in UAH: 3D-Stadtkarte ab 150 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
   h1: "Preise",
@@ -204,7 +204,7 @@ const de: Catalog = {
 };
 
 const es: Catalog = {
-  metaTitle: "Precios de mapas 3D, imanes y llaveros — Monadruk",
+  metaTitle: "Precios de mapas 3D, imanes y llaveros",
   metaDescription:
     "Precios actuales en UAH: mapa 3D de ciudad desde 150 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
   h1: "Precios",
@@ -255,7 +255,7 @@ const es: Catalog = {
 };
 
 const fr: Catalog = {
-  metaTitle: "Prix des cartes 3D, aimants et porte-clés — Monadruk",
+  metaTitle: "Prix des cartes 3D, aimants et porte-clés",
   metaDescription:
     "Prix actuels en UAH : carte 3D de ville dès 150 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
   h1: "Tarifs",
@@ -306,7 +306,7 @@ const fr: Catalog = {
 };
 
 const pl: Catalog = {
-  metaTitle: "Ceny map 3D, magnesów i breloków — Monadruk",
+  metaTitle: "Ceny map 3D, magnesów i breloków",
   metaDescription:
     "Aktualne ceny w UAH: mapa 3D miasta od 150 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
   h1: "Cennik",

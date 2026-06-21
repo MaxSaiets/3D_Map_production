@@ -5,7 +5,8 @@ import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { mapPriceRange } from "@/lib/mapPrices";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  return pageMetadata({ locale: params.locale, path: "/create", ns: "createMeta" });
+  // ogImage: false — маршрут має власний colocated opengraph-image.tsx.
+  return pageMetadata({ locale: params.locale, path: "/create", ns: "createMeta", ogImage: false });
 }
 
 export default async function CreateLayout({
@@ -31,7 +32,7 @@ export default async function CreateLayout({
         "@type": "Product",
         name: tm("offerMap"),
         description: t("description"),
-        image: `${BASE}/showcase/map-1.png`,
+        image: `${BASE}/showcase/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-MAP",
         offers: {

@@ -2,7 +2,7 @@
   "meta": {
     "skipToContent": "Skip to content",
     "homeTitle": "Monadruk — 3D maps of your city for printing",
-    "homeDescription": "Pick a district of your city, tune the model and download a print-ready 3D file. Tactile architectural maps with real building heights, parks and rivers. Custom city-map keychains.",
+    "homeDescription": "3D map of your city: pick a district, tune the model and download a print-ready file. Tactile maps with real building heights. Custom prints & keychains.",
     "ogTitle": "Monadruk — 3D maps of your city",
     "ogDescription": "Turn any place on Earth into a tactile 3D map ready to print.",
     "keywords": "3d printed city map, city map 3d print, custom city map, map keychain, personalized map keychain, 3d city map model, stl city map, 3mf map, topographic map 3d print, terrain relief keychain, city map fridge magnet, map wall art, personalized map gift, anniversary map gift, tactile map, Bambu Studio, PrusaSlicer",
@@ -180,7 +180,7 @@
   },
   "keychainsMeta": {
     "title": "City map keychain — custom 3D keychain",
-    "description": "A map keychain of your city: a personal 3D keychain with streets, buildings and custom text — or a topographic keychain with real mountain relief (Alps, Carpathians). Create online and download 3MF or order Eco PLA printing.",
+    "description": "A map keychain of your city: a 3D keychain with streets, buildings and custom text, or a topo keychain with mountain relief. Create online or order a print.",
     "keywords": "city map keychain, map keychain, custom 3d keychain, keychain with name, engraved keychain, topographic keychain, mountain relief keychain, heart map keychain, house keychain, gift for him, gift for her, anniversary gift, couple keychain"
   },
   "showcaseMeta": {
@@ -533,7 +533,14 @@
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",
     "description": "Ready 3D city maps of Ukraine for printing: Kyiv, Lviv, Odesa, Kharkiv, Dnipro and 18 more cities. Pick a city and create a tactile 3D district model or a map keychain.",
-    "keywords": "3d maps of ukrainian cities, 3d city map ukraine, city map for 3d printing, ukrainian city map keychain"
+    "keywords": "3d maps of ukrainian cities, 3d city map ukraine, city map for 3d printing, ukrainian city map keychain",
+    "h2how": "How a 3D city map works",
+    "pHow": "We use OpenStreetMap data: streets, buildings with real heights, parks and water. The builder turns the area you pick into a tactile model and gives you a ready 3MF or STL file for Bambu Studio or PrusaSlicer — or we print it and ship it to you.",
+    "h2cities": "Choose your city",
+    "h2gift": "A gift with your home-town map",
+    "pGift": "A 3D map or a map keychain is a personal gift for a housewarming, an anniversary or a farewell. Pick a district that means something and we turn it into a model that feels good in the hand.",
+    "ctaCreate": "Create a 3D map",
+    "ctaKeychain": "Map keychain"
   },
   "cityPages": {
     "title": "3D map of {city} — print it or get a map keychain",
@@ -552,7 +559,9 @@
     "fArea": "Area",
     "fRiver": "Water",
     "fOblast": "Region",
-    "fLandmark": "Landmark"
+    "fLandmark": "Landmark",
+    "factsProse": "The 3D model clearly shows the city’s main body of water ({river}) and its architectural landmark ({landmark}) — the details that make the map recognisable at a glance.",
+    "districtsTitle": "Districts & landmarks"
   },
   "share": {
     "title": "My 3D map on Monadruk",

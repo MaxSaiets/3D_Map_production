@@ -2,7 +2,7 @@
   "meta": {
     "skipToContent": "Saltar al contenido",
     "homeTitle": "Monadruk — mapas 3D de tu ciudad para imprimir",
-    "homeDescription": "Elige un distrito de tu ciudad, ajusta el modelo y descarga un archivo 3D listo para imprimir. Mapas arquitectónicos táctiles con alturas reales de edificios, parques y ríos. Llaveros con mapa de ciudad por encargo.",
+    "homeDescription": "Mapa 3D de tu ciudad: elige un distrito, ajusta el modelo y descarga el archivo para imprimir. Mapas táctiles reales. Impresión y llaveros por encargo.",
     "ogTitle": "Monadruk — mapas 3D de tu ciudad",
     "ogDescription": "Convierte cualquier lugar de la Tierra en un mapa 3D táctil listo para imprimir.",
     "keywords": "mapa 3d de ciudad, impresión 3d mapa ciudad, plano de ciudad 3d, llavero mapa de ciudad, llavero personalizado mapa, mapa stl, mapa 3mf, mapa topográfico 3d, llavero relieve, imán nevera mapa ciudad, regalo mapa personalizado, regalo de aniversario, mapa táctil, Bambu Studio, PrusaSlicer",
@@ -180,7 +180,7 @@
   },
   "keychainsMeta": {
     "title": "Llavero con mapa de ciudad — 3D personalizado",
-    "description": "Un llavero-mapa de tu ciudad: un llavero 3D personal con calles, edificios y texto propio — o un llavero topográfico con el relieve real de las montañas (Alpes, Pirineos, Cárpatos). Créalo online y descarga el 3MF o pide la impresión en Eco PLA.",
+    "description": "Llavero-mapa de tu ciudad: llavero 3D con calles, edificios y texto, o llavero topográfico con relieve de montañas. Créalo online o pide la impresión.",
     "keywords": "llavero mapa de ciudad, llavero mapa, llavero 3d personalizado, llavero con nombre, llavero grabado, llavero topográfico, llavero relieve montaña, llavero corazón mapa, llavero casa, regalo para él, regalo para ella, regalo de aniversario, llavero pareja"
   },
   "showcaseMeta": {
@@ -533,7 +533,14 @@
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
     "description": "Mapas 3D listos de ciudades ucranianas para imprimir: Kyiv, Lviv, Odesa, Kharkiv, Dnipro y 18 más. Elige una ciudad y crea un modelo 3D táctil o un llavero con mapa.",
-    "keywords": "mapas 3d ciudades ucrania, mapa 3d ciudad ucraniana, mapa de ciudad impresión 3d, llavero ciudad ucraniana"
+    "keywords": "mapas 3d ciudades ucrania, mapa 3d ciudad ucraniana, mapa de ciudad impresión 3d, llavero ciudad ucraniana",
+    "h2how": "Cómo funciona un mapa 3D de ciudad",
+    "pHow": "Usamos datos de OpenStreetMap: calles, edificios con alturas reales, parques y agua. El configurador convierte la zona que elijas en un modelo táctil y te da un archivo 3MF o STL listo para Bambu Studio o PrusaSlicer — o lo imprimimos y te lo enviamos.",
+    "h2cities": "Elige tu ciudad",
+    "h2gift": "Un regalo con el mapa de tu ciudad",
+    "pGift": "Un mapa 3D o un llavero-mapa es un regalo personal para una mudanza, un aniversario o una despedida. Elige un distrito con significado y lo convertimos en un modelo agradable de sostener.",
+    "ctaCreate": "Crear un mapa 3D",
+    "ctaKeychain": "Llavero-mapa"
   },
   "cityPages": {
     "title": "Mapa 3D de {city} — imprímelo o pide un llavero",
@@ -552,7 +559,9 @@
     "fArea": "Superficie",
     "fRiver": "Agua",
     "fOblast": "Región",
-    "fLandmark": "Emblema"
+    "fLandmark": "Emblema",
+    "factsProse": "El modelo 3D muestra con claridad el principal cuerpo de agua de la ciudad ({river}) y su símbolo arquitectónico ({landmark}): los detalles que hacen el mapa reconocible al instante.",
+    "districtsTitle": "Distritos y monumentos"
   },
   "share": {
     "title": "Mi mapa 3D en Monadruk",

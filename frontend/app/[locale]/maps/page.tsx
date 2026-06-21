@@ -41,7 +41,14 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <h1 className="text-[clamp(28px,4vw,46px)] leading-tight">{t("title")}</h1>
       <p className="mt-4 max-w-[640px] text-[15px] leading-relaxed text-ink-2">{t("description")}</p>
-      <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+
+      <section className="mt-10 max-w-[680px]">
+        <h2 className="text-[20px] font-semibold">{t("h2how")}</h2>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t("pHow")}</p>
+      </section>
+
+      <h2 className="mt-12 text-[20px] font-semibold">{t("h2cities")}</h2>
+      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {CITY_PAGES.map((c) => (
           <li key={c.slug}>
             <Link
@@ -53,6 +60,19 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
           </li>
         ))}
       </ul>
+
+      <section className="mt-14 max-w-[680px] rounded-[18px] border border-line-soft bg-white/60 px-5 py-6">
+        <h2 className="text-[20px] font-semibold">{t("h2gift")}</h2>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t("pGift")}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href="/create" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+            {t("ctaCreate")}
+          </Link>
+          <Link href="/keychains" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] border border-line-soft bg-white/80 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-[var(--accent)]">
+            {t("ctaKeychain")}
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

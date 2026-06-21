@@ -4,7 +4,8 @@ import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata"
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta" });
+  // ogImage: false — маршрут має власний colocated opengraph-image.tsx.
+  return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta", ogImage: false });
 }
 
 export default async function KeychainsLayout({
@@ -29,7 +30,7 @@ export default async function KeychainsLayout({
         "@type": "Product",
         name: tm("offerKeychain"),
         description: t("description"),
-        image: `${BASE}/showcase/keychain-5.png`,
+        image: `${BASE}/showcase/keychain-5.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-KEYCHAIN",
         offers: {

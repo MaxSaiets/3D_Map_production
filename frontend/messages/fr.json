@@ -2,7 +2,7 @@
   "meta": {
     "skipToContent": "Aller au contenu",
     "homeTitle": "Monadruk — cartes 3D de ta ville à imprimer",
-    "homeDescription": "Choisis un quartier de ta ville, règle le modèle et télécharge un fichier 3D prêt à imprimer. Cartes architecturales tactiles avec hauteurs réelles des bâtiments, parcs et rivières. Porte-clés carte de ville sur commande.",
+    "homeDescription": "Carte 3D de ta ville : choisis un quartier, règle le modèle et télécharge le fichier à imprimer. Cartes tactiles réelles. Impression et porte-clés.",
     "ogTitle": "Monadruk — cartes 3D de ta ville",
     "ogDescription": "Transforme n'importe quel lieu de la Terre en carte 3D tactile prête à imprimer.",
     "keywords": "carte de ville 3D, impression 3D carte de ville, plan de ville 3D, porte-clés carte de ville, porte-clés personnalisé carte, carte STL, carte 3MF, carte topographique 3D, porte-clés relief, magnet frigo carte de ville, cadeau carte personnalisé, cadeau anniversaire couple, carte tactile, Bambu Studio, PrusaSlicer",
@@ -180,7 +180,7 @@
   },
   "keychainsMeta": {
     "title": "Porte-clés carte de ville — 3D personnalisé",
-    "description": "Un porte-clés carte de votre ville : un porte-clés 3D personnel avec rues, bâtiments et texte personnalisé — ou un porte-clés topographique avec le vrai relief des montagnes (Alpes, Carpates). Créez en ligne et téléchargez le 3MF ou commandez l'impression en Eco PLA.",
+    "description": "Porte-clés carte de ta ville : porte-clés 3D avec rues et texte, ou porte-clés topo avec relief de montagnes. Crée en ligne ou commande l’impression.",
     "keywords": "porte-clés carte de ville, porte-clés carte, porte-clés 3D personnalisé, porte-clés avec prénom, porte-clés gravé, porte-clés topographique, porte-clés relief montagne, porte-clés cœur carte, porte-clés maison, cadeau pour lui, cadeau pour elle, cadeau d'anniversaire, porte-clés couple"
   },
   "showcaseMeta": {
@@ -533,7 +533,14 @@
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
     "description": "Cartes 3D prêtes des villes ukrainiennes à imprimer : Kyiv, Lviv, Odessa, Kharkiv, Dnipro et 18 autres. Choisissez une ville et créez un modèle 3D tactile ou un porte-clés carte.",
-    "keywords": "cartes 3d villes ukraine, carte 3d ville ukrainienne, carte de ville impression 3d, porte-clés ville ukrainienne"
+    "keywords": "cartes 3d villes ukraine, carte 3d ville ukrainienne, carte de ville impression 3d, porte-clés ville ukrainienne",
+    "h2how": "Comment fonctionne une carte 3D de ville",
+    "pHow": "Nous utilisons les données OpenStreetMap : rues, bâtiments aux hauteurs réelles, parcs et plans d’eau. Le configurateur transforme la zone choisie en un modèle tactile et vous donne un fichier 3MF ou STL prêt pour Bambu Studio ou PrusaSlicer — ou nous l’imprimons et vous l’envoyons.",
+    "h2cities": "Choisissez votre ville",
+    "h2gift": "Un cadeau avec la carte de votre ville",
+    "pGift": "Une carte 3D ou un porte-clés carte est un cadeau personnel pour une crémaillère, un anniversaire ou un départ. Choisissez un quartier qui compte et nous en faisons un modèle agréable à tenir.",
+    "ctaCreate": "Créer une carte 3D",
+    "ctaKeychain": "Porte-clés carte"
   },
   "cityPages": {
     "title": "Carte 3D de {city} — à imprimer ou en porte-clés",
@@ -552,7 +559,9 @@
     "fArea": "Superficie",
     "fRiver": "Eau",
     "fOblast": "Région",
-    "fLandmark": "Monument emblématique"
+    "fLandmark": "Monument emblématique",
+    "factsProse": "Le modèle 3D fait clairement apparaître le principal plan d’eau de la ville ({river}) et son emblème architectural ({landmark}) — les détails qui rendent la carte reconnaissable au premier coup d’œil.",
+    "districtsTitle": "Quartiers et monuments"
   },
   "share": {
     "title": "Ma carte 3D sur Monadruk",

@@ -2,7 +2,7 @@
   "meta": {
     "skipToContent": "Przejdź do treści",
     "homeTitle": "Monadruk — mapy 3D Twojego miasta do druku",
-    "homeDescription": "Wybierz dzielnicę swojego miasta, dostosuj model i pobierz gotowy plik 3D do druku. Dotykowe mapy architektoniczne z realnymi wysokościami budynków, parków i rzek. Breloki z mapą miasta na zamówienie.",
+    "homeDescription": "Mapa 3D twojego miasta: wybierz dzielnicę, dostosuj model i pobierz plik do druku. Dotykowe mapy z realnymi wysokościami. Druk i breloki na zamówienie.",
     "ogTitle": "Monadruk — mapy 3D Twojego miasta",
     "ogDescription": "Zamień dowolne miejsce na Ziemi w dotykową mapę 3D gotową do druku.",
     "keywords": "mapa miasta 3d, wydruk 3d mapy miasta, mapa miasta do druku 3d, brelok z mapą miasta, personalizowany brelok mapa, mapa stl, mapa 3mf, mapa topograficzna 3d, brelok z rzeźbą terenu, magnes na lodówkę mapa miasta, prezent z mapą, prezent na rocznicę, mapa dotykowa, Bambu Studio, PrusaSlicer",
@@ -180,7 +180,7 @@
   },
   "keychainsMeta": {
     "title": "Brelok z mapą miasta — spersonalizowany 3D",
-    "description": "Brelok-mapa twojego miasta: osobisty brelok 3D z ulicami, budynkami i własnym napisem — albo brelok topo z prawdziwą rzeźbą gór (Tatry, Alpy, Karpaty). Stwórz online i pobierz 3MF lub zamów druk z Eco PLA.",
+    "description": "Brelok-mapa twojego miasta: brelok 3D z ulicami i własnym napisem lub brelok topo z rzeźbą gór. Stwórz online lub zamów druk z Eco PLA.",
     "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d personalizowany, brelok z imieniem, brelok z grawerem, brelok topograficzny, brelok z rzeźbą gór, brelok serce z mapą, brelok domek, prezent dla niego, prezent dla niej, prezent na rocznicę, brelok dla pary"
   },
   "showcaseMeta": {
@@ -533,7 +533,14 @@
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
     "description": "Gotowe mapy 3D ukraińskich miast do druku: Kijów, Lwów, Odessa, Charków, Dniepr i 18 innych. Wybierz miasto i stwórz dotykowy model 3D dzielnicy albo brelok z mapą.",
-    "keywords": "mapy 3d miast ukrainy, mapa 3d miasta ukraina, mapa miasta do druku 3d, brelok z mapą ukraińskiego miasta"
+    "keywords": "mapy 3d miast ukrainy, mapa 3d miasta ukraina, mapa miasta do druku 3d, brelok z mapą ukraińskiego miasta",
+    "h2how": "Jak działa mapa 3D miasta",
+    "pHow": "Korzystamy z danych OpenStreetMap: ulice, budynki o realnych wysokościach, parki i woda. Kreator zamienia wybrany obszar w dotykowy model i daje gotowy plik 3MF lub STL do Bambu Studio czy PrusaSlicer — albo drukujemy i wysyłamy do ciebie.",
+    "h2cities": "Wybierz swoje miasto",
+    "h2gift": "Prezent z mapą rodzinnego miasta",
+    "pGift": "Mapa 3D lub brelok-mapa to osobisty prezent na parapetówkę, rocznicę lub pożegnanie. Wybierz dzielnicę, która coś znaczy, a my zamienimy ją w model, który dobrze leży w dłoni.",
+    "ctaCreate": "Stwórz mapę 3D",
+    "ctaKeychain": "Brelok-mapa"
   },
   "cityPages": {
     "title": "Mapa 3D miasta {city} — wydrukuj lub zamów brelok",
@@ -552,7 +559,9 @@
     "fArea": "Powierzchnia",
     "fRiver": "Woda",
     "fOblast": "Obwód",
-    "fLandmark": "Symbol miasta"
+    "fLandmark": "Symbol miasta",
+    "factsProse": "Model 3D wyraźnie pokazuje główny akwen miasta ({river}) oraz architektoniczną wizytówkę ({landmark}) — to właśnie te detale sprawiają, że mapa jest rozpoznawalna od pierwszego spojrzenia.",
+    "districtsTitle": "Dzielnice i punkty orientacyjne"
   },
   "share": {
     "title": "Moja mapa 3D na Monadruk",
