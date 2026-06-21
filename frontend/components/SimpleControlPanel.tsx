@@ -940,7 +940,7 @@ export function SimpleControlPanel({
             🌈 {t("flatAmsToggle")}
             {flatAmsMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>
+          {flatAmsMode && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>}
         </button>
 
         {/* ПЛАСКІ БУДИНКИ (#6): у плоских режимах будинки = тонкі footprint-плити
@@ -959,21 +959,20 @@ export function SimpleControlPanel({
           </label>
         )}
 
-        {/* ДОДАТКИ плоскої карти (з'єднувач/рамка/виділити дім) — заголовок секції.
-            Тумблери рендеряться одразу під ним (без другого розкривача), щоб
-            покупець не клікав двічі. data-testid лишаємо для сумісності з e2e. */}
+        {/* ДОДАТКИ плоскої карти (з'єднувач/рамка/виділити дім) — складаний підрозділ.
+            Згорнутий за замовчанням → панель коротка; розкривається кліком (або авто,
+            якщо якийсь додаток уже активний). e2e клікає addons-toggle перед тумблерами. */}
         <button
           type="button"
           onClick={() => setAddonsOpen((v) => !v)}
           aria-expanded={addonsOpen}
           data-testid="addons-toggle"
-          className="flex w-full items-center justify-between rounded-[16px] border border-dashed border-[var(--surface-border)] bg-white/50 px-4 py-2 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.25)]"
+          className="flex w-full items-center justify-between rounded-[16px] border border-dashed border-[var(--surface-border)] bg-white/50 px-4 py-2.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.25)]"
         >
           <span>➕ {t("addonsTitle")}{addonsActive ? " ●" : ""}</span>
           <ChevronDown size={15} className={`transition ${addonsOpen ? "rotate-180" : ""}`} />
         </button>
-        {/* fragment без addonsOpen-гейту: додатки видимі одразу при відкритому
-            «Більше опцій» (e2e клікає connector/frame/highlight без другого кліку). */}
+        {addonsOpen && (
         <>
         {/* З'єднувач-пази (метелик): «ластівчин-хвіст» пази на гранях + окрема
             деталь-ключ, щоб стикувати дві плоскі карти у диптих/панно. Паз у ДНІ
@@ -1001,7 +1000,7 @@ export function SimpleControlPanel({
             🔗 {t("connectorToggle")}
             {connectorMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("connectorHint")}</span>
+          {connectorMode && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("connectorHint")}</span>}
         </button>
 
         {/* Преміум-рамка: компас + масштабна лінійка + координати центру окремою
@@ -1028,7 +1027,7 @@ export function SimpleControlPanel({
             🧭 {t("frameToggle")}
             {frameMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("frameHint")}</span>
+          {frameMode && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("frameHint")}</span>}
         </button>
 
         {/* СТИЛЬ РАМКИ: показуємо лише коли рамка увімкнена. classic | ornate |
@@ -1091,7 +1090,7 @@ export function SimpleControlPanel({
               🏠 {t("highlightToggle")}
               {highlightMode && <Check size={16} className="text-[var(--accent-strong)]" />}
             </span>
-            <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("highlightHint")}</span>
+            {highlightMode && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("highlightHint")}</span>}
           </button>
           {highlightMode && (
             <div className="mt-2 flex items-center justify-between gap-2 text-[12px]">
@@ -1108,6 +1107,7 @@ export function SimpleControlPanel({
           )}
         </div>
         </>
+        )}
 
         <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("optGroupOther")}</div>
         {/* Магніт: плаский формат 6 см з кишенею під магніт у дні */}
@@ -1132,7 +1132,7 @@ export function SimpleControlPanel({
             🧲 {t("magnetToggle")}
             {magnetMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("magnetHint")}</span>
+          {magnetMode && <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("magnetHint")}</span>}
         </button>
         {magnetMode && (
           <input

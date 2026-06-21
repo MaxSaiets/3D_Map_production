@@ -127,6 +127,7 @@ test.describe("Конструктор мап /create", () => {
 
   test("з'єднувач-пази: тумблер вмикається, сумісний з flat-AMS, гаситься магнітом", async ({ page }) => {
     await page.locator('[data-testid="more-options"]').first().click();
+    await page.locator('[data-testid="addons-toggle"]').first().click();
     const connector = page.locator('[data-testid="connector-toggle"]').first();
     await expect(connector).toBeVisible();
     await expect(connector).toHaveAttribute("aria-pressed", "false");
@@ -144,6 +145,7 @@ test.describe("Конструктор мап /create", () => {
 
   test("преміум-рамка: тумблер вмикається й співіснує з flat-AMS, гаситься у 3D", async ({ page }) => {
     await page.locator('[data-testid="more-options"]').first().click();
+    await page.locator('[data-testid="addons-toggle"]').first().click();
     const frame = page.locator('[data-testid="frame-toggle"]').first();
     await expect(frame).toBeVisible();
     await expect(frame).toHaveAttribute("aria-pressed", "false");
@@ -182,6 +184,7 @@ test.describe("Конструктор мап /create", () => {
 
   test("виділення будинку: тумблер, клік по карті ставить точку, очищення", async ({ page }) => {
     await page.locator('[data-testid="more-options"]').first().click();
+    await page.locator('[data-testid="addons-toggle"]').first().click();
     const hl = page.locator('[data-testid="highlight-toggle"]').first();
     await expect(hl).toBeVisible();
     await expect(hl).toHaveAttribute("aria-pressed", "false");
