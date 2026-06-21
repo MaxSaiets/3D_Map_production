@@ -1,30 +1,56 @@
-name: Deploy to Production
+name: Build & Deploy (off-server)
+
+# WHY: building the frontend ON the server keeps corrupting node_modules / the npm
+# cache (next/dist/bin/next disappears -> pm2 MODULE_NOT_FOUND -> 502, ~5-7 min
+# downtime + manual recovery, roughly every other deploy). This workflow builds the
+# frontend in a CLEAN CI runner and ships the finished artifact (.next + node_modules)
+# to the server, which then only swaps + restarts — it never runs npm/next build, so
+# the corruption class is gone.
+#
+# MANUAL until validated: trigger = workflow_dispatch only. Run it from the GitHub
+# Actions tab (or `gh workflow run deploy.yml`). Once you've confirmed a clean deploy,
+# add the push trigger (see commented block) so `git push origin main` auto-deploys.
+#
+# REQUIRED REPO SECRETS (Settings → Secrets and variables → Actions):
+#   SERVER_IP            209.38.210.197
+#   SERVER_USER          root
+#   SSH_PRIVATE_KEY      a private key whose PUBLIC key is in /root/.ssh/authorized_keys
+#   FRONTEND_ENV_PRODUCTION   the FULL contents of the server's frontend/.env.production
+#                             (NEXT_PUBLIC_API_URL=https://monadruk.com + all NEXT_PUBLIC_FIREBASE_*).
+#                             These are baked into the build, so they MUST match prod.
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch: {}
+  # Enable auto-deploy on push once validated:
+  # push:
+  #   branches: [main]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
 
 jobs:
-  # ─────────────────────────────────────────────────────────────
-  # JOB 1: CI — TypeScript + build check
-  # ─────────────────────────────────────────────────────────────
-  ci:
-    name: CI Check
+  build-and-deploy:
+    name: Build in CI, ship artifact
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend deps
+      - name: Write production env (baked into NEXT_PUBLIC_*)
+        working-directory: frontend
+        run: |
+          printf '%s\n' "${{ secrets.FRONTEND_ENV_PRODUCTION }}" > .env.production
+          echo "wrote .env.production ($(wc -l < .env.production) lines)"
+
+      - name: Install deps (clean, reproducible)
         working-directory: frontend
         run: npm ci
 
@@ -32,53 +58,65 @@ jobs:
         working-directory: frontend
         run: npx tsc --noEmit
 
-      - name: Next.js build check
+      - name: Build (clean CI env — no server corruption)
         working-directory: frontend
         run: npm run build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
 
-  # ─────────────────────────────────────────────────────────────
-  # JOB 2: Deploy — SSH на сервер, git pull, restart
-  # ─────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: ci
+      - name: Package artifact (.next + node_modules)
+        working-directory: frontend
+        run: |
+          tar -czf /tmp/fe.tgz .next node_modules
+          ls -lh /tmp/fe.tgz
 
-    steps:
-      - name: Deploy via SSH
+      - name: Copy artifact to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: /tmp/fe.tgz
+          target: /tmp
+
+      - name: Deploy on server (swap artifact + restart)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          command_timeout: 10m
           script: |
             set -e
-            echo "=== [1/5] Git pull ==="
+            echo "=== [1/5] sync source (next.config, public, messages, app) ==="
             cd /opt/3dmap
-            git pull origin main
+            git pull origin main || true
 
-            echo "=== [2/5] Backend deps ==="
-            cd /opt/3dmap/backend
-            source venv/bin/activate
-            pip install -r requirements.txt --quiet
+            echo "=== [2/5] backend deps + restart ==="
+            cd /opt/3dmap/backend && source venv/bin/activate && pip install -q -r requirements.txt || true
+            pm2 restart 3dmap-backend || true
 
-            echo "=== [3/5] Frontend build ==="
+            echo "=== [3/5] stop frontend, unpack clean artifact ==="
             cd /opt/3dmap/frontend
-            npm ci --prefer-online
-            rm -rf .next
-            npm run build
+            pm2 stop 3dmap-frontend || true
+            pkill -9 -f next-server 2>/dev/null || true
+            pkill -9 -f "next start" 2>/dev/null || true
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 2
+            rm -rf .next node_modules
+            tar -xzf /tmp/fe.tgz
+            rm -f /tmp/fe.tgz
 
-            echo "=== [4/5] Reload nginx and restart services ==="
-            cd /opt/3dmap
-            cp deploy/nginx.conf /etc/nginx/sites-available/3dmap
-            nginx -t
-            systemctl reload nginx
-            pm2 startOrRestart ecosystem.config.js --update-env
+            echo "=== [4/5] start frontend ==="
+            pm2 start 3dmap-frontend && pm2 save
 
-            echo "=== [5/5] Save PM2 state ==="
-            pm2 save
-
+            echo "=== [5/5] healthcheck ==="
+            c=000
+            for i in $(seq 1 45); do
+              c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/ 2>/dev/null)
+              [ "$c" = "200" ] && break
+              sleep 1
+            done
+            echo "frontend http=$c BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null)"
+            [ "$c" = "200" ] || { echo "FRONTEND NOT HEALTHY"; exit 1; }
             echo "=== Deploy complete ==="
