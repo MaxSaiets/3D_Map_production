@@ -108,6 +108,12 @@ export default function Home() {
   const setGridType = useGenerationStore((st) => st.setGridType);
   const hexSizeM = useGenerationStore((st) => st.hexSizeM);
   const setHexSizeM = useGenerationStore((st) => st.setHexSizeM);
+  const gridRotationDeg = useGenerationStore((st) => st.gridRotationDeg);
+  const setGridRotationDeg = useGenerationStore((st) => st.setGridRotationDeg);
+  // Поворот сітки: повзунок оновлює ЛОКАЛЬНИЙ pendingRot (дешево — лише підпис),
+  // а важку сітку (тисячі клітин) обертаємо лише на ВІДПУСКАННЯ повзунка (commit).
+  const [pendingRot, setPendingRot] = useState(gridRotationDeg);
+  useEffect(() => { setPendingRot(gridRotationDeg); }, [gridRotationDeg]);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [proMode, setProMode] = useState(false);
   useEffect(() => {
@@ -230,6 +236,7 @@ export default function Home() {
       if (g.grid_type) setGridType(g.grid_type);
       if (g.hex_size_m) setHexSizeM(g.hex_size_m);
       if (g.bounds) setGridArea(g.bounds);
+      if (typeof g.rotation_deg === "number") setGridRotationDeg(g.rotation_deg);
       setGridId(g.id || id);
       // Куплені клітини → золоті, не обираються повторно.
       const px = cellIdPrefix(g.grid_type);
@@ -265,7 +272,7 @@ export default function Home() {
       grid_type: gridType,
       hex_size_m: hexSizeM,
       bounds: gridArea || city?.bounds,
-      rotation_deg: 0,
+      rotation_deg: gridRotationDeg,
       // row/col живуть у feature.properties (GeoJSON) — раніше читалось z.row
       // → падало на індекс i, тож збережені клітини не збігались зі справжніми
       // координатами сітки (продовження відкривало не ті зони).
@@ -279,7 +286,7 @@ export default function Home() {
     });
     if (grid?.id) { setGridId(grid.id); setGridNotice(tc("gridSaved")); }
     else setGridNotice(tc("gridSaveFailed"));
-  }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones, gridArea]);
+  }, [getIdToken, gridId, currentCityKey, gridType, hexSizeM, selectedZones, gridArea, gridRotationDeg]);
 
   // ПРОДОВЖЕННЯ: авто-зберігаємо сітку ОДРАЗУ після генерації серії з task_id
   // кожної клітини. Так куплені зони лишаються «золотими» при наступному відкритті
@@ -312,13 +319,13 @@ export default function Home() {
           grid_type: gridType,
           hex_size_m: hexSizeM,
           bounds: gridArea || city?.bounds,
-          rotation_deg: 0,
+          rotation_deg: gridRotationDeg,
           cells: merged,
         });
         if (grid?.id) setGridId(grid.id);
       } catch { /* збереження не критичне */ }
     },
-    [getIdToken, gridId, currentCityKey, gridType, hexSizeM, gridArea, boughtCells],
+    [getIdToken, gridId, currentCityKey, gridType, hexSizeM, gridArea, boughtCells, gridRotationDeg],
   );
 
   // ── Capture mode (?capture=<templateId>): auto-select the district area and
@@ -723,6 +730,7 @@ export default function Home() {
                       onZonesSelected={setSelectedZones}
                       gridType={gridType}
                       hexSizeM={hexSizeM}
+                      rotationDeg={gridRotationDeg}
                       onAreaChange={setGridArea}
                       initialArea={gridArea}
                       boughtCells={boughtCells}
@@ -803,6 +811,37 @@ export default function Home() {
                               {label}
                             </button>
                           ))}
+                        </div>
+                        {/* Поворот сітки: повзунок 0–90°. Обертає клітини довкола
+                            центру → можна вирівняти серію під діагональну річку/район.
+                            Коміт на відпускання (важка сітка не лагає при тягненні). */}
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-[11px] font-medium text-[var(--text-secondary)]">{tc("gridRotateLabel")}</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={90}
+                            step={1}
+                            value={pendingRot}
+                            onChange={(e) => setPendingRot(Number(e.target.value))}
+                            onPointerUp={() => setGridRotationDeg(pendingRot)}
+                            onTouchEnd={() => setGridRotationDeg(pendingRot)}
+                            onKeyUp={() => setGridRotationDeg(pendingRot)}
+                            aria-label={tc("gridRotateLabel")}
+                            className="h-2 flex-1 cursor-pointer accent-[var(--accent-strong,#0f766e)]"
+                          />
+                          <span className="w-8 shrink-0 text-right text-[11px] font-semibold tabular-nums text-[var(--text-primary)]">{pendingRot}°</span>
+                          {pendingRot !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => { setPendingRot(0); setGridRotationDeg(0); }}
+                              title={tc("gridRotateReset")}
+                              aria-label={tc("gridRotateReset")}
+                              className="shrink-0 rounded-full border border-[var(--surface-border)] px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.3)]"
+                            >
+                              ↺0
+                            </button>
+                          )}
                         </div>
                         <button
                           type="button"

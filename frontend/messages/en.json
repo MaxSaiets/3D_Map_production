@@ -272,7 +272,9 @@
     "stageRender": "3D model",
     "stageRenderLocked": "Generate a model first",
     "gridSelectHintTitle": "How to select",
-    "saveGridHint": "Saves your selected zones to your account — come back and add neighbours later."
+    "saveGridHint": "Saves your selected zones to your account — come back and add neighbours later.",
+    "gridRotateLabel": "Rotate",
+    "gridRotateReset": "Reset rotation"
   },
   "showcase": {
     "back": "Home",

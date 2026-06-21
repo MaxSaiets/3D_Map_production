@@ -272,7 +272,9 @@
     "stageRender": "Model 3D",
     "stageRenderLocked": "Najpierw wygeneruj model",
     "gridSelectHintTitle": "Jak wybrać",
-    "saveGridHint": "Zapisuje wybrane strefy na koncie — wróć i dokup sąsiednie później."
+    "saveGridHint": "Zapisuje wybrane strefy na koncie — wróć i dokup sąsiednie później.",
+    "gridRotateLabel": "Obrót",
+    "gridRotateReset": "Zresetuj obrót"
   },
   "showcase": {
     "back": "Strona główna",

@@ -272,7 +272,9 @@
     "stageRender": "Modelo 3D",
     "stageRenderLocked": "Primero genera un modelo",
     "gridSelectHintTitle": "Cómo elegir",
-    "saveGridHint": "Guarda las zonas elegidas en tu cuenta — vuelve y añade las contiguas después."
+    "saveGridHint": "Guarda las zonas elegidas en tu cuenta — vuelve y añade las contiguas después.",
+    "gridRotateLabel": "Rotar",
+    "gridRotateReset": "Restablecer rotación"
   },
   "showcase": {
     "back": "Inicio",

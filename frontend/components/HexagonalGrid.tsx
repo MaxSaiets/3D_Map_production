@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { MapContainer, TileLayer, GeoJSON, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
@@ -17,6 +17,54 @@ function defaultGridArea(b: GBounds, halfKm = 1.5): GBounds {
   const dLat = (halfKm * 1000) / 111_320;
   const dLon = (halfKm * 1000) / (111_320 * Math.max(Math.cos((cLat * Math.PI) / 180), 0.2));
   return { north: cLat + dLat, south: cLat - dLat, east: cLon + dLon, west: cLon - dLon };
+}
+
+/** Обертає всі полігони сітки на `deg`° довкола географічного центру `center`
+ *  ([lon,lat]) у МЕТРИЧНОМУ кадрі (екві-прямокутна корекція cos(lat) — точно на
+ *  масштабі міста). Повертає НОВИЙ GeoJSON; вихідний не мутується. Бек ріже кожну
+ *  плитку саме по цих (повернутих) координатах, тож превʼю=друк. */
+function rotateGridGeoJSON(geojson: any, deg: number, center: [number, number]): any {
+  if (!geojson || !geojson.features || !deg) return geojson;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const [clon, clat] = center;
+  const mPerDegLat = 111_320;
+  const mPerDegLon = 111_320 * Math.max(Math.cos((clat * Math.PI) / 180), 0.2);
+  const rot = (pt: number[]): number[] => {
+    const x = (pt[0] - clon) * mPerDegLon;
+    const y = (pt[1] - clat) * mPerDegLat;
+    const xr = x * cos - y * sin;
+    const yr = x * sin + y * cos;
+    return [clon + xr / mPerDegLon, clat + yr / mPerDegLat];
+  };
+  return {
+    ...geojson,
+    features: geojson.features.map((f: any) => ({
+      ...f,
+      geometry: f?.geometry?.coordinates
+        ? { ...f.geometry, coordinates: f.geometry.coordinates.map((ring: number[][]) => ring.map(rot)) }
+        : f.geometry,
+    })),
+  };
+}
+
+/** Географічний центр (bbox) усіх клітин сітки — вісь повороту. */
+function gridCenterOf(geojson: any): [number, number] | null {
+  if (!geojson || !geojson.features || geojson.features.length === 0) return null;
+  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  for (const f of geojson.features) {
+    for (const ring of f?.geometry?.coordinates || []) {
+      for (const [lon, lat] of ring) {
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+    }
+  }
+  if (!isFinite(minLon) || !isFinite(minLat)) return null;
+  return [(minLon + maxLon) / 2, (minLat + maxLat) / 2];
 }
 
 // Lets the user draw a rectangle to choose the AREA the grid fills (instead of
@@ -85,6 +133,9 @@ interface HexagonalGridProps {
   onZonesSelected: (zones: any[]) => void;
   gridType?: "hexagonal" | "square" | "circle";
   hexSizeM?: number;
+  /** Поворот сітки (°): обертає клітини довкола центру сітки. Чисто на клієнті —
+   *  бек ріже кожну плитку по її (вже повернутому) полігону (zone_polygon_coords). */
+  rotationDeg?: number;
   /** Notifies the parent when the user draws/clears the grid area (large zone). */
   onAreaChange?: (area: GBounds | null) => void;
   /** Pre-set the grid area (e.g. when reopening a saved grid from history). */
@@ -132,6 +183,7 @@ export default function HexagonalGrid({
   onZonesSelected,
   gridType: externalGridType = "hexagonal",
   hexSizeM: externalHexSizeM = 450.0,
+  rotationDeg = 0,
   onAreaChange,
   initialArea = null,
   boughtCells,
@@ -141,6 +193,14 @@ export default function HexagonalGrid({
   const boughtCellsRef = useRef<Set<string>>(new Set());
   boughtCellsRef.current = boughtCells ?? new Set();
   const [hexGrid, setHexGrid] = useState<any>(null);
+  // Вісь повороту = географічний центр сітки (стабільний поки сітка та сама).
+  const gridCenter = useMemo(() => gridCenterOf(hexGrid), [hexGrid]);
+  // Повернена сітка — те, що РЕАЛЬНО показуємо й шлемо на генерацію (клік/select/crop
+  // усі бачать уже повернуті полігони). rotationDeg=0 → той самий обʼєкт (no-op).
+  const displayGrid = useMemo(
+    () => (rotationDeg && gridCenter ? rotateGridGeoJSON(hexGrid, rotationDeg, gridCenter) : hexGrid),
+    [hexGrid, rotationDeg, gridCenter],
+  );
   const [selectedZones, setSelectedZones] = useState<Set<string>>(new Set());
   // Ordered selection (so zones can be generated and previewed "one after another")
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
@@ -163,8 +223,10 @@ export default function HexagonalGrid({
   const onZonesSelectedRef = useRef(onZonesSelected);
 
   useEffect(() => {
-    hexGridRef.current = hexGrid;
-  }, [hexGrid]);
+    // Ref тримає ПОВЕРНУТУ сітку — щоб клік-хендлери (стейл-замикання Leaflet)
+    // повертали клікнуті/обрані фічі з уже повернутими координатами.
+    hexGridRef.current = displayGrid;
+  }, [displayGrid]);
   useEffect(() => {
     selectedZonesRef.current = new Set(selectedZones);
   }, [selectedZones]);
@@ -299,8 +361,8 @@ export default function HexagonalGrid({
   };
 
   const handleSelectAll = () => {
-    if (!hexGrid || !hexGrid.features) return;
-    const all = (hexGrid.features || [])
+    if (!displayGrid || !displayGrid.features) return;
+    const all = (displayGrid.features || [])
       .map((f: any) => ({ id: normalizeId(f.id || f.properties?.id), feature: f }))
       .filter((x: any) => !!x.id);
     // Default order: by row/col if present (better UX for "in a row" selections), else original order
@@ -436,11 +498,12 @@ export default function HexagonalGrid({
           <MapBounds bounds={drawnBounds || initialArea || defaultGridArea(bounds)} />
           <GridAreaDraw onArea={handleAreaDraw} />
 
-          {hexGrid && hexGrid.features && hexGrid.features.length > 0 && (
+          {displayGrid && displayGrid.features && displayGrid.features.length > 0 && (
             <GeoJSON
               // IMPORTANT: Do NOT remount on selection changes, otherwise the map/tiles can "jump back".
-              key={`hex-grid-${hexGrid.features.length}-${gridType}-${hexSizeM}`}
-              data={hexGrid}
+              // rotationDeg у ключі → шар перемальовується ПОВЕРНУТИМ при зміні кута.
+              key={`hex-grid-${displayGrid.features.length}-${gridType}-${hexSizeM}-${Math.round(rotationDeg)}`}
+              data={displayGrid}
               style={(feature) => {
                 const zoneId = normalizeId(feature?.properties?.id || feature?.id);
                 if (!zoneId) {

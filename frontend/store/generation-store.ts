@@ -105,6 +105,8 @@ interface GenerationState {
   showHexGrid: boolean;
   gridType: "hexagonal" | "square" | "circle";
   hexSizeM: number;
+  /** Поворот сітки серії (°) — обертає клітини довкола центру сітки. */
+  gridRotationDeg: number;
 
   // Preview only
   // Preview only
@@ -153,6 +155,7 @@ interface GenerationState {
   setShowHexGrid: (on: boolean) => void;
   setGridType: (gt: "hexagonal" | "square" | "circle") => void;
   setHexSizeM: (m: number) => void;
+  setGridRotationDeg: (d: number) => void;
   setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[], productType?: "map" | "keychain") => void;
@@ -258,6 +261,7 @@ const initialState = {
   // Більші клітини (450м) — менше, але крупніших зон, які легше обирати на телефоні
   // (раніше 300м → дрібні клітини зливались і важко тапались).
   hexSizeM: 450.0,
+  gridRotationDeg: 0,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
@@ -345,6 +349,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setShowHexGrid: (on) => set({ showHexGrid: on }),
   setGridType: (gt) => set({ gridType: gt }),
   setHexSizeM: (m) => set({ hexSizeM: m }),
+  setGridRotationDeg: (d) => set({ gridRotationDeg: ((d % 360) + 360) % 360 }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds, productType = "map") =>

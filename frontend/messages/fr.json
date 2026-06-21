@@ -272,7 +272,9 @@
     "stageRender": "Modèle 3D",
     "stageRenderLocked": "Générez d'abord un modèle",
     "gridSelectHintTitle": "Comment choisir",
-    "saveGridHint": "Enregistre vos zones dans votre compte — revenez ajouter les voisines plus tard."
+    "saveGridHint": "Enregistre vos zones dans votre compte — revenez ajouter les voisines plus tard.",
+    "gridRotateLabel": "Rotation",
+    "gridRotateReset": "Réinitialiser la rotation"
   },
   "showcase": {
     "back": "Accueil",
