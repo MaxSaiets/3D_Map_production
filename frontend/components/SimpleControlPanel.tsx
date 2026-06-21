@@ -206,7 +206,12 @@ export function SimpleControlPanel({
   // Ціна для форми замовлення. КРИТИЧНО: для панно множимо на кількість плиток —
   // 3×3 = 9 окремих мап, раніше коштувало як 1 плитка → ~9× недозбір (і LiqPay
   // брав суму однієї). Магніт-fallback = 180₴ (не ціна мапи). Quote вже per-tile.
-  const orderTiles = panelMode > 0 ? panelMode * panelMode : 1;
+  // Кількість плиток для ціни: у режимі СІТКИ = число обраних клітин серії (інакше
+  // ціна показувала б 1 плитку за серію з N → недозбір/плутанина). panelMode (стара
+  // «Кілька частин») лишається 0, але формула сумісна.
+  const orderTiles = s.showHexGrid
+    ? Math.max(s.selectedZones?.length || 0, 1)
+    : (panelMode > 0 ? panelMode * panelMode : 1);
   const orderPriceText = (() => {
     // quote.price — у ₴; dispPrice конвертує у € для діаспори. Панно = ×плитки.
     if (quote) return dispPrice(quote.price * orderTiles);
@@ -554,6 +559,12 @@ export function SimpleControlPanel({
     } catch { return null; }
   };
 
+  // Чи готові до генерації: у режимі СІТКИ потрібні вибрані клітини (selectedZones),
+  // інакше — одна вибрана зона (selectedArea). Раніше всі CTA гейтились лише на
+  // selectedArea → у режимі сітки кнопка «Створити» була ВИМКНЕНА назавжди (глухий
+  // кут: клітини обрані, а згенерувати неможливо).
+  const canGenerate = s.showHexGrid ? (s.selectedZones?.length || 0) > 0 : !!selectedArea;
+
   const handleGenerate = async (opts?: { forPrint?: boolean }) => {
     // СІТКА СЕРІЇ (повна Профі-сітка у «Просто»): клітини несуть власну геометрію
     // (feature.geometry) → той самий батч-шлях, що й у ControlPanel. Має ПРІОРИТЕТ
@@ -664,7 +675,7 @@ export function SimpleControlPanel({
   // тож оператор отримає і конфіг, і готову модель (бек приймає order і без
   // завершеної генерації).
   const orderNow = () => {
-    if (!selectedArea) { setError(t("errSelectArea")); return; }
+    if (!canGenerate) { setError(t(s.showHexGrid ? "errSelectZone" : "errSelectArea")); return; }
     // Замовлення = ПОВНА друкарська якість: оператор має отримати готовий 3MF, а не
     // GLB-прев'ю. Якщо на екрані лише прев'ю (GLB) або нічого — стартуємо повну
     // генерацію у фоні (покупець заповнює контакти, поки 3MF готується; order несе task).
@@ -1225,7 +1236,7 @@ export function SimpleControlPanel({
           <button
             type="button"
             onClick={() => handleGenerate()}
-            disabled={!selectedArea || isGenerating}
+            disabled={!canGenerate || isGenerating}
             className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isGenerating ? (
@@ -1256,7 +1267,7 @@ export function SimpleControlPanel({
             <button
               type="button"
               onClick={() => handleGenerate({ forPrint: true })}
-              disabled={!selectedArea || isGenerating}
+              disabled={!canGenerate || isGenerating}
               data-testid="generate-print"
               className="inline-flex w-full items-center justify-center gap-1 text-center text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--accent-strong)] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -1288,7 +1299,7 @@ export function SimpleControlPanel({
           {error && (
             <div role="alert" aria-atomic="true" className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
               <p>{error}</p>
-              {selectedArea && !isGenerating && (
+              {canGenerate && !isGenerating && (
                 <button
                   type="button"
                   onClick={() => handleGenerate()}
@@ -1409,9 +1420,11 @@ export function SimpleControlPanel({
               // GLB-прев'ю, orderNow стартує ПОВНУ 3MF-генерацію у фоні, щоб оператор
               // отримав друкарський файл, а не чорновик.
               if (downloadUrl) { orderNow(); return; }
-              if (!selectedArea) {
-                setError(t("errSelectArea"));
-                window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", ns: "simple", key: "errSelectArea" } }));
+              if (!canGenerate) {
+                // У режимі сітки бракує вибраних клітин; інакше — зони.
+                const k = s.showHexGrid ? "errSelectZone" : "errSelectArea";
+                setError(t(k));
+                window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", ns: "simple", key: k } }));
                 return;
               }
               handleGenerate();
@@ -1420,8 +1433,8 @@ export function SimpleControlPanel({
             //  • готово → «Завантажити» поряд із «Замовити»;
             //  • до/під час генерації → «Замовити» (order-now: фонова генерація
             //    + форма одразу, без очікування 1-3 хв).
-            secondaryLabel={downloadUrl ? t("downloadShort") : (selectedArea ? t("orderShort") : undefined)}
-            onSecondary={downloadUrl ? doGatedDownload : (selectedArea ? orderNow : undefined)}
+            secondaryLabel={downloadUrl ? t("downloadShort") : (canGenerate ? t("orderShort") : undefined)}
+            onSecondary={downloadUrl ? doGatedDownload : (canGenerate ? orderNow : undefined)}
           />
         </>
       )}
