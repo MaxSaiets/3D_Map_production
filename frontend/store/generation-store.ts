@@ -97,6 +97,15 @@ interface GenerationState {
   gpxName: string | null;
   gpxNote: string | null;
 
+  // СІТКА СЕРІЇ (гекси/квадрати/кола) — У STORE, НЕ в useState! Той самий клас
+  // багу, що й simplePanelMode: панель /create монтується ДВІЧІ (desktop+mobile),
+  // page-level useState розсинхронізовувався між копіями. Тепер сітка доступна
+  // і в «Просто», і в «Профі» (спільне джерело правди).
+  selectedZones: any[];
+  showHexGrid: boolean;
+  gridType: "hexagonal" | "square" | "circle";
+  hexSizeM: number;
+
   // Preview only
   // Preview only
   terrainSmoothShading: boolean;
@@ -140,6 +149,10 @@ interface GenerationState {
   setHighlightFootprint: (pt: [number, number], poly: Array<[number, number]>) => void;
   setGpxName: (name: string | null) => void;
   setGpxNote: (note: string | null) => void;
+  setSelectedZones: (zones: any[]) => void;
+  setShowHexGrid: (on: boolean) => void;
+  setGridType: (gt: "hexagonal" | "square" | "circle") => void;
+  setHexSizeM: (m: number) => void;
   setCropRotationDeg: (deg: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[], productType?: "map" | "keychain") => void;
@@ -239,6 +252,10 @@ const initialState = {
   highlightFootprints: [],
   gpxName: null,
   gpxNote: null,
+  selectedZones: [] as any[],
+  showHexGrid: false,
+  gridType: "hexagonal" as "hexagonal" | "square" | "circle",
+  hexSizeM: 300.0,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
@@ -322,6 +339,10 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   }),
   setGpxName: (name) => set({ gpxName: name }),
   setGpxNote: (note) => set({ gpxNote: note }),
+  setSelectedZones: (zones) => set({ selectedZones: zones }),
+  setShowHexGrid: (on) => set({ showHexGrid: on }),
+  setGridType: (gt) => set({ gridType: gt }),
+  setHexSizeM: (m) => set({ hexSizeM: m }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds, productType = "map") =>

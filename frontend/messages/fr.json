@@ -438,6 +438,7 @@
     "generate": "Générer le modèle",
     "generateShort": "Générer",
     "errSelectArea": "Choisis un quartier ou dessine une zone sur la carte",
+    "errSelectZone": "Sélectionne au moins une cellule sur la grille",
     "errGen": "Erreur de génération",
     "qualityWarn": "Le modèle est prêt, mais il y a des remarques d'impression. Détails en mode « Pro ».",
     "downloadFile": "Télécharger 3MF",

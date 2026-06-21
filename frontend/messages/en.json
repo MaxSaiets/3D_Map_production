@@ -438,6 +438,7 @@
     "generate": "Generate model",
     "generateShort": "Generate",
     "errSelectArea": "Pick a district or draw an area on the map",
+    "errSelectZone": "Select at least one cell on the grid",
     "errGen": "Generation error",
     "qualityWarn": "The model is ready, but there are print remarks. Details in “Pro” mode.",
     "downloadFile": "Download 3MF",

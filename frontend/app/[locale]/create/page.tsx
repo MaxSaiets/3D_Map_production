@@ -97,26 +97,35 @@ const CITIES: Record<
 export default function Home() {
   const tc = useTranslations("create");
   const tCity = useTranslations("cities");
-  const [showHexGrid, setShowHexGrid] = useState(false);
-  const [selectedZones, setSelectedZones] = useState<any[]>([]);
-  const [gridType, setGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
-  const [hexSizeM, setHexSizeM] = useState(300.0);
+  // СІТКА СЕРІЇ — у store (НЕ page-level useState): панель монтується ДВІЧІ
+  // (desktop aside + mobile section), локальний стан розсинхронізовувався б між
+  // копіями (той самий клас багу, що й simplePanelMode). Сітка тепер валідна і в
+  // «Просто», і в «Профі».
+  const showHexGrid = useGenerationStore((st) => st.showHexGrid);
+  const setShowHexGrid = useGenerationStore((st) => st.setShowHexGrid);
+  const selectedZones = useGenerationStore((st) => st.selectedZones);
+  const setSelectedZones = useGenerationStore((st) => st.setSelectedZones);
+  const gridType = useGenerationStore((st) => st.gridType);
+  const setGridType = useGenerationStore((st) => st.setGridType);
+  const hexSizeM = useGenerationStore((st) => st.hexSizeM);
+  const setHexSizeM = useGenerationStore((st) => st.setHexSizeM);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [proMode, setProMode] = useState(false);
   useEffect(() => {
     try {
       const pro = localStorage.getItem("3dmap_pro_mode") === "1";
       setProMode(pro);
-      // Серія-сітка (гекси) існує ЛИШЕ у «Профі». Відновлюємо її тільки разом із
-      // proMode, інакше у «Просто» карта має бути завжди = одна ділянка.
-      if (pro && localStorage.getItem("3dmap_hex_grid") === "1") setShowHexGrid(true);
+      // Серія-сітка тепер доступна в ОБОХ режимах — відновлюємо її НЕЗАЛЕЖНО від
+      // proMode (раніше була лише у «Профі»; тепер «Серія зон» — це тумблер, що
+      // лишає користувача у простій панелі).
+      if (localStorage.getItem("3dmap_hex_grid") === "1") setShowHexGrid(true);
     } catch {/* ignore */}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const toggleProMode = (v: boolean) => {
     setProMode(v);
     try { localStorage.setItem("3dmap_pro_mode", v ? "1" : "0"); } catch {/* ignore */}
-    // Вихід у «Просто» → завжди одна ділянка (серія-сітка лишається у «Профі»).
-    if (!v) setShowHexGridPersist(false);
+    // Сітку БІЛЬШЕ НЕ гасимо при виході у «Просто» — вона валідна в обох режимах.
   };
   // showHexGrid зберігаємо у localStorage, щоб режим сітки переживав reload.
   const setShowHexGridPersist = (v: boolean) => {
@@ -584,9 +593,11 @@ export default function Home() {
                   // Місто вибирається у шапці (завжди видно) — у панелі дубль
                   // прибрано, щоб не плодити два однакові селектори.
                   <SimpleControlPanel
+                    availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onAdvanced={() => toggleProMode(true)}
                     showStickyBar={false}
+                    onSeriesGenerated={handleSeriesGenerated}
                   />
                 )}
               </div>
@@ -663,19 +674,17 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* РЕЖИМ ВИБОРУ (Одна ділянка / Серія-сітка гексів) — це ЕКСПЕРТНИЙ
-                    інструмент (колекція клітин, збереження сітки, докупівля сусідів).
-                    Звичайному користувачу він плутав «Панно» з «Серією зон». Тепер
-                    показуємо ЛИШЕ у «Профі»; у «Просто» карта завжди = одна ділянка,
-                    а «кілька частин» (панно) обирається у простій панелі одним
-                    зрозумілим контролом. */}
-                {proMode && (
+                {/* РЕЖИМ ВИБОРУ (Одна ділянка / Серія зон) — доступний В ОБОХ режимах
+                    («Просто» і «Профі»). «Серія зон» лише перемикає тип вибору на
+                    карті (сітка клітин зі збереженням і докупівлею сусідів) — НЕ
+                    змінює панель: користувач лишається у «Просто», а повну сітку
+                    бачить прямо тут (вибір форми/збереження нижче). */}
                 <div className="mx-4 mt-2 grid grid-cols-2 gap-2 sm:mt-3" role="tablist" aria-label={tc("selectionModeAria")}>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={!showHexGrid}
-                    onClick={() => { setShowHexGridPersist(false); toggleProMode(false); }}
+                    onClick={() => { setShowHexGridPersist(false); }}
                     className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       !showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
@@ -689,7 +698,7 @@ export default function Home() {
                     type="button"
                     role="tab"
                     aria-selected={showHexGrid}
-                    onClick={() => { setShowHexGridPersist(true); toggleProMode(true); }}
+                    onClick={() => { setShowHexGridPersist(true); }}
                     className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
                       showHexGrid
                         ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
@@ -700,7 +709,6 @@ export default function Home() {
                     <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("seriesSubtitle")}</span>
                   </button>
                 </div>
-                )}
 
                 {/* ВИБІР ФОРМИ КЛІТИНОК — видимий прямо у режимі сітки (раніше був
                     схований у «Профі»-панелі й на мобільному недоступний). */}
@@ -873,8 +881,10 @@ export default function Home() {
                   />
                 ) : (
                   <SimpleControlPanel
+                    availableCities={CITIES}
                     selectedCityKey={currentCityKey}
                     onAdvanced={() => toggleProMode(true)}
+                    onSeriesGenerated={handleSeriesGenerated}
                   />
                 )}
               </div>

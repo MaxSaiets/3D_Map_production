@@ -2,6 +2,7 @@
 // ControlPanel and the capture route all produce identical payloads.
 
 import { MAP_SIZE_PRICES_UAH, type MapSizeMm } from "@/lib/mapPrices";
+import { api } from "@/lib/api";
 
 export interface MapRequestParams {
   north: number; south: number; east: number; west: number;
@@ -134,3 +135,68 @@ export const SIMPLE_SIZES = [
   { key: "l",  label: "L",  mm: 110, cm: "11 см",  price: MAP_SIZE_PRICES_UAH[110] },
   { key: "xl", label: "XL", mm: 150, cm: "15 см",  price: MAP_SIZE_PRICES_UAH[150] },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; mm: MapSizeMm; cm: string; price: number }>;
+
+// СПІЛЬНА генерація СЕРІЇ зон (батч клітин сітки). Винесено сюди, щоб і
+// «Профі» ControlPanel, і «Просто» SimpleControlPanel кликали ОДИН код —
+// інакше дві копії логіки розходяться (anti-drift). Функція НЕ чіпає store:
+// валідацію і всі store-побічні-ефекти (setTaskGroup/setShowAllZones/...) робить
+// викликач; тут лише сортування зон, виклик API і деривація ids/meta.
+export interface RunZoneGenArgs {
+  selectedZones: any[];
+  request: Record<string, any>;
+  onSeriesGenerated?: (cells: Array<{ row: number; col: number; task_id?: string; zone_id?: string }>) => void;
+}
+export interface RunZoneGenResult {
+  taskId: string;
+  taskIds: string[];
+  batchMeta: Record<string, { zoneId: string; row?: number; col?: number }>;
+  zonesSorted: any[];
+}
+export async function runZoneGeneration(args: RunZoneGenArgs): Promise<RunZoneGenResult> {
+  const { selectedZones, request, onSeriesGenerated } = args;
+  // Сортуємо клітини row→col→id, щоб ids[i] стабільно відповідали zonesSorted[i]
+  // (продовження панно: збереження сітки за row/col, складене превʼю за порядком).
+  const zonesSorted = [...selectedZones].sort((a, b) => {
+    const ar = Number(a?.properties?.row ?? 0);
+    const br = Number(b?.properties?.row ?? 0);
+    if (ar !== br) return ar - br;
+    const ac = Number(a?.properties?.col ?? 0);
+    const bc = Number(b?.properties?.col ?? 0);
+    if (ac !== bc) return ac - bc;
+    const aid = String(a?.id || a?.properties?.id || "");
+    const bid = String(b?.id || b?.properties?.id || "");
+    return aid.localeCompare(bid);
+  });
+
+  const response = await api.generateZones(zonesSorted, request as any);
+  const ids: string[] =
+    (response as any).all_task_ids && (response as any).all_task_ids.length
+      ? (response as any).all_task_ids
+      : [response.task_id];
+
+  // Продовження панно: віддаємо викликачу клітини з task_id (zonesSorted[i]↔ids[i])
+  // → авто-збереження сітки, щоб ці зони лишились «куплені» (золоті) надалі.
+  try {
+    onSeriesGenerated?.(
+      zonesSorted.map((z: any, i: number) => ({
+        row: Number(z?.properties?.row ?? 0),
+        col: Number(z?.properties?.col ?? 0),
+        task_id: ids[i],
+        zone_id: String(z?.id ?? z?.properties?.id ?? ""),
+      })),
+    );
+  } catch { /* збереження сітки не критичне для генерації */ }
+
+  const batchMeta: Record<string, { zoneId: string; row?: number; col?: number }> = {};
+  for (let i = 0; i < ids.length; i += 1) {
+    const zone = zonesSorted[i];
+    const zoneId = String(zone?.id || zone?.properties?.id || `zone_${i}`);
+    batchMeta[String(ids[i])] = {
+      zoneId,
+      row: zone?.properties?.row,
+      col: zone?.properties?.col,
+    };
+  }
+
+  return { taskId: response.task_id, taskIds: ids, batchMeta, zonesSorted };
+}

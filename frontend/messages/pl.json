@@ -438,6 +438,7 @@
     "generate": "Wygeneruj model",
     "generateShort": "Wygeneruj",
     "errSelectArea": "Wybierz dzielnicę lub narysuj obszar na mapie",
+    "errSelectZone": "Wybierz co najmniej jedną komórkę na siatce",
     "errGen": "Błąd generowania",
     "qualityWarn": "Model gotowy, ale są uwagi do druku. Szczegóły w trybie „Pro”.",
     "downloadFile": "Pobierz 3MF",

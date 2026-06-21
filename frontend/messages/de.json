@@ -438,6 +438,7 @@
     "generate": "Modell generieren",
     "generateShort": "Generieren",
     "errSelectArea": "Wähle ein Viertel oder zeichne einen Bereich auf der Karte",
+    "errSelectZone": "Wähle mindestens eine Zelle im Raster aus",
     "errGen": "Generierungsfehler",
     "qualityWarn": "Das Modell ist fertig, aber es gibt Druckhinweise. Details im „Pro“-Modus.",
     "downloadFile": "3MF herunterladen",

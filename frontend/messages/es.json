@@ -438,6 +438,7 @@
     "generate": "Generar modelo",
     "generateShort": "Generar",
     "errSelectArea": "Elige un distrito o dibuja una zona en el mapa",
+    "errSelectZone": "Selecciona al menos una celda en la cuadrícula",
     "errGen": "Error de generación",
     "qualityWarn": "El modelo está listo, pero hay observaciones de impresión. Detalles en modo «Pro».",
     "downloadFile": "Descargar 3MF",

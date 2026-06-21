@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { runZoneGeneration } from "@/lib/generation";
 import { useGenerationStore } from "@/store/generation-store";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
@@ -528,18 +529,6 @@ export function ControlPanel({
     setShowHexGrid(false);
 
     try {
-      const zonesSorted = [...selectedZones].sort((a, b) => {
-        const ar = Number(a?.properties?.row ?? 0);
-        const br = Number(b?.properties?.row ?? 0);
-        if (ar !== br) return ar - br;
-        const ac = Number(a?.properties?.col ?? 0);
-        const bc = Number(b?.properties?.col ?? 0);
-        if (ac !== bc) return ac - bc;
-        const aid = String(a?.id || a?.properties?.id || "");
-        const bid = String(b?.id || b?.properties?.id || "");
-        return aid.localeCompare(bid);
-      });
-
       let requestBounds = kyivBounds;
       if (availableCities && selectedCityKey && availableCities[selectedCityKey]) {
         requestBounds = availableCities[selectedCityKey].bounds;
@@ -580,42 +569,13 @@ export function ControlPanel({
         preview_include_parks: previewIncludeParks,
       };
 
-      const response = await api.generateZones(zonesSorted, request);
-      const ids =
-        (response as any).all_task_ids && (response as any).all_task_ids.length
-          ? (response as any).all_task_ids
-          : [response.task_id];
-      setTaskGroup(response.task_id, ids);
-      setActiveTaskId(ids[0] ?? null);
-      // Продовження панно: віддаємо батьку клітини з task_id (zonesSorted[i]↔ids[i])
-      // → авто-збереження сітки, щоб ці зони лишились «куплені» (золоті) надалі.
-      try {
-        onSeriesGenerated?.(
-          zonesSorted.map((z: any, i: number) => ({
-            row: Number(z?.properties?.row ?? 0),
-            col: Number(z?.properties?.col ?? 0),
-            task_id: ids[i],
-            zone_id: String(z?.id ?? z?.properties?.id ?? ""),
-          })),
-        );
-      } catch { /* збереження сітки не критичне для генерації */ }
-      if (ids.length > 1) setShowAllZones(true);
-
-      try {
-        const meta: Record<string, any> = {};
-        for (let i = 0; i < ids.length; i += 1) {
-          const zone = zonesSorted[i];
-          const zoneId = String(zone?.id || zone?.properties?.id || `zone_${i}`);
-          meta[String(ids[i])] = {
-            zoneId,
-            row: zone?.properties?.row,
-            col: zone?.properties?.col,
-          };
-        }
-        setBatchZoneMetaByTaskId(meta);
-      } catch {
-        // ignore metadata sync issues
-      }
+      // СПІЛЬНИЙ хелпер (lib/generation) — той самий код, що й у «Просто»-панелі:
+      // сортує зони, шле батч, віддає ids/meta. Store-побічні-ефекти лишаються тут.
+      const res = await runZoneGeneration({ selectedZones, request, onSeriesGenerated });
+      setTaskGroup(res.taskId, res.taskIds);
+      setActiveTaskId(res.taskIds[0] ?? null);
+      if (res.taskIds.length > 1) setShowAllZones(true);
+      setBatchZoneMetaByTaskId(res.batchMeta);
     } catch (generateError: any) {
       setError(generateError.message || t("errorGenerateZones"));
       setGenerating(false);

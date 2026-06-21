@@ -5,7 +5,7 @@ import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronD
 import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
-import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM } from "@/lib/generation";
+import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM, runZoneGeneration } from "@/lib/generation";
 import { OrderDialog } from "@/components/OrderDialog";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
@@ -30,6 +30,7 @@ export function SimpleControlPanel({
   onCityChange,
   onAdvanced,
   showStickyBar = true,
+  onSeriesGenerated,
 }: {
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
@@ -39,6 +40,9 @@ export function SimpleControlPanel({
   // — портал у <body>, тож обидві копії малювали його → ДВА бари на мобільному
   // (+ inline-кнопка = «3 кнопки генерації»). Малюємо лише з мобільної копії.
   showStickyBar?: boolean;
+  // Продовження панно: після генерації серії-сітки віддаємо клітини з task_id
+  // батьку (/create) → авто-збереження сітки (золоті куплені клітини).
+  onSeriesGenerated?: (cells: Array<{ row: number; col: number; task_id?: string; zone_id?: string }>) => void;
 }) {
   const t = useTranslations("simple");
   const locale = useLocale();
@@ -436,7 +440,10 @@ export function SimpleControlPanel({
   // export 3mf) для завантаження/замовлення; інакше — швидке GLB-прев'ю на екрані.
   // Стандартна карта на екрані рендериться як легкий GLB; друкарський 3MF
   // генерується НА ВИМОГУ при download/order (магніт/панно вже завжди 3MF).
-  const buildSingleMapReq = (forPrint: boolean) => {
+  // gridBounds — у режимі СІТКИ карта не ставить selectedArea (клітини несуть
+  // власну геометрію), тож bbox беремо з обраного міста; клітини все одно
+  // переб'ють його per-zone у бекенді. Інакше — selectedArea як завжди.
+  const buildSingleMapReq = (forPrint: boolean, gridBounds?: { north: number; south: number; east: number; west: number }) => {
     const preset = MAP_STYLE_PRESETS.find((p) => p.id === styleId);
     const layerBuildings = preset ? preset.layers.buildings : s.previewIncludeBuildings;
     const layerRoads = preset ? preset.layers.roads : s.previewIncludeRoads;
@@ -466,8 +473,11 @@ export function SimpleControlPanel({
     // ПЛАСКІ БУДИНКИ — лише у плоских режимах (footprint-плити одної низької висоти).
     const flatBuildings = (flatPlate || magnetMode) && flatBuildingsMode;
     // ПОВЕРНУТА мапа: розширюємо fetch-bbox до AABB повернутого полігона (як у брелках).
-    let fN = selectedArea!.getNorth(), fS = selectedArea!.getSouth();
-    let fE = selectedArea!.getEast(), fW = selectedArea!.getWest();
+    // У режимі сітки selectedArea може бути null → беремо bbox міста (gridBounds).
+    let fN = gridBounds ? gridBounds.north : selectedArea!.getNorth();
+    let fS = gridBounds ? gridBounds.south : selectedArea!.getSouth();
+    let fE = gridBounds ? gridBounds.east : selectedArea!.getEast();
+    let fW = gridBounds ? gridBounds.west : selectedArea!.getWest();
     const zpoly = s.zonePolygonCoords;
     if (panelMode === 0 && zpoly && zpoly.length >= 3) {
       for (const [lon, lat] of zpoly) {
@@ -544,6 +554,36 @@ export function SimpleControlPanel({
   };
 
   const handleGenerate = async (opts?: { forPrint?: boolean }) => {
+    // СІТКА СЕРІЇ (повна Профі-сітка у «Просто»): клітини несуть власну геометрію
+    // (feature.geometry) → той самий батч-шлях, що й у ControlPanel. Має ПРІОРИТЕТ
+    // над single-картою/«Кілька частин» і НЕ потребує selectedArea (карта в режимі
+    // сітки його не ставить — bbox беремо з міста, бек переб'є його per-zone).
+    if (s.showHexGrid) {
+      if (!s.selectedZones?.length) { setError(t("errSelectZone")); return; }
+      setError(null);
+      setGenerating(true);
+      import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map" } }); m.trackFunnel("generate"); }).catch(() => {});
+      try {
+        // Bbox обраного міста для стабільного глобального центру сітки (як у Профі);
+        // якщо немає — бек сам порахує bbox із геометрії клітин (fallback).
+        const cityBounds = availableCities && selectedCityKey && availableCities[selectedCityKey]
+          ? availableCities[selectedCityKey].bounds
+          : undefined;
+        const req = buildSingleMapReq(opts?.forPrint ?? false, cityBounds);
+        // Клітини несуть власну геометрію → фігурний полігон single-карти НЕ потрібен.
+        delete (req as any).zone_polygon_coords;
+        if (s.simpleSeriesConnectors) (req as any).map_connector = true;
+        const res = await runZoneGeneration({ selectedZones: s.selectedZones, request: req, onSeriesGenerated });
+        setTaskGroup(res.taskId, res.taskIds);
+        setActiveTaskId(res.taskIds[0] ?? null);
+        s.setShowAllZones(true);
+        s.setBatchZoneMetaByTaskId(res.batchMeta);
+      } catch (e: any) {
+        setError(e?.message || t("errGen"));
+        setGenerating(false);
+      }
+      return;
+    }
     if (!selectedArea) { setError(t("errSelectArea")); return; }
     setError(null);
     setGenerating(true);
@@ -917,7 +957,9 @@ export function SimpleControlPanel({
             <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
               {panelMode > 0 ? t("piecesHintOn", { tiles: panelMode * panelMode }) : t("piecesHint")}
             </p>
-            {panelMode > 0 && (
+            {/* З'єднувачі серії — той самий єдиний тумблер і для «Кілька частин»
+                (панно), і для режиму СІТКИ (клітини стикуються пазами). */}
+            {(panelMode > 0 || s.showHexGrid) && (
               <>
                 <button
                   type="button"
