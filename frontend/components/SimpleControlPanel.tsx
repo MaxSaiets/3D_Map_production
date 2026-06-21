@@ -82,7 +82,8 @@ export function SimpleControlPanel({
   const mapLabel = s.simpleMapLabel;
   const setMapLabel = s.setSimpleMapLabel;
   const panelMode = s.simplePanelMode;
-  const setPanelMode = s.setSimplePanelMode;
+  // setPanelMode прибрано разом із контролом «Кілька частин» — багатозонна мапа
+  // тепер робиться через сітку «Серія зон» на карті; panelMode лишається 0.
   const flatAmsMode = s.simpleFlatAms;
   const setFlatAmsMode = s.setSimpleFlatAms;
   // З'ЄДНУВАЧ-ПАЗИ (метелик): стикує дві плоскі карти; стан у store (панель ×2).
@@ -753,76 +754,6 @@ export function SimpleControlPanel({
           </div>
         </div>
 
-        {/* 3. Style */}
-        <div>
-          <div id="simple-style-label" className={eyebrowStrong}>
-            {t("step3style")}
-          </div>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="simple-style-label">
-            {/* «З рельєфом» прибрано зі стилів — це був дубль (Повна деталізація +
-                рельєф). Рельєф тепер ЄДИНИЙ контрол — тумблер «🏔 Рельєф» нижче,
-                щоб користувач не плутався, де вмикати висоти. Стиль = лише вигляд. */}
-            {MAP_STYLE_PRESETS.filter((p) => p.id !== "relief").map((p) => {
-              const active = styleId === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => applyStyle(p.id)}
-                  title={p.blurb}
-                  className={`rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
-                    active
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
-                      : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.25)]"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 3b. Кольорова тема (#2) — стилістика друку (палітра кольорів). */}
-        <div>
-          <div id="simple-palette-label" className={eyebrowSoft}>
-            🎨 {t("paletteLabel")}
-          </div>
-          <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-labelledby="simple-palette-label">
-            {(
-              [
-                ["classic", t("palClassic"), "#ececec"],
-                ["sepia", t("palSepia"), "#e0cea9"],
-                ["noir", t("palNoir"), "#bdbdbd"],
-                ["ocean", t("palOcean"), "#1c5cac"],
-                ["neon", t("palNeon"), "#e83ca2"],
-              ] as Array<[string, string, string]>
-            ).map(([id, label, swatch]) => {
-              const active = s.simpleColorPalette === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => s.setSimpleColorPalette(id)}
-                  title={label}
-                  className={`flex flex-col items-center gap-1.5 rounded-[14px] border px-1 py-2 text-[11px] font-semibold transition ${
-                    active
-                      ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
-                      : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
-                  }`}
-                >
-                  <span className="h-5 w-5 rounded-full border border-black/10 shadow-sm" style={{ background: swatch }} />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* 4. Size */}
         <div>
           <div id="simple-size-label" className={eyebrowStrong}>
@@ -907,8 +838,8 @@ export function SimpleControlPanel({
             режимів/магніту рельєф фізично не існує). Вкладений вигляд (ліва
             акцент-смужка) читається як «ця 3D-карта → з висотами місцевості?».
             Щоб з плоского формату повернутись у 3D — клік на чип «Об'ємна 3D».
-            Показуємо для 3D і панно (панно = 3D-плитки, теж тримає simpleRelief). */}
-        {(format === "relief3d" || format === "panno") && (
+            Показуємо лише для «Об'ємна 3D» (плоскі режими/магніт без рельєфу). */}
+        {format === "relief3d" && (
         <button
           type="button"
           aria-pressed={reliefMode}
@@ -928,56 +859,19 @@ export function SimpleControlPanel({
         </button>
         )}
 
-        {/* КІЛЬКА ЧАСТИН (панно) — ЄДИНИЙ зрозумілий контрол «велика мапа з N×N
-            шматків». Замінює формат-кнопку «Панно», дубль-чипи у «Більше опцій» і
-            (для звичайного юзера) експертну «Серію зон» (та лишилась у «Профі»).
-            Під-опція «Об'ємна 3D». З'єднувачі ON за замовчанням → шматки стикуються. */}
-        {(format === "relief3d" || format === "panno") && (
-          <div className="-mt-1 ml-1 w-[calc(100%-0.25rem)] rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
-            <div className="text-sm font-semibold text-[var(--text-primary)]">🧩 {t("piecesTitle")}</div>
-            <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("piecesTitle")} data-testid="pieces-seg">
-              {([[0, t("pieces1")], [2, "2×2"], [3, "3×3"]] as Array<[0 | 2 | 3, string]>).map(([mode, label]) => (
-                <button
-                  key={`pieces-${mode}`}
-                  type="button"
-                  role="radio"
-                  aria-checked={panelMode === mode}
-                  data-testid={`pieces-${mode}`}
-                  onClick={() => { if (mode === 0) setFormat("relief3d"); else { setFormat("panno"); setPanelMode(mode); } }}
-                  className={`min-h-[44px] rounded-[14px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
-                    panelMode === mode
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
-                      : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
-              {panelMode > 0 ? t("piecesHintOn", { tiles: panelMode * panelMode }) : t("piecesHint")}
-            </p>
-            {/* З'єднувачі серії — той самий єдиний тумблер і для «Кілька частин»
-                (панно), і для режиму СІТКИ (клітини стикуються пазами). */}
-            {(panelMode > 0 || s.showHexGrid) && (
-              <>
-                <button
-                  type="button"
-                  aria-pressed={s.simpleSeriesConnectors}
-                  data-testid="series-connectors-toggle"
-                  onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
-                  className={`mt-2 flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${
-                    s.simpleSeriesConnectors
-                      ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
-                      : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
-                  }`}
-                >
-                  <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
-                  {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
-                </button>
-                <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("seriesConnectorsHint")}</p>
-              </>
-            )}
+        {/* З'ЄДНУВАЧІ СЕРІЇ — показуємо лише у режимі СІТКИ («Серія зон» на карті):
+            клітини серії друкуються окремо і стикуються пазами-замком. Багатозонна
+            велика мапа тепер робиться через сітку на карті, а не через «Кілька
+            частин», тож тумблер живе тут, поруч із сіткою. */}
+        {s.showHexGrid && (
+          <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
+            <button type="button" aria-pressed={s.simpleSeriesConnectors} data-testid="series-connectors-toggle"
+              onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
+              className={`flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${s.simpleSeriesConnectors ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]" : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"}`}>
+              <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
+              {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
+            </button>
+            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("seriesConnectorsHint")}</p>
           </div>
         )}
 

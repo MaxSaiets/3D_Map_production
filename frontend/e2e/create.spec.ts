@@ -112,7 +112,7 @@ test.describe("Конструктор мап /create", () => {
   });
 
   test("магніт: перемикач + поле підпису + жива/фолбек ціна в кнопці замовлення", async ({ page }) => {
-    // Магніт/GPX/панно сховані під «Більше опцій» (Просто-режим лишається коротким)
+    // Магніт/GPX сховані під «Налаштування» (Просто-режим лишається коротким)
     await page.locator('[data-testid="more-options"]').first().click();
     const magnet = page.getByRole("button", { name: /Магніт на холодильник/ }).first();
     await expect(magnet).toBeVisible();
@@ -142,7 +142,7 @@ test.describe("Конструктор мап /create", () => {
     await expect(connector).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("преміум-рамка: тумблер вмикається й співіснує з flat-AMS, гаситься панно", async ({ page }) => {
+  test("преміум-рамка: тумблер вмикається й співіснує з flat-AMS, гаситься у 3D", async ({ page }) => {
     await page.locator('[data-testid="more-options"]').first().click();
     const frame = page.locator('[data-testid="frame-toggle"]').first();
     await expect(frame).toBeVisible();
@@ -154,11 +154,9 @@ test.describe("Конструктор мап /create", () => {
     await flatAms.click();
     await expect(flatAms).toHaveAttribute("aria-pressed", "true");
     await expect(frame).toHaveAttribute("aria-pressed", "true");
-    // «Кілька частин» (панно) доступне ЛИШЕ у 3D → перехід у «Об'ємна 3D» гасить рамку.
+    // Перехід у «Об'ємна 3D» гасить рамку (рамка — лише для плоского режиму).
     await page.locator('[data-testid="format-relief3d"]').first().click();
     await expect(frame).toHaveAttribute("aria-pressed", "false");
-    await page.locator('[data-testid="pieces-seg"]').first().getByRole("radio", { name: "2×2" }).click();
-    await expect(page.locator('[data-testid="pieces-2"]').first()).toHaveAttribute("aria-checked", "true");
   });
 
   test("рельєф: під-опція формату «Об'ємна 3D», ховається у плоских режимах", async ({ page }) => {
@@ -169,7 +167,7 @@ test.describe("Конструктор мап /create", () => {
     await expect(relief).toHaveAttribute("aria-pressed", "false");
     await relief.click();
     await expect(relief).toHaveAttribute("aria-pressed", "true");
-    // Перемикання у плоский формат → рельєф ЗНИКАЄ з DOM (під-опція лише 3D/панно)
+    // Перемикання у плоский формат → рельєф ЗНИКАЄ з DOM (під-опція лише «Об'ємна 3D»)
     await page.locator('[data-testid="format-flat"]').first().click();
     await expect(page.locator('[data-testid="relief-toggle"]')).toHaveCount(0);
     // Пласкі будинки — суб-перемикач плоского режиму (під «Більше опцій»)
@@ -246,23 +244,10 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByText(/Ранкова пробіжка/)).toHaveCount(0);
   });
 
-  test("кілька зон: чипи 1/2×2/3×3 + з'єднувачі ON за замовчуванням", async ({ page }) => {
-    // «Кілька зон» — ВИДИМИЙ контрол під форматом «Об'ємна 3D» (не у «Більше опцій»).
-    const seg = page.locator('[data-testid="pieces-seg"]').first();
-    await expect(seg).toBeVisible();
-    await expect(seg.getByRole("radio", { name: "2×2" })).toBeVisible();
-    await seg.getByRole("radio", { name: "3×3" }).click();
-    await expect(page.getByText(/9 зон/).first()).toBeVisible();
-    // З'єднувачі серії з'являються при >1 зоні й УВІМКНЕНІ за замовчуванням.
-    await expect(page.locator('[data-testid="series-connectors-toggle"]').first()).toHaveAttribute("aria-pressed", "true");
-    await seg.getByRole("radio", { name: "2×2" }).click();
-    await expect(page.getByText(/4 зон/).first()).toBeVisible();
-  });
-
   test("формат: сегмент-контрол з 3 варіантів, вибір «Плоска» вмикає flat-AMS", async ({ page }) => {
     const seg = page.locator('[data-testid="format-seg"]').first();
     await expect(seg).toBeVisible();
-    // Рівно 3 взаємовиключні radio: 3D / Плоска / Магніт (панно винесено у «Кілька частин»)
+    // Рівно 3 взаємовиключні radio: 3D / Плоска / Магніт (багатозонна мапа — через сітку на карті)
     await expect(seg.getByRole("radio")).toHaveCount(3);
     // Дефолт = «Об'ємна 3D» (усі спецрежими off)
     await expect(page.locator('[data-testid="format-relief3d"]').first()).toHaveAttribute("aria-checked", "true");

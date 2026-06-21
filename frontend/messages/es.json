@@ -447,7 +447,7 @@
     "mapLabelAria": "Texto de grabado del imán",
     "estPrice": "Precio",
     "orderShort": "Pedir",
-    "moreOptions": "Más opciones (imán, GPX)",
+    "moreOptions": "Ajustes",
     "magnetToggle": "Imán de nevera",
     "magnetHint": "Formato plano de 6 cm con 4 huecos para imanes Ø4×2 mm en la base (en las esquinas). Los imanes se pegan tras la impresión.",
     "flatAmsToggle": "Impresión multicolor (cada capa su color)",
