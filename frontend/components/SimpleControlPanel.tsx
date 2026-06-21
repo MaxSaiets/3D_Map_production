@@ -704,8 +704,11 @@ export function SimpleControlPanel({
           <div id="simple-style-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {t("step3style")}
           </div>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="simple-style-label">
-            {MAP_STYLE_PRESETS.map((p) => {
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="simple-style-label">
+            {/* «З рельєфом» прибрано зі стилів — це був дубль (Повна деталізація +
+                рельєф). Рельєф тепер ЄДИНИЙ контрол — тумблер «🏔 Рельєф» нижче,
+                щоб користувач не плутався, де вмикати висоти. Стиль = лише вигляд. */}
+            {MAP_STYLE_PRESETS.filter((p) => p.id !== "relief").map((p) => {
               const active = styleId === p.id;
               return (
                 <button
@@ -799,11 +802,11 @@ export function SimpleControlPanel({
               );
             })}
           </div>
-          <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">
-            {format === "flat" ? t("fmtFlatHint")
-              : format === "magnet" ? t("fmtMagnetHint")
-              : t("fmtStandardHint")}
-          </p>
+          {/* Описи формату прибрано — кнопки самопояснювані (фідбек: «забагато опису»).
+              Коротка підказка лишається ЛИШЕ для магніту (нестандартний розмір). */}
+          {format === "magnet" && (
+            <p className="mt-1.5 text-[11px] leading-4 text-[var(--text-secondary)]">{t("fmtMagnetHint")}</p>
+          )}
         </div>
 
         {/* РЕЛЬЄФ (висоти землі) — ПІД-ОПЦІЯ формату «Об'ємна 3D», а не окремий
