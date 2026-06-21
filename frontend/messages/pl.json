@@ -158,7 +158,8 @@
       "contacts": "Kontakt",
       "entityLabel": "Sprzedawca",
       "entity": "Działalność gospodarcza Maksym Saiets",
-      "addressLine": "Ukraina, obwód chmielnicki, Chmielnicki, ul. Zawadskoho 38"
+      "addressLine": "Ukraina, obwód chmielnicki, Chmielnicki, ul. Zawadskoho 38",
+      "gift": "Prezent"
     },
     "seo": {
       "title": "Mapy miast 3D i personalizowane breloki — co robimy",
@@ -528,7 +529,11 @@
     "palNoir": "Noir",
     "palOcean": "Ocean",
     "palNeon": "Neon",
-    "paletteHint": "Kolor druku — jak będzie wyglądać gotowy model"
+    "paletteHint": "Kolor druku — jak będzie wyglądać gotowy model",
+    "frameStyleLabel": "Styl ramki",
+    "fsClassic": "Klasyczna",
+    "fsOrnate": "Zdobiona",
+    "fsCompass": "Kompas"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
@@ -1489,5 +1494,36 @@
     "title": "Generator światów 3D z AI",
     "description": "Opisz wyobrażony świat — góry, wyspy, kaniony — i otrzymaj drukowalny model 3D. Darmowy podgląd.",
     "keywords": "AI 3D, generowanie światów, teren proceduralny, druk 3D"
+  },
+  "giftMeta": {
+    "title": "Prezent z mapą 3D i brelokiem — Monadruk",
+    "description": "Dotykowa mapa 3D miasta lub brelok z mapą ważnego miejsca — ciepły, osobisty prezent na rocznicę, ślub, urodziny czy parapetówkę. Drukujemy i wysyłamy na terenie Ukrainy."
+  },
+  "gift": {
+    "breadcrumb": "Prezent",
+    "h1": "Mapa 3D i brelok na prezent",
+    "intro": "Podaruj miejsce, które ma znaczenie. Pierwsza randka, podwórko z dzieciństwa, miasto, gdzie wszystko się zaczęło — zamieniamy współrzędne w dotykową mapę 3D lub brelok z jej planem.",
+    "intro2": "Wybierz w kreatorze dowolny punkt świata, dodaj napis — a my wydrukujemy i wyślemy gotowy prezent albo przekażemy plik gotowy do druku.",
+    "ctaMap": "Stwórz mapę 3D",
+    "ctaKeychain": "Zrób brelok",
+    "occasionsTitle": "Prezent na każdą okazję",
+    "anniversaryTitle": "Rocznica i ślub",
+    "anniversaryDesc": "Mapa miejsca pierwszego spotkania lub ślubu — symboliczny prezent na lata. Dodaj datę i współrzędne.",
+    "anniversaryCta": "Stwórz mapę pary",
+    "birthdayTitle": "Urodziny",
+    "birthdayDesc": "Rodzinna dzielnica, ulubione miasto lub wymarzone miejsce jako mapa 3D — niespodziewany, serdeczny prezent.",
+    "birthdayCta": "Wybierz miasto",
+    "housewarmingTitle": "Parapetówka",
+    "housewarmingDesc": "Mapa 3D nowej dzielnicy lub domu — stylowa dekoracja na ścianę lub półkę dla tych, którzy właśnie się wprowadzili.",
+    "housewarmingCta": "Zrób mapę dzielnicy",
+    "coupleTitle": "Dla pary",
+    "coupleDesc": "Brelok-serce dla pary z mapą wspólnego miejsca — połówka dla każdego. Noś miasto, które was łączy.",
+    "coupleCta": "Stwórz brelok-serce",
+    "corporateTitle": "Dla kolegi i firmowy",
+    "corporateDesc": "Mapa biura, miasta oddziału lub rodzinnych stron — oryginalny prezent dla kolegi lub partnera. Możliwe zamówienia hurtowe.",
+    "corporateCta": "Wybierz format",
+    "outro": "Każdy prezent to mapa 3D prawdziwego miejsca: budynki, ulice, rzeźba terenu. Drukujemy z eko-PLA i wysyłamy na Ukrainie, albo przekazujemy gotowy plik 3MF do samodzielnego druku.",
+    "pricesLink": "Zobacz ceny",
+    "homeCtaLink": "Szukasz pomysłu na prezent?"
   }
 }

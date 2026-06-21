@@ -18,6 +18,37 @@ from shapely.geometry.base import BaseGeometry
 TRACK_COLOR = [222, 28, 28, 255]  # ЧЕРВОНИЙ — маршрут має чітко виділятись (AMS-шар)
 MAX_GPX_POINTS = 8000
 
+# Phase 2 toggle: road-snap і де-хвилястість умикаються КАЛЛЕРОМ через параметри
+# (snap_threshold_m>0 / vw_area_threshold>0). Цей прапор — глобальний kill-switch,
+# щоб у разі регресії можна було вимкнути ВСЮ Phase-2 поведінку, не чіпаючи каллери,
+# і дефолтний шлях (без road_lines_local) лишився ІДЕНТИЧНИМ старому (нуль регресій).
+GPX_PHASE2_ENABLED = True
+
+
+def _flatten_road_lines(road_lines_local: Any) -> list:
+    """Нормалізує road_lines_local у плаский список shapely LineString.
+    Каллер може передати list[LineString], list[MultiLineString] або суміш —
+    розкладаємо MultiLineString на компоненти, відкидаємо порожнє/не-лінії,
+    щоб _snap_coords_to_roads працював з однорідними геометріями."""
+    out: list = []
+    if not road_lines_local:
+        return out
+    try:
+        items = list(road_lines_local)
+    except TypeError:
+        items = [road_lines_local]
+    for rl in items:
+        if rl is None or getattr(rl, "is_empty", False):
+            continue
+        geoms = getattr(rl, "geoms", None)
+        if geoms is not None and not isinstance(rl, LineString):
+            for g in geoms:
+                if g is not None and not getattr(g, "is_empty", True) and getattr(g, "length", 0) > 0:
+                    out.append(g)
+        elif getattr(rl, "length", 0) > 0:
+            out.append(rl)
+    return out
+
 
 def _chaikin_smooth(coords: list, passes: int) -> list:
     """Згладження Чайкіна (corner-cutting): кожна ланка ділиться 25/75 → плавна
@@ -64,25 +95,62 @@ def _visvalingam_simplify(coords: list, area_threshold: float) -> list:
     return pts
 
 
-def _snap_coords_to_roads(coords: list, road_lines_local: list, snap_threshold_m: float) -> list:
+def _snap_coords_to_roads(coords: list, road_lines_local: Any, snap_threshold_m: float) -> list:
     """Притягує точки треку до найближчої осі дороги (місто): для кожної точки
-    шукаємо найближчу дорогу; якщо ближче за поріг — проєктуємо на неї, інакше
-    лишаємо як є (бездоріжжя/стежка). Так маршрут іде ПО ДОРОГАХ де можливо."""
-    if not road_lines_local or snap_threshold_m <= 0:
+    шукаємо найближчу дорогу; якщо ближче за поріг — проєктуємо на неї (nearest
+    point на лінії через project+interpolate), інакше лишаємо як є (бездоріжжя/
+    стежка/парк). Так маршрут іде ПО ДОРОГАХ де можливо, але далекі від доріг
+    точки (природа) НЕ зміщуються.
+
+    Phase 2: (1) MultiLineString розкладається на компоненти; (2) для швидкого
+    пошуку найближчої дороги використовуємо STRtree (просторовий індекс) з
+    fallback на лінійний скан; (3) точку, що НЕ ближче за поріг, лишаємо без змін."""
+    if not road_lines_local or snap_threshold_m <= 0 or not GPX_PHASE2_ENABLED:
+        return coords
+    lines = _flatten_road_lines(road_lines_local)
+    if not lines:
         return coords
     try:
         from shapely.geometry import Point
+
+        # Просторовий індекс прискорює пошук на великих містах (сотні вулиць).
+        # query-радіус = поріг; STRtree API різниться між shapely 1.x/2.x →
+        # graceful fallback на лінійний скан, якщо індекс недоступний.
+        tree = None
+        try:
+            from shapely.strtree import STRtree
+            tree = STRtree(lines)
+        except Exception:
+            tree = None
+
+        def _candidates(p):
+            if tree is None:
+                return lines
+            try:
+                # shapely 2.x: query() повертає індекси; 1.x — геометрії.
+                res = tree.query(p.buffer(snap_threshold_m))
+                cand = []
+                for r in res:
+                    if isinstance(r, (int, np.integer)):
+                        cand.append(lines[int(r)])
+                    else:
+                        cand.append(r)
+                return cand if cand else lines
+            except Exception:
+                return lines
+
         out = []
         for c in coords:
             p = Point(c[0], c[1])
             best = None
             best_d = snap_threshold_m
-            for rl in road_lines_local:
+            for rl in _candidates(p):
                 d = rl.distance(p)
                 if d < best_d:
                     best_d = d
                     best = rl
             if best is not None:
+                # Проєкція на найближчу точку осі дороги (range-clamped до кінців).
                 proj = best.interpolate(best.project(p))
                 out.append((proj.x, proj.y))
             else:
@@ -165,6 +233,36 @@ def gpx_track_to_local_geometry(
         return None
 
 
+def _ensure_valid_polygon(poly: Optional[BaseGeometry]) -> Optional[BaseGeometry]:
+    """Гарантує валідний (is_valid) і непорожній полігон: спершу buffer(0), якщо
+    лишився невалідним — make_valid (shapely 2.x) → відфільтрувати лише полігональні
+    частини. Захищає від самоперетинів/виродження після snap+buffer+intersection."""
+    if poly is None or getattr(poly, "is_empty", True):
+        return None
+    try:
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+    except Exception:
+        pass
+    try:
+        if poly is not None and not poly.is_empty and not poly.is_valid:
+            from shapely.validation import make_valid
+            fixed = make_valid(poly)
+            # make_valid може повернути GeometryCollection (лінії+полігони) —
+            # лишаємо лише полігональну складову (площа треку).
+            gtype = getattr(fixed, "geom_type", "")
+            if gtype == "GeometryCollection":
+                from shapely.geometry import MultiPolygon, Polygon as _Pg
+                parts = [g for g in fixed.geoms if isinstance(g, _Pg) and not g.is_empty]
+                fixed = (parts[0] if len(parts) == 1 else MultiPolygon(parts)) if parts else None
+            poly = fixed
+    except Exception:
+        pass
+    if poly is None or getattr(poly, "is_empty", True) or float(getattr(poly, "area", 0.0)) <= 0:
+        return None
+    return poly
+
+
 def build_gpx_track_polygon(
     *,
     gpx_track: Any,
@@ -185,7 +283,10 @@ def build_gpx_track_polygon(
     # Спрощення/згладження масштабовані: прибираємо тремтіння дрібніше за ~0.6мм
     # моделі (world = 0.6/sf), але не грубіше за пів-ширини треку.
     simplify_m = min(max(0.6 / sf, 0.5), half_w_m * 1.2)
-    snap_threshold_m = (18.0 if road_lines_local else 0.0)  # місто: притягувати до доріг у радіусі ~18м
+    # Поріг snap: ~18м у місті, але не менше за пів-ширину треку (щоб трек, що йде
+    # майже по дорозі, гарантовано підхопився) і не агресивніше за ~25м.
+    snap_threshold_m = (max(18.0, half_w_m) if road_lines_local else 0.0)
+    snap_threshold_m = min(snap_threshold_m, 25.0) if snap_threshold_m > 0 else 0.0
     # Visvalingam де-хвилястість: прибираємо зиґзаґи дрібніші за ~пів-ширину треку.
     # МІСТО (є дороги) — легше (трек уздовж осей доріг); ПРИРОДА (без доріг) — агресивніше
     # + більше Чайкіна, бо лісові/гірські треки звивистіші й гірше друкуються.
@@ -203,10 +304,21 @@ def build_gpx_track_polygon(
         # ROUND caps+joins (cap_style=1, join_style=1 у shapely = круглі) + buffer(0)
         # ОДРАЗУ прибирає самоперетини згладженого треку до кліпу.
         poly = line.buffer(half_w_m, cap_style=1, join_style=1).buffer(0)
+        # ВАЛІДНІСТЬ: snap до доріг може породити самоперетини/«вісімки» — make_valid.
+        poly = _ensure_valid_polygon(poly)
+        if poly is None:
+            print("[GPX] track buffer collapsed/empty — layer skipped")
+            return None
         if zone_polygon_local is not None and not getattr(zone_polygon_local, "is_empty", True):
-            poly = poly.intersection(zone_polygon_local).buffer(0)
-        if poly is None or poly.is_empty or float(poly.area) <= 0:
+            poly = poly.intersection(zone_polygon_local)
+            poly = _ensure_valid_polygon(poly)
+        if poly is None:
             print("[GPX] track outside the selected zone — layer skipped")
+            return None
+        # Захист від виродження у нитку: після кліпу площа має покривати ≥ мінімальну
+        # друковану ширину хоча б на короткому відрізку (half_w_m² як грубий поріг).
+        if float(poly.area) <= (half_w_m * half_w_m) * 0.25:
+            print("[GPX] track polygon too thin after clip — layer skipped")
             return None
         return poly
     except Exception as exc:

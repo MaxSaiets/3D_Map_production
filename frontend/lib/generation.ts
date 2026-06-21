@@ -50,6 +50,8 @@ export interface MapRequestParams {
   /** Преміум-рамка: компас + масштабна лінійка + координати центру окремою
    *  чорною деталлю поверх плоскої карти. Лише плоский режим. */
   mapFrame?: boolean;
+  /** Стиль рамки: classic | ornate | compass (мапиться у backend frame_style). */
+  frameStyle?: string;
   /** Виділені будівлі: окремі ЧЕРВОНІ вставні деталі (паз+peg). Плоский режим. */
   mapHighlightBuilding?: boolean;
   /** [[lon,lat],...] обраних будівель (кліки по карті); інакше — будинок у центрі. */
@@ -106,8 +108,8 @@ export function buildMapRequest(p: MapRequestParams) {
     ...(p.gpxTrack && p.gpxTrack.length >= 2 ? { gpx_track: p.gpxTrack } : {}),
     // З'єднувач-пази: бек має дефолти (NSEW, 10×15×2мм, кліренс 0.2) — шлемо лише прапор.
     ...(p.mapConnector ? { map_connector: true } : {}),
-    // Преміум-рамка: бек має дефолти (компас+лінійка+координати) — шлемо лише прапор.
-    ...(p.mapFrame ? { map_frame: true } : {}),
+    // Преміум-рамка: бек має дефолти (компас+лінійка+координати) — шлемо прапор + стиль.
+    ...(p.mapFrame ? { map_frame: true, frame_style: p.frameStyle ?? "classic" } : {}),
     // Виділені будівлі: прапор + точки [[lon,lat],...] обраних будівель (якщо клікнули).
     ...(p.mapHighlightBuilding ? { map_highlight_building: true } : {}),
     ...(p.mapHighlightBuilding && p.highlightPoints && p.highlightPoints.length > 0

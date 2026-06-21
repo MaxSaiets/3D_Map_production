@@ -553,6 +553,7 @@ function Testimonials() {
 function FinalCTA() {
   const t = useTranslations("home.cta");
   const tAlt = useTranslations("home.alt");
+  const tGift = useTranslations("gift");
   return (
     <section className="mx-auto max-w-[1360px] px-5 py-20 lg:px-8 lg:py-24">
       <div className="grid items-center gap-12 overflow-hidden rounded-[32px] bg-forest px-8 py-16 text-[#F4EFE4] lg:grid-cols-[1.4fr_1fr] lg:px-16">
@@ -570,6 +571,14 @@ function FinalCTA() {
               {t("keychain")}
             </Link>
           </div>
+          {/* Внутрішнє перелінкування на подарункову сторінку (SEO + сезонний попит). */}
+          <Link
+            href="/podarunok"
+            className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold underline-offset-4 hover:underline"
+            style={{ color: "rgba(244,239,228,0.85)" }}
+          >
+            {tGift("homeCtaLink")} <ArrowRight size={14} />
+          </Link>
         </div>
         <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)] bg-[rgba(244,239,228,0.06)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}

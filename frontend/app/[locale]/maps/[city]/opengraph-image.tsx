@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { routing } from "@/i18n/routing";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
+import { cityFacts } from "@/lib/cityFacts";
 import type { AppLocale } from "@/i18n/routing";
 
 export const size = { width: 1200, height: 630 };
@@ -70,6 +71,9 @@ export default async function CityOpengraphImage({
   const text = OG_TEXT[locale] ?? OG_TEXT.uk;
   const city = CITY_PAGE_BY_SLUG[params.city];
   const cityName = city ? city.names[locale] : "";
+  // Візитівка міста (lib/cityFacts): uk-локаль бере .uk, решта — .latin.
+  const facts = cityFacts(params.city);
+  const landmark = facts ? (locale === "uk" ? facts.landmark.uk : facts.landmark.latin) : "";
 
   return new ImageResponse(
     (
@@ -92,6 +96,11 @@ export default async function CityOpengraphImage({
           <div style={{ fontSize: 88, fontWeight: 600, lineHeight: 1.02, color: "#1B2A22", fontStyle: "italic" }}>
             {cityName}
           </div>
+          {landmark ? (
+            <div style={{ fontSize: 30, color: "#2E4A3A", marginTop: 10, fontFamily: "Georgia, serif" }}>
+              {landmark}
+            </div>
+          ) : null}
           <div style={{ fontSize: 28, color: "#3c4a42", maxWidth: 900, marginTop: 18, fontFamily: "Arial, sans-serif" }}>
             {text.sub}
           </div>

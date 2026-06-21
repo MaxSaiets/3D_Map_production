@@ -797,6 +797,11 @@ class GenerationRequest(BaseModel):
     map_frame_compass: bool = True
     map_frame_scale: bool = True
     map_frame_coords: bool = True
+    # СТИЛЬ ОРНАМЕНТАЛЬНОЇ РАМКИ: "classic" = поточна поведінка (компас+лінійка+
+    # координати, без зовнішнього ободка); "ornate" = декоративний підведений
+    # подвійний ободок по периметру + кутові мотиви; "compass" = ті ж елементи +
+    # тонкий зовнішній ободок. Рендериться у build_map_frame_overlay.
+    frame_style: str = "classic"
     # ВИДІЛЕНА БУДІВЛЯ на карті: користувач обирає свій будинок (highlight_point
     # [lon,lat] від кліку по карті; інакше — будинок у центрі) → ОКРЕМА ЧЕРВОНА
     # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).
@@ -3134,6 +3139,11 @@ class ZoneGenerationRequest(BaseModel):
     map_frame_compass: bool = True
     map_frame_scale: bool = True
     map_frame_coords: bool = True
+    # СТИЛЬ ОРНАМЕНТАЛЬНОЇ РАМКИ: "classic" = поточна поведінка (компас+лінійка+
+    # координати, без зовнішнього ободка); "ornate" = декоративний підведений
+    # подвійний ободок по периметру + кутові мотиви; "compass" = ті ж елементи +
+    # тонкий зовнішній ободок. Рендериться у build_map_frame_overlay.
+    frame_style: str = "classic"
     # ВИДІЛЕНА БУДІВЛЯ на карті: користувач обирає свій будинок (highlight_point
     # [lon,lat] від кліку по карті; інакше — будинок у центрі) → ОКРЕМА ЧЕРВОНА
     # вставна деталь (паз+peg). build_highlight_insert (flat_plate_pipeline).

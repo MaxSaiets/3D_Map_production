@@ -1021,6 +1021,7 @@ def build_map_frame_overlay(
     want_compass: bool = True,
     want_scale: bool = True,
     want_coords: bool = True,
+    frame_style: str = "classic",
 ) -> Optional[BaseGeometry]:
     """ПРЕМІУМ-РАМКА плоскої карти: компас (стрілка-N), масштабна лінійка
     (шахова + підписи 0…N м) і координати центру (lat/lon) — як ОДИН підведений
@@ -1029,7 +1030,14 @@ def build_map_frame_overlay(
 
     Координати world-метрів: base_polygon.bounds = (west..east)×(south..north).
     Розміри елементів у model-мм → _model_mm_to_world_m. Реальна довжина лінійки
-    рахується від РЕАЛЬНОЇ ширини карти (метри широти/довготи)."""
+    рахується від РЕАЛЬНОЇ ширини карти (метри широти/довготи).
+
+    frame_style:
+      • "classic" — лише компас+лінійка+координати (як було, golden-сумісно).
+      • "ornate"  — + декоративний підведений ободок по периметру (подвійна лінія)
+        та прості кутові мотиви (сходинкові квадрати). FDM-друкабельно (стінка
+        ≥0.8мм). Геометрія через shapely (буфер контуру плити).
+      • "compass" — + тонкий ОДИНАРНИЙ зовнішній ободок (акцент на компас/лінійці)."""
     if base_polygon is None or getattr(base_polygon, "is_empty", True):
         return None
     minx, miny, maxx, maxy = base_polygon.bounds
@@ -1108,6 +1116,66 @@ def build_map_frame_overlay(
                 parts.append(ct)
         except Exception as exc:
             print(f"[MAP FRAME] coords failed (non-fatal): {exc}")
+
+    # ── Орнаментальний ободок по периметру (ornate/compass).
+    # Будуємо кільце як різницю двох усаджених копій контуру плити (shapely).
+    # Друкабельність: товщина стінки кожної лінії ≥0.8мм; для "ornate" — подвійна
+    # лінія + сходинкові кутові квадрати; для "compass" — одна тонша зовнішня лінія.
+    style = (frame_style or "classic").strip().lower()
+    if style in ("ornate", "compass"):
+        try:
+            def _ring(inset_mm: float, width_mm: float) -> Optional[BaseGeometry]:
+                """Кільце-лінія всередині плити: зовнішній край на inset від краю,
+                ширина стінки = width. Через буфери самого base_polygon."""
+                outer = base_polygon.buffer(-mm(inset_mm), join_style=1)
+                inner = base_polygon.buffer(-mm(inset_mm + width_mm), join_style=1)
+                if outer is None or outer.is_empty:
+                    return None
+                ring = outer.difference(inner) if (inner is not None and not inner.is_empty) else outer
+                ring = ring.buffer(0)
+                return ring if (ring is not None and not ring.is_empty) else None
+
+            rim_parts: list[BaseGeometry] = []
+            if style == "ornate":
+                r1 = _ring(2.0, 1.0)   # зовнішня лінія (стінка 1.0мм)
+                r2 = _ring(4.2, 0.9)   # внутрішня лінія (стінка 0.9мм), зазор ~1.3мм
+                for r in (r1, r2):
+                    if r is not None:
+                        rim_parts.append(r)
+                # Сходинкові кутові мотиви: маленькі квадрати в 4 кутах bbox плити.
+                csz = mm(5.0)
+                cins = mm(1.6)
+                corners = [
+                    (minx + cins, miny + cins),  # нижній-лівий
+                    (maxx - cins - csz, miny + cins),  # нижній-правий
+                    (minx + cins, maxy - cins - csz),  # верхній-лівий
+                    (maxx - cins - csz, maxy - cins - csz),  # верхній-правий
+                ]
+                cstroke = mm(1.0)
+                for (qx, qy) in corners:
+                    sq_out = box(qx, qy, qx + csz, qy + csz)
+                    sq_in = box(qx + cstroke, qy + cstroke, qx + csz - cstroke, qy + csz - cstroke)
+                    motif = sq_out.difference(sq_in).buffer(0)
+                    # маленький залитий квадратик у центрі мотиву (акцент)
+                    dsz = csz * 0.28
+                    dcx, dcy = qx + csz * 0.5, qy + csz * 0.5
+                    dot = box(dcx - dsz * 0.5, dcy - dsz * 0.5, dcx + dsz * 0.5, dcy + dsz * 0.5)
+                    cm = unary_union([g for g in (motif, dot) if g is not None and not g.is_empty]).buffer(0)
+                    if cm is not None and not cm.is_empty:
+                        rim_parts.append(cm)
+            else:  # compass — тонкий одинарний зовнішній ободок
+                r1 = _ring(2.0, 0.9)
+                if r1 is not None:
+                    rim_parts.append(r1)
+
+            rim = unary_union([g for g in rim_parts if g is not None and not g.is_empty]).buffer(0) if rim_parts else None
+            if rim is not None and not rim.is_empty and rim.is_valid:
+                # тримаємо ободок усередині плити
+                rim = rim.intersection(base_polygon).buffer(0)
+                if rim is not None and not rim.is_empty:
+                    parts.append(rim)
+        except Exception as exc:
+            print(f"[MAP FRAME] ornamental rim ({style}) failed (non-fatal): {exc}")
 
     if not parts:
         return None
@@ -3934,6 +4002,7 @@ def run_flat_plate_pipeline(
                 want_compass=bool(getattr(request, "map_frame_compass", True)),
                 want_scale=bool(getattr(request, "map_frame_scale", True)),
                 want_coords=bool(getattr(request, "map_frame_coords", True)),
+                frame_style=str(getattr(request, "frame_style", "classic") or "classic"),
             )
             if map_frame_overlay is not None and not map_frame_overlay.is_empty:
                 map_frame_hull = map_frame_overlay.convex_hull.buffer(
@@ -3941,10 +4010,19 @@ def run_flat_plate_pipeline(
                 ).buffer(0)
                 # Розбиваємо на per-елемент опуклі оболонки (компас/лінійка/координати
                 # у різних кутах) — спільна опукла оболонка з'їла б половину карти.
+                # ПАСТКА: ободок (ornate/compass) — кільцеподібний, його convex_hull =
+                # вся плита. Для таких частин (hull-площа ≫ власної площі) ріжемо лише
+                # буфер самої геометрії, а не опуклу оболонку.
+                _pad = _model_mm_to_world_m(0.6, export_scale_factor)
                 _clears = []
                 for _g in (map_frame_overlay.geoms if hasattr(map_frame_overlay, "geoms") else [map_frame_overlay]):
                     try:
-                        _clears.append(_g.convex_hull.buffer(_model_mm_to_world_m(0.6, export_scale_factor), join_style=1))
+                        _hull = _g.convex_hull
+                        _g_area = getattr(_g, "area", 0.0) or 0.0
+                        if getattr(_hull, "area", 0.0) > _g_area * 4.0 + 1e-9:
+                            _clears.append(_g.buffer(_pad, join_style=1))  # кільце → лише сам контур
+                        else:
+                            _clears.append(_hull.buffer(_pad, join_style=1))
                     except Exception:
                         pass
                 map_frame_hull = unary_union(_clears).buffer(0) if _clears else map_frame_hull
@@ -3959,7 +4037,7 @@ def run_flat_plate_pipeline(
                     thickness_m=_model_mm_to_world_m(0.6, export_scale_factor),
                     color=LAYER_COLORS.get("rim", [25, 25, 25, 255]), min_area_m2=1e-12,
                 )
-                print(f"[MAP FRAME] compass/scale/coords ready ({len(getattr(map_frame_overlay,'geoms',[1]))} elems), carved from map layers")
+                print(f"[MAP FRAME] style={str(getattr(request, 'frame_style', 'classic'))} compass/scale/coords ready ({len(getattr(map_frame_overlay,'geoms',[1]))} elems), carved from map layers")
         except Exception as exc:
             print(f"[MAP FRAME] failed (non-fatal): {exc}")
             map_frame_mesh = None

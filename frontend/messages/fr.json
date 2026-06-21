@@ -158,7 +158,8 @@
       "contacts": "Contacts",
       "entityLabel": "Vendeur",
       "entity": "Entrepreneur individuel Maksym Saiets",
-      "addressLine": "Ukraine, oblast de Khmelnytskyi, Khmelnytskyi, rue Zavadskoho 38"
+      "addressLine": "Ukraine, oblast de Khmelnytskyi, Khmelnytskyi, rue Zavadskoho 38",
+      "gift": "Cadeau"
     },
     "seo": {
       "title": "Cartes de villes 3D et porte-clés personnalisés — ce que nous faisons",
@@ -528,7 +529,11 @@
     "palNoir": "Noir",
     "palOcean": "Océan",
     "palNeon": "Néon",
-    "paletteHint": "Couleur d impression — l aspect du modèle fini"
+    "paletteHint": "Couleur d impression — l aspect du modèle fini",
+    "frameStyleLabel": "Style de cadre",
+    "fsClassic": "Classique",
+    "fsOrnate": "Ornementé",
+    "fsCompass": "Boussole"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
@@ -1489,5 +1494,36 @@
     "title": "Générateur de mondes 3D par IA",
     "description": "Décris un monde imaginaire — montagnes, îles, canyons — et obtiens un modèle 3D imprimable. Aperçu gratuit.",
     "keywords": "IA 3D, génération de mondes, terrain procédural, impression 3D"
+  },
+  "giftMeta": {
+    "title": "Un cadeau avec carte 3D et porte-clés — Monadruk",
+    "description": "Une carte 3D tactile d'une ville ou un porte-clés d'un lieu cher — un cadeau chaleureux et personnel pour un anniversaire, un mariage ou une pendaison de crémaillère. Nous imprimons et livrons en Ukraine."
+  },
+  "gift": {
+    "breadcrumb": "Cadeau",
+    "h1": "Une carte 3D et un porte-clés en cadeau",
+    "intro": "Offrez un lieu qui compte. Le premier rendez-vous, la cour d'enfance, la ville où tout a commencé — nous transformons des coordonnées en une carte 3D tactile ou un porte-clés avec son plan.",
+    "intro2": "Choisissez n'importe quel point du monde dans le configurateur, ajoutez une légende — et nous imprimons et livrons le cadeau fini, ou vous remettons un fichier prêt à imprimer.",
+    "ctaMap": "Créer une carte 3D",
+    "ctaKeychain": "Faire un porte-clés",
+    "occasionsTitle": "Un cadeau pour chaque occasion",
+    "anniversaryTitle": "Anniversaire & mariage",
+    "anniversaryDesc": "Une carte du lieu de votre première rencontre ou de votre mariage — un cadeau symbolique qui dure des années. Ajoutez une date et les coordonnées.",
+    "anniversaryCta": "Créer la carte du couple",
+    "birthdayTitle": "Anniversaire",
+    "birthdayDesc": "Le quartier d'origine, la ville préférée ou une destination de rêve en carte 3D — un cadeau inattendu et plein de sens.",
+    "birthdayCta": "Choisir une ville",
+    "housewarmingTitle": "Pendaison de crémaillère",
+    "housewarmingDesc": "Une carte 3D du nouveau quartier ou logement — une déco élégante pour un mur ou une étagère pour ceux qui viennent d'emménager.",
+    "housewarmingCta": "Cartographier un quartier",
+    "coupleTitle": "Pour un couple",
+    "coupleDesc": "Un porte-clés cœur en duo avec la carte d'un lieu partagé — une moitié pour chacun. Portez la ville qui vous unit.",
+    "coupleCta": "Créer le porte-clés cœur",
+    "corporateTitle": "Collègue & entreprise",
+    "corporateDesc": "Une carte du bureau, de la ville d'une filiale ou de la région d'origine — un cadeau original pour un collègue ou un partenaire. Commandes en volume possibles.",
+    "corporateCta": "Choisir un format",
+    "outro": "Chaque cadeau est une carte 3D d'un lieu réel : bâtiments, rues, relief. Imprimé en PLA éco et livré en Ukraine, ou remis en 3MF prêt à imprimer vous-même.",
+    "pricesLink": "Voir les tarifs",
+    "homeCtaLink": "Une idée de cadeau ?"
   }
 }

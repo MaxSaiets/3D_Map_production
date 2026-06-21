@@ -158,7 +158,8 @@
       "contacts": "Contacts",
       "entityLabel": "Seller",
       "entity": "Sole proprietor Maksym Saiets",
-      "addressLine": "Ukraine, Khmelnytskyi oblast, Khmelnytskyi, Zavadskoho St. 38"
+      "addressLine": "Ukraine, Khmelnytskyi oblast, Khmelnytskyi, Zavadskoho St. 38",
+      "gift": "Gift"
     },
     "seo": {
       "title": "3D city maps and personalised keychains — what we make",
@@ -528,7 +529,11 @@
     "palNoir": "Noir",
     "palOcean": "Ocean",
     "palNeon": "Neon",
-    "paletteHint": "Print color — how the finished model will look"
+    "paletteHint": "Print color — how the finished model will look",
+    "frameStyleLabel": "Frame style",
+    "fsClassic": "Classic",
+    "fsOrnate": "Ornate",
+    "fsCompass": "Compass"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",
@@ -1489,5 +1494,36 @@
     "title": "AI 3D world generator",
     "description": "Describe an imaginary world — mountains, islands, canyons — and get a printable 3D model. Free preview.",
     "keywords": "AI 3D, world generation, procedural terrain, 3D printing"
+  },
+  "giftMeta": {
+    "title": "A gift with a 3D map & keychain — Monadruk",
+    "description": "A tactile 3D city map or a keychain of a meaningful place — a warm, personal gift for an anniversary, wedding, birthday or housewarming. We print and ship across Ukraine."
+  },
+  "gift": {
+    "breadcrumb": "Gift",
+    "h1": "A 3D map & keychain as a gift",
+    "intro": "Give a place that matters. The first date, a childhood yard, the city where it all began — we turn coordinates into a tactile 3D map or a keychain with its plan.",
+    "intro2": "Pick any point on Earth in the builder, add a caption — and we print and ship the finished gift, or hand you a print-ready file.",
+    "ctaMap": "Create a 3D map",
+    "ctaKeychain": "Make a keychain",
+    "occasionsTitle": "A gift for any occasion",
+    "anniversaryTitle": "Anniversary & wedding",
+    "anniversaryDesc": "A map of where you first met or married — a symbolic gift that lasts for years. Add a date and the coordinates.",
+    "anniversaryCta": "Create a couple's map",
+    "birthdayTitle": "Birthday",
+    "birthdayDesc": "A home neighbourhood, a favourite city or a dream destination as a 3D map — an unexpected, heartfelt gift.",
+    "birthdayCta": "Choose a city",
+    "housewarmingTitle": "Housewarming",
+    "housewarmingDesc": "A 3D map of the new neighbourhood or home — elegant decor for a wall or shelf for anyone who just moved in.",
+    "housewarmingCta": "Map a neighbourhood",
+    "coupleTitle": "For a couple",
+    "coupleDesc": "A heart-shaped pair keychain with the map of a shared place — one half for each of you. Carry the city that ties you together.",
+    "coupleCta": "Create a heart keychain",
+    "corporateTitle": "Colleague & corporate",
+    "corporateDesc": "A map of the office, a branch city or a home region — an original gift for a colleague or partner. Bulk orders available.",
+    "corporateCta": "Choose a format",
+    "outro": "Every gift is a 3D map of a real place: buildings, streets, terrain. Printed in eco PLA and shipped across Ukraine, or delivered as a ready 3MF to print yourself.",
+    "pricesLink": "See prices",
+    "homeCtaLink": "Looking for a gift idea?"
   }
 }

@@ -158,7 +158,8 @@
       "contacts": "Contactos",
       "entityLabel": "Vendedor",
       "entity": "Empresario individual Maksym Saiets",
-      "addressLine": "Ucrania, óblast de Jmelnitski, Jmelnitski, calle Zavadskoho 38"
+      "addressLine": "Ucrania, óblast de Jmelnitski, Jmelnitski, calle Zavadskoho 38",
+      "gift": "Regalo"
     },
     "seo": {
       "title": "Mapas 3D de ciudades y llaveros personalizados — qué hacemos",
@@ -528,7 +529,11 @@
     "palNoir": "Noir",
     "palOcean": "Océano",
     "palNeon": "Neón",
-    "paletteHint": "Color de impresión — cómo se verá el modelo final"
+    "paletteHint": "Color de impresión — cómo se verá el modelo final",
+    "frameStyleLabel": "Estilo de marco",
+    "fsClassic": "Clásico",
+    "fsOrnate": "Ornamentado",
+    "fsCompass": "Brújula"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
@@ -1489,5 +1494,36 @@
     "title": "Generador de mundos 3D con IA",
     "description": "Describe un mundo imaginario — montañas, islas, cañones — y obtén un modelo 3D imprimible. Vista previa gratis.",
     "keywords": "IA 3D, generación de mundos, terreno procedural, impresión 3D"
+  },
+  "giftMeta": {
+    "title": "Un regalo con mapa 3D y llavero — Monadruk",
+    "description": "Un mapa 3D táctil de una ciudad o un llavero de un lugar especial — un regalo cálido y personal para un aniversario, boda, cumpleaños o inauguración de casa. Imprimimos y enviamos por Ucrania."
+  },
+  "gift": {
+    "breadcrumb": "Regalo",
+    "h1": "Un mapa 3D y un llavero de regalo",
+    "intro": "Regala un lugar que importa. La primera cita, el patio de la infancia, la ciudad donde todo empezó — convertimos coordenadas en un mapa 3D táctil o un llavero con su plano.",
+    "intro2": "Elige cualquier punto del mundo en el configurador, añade un texto — y nosotros imprimimos y enviamos el regalo terminado, o te entregamos un archivo listo para imprimir.",
+    "ctaMap": "Crear un mapa 3D",
+    "ctaKeychain": "Hacer un llavero",
+    "occasionsTitle": "Un regalo para cualquier ocasión",
+    "anniversaryTitle": "Aniversario y boda",
+    "anniversaryDesc": "Un mapa del lugar de vuestro primer encuentro o boda — un regalo simbólico que dura años. Añade la fecha y las coordenadas.",
+    "anniversaryCta": "Crear el mapa de la pareja",
+    "birthdayTitle": "Cumpleaños",
+    "birthdayDesc": "El barrio de origen, la ciudad favorita o un destino soñado como mapa 3D — un regalo inesperado y entrañable.",
+    "birthdayCta": "Elegir una ciudad",
+    "housewarmingTitle": "Inauguración de casa",
+    "housewarmingDesc": "Un mapa 3D del nuevo barrio o vivienda — una decoración elegante para la pared o la estantería de quien acaba de mudarse.",
+    "housewarmingCta": "Mapear un barrio",
+    "coupleTitle": "Para una pareja",
+    "coupleDesc": "Un llavero de corazón en pareja con el mapa de un lugar compartido — una mitad para cada uno. Lleva la ciudad que os une.",
+    "coupleCta": "Crear el llavero de corazón",
+    "corporateTitle": "Colega y empresa",
+    "corporateDesc": "Un mapa de la oficina, la ciudad de una sucursal o la región de origen — un regalo original para un colega o socio. Pedidos por volumen disponibles.",
+    "corporateCta": "Elegir un formato",
+    "outro": "Cada regalo es un mapa 3D de un lugar real: edificios, calles, relieve. Impreso en PLA ecológico y enviado por Ucrania, o entregado como un 3MF listo para imprimir tú mismo.",
+    "pricesLink": "Ver precios",
+    "homeCtaLink": "¿Buscas una idea de regalo?"
   }
 }

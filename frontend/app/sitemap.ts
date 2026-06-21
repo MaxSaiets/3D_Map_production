@@ -11,6 +11,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/worlds", changeFrequency: "monthly", priority: 0.6 },
   { path: "/prices", changeFrequency: "monthly", priority: 0.7 },
   { path: "/maps", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/podarunok", changeFrequency: "monthly", priority: 0.7 },
   // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей)
   ...CITY_PAGES.map((c) => ({
     path: `/maps/${c.slug}`,

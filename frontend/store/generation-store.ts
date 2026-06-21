@@ -78,6 +78,8 @@ interface GenerationState {
   simpleSeriesConnectors: boolean;
   // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
   simpleFrame: boolean;
+  // СТИЛЬ РАМКИ: classic | ornate | compass (дзеркалить backend frame_style). Спільна (панель ×2).
+  simpleFrameStyle: string;
   // РЕЛЬЄФ (висоти землі): окремий перемикач для УСІХ режимів карт. Джерело правди
   // для terrain_enabled у Просто-флоу (стиль лише задає дефолт). Вмикається лише на
   // 3D-карті (повний пайплайн); плоскі режими (AMS/магніт/конектор/рамка) — без рельєфу.
@@ -128,6 +130,7 @@ interface GenerationState {
   setSimpleConnector: (on: boolean) => void;
   setSimpleSeriesConnectors: (on: boolean) => void;
   setSimpleFrame: (on: boolean) => void;
+  setSimpleFrameStyle: (style: string) => void;
   setSimpleRelief: (on: boolean) => void;
   setSimpleFlatBuildings: (on: boolean) => void;
   setMapHighlightBuilding: (on: boolean) => void;
@@ -228,6 +231,7 @@ const initialState = {
   simpleConnector: false,
   simpleSeriesConnectors: true,
   simpleFrame: false,
+  simpleFrameStyle: "classic",
   simpleRelief: false,
   simpleFlatBuildings: false,
   mapHighlightBuilding: false,
@@ -296,6 +300,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimpleConnector: (on) => set({ simpleConnector: on }),
   setSimpleSeriesConnectors: (on) => set({ simpleSeriesConnectors: on }),
   setSimpleFrame: (on) => set({ simpleFrame: on }),
+  setSimpleFrameStyle: (style) => set({ simpleFrameStyle: style }),
   setSimpleRelief: (on) => set({ simpleRelief: on }),
   setSimpleFlatBuildings: (on) => set({ simpleFlatBuildings: on }),
   setMapHighlightBuilding: (on) => set({ mapHighlightBuilding: on }),

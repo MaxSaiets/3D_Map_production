@@ -158,7 +158,8 @@
       "contacts": "Kontakte",
       "entityLabel": "Verkäufer",
       "entity": "Einzelunternehmer Maksym Saiets",
-      "addressLine": "Ukraine, Oblast Chmelnyzkyj, Chmelnyzkyj, Sawadskoho-Str. 38"
+      "addressLine": "Ukraine, Oblast Chmelnyzkyj, Chmelnyzkyj, Sawadskoho-Str. 38",
+      "gift": "Geschenk"
     },
     "seo": {
       "title": "3D-Stadtkarten und personalisierte Anhänger — was wir machen",
@@ -528,7 +529,11 @@
     "palNoir": "Noir",
     "palOcean": "Ozean",
     "palNeon": "Neon",
-    "paletteHint": "Druckfarbe — wie das fertige Modell aussieht"
+    "paletteHint": "Druckfarbe — wie das fertige Modell aussieht",
+    "frameStyleLabel": "Rahmenstil",
+    "fsClassic": "Klassisch",
+    "fsOrnate": "Verziert",
+    "fsCompass": "Kompass"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",
@@ -1489,5 +1494,36 @@
     "title": "KI-3D-Weltgenerator",
     "description": "Beschreibe eine Fantasiewelt — Berge, Inseln, Schluchten — und erhalte ein druckbares 3D-Modell. Kostenlose Vorschau.",
     "keywords": "KI 3D, Weltgenerierung, prozedurales Gelände, 3D-Druck"
+  },
+  "giftMeta": {
+    "title": "Ein Geschenk mit 3D-Karte & Schlüsselanhänger — Monadruk",
+    "description": "Eine taktile 3D-Stadtkarte oder ein Schlüsselanhänger eines besonderen Ortes — ein herzliches, persönliches Geschenk zum Jahrestag, zur Hochzeit, zum Geburtstag oder Einzug. Wir drucken und versenden in der Ukraine."
+  },
+  "gift": {
+    "breadcrumb": "Geschenk",
+    "h1": "3D-Karte & Schlüsselanhänger als Geschenk",
+    "intro": "Verschenke einen Ort, der zählt. Das erste Date, der Hof der Kindheit, die Stadt, wo alles begann — wir verwandeln Koordinaten in eine taktile 3D-Karte oder einen Anhänger mit ihrem Grundriss.",
+    "intro2": "Wähle im Konfigurator einen beliebigen Punkt der Welt, füge eine Beschriftung hinzu — und wir drucken und versenden das fertige Geschenk oder liefern dir eine druckfertige Datei.",
+    "ctaMap": "3D-Karte erstellen",
+    "ctaKeychain": "Anhänger gestalten",
+    "occasionsTitle": "Ein Geschenk für jeden Anlass",
+    "anniversaryTitle": "Jahrestag & Hochzeit",
+    "anniversaryDesc": "Eine Karte des Ortes eures ersten Treffens oder eurer Hochzeit — ein symbolisches Geschenk für viele Jahre. Mit Datum und Koordinaten.",
+    "anniversaryCta": "Paar-Karte erstellen",
+    "birthdayTitle": "Geburtstag",
+    "birthdayDesc": "Das Heimatviertel, die Lieblingsstadt oder der Traumort als 3D-Karte — ein überraschendes, herzliches Geschenk.",
+    "birthdayCta": "Stadt wählen",
+    "housewarmingTitle": "Einzug",
+    "housewarmingDesc": "Eine 3D-Karte des neuen Viertels oder Hauses — stilvolle Deko für Wand oder Regal für alle, die gerade umgezogen sind.",
+    "housewarmingCta": "Viertel gestalten",
+    "coupleTitle": "Für Paare",
+    "coupleDesc": "Ein Herz-Paaranhänger mit der Karte eines gemeinsamen Ortes — eine Hälfte für jeden. Trage die Stadt, die euch verbindet.",
+    "coupleCta": "Herz-Anhänger erstellen",
+    "corporateTitle": "Kollegen & Firma",
+    "corporateDesc": "Eine Karte des Büros, der Niederlassungsstadt oder der Heimatregion — ein originelles Geschenk für Kollegen oder Partner. Mengen auf Anfrage.",
+    "corporateCta": "Format wählen",
+    "outro": "Jedes Geschenk ist eine 3D-Karte eines echten Ortes: Gebäude, Straßen, Relief. Gedruckt aus Öko-PLA und in der Ukraine versendet, oder als fertige 3MF zum Selbstdrucken.",
+    "pricesLink": "Preise ansehen",
+    "homeCtaLink": "Suchst du eine Geschenkidee?"
   }
 }

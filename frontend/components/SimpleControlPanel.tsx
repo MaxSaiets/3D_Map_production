@@ -81,6 +81,9 @@ export function SimpleControlPanel({
   // ПРЕМІУМ-РАМКА: компас + масштабна лінійка + координати поверх плоскої карти.
   const frameMode = s.simpleFrame;
   const setFrameMode = s.setSimpleFrame;
+  // СТИЛЬ РАМКИ: classic | ornate | compass (дзеркалить backend frame_style); store (панель ×2).
+  const frameStyle = s.simpleFrameStyle;
+  const setFrameStyle = s.setSimpleFrameStyle;
   // РЕЛЬЄФ (висоти землі): окремий перемикач для усіх режимів (3D-карта).
   const reliefMode = s.simpleRelief;
   const setReliefMode = s.setSimpleRelief;
@@ -501,6 +504,7 @@ export function SimpleControlPanel({
       magnetPocket: panelMode > 0 ? false : magnetMode,
       mapConnector: connector,
       mapFrame: frame,
+      frameStyle,
       mapHighlightBuilding: highlight,
       highlightPoints: highlight ? s.highlightPoints : [],
       mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
@@ -1068,6 +1072,41 @@ export function SimpleControlPanel({
           </span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("frameHint")}</span>
         </button>
+
+        {/* СТИЛЬ РАМКИ: показуємо лише коли рамка увімкнена. classic | ornate |
+            compass дзеркалять backend frame_style (контракт). Вкладений вигляд
+            (ліва акцент-смужка) читається як під-опція рамки. */}
+        {frameMode && (
+          <div className="-mt-1 ml-1 w-[calc(100%-0.25rem)] rounded-[16px] border-l-2 border-l-[var(--accent-strong)] border-y border-r border-y-[var(--surface-border)] border-r-[var(--surface-border)] bg-white/80 px-4 py-3">
+            <div id="frame-style-label" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("frameStyleLabel")}</div>
+            <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="frame-style-label" data-testid="frame-style-seg">
+              {([
+                ["classic", t("fsClassic")],
+                ["ornate", t("fsOrnate")],
+                ["compass", t("fsCompass")],
+              ] as Array<[string, string]>).map(([id, label]) => {
+                const active = frameStyle === id;
+                return (
+                  <button
+                    key={`fs-${id}`}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    data-testid={`frame-style-${id}`}
+                    onClick={() => setFrameStyle(id)}
+                    className={`min-h-[40px] rounded-[14px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
+                      active
+                        ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
+                        : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ВИДІЛЕНА БУДІВЛЯ: користувач клікає свій будинок на карті → окрема ЧЕРВОНА
             вставна деталь (паз+peg). Друк окремим філаментом + вставка = економія
