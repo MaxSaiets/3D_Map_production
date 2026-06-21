@@ -429,7 +429,7 @@
     "khmel": "Chmielnicki",
     "noDistricts": "Dla tego miasta nie ma jeszcze gotowych dzielnic — narysuj obszar prostokątem na mapie.",
     "areaSelected": "✓ Obszar wybrany",
-    "areaNotSelected": "Nie wybrano jeszcze obszaru",
+    "areaNotSelected": "Ramka jest na środku miasta — przeciągnij ją lub wybierz dzielnicę",
     "step3style": "Styl",
     "step4size": "Rozmiar",
     "quickPreview": "Szybki podgląd",
@@ -851,7 +851,10 @@
       "status": "Stan",
       "product": "Produkt",
       "map": "Mapa",
-      "signature": "Podpis"
+      "signature": "Podpis",
+      "secondLine": "Drugi wiersz",
+      "backText": "Tekst na rewersie",
+      "marker": "Znacznik miejsca"
     },
     "loop": {
       "round": "Okrągłe",
@@ -896,7 +899,9 @@
       "puzzleR": "Puzzel R 🧩",
       "heartL": "Serce pary L 💕",
       "heartR": "Serce pary R 💕",
-      "tag": "Zawieszka"
+      "tag": "Zawieszka",
+      "halfL": "lewa połowa",
+      "halfR": "prawa połowa"
     },
     "loopPos": {
       "topLeft": "Lewy górny",
@@ -1104,7 +1109,8 @@
       "wide": "Szeroki",
       "narrow": "Wąski"
     },
-    "tabsAria": "Sekcje ustawień breloka"
+    "tabsAria": "Sekcje ustawień breloka",
+    "standardSize": "Standard 35×55 mm"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

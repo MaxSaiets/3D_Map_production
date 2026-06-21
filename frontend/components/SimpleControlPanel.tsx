@@ -633,13 +633,19 @@ export function SimpleControlPanel({
     ? (downloadUrl.startsWith("http") ? downloadUrl : `${API_BASE}${downloadUrl}`)
     : null;
 
+  // Заголовки-«брови» секцій. Ядро воронки (Місто/Стиль/Розмір) лишається
+  // акцентним (uppercase + широкий трекінг), а вторинні секції (Палітра/Формат)
+  // — легші (без uppercase/трекінгу), щоб не конкурувати за увагу.
+  const eyebrowStrong = "mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]";
+  const eyebrowSoft = "mb-2 flex items-center gap-2 text-[11px] font-medium text-[var(--text-secondary)]";
+
   return (
     <div className="h-full overflow-y-auto px-4 py-4 sm:px-5">
       <div className="space-y-5 pb-8">
         {/* 1. City */}
         {cityKeys.length > 0 && onCityChange && (
           <div>
-            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+            <div className={eyebrowStrong}>
               <MapPin size={14} /> {t("step1city")}
             </div>
             <select
@@ -706,7 +712,7 @@ export function SimpleControlPanel({
 
         {/* 3. Style */}
         <div>
-          <div id="simple-style-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-style-label" className={eyebrowStrong}>
             {t("step3style")}
           </div>
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="simple-style-label">
@@ -738,7 +744,7 @@ export function SimpleControlPanel({
 
         {/* 3b. Кольорова тема (#2) — стилістика друку (палітра кольорів). */}
         <div>
-          <div id="simple-palette-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-palette-label" className={eyebrowSoft}>
             🎨 {t("paletteLabel")}
           </div>
           <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-labelledby="simple-palette-label">
@@ -760,7 +766,7 @@ export function SimpleControlPanel({
                   aria-checked={active}
                   onClick={() => s.setSimpleColorPalette(id)}
                   title={label}
-                  className={`flex flex-col items-center gap-1.5 rounded-[14px] border px-1 py-2 text-[10px] font-semibold transition ${
+                  className={`flex flex-col items-center gap-1.5 rounded-[14px] border px-1 py-2 text-[11px] font-semibold transition ${
                     active
                       ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
                       : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
@@ -772,12 +778,11 @@ export function SimpleControlPanel({
               );
             })}
           </div>
-          <p className="mt-1.5 text-[11px] text-[var(--text-secondary)]">{t("paletteHint")}</p>
         </div>
 
         {/* 4. Size */}
         <div>
-          <div id="simple-size-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-size-label" className={eyebrowStrong}>
             {t("step4size")}
           </div>
           <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-labelledby="simple-size-label">
@@ -799,6 +804,7 @@ export function SimpleControlPanel({
                 >
                   <span className="block text-base font-bold text-[var(--text-primary)]">{sz.label}</span>
                   <span className="block text-[11px] text-[var(--text-secondary)]">{sz.cm}</span>
+                  <span className="block text-[11px] text-[var(--text-secondary)]">{sz.price} ₴</span>
                 </button>
               );
             })}
@@ -810,7 +816,7 @@ export function SimpleControlPanel({
             похідно синхронізує усі легасі-булеві (рельєф/flat-AMS/магніт/панно),
             тож запит до бека лишається байт-в-байт тим самим, що й раніше. */}
         <div>
-          <div id="simple-format-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          <div id="simple-format-label" className={eyebrowSoft}>
             {t("fmtTitle")}
           </div>
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("fmtAria")} data-testid="format-seg">
@@ -895,7 +901,7 @@ export function SimpleControlPanel({
                   aria-checked={panelMode === mode}
                   data-testid={`pieces-${mode}`}
                   onClick={() => { if (mode === 0) setFormat("relief3d"); else { setFormat("panno"); setPanelMode(mode); } }}
-                  className={`min-h-[40px] rounded-[14px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
+                  className={`min-h-[44px] rounded-[14px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
                     panelMode === mode
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
                       : "border-[var(--surface-border)] bg-white text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
@@ -979,7 +985,7 @@ export function SimpleControlPanel({
           }`}
         >
           <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
-            🎨 {t("flatAmsToggle")}
+            🌈 {t("flatAmsToggle")}
             {flatAmsMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("flatAmsHint")}</span>
@@ -1040,7 +1046,7 @@ export function SimpleControlPanel({
           }`}
         >
           <span className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
-            🧩 {t("connectorToggle")}
+            🔗 {t("connectorToggle")}
             {connectorMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("connectorHint")}</span>
@@ -1194,7 +1200,7 @@ export function SimpleControlPanel({
               type="file"
               accept=".gpx,application/gpx+xml"
               data-testid="gpx-input"
-              className="hidden"
+              className="sr-only"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
@@ -1234,7 +1240,7 @@ export function SimpleControlPanel({
                 } catch { setError(t("gpxErr")); }
               }}
             />
-            <span className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
+            <span aria-hidden="true" className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
               {gpxTrack ? t("gpxReplace") : t("gpxChoose")}
             </span>
           </label>
@@ -1292,21 +1298,19 @@ export function SimpleControlPanel({
           {/* ОКРЕМА генерація ДРУКАРСЬКОГО 3MF (повна якість) — лише коли на екрані
               швидке GLB-прев'ю. Прев'ю вище = для всіх; ця кнопка віддає РЕАЛЬНИЙ
               3MF на екран. Генерація відкрита всім — ліміт лише на ЗАВАНТАЖЕННЯ. */}
+          {/* Демотовано до тихого текст-лінка: «3MF для друку» — рідковживана дія
+              (генерує реальний 3MF на екран замість швидкого GLB), тож не має
+              конкурувати з основним «Створити» та бронзовим «Замовити». */}
           {usesGlbPreview && (
-            <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => handleGenerate({ forPrint: true })}
-                disabled={!selectedArea || isGenerating}
-                data-testid="generate-print"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[var(--accent-strong)] bg-white px-5 py-3 text-sm font-bold text-[var(--accent-strong)] transition hover:bg-[rgba(11,92,87,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Sparkles className="h-4 w-4" /> {t("generatePrint")}
-              </button>
-              {!isGenerating && (
-                <p className="text-center text-[11px] text-[var(--text-secondary)]">{t("etaPrint")}</p>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => handleGenerate({ forPrint: true })}
+              disabled={!selectedArea || isGenerating}
+              data-testid="generate-print"
+              className="inline-flex w-full items-center justify-center gap-1 text-center text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--accent-strong)] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> {t("generatePrint")}
+            </button>
           )}
           {isGenerating && (
             <button

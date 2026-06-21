@@ -93,7 +93,10 @@ export function WizardSteps({
           <Tag
             key={step.key}
             {...(onStepClick ? { type: "button", onClick: () => onStepClick(step.key) } : {})}
-            className={`flex min-w-fit flex-1 items-center gap-1.5 rounded-[16px] px-2 py-2 text-left transition sm:gap-2.5 sm:px-3 ${
+            // a11y: стан кроку передавався лише кольором/іконкою. aria-current="step"
+            // дає скрінрідеру знати, який крок поточний.
+            {...(isCurrent ? { "aria-current": "step" as const } : {})}
+            className={`flex min-h-[44px] min-w-fit flex-1 items-center gap-1.5 rounded-[16px] px-2 py-2 text-left transition sm:gap-2.5 sm:px-3 ${
               onStepClick ? "cursor-pointer hover:opacity-90" : ""
             } ${
               isCurrent
@@ -112,7 +115,7 @@ export function WizardSteps({
                     : "bg-black/5 text-[var(--text-secondary)]"
               }`}
             >
-              {isDone ? <Check size={14} /> : <Icon size={14} />}
+              {isDone ? <Check size={14} aria-hidden="true" /> : <Icon size={14} aria-hidden="true" />}
             </span>
             <span className="min-w-0">
               <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-[0.16em]">

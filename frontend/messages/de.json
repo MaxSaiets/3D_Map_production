@@ -429,7 +429,7 @@
     "khmel": "Chmelnyzkyj",
     "noDistricts": "Für diese Stadt gibt es noch keine fertigen Viertel — zeichne einen Bereich als Rechteck auf der Karte.",
     "areaSelected": "✓ Bereich ausgewählt",
-    "areaNotSelected": "Noch kein Bereich ausgewählt",
+    "areaNotSelected": "Der Rahmen liegt im Stadtzentrum — ziehe ihn oder wähle einen Bezirk",
     "step3style": "Stil",
     "step4size": "Größe",
     "quickPreview": "Schnelle Vorschau",
@@ -851,7 +851,10 @@
       "status": "Status",
       "product": "Produkt",
       "map": "Karte",
-      "signature": "Beschriftung"
+      "signature": "Beschriftung",
+      "secondLine": "Zweite Zeile",
+      "backText": "Rückseitentext",
+      "marker": "Ortsmarkierung"
     },
     "loop": {
       "round": "Rund",
@@ -896,7 +899,9 @@
       "puzzleR": "Puzzle R 🧩",
       "heartL": "Paarherz L 💕",
       "heartR": "Paarherz R 💕",
-      "tag": "Anhänger"
+      "tag": "Anhänger",
+      "halfL": "linke Hälfte",
+      "halfR": "rechte Hälfte"
     },
     "loopPos": {
       "topLeft": "Oben links",
@@ -1104,7 +1109,8 @@
       "wide": "Breit",
       "narrow": "Schmal"
     },
-    "tabsAria": "Schlüsselanhänger-Einstellungen"
+    "tabsAria": "Schlüsselanhänger-Einstellungen",
+    "standardSize": "Standard 35×55 mm"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

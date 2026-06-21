@@ -429,7 +429,7 @@
     "khmel": "Khmelnytskyi",
     "noDistricts": "No ready districts for this city yet — draw an area as a rectangle on the map.",
     "areaSelected": "✓ Area selected",
-    "areaNotSelected": "No area selected yet",
+    "areaNotSelected": "The frame is placed at the city centre — drag it or pick a district",
     "step3style": "Style",
     "step4size": "Size",
     "quickPreview": "Quick preview",
@@ -851,7 +851,10 @@
       "status": "Status",
       "product": "Item",
       "map": "Map",
-      "signature": "Caption"
+      "signature": "Caption",
+      "secondLine": "Second line",
+      "backText": "Back text",
+      "marker": "Place marker"
     },
     "loop": {
       "round": "Round",
@@ -896,7 +899,9 @@
       "puzzleR": "Puzzle R 🧩",
       "heartL": "Couple heart L 💕",
       "heartR": "Couple heart R 💕",
-      "tag": "Tag"
+      "tag": "Tag",
+      "halfL": "left half",
+      "halfR": "right half"
     },
     "loopPos": {
       "topLeft": "Top left",
@@ -1104,7 +1109,8 @@
       "wide": "Wide",
       "narrow": "Narrow"
     },
-    "tabsAria": "Keychain settings sections"
+    "tabsAria": "Keychain settings sections",
+    "standardSize": "Standard 35×55 mm"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

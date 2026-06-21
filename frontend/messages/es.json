@@ -429,7 +429,7 @@
     "khmel": "Jmelnitski",
     "noDistricts": "Aún no hay distritos listos para esta ciudad — dibuja una zona como rectángulo en el mapa.",
     "areaSelected": "✓ Zona seleccionada",
-    "areaNotSelected": "Aún no hay zona seleccionada",
+    "areaNotSelected": "El marco está en el centro de la ciudad — arrástralo o elige un distrito",
     "step3style": "Estilo",
     "step4size": "Tamaño",
     "quickPreview": "Vista rápida",
@@ -851,7 +851,10 @@
       "status": "Estado",
       "product": "Producto",
       "map": "Mapa",
-      "signature": "Texto"
+      "signature": "Texto",
+      "secondLine": "Segunda línea",
+      "backText": "Texto del reverso",
+      "marker": "Marcador de lugar"
     },
     "loop": {
       "round": "Redonda",
@@ -896,7 +899,9 @@
       "puzzleR": "Puzle R 🧩",
       "heartL": "Corazón en pareja L 💕",
       "heartR": "Corazón en pareja R 💕",
-      "tag": "Etiqueta"
+      "tag": "Etiqueta",
+      "halfL": "mitad izquierda",
+      "halfR": "mitad derecha"
     },
     "loopPos": {
       "topLeft": "Arriba izquierda",
@@ -1104,7 +1109,8 @@
       "wide": "Ancho",
       "narrow": "Estrecho"
     },
-    "tabsAria": "Secciones de ajustes del llavero"
+    "tabsAria": "Secciones de ajustes del llavero",
+    "standardSize": "Estándar 35×55 mm"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

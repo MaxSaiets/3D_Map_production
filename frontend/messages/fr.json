@@ -429,7 +429,7 @@
     "khmel": "Khmelnytskyï",
     "noDistricts": "Pas encore de quartiers prêts pour cette ville — dessine une zone en rectangle sur la carte.",
     "areaSelected": "✓ Zone sélectionnée",
-    "areaNotSelected": "Aucune zone sélectionnée",
+    "areaNotSelected": "Le cadre est placé au centre-ville — faites-le glisser ou choisissez un quartier",
     "step3style": "Style",
     "step4size": "Taille",
     "quickPreview": "Aperçu rapide",
@@ -851,7 +851,10 @@
       "status": "État",
       "product": "Produit",
       "map": "Carte",
-      "signature": "Légende"
+      "signature": "Légende",
+      "secondLine": "Deuxième ligne",
+      "backText": "Texte du dos",
+      "marker": "Repère de lieu"
     },
     "loop": {
       "round": "Rond",
@@ -896,7 +899,9 @@
       "puzzleR": "Puzzle R 🧩",
       "heartL": "Cœur en duo L 💕",
       "heartR": "Cœur en duo R 💕",
-      "tag": "Étiquette"
+      "tag": "Étiquette",
+      "halfL": "moitié gauche",
+      "halfR": "moitié droite"
     },
     "loopPos": {
       "topLeft": "En haut à gauche",
@@ -1104,7 +1109,8 @@
       "wide": "Large",
       "narrow": "Étroit"
     },
-    "tabsAria": "Sections de réglages du porte-clés"
+    "tabsAria": "Sections de réglages du porte-clés",
+    "standardSize": "Standard 35×55 mm"
   },
   "pro": {
     "essentialsEyebrow": "Essentials",

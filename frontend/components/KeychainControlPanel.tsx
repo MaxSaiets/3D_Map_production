@@ -39,6 +39,9 @@ const PANEL_SECTIONS: Array<{ id: PanelSection; labelKey: string }> = [
 
 const PANEL_CARD_CLASS =
   "rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel-strong)] p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-5";
+// Стандартний розмір тіла брелка (мм) — єдине джерело для «скинути до стандарту»
+// (раніше хардкод «35 x 55» у двох місцях + порівняння 35/55 у active-check).
+const STANDARD_SIZE = { w: 35, h: 55 };
 // ── FDM 0.4mm nozzle print standards ──────────────────────────────────────────
 // На основі дослідження reddit/r/3Dprinting + Bambu/Prusa/All3DP рекомендацій:
 // - Nozzle 0.4mm → мінімальна XY-деталь = 0.4mm (1× nozzle)
@@ -1103,7 +1106,7 @@ export function KeychainControlPanel({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <QuickActionButton onClick={resetToStandard}><RotateCcw size={15} />35 x 55</QuickActionButton>
+                <QuickActionButton onClick={resetToStandard}><RotateCcw size={15} />{t("standardSize")}</QuickActionButton>
                 <QuickActionButton onClick={centerMap}><MapIcon size={15} />{t("quick.centerMap")}</QuickActionButton>
                 <QuickActionButton onClick={centerLabel}><AlignCenter size={15} />{t("quick.centerLabel")}</QuickActionButton>
                 <QuickActionButton onClick={centerLoop}><KeyRound size={15} />{t("quick.loopTop")}</QuickActionButton>
@@ -1127,7 +1130,7 @@ export function KeychainControlPanel({
 
         <nav className="-mx-1 rounded-[20px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.96)] p-1 shadow-[0_8px_22px_rgba(15,23,42,0.06)] backdrop-blur lg:sticky lg:top-0 lg:z-20">
           <div role="tablist" aria-label={t("tabsAria")} className="grid grid-cols-4 gap-1">
-            {visibleSections.map((section, index) => (
+            {visibleSections.map((section) => (
               <button
                 key={section.id}
                 type="button"
@@ -1136,13 +1139,13 @@ export function KeychainControlPanel({
                 aria-selected={activeSection === section.id}
                 aria-controls={`kc-tabpanel-${section.id}`}
                 onClick={() => setActiveSection(section.id)}
-                className={`min-h-[42px] rounded-[16px] px-2 text-[11px] font-semibold transition sm:text-xs ${
+                className={`min-h-[44px] rounded-[16px] px-2 text-[11px] font-semibold transition sm:text-xs ${
                   activeSection === section.id
                     ? "bg-[var(--accent-strong)] text-white shadow-[0_10px_22px_rgba(11,92,87,0.22)]"
                     : "text-[var(--text-secondary)] hover:bg-white/80"
                 }`}
               >
-                <span className="inline">{section.id === "advanced" ? "" : `${index + 1}. `}</span>{t(section.labelKey)}
+                {t(section.labelKey)}
               </button>
             ))}
           </div>
@@ -1159,7 +1162,7 @@ export function KeychainControlPanel({
             <Metric label={t("metric.loop")} value={design.baseShape === "token" ? `${t("metric.hole")} Ø${(design.loopInnerMm * 2).toFixed(1)}` : design.loopStyle === "round" ? t("loop.round") : design.loopStyle === "slot" ? t("loop.slot") : design.loopStyle === "side-tab" ? t("loop.sideTab") : t("loop.teardrop")} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <ChoiceButton label="35 x 55" active={Math.round(design.bodyWidthMm) === 35 && Math.round(design.bodyHeightMm) === 55} onClick={resetToStandard} />
+            <ChoiceButton label={t("standardSize")} active={Math.round(design.bodyWidthMm) === STANDARD_SIZE.w && Math.round(design.bodyHeightMm) === STANDARD_SIZE.h} onClick={resetToStandard} />
             <ChoiceButton label={t("product.maxMap")} active={design.mapWidthMm >= design.bodyWidthMm - 5} onClick={maximizeMapArea} />
             <ChoiceButton label={t("product.token")} active={design.baseShape === "token"} onClick={() => updateDesign({
               bodyWidthMm: 55,
@@ -1265,7 +1268,7 @@ export function KeychainControlPanel({
                     type="file"
                     accept=".gpx,application/gpx+xml"
                     data-testid="kc-gpx-input"
-                    className="hidden"
+                    className="sr-only"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       e.target.value = "";
@@ -1284,7 +1287,7 @@ export function KeychainControlPanel({
                       } catch { setError(t("gpx.readError")); }
                     }}
                   />
-                  <span className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
+                  <span aria-hidden="true" className="rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--accent-strong)]">
                     {gpxTrack ? t("gpx.replace") : t("gpx.pickFile")}
                   </span>
                 </label>
@@ -1515,6 +1518,17 @@ export function KeychainControlPanel({
             <Metric label={t("metric.product")} value={`${Math.round(design.bodyWidthMm)} x ${Math.round(design.bodyHeightMm)} ${t("unit.mm")}`} />
             <Metric label={t("metric.map")} value={`${Math.round(design.mapWidthMm)} x ${Math.round(design.mapHeightMm)} ${t("unit.mm")}`} />
             <Metric label={t("metric.signature")} value={label || t("review.noText")} />
+            {/* Гравіювання, що піднято на сторінку (label2/backLabel/placeMarker):
+                показуємо у зведенні лише коли заповнені — щоб юзер підтвердив усі
+                написи/маркер ПЕРЕД замовленням (раніше їх не було видно). */}
+            {label2.trim() && <Metric label={t("metric.secondLine")} value={label2} />}
+            {backLabel.trim() && <Metric label={t("metric.backText")} value={backLabel} />}
+            {placeMarker && (
+              <Metric
+                label={t("metric.marker")}
+                value={placeMarker === "heart" ? "❤" : placeMarker === "star" ? "★" : "●"}
+              />
+            )}
           </div>
           <div className="mt-4">
             <PrintabilityCard {...printability} />
@@ -1684,10 +1698,12 @@ export function KeychainControlPanel({
                   ["star", t("shape.star")],
                   ["heart", t("shape.heart")],
                   ["house", t("shape.house")],
-                  ["puzzle-l", t("shape.puzzleL")],
-                  ["puzzle-r", t("shape.puzzleR")],
-                  ["heart-l", t("shape.heartL")],
-                  ["heart-r", t("shape.heartR")],
+                  // Пазл/серце L-R — половини парного набору. Додаємо «(ліва/права
+                  // половина)», щоб юзер розумів, що це не самостійна форма.
+                  ["puzzle-l", `${t("shape.puzzleL")} (${t("shape.halfL")})`],
+                  ["puzzle-r", `${t("shape.puzzleR")} (${t("shape.halfR")})`],
+                  ["heart-l", `${t("shape.heartL")} (${t("shape.halfL")})`],
+                  ["heart-r", `${t("shape.heartR")} (${t("shape.halfR")})`],
                 ] as Array<[KeychainBaseShape, string]>).map(([shape, text]) => (
                   <ChoiceButton key={shape} label={text} active={design.baseShape === shape} onClick={() => updateDesign({ baseShape: shape })} />
                 ))}
