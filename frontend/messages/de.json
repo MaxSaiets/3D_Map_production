@@ -232,7 +232,7 @@
     "fileReady": "Datei bereit zum Download",
     "readyToConfigure": "Bereit zur Konfiguration",
     "tourCityTitle": "Stadt wählen",
-    "tourCityBody": "Wähle eine Stadt aus der Liste oben — die Karte springt sofort dorthin.",
+    "tourCityBody": "Wählen Sie Ihre Stadt im Panel — die Karte springt direkt dorthin.",
     "tourFrameTitle": "Rahmen verschieben",
     "tourFrameBody": "Der Rahmen auf der Karte ist deine künftige 3D-Karte. Klick verschiebt ihn, das türkise Quadrat ändert die Größe. Optimal sind 0,5–4 km².",
     "tourGenerateTitle": "Generieren",

@@ -232,7 +232,7 @@
     "fileReady": "Plik gotowy do pobrania",
     "readyToConfigure": "Gotowe do konfiguracji",
     "tourCityTitle": "Wybierz miasto",
-    "tourCityBody": "Wybierz miasto z listy powyżej — mapa od razu tam przeskoczy.",
+    "tourCityBody": "Wybierz miasto w panelu — mapa od razu tam przeskoczy.",
     "tourFrameTitle": "Przesuń ramkę",
     "tourFrameBody": "Ramka na mapie to twoja przyszła mapa 3D. Kliknięcie ją przesuwa, turkusowy kwadrat zmienia rozmiar. Optymalnie 0,5–4 km².",
     "tourGenerateTitle": "Wygeneruj",

@@ -482,10 +482,8 @@ export default function KeychainsPage() {
         </div>
       </div>
 
-      {/* Мобільну навігацію уніфіковано: ЄДИНИЙ степер (WizardSteps зверху, з
-          клік-скролом до секцій) + StickyActionBar (ціна+«Створити») з
-          KeychainControlPanel. Прибрано дубль-ряд «Превʼю/Карта/Створити»,
-          що перекривав sticky-бар і дублював степер. */}
+      {/* Мобільна навігація = StickyActionBar (ціна+«Створити») з
+          KeychainControlPanel. Степер «Крок 1/2/3» прибрано (власник). */}
     </div>
   );
 }

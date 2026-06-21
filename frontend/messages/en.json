@@ -232,7 +232,7 @@
     "fileReady": "File ready to download",
     "readyToConfigure": "Ready to configure",
     "tourCityTitle": "Choose a city",
-    "tourCityBody": "Pick a city from the list above — the map will jump there right away.",
+    "tourCityBody": "Pick your city in the panel — the map jumps straight there.",
     "tourFrameTitle": "Move the frame",
     "tourFrameBody": "The frame on the map is your future 3D map. Click to move it, the teal square resizes it. Optimal is 0.5–4 km².",
     "tourGenerateTitle": "Generate",
