@@ -1403,10 +1403,11 @@ export function SimpleControlPanel({
         <>
           <div className="h-20 lg:hidden" aria-hidden="true" />
           <StickyActionBar
-            // Орієнтовна ціна завжди на видноті (фолбек з SIMPLE_SIZES, ніколи «—»)
-            // — щоб покупець не тиснув «Замовити» наосліп (головна втрата конверсії).
+            // Ціну у нижньому барі НЕ показуємо постійно (власник: «не була завжди на
+            // виду, а тільки при замовленні») → price=null. Ціна видно на inline-кнопці
+            // «Замовити друк · N₴» та у формі замовлення. Бар лишає лише дії (на всю ширину).
             priceLabel={t("estPrice")}
-            price={orderPriceText}
+            price={null}
             actionLabel={
               downloadUrl
                 ? t("orderShort")

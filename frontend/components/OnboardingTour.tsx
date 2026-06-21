@@ -47,9 +47,9 @@ export function OnboardingTour({
   };
 
   return (
-    // Мобільний: піднято НАД sticky-баром (≈80px) і відцентровано, щоб не
-    // перекривати ціну+CTA. Десктоп: як було — внизу праворуч.
-    <div className="pointer-events-none fixed inset-0 z-[70] flex items-start justify-center pt-[64px] px-3 sm:items-end sm:justify-end sm:p-6">
+    // Мобільний: картка ВНИЗУ (над нижнім баром), щоб НЕ перекривати карту/шапку
+    // (раніше була зверху й закривала мапу — скарга власника). Десктоп: внизу праворуч.
+    <div className="pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-3 pb-[92px] sm:justify-end sm:p-6">
       <div
         className="pointer-events-auto w-full max-w-[360px] rounded-[18px] border border-line bg-paper-2 p-5 shadow-lift fade-up"
         role="dialog"
