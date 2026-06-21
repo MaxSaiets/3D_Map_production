@@ -762,6 +762,9 @@ class GenerationRequest(BaseModel):
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
     flat_uniform_building_height: bool = False
+    # Кольорова тема/палітра (#2): classic (дефолт, без змін) | sepia | noir | ocean | neon.
+    # Застосовується post-export як перепатч m:colorgroup 3MF (стилістика «настрою» карти).
+    color_palette: str = "classic"
     # Мапа-магніт: кругла кишеня під магніт у центрі дна (плаский режим).
     magnet_pocket: bool = False
     magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)
@@ -3096,6 +3099,9 @@ class ZoneGenerationRequest(BaseModel):
     flat_parks_layer_mm: float = Field(default=0.36, ge=0.0, le=5.0)
     flat_max_building_height_mm: float = Field(default=0.0, ge=0.0, le=20.0)
     flat_uniform_building_height: bool = False
+    # Кольорова тема/палітра (#2): classic (дефолт, без змін) | sepia | noir | ocean | neon.
+    # Застосовується post-export як перепатч m:colorgroup 3MF (стилістика «настрою» карти).
+    color_palette: str = "classic"
     # Мапа-магніт: кругла кишеня під магніт у центрі дна (плаский режим).
     magnet_pocket: bool = False
     magnet_pocket_diameter_mm: float = Field(default=10.4, ge=4.0, le=30.0)

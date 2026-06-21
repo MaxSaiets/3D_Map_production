@@ -357,6 +357,19 @@ def export_generation_outputs(
         repair_meshes=repair_meshes,
     )
 
+    # ТЕМА/ПАЛІТРА (#2): post-export перепатч m:colorgroup 3MF на тематичні кольори
+    # (sepia/noir/ocean/neon). classic/порожньо → пропуск (основний експорт не зачеплено).
+    try:
+        _palette = str(getattr(request, "color_palette", "") or "").lower().strip()
+        if primary_format == "3mf" and _palette and _palette != "classic":
+            from services.model_exporter import get_palette_color_map, _patch_3mf_colors
+            _pm = get_palette_color_map(_palette)
+            if _pm:
+                _patch_3mf_colors(str(output_file_abs), _pm)
+                print(f"[THEME] applied palette '{_palette}' to {Path(str(output_file_abs)).name}")
+    except Exception as _texc:
+        print(f"[THEME] palette repatch skipped (non-fatal): {_texc}")
+
     if parts_from_main and isinstance(parts_from_main, dict) and primary_format == "stl":
         for part_name, path in parts_from_main.items():
             if str(part_name).lower() == "stl":
