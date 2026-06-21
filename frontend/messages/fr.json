@@ -25,7 +25,8 @@
     "keychain": "Porte-clés",
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu",
-    "language": "Langue"
+    "language": "Langue",
+    "worlds": "Mondes"
   },
   "home": {
     "hero": {
@@ -1439,5 +1440,38 @@
   "viewer3d": {
     "model": "Modèle 3D interactif",
     "modelLabeled": "Modèle 3D : {label}"
+  },
+  "worlds": {
+    "badge": "Génération IA",
+    "title": "Décris ton monde — obtiens-le en 3D",
+    "subtitle": "Écris ce que tu veux voir : montagnes, une île, un canyon, un cratère extraterrestre — et nous construisons un modèle 3D imprimable.",
+    "inputLabel": "Description du monde",
+    "inputPlaceholder": "Une île volcanique épique aux falaises acérées dans une mer déchaînée...",
+    "ex": {
+      "epicMountains": "Montagnes enneigées épiques",
+      "volcanoIsland": "Île volcanique en mer",
+      "deepCanyon": "Canyon profond avec rivière",
+      "rollingHills": "Douces collines vertes",
+      "alienCrater": "Cratère extraterrestre",
+      "desertDunes": "Dunes du désert"
+    },
+    "sizeLabel": "Taille du modèle",
+    "size": {
+      "s": "Petit",
+      "m": "Moyen",
+      "l": "Grand"
+    },
+    "generateButton": "Générer le monde",
+    "generating": "Construction du monde...",
+    "starting": "Analyse de la description...",
+    "hint": "Le relief est généré de façon procédurale pour l'instant. Ceci est un aperçu — contacte-nous pour imprimer ou commander.",
+    "errGen": "Échec de la génération. Réessaie.",
+    "downloadGlb": "Télécharger 3D (.glb)",
+    "previewEmpty": "Décris un monde à gauche — il apparaîtra ici en 3D."
+  },
+  "worldsMeta": {
+    "title": "Générateur de mondes 3D par IA",
+    "description": "Décris un monde imaginaire — montagnes, îles, canyons — et obtiens un modèle 3D imprimable. Aperçu gratuit.",
+    "keywords": "IA 3D, génération de mondes, terrain procédural, impression 3D"
   }
 }

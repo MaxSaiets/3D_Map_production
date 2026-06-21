@@ -25,7 +25,8 @@
     "keychain": "Keychain",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "language": "Language"
+    "language": "Language",
+    "worlds": "Worlds"
   },
   "home": {
     "hero": {
@@ -1439,5 +1440,38 @@
   "viewer3d": {
     "model": "Interactive 3D model",
     "modelLabeled": "3D model: {label}"
+  },
+  "worlds": {
+    "badge": "AI generation",
+    "title": "Describe your world — get it in 3D",
+    "subtitle": "Write what you want to see: mountains, an island, a canyon, an alien crater — and we build a printable 3D model.",
+    "inputLabel": "World description",
+    "inputPlaceholder": "An epic volcano island with sharp cliffs in a stormy sea...",
+    "ex": {
+      "epicMountains": "Epic snowy mountains",
+      "volcanoIsland": "Volcano island in the sea",
+      "deepCanyon": "Deep canyon with a river",
+      "rollingHills": "Gentle green hills",
+      "alienCrater": "Alien crater",
+      "desertDunes": "Desert sand dunes"
+    },
+    "sizeLabel": "Model size",
+    "size": {
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large"
+    },
+    "generateButton": "Generate world",
+    "generating": "Building world...",
+    "starting": "Analyzing description...",
+    "hint": "Terrain is generated procedurally for now. This is a preview — contact us to print or order.",
+    "errGen": "Generation failed. Please try again.",
+    "downloadGlb": "Download 3D (.glb)",
+    "previewEmpty": "Describe a world on the left — it'll appear here in 3D."
+  },
+  "worldsMeta": {
+    "title": "AI 3D world generator",
+    "description": "Describe an imaginary world — mountains, islands, canyons — and get a printable 3D model. Free preview.",
+    "keywords": "AI 3D, world generation, procedural terrain, 3D printing"
   }
 }

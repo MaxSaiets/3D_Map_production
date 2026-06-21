@@ -25,7 +25,8 @@
     "keychain": "Anhänger",
     "openMenu": "Menü öffnen",
     "closeMenu": "Menü schließen",
-    "language": "Sprache"
+    "language": "Sprache",
+    "worlds": "Welten"
   },
   "home": {
     "hero": {
@@ -1439,5 +1440,38 @@
   "viewer3d": {
     "model": "Interaktives 3D-Modell",
     "modelLabeled": "3D-Modell: {label}"
+  },
+  "worlds": {
+    "badge": "KI-Generierung",
+    "title": "Beschreibe deine Welt — erhalte sie in 3D",
+    "subtitle": "Schreibe, was du sehen willst: Berge, eine Insel, eine Schlucht, einen Alien-Krater — wir bauen ein druckbares 3D-Modell.",
+    "inputLabel": "Weltbeschreibung",
+    "inputPlaceholder": "Eine epische Vulkaninsel mit scharfen Klippen in stürmischer See...",
+    "ex": {
+      "epicMountains": "Epische schneebedeckte Berge",
+      "volcanoIsland": "Vulkaninsel im Meer",
+      "deepCanyon": "Tiefe Schlucht mit Fluss",
+      "rollingHills": "Sanfte grüne Hügel",
+      "alienCrater": "Alien-Krater",
+      "desertDunes": "Wüstendünen"
+    },
+    "sizeLabel": "Modellgröße",
+    "size": {
+      "s": "Klein",
+      "m": "Mittel",
+      "l": "Groß"
+    },
+    "generateButton": "Welt generieren",
+    "generating": "Baue Welt...",
+    "starting": "Analysiere Beschreibung...",
+    "hint": "Das Gelände wird vorerst prozedural erzeugt. Dies ist eine Vorschau — für Druck/Bestellung kontaktiere uns.",
+    "errGen": "Generierung fehlgeschlagen. Bitte erneut versuchen.",
+    "downloadGlb": "3D herunterladen (.glb)",
+    "previewEmpty": "Beschreibe links eine Welt — sie erscheint hier in 3D."
+  },
+  "worldsMeta": {
+    "title": "KI-3D-Weltgenerator",
+    "description": "Beschreibe eine Fantasiewelt — Berge, Inseln, Schluchten — und erhalte ein druckbares 3D-Modell. Kostenlose Vorschau.",
+    "keywords": "KI 3D, Weltgenerierung, prozedurales Gelände, 3D-Druck"
   }
 }

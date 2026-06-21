@@ -25,7 +25,8 @@
     "keychain": "Brelok",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
-    "language": "Język"
+    "language": "Język",
+    "worlds": "Światy"
   },
   "home": {
     "hero": {
@@ -1439,5 +1440,38 @@
   "viewer3d": {
     "model": "Interaktywny model 3D",
     "modelLabeled": "Model 3D: {label}"
+  },
+  "worlds": {
+    "badge": "Generowanie AI",
+    "title": "Opisz swój świat — otrzymaj go w 3D",
+    "subtitle": "Napisz, co chcesz zobaczyć: góry, wyspę, kanion, obcy krater — a my zbudujemy drukowalny model 3D.",
+    "inputLabel": "Opis świata",
+    "inputPlaceholder": "Epicka wyspa wulkaniczna z ostrymi klifami na wzburzonym morzu...",
+    "ex": {
+      "epicMountains": "Epickie ośnieżone góry",
+      "volcanoIsland": "Wyspa wulkaniczna na morzu",
+      "deepCanyon": "Głęboki kanion z rzeką",
+      "rollingHills": "Łagodne zielone wzgórza",
+      "alienCrater": "Obcy krater",
+      "desertDunes": "Wydmy pustyni"
+    },
+    "sizeLabel": "Rozmiar modelu",
+    "size": {
+      "s": "Mały",
+      "m": "Średni",
+      "l": "Duży"
+    },
+    "generateButton": "Generuj świat",
+    "generating": "Buduję świat...",
+    "starting": "Analizuję opis...",
+    "hint": "Teren jest na razie generowany proceduralnie. To podgląd — skontaktuj się, aby wydrukować lub zamówić.",
+    "errGen": "Generowanie nie powiodło się. Spróbuj ponownie.",
+    "downloadGlb": "Pobierz 3D (.glb)",
+    "previewEmpty": "Opisz świat po lewej — pojawi się tutaj w 3D."
+  },
+  "worldsMeta": {
+    "title": "Generator światów 3D z AI",
+    "description": "Opisz wyobrażony świat — góry, wyspy, kaniony — i otrzymaj drukowalny model 3D. Darmowy podgląd.",
+    "keywords": "AI 3D, generowanie światów, teren proceduralny, druk 3D"
   }
 }

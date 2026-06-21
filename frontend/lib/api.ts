@@ -272,6 +272,15 @@ export const api = {
     return response.data;
   },
 
+  // Режим «опиши світ» (#5): вільний промт → процедурна 3D-модель рельєфу.
+  async generateCustom(prompt: string, sizeMm = 120): Promise<GenerationResponse> {
+    const response = await axios.post<GenerationResponse>(
+      `${API_BASE_URL}/api/generate-custom`,
+      { prompt, size_mm: sizeMm }
+    );
+    return response.data;
+  },
+
   async getStatus(taskId: string): Promise<StatusResponse> {
     const response = await axios.get<StatusResponse>(
       `${API_BASE_URL}/api/status/${taskId}`

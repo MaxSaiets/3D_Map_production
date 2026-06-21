@@ -76,6 +76,7 @@ export function SiteHeader() {
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
           <Link href="/prices" className="hover:text-ink">{pricesLabel}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
+          <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
         </nav>
         <div className="flex items-center gap-2.5">
           <div className="hidden sm:block"><LanguageSwitcher /></div>
@@ -120,6 +121,7 @@ export function SiteHeader() {
               { href: "/showcase", label: t("gallery") },
               { href: "/prices", label: pricesLabel },
               { href: "/keychains", label: t("keychains") },
+              { href: "/worlds", label: t("worlds") },
               { href: "/account", label: configured && user ? t("account") : t("login") },
             ].map((it) => (
               <li key={it.href}>

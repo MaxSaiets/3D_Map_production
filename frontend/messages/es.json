@@ -25,7 +25,8 @@
     "keychain": "Llavero",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
-    "language": "Idioma"
+    "language": "Idioma",
+    "worlds": "Mundos"
   },
   "home": {
     "hero": {
@@ -1439,5 +1440,38 @@
   "viewer3d": {
     "model": "Modelo 3D interactivo",
     "modelLabeled": "Modelo 3D: {label}"
+  },
+  "worlds": {
+    "badge": "Generación IA",
+    "title": "Describe tu mundo — obténlo en 3D",
+    "subtitle": "Escribe lo que quieres ver: montañas, una isla, un cañón, un cráter alienígena — y construimos un modelo 3D imprimible.",
+    "inputLabel": "Descripción del mundo",
+    "inputPlaceholder": "Una épica isla volcánica con acantilados afilados en un mar tormentoso...",
+    "ex": {
+      "epicMountains": "Montañas nevadas épicas",
+      "volcanoIsland": "Isla volcánica en el mar",
+      "deepCanyon": "Cañón profundo con río",
+      "rollingHills": "Suaves colinas verdes",
+      "alienCrater": "Cráter alienígena",
+      "desertDunes": "Dunas del desierto"
+    },
+    "sizeLabel": "Tamaño del modelo",
+    "size": {
+      "s": "Pequeño",
+      "m": "Mediano",
+      "l": "Grande"
+    },
+    "generateButton": "Generar mundo",
+    "generating": "Construyendo mundo...",
+    "starting": "Analizando descripción...",
+    "hint": "El terreno se genera de forma procedural por ahora. Es una vista previa — contáctanos para imprimir o pedir.",
+    "errGen": "Error al generar. Inténtalo de nuevo.",
+    "downloadGlb": "Descargar 3D (.glb)",
+    "previewEmpty": "Describe un mundo a la izquierda — aparecerá aquí en 3D."
+  },
+  "worldsMeta": {
+    "title": "Generador de mundos 3D con IA",
+    "description": "Describe un mundo imaginario — montañas, islas, cañones — y obtén un modelo 3D imprimible. Vista previa gratis.",
+    "keywords": "IA 3D, generación de mundos, terreno procedural, impresión 3D"
   }
 }
