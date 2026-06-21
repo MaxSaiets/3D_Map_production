@@ -533,7 +533,11 @@
     "frameStyleLabel": "Стиль рамки",
     "fsClassic": "Класична",
     "fsOrnate": "Орнамент",
-    "fsCompass": "Компас"
+    "fsCompass": "Компас",
+    "trustEco": "Eco PLA",
+    "trustReprint": "Гарантія 60 днів",
+    "trustNoPrepay": "Без передоплати",
+    "trustShip": "Доставка Україна + ЄС"
   },
   "mapsMeta": {
     "title": "3D-мапи міст України — обери своє місто",

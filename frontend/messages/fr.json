@@ -533,7 +533,11 @@
     "frameStyleLabel": "Style de cadre",
     "fsClassic": "Classique",
     "fsOrnate": "Ornementé",
-    "fsCompass": "Boussole"
+    "fsCompass": "Boussole",
+    "trustEco": "Eco PLA",
+    "trustReprint": "Garantie 60 jours",
+    "trustNoPrepay": "Sans acompte",
+    "trustShip": "Livraison Ukraine + UE"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM } from "@/lib/generation";
@@ -11,7 +11,7 @@ import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { fetchQuote, type Quote } from "@/lib/pricing";
-import { MAP_MAGNET_PRICE_UAH, MAP_RELIEF_ADDON_UAH } from "@/lib/mapPrices";
+import { MAP_MAGNET_PRICE_UAH, MAP_RELIEF_ADDON_UAH, mapPriceEur } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -41,6 +41,12 @@ export function SimpleControlPanel({
   showStickyBar?: boolean;
 }) {
   const t = useTranslations("simple");
+  const locale = useLocale();
+  // Діаспора (не-uk локалі) бачить ціни у € за тим самим позиційним курсом, що й
+  // решта сайту (mapPriceEur ≈ ×0.024). Quote з бека приходить у ₴ → конвертуємо
+  // лише для показу; OrderDialog зчитує валюту з тексту (€ → EUR-замовлення).
+  const isEu = locale !== "uk";
+  const dispPrice = (uah: number) => (isEu ? `€${mapPriceEur(uah)}` : `${uah} ₴`);
   const tOrder = useTranslations("order");
   const s = useGenerationStore();
   const {
@@ -196,19 +202,16 @@ export function SimpleControlPanel({
   // 3×3 = 9 окремих мап, раніше коштувало як 1 плитка → ~9× недозбір (і LiqPay
   // брав суму однієї). Магніт-fallback = 180₴ (не ціна мапи). Quote вже per-tile.
   const orderTiles = panelMode > 0 ? panelMode * panelMode : 1;
-  const fmtPrice = (n: number, currency: string) =>
-    currency === "EUR" ? `€${n}` : `${n} ₴`;
   const orderPriceText = (() => {
-    if (quote) {
-      return orderTiles > 1 ? fmtPrice(quote.price * orderTiles, quote.currency) : quote.formatted;
-    }
+    // quote.price — у ₴; dispPrice конвертує у € для діаспори. Панно = ×плитки.
+    if (quote) return dispPrice(quote.price * orderTiles);
     const near = SIMPLE_SIZES.reduce((best, z) =>
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
     // Рельєф додає надбавку (як у бекенд-quote) — інакше fallback недооцінює.
     // Ціни з єдиного джерела mapPrices.ts (не хардкод) — щоб fallback не розходився з quote.
     const reliefAddon = (reliefMode && !magnetMode) ? MAP_RELIEF_ADDON_UAH : 0;
     const unit = magnetMode ? MAP_MAGNET_PRICE_UAH : near.price + reliefAddon; // магніт = окремий продукт
-    return fmtPrice(unit * orderTiles, "UAH");
+    return dispPrice(unit * orderTiles);
   })();
 
   const doGatedDownload = async () => {
@@ -804,7 +807,7 @@ export function SimpleControlPanel({
                 >
                   <span className="block text-base font-bold text-[var(--text-primary)]">{sz.label}</span>
                   <span className="block text-[11px] text-[var(--text-secondary)]">{sz.cm}</span>
-                  <span className="block text-[11px] text-[var(--text-secondary)]">{sz.price} ₴</span>
+                  <span className="block text-[11px] text-[var(--text-secondary)]">{dispPrice(sz.price)}</span>
                 </button>
               );
             })}
@@ -1271,6 +1274,15 @@ export function SimpleControlPanel({
               швидке прев'ю (previewMode=true за замовчанням), а друкарську якість
               оператор генерує при оформленні замовлення. Менше технічних рішень
               для покупця. */}
+          {/* Довіра БІЛЯ CTA (раніше лише у формі замовлення): ключові гарантії на
+              момент рішення — Eco PLA, гарантія, без передоплати, доставка UA+ЄС. */}
+          <div className="mb-2.5 flex flex-wrap justify-center gap-1.5">
+            {[t("trustEco"), t("trustReprint"), t("trustNoPrepay"), t("trustShip")].map((claim) => (
+              <span key={claim} className="inline-flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
+                <Check className="h-3 w-3 text-[var(--accent-strong)]" /> {claim}
+              </span>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => handleGenerate()}

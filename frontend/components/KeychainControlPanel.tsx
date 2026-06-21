@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { fetchQuote, type Quote } from "@/lib/pricing";
+import { mapPriceEur } from "@/lib/mapPrices";
 import { getKeychainDesignerSvg, svgToPngDataUrl } from "@/lib/capturePreview";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
@@ -358,6 +359,12 @@ export function KeychainControlPanel({
   cropPolygon?: Array<[number, number]> | null;
 }) {
   const t = useTranslations("kc");
+  const locale = useLocale();
+  // Діаспора бачить € (той самий курс, що й уся решта сайту); quote з бека у ₴.
+  const isEu = locale !== "uk";
+  const dispPrice = (uah: number) => (isEu ? `€${mapPriceEur(uah)}` : `${uah} ₴`);
+  const quoteText = (q: Quote | null, fallbackUah: number) =>
+    q ? dispPrice(q.price) : dispPrice(fallbackUah);
   const {
     selectedArea,
     isGenerating,
@@ -1582,7 +1589,7 @@ export function KeychainControlPanel({
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
             >
               <ShoppingBag className="h-5 w-5" />
-              {downloadUrl ? t("btn.buyOrder") : t("btn.order")}{quote ? ` · ${quote.formatted}` : ""}
+              {downloadUrl ? t("btn.buyOrder") : t("btn.order")}{quote ? ` · ${dispPrice(quote.price)}` : ""}
             </button>
             <button
               type="button"
@@ -1608,7 +1615,7 @@ export function KeychainControlPanel({
           onClose={() => setOrderOpen(false)}
           taskId={taskGroupId}
           productType="keychain"
-          priceText={quote?.formatted}
+          priceText={quote ? dispPrice(quote.price) : undefined}
           modelPending={!downloadUrl}
           summary={{
             label,
@@ -1622,7 +1629,7 @@ export function KeychainControlPanel({
           // Ціна завжди на видноті (фолбек 120₴ поки вантажиться quote) —
           // покупець бачить вартість ще до форми замовлення.
           priceLabel={t("sticky.priceLabel")}
-          price={quote?.formatted ?? "120 ₴"}
+          price={quoteText(quote, 120)}
           actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
           busy={isGenerating}
           // НЕ блокуємо коли зона не вибрана / є print-issue — інакше на мобільному

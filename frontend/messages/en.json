@@ -533,7 +533,11 @@
     "frameStyleLabel": "Frame style",
     "fsClassic": "Classic",
     "fsOrnate": "Ornate",
-    "fsCompass": "Compass"
+    "fsCompass": "Compass",
+    "trustEco": "Eco PLA",
+    "trustReprint": "60-day guarantee",
+    "trustNoPrepay": "No prepayment",
+    "trustShip": "Ships Ukraine + EU"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

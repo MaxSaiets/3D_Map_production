@@ -533,7 +533,11 @@
     "frameStyleLabel": "Styl ramki",
     "fsClassic": "Klasyczna",
     "fsOrnate": "Zdobiona",
-    "fsCompass": "Kompas"
+    "fsCompass": "Kompas",
+    "trustEco": "Eco PLA",
+    "trustReprint": "Gwarancja 60 dni",
+    "trustNoPrepay": "Bez przedpłaty",
+    "trustShip": "Wysyłka Ukraina + UE"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",
