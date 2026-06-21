@@ -409,52 +409,38 @@ export default function HexagonalGrid({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="px-2 py-1.5 bg-white border-b border-gray-200 flex-shrink-0 shadow-sm">
+      <div className="px-2 py-1 bg-white border-b border-gray-200 flex-shrink-0 shadow-sm">
         {gridError && (
-          <div className="mb-1.5 flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-red-700">
+          <div className="mb-1 flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
             <span>⚠ {gridError}</span>
             <button type="button" onClick={() => setGridError(null)} className="font-semibold underline-offset-2 hover:underline">{t("hide")}</button>
           </div>
         )}
         {isLoading ? (
-          <div className="flex items-center gap-1.5 text-[11px]">
+          <div className="flex items-center gap-1.5 text-[10px]">
             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
             <span className="text-gray-700">{t("generating")}</span>
           </div>
         ) : hexGrid ? (
-          <div className="space-y-1.5">
-            {/* Чітка інструкція: раніше юзер бачив суцільну пляму клітин і не
-                розумів, що їх треба КЛІКАТИ. Тепер — «як це працює» одним рядком
-                + ПОСТІЙНА легенда трьох станів (доступна/наведення/обрана). */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-semibold leading-4 text-[var(--accent-strong,#0f766e)]">
-                {selectedZones.size === 0
-                  ? t("howItWorks")
-                  : t("howItWorksSelected", { n: selectedZones.size })}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] leading-4 text-gray-600">
+          // КОМПАКТНИЙ тулбар: легенда + лічильники + дії в один-два щільні
+          // ряди (підказку-речення прибрано — крапки легенди й так пояснюють).
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] leading-4 text-gray-600">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-blue-500 bg-blue-400/40" /> {t("legendAvailable")}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-emerald-500 bg-emerald-400/60" /> {t("legendHover")}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-red-600 bg-red-400/70" /> {t("legendSelected")}
+              </span>
+              {boughtCells && boughtCells.size > 0 && (
                 <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-blue-500 bg-blue-400/40" /> {t("legendAvailable")}
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-700 bg-amber-400/70" /> {t("legendBought")}
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-emerald-500 bg-emerald-400/60" /> {t("legendHover")}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-red-600 bg-red-400/70" /> {t("legendSelected")}
-                </span>
-                {boughtCells && boughtCells.size > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-700 bg-amber-400/70" /> {t("legendBought")}
-                  </span>
-                )}
-                <span className="text-gray-400">·</span>
-                <span title={t("ownZoneHint")}>
-                  ▢ {t("ownZone")}
-                </span>
-              </div>
-            </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-[11px]">
+              )}
+              <span className="text-gray-400">·</span>
               <span className="font-medium text-gray-700">
                 {t("cellsLabel")} <span className="text-gray-900 font-semibold">{hexGrid.features.length}</span>
               </span>
@@ -465,16 +451,16 @@ export default function HexagonalGrid({
                 <span className="text-green-700 font-semibold">✓ {t("ready")}</span>
               )}
               {!isValid && validationErrors.length > 0 && (
-                <span className="text-red-600 text-[10px]">
+                <span className="text-red-600">
                   ⚠ {t("validationErrors", { n: validationErrors.length })}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {hasPendingChanges && (
                 <button
                   onClick={generateGrid}
-                  className="px-3 py-1.5 text-[11px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
+                  className="px-2 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
                   title={t("applyTitle", { type: gridType, size: hexSizeM })}
                 >
                   ↻ {t("apply")}
@@ -482,14 +468,14 @@ export default function HexagonalGrid({
               )}
               <button
                 onClick={handleSelectAll}
-                className="px-3 py-1.5 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                 title={t("selectAllTitle")}
               >
                 {t("all")}
               </button>
               <button
                 onClick={handleDeselectAll}
-                className="px-3 py-1.5 text-[11px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                className="px-2 py-0.5 text-[10px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                 title={t("clearTitle")}
               >
                 {t("clear")}
@@ -497,21 +483,20 @@ export default function HexagonalGrid({
               {drawnBounds ? (
                 <button
                   onClick={resetArea}
-                  className="px-3 py-1.5 text-[11px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                  className="px-2 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
                   title={t("resetAreaTitle")}
                 >
                   ⤢ {t("ownZone")}
                 </button>
               ) : (
-                <span className="px-3 py-1.5 text-[11px] text-teal-700" title={t("drawZoneTitle")}>
+                <span className="px-2 py-0.5 text-[10px] text-teal-700" title={t("drawZoneTitle")}>
                   ▢ {t("drawZone")}
                 </span>
               )}
             </div>
           </div>
-          </div>
         ) : (
-          <div className="text-[11px] text-gray-600">{t("generating")}</div>
+          <div className="text-[10px] text-gray-600">{t("generating")}</div>
         )}
       </div>
 

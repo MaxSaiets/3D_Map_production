@@ -8,7 +8,6 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
-import { WizardSteps } from "@/components/WizardSteps";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
@@ -428,7 +427,6 @@ export default function Home() {
   }, [downloadUrl]);
 
   const currentCity = CITIES[currentCityKey];
-  const selectedCityLabel = tCity(currentCityKey);
   const hasMapSelection = Boolean(selectedArea);
   const zoneCount = selectedZones.length;
   // Авто-перехід на 3D-рендер у мить старту генерації (rising edge). Назад на
@@ -530,34 +528,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Мобільну навігацію уніфіковано: ЄДИНИЙ степер (WizardSteps нижче)
-              замість трьох конкурентних систем табів. Раніше тут був дубль-ряд
-              «Мапа/Прев'ю/Налаштування», що повторював і степер, і нижній бар. */}
+          {/* Навігацію спрощено: степер КРОК 1/2/3 прибрано (зайвий chrome —
+              сцена карта⇄рендер уже самопояснювана). Раніше тут був ще й
+              дубль-ряд табів — теж прибрано. Нижній бар = StickyActionBar. */}
         </header>
-
-        <div className="mt-3">
-          <WizardSteps
-            state={{
-              cityLabel: selectedCityLabel,
-              hasSelection: hasMapSelection || zoneCount > 0,
-              isGenerating,
-              hasDownload: Boolean(downloadUrl),
-              progress,
-            }}
-            onStepClick={(key) => {
-              // Одноекранно: степер лише ПРОКРУЧУЄ до секції (нічого не ховає).
-              const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-              // На мобільному налаштування — окрема картка (aside схований); ведемо
-              // на неї, а не на десктоп-aside (display:none → скрол нікуди).
-              const id =
-                key === "place" ? "panel-map"
-                : key === "settings" ? (isMobile ? "panel-settings-mobile" : "panel-settings")
-                : "panel-preview";
-              const target = document.getElementById(id);
-              target?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          />
-        </div>
 
         <div className="mt-3 flex flex-1 flex-col gap-3 lg:min-h-0 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
           <aside id="panel-settings" className="hidden min-h-0 lg:block">
@@ -644,23 +618,16 @@ export default function Home() {
               </button>
             </div>
             <div id="panel-map" className={`${mapPanelClasses} ${stageView === "map" ? "" : "hidden"}`}>
-              {/* Карта — головна взаємодія: на десктопі домінує (≈60% висоти
-                  вікна), щоб рамку було зручно тягати (раніше ~270px). */}
-              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[60vh] xl:min-h-[56vh]">
-                <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-4">
-                  <div>
-                    <p className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:block">
-                      {showHexGrid ? tc("seriesSelection") : tc("singleArea")}
-                    </p>
-                    <h2 className="font-title text-base font-semibold text-[var(--text-primary)] sm:mt-1 sm:text-xl">
-                      {showHexGrid ? tc("pickZonesForSeries") : tc("markAreaOnMap")}
-                    </h2>
-                    <p className="mt-1 hidden text-sm text-[var(--text-secondary)] sm:block">
-                      {showHexGrid
-                        ? tc("pickAdjacentZones")
-                        : tc("dragFrameSubtitle")}
-                    </p>
-                  </div>
+              {/* Карта — головна взаємодія: на десктопі вся сцена (перемикач +
+                  картка) ВЛІЗАЄ в один екран (calc під шапку) → без скролу
+                  сторінки. На мобільному лишаємо min-h і дозволяємо скрол. */}
+              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[calc(100dvh-140px)] lg:min-h-0 lg:max-h-[calc(100dvh-110px)]">
+                {/* Компактний заголовок карти: один рядок (лише h2), без брови
+                    й підзаголовка — економимо вертикаль над картою. */}
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-2 sm:px-5">
+                  <h2 className="font-title text-sm font-semibold text-[var(--text-primary)] sm:text-base">
+                    {showHexGrid ? tc("pickZonesForSeries") : tc("markAreaOnMap")}
+                  </h2>
 
                   {/* Прибрано дубль-бейдж «РЕЖИМ · Одна ділянка» (повторював
                       заголовок зліва). Лишилась лише дія для grid-режиму. */}
@@ -682,43 +649,43 @@ export default function Home() {
                     карті (сітка клітин зі збереженням і докупівлею сусідів) — НЕ
                     змінює панель: користувач лишається у «Просто», а повну сітку
                     бачить прямо тут (вибір форми/збереження нижче). */}
-                <div className="mx-4 mt-2 grid grid-cols-2 gap-2 sm:mt-3" role="tablist" aria-label={tc("selectionModeAria")}>
+                {/* Компактний сегмент-контрол (пігулки в один ряд) замість двох
+                    великих карток із підзаголовками — економимо вертикаль. */}
+                <div className="mx-4 mt-2 flex items-center gap-1.5" role="tablist" aria-label={tc("selectionModeAria")}>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={!showHexGrid}
                     onClick={() => { setShowHexGridPersist(false); }}
-                    className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
+                    className={`min-h-[36px] flex-1 rounded-full border px-3 py-1.5 text-center text-[13px] font-semibold transition ${
                       !showHexGrid
-                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
-                        : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("singleAreaTab")}</span>
-                    <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("singleAreaSubtitle")}</span>
+                    {tc("singleAreaTab")}
                   </button>
                   <button
                     type="button"
                     role="tab"
                     aria-selected={showHexGrid}
                     onClick={() => { setShowHexGridPersist(true); }}
-                    className={`min-h-[44px] rounded-[16px] border px-3 py-2 text-left transition sm:py-2.5 ${
+                    className={`min-h-[36px] flex-1 rounded-full border px-3 py-1.5 text-center text-[13px] font-semibold transition ${
                       showHexGrid
-                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] shadow-[0_8px_20px_rgba(11,92,87,0.12)]"
-                        : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">{tc("seriesTab")}</span>
-                    <span className="mt-0.5 hidden text-[11px] leading-4 text-[var(--text-secondary)] sm:block">{tc("seriesSubtitle")}</span>
+                    {tc("seriesTab")}
                   </button>
                 </div>
 
                 {/* ВИБІР ФОРМИ КЛІТИНОК — видимий прямо у режимі сітки (раніше був
                     схований у «Профі»-панелі й на мобільному недоступний). */}
                 {showHexGrid && (
-                  <div className="mx-4 mt-2">
-                    <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("cellShape")}</div>
-                    <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={tc("cellShapeAria")}>
+                  <div className="mx-4 mt-2 flex items-center gap-2">
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{tc("cellShape")}</span>
+                    <div className="grid flex-1 grid-cols-3 gap-1.5" role="radiogroup" aria-label={tc("cellShapeAria")}>
                       {([
                         ["hexagonal", tc("gridHexLabel"), tc("gridHexHint")],
                         ["square", tc("gridSquareLabel"), tc("gridSquareHint")],
@@ -731,13 +698,13 @@ export default function Home() {
                           aria-checked={gridType === gt}
                           onClick={() => setGridType(gt)}
                           title={hint}
-                          className={`rounded-[14px] border px-2 py-2 text-center transition ${
+                          className={`rounded-[12px] border px-2 py-1.5 text-center text-xs font-semibold transition ${
                             gridType === gt
-                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
-                              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
                           }`}
                         >
-                          <span className="block text-[12px] font-semibold text-[var(--text-primary)]">{label}</span>
+                          {label}
                         </button>
                       ))}
                     </div>
@@ -789,7 +756,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="min-h-[62dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-[600px]">
+                <div className="min-h-[60dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини
@@ -814,7 +781,7 @@ export default function Home() {
 
             {stageView === "render" && (
             <div id="panel-preview" className={previewPanelClasses}>
-              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[360px] xl:min-h-[56vh]">
+              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[calc(100dvh-140px)] lg:min-h-0 lg:max-h-[calc(100dvh-110px)]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">

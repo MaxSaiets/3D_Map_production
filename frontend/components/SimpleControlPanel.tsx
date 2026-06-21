@@ -685,7 +685,7 @@ export function SimpleControlPanel({
 
   return (
     <div className="h-full overflow-y-auto px-4 py-4 sm:px-5">
-      <div className="space-y-5 pb-8">
+      <div className="space-y-3.5 pb-8">
         {/* 1. City */}
         {cityKeys.length > 0 && onCityChange && (
           <div>
@@ -724,16 +724,16 @@ export function SimpleControlPanel({
                     type="button"
                     onClick={() => pickTemplate(t.id)}
                     title={t.blurb}
-                    className={`flex items-center gap-2.5 rounded-[16px] border px-2.5 py-2 text-left transition ${
+                    className={`flex items-center gap-2.5 rounded-[16px] border px-2.5 py-1.5 text-left transition ${
                       active
                         ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] shadow-[0_10px_24px_rgba(11,92,87,0.14)]"
                         : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
                     }`}
                   >
-                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] transition ${
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-[11px] transition ${
                       active ? "bg-[var(--accent-strong)] text-white" : "bg-[rgba(46,74,58,0.08)] text-[var(--accent-strong)]"
                     }`}>
-                      <MapPin size={16} className={active ? "" : "opacity-70"} />
+                      <MapPin size={15} className={active ? "" : "opacity-70"} />
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.district}</span>
@@ -855,7 +855,7 @@ export function SimpleControlPanel({
             🏔 {t("reliefToggle")}
             {reliefMode && <Check size={16} className="text-[var(--accent-strong)]" />}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-secondary)]">{t("reliefHint")}</span>
+          {/* Підпис-підказку (reliefHint) прибрано — компактніше; ключ лишився в i18n. */}
         </button>
         )}
 
@@ -871,7 +871,7 @@ export function SimpleControlPanel({
               <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
               {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
             </button>
-            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("seriesConnectorsHint")}</p>
+            {/* Підказку (seriesConnectorsHint) прибрано — компактніше; ключ лишився в i18n. */}
           </div>
         )}
 
