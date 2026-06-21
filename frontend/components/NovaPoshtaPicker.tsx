@@ -37,8 +37,14 @@ export function NovaPoshtaPicker({
   const [whQuery, setWhQuery] = useState(branch);
   const [whOpen, setWhOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Підсвічений рядок у списку (для клавіатурної навігації combobox). -1 = немає.
+  const [cityIdx, setCityIdx] = useState(-1);
+  const [whIdx, setWhIdx] = useState(-1);
   const debCity = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debWh = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Скидаємо підсвітку щойно змінюється список результатів.
+  useEffect(() => { setCityIdx(-1); }, [cityResults]);
+  useEffect(() => { setWhIdx(-1); }, [whResults]);
 
   useEffect(() => {
     let alive = true;
@@ -83,6 +89,7 @@ export function NovaPoshtaPicker({
     loadWarehouses(c.ref, "");
     setWhOpen(true);
   };
+  const selectWh = (w: Wh) => { setBranch(w.name); setWhQuery(w.name); setWhOpen(false); setWhIdx(-1); };
 
   // Пошук відділення в обраному місті (debounce)
   useEffect(() => {
@@ -122,17 +129,25 @@ export function NovaPoshtaPicker({
           aria-autocomplete="list"
           aria-expanded={cityOpen && cityResults.length > 0}
           aria-controls="np-city-listbox"
+          aria-activedescendant={cityIdx >= 0 && cityResults[cityIdx] ? `np-city-opt-${cityResults[cityIdx].ref}` : undefined}
           value={cityQuery}
           onChange={(e) => { setCityQuery(e.target.value); setCityOpen(true); setCityRef(""); setBranch(""); setWhQuery(""); }}
           onFocus={(e) => { setCityOpen(true); e.target.scrollIntoView({ block: 'center' }); }}
+          onKeyDown={(e) => {
+            if (!cityOpen || cityResults.length === 0) return;
+            if (e.key === "ArrowDown") { e.preventDefault(); setCityIdx((p) => Math.min(p + 1, cityResults.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setCityIdx((p) => Math.max(p - 1, 0)); }
+            else if (e.key === "Enter") { if (cityIdx >= 0 && cityResults[cityIdx]) { e.preventDefault(); pickCity(cityResults[cityIdx]); } }
+            else if (e.key === "Escape") { setCityOpen(false); setCityIdx(-1); }
+          }}
           onBlur={() => setTimeout(() => setCityOpen(false), 160)}
         />
         {cityOpen && cityResults.length > 0 && (
           <ul id="np-city-listbox" role="listbox" className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
-            {cityResults.map((c) => (
-              <li key={c.ref} role="option" aria-selected={false}>
-                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pickCity(c)}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-[rgba(15,118,110,0.08)]">
+            {cityResults.map((c, i) => (
+              <li key={c.ref} id={`np-city-opt-${c.ref}`} role="option" aria-selected={i === cityIdx}>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setCityIdx(i)} onClick={() => pickCity(c)}
+                  className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm ${i === cityIdx ? "bg-[rgba(15,118,110,0.12)]" : "hover:bg-[rgba(15,118,110,0.08)]"}`}>
                   <MapPin size={14} className="shrink-0 text-[var(--accent-strong)]" />
                   <span className="truncate"><b className="font-semibold">{c.name}</b>{c.area ? <span className="text-[var(--text-secondary)]"> · {c.area} обл.</span> : null}</span>
                 </button>
@@ -154,17 +169,25 @@ export function NovaPoshtaPicker({
             aria-autocomplete="list"
             aria-expanded={whOpen && whResults.length > 0}
             aria-controls="np-wh-listbox"
+            aria-activedescendant={whIdx >= 0 && whResults[whIdx] ? `np-wh-opt-${whResults[whIdx].ref}` : undefined}
             value={whQuery}
             onChange={(e) => { setWhQuery(e.target.value); setWhOpen(true); }}
             onFocus={(e) => { setWhOpen(true); if (!whResults.length) loadWarehouses(cityRef, ""); e.target.scrollIntoView({ block: 'center' }); }}
+            onKeyDown={(e) => {
+              if (!whOpen || whResults.length === 0) return;
+              if (e.key === "ArrowDown") { e.preventDefault(); setWhIdx((p) => Math.min(p + 1, whResults.length - 1)); }
+              else if (e.key === "ArrowUp") { e.preventDefault(); setWhIdx((p) => Math.max(p - 1, 0)); }
+              else if (e.key === "Enter") { if (whIdx >= 0 && whResults[whIdx]) { e.preventDefault(); selectWh(whResults[whIdx]); } }
+              else if (e.key === "Escape") { setWhOpen(false); setWhIdx(-1); }
+            }}
             onBlur={() => setTimeout(() => setWhOpen(false), 160)}
           />
           {whOpen && whResults.length > 0 && (
             <ul id="np-wh-listbox" role="listbox" className="absolute z-30 mt-1 max-h-44 w-full overflow-auto rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
-              {whResults.map((w) => (
-                <li key={w.ref} role="option" aria-selected={false}>
-                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setBranch(w.name); setWhQuery(w.name); setWhOpen(false); }}
-                    className="block w-full px-4 py-2.5 text-left text-sm hover:bg-[rgba(15,118,110,0.08)]">
+              {whResults.map((w, i) => (
+                <li key={w.ref} id={`np-wh-opt-${w.ref}`} role="option" aria-selected={i === whIdx}>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setWhIdx(i)} onClick={() => selectWh(w)}
+                    className={`block w-full px-4 py-2.5 text-left text-sm ${i === whIdx ? "bg-[rgba(15,118,110,0.12)]" : "hover:bg-[rgba(15,118,110,0.08)]"}`}>
                     <span className="line-clamp-2">{w.name}</span>
                   </button>
                 </li>

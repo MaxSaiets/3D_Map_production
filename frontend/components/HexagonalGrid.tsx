@@ -611,7 +611,7 @@ export default function HexagonalGrid({
               {hasPendingChanges && (
                 <button
                   onClick={generateGrid}
-                  className="px-1.5 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
+                  className="inline-flex min-h-[36px] items-center px-2.5 py-1.5 text-[11px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
                   title={t("applyTitle", { type: gridType, size: hexSizeM })}
                 >
                   ↻ {t("apply")}
@@ -619,14 +619,14 @@ export default function HexagonalGrid({
               )}
               <button
                 onClick={handleSelectAll}
-                className="px-1.5 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                className="inline-flex min-h-[36px] items-center px-2.5 py-1.5 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                 title={t("selectAllTitle")}
               >
                 {t("all")}
               </button>
               <button
                 onClick={handleDeselectAll}
-                className="px-1.5 py-0.5 text-[10px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                className="inline-flex min-h-[36px] items-center px-2.5 py-1.5 text-[11px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                 title={t("clearTitle")}
               >
                 {t("clear")}
@@ -634,13 +634,13 @@ export default function HexagonalGrid({
               {drawnBounds ? (
                 <button
                   onClick={resetArea}
-                  className="px-1.5 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                  className="inline-flex min-h-[36px] items-center px-2.5 py-1.5 text-[11px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
                   title={t("resetAreaTitle")}
                 >
                   ⤢ {t("ownZone")}
                 </button>
               ) : (
-                <span className="px-1.5 py-0.5 text-[10px] text-teal-700" title={t("drawZoneTitle")}>
+                <span className="inline-flex min-h-[36px] items-center px-2.5 py-1.5 text-[11px] text-teal-700" title={t("drawZoneTitle")}>
                   ▢ {t("drawZone")}
                 </span>
               )}

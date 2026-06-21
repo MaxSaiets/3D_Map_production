@@ -1389,7 +1389,11 @@ export function SimpleControlPanel({
         summary={{
           city: selectedCityKey,
           district: MAP_TEMPLATES.find((t) => t.id === activeTemplate)?.district,
-          size: panelMode > 0
+          size: s.showHexGrid
+            // СІТКА: показуємо К-сть плиток + розмір кожної, інакше оператор бачив
+            // один розмір S/M/L на замовлення з N плиток (плутанина/недозбір).
+            ? `${t("seriesTab")} · ${orderTiles}× ${SIMPLE_SIZES.find((z) => Math.abs(modelSizeMm - z.mm) < 1)?.cm || ""}`.trim()
+            : panelMode > 0
             ? `${t("panelToggle")} ${panelMode}×${panelMode} (${orderTiles}×)`
             : magnetMode
               ? t("magnetToggle")

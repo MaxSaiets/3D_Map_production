@@ -997,9 +997,30 @@ export function KeychainControlPanel({
   };
 
   const canGenerate = Boolean(selectedArea) && !isGenerating && blockingPrintIssues.length === 0;
-  // ЗАМОВИТИ ОДРАЗУ: стартує генерацію у фоні + відкриває форму, щоб не чекати.
+  // ЗАМОВИТИ — ЄДИНИЙ захищений вхід у форму (усі кнопки «Замовити» йдуть СЮДИ).
+  // КРИТИЧНО: якщо немає готового 3MF і генерація заблокована (зона/print-issue) —
+  // НЕ відкривати форму (інакше замовлення йде з task_id=null → оператор не отримує
+  // моделі, а банер обіцяє «надішлемо файл» — це ніколи не станеться). Той самий клас
+  // бага, що вже виправлено в SimpleControlPanel. Готова модель → одразу форма;
+  // інакше старт повної генерації у фоні + форма (бек віддасть файл коли буде).
   const orderNow = () => {
-    if (!downloadUrl && canGenerate) handleGenerate();
+    if (downloadUrl) { setOrderOpen(true); return; }
+    if (!selectedArea) {
+      const msg = t("error.noArea");
+      setError(msg);
+      window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", message: msg } }));
+      setActiveSection("map");
+      return;
+    }
+    if (blockingPrintIssues.length > 0) {
+      const issue = blockingPrintIssues[0];
+      const msg = t("error.notReady", { issues: blockingPrintIssues.map((i) => i.label.toLowerCase()).join(", ") });
+      setError(msg);
+      window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", message: msg } }));
+      setActiveSection(issue.id === "crop" ? "map" : issue.id === "text-stroke" ? "label" : "product");
+      return;
+    }
+    handleGenerate();
     setOrderOpen(true);
   };
   const currentStatus = isGenerating ? `${progress}% • ${status || t("status.generating")}` : downloadUrl ? t("status.ready3mf") : t("status.ready");
@@ -1367,6 +1388,7 @@ export function KeychainControlPanel({
             value={label}
             onChange={(event) => onLabelChange(event.target.value.toUpperCase().slice(0, 28))}
             placeholder={t("label.mainPlaceholder")}
+            aria-label={t("label.mainPlaceholder")}
             className="mt-4 w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
           />
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -1411,6 +1433,7 @@ export function KeychainControlPanel({
                 value={label2}
                 onChange={(event) => setLabel2(event.target.value.toUpperCase().slice(0, 28))}
                 placeholder={t("label.secondPlaceholder")}
+                aria-label={t("label.secondPlaceholder")}
                 className="min-w-0 flex-1 rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
               />
               <button
@@ -1438,6 +1461,7 @@ export function KeychainControlPanel({
                 value={backLabel}
                 onChange={(event) => onBackLabelChange(event.target.value.toUpperCase().slice(0, 28))}
                 placeholder={t("label.backPlaceholder")}
+                aria-label={t("label.backPlaceholder")}
                 className="w-full rounded-[20px] border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)]"
               />
               <button
@@ -1585,7 +1609,7 @@ export function KeychainControlPanel({
             {/* «Замовити» — одразу після «Створити», на видному місці (бронзова) */}
             <button
               type="button"
-              onClick={() => setOrderOpen(true)}
+              onClick={orderNow}
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
             >
               <ShoppingBag className="h-5 w-5" />
@@ -1838,7 +1862,7 @@ export function KeychainControlPanel({
           </button>
           <button
             type="button"
-            onClick={() => setOrderOpen(true)}
+            onClick={orderNow}
             className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[22px] bg-[var(--bronze,#8E6B3D)] px-4 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(142,107,61,0.28)] transition hover:opacity-90"
           >
             <ShoppingBag className="h-4 w-4" />

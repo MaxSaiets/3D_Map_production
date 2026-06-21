@@ -52,8 +52,7 @@ export function OnboardingTour({
     <div className="pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-3 pb-[92px] sm:justify-end sm:p-6">
       <div
         className="pointer-events-auto w-full max-w-[360px] rounded-[18px] border border-line bg-paper-2 p-5 shadow-lift fade-up"
-        role="dialog"
-        aria-modal="true"
+        role="region"
         aria-label={t("hintAria")}
       >
         <div className="mb-3 flex items-start justify-between">

@@ -35,7 +35,10 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
       </button>
       {open && (
         <>
-          <button aria-hidden className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
+          {/* Скрим-закривач: НЕ-фокусований div (раніше був aria-hidden <button> —
+              порушення «hidden але фокусоване»; меню й так закриється кнопкою-тоглом
+              та вибором локалі). */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
           <ul id={menuId} className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-line bg-paper p-1 shadow-lift">
             {locales.map((l) => (
               <li key={l}>
@@ -66,7 +69,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-ink">
+        <Link href="/" className="flex min-w-0 shrink items-center gap-2 truncate font-serif text-xl font-semibold tracking-tight text-ink">
           <Box size={22} className="text-forest" />
           monadruk
         </Link>
@@ -78,7 +81,7 @@ export function SiteHeader() {
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
           <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
         </nav>
-        <div className="flex items-center gap-2.5">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           <div className="hidden sm:block"><LanguageSwitcher /></div>
           <Link
             href="/account"

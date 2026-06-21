@@ -678,7 +678,7 @@ export default function Home() {
                         role="radio"
                         aria-checked={figureShape === sh.id}
                         onClick={() => setFigureShape(sh.id)}
-                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        className={`flex min-h-[40px] shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition ${
                           figureShape === sh.id
                             ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.14)] text-[var(--text-primary)]"
                             : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
@@ -695,7 +695,7 @@ export default function Home() {
                         data-testid="round-corners-toggle"
                         onClick={() => setRoundCorners((v) => !v)}
                         title={tc("roundCornersHint")}
-                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        className={`flex min-h-[40px] shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition ${
                           roundCorners
                             ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.14)] text-[var(--text-primary)]"
                             : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
