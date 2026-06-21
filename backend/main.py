@@ -2026,6 +2026,59 @@ async def generate_model(
         raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° СЃС‚РІРѕСЂРµРЅРЅСЏ Р·Р°РґР°С‡С–: {str(e)}")
 
 
+class CustomWorldRequest(BaseModel):
+    """Запит режиму «опиши світ» (AI/процедурна генерація, задача #5)."""
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    size_mm: float = Field(default=120.0, ge=40.0, le=220.0)
+    keychain_mode: bool = False
+
+
+def generate_custom_task(task_id: str, prompt: str, size_mm: float, keychain_mode: bool):
+    """Фон: промт → spec (Claude або rule-based) → процедурний світ → 3MF/STL/GLB."""
+    task = tasks.get(task_id)
+    if task is None:
+        return
+    try:
+        from services.llm_orchestrator import prompt_to_spec
+        from services.procedural_generator import generate_world_mesh
+        task.update_status("processing", 15, "Аналізую опис світу...")
+        spec, src = prompt_to_spec(prompt, size_mm)
+        task.update_status("processing", 45, f"Будую {spec.get('shape', 'світ')}...")
+        mesh = generate_world_mesh(spec)
+        task.update_status("processing", 80, "Експортую модель...")
+        basename = f"custom_{task_id[:8]}"
+        p3mf = str(OUTPUT_DIR / f"{basename}.3mf")
+        pstl = str(OUTPUT_DIR / f"{basename}.stl")
+        pglb = str(OUTPUT_DIR / f"{basename}.glb")
+        mesh.export(p3mf); mesh.export(pstl); mesh.export(pglb)
+        task.set_output("3mf", p3mf); task.set_output("stl", pstl); task.set_output("glb", pglb)
+        task.complete(p3mf)
+        task.message = f"Світ готовий · {spec.get('shape', '')} [{src}]"
+        print(f"[CUSTOM] {task_id} done: {spec.get('shape')} src={src} -> {p3mf}", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        import traceback
+        traceback.print_exc()
+        task.fail(f"Помилка генерації світу: {exc}")
+
+
+@app.post("/api/generate-custom", response_model=GenerationResponse)
+async def generate_custom(
+    request: CustomWorldRequest,
+    background_tasks: BackgroundTasks,
+    _rl: None = Depends(rate_limit("generate_custom", [(5, 60.0), (30, 3600.0)])),
+):
+    """Режим «опиши світ» (#5): вільний опис → процедурна 3D-модель рельєфу
+    (heightfield+форма), готова до друку. Claude покращує промт→spec ЯКЩО заданий
+    ANTHROPIC_API_KEY, інакше rule-based парсер (працює одразу). Статус — /api/status."""
+    task_id = str(uuid.uuid4())
+    tasks[task_id] = GenerationTask(task_id=task_id, request={"prompt": request.prompt})
+    background_tasks.add_task(
+        generate_custom_task, task_id, request.prompt, float(request.size_mm), bool(request.keychain_mode),
+    )
+    print(f"[CUSTOM] created task {task_id} for prompt: {request.prompt[:60]}", flush=True)
+    return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
+
+
 @app.get("/api/status/{task_id}")
 async def get_status(task_id: str):
     """
