@@ -245,7 +245,7 @@
     "singleArea": "Pojedynczy obszar",
     "pickZonesForSeries": "Wybierz strefy do serii",
     "markAreaOnMap": "Zaznacz obszar na mapie",
-    "pickAdjacentZones": "Wybierz sąsiednie strefy do serii.",
+    "pickAdjacentZones": "Kliknij komórki na mapie, aby wybrać sąsiednie strefy serii.",
     "dragFrameSubtitle": "Przeciągnij ramkę w wybrane miejsce.",
     "saveGridButton": "💾 Zapisz siatkę",
     "selectionModeAria": "Tryb wyboru obszarów",
@@ -270,7 +270,9 @@
     "loading3d": "Ładowanie podglądu 3D…",
     "stageMap": "Mapa",
     "stageRender": "Model 3D",
-    "stageRenderLocked": "Najpierw wygeneruj model"
+    "stageRenderLocked": "Najpierw wygeneruj model",
+    "gridSelectHintTitle": "Jak wybrać",
+    "saveGridHint": "Zapisuje wybrane strefy na koncie — wróć i dokup sąsiednie później."
   },
   "showcase": {
     "back": "Strona główna",

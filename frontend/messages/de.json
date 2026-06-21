@@ -245,7 +245,7 @@
     "singleArea": "Einzelner Bereich",
     "pickZonesForSeries": "Zonen für die Serie auswählen",
     "markAreaOnMap": "Bereich auf der Karte markieren",
-    "pickAdjacentZones": "Benachbarte Zonen für die Serie auswählen.",
+    "pickAdjacentZones": "Tippen Sie auf Zellen der Karte, um benachbarte Zonen für die Serie zu wählen.",
     "dragFrameSubtitle": "Ziehe den Rahmen an die gewünschte Stelle.",
     "saveGridButton": "💾 Raster speichern",
     "selectionModeAria": "Bereichsauswahlmodus",
@@ -270,7 +270,9 @@
     "loading3d": "3D-Vorschau wird geladen…",
     "stageMap": "Karte",
     "stageRender": "3D-Modell",
-    "stageRenderLocked": "Zuerst ein Modell generieren"
+    "stageRenderLocked": "Zuerst ein Modell generieren",
+    "gridSelectHintTitle": "So wählen Sie",
+    "saveGridHint": "Speichert die gewählten Zonen in Ihrem Konto — später benachbarte ergänzen."
   },
   "showcase": {
     "back": "Startseite",

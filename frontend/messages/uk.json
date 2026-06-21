@@ -245,7 +245,7 @@
     "singleArea": "Одна ділянка",
     "pickZonesForSeries": "Оберіть зони для серії",
     "markAreaOnMap": "Позначте ділянку на мапі",
-    "pickAdjacentZones": "Оберіть сусідні зони для серії.",
+    "pickAdjacentZones": "Натисніть клітинки на карті, щоб обрати сусідні зони для серії.",
     "dragFrameSubtitle": "Перетягніть рамку у потрібне місце.",
     "saveGridButton": "💾 Зберегти сітку",
     "selectionModeAria": "Режим вибору ділянок",
@@ -270,7 +270,9 @@
     "loading3d": "Завантаження 3D перегляду…",
     "stageMap": "Карта",
     "stageRender": "3D-модель",
-    "stageRenderLocked": "Спершу згенеруй модель"
+    "stageRenderLocked": "Спершу згенеруй модель",
+    "gridSelectHintTitle": "Як обрати зони",
+    "saveGridHint": "Збереже вибрані зони у вашому кабінеті — повернетесь і докупите сусідні згодом."
   },
   "showcase": {
     "back": "На головну",

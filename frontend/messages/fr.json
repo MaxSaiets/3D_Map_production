@@ -245,7 +245,7 @@
     "singleArea": "Zone unique",
     "pickZonesForSeries": "Sélectionne des zones pour la série",
     "markAreaOnMap": "Marque une zone sur la carte",
-    "pickAdjacentZones": "Sélectionne des zones voisines pour la série.",
+    "pickAdjacentZones": "Touchez les cellules sur la carte pour choisir les zones voisines de la série.",
     "dragFrameSubtitle": "Fais glisser le cadre à l'endroit voulu.",
     "saveGridButton": "💾 Enregistrer la grille",
     "selectionModeAria": "Mode de sélection des zones",
@@ -270,7 +270,9 @@
     "loading3d": "Chargement de l aperçu 3D…",
     "stageMap": "Carte",
     "stageRender": "Modèle 3D",
-    "stageRenderLocked": "Générez d'abord un modèle"
+    "stageRenderLocked": "Générez d'abord un modèle",
+    "gridSelectHintTitle": "Comment choisir",
+    "saveGridHint": "Enregistre vos zones dans votre compte — revenez ajouter les voisines plus tard."
   },
   "showcase": {
     "back": "Accueil",

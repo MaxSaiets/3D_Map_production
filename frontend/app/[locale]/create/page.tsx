@@ -733,6 +733,16 @@ export default function Home() {
                     </div>
                   )}
 
+                  {/* ПІДКАЗКА «як обрати зону» — компактна плаваюча картка у правому
+                      верху НА мапі. Лише моб/планшет (lg:hidden): на десктопі картка
+                      керування й так стоїть у правому верху і містить ту саму підказку. */}
+                  {showHexGrid && (
+                    <div className="pointer-events-none absolute right-2 top-2 z-[500] w-[160px] max-w-[58%] rounded-[12px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+                      <p className="text-[11px] font-semibold text-[var(--text-primary)]">{tc("gridSelectHintTitle")}</p>
+                      <p className="mt-0.5 text-[10px] leading-tight text-[var(--text-secondary)]">{tc("pickAdjacentZones")}</p>
+                    </div>
+                  )}
+
                   {/* ПЛАВАЮЧА КАРТКА КЕРУВАННЯ (правий верх НА мапі): сегмент
                       ділянка/серія завжди; форма клітинок + збереження + підказка
                       лише у режимі сітки. z-[500] — над leaflet-панелями. */}
@@ -746,7 +756,7 @@ export default function Home() {
                         role="tab"
                         aria-selected={!showHexGrid}
                         onClick={() => { setShowHexGridPersist(false); }}
-                        className={`flex-1 rounded-full border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                        className={`flex min-h-[44px] flex-1 items-center justify-center rounded-full border px-2 py-2 text-center text-[13px] font-semibold transition ${
                           !showHexGrid
                             ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
                             : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
@@ -759,7 +769,7 @@ export default function Home() {
                         role="tab"
                         aria-selected={showHexGrid}
                         onClick={() => { setShowHexGridPersist(true); }}
-                        className={`flex-1 rounded-full border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                        className={`flex min-h-[44px] flex-1 items-center justify-center rounded-full border px-2 py-2 text-center text-[13px] font-semibold transition ${
                           showHexGrid
                             ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
                             : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
@@ -784,7 +794,7 @@ export default function Home() {
                               aria-checked={gridType === gt}
                               onClick={() => setGridType(gt)}
                               title={hint}
-                              className={`rounded-[10px] border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                              className={`flex min-h-[44px] items-center justify-center rounded-[12px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
                                 gridType === gt
                                   ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
                                   : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
@@ -797,11 +807,12 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleSaveGrid}
-                          className="w-full rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-2 py-1 text-[11px] font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
+                          className="flex min-h-[44px] w-full items-center justify-center rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-2 py-2 text-[13px] font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
                         >
                           {tc("saveGridButton")}
                         </button>
-                        <p className="text-[10px] leading-3 text-[var(--text-secondary)]">{tc("pickAdjacentZones")}</p>
+                        <p className="text-[10px] leading-tight text-[var(--text-secondary)]">{tc("saveGridHint")}</p>
+                        <p className="text-[11px] font-medium leading-tight text-[var(--text-primary)]">{tc("pickAdjacentZones")}</p>
                       </>
                     )}
                   </div>

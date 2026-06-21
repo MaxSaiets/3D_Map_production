@@ -245,7 +245,7 @@
     "singleArea": "Single area",
     "pickZonesForSeries": "Select zones for the series",
     "markAreaOnMap": "Mark an area on the map",
-    "pickAdjacentZones": "Select adjacent zones for the series.",
+    "pickAdjacentZones": "Tap cells on the map to pick adjacent zones for the series.",
     "dragFrameSubtitle": "Drag the frame to the spot you want.",
     "saveGridButton": "💾 Save grid",
     "selectionModeAria": "Area selection mode",
@@ -270,7 +270,9 @@
     "loading3d": "Loading 3D preview…",
     "stageMap": "Map",
     "stageRender": "3D model",
-    "stageRenderLocked": "Generate a model first"
+    "stageRenderLocked": "Generate a model first",
+    "gridSelectHintTitle": "How to select",
+    "saveGridHint": "Saves your selected zones to your account — come back and add neighbours later."
   },
   "showcase": {
     "back": "Home",

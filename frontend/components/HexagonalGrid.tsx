@@ -131,7 +131,7 @@ export default function HexagonalGrid({
   bounds,
   onZonesSelected,
   gridType: externalGridType = "hexagonal",
-  hexSizeM: externalHexSizeM = 300.0,
+  hexSizeM: externalHexSizeM = 450.0,
   onAreaChange,
   initialArea = null,
   boughtCells,
@@ -182,10 +182,10 @@ export default function HexagonalGrid({
   const [internalGridType, setInternalGridType] = useState<"hexagonal" | "square" | "circle">("hexagonal");
   // "Applied" params — те, що реально використовувалось при генерації
   const [appliedGridType, setAppliedGridType] = useState(externalGridType || "hexagonal");
-  const [appliedHexSizeM, setAppliedHexSizeM] = useState(externalHexSizeM || 300.0);
+  const [appliedHexSizeM, setAppliedHexSizeM] = useState(externalHexSizeM || 450.0);
 
   const gridType = externalGridType || internalGridType;
-  const hexSizeM = externalHexSizeM || 300.0;
+  const hexSizeM = externalHexSizeM || 450.0;
 
   // Чи є незастосовані зміни параметрів
   const hasPendingChanges = gridType !== appliedGridType || hexSizeM !== appliedHexSizeM;
@@ -511,7 +511,7 @@ export default function HexagonalGrid({
       {/* ПЛАВАЮЧИЙ ТУЛБАР СІТКИ (лівий верх НА мапі): лічильники + дії компактно.
           z-[500] — над leaflet-панелями; pointer-events-none на контейнері, а
           сама картка events-auto, щоб кліки по мапі поза карткою проходили. */}
-      <div className="pointer-events-none absolute left-2 top-2 z-[500] w-[200px] max-w-[calc(100%-1rem)] space-y-1 rounded-[14px] border border-gray-200 bg-white/95 px-2 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
+      <div className="pointer-events-none absolute left-2 top-2 z-[500] w-[172px] max-w-[calc(58%-0.5rem)] space-y-1 rounded-[14px] border border-gray-200 bg-white/95 px-2 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:w-[200px] lg:max-w-[calc(100%-1rem)]">
         {gridError && (
           <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
             <span>⚠ {gridError}</span>

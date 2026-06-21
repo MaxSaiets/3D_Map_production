@@ -245,7 +245,7 @@
     "singleArea": "Área única",
     "pickZonesForSeries": "Selecciona zonas para la serie",
     "markAreaOnMap": "Marca un área en el mapa",
-    "pickAdjacentZones": "Selecciona zonas adyacentes para la serie.",
+    "pickAdjacentZones": "Toca las celdas del mapa para elegir zonas contiguas de la serie.",
     "dragFrameSubtitle": "Arrastra el marco al lugar que quieras.",
     "saveGridButton": "💾 Guardar cuadrícula",
     "selectionModeAria": "Modo de selección de áreas",
@@ -270,7 +270,9 @@
     "loading3d": "Cargando vista 3D…",
     "stageMap": "Mapa",
     "stageRender": "Modelo 3D",
-    "stageRenderLocked": "Primero genera un modelo"
+    "stageRenderLocked": "Primero genera un modelo",
+    "gridSelectHintTitle": "Cómo elegir",
+    "saveGridHint": "Guarda las zonas elegidas en tu cuenta — vuelve y añade las contiguas después."
   },
   "showcase": {
     "back": "Inicio",

@@ -255,7 +255,9 @@ const initialState = {
   selectedZones: [] as any[],
   showHexGrid: false,
   gridType: "hexagonal" as "hexagonal" | "square" | "circle",
-  hexSizeM: 300.0,
+  // Більші клітини (450м) — менше, але крупніших зон, які легше обирати на телефоні
+  // (раніше 300м → дрібні клітини зливались і важко тапались).
+  hexSizeM: 450.0,
 
   // Preview: smooth shading can show a visible seam between separate tiles on slopes
   terrainSmoothShading: false,
