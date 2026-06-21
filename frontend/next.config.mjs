@@ -20,6 +20,12 @@ const nextConfig = {
   // фронт ще обслуговує з .next, потім атомарний swap + restart (~секунди замість ~6хв
   // простою від rm -rf .next). За замовчуванням .next — звичайний build/start не зачеплено.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // collectBuildTraces (.nft.json) потрібен ЛИШЕ для output:'standalone'/serverless.
+  // Тут продакшн = `next start` із повним .next, тож трейси не використовуються.
+  // А з кастомним distDir (.next-build для zero-downtime) цей крок РЕГУЛЯРНО падав
+  // `Cannot find module next/.../app-page/module.compiled` (відома вада Next 14 при
+  // нестандартному distDir) і валив весь білд. Вимкнення прибирає цей крах + пришвидшує білд.
+  outputFileTracing: false,
   images: {
     unoptimized: true,
   },
