@@ -685,7 +685,7 @@ export function SimpleControlPanel({
 
   return (
     <div className="h-full overflow-y-auto px-4 py-4 sm:px-5">
-      <div className="space-y-3.5 pb-8">
+      <div className="space-y-3 pb-8">
         {/* 1. City */}
         {cityKeys.length > 0 && onCityChange && (
           <div>
@@ -770,7 +770,7 @@ export function SimpleControlPanel({
                   aria-checked={active}
                   aria-label={`${sz.label} · ${sz.cm}`}
                   onClick={() => setModelSizeMm(sz.mm)}
-                  className={`rounded-[16px] border px-2 py-3 text-center transition ${
+                  className={`rounded-[16px] border px-2 py-2 text-center transition ${
                     active
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
                       : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"
@@ -793,7 +793,9 @@ export function SimpleControlPanel({
           <div id="simple-format-label" className={eyebrowSoft}>
             {t("fmtTitle")}
           </div>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("fmtAria")} data-testid="format-seg">
+          {/* Один ряд із 3 рівних пігулок (раніше 2×2 → перенос «Магніт» на 2-й
+              рядок з'їдав вертикаль). Компактніше: 3D / Плоска / Магніт в один ряд. */}
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("fmtAria")} data-testid="format-seg">
             {([
               ["relief3d", t("fmtStandard")],
               ["flat", t("fmtFlat")],
@@ -815,7 +817,7 @@ export function SimpleControlPanel({
                     // як дефолтний вигляд плоскої карти (додатки керуються окремо).
                     if (id === "flat") setFlatAmsMode(true);
                   }}
-                  className={`min-h-[44px] rounded-[16px] border px-3 py-2.5 text-center text-sm font-semibold transition ${
+                  className={`min-h-[40px] rounded-[16px] border px-2 py-2 text-center text-[13px] font-semibold transition ${
                     active
                       ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
                       : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.25)]"
@@ -845,7 +847,7 @@ export function SimpleControlPanel({
           aria-pressed={reliefMode}
           data-testid="relief-toggle"
           onClick={() => setReliefMode(!reliefMode)}
-          className={`-mt-1 ml-1 block w-[calc(100%-0.25rem)] rounded-[16px] border-l-2 border-r border-y px-4 py-3 text-left transition ${
+          className={`-mt-1 ml-1 block w-[calc(100%-0.25rem)] rounded-[16px] border-l-2 border-r border-y px-4 py-2 text-left transition ${
             reliefMode
               ? "border-l-[var(--accent-strong)] border-y-[rgba(11,92,87,0.4)] border-r-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]"
               : "border-l-[rgba(11,92,87,0.3)] border-y-[var(--surface-border)] border-r-[var(--surface-border)] bg-white/80 hover:border-l-[var(--accent-strong)]"
@@ -864,7 +866,7 @@ export function SimpleControlPanel({
             велика мапа тепер робиться через сітку на карті, а не через «Кілька
             частин», тож тумблер живе тут, поруч із сіткою. */}
         {s.showHexGrid && (
-          <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
+          <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-2">
             <button type="button" aria-pressed={s.simpleSeriesConnectors} data-testid="series-connectors-toggle"
               onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
               className={`flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${s.simpleSeriesConnectors ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]" : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"}`}>
@@ -1212,10 +1214,11 @@ export function SimpleControlPanel({
               для покупця. */}
           {/* Довіра БІЛЯ CTA (раніше лише у формі замовлення): ключові гарантії на
               момент рішення — Eco PLA, гарантія, без передоплати, доставка UA+ЄС. */}
-          <div className="mb-2.5 flex flex-wrap justify-center gap-1.5">
+          {/* Компактніший рядок довіри: менший gap + text-[10px], тісніший паддинг. */}
+          <div className="mb-2 flex flex-wrap justify-center gap-1">
             {[t("trustEco"), t("trustReprint"), t("trustNoPrepay"), t("trustShip")].map((claim) => (
-              <span key={claim} className="inline-flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
-                <Check className="h-3 w-3 text-[var(--accent-strong)]" /> {claim}
+              <span key={claim} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--surface-border)] bg-white/70 px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">
+                <Check className="h-2.5 w-2.5 text-[var(--accent-strong)]" /> {claim}
               </span>
             ))}
           </div>

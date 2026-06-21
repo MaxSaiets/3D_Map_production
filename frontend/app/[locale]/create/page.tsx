@@ -622,103 +622,16 @@ export default function Home() {
                   картка) ВЛІЗАЄ в один екран (calc під шапку) → без скролу
                   сторінки. На мобільному лишаємо min-h і дозволяємо скрол. */}
               <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[calc(100dvh-140px)] lg:min-h-0 lg:max-h-[calc(100dvh-110px)]">
-                {/* Компактний заголовок карти: один рядок (лише h2), без брови
-                    й підзаголовка — економимо вертикаль над картою. */}
-                <div className="flex items-center justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-2 sm:px-5">
-                  <h2 className="font-title text-sm font-semibold text-[var(--text-primary)] sm:text-base">
-                    {showHexGrid ? tc("pickZonesForSeries") : tc("markAreaOnMap")}
-                  </h2>
+                {/* РЕДИЗАЙН: керування сіткою більше НЕ стоїть стосом над картою
+                    (з'їдало вертикаль) — карта займає всю картку, а контроли
+                    плавають компактною карткою у ПРАВОМУ ВЕРХНЬОМУ куті прямо НА
+                    мапі. Сегмент «Одна ділянка / Серія» доступний В ОБОХ режимах;
+                    форма клітинок + збереження — лише у режимі сітки. */}
 
-                  {/* Прибрано дубль-бейдж «РЕЖИМ · Одна ділянка» (повторював
-                      заголовок зліва). Лишилась лише дія для grid-режиму. */}
-                  {showHexGrid && (
-                    <div className="hidden sm:flex">
-                      <button
-                        type="button"
-                        onClick={handleSaveGrid}
-                        className="rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
-                      >
-                        {tc("saveGridButton")}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* РЕЖИМ ВИБОРУ (Одна ділянка / Серія зон) — доступний В ОБОХ режимах
-                    («Просто» і «Профі»). «Серія зон» лише перемикає тип вибору на
-                    карті (сітка клітин зі збереженням і докупівлею сусідів) — НЕ
-                    змінює панель: користувач лишається у «Просто», а повну сітку
-                    бачить прямо тут (вибір форми/збереження нижче). */}
-                {/* Компактний сегмент-контрол (пігулки в один ряд) замість двох
-                    великих карток із підзаголовками — економимо вертикаль. */}
-                <div className="mx-4 mt-2 flex items-center gap-1.5" role="tablist" aria-label={tc("selectionModeAria")}>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={!showHexGrid}
-                    onClick={() => { setShowHexGridPersist(false); }}
-                    className={`min-h-[36px] flex-1 rounded-full border px-3 py-1.5 text-center text-[13px] font-semibold transition ${
-                      !showHexGrid
-                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
-                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
-                    }`}
-                  >
-                    {tc("singleAreaTab")}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={showHexGrid}
-                    onClick={() => { setShowHexGridPersist(true); }}
-                    className={`min-h-[36px] flex-1 rounded-full border px-3 py-1.5 text-center text-[13px] font-semibold transition ${
-                      showHexGrid
-                        ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
-                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
-                    }`}
-                  >
-                    {tc("seriesTab")}
-                  </button>
-                </div>
-
-                {/* ВИБІР ФОРМИ КЛІТИНОК — видимий прямо у режимі сітки (раніше був
-                    схований у «Профі»-панелі й на мобільному недоступний). */}
-                {showHexGrid && (
-                  <div className="mx-4 mt-2 flex items-center gap-2">
-                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{tc("cellShape")}</span>
-                    <div className="grid flex-1 grid-cols-3 gap-1.5" role="radiogroup" aria-label={tc("cellShapeAria")}>
-                      {([
-                        ["hexagonal", tc("gridHexLabel"), tc("gridHexHint")],
-                        ["square", tc("gridSquareLabel"), tc("gridSquareHint")],
-                        ["circle", tc("gridCircleLabel"), tc("gridCircleHint")],
-                      ] as Array<["hexagonal" | "square" | "circle", string, string]>).map(([gt, label, hint]) => (
-                        <button
-                          key={gt}
-                          type="button"
-                          role="radio"
-                          aria-checked={gridType === gt}
-                          onClick={() => setGridType(gt)}
-                          title={hint}
-                          className={`rounded-[12px] border px-2 py-1.5 text-center text-xs font-semibold transition ${
-                            gridType === gt
-                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
-                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {gridNotice && (
-                  <div className="mx-4 mt-3 rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[rgba(15,118,110,0.08)] px-3 py-2 text-[12px] text-[var(--text-primary)]">
-                    {gridNotice}
-                  </div>
-                )}
-
+                {/* ВИБІР ФОРМИ ФІГУРИ — лишається У ПОТОЦІ над картою ЛИШЕ для
+                    одиночної ділянки (single-режим не чіпаємо). */}
                 {!showHexGrid && (
-                  <div role="radiogroup" aria-label={tc("shapeFieldLabel")} className="mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:flex-wrap sm:overflow-visible sm:pb-0">
+                  <div role="radiogroup" aria-label={tc("shapeFieldLabel")} className="mx-4 mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0">
                     <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
                     {FIGURE_SHAPES.map((sh) => (
                       <button
@@ -756,7 +669,9 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="min-h-[60dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
+                {/* МАПА НА ВЕСЬ РОЗМІР + плаваючі оверлеї. relative — щоб
+                    абсолютно-позиційовані контроли лягали поверх карти. */}
+                <div className="relative flex min-h-[60dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини
@@ -773,6 +688,86 @@ export default function Home() {
                   ) : (
                     <div className="h-full overflow-hidden rounded-[24px]">
                       <MapSelector center={currentCity.center} keychainCrop={mapCrop} />
+                    </div>
+                  )}
+
+                  {/* ПЛАВАЮЧА КАРТКА КЕРУВАННЯ (правий верх НА мапі): сегмент
+                      ділянка/серія завжди; форма клітинок + збереження + підказка
+                      лише у режимі сітки. z-[500] — над leaflet-панелями. */}
+                  {/* МОБ: оверлей у потоці ПІД картою (не плаває), щоб НЕ накладатись
+                      на тулбар сітки (лівий-верх). ДЕСКТОП: плаває у правому верху НА мапі. */}
+                  <div className="relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:top-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)]">
+                    {/* Сегмент-контрол: дві пігулки в один ряд (доступно в ОБОХ режимах). */}
+                    <div className="flex items-center gap-1" role="tablist" aria-label={tc("selectionModeAria")}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={!showHexGrid}
+                        onClick={() => { setShowHexGridPersist(false); }}
+                        className={`flex-1 rounded-full border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                          !showHexGrid
+                            ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                        }`}
+                      >
+                        {tc("singleAreaTab")}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={showHexGrid}
+                        onClick={() => { setShowHexGridPersist(true); }}
+                        className={`flex-1 rounded-full border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                          showHexGrid
+                            ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                        }`}
+                      >
+                        {tc("seriesTab")}
+                      </button>
+                    </div>
+
+                    {/* Лише у режимі сітки: форма клітинок (без «Кола») + збереження + підказка. */}
+                    {showHexGrid && (
+                      <>
+                        <div className="grid grid-cols-2 gap-1" role="radiogroup" aria-label={tc("cellShapeAria")}>
+                          {([
+                            ["hexagonal", tc("gridHexLabel"), tc("gridHexHint")],
+                            ["square", tc("gridSquareLabel"), tc("gridSquareHint")],
+                          ] as Array<["hexagonal" | "square", string, string]>).map(([gt, label, hint]) => (
+                            <button
+                              key={gt}
+                              type="button"
+                              role="radio"
+                              aria-checked={gridType === gt}
+                              onClick={() => setGridType(gt)}
+                              title={hint}
+                              className={`rounded-[10px] border px-2 py-1 text-center text-[11px] font-semibold transition ${
+                                gridType === gt
+                                  ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                                  : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveGrid}
+                          className="w-full rounded-full border border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] px-2 py-1 text-[11px] font-semibold text-[var(--text-primary)] transition hover:bg-[rgba(15,118,110,0.18)]"
+                        >
+                          {tc("saveGridButton")}
+                        </button>
+                        <p className="text-[10px] leading-3 text-[var(--text-secondary)]">{tc("pickAdjacentZones")}</p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* gridNotice — плаваючий тост ВНИЗУ по центру карти (не штовхає мапу). */}
+                  {gridNotice && (
+                    <div className="absolute bottom-2 left-1/2 z-[500] -translate-x-1/2 max-w-[calc(100%-1rem)] rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[var(--surface-panel)]/95 px-3 py-2 text-center text-[12px] text-[var(--text-primary)] shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
+                      {gridNotice}
                     </div>
                   )}
                 </div>

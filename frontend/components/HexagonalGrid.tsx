@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw";
@@ -28,7 +28,9 @@ function GridAreaDraw({ onArea }: { onArea: (b: GBounds) => void }) {
     const group = new L.FeatureGroup();
     map.addLayer(group);
     const control = new (L as any).Control.Draw({
-      position: "topright",
+      // Малюнок-зона — у нижньому ПРАВОМУ куті: верхні кути звільнено під плаваючі
+      // картки (зліва — тулбар сітки, справа — керування /create).
+      position: "bottomright",
       draw: { rectangle: { shapeOptions: { color: "#0f766e", weight: 2 } },
         polygon: false, circle: false, marker: false, circlemarker: false, polyline: false },
       edit: { featureGroup: group, remove: true },
@@ -408,108 +410,23 @@ export default function HexagonalGrid({
   const zoom = 11; // Оптимальний zoom для Києва
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="px-2 py-1 bg-white border-b border-gray-200 flex-shrink-0 shadow-sm">
-        {gridError && (
-          <div className="mb-1 flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
-            <span>⚠ {gridError}</span>
-            <button type="button" onClick={() => setGridError(null)} className="font-semibold underline-offset-2 hover:underline">{t("hide")}</button>
-          </div>
-        )}
-        {isLoading ? (
-          <div className="flex items-center gap-1.5 text-[10px]">
-            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
-            <span className="text-gray-700">{t("generating")}</span>
-          </div>
-        ) : hexGrid ? (
-          // КОМПАКТНИЙ тулбар: легенда + лічильники + дії в один-два щільні
-          // ряди (підказку-речення прибрано — крапки легенди й так пояснюють).
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] leading-4 text-gray-600">
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-blue-500 bg-blue-400/40" /> {t("legendAvailable")}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-emerald-500 bg-emerald-400/60" /> {t("legendHover")}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm border border-red-600 bg-red-400/70" /> {t("legendSelected")}
-              </span>
-              {boughtCells && boughtCells.size > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-700 bg-amber-400/70" /> {t("legendBought")}
-                </span>
-              )}
-              <span className="text-gray-400">·</span>
-              <span className="font-medium text-gray-700">
-                {t("cellsLabel")} <span className="text-gray-900 font-semibold">{hexGrid.features.length}</span>
-              </span>
-              <span className="font-medium text-blue-700">
-                {t("selectedLabel")} <span className="text-blue-800 font-bold">{selectedZones.size}</span>
-              </span>
-              {selectedZones.size > 0 && (
-                <span className="text-green-700 font-semibold">✓ {t("ready")}</span>
-              )}
-              {!isValid && validationErrors.length > 0 && (
-                <span className="text-red-600">
-                  ⚠ {t("validationErrors", { n: validationErrors.length })}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              {hasPendingChanges && (
-                <button
-                  onClick={generateGrid}
-                  className="px-2 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
-                  title={t("applyTitle", { type: gridType, size: hexSizeM })}
-                >
-                  ↻ {t("apply")}
-                </button>
-              )}
-              <button
-                onClick={handleSelectAll}
-                className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                title={t("selectAllTitle")}
-              >
-                {t("all")}
-              </button>
-              <button
-                onClick={handleDeselectAll}
-                className="px-2 py-0.5 text-[10px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-                title={t("clearTitle")}
-              >
-                {t("clear")}
-              </button>
-              {drawnBounds ? (
-                <button
-                  onClick={resetArea}
-                  className="px-2 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
-                  title={t("resetAreaTitle")}
-                >
-                  ⤢ {t("ownZone")}
-                </button>
-              ) : (
-                <span className="px-2 py-0.5 text-[10px] text-teal-700" title={t("drawZoneTitle")}>
-                  ▢ {t("drawZone")}
-                </span>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="text-[10px] text-gray-600">{t("generating")}</div>
-        )}
-      </div>
-
-      <div className="flex-1 relative min-h-0">
+    // РЕДИЗАЙН: leaflet ЗАПОВНЮЄ весь блок (absolute inset-0), а тулбар сітки —
+    // компактна плаваюча картка у ЛІВОМУ ВЕРХНЬОМУ куті НА мапі (правий верх
+    // зайнятий оверлеєм /create; zoom внизу-зліва; малюнок-зона внизу-справа).
+    <div className="w-full h-full relative">
+      <div className="absolute inset-0">
         <MapContainer
           center={center}
           zoom={zoom}
           style={{ height: "100%", width: "100%" }}
           scrollWheelZoom={true}
+          zoomControl={false}
           whenReady={() => {
             // Карта готова
           }}
         >
+          {/* Зум — у нижній лівий кут (верхні кути під плаваючі картки). */}
+          <ZoomControl position="bottomleft" />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -589,6 +506,86 @@ export default function HexagonalGrid({
             />
           )}
         </MapContainer>
+      </div>
+
+      {/* ПЛАВАЮЧИЙ ТУЛБАР СІТКИ (лівий верх НА мапі): лічильники + дії компактно.
+          z-[500] — над leaflet-панелями; pointer-events-none на контейнері, а
+          сама картка events-auto, щоб кліки по мапі поза карткою проходили. */}
+      <div className="pointer-events-none absolute left-2 top-2 z-[500] w-[200px] max-w-[calc(100%-1rem)] space-y-1 rounded-[14px] border border-gray-200 bg-white/95 px-2 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
+        {gridError && (
+          <div className="pointer-events-auto flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">
+            <span>⚠ {gridError}</span>
+            <button type="button" onClick={() => setGridError(null)} className="font-semibold underline-offset-2 hover:underline">{t("hide")}</button>
+          </div>
+        )}
+        {isLoading ? (
+          <div className="pointer-events-auto flex items-center gap-1.5 text-[10px]">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+            <span className="text-gray-700">{t("generating")}</span>
+          </div>
+        ) : hexGrid ? (
+          <div className="pointer-events-auto space-y-1">
+            {/* Лічильники (форму-легенду крапок прибрано — економимо місце). */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-4 text-gray-600">
+              <span className="font-medium text-gray-700">
+                {t("cellsLabel")} <span className="text-gray-900 font-semibold">{hexGrid.features.length}</span>
+              </span>
+              <span className="text-gray-400">·</span>
+              <span className="font-medium text-blue-700">
+                {t("selectedLabel")} <span className="text-blue-800 font-bold">{selectedZones.size}</span>
+              </span>
+              {selectedZones.size > 0 && (
+                <span className="text-green-700 font-semibold">✓ {t("ready")}</span>
+              )}
+              {!isValid && validationErrors.length > 0 && (
+                <span className="text-red-600">
+                  ⚠ {t("validationErrors", { n: validationErrors.length })}
+                </span>
+              )}
+            </div>
+            {/* Дії компактним рядом. */}
+            <div className="flex flex-wrap items-center gap-1">
+              {hasPendingChanges && (
+                <button
+                  onClick={generateGrid}
+                  className="px-1.5 py-0.5 text-[10px] bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors font-semibold"
+                  title={t("applyTitle", { type: gridType, size: hexSizeM })}
+                >
+                  ↻ {t("apply")}
+                </button>
+              )}
+              <button
+                onClick={handleSelectAll}
+                className="px-1.5 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                title={t("selectAllTitle")}
+              >
+                {t("all")}
+              </button>
+              <button
+                onClick={handleDeselectAll}
+                className="px-1.5 py-0.5 text-[10px] bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                title={t("clearTitle")}
+              >
+                {t("clear")}
+              </button>
+              {drawnBounds ? (
+                <button
+                  onClick={resetArea}
+                  className="px-1.5 py-0.5 text-[10px] bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                  title={t("resetAreaTitle")}
+                >
+                  ⤢ {t("ownZone")}
+                </button>
+              ) : (
+                <span className="px-1.5 py-0.5 text-[10px] text-teal-700" title={t("drawZoneTitle")}>
+                  ▢ {t("drawZone")}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="pointer-events-auto text-[10px] text-gray-600">{t("generating")}</div>
+        )}
       </div>
     </div>
   );
