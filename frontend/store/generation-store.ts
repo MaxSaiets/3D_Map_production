@@ -65,6 +65,8 @@ interface GenerationState {
   // ЛЕГАСІ-булеві (simpleRelief/simpleFlatAms/simpleMagnetMode/simplePanelMode) як
   // ДЗЕРКАЛА, щоб buildSingleMapReq/applyStyle/fetchQuote/e2e лишились без змін.
   simpleFormat: "relief3d" | "flat" | "magnet" | "panno";
+  // Кольорова тема/палітра (#2): classic | sepia | noir | ocean | neon. Спільна (панель ×2).
+  simpleColorPalette: string;
   // «Плоска кольорова (AMS)» — пласка багатокольорова плитка-карта (кожен шар
   // окремий колір-філамент), міцна основа 3мм. Стан спільний (панель ×2).
   simpleFlatAms: boolean;
@@ -121,6 +123,7 @@ interface GenerationState {
   setSimpleStyleId: (id: string) => void;
   setSimpleTemplate: (id: string | null) => void;
   setSimpleFormat: (f: GenerationState["simpleFormat"]) => void;
+  setSimpleColorPalette: (p: string) => void;
   setSimpleFlatAms: (on: boolean) => void;
   setSimpleConnector: (on: boolean) => void;
   setSimpleSeriesConnectors: (on: boolean) => void;
@@ -220,6 +223,7 @@ const initialState = {
   simpleTemplate: null,
   // Дефолт = «Об'ємна 3D» = сьогоднішній стан з усіма спецрежимами ВИМКНЕНО.
   simpleFormat: "relief3d" as GenerationState["simpleFormat"],
+  simpleColorPalette: "classic",
   simpleFlatAms: false,
   simpleConnector: false,
   simpleSeriesConnectors: true,
@@ -264,6 +268,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   //  • relief3d → усе off (= сьогоднішній all-off стан), рельєф лишається.
   // simpleFlatBuildings навмисно НЕ скидаємо — у білдері він під гейтом (flatPlate||magnet),
   // тож на relief3d/panno інертний.
+  setSimpleColorPalette: (p) => set({ simpleColorPalette: p }),
   setSimpleFormat: (f) => set((st) => ({
     simpleFormat: f,
     simplePanelMode: f === "panno" ? (st.simplePanelMode > 0 ? st.simplePanelMode : 2) : 0,

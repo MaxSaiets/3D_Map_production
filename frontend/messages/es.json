@@ -521,7 +521,14 @@
     "piecesHint": "Un solo modelo",
     "piecesHintOn": "{tiles} zonas que encajan",
     "seriesConnectors": "Conectores (cierres)",
-    "seriesConnectorsHint": "Las piezas contiguas encajan como un puzzle al imprimir"
+    "seriesConnectorsHint": "Las piezas contiguas encajan como un puzzle al imprimir",
+    "paletteLabel": "Tema de color",
+    "palClassic": "Clásica",
+    "palSepia": "Sepia",
+    "palNoir": "Noir",
+    "palOcean": "Océano",
+    "palNeon": "Neón",
+    "paletteHint": "Color de impresión — cómo se verá el modelo final"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

@@ -487,6 +487,7 @@ export function SimpleControlPanel({
       // низько але РІЗНО (cap 1.5мм), 3-поверховий і хмарочос виглядають по-різному.
       flatUniformBuildingHeight: false,
       flatMaxBuildingHeightMm: flatBuildings ? 1.5 : undefined,
+      colorPalette: s.simpleColorPalette,
       // forPrint → друкарський 3MF (не GLB-прев'ю).
       exportFormat: forPrint ? "3mf" : s.exportFormat,
       modelSizeMm: magnetMode ? 60 : s.modelSizeMm,
@@ -729,6 +730,45 @@ export function SimpleControlPanel({
               );
             })}
           </div>
+        </div>
+
+        {/* 3b. Кольорова тема (#2) — стилістика друку (палітра кольорів). */}
+        <div>
+          <div id="simple-palette-label" className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+            🎨 {t("paletteLabel")}
+          </div>
+          <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-labelledby="simple-palette-label">
+            {(
+              [
+                ["classic", t("palClassic"), "#ececec"],
+                ["sepia", t("palSepia"), "#e0cea9"],
+                ["noir", t("palNoir"), "#bdbdbd"],
+                ["ocean", t("palOcean"), "#1c5cac"],
+                ["neon", t("palNeon"), "#e83ca2"],
+              ] as Array<[string, string, string]>
+            ).map(([id, label, swatch]) => {
+              const active = s.simpleColorPalette === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => s.setSimpleColorPalette(id)}
+                  title={label}
+                  className={`flex flex-col items-center gap-1.5 rounded-[14px] border px-1 py-2 text-[10px] font-semibold transition ${
+                    active
+                      ? "border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                      : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.25)]"
+                  }`}
+                >
+                  <span className="h-5 w-5 rounded-full border border-black/10 shadow-sm" style={{ background: swatch }} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] text-[var(--text-secondary)]">{t("paletteHint")}</p>
         </div>
 
         {/* 4. Size */}

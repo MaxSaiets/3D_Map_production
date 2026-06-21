@@ -521,7 +521,14 @@
     "piecesHint": "One single model",
     "piecesHintOn": "{tiles} zones that lock together",
     "seriesConnectors": "Connectors (locks)",
-    "seriesConnectorsHint": "Adjacent pieces lock together like a puzzle when printed"
+    "seriesConnectorsHint": "Adjacent pieces lock together like a puzzle when printed",
+    "paletteLabel": "Color theme",
+    "palClassic": "Classic",
+    "palSepia": "Sepia",
+    "palNoir": "Noir",
+    "palOcean": "Ocean",
+    "palNeon": "Neon",
+    "paletteHint": "Print color — how the finished model will look"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

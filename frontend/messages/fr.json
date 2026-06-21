@@ -521,7 +521,14 @@
     "piecesHint": "Un seul modèle",
     "piecesHintOn": "{tiles} zones qui s'emboîtent",
     "seriesConnectors": "Connecteurs (verrous)",
-    "seriesConnectorsHint": "Les pièces adjacentes s'emboîtent comme un puzzle à l'impression"
+    "seriesConnectorsHint": "Les pièces adjacentes s'emboîtent comme un puzzle à l'impression",
+    "paletteLabel": "Thème couleur",
+    "palClassic": "Classique",
+    "palSepia": "Sépia",
+    "palNoir": "Noir",
+    "palOcean": "Océan",
+    "palNeon": "Néon",
+    "paletteHint": "Couleur d impression — l aspect du modèle fini"
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",

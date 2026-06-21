@@ -521,7 +521,14 @@
     "piecesHint": "Ein einzelnes Modell",
     "piecesHintOn": "{tiles} Zonen, die zusammenrasten",
     "seriesConnectors": "Verbinder (Schlösser)",
-    "seriesConnectorsHint": "Benachbarte Teile rasten beim Druck wie ein Puzzle ineinander"
+    "seriesConnectorsHint": "Benachbarte Teile rasten beim Druck wie ein Puzzle ineinander",
+    "paletteLabel": "Farbthema",
+    "palClassic": "Klassisch",
+    "palSepia": "Sepia",
+    "palNoir": "Noir",
+    "palOcean": "Ozean",
+    "palNeon": "Neon",
+    "paletteHint": "Druckfarbe — wie das fertige Modell aussieht"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

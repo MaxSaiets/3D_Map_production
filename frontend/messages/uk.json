@@ -521,7 +521,14 @@
     "piecesHint": "Одна суцільна модель",
     "piecesHintOn": "{tiles} зон, що стикуються замками",
     "seriesConnectors": "З'єднувачі (замки)",
-    "seriesConnectorsHint": "Сусідні шматки стикуються пазл-замком — друкуй і склади"
+    "seriesConnectorsHint": "Сусідні шматки стикуються пазл-замком — друкуй і склади",
+    "paletteLabel": "Кольорова тема",
+    "palClassic": "Класична",
+    "palSepia": "Сепія",
+    "palNoir": "Нуар",
+    "palOcean": "Океан",
+    "palNeon": "Неон",
+    "paletteHint": "Колір друку — як виглядатиме готова модель"
   },
   "mapsMeta": {
     "title": "3D-мапи міст України — обери своє місто",

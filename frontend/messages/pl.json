@@ -521,7 +521,14 @@
     "piecesHint": "Jeden cały model",
     "piecesHintOn": "{tiles} stref, które się łączą",
     "seriesConnectors": "Łączniki (zamki)",
-    "seriesConnectorsHint": "Sąsiednie części łączą się jak puzzle po wydruku"
+    "seriesConnectorsHint": "Sąsiednie części łączą się jak puzzle po wydruku",
+    "paletteLabel": "Motyw kolorów",
+    "palClassic": "Klasyczna",
+    "palSepia": "Sepia",
+    "palNoir": "Noir",
+    "palOcean": "Ocean",
+    "palNeon": "Neon",
+    "paletteHint": "Kolor druku — jak będzie wyglądać gotowy model"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

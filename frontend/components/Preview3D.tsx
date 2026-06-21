@@ -259,6 +259,31 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
   });
 }
 
+// Дзеркало backend COLOR_PALETTES (model_exporter.py) — щоб ПРЕВʼЮ = ДРУК для
+// кольорових тем (#2). classic = поточна превʼю-палітра (нижче), решта = оверрайди
+// за ключем шару. Часткові: відсутні ключі лишають дефолтний превʼю-колір.
+const PREVIEW_PALETTES: Record<string, Record<string, number>> = {
+  sepia: {
+    base: 0xe0cea9, terrain: 0xe0cea9, baseback: 0xe0cea9, connector: 0xe0cea9,
+    buildings: 0xc4a978, roads: 0x5c3e20, water: 0x96a596, parks: 0x8e8c5c, green: 0x8e8c5c,
+    text: 0x462d14, text2: 0x462d14, rim: 0x462d14, maplabel: 0x462d14, frame: 0x462d14,
+  },
+  noir: {
+    base: 0xececec, terrain: 0xececec, baseback: 0xececec, connector: 0xececec,
+    buildings: 0xb2b2b2, roads: 0x0f0f0f, water: 0x787878, parks: 0x969696, green: 0x969696,
+  },
+  ocean: {
+    base: 0xecf4fb, terrain: 0xecf4fb, baseback: 0xecf4fb, connector: 0xecf4fb,
+    buildings: 0x96b6d4, roads: 0x1c325c, water: 0x145cac, parks: 0x5c987a, green: 0x5c987a,
+    text: 0x162a52, text2: 0x162a52, rim: 0x162a52, maplabel: 0x162a52,
+  },
+  neon: {
+    base: 0x1a1a2a, terrain: 0x1a1a2a, baseback: 0x1a1a2a, connector: 0x1a1a2a,
+    buildings: 0x3e3e5c, roads: 0xe83ca2, water: 0x28c8de, parks: 0x78e85c, green: 0x78e85c,
+    text: 0xf0f0ff, text2: 0xf0f0ff, rim: 0xf0f0ff, maplabel: 0xf0f0ff,
+  },
+};
+
 async function loadGLB(blob: Blob): Promise<THREE.Group> {
   const url = URL.createObjectURL(blob);
   return await new Promise<THREE.Group>((resolve, reject) => {
@@ -303,6 +328,19 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           text: { color: 0x191919, part: "text" },       // текст — чорний
           text2: { color: 0x191919, part: "text2" },
         };
+        // Кольорова тема (#2): якщо обрано не-classic палітру — перефарбовуємо превʼю
+        // у ті самі кольори, що бек запікає у 3MF (PREVIEW_PALETTES = дзеркало backend).
+        try {
+          const pal = useGenerationStore.getState().simpleColorPalette;
+          const overrides = pal && pal !== "classic" ? PREVIEW_PALETTES[pal] : null;
+          if (overrides) {
+            for (const [key, hex] of Object.entries(overrides)) {
+              if (colorMap[key]) colorMap[key] = { color: hex, part: colorMap[key].part };
+            }
+          }
+        } catch {
+          /* store недоступний — лишаємо classic-превʼю */
+        }
         group.traverse((child) => {
           if (!(child instanceof THREE.Mesh)) return;
           totalMeshes++;
