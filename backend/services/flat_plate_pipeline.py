@@ -3103,7 +3103,7 @@ def run_flat_plate_pipeline(
     # тож основа мусить бути ≥ (глибина пазу + 1мм) і ≥3мм (узгоджено з flat-AMS).
     map_connector = bool(getattr(request, "map_connector", False)) and not keychain_mode
     if map_connector:
-        _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
+        _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
         base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.0, 3.0)
 
     # ВИДІЛЕНА БУДІВЛЯ (карта): паз 0.8мм у ВЕРХ бази + лице ≥0.6мм → база ≥1.6мм.
@@ -3128,7 +3128,7 @@ def run_flat_plate_pipeline(
         if bool(getattr(request, "magnet_pocket", False)):
             _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "magnet_pocket_depth_mm", 2.0) or 2.0))
         if bool(getattr(request, "map_connector", False)):
-            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3))
+            _bottom_depth_mm = max(_bottom_depth_mm, float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0))
         _needed_mm = _HL_TOP_POCKET_MM + _bottom_depth_mm + _HL_MIN_SOLID_MM
         if base_thickness_mm < _needed_mm - 1e-9:
             print(f"[MAP HIGHLIGHT] through-hole guard (early): highlight 0.8mm top pocket + "
@@ -3328,7 +3328,7 @@ def run_flat_plate_pipeline(
         # Той самий прийом, що магніт/зворот-гравіювання — паз ріжеться у нижній
         # шар (back_text_poly), лице лишається суцільним → шов спереду непомітний.
         try:
-            _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
+            _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             _conn_depth_mm = min(_conn_depth_mm, max(base_thickness_mm - 1.0, 0.0))  # ≥1мм лиця
             _conn_depth_m = _model_mm_to_world_m(_conn_depth_mm, export_scale_factor)
             _notches, _keys = build_map_connector_geometry(
@@ -3349,11 +3349,14 @@ def run_flat_plate_pipeline(
                 back_text_poly=_notches if (_notches is not None and _conn_depth_m > 1e-9) else None,
                 engrave_m=_conn_depth_m,
             )
-            # Ключ-метелик окремою деталлю «Connector» (товщина = глибина пазу,
-            # тож вкладається у спільну порожнину двох плиток урівень з дном).
-            if _keys is not None and not getattr(_keys, "is_empty", True) and _conn_depth_m > 1e-9:
+            # Ключ-метелик («скрепка») окремою деталлю «Connector». Висота скрепки =
+            # 1.7мм (за вимогою), паз у деталі лишається 2мм → скрепка сідає з 0.3мм
+            # вертикальним зазором (нижче дна, не виступає). min(): скрепка ніколи не
+            # вища за паз, навіть якщо тонка основа обмежила глибину пазу.
+            _clip_h_m = min(_model_mm_to_world_m(1.7, export_scale_factor), _conn_depth_m)
+            if _keys is not None and not getattr(_keys, "is_empty", True) and _clip_h_m > 1e-9:
                 connector_mesh = build_flat_layer_mesh_from_mask(
-                    _keys, bottom_z_m=0.0, thickness_m=_conn_depth_m,
+                    _keys, bottom_z_m=0.0, thickness_m=_clip_h_m,
                     color=LAYER_COLORS["base"], min_area_m2=1e-9,
                 )
             if _notches is not None and keychain_base_bottom_mesh is not None:
