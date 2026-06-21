@@ -767,7 +767,7 @@
     "header": {
       "eyebrow": "Asistente de creación",
       "title": "Primero la forma, luego el mapa",
-      "subtitle": "Flujo mínimo: plantilla, área del mapa, etiqueta, generación."
+      "subtitle": "Forma → mapa → texto → impresión."
     },
     "ready": {
       "good": "Listo para imprimir",
@@ -807,8 +807,8 @@
       "uniformBuildings": "Altura uniforme de edificios"
     },
     "product": {
-      "title": "Revisa la base del llavero",
-      "desc": "Las plantillas listas están justo debajo de la vista previa. Aquí solo quedan las acciones rápidas que un cliente realmente necesita tras elegir una plantilla.",
+      "title": "Base del llavero",
+      "desc": "Tamaño base, forma y posición del aro.",
       "maxMap": "Mapa máx.",
       "token": "Ficha 55 x 30",
       "centerLoop": "Centrar argolla",

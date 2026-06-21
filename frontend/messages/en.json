@@ -767,7 +767,7 @@
     "header": {
       "eyebrow": "Creation wizard",
       "title": "Shape first, then the map",
-      "subtitle": "Minimal flow: template, map area, label, generation."
+      "subtitle": "Shape → map → label → print."
     },
     "ready": {
       "good": "Ready to print",
@@ -807,8 +807,8 @@
       "uniformBuildings": "Uniform building height"
     },
     "product": {
-      "title": "Check the keychain base",
-      "desc": "Ready-made templates sit right under the preview. Only the quick actions a client really needs after picking a template are left here.",
+      "title": "Keychain base",
+      "desc": "Base size, shape and loop position.",
       "maxMap": "Max map",
       "token": "Token 55 x 30",
       "centerLoop": "Center loop",

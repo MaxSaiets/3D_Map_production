@@ -541,22 +541,10 @@ export default function Home() {
               {tc("title")}
             </h1>
 
-            {/* Controls (compact toolbar, right-aligned) — суцільний білий +
-                тінь + min-h-[40px] для чітких тап-таргетів і контрасту. */}
+            {/* Controls (compact toolbar, right-aligned). Вибір міста + статус
+                «Оберіть зони» прибрано зі шапки (власник: захаращено) — місто тепер
+                у лівій панелі (там, де райони), статус і так видно в панелі/на барі. */}
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              <select
-                value={currentCityKey}
-                onChange={(e) => handleCityChange(e.target.value)}
-                className="min-h-[40px] cursor-pointer rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] outline-none transition hover:border-[rgba(11,92,87,0.4)] focus:border-[rgba(11,92,87,0.5)]"
-                title={tc("cityTitle")}
-              >
-                {Object.keys(CITIES).map((key) => (
-                  <option key={key} value={key}>{tCity(key)}</option>
-                ))}
-              </select>
-              <span className="hidden min-h-[40px] items-center rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[12px] font-medium text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:inline-flex">
-                {selectionLabel}
-              </span>
               {/* БРЕЛОК: помітна заливна акцент-кнопка; підпис ВИДНО і на мобільному
                   (раніше hidden sm:inline → на телефоні лишалась лише іконка й
                   користувач не знав про брелки). */}
@@ -618,6 +606,8 @@ export default function Home() {
                   <SimpleControlPanel
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
+                    onCityChange={handleCityChange}
+                    cityLabel={tCity}
                     onAdvanced={() => toggleProMode(true)}
                     showStickyBar={false}
                     onSeriesGenerated={handleSeriesGenerated}
@@ -940,6 +930,8 @@ export default function Home() {
                   <SimpleControlPanel
                     availableCities={CITIES}
                     selectedCityKey={currentCityKey}
+                    onCityChange={handleCityChange}
+                    cityLabel={tCity}
                     onAdvanced={() => toggleProMode(true)}
                     onSeriesGenerated={handleSeriesGenerated}
                   />

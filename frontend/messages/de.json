@@ -767,7 +767,7 @@
     "header": {
       "eyebrow": "Erstellungsassistent",
       "title": "Erst die Form, dann die Karte",
-      "subtitle": "Minimaler Ablauf: Vorlage, Kartenausschnitt, Beschriftung, Generierung."
+      "subtitle": "Form → Karte → Text → Druck."
     },
     "ready": {
       "good": "Druckbereit",
@@ -807,8 +807,8 @@
       "uniformBuildings": "Einheitliche Gebäudehöhe"
     },
     "product": {
-      "title": "Schlüsselanhänger-Basis prüfen",
-      "desc": "Fertige Vorlagen liegen direkt unter der Vorschau. Hier bleiben nur die Schnellaktionen, die ein Kunde nach der Vorlagenwahl wirklich braucht.",
+      "title": "Anhänger-Basis",
+      "desc": "Basisgröße, Form und Ösenposition.",
       "maxMap": "Max. Karte",
       "token": "Token 55 x 30",
       "centerLoop": "Öse zentr.",

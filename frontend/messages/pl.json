@@ -767,7 +767,7 @@
     "header": {
       "eyebrow": "Kreator tworzenia",
       "title": "Najpierw kształt, potem mapa",
-      "subtitle": "Minimalny przepływ: szablon, obszar mapy, podpis, generowanie."
+      "subtitle": "Kształt → mapa → napis → druk."
     },
     "ready": {
       "good": "Gotowe do druku",
@@ -807,8 +807,8 @@
       "uniformBuildings": "Jednolita wysokość budynków"
     },
     "product": {
-      "title": "Sprawdź podstawę breloka",
-      "desc": "Gotowe szablony są tuż pod podglądem. Tutaj zostały tylko szybkie akcje, których klient naprawdę potrzebuje po wyborze szablonu.",
+      "title": "Baza brelka",
+      "desc": "Rozmiar bazy, kształt i pozycja oczka.",
       "maxMap": "Maks. mapa",
       "token": "Żeton 55 x 30",
       "centerLoop": "Wyśr. uszko",

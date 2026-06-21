@@ -28,6 +28,7 @@ export function SimpleControlPanel({
   availableCities,
   selectedCityKey,
   onCityChange,
+  cityLabel,
   onAdvanced,
   showStickyBar = true,
   onSeriesGenerated,
@@ -35,6 +36,8 @@ export function SimpleControlPanel({
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
   onCityChange?: (key: string) => void;
+  /** Локалізована назва міста (tCity з cities-namespace); fallback — сирий ключ. */
+  cityLabel?: (key: string) => string;
   onAdvanced?: () => void;
   // Панель монтується ДВІЧІ (desktop aside + mobile section). StickyActionBar
   // — портал у <body>, тож обидві копії малювали його → ДВА бари на мобільному
@@ -711,7 +714,7 @@ export function SimpleControlPanel({
               className="w-full rounded-2xl border border-[var(--surface-border)] bg-white/90 px-4 py-3 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.35)]"
             >
               {cityKeys.map((k) => (
-                <option key={k} value={k}>{k === "Kyiv" ? t("kyiv") : k === "Khmelnytskyi" ? t("khmel") : k}</option>
+                <option key={k} value={k}>{cityLabel ? cityLabel(k) : (k === "Kyiv" ? t("kyiv") : k === "Khmelnytskyi" ? t("khmel") : k)}</option>
               ))}
             </select>
           </div>

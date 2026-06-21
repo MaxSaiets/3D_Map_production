@@ -17,7 +17,6 @@ import { useGenerationStore } from "@/store/generation-store";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
-import { WizardSteps } from "@/components/WizardSteps";
 
 function MapLoading() {
   const t = useTranslations("kcp");
@@ -201,14 +200,6 @@ export default function KeychainsPage() {
     }),
     [cropRotationDeg, design.mapHeightMm, design.mapWidthMm, design.baseShape, design.cornerRadiusMm, handleCropRotationChange, mapAspectRatio, gpxFocus],
   );
-  const statusLabel = isGenerating
-    ? `${progress}% • ${status || t("statusGenerating")}`
-    : downloadUrl
-      ? t("statusReady")
-      : selectedArea
-        ? t("statusSelected")
-        : t("statusPickArea");
-
   // Mobile = single scroll: every panel is visible and stacked (no tab juggling).
   // The bottom bar just smooth-scrolls to a section. Desktop keeps the 3-col grid.
   const mapPanelClasses = "flex";
@@ -249,7 +240,7 @@ export default function KeychainsPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[500px]">
+            <div className="flex flex-wrap gap-2">
               {/* Паритет із шапкою /create: [На головну] + [Карти→/create] +
                   [Кабінет]. Раніше «Карти» вело на «/» (домашня), тож з
                   конструктора брелка не можна було стрибнути одразу в
@@ -277,62 +268,35 @@ export default function KeychainsPage() {
                   <User size={16} /> <span className="hidden sm:inline">{t("navAccount")}</span>
                 </Link>
               </div>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  {t("city")}
-                </div>
-                <select
-                  value={currentCityKey}
-                  aria-label={t("city")}
-                  onChange={(event) => {
-                    const nextKey = event.target.value;
-                    // Скидаємо рамку СТАРОГО міста, інакше crop-overlay робить
-                    // fitBounds назад на стару зону і карта не перелітає на нове
-                    // місто (той самий баг, що був на /create — Рома).
-                    setSelectedArea(null);
-                    setCurrentCityKey(nextKey);
-                    setLabel(CITIES[nextKey]?.defaultText ?? "CITY");
-                  }}
-                  className="mt-1 min-h-[44px] w-full bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none"
-                >
-                  {Object.keys(CITIES).map((cityKey) => (
-                    <option key={cityKey} value={cityKey}>
-                      {tCity(cityKey)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  {t("state")}
-                </div>
-                <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{statusLabel}</div>
-              </div>
             </div>
           </div>
         </header>
 
-        <div className="mt-3">
-          <WizardSteps
-            variant="keychain"
-            state={{
-              cityLabel: CITIES[currentCityKey] ? tCity(currentCityKey) : currentCityKey,
-              hasSelection: Boolean(selectedArea),
-              isGenerating,
-              hasDownload: Boolean(downloadUrl),
-              progress,
+        {/* Степер «Крок 1/2/3» прибрано (власник: зайвий chrome). Натомість —
+            компактний вибір міста (перенесено зі шапки). */}
+        <div className="mt-3 flex items-center gap-2 rounded-[18px] border border-[var(--surface-border)] bg-white/70 px-3 py-2">
+          <span className="shrink-0 text-[12px] font-semibold text-[var(--text-secondary)]">{t("city")}</span>
+          <select
+            value={currentCityKey}
+            aria-label={t("city")}
+            onChange={(event) => {
+              const nextKey = event.target.value;
+              // Скидаємо рамку СТАРОГО міста, інакше crop-overlay фітить назад на стару зону.
+              setSelectedArea(null);
+              setCurrentCityKey(nextKey);
+              setLabel(CITIES[nextKey]?.defaultText ?? "CITY");
             }}
-            onStepClick={(key) => {
-              const id = key === "place" ? "kc-map" : key === "settings" ? "kc-design" : "kc-preview3d";
-              document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          />
+            className="min-h-[40px] flex-1 rounded-full border border-[var(--surface-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[rgba(11,92,87,0.4)]"
+          >
+            {Object.keys(CITIES).map((cityKey) => (
+              <option key={cityKey} value={cityKey}>{tCity(cityKey)}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Step 1: pick a keychain form template — the prominent first decision */}
+        {/* Перший крок — вибір форми брелка. */}
         <div className="mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[10px] font-bold text-white">1</span>
             {t("pickShape")}
             <span className="ml-auto rounded-full bg-[rgba(46,74,58,0.07)] px-2 py-0.5 text-[10px] normal-case tracking-normal text-[var(--accent-strong)]">
               {t("pickShapeHint")}

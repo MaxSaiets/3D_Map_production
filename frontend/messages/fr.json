@@ -767,7 +767,7 @@
     "header": {
       "eyebrow": "Assistant de création",
       "title": "D'abord la forme, puis la carte",
-      "subtitle": "Flux minimal : modèle, zone de carte, légende, génération."
+      "subtitle": "Forme → carte → texte → impression."
     },
     "ready": {
       "good": "Prêt à imprimer",
@@ -807,8 +807,8 @@
       "uniformBuildings": "Hauteur uniforme des bâtiments"
     },
     "product": {
-      "title": "Vérifiez la base du porte-clés",
-      "desc": "Les modèles prêts à l'emploi sont juste sous l'aperçu. Seules les actions rapides dont un client a vraiment besoin après avoir choisi un modèle restent ici.",
+      "title": "Base du porte-clés",
+      "desc": "Taille de base, forme et position de l'anneau.",
       "maxMap": "Carte max.",
       "token": "Jeton 55 x 30",
       "centerLoop": "Centrer anneau",
