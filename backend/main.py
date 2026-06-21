@@ -1091,6 +1091,56 @@ async def health():
     }
 
 
+# Карта код-країни → координати столиці (для авто-центрування карти /create за IP).
+# Cloudflare додає заголовок CF-IPCountry на origin-запитах → читаємо його ТУТ
+# (без зовнішніх викликів — тривіально й швидко). Невідома/відсутня країна → Київ.
+COUNTRY_CENTER = {
+    "UA": (50.4501, 30.5234, "Київ"),
+    "PL": (52.2297, 21.0122, "Warszawa"),
+    "DE": (52.52, 13.405, "Berlin"),
+    "CZ": (50.0755, 14.4378, "Praha"),
+    "ES": (40.4168, -3.7038, "Madrid"),
+    "IT": (41.9028, 12.4964, "Roma"),
+    "FR": (48.8566, 2.3522, "Paris"),
+    "GB": (51.5074, -0.1278, "London"),
+    "US": (40.7128, -74.006, "New York"),
+    "CA": (45.4215, -75.6972, "Ottawa"),
+    "PT": (38.7223, -9.1393, "Lisboa"),
+    "NL": (52.3676, 4.9041, "Amsterdam"),
+    "AT": (48.2082, 16.3738, "Wien"),
+    "SK": (48.1486, 17.1077, "Bratislava"),
+    "RO": (44.4268, 26.1025, "Bucuresti"),
+    "LT": (54.6872, 25.2797, "Vilnius"),
+    "LV": (56.9496, 24.1052, "Riga"),
+    "EE": (59.437, 24.7536, "Tallinn"),
+    "HU": (47.4979, 19.0402, "Budapest"),
+    "SE": (59.3293, 18.0686, "Stockholm"),
+    "NO": (59.9139, 10.7522, "Oslo"),
+    "FI": (60.1699, 24.9384, "Helsinki"),
+    "IE": (53.3498, -6.2603, "Dublin"),
+    "CH": (47.3769, 8.5417, "Zurich"),
+    "BE": (50.8503, 4.3517, "Brussels"),
+}
+
+
+@app.get("/api/geo")
+async def geo(request: Request):
+    """Геолокація за IP через Cloudflare CF-IPCountry → центр карти /create.
+
+    Cloudflare проксує origin-запити із заголовком CF-IPCountry (2-літерний код).
+    Мапимо його на координати столиці. Невідома/відсутня країна → Київ (UA).
+    Жодних зовнішніх викликів — тривіально й швидко.
+    """
+    code = (request.headers.get("cf-ipcountry", "") or "").strip().upper()
+    lat, lng, label = COUNTRY_CENTER.get(code, COUNTRY_CENTER["UA"])
+    return {
+        "country": code if code in COUNTRY_CENTER else "UA",
+        "lat": lat,
+        "lng": lng,
+        "label": label,
+    }
+
+
 class OrderRequest(BaseModel):
     name: str = Field(max_length=80)
     phone: str = Field(default="", max_length=32)

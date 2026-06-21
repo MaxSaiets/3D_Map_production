@@ -404,6 +404,40 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ГЕО за IP: коли НЕМАЄ збереженого чернетки і не обрано зону/сітку — центруємо
+  // карту на країну користувача (Cloudflare CF-IPCountry → /api/geo). Для UA (або
+  // помилки fetch) нічого не робимо — Київ лишається дефолтом. Локаль/мова не
+  // чіпаємо (next-intl сам визначає). Подію шлемо З ЗАТРИМКОЮ (~900мс), бо
+  // MapSelector імпортується динамічно й слухач реєструється після маунта.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      if (localStorage.getItem("monadruk:draft:create")) return; // є чернетка → не чіпаємо
+      const st = useGenerationStore.getState();
+      if (st.selectedArea || st.showHexGrid || (st.selectedZones || []).length > 0) return; // вже щось обрано
+      // grid=/template=/city= з URL теж означають намір — не перебиваємо центр
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("grid") || params.get("template") || params.get("city") || params.get("capture")) return;
+      (async () => {
+        try {
+          const { API_BASE_URL } = await import("@/lib/api");
+          const r = await fetch(`${API_BASE_URL}/api/geo`).then((res) => (res.ok ? res.json() : null));
+          if (!r || r.country === "UA") return; // UA → Київ за дефолтом
+          const lat = Number(r.lat), lon = Number(r.lng);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+          // ЗАТРИМКА: даємо динамічному MapSelector змонтуватись і повісити слухач.
+          timer = setTimeout(() => {
+            try {
+              window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label: r.label } }));
+            } catch { /* no-op */ }
+          }, 900);
+        } catch { /* graceful no-op */ }
+      })();
+    } catch { /* graceful no-op */ }
+    return () => { if (timer) clearTimeout(timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleCancelTask = async () => {
     if (!taskGroupId) return;
     try {
@@ -485,11 +519,13 @@ export default function Home() {
       <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
         <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Back to home (prominent, always visible) */}
+            {/* Back to home (prominent, always visible). Суцільний білий +
+                сильніша рамка + легка тінь → контрастніше на кремовій шапці;
+                min-h-[40px] = зручний тап-таргет. */}
             <Link
               href="/"
               title={tc("backHomeTitle")}
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.35)] hover:text-[var(--text-primary)]"
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
             >
               <HomeIcon size={15} /> <span className="hidden sm:inline">{tc("backHome")}</span>
             </Link>
@@ -498,30 +534,36 @@ export default function Home() {
               {tc("title")}
             </h1>
 
-            {/* Controls (compact toolbar, right-aligned) */}
+            {/* Controls (compact toolbar, right-aligned) — суцільний білий +
+                тінь + min-h-[40px] для чітких тап-таргетів і контрасту. */}
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <select
                 value={currentCityKey}
                 onChange={(e) => handleCityChange(e.target.value)}
-                className="rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-primary)] outline-none cursor-pointer"
+                className="min-h-[40px] cursor-pointer rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] outline-none transition hover:border-[rgba(11,92,87,0.4)] focus:border-[rgba(11,92,87,0.5)]"
                 title={tc("cityTitle")}
               >
                 {Object.keys(CITIES).map((key) => (
                   <option key={key} value={key}>{tCity(key)}</option>
                 ))}
               </select>
-              <span className="hidden rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] md:inline">
+              <span className="hidden min-h-[40px] items-center rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[12px] font-medium text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:inline-flex">
                 {selectionLabel}
               </span>
+              {/* БРЕЛОК: помітна заливна акцент-кнопка; підпис ВИДНО і на мобільному
+                  (раніше hidden sm:inline → на телефоні лишалась лише іконка й
+                  користувач не знав про брелки). */}
               <Link
                 href="/keychains"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-1.5 text-[13px] font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--accent-strong)] bg-[var(--accent-strong)] px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(11,92,87,0.25)] transition hover:bg-[rgba(11,92,87,0.92)]"
               >
-                <KeyRound size={15} /> <span className="hidden sm:inline">{tc("keychain")}</span>
+                <KeyRound size={15} /> <span>{tc("keychain")}</span>
               </Link>
+              {/* Кабінет лишаємо компактним (іконка-онлі на мобільному). */}
               <Link
                 href="/account"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white/85 px-3 py-1.5 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                title={tc("account")}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
               >
                 <User size={15} /> <span className="hidden sm:inline">{tc("account")}</span>
               </Link>
