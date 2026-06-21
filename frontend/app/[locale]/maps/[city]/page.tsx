@@ -51,8 +51,10 @@ export async function generateMetadata({
       siteName: "Monadruk",
       type: "website",
       locale: localeMeta[locale].ogLocale,
+      // Робочий рут-OG (colocated [locale]-OG дають 307→404 через next-intl as-needed).
+      images: [`${BASE}/opengraph-image`],
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: { card: "summary_large_image", title, description, images: [`${BASE}/opengraph-image`] },
   };
 }
 

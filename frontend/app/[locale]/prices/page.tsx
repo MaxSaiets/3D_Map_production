@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
-import { localeUrl } from "@/i18n/metadata";
+import { localeUrl, BASE } from "@/i18n/metadata";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { getCatalog } from "@/lib/catalog";
 import { mapPriceEur } from "@/lib/mapPrices";
@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: { params: { locale: string } 
     title: c.metaTitle,
     description: c.metaDescription,
     alternates: { canonical: url, languages },
-    openGraph: { title: c.metaTitle, description: c.metaDescription, url, siteName: "Monadruk", type: "website" },
-    twitter: { card: "summary_large_image", title: c.metaTitle, description: c.metaDescription },
+    openGraph: { title: c.metaTitle, description: c.metaDescription, url, siteName: "Monadruk", type: "website", images: [`${BASE}/opengraph-image`] },
+    twitter: { card: "summary_large_image", title: c.metaTitle, description: c.metaDescription, images: [`${BASE}/opengraph-image`] },
   };
 }
 

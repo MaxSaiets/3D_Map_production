@@ -5,8 +5,8 @@ import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { mapPriceRange } from "@/lib/mapPrices";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  // ogImage: false — маршрут має власний colocated opengraph-image.tsx.
-  return pageMetadata({ locale: params.locale, path: "/create", ns: "createMeta", ogImage: false });
+  // Colocated [locale]-OG дають 307→404 (next-intl as-needed) → беремо робочий рут-OG.
+  return pageMetadata({ locale: params.locale, path: "/create", ns: "createMeta" });
 }
 
 export default async function CreateLayout({

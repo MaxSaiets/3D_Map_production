@@ -75,11 +75,16 @@ export async function generateMetadata({ params }: { params: { locale: string } 
       type: "website",
       locale: localeMeta[locale].ogLocale,
       alternateLocale: locales.filter((l) => l !== locale).map((l) => localeMeta[l].ogLocale),
+      // Робочий КОРЕНЕВИЙ OG (app/opengraph-image.tsx, 200). Colocated [locale]-OG
+      // дають 307→404 через next-intl as-needed → явно вказуємо рут, щоб соцкартка
+      // мала зображення. (Per-city custom OG — окрема задача.)
+      images: [`${BASE}/opengraph-image`],
     },
     twitter: {
       card: "summary_large_image",
       title: t("ogTitle"),
       description: t("ogDescription"),
+      images: [`${BASE}/opengraph-image`],
     },
   };
 }

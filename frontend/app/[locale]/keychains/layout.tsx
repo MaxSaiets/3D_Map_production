@@ -4,8 +4,8 @@ import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata"
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-  // ogImage: false — маршрут має власний colocated opengraph-image.tsx.
-  return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta", ogImage: false });
+  // Colocated [locale]-OG дають 307→404 (next-intl as-needed) → беремо робочий рут-OG.
+  return pageMetadata({ locale: params.locale, path: "/keychains", ns: "keychainsMeta" });
 }
 
 export default async function KeychainsLayout({

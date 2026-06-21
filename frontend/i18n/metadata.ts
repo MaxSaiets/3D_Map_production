@@ -74,6 +74,11 @@ export async function pageMetadata({
       alternateLocale: locales.filter((l) => l !== locale).map((l) => localeMeta[l].ogLocale),
       ...(ogImage === false ? {} : { images: [ogImage ?? `${BASE}/opengraph-image`] }),
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(ogImage === false ? {} : { images: [ogImage ?? `${BASE}/opengraph-image`] }),
+    },
   };
 }
