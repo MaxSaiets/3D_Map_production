@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowRight, Box, User, Menu, X, Globe } from "lucide-react";
+import { ArrowRight, Box, User, Menu, X, Globe, KeyRound } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { locales, localeMeta } from "@/i18n/routing";
@@ -88,11 +88,21 @@ export function SiteHeader() {
             <User size={15} />
             <span className="hidden sm:inline">{configured && user ? t("account") : t("login")}</span>
           </Link>
-          {/* Дубль-CTA «Брелок» прибрано — брелоки вже є пунктом меню; у шапці
-              лишається ОДНА головна дія «Створити мапу». */}
+          {/* ДВІ продуктові дії поруч — обидві ВИДНО і на мобільному (раніше
+              «Брелок» був похований у бургер-меню, тож з телефона досяжні були
+              лише «Карти»). «Брелок» = вторинна обведена пігулка (forest-tint),
+              «Карти» = головна заливна CTA. Обидві ≥44px, компактні на 375px
+              (px-3, короткі лейбли nav.keychain / nav.mapShort). */}
+          <Link
+            href="/keychains"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-forest/35 bg-[rgba(46,74,58,0.08)] px-3 py-2 text-sm font-semibold text-forest transition hover:bg-[rgba(46,74,58,0.14)] sm:px-3.5"
+          >
+            <KeyRound size={15} />
+            <span>{t("keychain")}</span>
+          </Link>
           <Link
             href="/create"
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-4 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest px-3 py-2.5 text-sm font-bold text-[#F4EFE4] shadow-[0_10px_24px_rgba(46,74,58,0.28)] transition hover:opacity-90 sm:px-5"
             style={{ background: "var(--forest, #2E4A3A)" }}
           >
             <span className="sm:hidden">{t("mapShort")}</span>

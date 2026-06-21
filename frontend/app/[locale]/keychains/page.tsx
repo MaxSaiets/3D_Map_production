@@ -250,18 +250,31 @@ export default function KeychainsPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[500px]">
+              {/* Паритет із шапкою /create: [На головну] + [Карти→/create] +
+                  [Кабінет]. Раніше «Карти» вело на «/» (домашня), тож з
+                  конструктора брелка не можна було стрибнути одразу в
+                  конструктор МАП. Тепер «Карти» = помітна акцент-кнопка → /create
+                  (дзеркало create→«Брелок»), а домашню дає окреме «На головну». */}
               <div className="flex gap-2">
                 <Link
                   href="/"
-                  className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-3 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
+                  title={t("navHome")}
+                  className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-3 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
                 >
-                  <ArrowLeft size={16} /> {t("navMaps")}
+                  <ArrowLeft size={16} /> <span className="hidden sm:inline">{t("navHome")}</span>
+                </Link>
+                <Link
+                  href="/create"
+                  className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[var(--accent-strong)] bg-[var(--accent-strong)] px-3 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(11,92,87,0.25)] transition hover:bg-[rgba(11,92,87,0.92)]"
+                >
+                  <MapIcon size={16} /> {t("navMaps")}
                 </Link>
                 <Link
                   href="/account"
-                  className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
+                  title={t("navAccount")}
+                  className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
                 >
-                  <User size={16} /> {t("navAccount")}
+                  <User size={16} /> <span className="hidden sm:inline">{t("navAccount")}</span>
                 </Link>
               </div>
               <div className="rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-4 py-3">
