@@ -1234,7 +1234,7 @@ def run_full_generation_pipeline(
             import trimesh as _tmc
             _floor_z = float(terrain_mesh.bounds[0][2])
             _model_h = float(terrain_mesh.bounds[1][2]) - _floor_z
-            _depth_mm = float(getattr(request, "map_connector_depth_mm", 0.3) or 0.3)
+            _depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             # Глибина пазу: не глибше 60% висоти моделі (лишаємо суцільний матеріал).
             _depth_m = min(_depth_mm / _sf_c, max(_model_h * 0.6, 0.0))
             _ntc, _keyc = build_map_connector_geometry(
@@ -1327,8 +1327,11 @@ def run_full_generation_pipeline(
                 # Ключ-метелик ЛИШЕ якщо паз РЕАЛЬНО вирізано (інакше юзер отримає
                 # ключ без слоту — на не-watertight рельєфі паз пропускається).
                 if _notch_carved and _keyc is not None and not getattr(_keyc, "is_empty", True):
+                    # Висота скрепки = 1.7мм (за вимогою), паз лишається 2мм → 0.3мм
+                    # вертикальний зазор. min(): не вища за паз; floor 0.4мм проти виродження.
+                    _clip_h = max(min(1.7 / _sf_c, _depth_m), 0.4 / _sf_c)
                     connector_key_mesh = build_flat_layer_mesh_from_mask(
-                        _keyc, bottom_z_m=_floor_z, thickness_m=max(_depth_m, 0.4 / _sf_c),
+                        _keyc, bottom_z_m=_floor_z, thickness_m=_clip_h,
                         color=[242, 242, 242], min_area_m2=1e-12,
                     )
                 elif not _notch_carved:
