@@ -496,6 +496,116 @@ def _validate_source_stage(
         )
 
 
+def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix=""):
+    """Ріже конектор-паз (ластівчин хвіст) у ДНІ рельєф-мешу + повертає ключ-метелик.
+    ВИКЛИКАТИ на ГЕРМЕТИЧНОМУ (ДО-грувовому) рельєфі → manifold ріже чисто (drift≈0).
+    Паз — у дні, груви — на версі → не конфліктують. Раніше різали ПІСЛЯ грувів на
+    негерметичному мешеві → boolean руйнував/відкидав («рельєф: нема зʼєднання»).
+    Повертає (terrain_mesh, connector_key_mesh, carved)."""
+    if not getattr(request, "map_connector", False) or terrain_mesh is None or sf_c <= 0:
+        return terrain_mesh, None, False
+    try:
+        from services.flat_plate_pipeline import (
+            build_map_connector_geometry, build_flat_layer_mesh_from_mask,
+            parse_connector_azimuths,
+        )
+        import trimesh as _t
+        floor_z = float(terrain_mesh.bounds[0][2])
+        model_h = float(terrain_mesh.bounds[1][2]) - floor_z
+        depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+        depth_m = min(depth_mm / sf_c, max(model_h * 0.6, 0.0))
+        ntc, keyc = build_map_connector_geometry(
+            zone.zone_polygon_local,
+            edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
+            span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
+            length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
+            waist_frac=0.5,
+            clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
+            export_scale_factor=sf_c,
+            key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
+            edge_dirs=parse_connector_azimuths(getattr(request, "map_connector_edge_az", "")),
+            key_dirs=parse_connector_azimuths(getattr(request, "map_connector_key_az", "")),
+        )
+        if ntc is None or depth_m <= 1e-6:
+            return terrain_mesh, None, False
+        eps = max(model_h * 0.01, 0.5 / sf_c)
+        cutter = build_flat_layer_mesh_from_mask(
+            ntc, bottom_z_m=floor_z - eps, thickness_m=depth_m + eps,
+            color=[128, 128, 128], min_area_m2=1e-12,
+        )
+        if cutter is None or not bool(getattr(cutter, "is_volume", False)):
+            print(f"[CONNECTOR] {zone_prefix}cutter not a volume — skip pre-groove notch")
+            return terrain_mesh, None, False
+        b0 = terrain_mesh.bounds
+        faces0 = len(getattr(terrain_mesh, "faces", []))
+        isv = bool(getattr(terrain_mesh, "is_volume", False))
+        print(f"[CONNECTOR] {zone_prefix}pre-groove terrain is_volume={isv}")
+        cutc, via = None, None
+        if isv:
+            try:
+                cutc = _t.boolean.difference([terrain_mesh, cutter], engine="manifold")
+                via = "manifold"
+            except Exception as e:
+                print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({e})")
+                cutc = None
+        if cutc is None or len(getattr(cutc, "faces", [])) == 0:
+            try:
+                import trimesh.repair as _rr
+                rep = terrain_mesh.copy()
+                rep.merge_vertices()
+                try:
+                    rep.update_faces(rep.nondegenerate_faces())
+                    rep.update_faces(rep.unique_faces())
+                    rep.remove_unreferenced_vertices()
+                except Exception:
+                    pass
+                for _ in range(3):
+                    if bool(getattr(rep, "is_volume", False)):
+                        break
+                    rep.fill_holes()
+                    try:
+                        _rr.fix_winding(rep)
+                    except Exception:
+                        pass
+                try:
+                    rep.fix_normals()
+                except Exception:
+                    pass
+                if bool(getattr(rep, "is_volume", False)):
+                    cutc = _t.boolean.difference([rep, cutter], engine="manifold")
+                    via = "repair+manifold"
+            except Exception as e:
+                print(f"[CONNECTOR] {zone_prefix}repair+manifold notch failed ({e})")
+        if cutc is None or len(getattr(cutc, "faces", [])) == 0:
+            print(f"[CONNECTOR] {zone_prefix}pre-groove notch boolean produced nothing — skip")
+            return terrain_mesh, None, False
+        b1 = cutc.bounds
+        drift = (max(abs(b1[0][i] - b0[0][i]) for i in range(2))
+                 + max(abs(b1[1][i] - b0[1][i]) for i in range(2)))
+        changed = abs(len(cutc.faces) - faces0) > 0
+        ext0 = (float(b0[1][0] - b0[0][0]), float(b0[1][1] - b0[0][1]))
+        ext1 = (float(b1[1][0] - b1[0][0]), float(b1[1][1] - b1[0][1]))
+        ext_ok = ((ext0[0] <= 1e-6 or ext1[0] >= 0.6 * ext0[0])
+                  and (ext0[1] <= 1e-6 or ext1[1] >= 0.6 * ext0[1]))
+        if not (drift < (5.0 / sf_c) and changed and ext_ok):
+            print(f"[CONNECTOR] {zone_prefix}pre-groove notch rejected "
+                  f"(via={via} drift={drift:.1f} changed={changed} ext_ok={ext_ok})")
+            return terrain_mesh, None, False
+        key_mesh = None
+        if keyc is not None and not getattr(keyc, "is_empty", True):
+            clip_h = max(min(1.7 / sf_c, depth_m), 0.4 / sf_c)
+            key_mesh = build_flat_layer_mesh_from_mask(
+                keyc, bottom_z_m=floor_z, thickness_m=clip_h,
+                color=[242, 242, 242], min_area_m2=1e-12,
+            )
+        print(f"[CONNECTOR] {zone_prefix}PRE-GROOVE dovetail notch carved "
+              f"({via}, depth {depth_m * sf_c:.2f}mm, drift {drift:.2f})")
+        return cutc, key_mesh, True
+    except Exception as e:
+        print(f"[CONNECTOR] {zone_prefix}pre-groove connector failed (non-fatal): {e}")
+        return terrain_mesh, None, False
+
+
 def _run_terrain_stage(
     *,
     task: Any,
@@ -786,6 +896,22 @@ def run_full_generation_pipeline(
         except Exception as exc:
             print(f"[WARN] {zone_prefix}Stage snapshot failed at terrain_stage: {exc}")
 
+    # ── ЗʼЄДНУВАЧ-ПАЗ у ДНІ рельєфу — ДО грувів (рельєф ще ГЕРМЕТИЧНИЙ → manifold
+    # ріже чисто, drift≈0). Паз у дні, груви потім на версі → не конфліктують.
+    # Раніше різали ПІСЛЯ грувів на негерметичному → boolean руйнував меш. Ключ-
+    # метелик зберігаємо у connector_key_mesh; late-блок пропускається якщо вдалось.
+    connector_key_mesh = None
+    _relief_connector_done = False
+    _conn_terrain = terrain_stage.terrain_mesh
+    if getattr(request, "map_connector", False):
+        _conn_terrain, connector_key_mesh, _relief_connector_done = cut_relief_connector_notch(
+            terrain_stage.terrain_mesh,
+            zone=zone,
+            request=request,
+            sf_c=float(getattr(zone, "scale_factor", 0.0) or 0.0),
+            zone_prefix=zone_prefix,
+        )
+
     water_geoms_for_bridges = prepare_bridge_water_geometries(
         request=request,
         gdf_water=source.gdf_water,
@@ -799,7 +925,7 @@ def run_full_generation_pipeline(
         request=request,
         scale_factor=zone.scale_factor,
         terrain_provider=terrain_stage.terrain_provider,
-        terrain_mesh=terrain_stage.terrain_mesh,
+        terrain_mesh=_conn_terrain,
         global_center=global_center,
         G_roads=source.G_roads,
         water_geoms_for_bridges=water_geoms_for_bridges,
@@ -1224,9 +1350,11 @@ def run_full_generation_pipeline(
     # що GPX-жолоб вище. Строго за map_connector → звичайна рельєфна генерація
     # лишається БАЙТ-В-БАЙТ (golden не чіпається). Ключ-метелик = окрема деталь на
     # рівні дна (floor_z), товщина = глибина пазу. Будь-який сумнів → лишаємо базу.
-    connector_key_mesh = None
+    # connector_key_mesh уже міг бути виставлений PRE-GROOVE різом (вище). Цей late-
+    # блок — FALLBACK лише якщо pre-groove не вдався (_relief_connector_done=False).
     _sf_c = float(getattr(zone, "scale_factor", 0.0) or 0.0)
-    if getattr(request, "map_connector", False) and terrain_mesh is not None and _sf_c > 0:
+    if (getattr(request, "map_connector", False) and not _relief_connector_done
+            and terrain_mesh is not None and _sf_c > 0):
         try:
             from services.flat_plate_pipeline import (
                 build_map_connector_geometry, build_flat_layer_mesh_from_mask,
