@@ -1329,6 +1329,17 @@ def run_full_generation_pipeline(
                                 _via = "blender"
                         except Exception as _bexc:
                             print(f"[CONNECTOR] {zone_prefix}Blender notch failed (non-fatal): {_bexc}")
+                    # Blender boolean може лишити дрібні ВІДʼЄДНАНІ уламки далеко
+                    # (артефакт різання негерметичного рельєфу) → bounds стрибають на
+                    # ~офсет плитки і коректний паз ХИБНО відкидався (drift~600). Як у
+                    # road-грувах: беремо НАЙБІЛЬШУ звʼязну компоненту, відкидаємо стрес.
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            _parts = _cutc.split(only_watertight=False)
+                            if _parts is not None and len(_parts) > 1:
+                                _cutc = max(_parts, key=lambda m: len(getattr(m, "faces", [])) if m is not None else 0)
+                        except Exception:
+                            pass
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
