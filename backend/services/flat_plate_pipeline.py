@@ -4101,6 +4101,35 @@ def run_flat_plate_pipeline(
             color=LAYER_COLORS["water"],
             min_area_m2=min_area_m2,
         )
+    # GPX ЗАМІНЯЄ ДОРОГУ: рахуємо полігон треку РАНО (snap-to-roads) і ВІДНІМАЄМО його
+    # з road_mask, щоб під треком не лишалось дублю-дороги (інакше дві співпадні
+    # геометрії — сіра дорога + червоний трек — = трек похований / non-manifold).
+    # Полігон зберігаємо й перевикористовуємо для меша треку нижче. ЛИШЕ коли є
+    # gpx_track → звичайні карти байт-ідентичні (golden недоторканий). Захисно:
+    # будь-який виняток → road_mask незмінений, _gpx_poly_local=None → старий шлях.
+    _gpx_poly_local = None
+    if getattr(request, "gpx_track", None) and not topo_mode:
+        try:
+            from services.gpx_track import build_gpx_track_polygon as _bgtp
+            _rl = None
+            try:
+                _rc = getattr(road_geometry, "semantic_centerlines_local", None)  # noqa: F821
+                if _rc is not None and not getattr(_rc, "is_empty", True):
+                    _rl = list(_rc.geoms) if hasattr(_rc, "geoms") else [_rc]
+            except Exception:
+                _rl = None
+            _gpx_poly_local = _bgtp(
+                gpx_track=request.gpx_track, global_center=global_center,
+                zone_polygon_local=zone.zone_polygon_local, scale_factor=scale_factor,
+                width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
+                road_lines_local=_rl,
+            )
+            if _gpx_poly_local is not None and not getattr(_gpx_poly_local, "is_empty", True):
+                _clr = _model_mm_to_world_m(0.15, export_scale_factor)  # 0.15мм рим між треком і дорогою
+                road_mask = _subtract_geometry(road_mask, _gpx_poly_local.buffer(_clr))
+        except Exception as _gex:
+            print(f"[GPX] road-subtract skipped (non-fatal): {_gex}")
+            _gpx_poly_local = None
     road_mesh = build_flat_layer_mesh_from_mask(
         _clip_geometry(road_mask, content_area),
         bottom_z_m=base_top_m,
@@ -4149,30 +4178,12 @@ def run_flat_plate_pipeline(
     gpx_track_mesh: Optional[trimesh.Trimesh] = None
     if getattr(request, "gpx_track", None) and not topo_mode:
         try:
-            from services.gpx_track import TRACK_COLOR, build_gpx_track_polygon
+            from services.gpx_track import TRACK_COLOR
 
-            # SNAP-TO-ROADS у ПЛОСКОМУ режимі: раніше build_gpx_track_polygon кликався
-            # БЕЗ road_lines_local → трек був сирою полілінією, що ігнорувала вулиці
-            # (рельєфний пайплайн уже передає осьові лінії й притягує до доріг).
-            # Беремо semantic_centerlines_local з road_geometry (присвоюється у канон-
-            # стейджі вище). ЗАХИСНО: будь-яка відсутність/виняток → None → стара
-            # поведінка (без снапу), тож фікс не може нічого зламати.
-            _gpx_road_lines = None
-            try:
-                _rc = getattr(road_geometry, "semantic_centerlines_local", None)  # noqa: F821
-                if _rc is not None and not getattr(_rc, "is_empty", True):
-                    _gpx_road_lines = list(_rc.geoms) if hasattr(_rc, "geoms") else [_rc]
-            except Exception:
-                _gpx_road_lines = None
-
-            _gpx_poly = build_gpx_track_polygon(
-                gpx_track=request.gpx_track,
-                global_center=global_center,
-                zone_polygon_local=zone.zone_polygon_local,
-                scale_factor=scale_factor,
-                width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
-                road_lines_local=_gpx_road_lines,
-            )
+            # Полігон треку вже пораховано РАНО (зі snap-to-roads) і віднято з road_mask
+            # вище → ПЕРЕВИКОРИСТОВУЄМО той самий полігон, щоб трек і виріз дороги
+            # збігались ідеально (один полігон = одна геометрія).
+            _gpx_poly = _gpx_poly_local
             if _gpx_poly is not None and keychain_layout is not None and source_bounds and target_bounds:
                 _gpx_poly = _xform(_gpx_poly)
             if _gpx_poly is not None:
