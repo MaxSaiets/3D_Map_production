@@ -19,36 +19,78 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 // generation-store.simpleFormat — тримаємо локально, щоб не плодити імпорти.
 type GenerationFormat = "relief3d" | "flat" | "magnet" | "panno";
 
-/** З'ЄДНУВАЧІ СЕРІЇ (кілька зон): для КВАДРАТНОЇ сітки рахує внутрішні (спільні з
- *  обраним сусідом) грані кожної клітини (NSEW по геометрії центроїдів) і кладе
- *  connector_edges + connector_key_edges (S/E — рівно один ключ на шов) у properties,
- *  щоб бек поставив замок ЛИШЕ на спільних швах, а зовнішній периметр лишив чистим.
- *  Гекс або повернута (не кратно 90°) сітка → без змін (NSEW-замок не збігся б із
- *  гранями таких клітин). Без сусіда у напрямку — грань не отримує замка. */
-function attachSeriesConnectorEdges(zones: any[], gridType: string, rotationDeg: number): any[] {
+/** З'ЄДНУВАЧІ СЕРІЇ (кілька зон) — УНІВЕРСАЛЬНО для КВАДРАТА, ШЕСТИКУТНИКА та
+ *  ПОВЕРНУТОЇ сітки. Раніше працювало лише для квадрата під 0/90° (NSEW по
+ *  центроїдах) → гекс не діставав ЖОДНОГО замка, бо 4 кардинали не адресують
+ *  6 граней. Тепер для кожної клітини рахуємо НАПРЯМКИ (азимути) до обраних
+ *  сусідів — це і є зовнішні нормалі спільних граней — і кладемо їх у
+ *  connector_edge_az; бек добирає реальну грань полігону за збігом нормалі.
+ *  Ключ (1 на шов) випускає клітина-власник шва (детермінований мінімум по
+ *  центроїду), її напрямок іде у connector_key_az. Сусідство визначаємо за
+ *  найближчою відстанню між центроїдами (×1.3) — ловить 4 грані квадрата /
+ *  6 граней гекса, відкидає діагональ (√2) і другий ряд гекса (√3). */
+function attachSeriesConnectorEdges(zones: any[], _gridType: string, _rotationDeg: number): any[] {
   if (!Array.isArray(zones) || zones.length < 2) return zones;
-  if (gridType !== "square" || Math.round(rotationDeg) % 90 !== 0) return zones;
-  const info = zones.map((z) => {
+  // Центроїди у lng/lat + проєкція у метри (для коректних кутів і відстаней).
+  const cents = zones.map((z) => {
     const ring: number[][] = z?.geometry?.coordinates?.[0] || [];
+    let sx = 0, sy = 0, n = 0;
     let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
-    for (const p of ring) { const x = p[0], y = p[1]; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
-    return { cx: (minx + maxx) / 2, cy: (miny + maxy) / 2, w: maxx - minx, h: maxy - miny, ok: isFinite(minx) };
-  });
-  return zones.map((z, i) => {
-    const a = info[i];
-    if (!a.ok || a.w <= 0 || a.h <= 0) return z;
-    let edges = "";
-    for (let j = 0; j < zones.length; j++) {
-      if (j === i || !info[j].ok) continue;
-      const dx = info[j].cx - a.cx, dy = info[j].cy - a.cy;
-      const tolx = a.w * 0.5, toly = a.h * 0.5;
-      if (Math.abs(dy) < toly && Math.abs(Math.abs(dx) - a.w) < tolx) edges += dx > 0 ? "E" : "W";
-      else if (Math.abs(dx) < tolx && Math.abs(Math.abs(dy) - a.h) < toly) edges += dy > 0 ? "N" : "S";
+    for (const p of ring) {
+      const x = p[0], y = p[1];
+      if (!isFinite(x) || !isFinite(y)) continue;
+      sx += x; sy += y; n++;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
     }
-    if (!edges) return z;
-    edges = Array.from(new Set(edges.split(""))).join("");
-    const keyEdges = edges.replace(/[NW]/g, ""); // один ключ на спільний шов (S/E)
-    return { ...z, properties: { ...(z.properties || {}), connector_edges: edges, connector_key_edges: keyEdges } };
+    return { lng: n ? sx / n : NaN, lat: n ? sy / n : NaN, ok: n >= 3 };
+  });
+  const okCents = cents.filter((c) => c.ok);
+  if (okCents.length < 2) return zones;
+  const latMean = okCents.reduce((s, c) => s + c.lat, 0) / okCents.length;
+  const cosLat = Math.max(Math.cos((latMean * Math.PI) / 180), 0.05);
+  const proj = cents.map((c) => c.ok ? { x: c.lng * 111320 * cosLat, y: c.lat * 110540, ok: true } : { x: 0, y: 0, ok: false });
+  // Найближча відстань між центроїдами (крок сітки).
+  let dmin = Infinity;
+  for (let i = 0; i < proj.length; i++) {
+    if (!proj[i].ok) continue;
+    for (let j = i + 1; j < proj.length; j++) {
+      if (!proj[j].ok) continue;
+      const d = Math.hypot(proj[j].x - proj[i].x, proj[j].y - proj[i].y);
+      if (d > 1 && d < dmin) dmin = d;
+    }
+  }
+  if (!isFinite(dmin)) return zones;
+  const adjMax = dmin * 1.3;
+  const az = (dx: number, dy: number) => { let a = (Math.atan2(dy, dx) * 180) / Math.PI; if (a < 0) a += 360; return Math.round(a); };
+  // Детермінований власник шва: клітина з меншим (lat, потім lng) центроїдом.
+  const owns = (i: number, j: number) => {
+    const a = cents[i], b = cents[j];
+    if (Math.abs(a.lat - b.lat) > 1e-9) return a.lat < b.lat;
+    if (Math.abs(a.lng - b.lng) > 1e-9) return a.lng < b.lng;
+    return i < j;
+  };
+  return zones.map((z, i) => {
+    if (!proj[i].ok) return z;
+    const edgeAz: number[] = [];
+    const keyAz: number[] = [];
+    for (let j = 0; j < zones.length; j++) {
+      if (j === i || !proj[j].ok) continue;
+      const dx = proj[j].x - proj[i].x, dy = proj[j].y - proj[i].y;
+      const d = Math.hypot(dx, dy);
+      if (d > adjMax) continue; // не сусід (діагональ / дальший ряд)
+      const a = az(dx, dy);
+      edgeAz.push(a);
+      if (owns(i, j)) keyAz.push(a); // 1 ключ на спільний шов
+    }
+    if (!edgeAz.length) return z;
+    return {
+      ...z,
+      properties: {
+        ...(z.properties || {}),
+        connector_edge_az: edgeAz.join(","),
+        connector_key_az: keyAz.join(","),
+      },
+    };
   });
 }
 
@@ -620,12 +662,10 @@ export function SimpleControlPanel({
         const req = buildSingleMapReq(opts?.forPrint ?? false, cityBounds);
         // Клітини несуть власну геометрію → фігурний полігон single-карти НЕ потрібен.
         delete (req as any).zone_polygon_coords;
-        // З'ЄДНУВАЧІ СЕРІЇ (кілька зон): раніше тут НЕ рахувались connector_edges →
-        // бек ставить замок ЛИШЕ якщо у зони є connector_edges → у багатозонній серії
-        // зʼєднувачів НЕ було взагалі (скарга власника). Тепер рахуємо ВНУТРІШНІ
-        // (спільні з обраним сусідом) грані кожної клітини по геометрії й кладемо у
-        // properties. Лише для КВАДРАТНОЇ сітки без повороту (NSEW-замок має сенс для
-        // плиток, що стикуються гранями; гекс/поворот → грані не співпадуть → пропуск).
+        // З'ЄДНУВАЧІ СЕРІЇ (кілька зон): рахуємо НАПРЯМКИ (азимути) до обраних сусідів
+        // кожної клітини й кладемо у properties (connector_edge_az/key_az). Працює для
+        // КВАДРАТА, ШЕСТИКУТНИКА і ПОВЕРНУТОЇ сітки — бек добирає реальну грань полігону
+        // за збігом нормалі (NSEW-обмеження 4 граней знято).
         let _seriesZones = s.selectedZones;
         if (s.simpleSeriesConnectors) {
           (req as any).map_connector = true;
@@ -927,20 +967,11 @@ export function SimpleControlPanel({
         {s.showHexGrid && (
           <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-2">
             <button type="button" aria-pressed={s.simpleSeriesConnectors} data-testid="series-connectors-toggle"
-              onClick={() => {
-                const next = !s.simpleSeriesConnectors;
-                s.setSimpleSeriesConnectors(next);
-                // Замки-ластівчин-хвіст лягають лише на КВАДРАТНІ плитки (NSEW-грані).
-                // Вмикаючи замки — переводимо сітку у квадрати, щоб вони реально працювали.
-                if (next && s.gridType !== "square") s.setGridType("square");
-              }}
+              onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
               className={`flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${s.simpleSeriesConnectors ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]" : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"}`}>
               <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
               {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
             </button>
-            {s.simpleSeriesConnectors && s.gridType !== "square" && (
-              <p className="mt-1.5 text-[11px] leading-tight text-amber-700">{t("seriesConnectorsSquareHint")}</p>
-            )}
           </div>
         )}
 

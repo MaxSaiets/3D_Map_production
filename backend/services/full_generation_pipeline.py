@@ -1230,6 +1230,7 @@ def run_full_generation_pipeline(
         try:
             from services.flat_plate_pipeline import (
                 build_map_connector_geometry, build_flat_layer_mesh_from_mask,
+                parse_connector_azimuths,
             )
             import trimesh as _tmc
             _floor_z = float(terrain_mesh.bounds[0][2])
@@ -1246,6 +1247,8 @@ def run_full_generation_pipeline(
                 clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
                 export_scale_factor=_sf_c,
                 key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
+                edge_dirs=parse_connector_azimuths(getattr(request, "map_connector_edge_az", "")),
+                key_dirs=parse_connector_azimuths(getattr(request, "map_connector_key_az", "")),
             )
             _notch_carved = False
             if _ntc is not None and _depth_m > 1e-6:

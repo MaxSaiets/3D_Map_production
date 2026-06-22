@@ -790,6 +790,11 @@ class GenerationRequest(BaseModel):
     # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
     # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
     map_connector_key_edges: str = Field(default="", max_length=4)
+    # НАПРЯМКОВИЙ добір граней (азимути нормалі у градусах, "30,90,150") — для серії
+    # шестикутників/повернутих клітин, де NSEW (4 кардинали) не адресує 6 граней.
+    # Порожнє → стара NSEW-поведінка. *_key_az = підмножина з ключем (1 на шов).
+    map_connector_edge_az: str = Field(default="", max_length=200)
+    map_connector_key_az: str = Field(default="", max_length=200)
     # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
     # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
     # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
@@ -3199,6 +3204,11 @@ class ZoneGenerationRequest(BaseModel):
     # Грані, для яких випускаємо КЛЮЧ (для серії — лише S/E внутрішні, 1 ключ/шов).
     # Порожнє → ключ для кожного пазу (single-tile). Паз ріжемо на всіх map_connector_edges.
     map_connector_key_edges: str = Field(default="", max_length=4)
+    # НАПРЯМКОВИЙ добір граней (азимути нормалі у градусах, "30,90,150") — для серії
+    # шестикутників/повернутих клітин, де NSEW (4 кардинали) не адресує 6 граней.
+    # Порожнє → стара NSEW-поведінка. *_key_az = підмножина з ключем (1 на шов).
+    map_connector_edge_az: str = Field(default="", max_length=200)
+    map_connector_key_az: str = Field(default="", max_length=200)
     # ПРЕМІУМ-РАМКА: компас (стрілка-N), масштабна лінійка (0…N м) і координати
     # центру (lat/lon) окремою чорною деталлю «Frame», вирізаною з шарів карти.
     # build_map_frame_overlay (flat_plate_pipeline). Працює у flat_plate.
@@ -3510,7 +3520,11 @@ async def generate_zones_endpoint(
         _zone_conn_edges = str(_zprops.get('connector_edges') or '').upper()
         # Ключі лише на S/E внутрішніх гранях (фронт рахує) → 1 ключ на спільний шов.
         _zone_key_edges = str(_zprops.get('connector_key_edges') or '').upper()
-        _zone_conn = bool(getattr(request, 'map_connector', False)) and bool(_zone_conn_edges)
+        # НАПРЯМКОВІ грані (азимути) — шестикутник/повернута сітка. Фронт кладе
+        # connector_edge_az/connector_key_az; коли є — бек добирає грані за нормаллю.
+        _zone_edge_az = str(_zprops.get('connector_edge_az') or '')
+        _zone_key_az = str(_zprops.get('connector_key_az') or '')
+        _zone_conn = bool(getattr(request, 'map_connector', False)) and bool(_zone_conn_edges or _zone_edge_az)
 
         zone_request = GenerationRequest(
             north=zone_bbox['north'],
@@ -3542,6 +3556,8 @@ async def generate_zones_endpoint(
             map_connector=_zone_conn,
             map_connector_edges=(_zone_conn_edges or "NSEW"),
             map_connector_key_edges=_zone_key_edges,
+            map_connector_edge_az=_zone_edge_az,
+            map_connector_key_az=_zone_key_az,
             map_connector_span_mm=request.map_connector_span_mm,
             map_connector_length_mm=request.map_connector_length_mm,
             map_connector_depth_mm=request.map_connector_depth_mm,

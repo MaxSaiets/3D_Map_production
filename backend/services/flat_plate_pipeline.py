@@ -818,6 +818,20 @@ def _ensure_no_through_hole(
     return new_top, new_bottom
 
 
+def parse_connector_azimuths(s) -> Optional[list]:
+    """"30,90,150" → [30.0, 90.0, 150.0]; порожнє/None → None (стара NSEW-поведінка)."""
+    out: list = []
+    for tok in str(s or "").replace(";", ",").split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        try:
+            out.append(float(tok))
+        except (TypeError, ValueError):
+            pass
+    return out or None
+
+
 def build_map_connector_geometry(
     base_polygon: BaseGeometry,
     *,
@@ -828,8 +842,18 @@ def build_map_connector_geometry(
     clearance_mm: float,
     export_scale_factor: float,
     key_edges: Optional[str] = None,
+    edge_dirs: Optional[list] = None,
+    key_dirs: Optional[list] = None,
 ) -> tuple[Optional[BaseGeometry], Optional[BaseGeometry]]:
     """З'ЄДНУВАЧ-ПАЗИ (метелик/bowtie) на серединах граней плоскої карти-плитки.
+
+    edge_dirs / key_dirs (НОВЕ, опційно) — списки АЗИМУТІВ у градусах (напрямок
+    ЗОВНІШНЬОЇ нормалі грані: atan2(north, east), x=схід/0°, y=північ/90°). Коли
+    edge_dirs задано — грані добираються за збігом нормалі з цими напрямками
+    (а НЕ за NSEW-кардиналами), тож працює для ШЕСТИКУТНИКА (6 граней) та будь-якої
+    повернутої клітини. key_dirs — підмножина, для якої ЦЯ плитка випускає ключ
+    (1 ключ на шов). edge_dirs=None → стара NSEW/want_all поведінка (single-tile,
+    golden байт-ідентичні).
 
     Повертає (notch_union, keys_union) у локально-метровій системі base_polygon:
       * notch_union — РІЖЕТЬСЯ у НИЖНІЙ шар бази (через _build_keychain_base_parts
@@ -918,14 +942,57 @@ def build_map_connector_geometry(
     if not segs:
         return None, None
 
-    # Які грані дістануть з'єднувач.
-    if want_all:
-        chosen = list(segs)  # КОЖНА грань
+    def _unit_from_az(az: float) -> tuple:
+        a = math.radians(float(az))
+        return (math.cos(a), math.sin(a))
+
+    def _wants_key(outward: tuple) -> bool:
+        # Чи ця грань випускає ключ. Пріоритет: key_dirs (азимути) → key_edges (NSEW)
+        # → None (ключ для кожного пазу, single-tile).
+        if key_dirs is not None:
+            for kd in key_dirs:
+                kx, ky = _unit_from_az(kd)
+                if outward[0] * kx + outward[1] * ky > 0.70:  # ≈ у межах 45°
+                    return True
+            return False
+        if edge_dirs is not None:
+            # Азимут-режим без key_dirs → ця плитка не володіє жодним ключем (усі
+            # шви належать сусідам). НЕ дефолтимо у «ключ на кожній грані».
+            return False
+        if key_edges_set is not None:
+            _cx, _cy = outward
+            _card = max((("N", _cy), ("S", -_cy), ("E", _cx), ("W", -_cx)),
+                        key=lambda t: t[1])[0]
+            return _card in key_edges_set
+        return True
+
+    # Які грані дістануть з'єднувач. chosen = список (seg, wants_key).
+    chosen: list = []
+    if edge_dirs is not None:
+        # НАПРЯМКОВИЙ добір: кожен азимут → грань, чия зовнішня нормаль найкраще
+        # туди дивиться (dot>0.5 ≈ у межах 60°), без повторного вибору однієї грані.
+        # Працює для 6 граней шестикутника та повернутих клітин (NSEW не вміє).
+        used: set = set()
+        for az in edge_dirs:
+            tx, ty = _unit_from_az(az)
+            best_i, best_score = -1, 0.5
+            for idx, seg in enumerate(segs):
+                if idx in used:
+                    continue
+                _, _, outward, _ = seg
+                score = outward[0] * tx + outward[1] * ty
+                if score > best_score:
+                    best_score, best_i = score, idx
+            if best_i >= 0:
+                used.add(best_i)
+                chosen.append((segs[best_i], _wants_key(segs[best_i][2])))
+    elif want_all:
+        chosen = [(seg, _wants_key(seg[2])) for seg in segs]  # КОЖНА грань
     else:
         # Легасі: для кожного обраного кардинального боку — грань, чия зовнішня
         # нормаль найкраще туди дивиться (dot>0.15), без дублів.
         _CARD = {"N": (0.0, 1.0), "S": (0.0, -1.0), "E": (1.0, 0.0), "W": (-1.0, 0.0)}
-        chosen = []
+        _seen: list = []
         for e in ("N", "S", "E", "W"):
             if e not in edges_set:
                 continue
@@ -936,15 +1003,16 @@ def build_map_connector_geometry(
                 score = outward[0] * cardx + outward[1] * cardy
                 if score > best_score:
                     best_score, best = score, seg
-            if best is not None and best not in chosen:
-                chosen.append(best)
+            if best is not None and best not in _seen:
+                _seen.append(best)
+                chosen.append((best, _wants_key(best[2])))
 
     # Запобіжник від захаращення (дуже багатогранний контур) — найдовші грані.
     MAX_CONN = 16
     if len(chosen) > MAX_CONN:
-        chosen = sorted(chosen, key=lambda s: s[3], reverse=True)[:MAX_CONN]
+        chosen = sorted(chosen, key=lambda c: c[0][3], reverse=True)[:MAX_CONN]
 
-    for (mx, my), inward, _outward, L in chosen:
+    for ((mx, my), inward, _outward, L), wants_key in chosen:
         h = min(h0, L * 0.40)  # замок ≤40% РЕАЛЬНОЇ грані
         if h < min_h:
             continue
@@ -959,15 +1027,8 @@ def build_map_connector_geometry(
         if clipped is None or getattr(clipped, "is_empty", True):
             continue
         notches.append(clipped)
-        # Ключ ЛИШЕ якщо ця грань у key_edges (None = усі). Кардинал грані — за
-        # домінантою зовнішньої нормалі (для прямокутника точний ±x/±y).
-        if key_edges_set is not None:
-            _cx, _cy = _outward
-            _card = max((("N", _cy), ("S", -_cy), ("E", _cx), ("W", -_cx)),
-                        key=lambda t: t[1])[0]
-        else:
-            _card = None
-        if key_edges_set is None or _card in key_edges_set:
+        # Ключ ЛИШЕ якщо ця грань випускає ключ (_wants_key враховує key_dirs/NSEW).
+        if wants_key:
             # Ключ-метелик у вільному рядку ПІД картою (поза footprint основи).
             kx = minx + key_slot * key_pitch + w
             ky = miny - margin - h0
@@ -3345,6 +3406,8 @@ def run_flat_plate_pipeline(
                 clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
                 export_scale_factor=export_scale_factor,
                 key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
+                edge_dirs=parse_connector_azimuths(getattr(request, "map_connector_edge_az", "")),
+                key_dirs=parse_connector_azimuths(getattr(request, "map_connector_key_az", "")),
             )
             if _notches is not None and _conn_depth_m > 1e-9:
                 _flat_base_bottom_poly, _flat_base_bottom_depth_m = _notches, _conn_depth_m
