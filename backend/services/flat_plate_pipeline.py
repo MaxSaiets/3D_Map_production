@@ -2916,7 +2916,12 @@ def build_flat_building_meshes(
     # вікна карти ріже будинки в нитки 0.06–0.5мм, які не друкуються/відламуються;
     # емпірично: 72 компоненти <0.4мм у 31×40мм брелку). Повна мапа НЕ зачіпається
     # (більший масштаб + golden), тож golden лишається без змін.
-    if is_keychain and gdf_buildings_for_mesh is not None and not gdf_buildings_for_mesh.empty:
+    # Фільтр волосин — і для брелка, І для ПЛОСКОЇ карти (flat/AMS/конектор/магніт):
+    # раніше гейтилось лише на is_keychain → на плоских картах будівлі-слівери (тонші
+    # за 0.5мм) лишались як вертикальні «стінки-волосини», що звисають і не друкуються
+    # (скарга власника, особливо помітно у режимі зʼєднувачів). Рельєф (golden, DEM-
+    # пайплайн full_generation) сюди НЕ заходить → golden недоторканий.
+    if (is_keychain or is_flat) and gdf_buildings_for_mesh is not None and not gdf_buildings_for_mesh.empty:
         _before_thin = len(gdf_buildings_for_mesh)
         # ВАЖЛИВО: footprint у body-layout-просторі, що масштабується export_scale_factor
         # у фінальні мм (як магніти/база) — НЕ scale_factor (то детальний масштаб мапи).
@@ -2927,7 +2932,7 @@ def build_flat_building_meshes(
         )
         _after_thin = len(gdf_buildings_for_mesh)
         if _after_thin < _before_thin:
-            print(f"[KEYCHAIN] Dropped {_before_thin - _after_thin} thin building slivers (<0.5mm wide) — anti break-off")
+            print(f"[{'KEYCHAIN' if is_keychain else 'FLAT'}] Dropped {_before_thin - _after_thin} thin building slivers (<0.5mm wide) — anti break-off")
 
     height_scale_factor = float(
         getattr(request, "buildings_height_scale", None)
@@ -3034,15 +3039,15 @@ def build_flat_building_meshes(
     # внутрішньо створює slivers (parent − parts), яких footprint-фільтр вище не
     # бачить. Тут міряємо РЕАЛЬНУ мін-ширину готового меша і викидаємо <0.5мм
     # (фінал) — не друкується/відламується. Повна мапа не зачіпається → golden ОК.
-    if is_keychain:
+    if is_keychain or is_flat:
         _minw_m = model_mm_to_world_m(0.5, float(export_scale_factor or scale_factor))
         _before = len(meshes) + len(landmark_meshes)
         meshes = [m for m in meshes if _mesh_footprint_min_width_m(m) >= _minw_m]
-        # Орієнтири на БРЕЛКУ теж не можуть бути тоншими за 0.5мм (відламаються при друці)
+        # Орієнтири теж не можуть бути тоншими за 0.5мм (відламаються при друці)
         landmark_meshes = [m for m in landmark_meshes if _mesh_footprint_min_width_m(m) >= _minw_m]
         _after = len(meshes) + len(landmark_meshes)
         if _after < _before:
-            print(f"[KEYCHAIN] Dropped {_before - _after} thin building meshes (<0.5mm min-width) — anti break-off")
+            print(f"[{'KEYCHAIN' if is_keychain else 'FLAT'}] Dropped {_before - _after} thin building meshes (<0.5mm min-width) — anti break-off")
     return meshes, landmark_meshes
 
 
