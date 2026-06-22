@@ -702,7 +702,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
     const box = new THREE.Box3();
     let anyMap = false;
     object.traverse((c: any) => {
-      if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
+      if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
         box.expandByObject(c);
         anyMap = true;
       }
@@ -805,7 +805,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
           const b = new THREE.Box3();
           let any = false;
           obj.traverse((c: any) => {
-            if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
+            if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
               b.expandByObject(c);
               any = true;
             }
@@ -927,6 +927,12 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         group.position.z -= gCenter.z;
         group.position.y -= gMin.y;
         group.updateMatrixWorld(true);
+
+        // 6. Кадруємо камеру на ВСЮ серію (карти, без шару Connector). Без цього
+        // композит-група не мала підгону камери (fitCameraToObject звався лише для
+        // одиночної моделі) → серія рендерилась ДРІБНОЮ в центрі канви. Тепер плитки
+        // заповнюють кадр, ключі-метелики не роздувають габарит.
+        try { fitCameraToObject(group); } catch { /* камера-фіт не критичний */ }
 
         // Додаємо легкі візуальні індикатори для кожної зони (опціонально)
         // Для продуктивності не додаємо складні об'єкти, але зберігаємо інформацію

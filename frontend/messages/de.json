@@ -543,7 +543,8 @@
     "trustReprint": "60 Tage Garantie",
     "trustNoPrepay": "Keine Vorkasse",
     "trustShip": "Versand Ukraine + EU",
-    "seriesConnectorsSquareHint": "Verbinder-Schlösser funktionieren nur mit dem quadratischen Raster."
+    "seriesConnectorsSquareHint": "Verbinder-Schlösser funktionieren nur mit dem quadratischen Raster.",
+    "seriesTab": "▦ Zonenserie (Raster)"
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

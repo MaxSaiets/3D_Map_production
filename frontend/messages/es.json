@@ -543,7 +543,8 @@
     "trustReprint": "Garantía 60 días",
     "trustNoPrepay": "Sin pago previo",
     "trustShip": "Envío Ucrania + UE",
-    "seriesConnectorsSquareHint": "Los conectores funcionan solo con la cuadrícula cuadrada."
+    "seriesConnectorsSquareHint": "Los conectores funcionan solo con la cuadrícula cuadrada.",
+    "seriesTab": "▦ Serie de zonas (cuadrícula)"
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

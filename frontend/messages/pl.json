@@ -543,7 +543,8 @@
     "trustReprint": "Gwarancja 60 dni",
     "trustNoPrepay": "Bez przedpłaty",
     "trustShip": "Wysyłka Ukraina + UE",
-    "seriesConnectorsSquareHint": "Łączniki działają tylko z siatką kwadratową."
+    "seriesConnectorsSquareHint": "Łączniki działają tylko z siatką kwadratową.",
+    "seriesTab": "▦ Seria stref (siatka)"
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

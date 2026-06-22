@@ -543,7 +543,8 @@
     "trustReprint": "60-day guarantee",
     "trustNoPrepay": "No prepayment",
     "trustShip": "Ships Ukraine + EU",
-    "seriesConnectorsSquareHint": "Connector locks work only with the square grid."
+    "seriesConnectorsSquareHint": "Connector locks work only with the square grid.",
+    "seriesTab": "▦ Series of zones (grid)"
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

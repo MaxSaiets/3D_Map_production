@@ -543,7 +543,8 @@
     "trustReprint": "Гарантія 60 днів",
     "trustNoPrepay": "Без передоплати",
     "trustShip": "Доставка Україна + ЄС",
-    "seriesConnectorsSquareHint": "Замки-зʼєднувачі працюють лише з квадратною сіткою."
+    "seriesConnectorsSquareHint": "Замки-зʼєднувачі працюють лише з квадратною сіткою.",
+    "seriesTab": "▦ Серія зон (сітка)"
   },
   "mapsMeta": {
     "title": "3D-мапи міст України — обери своє місто",
