@@ -3357,8 +3357,8 @@ async def generate_zones_endpoint(
     import hashlib, json
     cache_dir = Path("cache/cities")
     cache_dir.mkdir(parents=True, exist_ok=True)
-    # cache version bump: elevation baseline logic changed (needs refresh)
-    city_key = f"v4_{grid_bbox_latlon[0]:.6f}_{grid_bbox_latlon[1]:.6f}_{grid_bbox_latlon[2]:.6f}_{grid_bbox_latlon[3]:.6f}_z{int(request.terrarium_zoom)}_zs{float(request.terrain_z_scale):.3f}_ms{float(request.model_size_mm):.1f}"
+    # cache version bump: v5 adds elevation_max_m (series shared relief gain) — refresh
+    city_key = f"v5_{grid_bbox_latlon[0]:.6f}_{grid_bbox_latlon[1]:.6f}_{grid_bbox_latlon[2]:.6f}_{grid_bbox_latlon[3]:.6f}_z{int(request.terrarium_zoom)}_zs{float(request.terrain_z_scale):.3f}_ms{float(request.model_size_mm):.1f}"
     city_hash = hashlib.md5(city_key.encode()).hexdigest()
     city_cache_file = cache_dir / f"city_{city_hash}.json"
 
