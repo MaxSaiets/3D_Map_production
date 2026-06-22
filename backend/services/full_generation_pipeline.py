@@ -1238,8 +1238,28 @@ def run_full_generation_pipeline(
             _depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             # Глибина пазу: не глибше 60% висоти моделі (лишаємо суцільний матеріал).
             _depth_m = min(_depth_mm / _sf_c, max(_model_h * 0.6, 0.0))
+            # ── КООРДИНАТНА РАМКА (фікс «рельєф+серія: паз відкидається drift~офсет») ──
+            # У СЕРІЇ рельєф-меш будується ЦЕНТРОВАНИМ у локально-тайловій рамці, а
+            # zone_polygon_local — у ГЛОБАЛЬНІЙ (зміщений на офсет плитки від центру
+            # сітки). Різні рамки → cutter не перетинає меш → boolean дає дрейф ≈
+            # офсет плитки і паз відкидається (скарга «рельєф: жодного зʼєднання»).
+            # Вирівнюємо полігон конектора до центру terrain_mesh (для single-zone
+            # офсет≈0 → без змін; flat-пайплайн сюди не заходить).
+            from shapely import affinity as _affc
+            _tb = terrain_mesh.bounds
+            _tcx = (float(_tb[0][0]) + float(_tb[1][0])) / 2.0
+            _tcy = (float(_tb[0][1]) + float(_tb[1][1])) / 2.0
+            _zb = zone.zone_polygon_local.bounds
+            _zcx = (float(_zb[0]) + float(_zb[2])) / 2.0
+            _zcy = (float(_zb[1]) + float(_zb[3])) / 2.0
+            _off_x, _off_y = _tcx - _zcx, _tcy - _zcy
+            _conn_poly = zone.zone_polygon_local
+            if abs(_off_x) > 0.5 or abs(_off_y) > 0.5:
+                _conn_poly = _affc.translate(zone.zone_polygon_local, xoff=_off_x, yoff=_off_y)
+                print(f"[CONNECTOR] {zone_prefix}frame-align cutter by offset "
+                      f"({_off_x:.1f},{_off_y:.1f}) terrain_c=({_tcx:.1f},{_tcy:.1f}) zone_c=({_zcx:.1f},{_zcy:.1f})")
             _ntc, _keyc = build_map_connector_geometry(
-                zone.zone_polygon_local,
+                _conn_poly,
                 edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
                 span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
                 length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
