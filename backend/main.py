@@ -761,6 +761,10 @@ class GenerationRequest(BaseModel):
     # РЎРёРЅС…СЂРѕРЅС–Р·Р°С†С–СЏ РІРёСЃРѕС‚ РјС–Р¶ Р·РѕРЅР°РјРё (РґР»СЏ РіРµРєСЃР°РіРѕРЅР°Р»СЊРЅРѕС— СЃС–С‚РєРё)
     elevation_ref_m: Optional[float] = None  # Р“Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° (РјРµС‚СЂРё РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)
     baseline_offset_m: float = 0.0  # Р—РјС–С‰РµРЅРЅСЏ baseline (РјРµС‚СЂРё)
+    # СЕРІЯ ЗОН: спільний перепад висот (max-ref, світові метри) для ВСІЄЇ сітки. Коли
+    # >0 — кожна плитка масштабує рельєф ОДНИМ спільним gain (континуальний рельєф через
+    # шов, без сходинок). 0 = per-tile lift (одиночна мапа). Рахується в /generate-zones.
+    terrain_relief_range_m: float = 0.0
     # Preserve global XY coordinates (do NOT center per tile) for perfect stitching across zones/sessions.
     preserve_global_xy: bool = False
     # Explicit Grid Step (meters) for perfect stitching (avoids legacy resolution-based gaps)
@@ -3411,9 +3415,15 @@ async def generate_zones_endpoint(
         except Exception:
             cached_elev = None
 
+    global_elevation_max_m = None
     if cached_elev is not None:
         global_elevation_ref_m = float(cached.get("elevation_ref_m"))
         global_baseline_offset_m = float(cached.get("baseline_offset_m") or 0.0)
+        try:
+            _cmax = cached.get("elevation_max_m")
+            global_elevation_max_m = float(_cmax) if _cmax is not None else None
+        except Exception:
+            global_elevation_max_m = None
         print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m (РєРµС€): {global_elevation_ref_m:.2f}Рј")
         print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m (РєРµС€): {global_baseline_offset_m:.3f}Рј")
     else:
@@ -3427,7 +3437,7 @@ async def generate_zones_endpoint(
                 grid_bbox['west']
             )
 
-        global_elevation_ref_m, global_baseline_offset_m = calculate_global_elevation_reference(
+        global_elevation_ref_m, global_baseline_offset_m, global_elevation_max_m = calculate_global_elevation_reference(
             zones=request.zones,
             source_crs=source_crs,
             terrarium_zoom=request.terrarium_zoom if hasattr(request, 'terrarium_zoom') else 15,
@@ -3442,7 +3452,20 @@ async def generate_zones_endpoint(
         print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ baseline_offset_m: {global_baseline_offset_m:.3f}Рј")
     else:
         print(f"[WARN] РќРµ РІРґР°Р»РѕСЃСЏ РѕР±С‡РёСЃР»РёС‚Рё РіР»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m, РєРѕР¶РЅР° Р·РѕРЅР° РІРёРєРѕСЂРёСЃС‚РѕРІСѓРІР°С‚РёРјРµ Р»РѕРєР°Р»СЊРЅСѓ РЅРѕСЂРјР°Р»С–Р·Р°С†С–СЋ")
-    
+
+    # СЕРІЯ ЗОН — спільний перепад висот (світові метри) для ЄДИНОГО gain рельєфу на всіх
+    # плитках. Без цього кожна плитка масштабувала рельєф власним gain (рівнинна ×3.5,
+    # горбиста ×1.2) → сходинка на шві («висоти перепадають»). Передаємо у кожну зону.
+    global_relief_range_m = 0.0
+    try:
+        if (global_elevation_ref_m is not None and global_elevation_max_m is not None
+                and float(global_elevation_max_m) > float(global_elevation_ref_m)):
+            global_relief_range_m = float(global_elevation_max_m) - float(global_elevation_ref_m)
+            print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ РїРµСЂРµРїР°Рґ РІРёСЃРѕС‚ (range): {global_relief_range_m:.2f}Рј "
+                  f"(СЌРґРёРЅРёР№ gain РґР»СЏ РІСЃС–С… РїР»РёС‚РѕРє СЃРµСЂС–С—)")
+    except Exception:
+        global_relief_range_m = 0.0
+
     # РћР±С‡РёСЃР»СЋС”РјРѕ РѕРїС‚РёРјР°Р»СЊРЅСѓ С‚РѕРІС‰РёРЅСѓ РїС–РґР»РѕР¶РєРё РґР»СЏ РІСЃС–С… Р·РѕРЅ
     # CRITICAL: base thickness must be stable across "add more zones", BUT ALSO must be thick enough to hold all grooves!
     # If a park embeds 1.0mm, the base MUST be more than 1.0mm, otherwise the boolean cut will punch a hole through the bottom floor!
@@ -3467,6 +3490,7 @@ async def generate_zones_endpoint(
             "model_size_mm": float(request.model_size_mm),
             "elevation_ref_m": float(global_elevation_ref_m) if global_elevation_ref_m is not None else None,
             "baseline_offset_m": float(global_baseline_offset_m) if global_baseline_offset_m is not None else 0.0,
+            "elevation_max_m": float(global_elevation_max_m) if global_elevation_max_m is not None else None,
             "terrain_base_thickness_mm": float(final_base_thickness_mm),
         }
         city_cache_file.write_text(json.dumps(cache_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -3586,6 +3610,7 @@ async def generate_zones_endpoint(
             # РљР РРўРР§РќРћ: РџРµСЂРµРґР°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅС– РїР°СЂР°РјРµС‚СЂРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РІРёСЃРѕС‚
             elevation_ref_m=global_elevation_ref_m,  # Р“Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° РґР»СЏ РІСЃС–С… Р·РѕРЅ
             baseline_offset_m=global_baseline_offset_m,  # Р“Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
+            terrain_relief_range_m=float(global_relief_range_m),  # СЕРІЯ: спільний перепад → єдиний gain рельєфу
             preserve_global_xy=True,  # IMPORTANT: export in a shared coordinate frame for stitching
             grid_step_m=global_grid_step_m,  # GLOBAL GRID FIX
             is_ams_mode=request.is_ams_mode and not bool(getattr(request, "flat_plate_mode", False)),

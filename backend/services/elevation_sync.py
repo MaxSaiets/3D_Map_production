@@ -10,21 +10,24 @@ import os
 import math
 
 
-def _terrarium_min_elevation_in_bbox(
+def _terrarium_minmax_elevation_in_bbox(
     bbox_latlon: Tuple[float, float, float, float],
     terrarium_zoom: Optional[int] = None,
-) -> Optional[float]:
+) -> Tuple[Optional[float], Optional[float]]:
     """
-    Robust global min for Terrarium: scan *all* tiles intersecting bbox and take min pixel elevation.
-    This avoids missing minima due to sparse point sampling (which causes negative Z and seams).
+    Robust global (min, max) for Terrarium: scan *all* tiles intersecting bbox and take
+    the min/max pixel elevation (via low/high quantiles to reject outlier spikes).
+    The robust MIN avoids negative Z / seams; the robust MAX gives the true global relief
+    range so a SERIES of tiles can share ONE vertical-exaggeration gain (continuous relief
+    across seams — no per-tile "висоти перепадають").
     """
     provider = (os.getenv("ELEVATION_PROVIDER") or "terrarium").lower()
     if provider != "terrarium":
-        return None
+        return None, None
     try:
         from services.terrarium_tiles import TerrariumTileProvider, TileKey
     except Exception:
-        return None
+        return None, None
 
     north, south, east, west = bbox_latlon
     z = int(terrarium_zoom if terrarium_zoom is not None else os.getenv("TERRARIUM_ZOOM", "14"))
@@ -52,6 +55,7 @@ def _terrarium_min_elevation_in_bbox(
     # Using the absolute min pixel makes elevation_ref_m wildly wrong and produces "tower" bases (hundreds of mm).
     # We use a very low quantile per tile to be robust against such outliers.
     elev_min = None
+    elev_max = None
     for tx in range(minx, maxx + 1):
         for ty in range(miny, maxy + 1):
             tile = tp.get_tile(TileKey(z=z, x=tx, y=ty))
@@ -68,12 +72,14 @@ def _terrarium_min_elevation_in_bbox(
                     continue
                 # 0.1% quantile ~ 65 pixels of a 256x256 tile; robust to a few bad pixels.
                 tmin = float(np.quantile(vals, 0.001))
+                tmax = float(np.quantile(vals, 0.999))
             except Exception:
                 continue
-            if not np.isfinite(tmin):
-                continue
-            elev_min = tmin if elev_min is None else min(elev_min, tmin)
-    return elev_min
+            if np.isfinite(tmin):
+                elev_min = tmin if elev_min is None else min(elev_min, tmin)
+            if np.isfinite(tmax):
+                elev_max = tmax if elev_max is None else max(elev_max, tmax)
+    return elev_min, elev_max
 
 
 def calculate_global_elevation_reference(
@@ -84,7 +90,7 @@ def calculate_global_elevation_reference(
     sample_points_per_zone: int = 25,  # Кількість точок для семплінгу в кожній зоні
     global_center: Optional[object] = None,  # Глобальний центр для конвертації координат
     explicit_bbox: Optional[Tuple[float, float, float, float]] = None,  # Явний bbox (north, south, east, west)
-) -> Tuple[Optional[float], float]:
+) -> Tuple[Optional[float], float, Optional[float]]:
     """
     Обчислює глобальний elevation_ref_m для всієї сітки зон.
     Це забезпечує, що всі зони використовують одну базову висоту для нормалізації.
@@ -102,7 +108,7 @@ def calculate_global_elevation_reference(
         - baseline_offset_m: Зміщення baseline (метри) для мінімальної висоти на моделі
     """
     if not zones and explicit_bbox is None:
-        return None, 0.0
+        return None, 0.0, None
     
     print(f"[INFO] Обчислення глобального elevation_ref для {len(zones) if zones else 0} зон...")
     
@@ -135,7 +141,7 @@ def calculate_global_elevation_reference(
         
         if len(all_lons) == 0 or len(all_lats) == 0:
             print("[WARN] Не вдалося отримати координати зон, використовується локальна нормалізація")
-            return None, 0.0
+            return None, 0.0, None
         
         # Обчислюємо bbox для всієї сітки
         grid_bbox_latlon = (
@@ -156,7 +162,7 @@ def calculate_global_elevation_reference(
             source_crs = bbox_utm_result[4]  # CRS з результату
         except Exception as e:
             print(f"[WARN] Не вдалося визначити source_crs: {e}, використовується локальна нормалізація")
-            return None, 0.0
+            return None, 0.0, None
     
     # Створюємо регулярну сітку точок для семплінгу висот по всій сітці
     # Використовуємо більш розріджену сітку для швидкості
@@ -230,13 +236,14 @@ def calculate_global_elevation_reference(
         print(f"[WARN] Помилка конвертації координат для семплінгу: {e}")
         import traceback
         traceback.print_exc()
-        return None, 0.0
+        return None, 0.0, None
     
-    # 1) Robust min (Terrarium): scan tiles to find true minimum in bbox (prevents seams).
+    # 1) Robust min+max (Terrarium): scan tiles to find true min/max in bbox (prevents
+    #    seams + gives the global relief range for a shared series gain).
     try:
-        tile_min = _terrarium_min_elevation_in_bbox(grid_bbox_latlon, terrarium_zoom=terrarium_zoom)
+        tile_min, tile_max = _terrarium_minmax_elevation_in_bbox(grid_bbox_latlon, terrarium_zoom=terrarium_zoom)
     except Exception:
-        tile_min = None
+        tile_min, tile_max = None, None
 
     # 2) Fallback: sample absolute heights for the grid bbox
     try:
@@ -250,7 +257,7 @@ def calculate_global_elevation_reference(
         
         if Z_abs is None or not np.any(np.isfinite(Z_abs)):
             print("[WARN] Не вдалося отримати дані висот, використовується локальна нормалізація")
-            return None, 0.0
+            return None, 0.0, None
         
         # Robust reference for stitching:
         # Terrarium can contain outlier low pixels (even after per-tile quantile), and using absolute MIN
@@ -259,7 +266,7 @@ def calculate_global_elevation_reference(
         vals = vals[np.isfinite(vals)]
         vals = vals[(vals > -5000.0) & (vals < 9000.0)]
         if vals.size == 0:
-            return None, 0.0
+            return None, 0.0, None
 
         sample_min = float(np.min(vals))
         # Use low quantile as a stable "sea-level-like" reference for the city bbox
@@ -274,10 +281,18 @@ def calculate_global_elevation_reference(
                 tile_q = float(tile_min)
 
         elevation_ref_m = float(min(sample_q, tile_q)) if tile_q is not None else float(sample_q)
-        elevation_max = float(np.nanmax(Z_abs))
+        # Global MAX for the series relief range. Prefer the robust per-tile high quantile
+        # (full DEM coverage) over the sparse point sample (which can miss real peaks);
+        # fall back to the sample high-quantile if tile scan is unavailable.
+        sample_qmax = float(np.quantile(vals, 0.99))
+        if tile_max is not None and np.isfinite(tile_max):
+            elevation_max = float(max(sample_qmax, float(tile_max)))
+        else:
+            elevation_max = float(max(sample_qmax, float(np.nanmax(Z_abs))))
         elevation_mean = float(np.nanmean(Z_abs))
-        
-        print(f"[INFO] Глобальний elevation_ref: min={elevation_ref_m:.2f}м, max={elevation_max:.2f}м, mean={elevation_mean:.2f}м")
+
+        print(f"[INFO] Глобальний elevation_ref: min={elevation_ref_m:.2f}м, max={elevation_max:.2f}м, "
+              f"range={elevation_max-elevation_ref_m:.2f}м, mean={elevation_mean:.2f}м")
         
         # baseline_offset_m: глобальний зсув (в метрах у світі) який гарантує,
         # що всі Z_rel >= 0 для всіх зон у батчі.
@@ -291,14 +306,14 @@ def calculate_global_elevation_reference(
         # We now clamp Z>=0 in `get_elevation_data()` for global mode, so we KEEP baseline at 0
         # and rely on clamping instead of shifting the whole city upward.
         baseline_offset_m = 0.0
-        
-        return elevation_ref_m, baseline_offset_m
-        
+
+        return elevation_ref_m, baseline_offset_m, elevation_max
+
     except Exception as e:
         print(f"[WARN] Помилка обчислення глобального elevation_ref: {e}")
         import traceback
         traceback.print_exc()
-        return None, 0.0
+        return None, 0.0, None
 
 
 def calculate_optimal_base_thickness(

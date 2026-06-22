@@ -247,6 +247,33 @@ def process_generation_stage(
         except Exception:
             _max_relief_m = None
             _target_relief_m = None
+        # СЕРІЯ ЗОН: ЄДИНИЙ коефіцієнт рельєфу. Якщо ендпойнт передав глобальний
+        # перепад висот (terrain_relief_range_m, світові метри для ВСІЄЇ сітки) —
+        # рахуємо ОДИН gain із цього спільного діапазону і застосовуємо однаково до
+        # кожної плитки. Так per-tile lift (що давав РІЗНИЙ gain сусіднім плиткам →
+        # «висоти перепадають») замінюється на континуальне масштабування.
+        _relief_gain = None
+        try:
+            _glob_range = float(getattr(request, "terrain_relief_range_m", 0.0) or 0.0)
+            if _glob_range > 0.5 and _target_relief_m and _target_relief_m > 0:
+                _max_amp = float(os.getenv("TERRAIN_MAX_AMP", "3.5"))
+                _noise = max(3.0, 0.04 * float(_target_relief_m))
+                if _glob_range < float(_target_relief_m):
+                    # рівнинна серія → підсилюємо (але не нижче шуму і не вище стелі)
+                    if _glob_range > _noise:
+                        _relief_gain = min(float(_target_relief_m) / _glob_range, _max_amp)
+                    else:
+                        _relief_gain = 1.0
+                elif _max_relief_m and _glob_range > float(_max_relief_m):
+                    # горбиста серія, перепад вищий за друкований кап → стискаємо
+                    _relief_gain = float(_max_relief_m) / _glob_range
+                else:
+                    _relief_gain = 1.0
+                print(f"[TERRAIN] {zone_prefix}series shared gain={_relief_gain:.3f} "
+                      f"(global range {_glob_range:.0f}m, target {_target_relief_m:.0f}m)")
+        except Exception as _gx:
+            print(f"[TERRAIN] {zone_prefix}shared-gain calc skipped: {_gx}")
+            _relief_gain = None
         terrain_mesh, terrain_provider = create_terrain_mesh(
             bbox_meters,
             z_scale=_z_scale,
@@ -259,6 +286,7 @@ def process_generation_stage(
             base_thickness=(float(request.terrain_base_thickness_mm) / float(scale_factor)) if scale_factor else 5.0,
             max_relief_m=_max_relief_m,
             target_relief_m=_target_relief_m,
+            relief_gain=_relief_gain,
             flatten_buildings=bool(getattr(request, 'flatten_buildings_on_terrain', True)),
             building_geometries=building_geometries_for_flatten,
             flatten_roads=False,

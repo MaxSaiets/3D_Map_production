@@ -298,6 +298,12 @@ def create_terrain_mesh(
     # Цільовий ВИДИМИЙ рельєф у світових метрах. Якщо реальний перепад НИЖЧИЙ —
     # підсилюємо його до цілі (рівнинні міста стають видимими). None = без підсилення.
     target_relief_m: Optional[float] = None,
+    # СЕРІЯ ЗОН: ЄДИНИЙ коефіцієнт масштабування рельєфу для ВСІХ плиток серії.
+    # Коли заданий (>0) — застосовуємо рівномірно (Z *= relief_gain на ref-відносному
+    # Z) ЗАМІСТЬ per-tile lift/compress. Це гарантує, що сусідні плитки мають ОДНАКОВЕ
+    # вертикальне перебільшення → рельєф НЕПЕРЕРВНИЙ через шов (без сходинок «висоти
+    # перепадають»). None/0 = старий per-tile режим (для одиночних мап).
+    relief_gain: Optional[float] = None,
 ) -> Tuple[Optional[trimesh.Trimesh], Optional[TerrainProvider]]:
     
     total_start = time.time()
@@ -393,7 +399,30 @@ def create_terrain_mesh(
     # z-shift), і модель надто гостра для друку. Стискаємо рельєф до друкованого
     # максимуму, ЗБЕРІГАЮЧИ ФОРМУ (лінійна компресія відносної висоти).
     # Звичайні міста (перепад < капу) лишаються без змін.
-    if max_relief_m and max_relief_m > 0:
+    # СЕРІЯ ЗОН: якщо заданий ЄДИНИЙ relief_gain — застосовуємо його рівномірно для
+    # ВСІХ плиток (континуальний рельєф через шов) і ПРОПУСКАЄМО per-tile lift/compress.
+    # Z тут вже ref-відносний (elevation_ref_m задано для серії → floor≈0 глобально),
+    # тож проста множина зберігає неперервність: однакова абс.висота E на шві дає
+    # (E-ref)*gain з обох боків. Якорим у локальному мінімумі лише як фолбек (ref=None).
+    _shared_gain = None
+    try:
+        if relief_gain is not None and float(relief_gain) > 0:
+            _shared_gain = float(relief_gain)
+    except Exception:
+        _shared_gain = None
+
+    if _shared_gain is not None:
+        try:
+            if elevation_ref_m is not None:
+                Z = Z * _shared_gain
+            else:
+                z_lo = float(np.nanmin(Z))
+                Z = z_lo + (Z - z_lo) * _shared_gain
+            print(f"[TERRAIN] Relief SHARED gain {_shared_gain:.3f} applied uniformly "
+                  f"(series continuity — same exaggeration on every tile)")
+        except Exception as _exc:
+            print(f"[TERRAIN] shared relief gain skipped: {_exc}")
+    elif max_relief_m and max_relief_m > 0:
         try:
             z_lo = float(np.nanmin(Z))
             rel = Z - z_lo
@@ -417,7 +446,7 @@ def create_terrain_mesh(
     # Працює ТІЛЬКИ коли перепад < target → справжні пагорби/гори лишаються
     # натуральними (а вище капляться компресією). Компресія і підсилення
     # взаємовиключні: target_relief_m завжди < max_relief_m (див. виклик).
-    if target_relief_m and target_relief_m > 0:
+    if _shared_gain is None and target_relief_m and target_relief_m > 0:
         try:
             Z = lift_relief_to_target(Z, float(target_relief_m))
         except Exception as _exc:
