@@ -927,12 +927,20 @@ export function SimpleControlPanel({
         {s.showHexGrid && (
           <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/80 px-4 py-2">
             <button type="button" aria-pressed={s.simpleSeriesConnectors} data-testid="series-connectors-toggle"
-              onClick={() => s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors)}
+              onClick={() => {
+                const next = !s.simpleSeriesConnectors;
+                s.setSimpleSeriesConnectors(next);
+                // Замки-ластівчин-хвіст лягають лише на КВАДРАТНІ плитки (NSEW-грані).
+                // Вмикаючи замки — переводимо сітку у квадрати, щоб вони реально працювали.
+                if (next && s.gridType !== "square") s.setGridType("square");
+              }}
               className={`flex w-full items-center justify-between rounded-[14px] border px-3 py-2 text-left transition ${s.simpleSeriesConnectors ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)]" : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.25)]"}`}>
               <span className="text-[13px] font-semibold text-[var(--text-primary)]">🔗 {t("seriesConnectors")}</span>
               {s.simpleSeriesConnectors && <Check size={16} className="text-[var(--accent-strong)]" />}
             </button>
-            {/* Підказку (seriesConnectorsHint) прибрано — компактніше; ключ лишився в i18n. */}
+            {s.simpleSeriesConnectors && s.gridType !== "square" && (
+              <p className="mt-1.5 text-[11px] leading-tight text-amber-700">{t("seriesConnectorsSquareHint")}</p>
+            )}
           </div>
         )}
 
@@ -1308,18 +1316,18 @@ export function SimpleControlPanel({
           {/* ОКРЕМА генерація ДРУКАРСЬКОГО 3MF (повна якість) — лише коли на екрані
               швидке GLB-прев'ю. Прев'ю вище = для всіх; ця кнопка віддає РЕАЛЬНИЙ
               3MF на екран. Генерація відкрита всім — ліміт лише на ЗАВАНТАЖЕННЯ. */}
-          {/* Демотовано до тихого текст-лінка: «3MF для друку» — рідковживана дія
-              (генерує реальний 3MF на екран замість швидкого GLB), тож не має
-              конкурувати з основним «Створити» та бронзовим «Замовити». */}
+          {/* «3MF для друку» — виразна обведена кнопка (власник просив виокремити),
+              а не тихий текст-лінк. Дає РЕАЛЬНИЙ друкарський 3MF на екран замість
+              швидкого GLB-прев'ю. */}
           {usesGlbPreview && (
             <button
               type="button"
               onClick={() => handleGenerate({ forPrint: true })}
               disabled={!canGenerate || isGenerating}
               data-testid="generate-print"
-              className="inline-flex w-full items-center justify-center gap-1 text-center text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--accent-strong)] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full border border-[rgba(11,92,87,0.45)] bg-[rgba(15,118,110,0.10)] px-4 py-2.5 text-[13px] font-bold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.18)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Sparkles className="h-3.5 w-3.5" /> {t("generatePrint")}
+              <Sparkles className="h-4 w-4" /> {t("generatePrint")}
             </button>
           )}
           {isGenerating && (

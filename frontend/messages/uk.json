@@ -542,7 +542,8 @@
     "trustEco": "Eco PLA",
     "trustReprint": "Гарантія 60 днів",
     "trustNoPrepay": "Без передоплати",
-    "trustShip": "Доставка Україна + ЄС"
+    "trustShip": "Доставка Україна + ЄС",
+    "seriesConnectorsSquareHint": "Замки-зʼєднувачі працюють лише з квадратною сіткою."
   },
   "mapsMeta": {
     "title": "3D-мапи міст України — обери своє місто",

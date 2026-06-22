@@ -1852,6 +1852,23 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
             status_code=403,
             detail="Підтвердьте email, щоб завантажувати моделі (перевірте пошту).",
         )
+    # СЕРІЯ/ПАННО ZIP: download_url=/api/zones/{batch}/download_all (або task_id=batch_*).
+    # _resolve_model_path знає лише .3mf/.stl → zip-архів не резолвився → 404 → «нічого
+    # не качається» (скарга власника). Тут гейтимо квоту й віддаємо zip через наявний
+    # download_all_zones (він будує архів + layout.png; 409 поки плитки готуються).
+    _dl_url = req.download_url or ""
+    _is_batch = "/download_all" in _dl_url or (req.task_id or "").startswith("batch_")
+    if _is_batch:
+        _bid = req.task_id if (req.task_id or "").startswith("batch_") else _dl_url.split("/zones/")[-1].split("/download_all")[0]
+        _res = register_download(u["uid"], u.get("email") or "", u["is_admin"], _bid or "")
+        if not _res["ok"]:
+            raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
+        add_model(u["uid"], u.get("email") or "", {
+            "task_id": _bid, "title": req.title, "city": req.city,
+            "product_type": req.product_type, "download_url": _dl_url,
+            "preview": (req.preview or "")[:200000],
+        })
+        return await download_all_zones(_bid)
     path = _resolve_model_path(req)
     if path is None:
         raise HTTPException(status_code=404, detail="Файл моделі не знайдено")

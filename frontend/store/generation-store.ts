@@ -257,7 +257,10 @@ const initialState = {
   gpxNote: null,
   selectedZones: [] as any[],
   showHexGrid: false,
-  gridType: "hexagonal" as "hexagonal" | "square" | "circle",
+  // Дефолт КВАДРАТИ: рівно тайляться у прямокутне панно + сумісні зі зʼєднувачами-
+  // замками (дефолт ON). Раніше hexagonal+connectors-on = замки мовчки не ставились
+  // (NSEW-замок не лягає на гекс). Гексагони лишаються опцією (вимикають замки).
+  gridType: "square" as "hexagonal" | "square" | "circle",
   // Більші клітини (450м) — менше, але крупніших зон, які легше обирати на телефоні
   // (раніше 300м → дрібні клітини зливались і важко тапались).
   hexSizeM: 450.0,

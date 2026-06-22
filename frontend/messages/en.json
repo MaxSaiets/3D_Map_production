@@ -542,7 +542,8 @@
     "trustEco": "Eco PLA",
     "trustReprint": "60-day guarantee",
     "trustNoPrepay": "No prepayment",
-    "trustShip": "Ships Ukraine + EU"
+    "trustShip": "Ships Ukraine + EU",
+    "seriesConnectorsSquareHint": "Connector locks work only with the square grid."
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

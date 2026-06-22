@@ -542,7 +542,8 @@
     "trustEco": "Eco PLA",
     "trustReprint": "Garantía 60 días",
     "trustNoPrepay": "Sin pago previo",
-    "trustShip": "Envío Ucrania + UE"
+    "trustShip": "Envío Ucrania + UE",
+    "seriesConnectorsSquareHint": "Los conectores funcionan solo con la cuadrícula cuadrada."
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",
