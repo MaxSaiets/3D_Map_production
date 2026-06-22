@@ -3210,6 +3210,21 @@ def run_flat_plate_pipeline(
     _flat_base_bottom_poly: Optional[BaseGeometry] = None
     _flat_base_bottom_depth_m: float = 0.0
     content_area = zone.zone_polygon_local
+    # ЗʼЄДНУВАЧ: ЧИСТИЙ БОРДЮР по краях плитки — НЕ ставимо дороги/будинки/парки у
+    # ~2мм від краю. Інакше будинки ріжуться краєм вікна у тонкі стінки-слівери, а
+    # шов стику двох плиток виглядає брудно (скарга: «на гранях нічого не робити»).
+    # База лишається на ПОВНИЙ zone_polygon_local → чистий рівний обідок під стик.
+    if map_connector and content_area is not None and not getattr(content_area, "is_empty", True):
+        try:
+            _edge_clear_m = _model_mm_to_world_m(2.0, export_scale_factor)
+            _shrunk = content_area.buffer(-_edge_clear_m).buffer(0)
+            if _shrunk is not None and not _shrunk.is_empty:
+                content_area = _shrunk
+                print("[CONNECTOR] flat: cleared 2.0mm edge margin (clean rim — no road/building slivers at seam)")
+            else:
+                print("[CONNECTOR] flat: edge-clear skipped (tile too small for 2mm margin)")
+        except Exception as _ece:
+            print(f"[CONNECTOR] flat edge-clear failed (non-fatal): {_ece}")
     keychain_layout: Optional[dict[str, BaseGeometry]] = None
     keychain_rim_mesh: Optional[trimesh.Trimesh] = None
     keychain_text_mesh: Optional[trimesh.Trimesh] = None
