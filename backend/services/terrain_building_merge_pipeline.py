@@ -94,7 +94,8 @@ def merge_terrain_and_buildings(
         )
         print(
             f"[INFO] pre-merge: building bottoms extended to Z={target_z_for_extend:.4f} "
-            f"(ensures overlap with terrain base for boolean union)"
+            f"(floor={float(terrain_mesh.bounds[0][2]):.4f} clearance={_clr:.4f}) "
+            f"(connector keeps notch band clear of buildings)"
         )
     except Exception as exc:
         print(f"[WARN] pre-merge extend_buildings failed: {exc}")
