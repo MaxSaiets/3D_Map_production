@@ -696,7 +696,18 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
   const fitCameraToObject = (object: THREE.Object3D) => {
     object.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(object);
+    // Кадруємо за КАРТАМИ (Base/Roads/…), БЕЗ шару Connector: ключі-метелики
+    // лежать ОКРЕМО під/збоку плиток і роздували габарит → модель виглядала
+    // дрібною. Фокус на самих плитках = модель велика й чітка.
+    const box = new THREE.Box3();
+    let anyMap = false;
+    object.traverse((c: any) => {
+      if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
+        box.expandByObject(c);
+        anyMap = true;
+      }
+    });
+    if (!anyMap || box.isEmpty()) box.setFromObject(object);
     if (box.isEmpty()) return;
 
     const size = box.getSize(new THREE.Vector3());
