@@ -209,6 +209,15 @@ def process_building_layer(
     # рендеряться на СВОЇЙ висоті (реальна варіація), лишаючись друкованими.
     printable_min_height_m = max((0.3 / scale_factor), 0.6) if scale_factor > 0 else 2.0
     min_building_height_m = max(requested_min_height_m, printable_min_height_m)
+    # КАП висоти будівель для СЕРІЇ-зʼЄДНУВАЧІВ: реальні висоти × множник давали
+    # хмарочоси ~30мм на 90мм-плитці (друк-крихкі тонкі вежі + «висоти дико
+    # перепадають» між плитками). Капуємо до ~15% розміру моделі (мін 6мм). Лише
+    # коли map_connector → golden/звичайний рельєф недоторкані (байт-в-байт).
+    max_building_height_m = None
+    if bool(getattr(request, "map_connector", False)) and scale_factor and scale_factor > 0:
+        _model_mm = float(getattr(request, "model_size_mm", 90.0) or 90.0)
+        _cap_mm = max(_model_mm * 0.15, 6.0)
+        max_building_height_m = _cap_mm / scale_factor
     building_embed_m = stl_extra_embed_m if not request.is_ams_mode else 0.0
     gdf_buildings_for_mesh = split_building_parts_from_parent_footprints(gdf_buildings_local)
 
@@ -224,6 +233,7 @@ def process_building_layer(
         exclusion_polygons=building_exclusion_polygons,
         min_feature_m=model_mm_to_world_m(MICRO_REGION_THRESHOLD_MM, scale_factor) if scale_factor and scale_factor > 0 else 0.0,
         scale_factor=scale_factor,
+        max_height=max_building_height_m,
     )
     meshes = [record.mesh for record in building_records if getattr(record, "mesh", None) is not None]
     # Центроїди визначних місць (локальні координати) → full_generation вилучає ці

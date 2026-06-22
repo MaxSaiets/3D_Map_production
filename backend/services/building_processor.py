@@ -46,6 +46,7 @@ def process_buildings(
     exclusion_polygons: Optional[BaseGeometry] = None,
     min_feature_m: float = 0.0,
     scale_factor: Optional[float] = None,
+    max_height: Optional[float] = None,  # КАП висоти будівлі (світові метри); None=без капу
 ) -> List[trimesh.Trimesh] | List[BuildingMeshRecord]:
     """
     Обробляє будівлі, створюючи 3D меші з екструзією
@@ -380,6 +381,11 @@ def process_buildings(
                 
                 # Отримуємо висоту будівлі
                 height = get_building_height(row, min_height) * height_multiplier
+                # КАП висоти: без капу хмарочоси × множник давали 30мм-вежі на 90мм-
+                # плитці — і друк-крихкі, і висоти «дико перепадають». Капуємо до max_height
+                # (зберігаючи відносний порядок: нижчі лишаються нижчими).
+                if max_height is not None and max_height > 0 and height > max_height:
+                    height = max_height
 
                 # Розраховуємо foundation_depth_eff заздалегідь (для використання в обох гілках)
                 foundation_depth_eff = max(float(foundation_depth), float(embed_depth), 0.1)
