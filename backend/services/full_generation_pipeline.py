@@ -1342,6 +1342,15 @@ def run_full_generation_pipeline(
                                 _cutc = max(_parts, key=lambda m: len(getattr(m, "faces", [])) if m is not None else 0)
                         except Exception:
                             pass
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        _bb = _cutc.bounds
+                        try:
+                            _nparts = len(_cutc.split(only_watertight=False))
+                        except Exception:
+                            _nparts = -1
+                        print(f"[CONNECTOR] {zone_prefix}DIAG via={_via} "
+                              f"terr_xy=[{_b0[0][0]:.0f},{_b0[0][1]:.0f}..{_b0[1][0]:.0f},{_b0[1][1]:.0f}] "
+                              f"res_xy=[{_bb[0][0]:.0f},{_bb[0][1]:.0f}..{_bb[1][0]:.0f},{_bb[1][1]:.0f}] parts={_nparts}")
                     # Blender-boolean на НЕгерметичному рельєфі лишає ВИРОДЖЕНУ
                     # геометрію (вершина/грань у origin (0,0)) → XY-bounds стрибають на
                     # ~позицію плитки (у серії ~700м) і коректний паз ХИБНО відкидався.
