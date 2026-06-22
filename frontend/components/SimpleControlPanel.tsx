@@ -59,12 +59,6 @@ function attachSeriesConnectorEdges(zones: any[], _gridType: string, _rotationDe
   }
   const adjMax = isFinite(dmin) ? dmin * 1.3 : 0;
   const az = (dx: number, dy: number) => { let a = (Math.atan2(dy, dx) * 180) / Math.PI; if (a < 0) a += 360; return Math.round(a); };
-  const owns = (i: number, j: number) => {
-    const a = cents[i], b = cents[j];
-    if (Math.abs(a.lat - b.lat) > 1e-9) return a.lat < b.lat;
-    if (Math.abs(a.lng - b.lng) > 1e-9) return a.lng < b.lng;
-    return i < j;
-  };
   // Азимути ЗОВНІШНІХ НОРМАЛЕЙ усіх граней полігону (CCW у проєкції метрів).
   // Та сама конвенція, що в беку: outward = права нормаль грані CCW = (dy,-dx).
   const allEdgeAz = (ring: number[][]): number[] => {
@@ -100,7 +94,11 @@ function attachSeriesConnectorEdges(zones: any[], _gridType: string, _rotationDe
         if (j === i || !proj[j].ok) continue;
         const dx = proj[j].x - proj[i].x, dy = proj[j].y - proj[i].y;
         if (Math.hypot(dx, dy) > adjMax) continue;
-        if (owns(i, j)) keyAz.push(az(dx, dy)); // 1 ключ на реальний шов
+        // КОЖНА модель самодостатня: ключ-метелик на КОЖНОМУ спільному шві ЦІЄЇ
+        // плитки (а не лише там, де вона «власник») — власник вимагає, щоб для
+        // кожної моделі друкувався свій повний зʼєднувач. На спільний шов тоді
+        // припадає 2 ключі (по одному з кожної плитки) — обидві деталі самодостатні.
+        keyAz.push(az(dx, dy));
       }
     }
     return {
