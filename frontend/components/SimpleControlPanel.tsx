@@ -19,6 +19,39 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 // generation-store.simpleFormat — тримаємо локально, щоб не плодити імпорти.
 type GenerationFormat = "relief3d" | "flat" | "magnet" | "panno";
 
+/** З'ЄДНУВАЧІ СЕРІЇ (кілька зон): для КВАДРАТНОЇ сітки рахує внутрішні (спільні з
+ *  обраним сусідом) грані кожної клітини (NSEW по геометрії центроїдів) і кладе
+ *  connector_edges + connector_key_edges (S/E — рівно один ключ на шов) у properties,
+ *  щоб бек поставив замок ЛИШЕ на спільних швах, а зовнішній периметр лишив чистим.
+ *  Гекс або повернута (не кратно 90°) сітка → без змін (NSEW-замок не збігся б із
+ *  гранями таких клітин). Без сусіда у напрямку — грань не отримує замка. */
+function attachSeriesConnectorEdges(zones: any[], gridType: string, rotationDeg: number): any[] {
+  if (!Array.isArray(zones) || zones.length < 2) return zones;
+  if (gridType !== "square" || Math.round(rotationDeg) % 90 !== 0) return zones;
+  const info = zones.map((z) => {
+    const ring: number[][] = z?.geometry?.coordinates?.[0] || [];
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    for (const p of ring) { const x = p[0], y = p[1]; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+    return { cx: (minx + maxx) / 2, cy: (miny + maxy) / 2, w: maxx - minx, h: maxy - miny, ok: isFinite(minx) };
+  });
+  return zones.map((z, i) => {
+    const a = info[i];
+    if (!a.ok || a.w <= 0 || a.h <= 0) return z;
+    let edges = "";
+    for (let j = 0; j < zones.length; j++) {
+      if (j === i || !info[j].ok) continue;
+      const dx = info[j].cx - a.cx, dy = info[j].cy - a.cy;
+      const tolx = a.w * 0.5, toly = a.h * 0.5;
+      if (Math.abs(dy) < toly && Math.abs(Math.abs(dx) - a.w) < tolx) edges += dx > 0 ? "E" : "W";
+      else if (Math.abs(dx) < tolx && Math.abs(Math.abs(dy) - a.h) < toly) edges += dy > 0 ? "N" : "S";
+    }
+    if (!edges) return z;
+    edges = Array.from(new Set(edges.split(""))).join("");
+    const keyEdges = edges.replace(/[NW]/g, ""); // один ключ на спільний шов (S/E)
+    return { ...z, properties: { ...(z.properties || {}), connector_edges: edges, connector_key_edges: keyEdges } };
+  });
+}
+
 /**
  * Simple, preset-first map builder shown by default.
  * Three decisions: location (featured district card or draw) → style → size → Generate.
@@ -587,8 +620,20 @@ export function SimpleControlPanel({
         const req = buildSingleMapReq(opts?.forPrint ?? false, cityBounds);
         // Клітини несуть власну геометрію → фігурний полігон single-карти НЕ потрібен.
         delete (req as any).zone_polygon_coords;
-        if (s.simpleSeriesConnectors) (req as any).map_connector = true;
-        const res = await runZoneGeneration({ selectedZones: s.selectedZones, request: req, onSeriesGenerated });
+        // З'ЄДНУВАЧІ СЕРІЇ (кілька зон): раніше тут НЕ рахувались connector_edges →
+        // бек ставить замок ЛИШЕ якщо у зони є connector_edges → у багатозонній серії
+        // зʼєднувачів НЕ було взагалі (скарга власника). Тепер рахуємо ВНУТРІШНІ
+        // (спільні з обраним сусідом) грані кожної клітини по геометрії й кладемо у
+        // properties. Лише для КВАДРАТНОЇ сітки без повороту (NSEW-замок має сенс для
+        // плиток, що стикуються гранями; гекс/поворот → грані не співпадуть → пропуск).
+        let _seriesZones = s.selectedZones;
+        if (s.simpleSeriesConnectors) {
+          (req as any).map_connector = true;
+          _seriesZones = attachSeriesConnectorEdges(
+            s.selectedZones, s.gridType, s.gridRotationDeg || 0,
+          );
+        }
+        const res = await runZoneGeneration({ selectedZones: _seriesZones, request: req, onSeriesGenerated });
         setTaskGroup(res.taskId, res.taskIds);
         setActiveTaskId(res.taskIds[0] ?? null);
         s.setShowAllZones(true);
