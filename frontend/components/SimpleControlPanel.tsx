@@ -19,37 +19,35 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 // generation-store.simpleFormat — тримаємо локально, щоб не плодити імпорти.
 type GenerationFormat = "relief3d" | "flat" | "magnet" | "panno";
 
-/** З'ЄДНУВАЧІ СЕРІЇ (кілька зон) — УНІВЕРСАЛЬНО для КВАДРАТА, ШЕСТИКУТНИКА та
- *  ПОВЕРНУТОЇ сітки. Раніше працювало лише для квадрата під 0/90° (NSEW по
- *  центроїдах) → гекс не діставав ЖОДНОГО замка, бо 4 кардинали не адресують
- *  6 граней. Тепер для кожної клітини рахуємо НАПРЯМКИ (азимути) до обраних
- *  сусідів — це і є зовнішні нормалі спільних граней — і кладемо їх у
- *  connector_edge_az; бек добирає реальну грань полігону за збігом нормалі.
- *  Ключ (1 на шов) випускає клітина-власник шва (детермінований мінімум по
- *  центроїду), її напрямок іде у connector_key_az. Сусідство визначаємо за
- *  найближчою відстанню між центроїдами (×1.3) — ловить 4 грані квадрата /
- *  6 граней гекса, відкидає діагональ (√2) і другий ряд гекса (√3). */
+/** З'ЄДНУВАЧІ СЕРІЇ — ПАЗ НА КОЖНІЙ ГРАНІ (незалежно від сусіда), КЛЮЧ лише на
+ *  фактичних швах. УНІВЕРСАЛЬНО для КВАДРАТА, ШЕСТИКУТНИКА, ПОВЕРНУТОЇ сітки.
+ *  Для кожної клітини:
+ *   • connector_edge_az = АЗИМУТИ ЗОВНІШНІХ НОРМАЛЕЙ УСІХ граней полігону → бек
+ *     ріже паз на кожній грані (готова стикуватись із будь-ким, навіть тим, кого
+ *     ще не друкували). Власник вимагав «пази на кожній грані».
+ *   • connector_key_az = напрямки до ОБРАНИХ сусідів, де ця клітина — власник шва
+ *     (детермінований мінімум по центроїду) → рівно 1 ключ-метелик на реальний
+ *     шов (а не на кожну грань — інакше купа зайвих деталей). Не-власник дістає
+ *     порожній key_az → бек (edge_dirs задано) НЕ ставить ключів. */
 function attachSeriesConnectorEdges(zones: any[], _gridType: string, _rotationDeg: number): any[] {
-  if (!Array.isArray(zones) || zones.length < 2) return zones;
-  // Центроїди у lng/lat + проєкція у метри (для коректних кутів і відстаней).
+  if (!Array.isArray(zones) || zones.length < 1) return zones;
+  const ringOf = (z: any): number[][] => z?.geometry?.coordinates?.[0] || [];
   const cents = zones.map((z) => {
-    const ring: number[][] = z?.geometry?.coordinates?.[0] || [];
+    const ring = ringOf(z);
     let sx = 0, sy = 0, n = 0;
-    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
     for (const p of ring) {
       const x = p[0], y = p[1];
       if (!isFinite(x) || !isFinite(y)) continue;
       sx += x; sy += y; n++;
-      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
     }
     return { lng: n ? sx / n : NaN, lat: n ? sy / n : NaN, ok: n >= 3 };
   });
   const okCents = cents.filter((c) => c.ok);
-  if (okCents.length < 2) return zones;
+  if (!okCents.length) return zones;
   const latMean = okCents.reduce((s, c) => s + c.lat, 0) / okCents.length;
   const cosLat = Math.max(Math.cos((latMean * Math.PI) / 180), 0.05);
   const proj = cents.map((c) => c.ok ? { x: c.lng * 111320 * cosLat, y: c.lat * 110540, ok: true } : { x: 0, y: 0, ok: false });
-  // Найближча відстань між центроїдами (крок сітки).
+  // Крок сітки (найближча відстань між центроїдами) → сусідство.
   let dmin = Infinity;
   for (let i = 0; i < proj.length; i++) {
     if (!proj[i].ok) continue;
@@ -59,30 +57,52 @@ function attachSeriesConnectorEdges(zones: any[], _gridType: string, _rotationDe
       if (d > 1 && d < dmin) dmin = d;
     }
   }
-  if (!isFinite(dmin)) return zones;
-  const adjMax = dmin * 1.3;
+  const adjMax = isFinite(dmin) ? dmin * 1.3 : 0;
   const az = (dx: number, dy: number) => { let a = (Math.atan2(dy, dx) * 180) / Math.PI; if (a < 0) a += 360; return Math.round(a); };
-  // Детермінований власник шва: клітина з меншим (lat, потім lng) центроїдом.
   const owns = (i: number, j: number) => {
     const a = cents[i], b = cents[j];
     if (Math.abs(a.lat - b.lat) > 1e-9) return a.lat < b.lat;
     if (Math.abs(a.lng - b.lng) > 1e-9) return a.lng < b.lng;
     return i < j;
   };
-  return zones.map((z, i) => {
-    if (!proj[i].ok) return z;
-    const edgeAz: number[] = [];
-    const keyAz: number[] = [];
-    for (let j = 0; j < zones.length; j++) {
-      if (j === i || !proj[j].ok) continue;
-      const dx = proj[j].x - proj[i].x, dy = proj[j].y - proj[i].y;
-      const d = Math.hypot(dx, dy);
-      if (d > adjMax) continue; // не сусід (діагональ / дальший ряд)
-      const a = az(dx, dy);
-      edgeAz.push(a);
-      if (owns(i, j)) keyAz.push(a); // 1 ключ на спільний шов
+  // Азимути ЗОВНІШНІХ НОРМАЛЕЙ усіх граней полігону (CCW у проєкції метрів).
+  // Та сама конвенція, що в беку: outward = права нормаль грані CCW = (dy,-dx).
+  const allEdgeAz = (ring: number[][]): number[] => {
+    let pts = ring
+      .map((p) => [p[0] * 111320 * cosLat, p[1] * 110540] as [number, number])
+      .filter((p) => isFinite(p[0]) && isFinite(p[1]));
+    if (pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) {
+      pts = pts.slice(0, -1);
     }
+    if (pts.length < 3) return [];
+    let area2 = 0;
+    for (let k = 0; k < pts.length; k++) {
+      const a = pts[k], b = pts[(k + 1) % pts.length];
+      area2 += a[0] * b[1] - b[0] * a[1];
+    }
+    if (area2 < 0) pts.reverse();
+    const out: number[] = [];
+    for (let k = 0; k < pts.length; k++) {
+      const a = pts[k], b = pts[(k + 1) % pts.length];
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      if (Math.hypot(dx, dy) < 1) continue; // дегенеративна грань
+      out.push(az(dy, -dx)); // зовнішня нормаль CCW-грані
+    }
+    return out;
+  };
+  return zones.map((z, i) => {
+    if (!cents[i].ok) return z;
+    const edgeAz = allEdgeAz(ringOf(z)); // ПАЗ на КОЖНІЙ грані
     if (!edgeAz.length) return z;
+    const keyAz: number[] = [];
+    if (isFinite(dmin)) {
+      for (let j = 0; j < zones.length; j++) {
+        if (j === i || !proj[j].ok) continue;
+        const dx = proj[j].x - proj[i].x, dy = proj[j].y - proj[i].y;
+        if (Math.hypot(dx, dy) > adjMax) continue;
+        if (owns(i, j)) keyAz.push(az(dx, dy)); // 1 ключ на реальний шов
+      }
+    }
     return {
       ...z,
       properties: {
