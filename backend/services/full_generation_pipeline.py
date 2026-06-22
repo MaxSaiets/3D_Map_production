@@ -1292,14 +1292,16 @@ def run_full_generation_pipeline(
                     _faces0 = len(getattr(terrain_mesh, "faces", []))
                     _cutc = None
                     _via = None
-                    # (A) manifold на герметичному рельєфі
-                    if bool(getattr(terrain_mesh, "is_volume", False)):
-                        try:
-                            _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
-                            _via = "manifold"
-                        except Exception as _mexc:
-                            print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
-                            _cutc = None
+                    # (A) manifold — ПРОБУЄМО ЗАВЖДИ (рушій manifold терпить помірну
+                    # негерметичність і ЗБЕРІГАЄ координати → drift≈0). Blender-шлях у
+                    # СЕРІЇ дрейфував на ~офсет плитки (~700м) і коректний паз хибно
+                    # відкидався — тож manifold має пріоритет навіть на не-watertight.
+                    try:
+                        _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
+                        _via = "manifold"
+                    except Exception as _mexc:
+                        print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                        _cutc = None
                     # (B) ремонт копії → manifold (без Blender)
                     if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
                         try:
