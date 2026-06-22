@@ -3904,9 +3904,17 @@ def generate_model_task(
             # dumps top cumulative-time functions so we can target real hot spots.
             _profiler = None
             if os.environ.get("PIPELINE_PROFILE", "").lower() in ("1", "true", "yes"):
-                import cProfile
-                _profiler = cProfile.Profile()
-                _profiler.enable()
+                # ПАСТКА: cProfile глобальний на потік → у СЕРІЇ (паралельні плитки в
+                # одному event-loop) друга плитка падала «Another profiling tool is
+                # already active» і ВСЯ плитка не генерувалась. Профіль не критичний —
+                # огортаємо у try, щоб НІКОЛИ не валити генерацію.
+                try:
+                    import cProfile
+                    _profiler = cProfile.Profile()
+                    _profiler.enable()
+                except Exception as _pe:
+                    print(f"[PROFILE] {zone_prefix}skipped (non-fatal): {_pe}")
+                    _profiler = None
             workflow_result = run_full_generation_pipeline(
                 task=task,
                 request=request,
@@ -3925,11 +3933,14 @@ def generate_model_task(
                 file_basename=file_basename,
             )
             if _profiler is not None:
-                import pstats, io as _io
-                _profiler.disable()
-                _s = _io.StringIO()
-                pstats.Stats(_profiler, stream=_s).sort_stats("cumulative").print_stats(30)
-                print(f"[PROFILE] {zone_prefix}Top functions by cumulative time:\n" + _s.getvalue())
+                try:
+                    import pstats, io as _io
+                    _profiler.disable()
+                    _s = _io.StringIO()
+                    pstats.Stats(_profiler, stream=_s).sort_stats("cumulative").print_stats(30)
+                    print(f"[PROFILE] {zone_prefix}Top functions by cumulative time:\n" + _s.getvalue())
+                except Exception:
+                    pass
         finally:
             gen_queue.release(_gen_weight)
         if workflow_result.terrain_only_result is not None:
