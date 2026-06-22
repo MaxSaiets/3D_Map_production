@@ -4151,12 +4151,27 @@ def run_flat_plate_pipeline(
         try:
             from services.gpx_track import TRACK_COLOR, build_gpx_track_polygon
 
+            # SNAP-TO-ROADS у ПЛОСКОМУ режимі: раніше build_gpx_track_polygon кликався
+            # БЕЗ road_lines_local → трек був сирою полілінією, що ігнорувала вулиці
+            # (рельєфний пайплайн уже передає осьові лінії й притягує до доріг).
+            # Беремо semantic_centerlines_local з road_geometry (присвоюється у канон-
+            # стейджі вище). ЗАХИСНО: будь-яка відсутність/виняток → None → стара
+            # поведінка (без снапу), тож фікс не може нічого зламати.
+            _gpx_road_lines = None
+            try:
+                _rc = getattr(road_geometry, "semantic_centerlines_local", None)  # noqa: F821
+                if _rc is not None and not getattr(_rc, "is_empty", True):
+                    _gpx_road_lines = list(_rc.geoms) if hasattr(_rc, "geoms") else [_rc]
+            except Exception:
+                _gpx_road_lines = None
+
             _gpx_poly = build_gpx_track_polygon(
                 gpx_track=request.gpx_track,
                 global_center=global_center,
                 zone_polygon_local=zone.zone_polygon_local,
                 scale_factor=scale_factor,
                 width_mm=float(getattr(request, "gpx_width_mm", 1.2) or 1.2),
+                road_lines_local=_gpx_road_lines,
             )
             if _gpx_poly is not None and keychain_layout is not None and source_bounds and target_bounds:
                 _gpx_poly = _xform(_gpx_poly)
