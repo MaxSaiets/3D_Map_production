@@ -1345,6 +1345,19 @@ def run_full_generation_pipeline(
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
+                        # Blender OBJ-раунд-тріп РЕЦЕНТРУЄ великі глобальні координати
+                        # (у серії плитка на ~сотні м від центру) → результат падає до
+                        # origin, bounds дрейфують на ~офсет, паз хибно відкидався.
+                        # manifold координати зберігає (drift≈0). Тож для blender-шляху
+                        # повертаємо результат на місце за різницею центрів XY (пази
+                        # збережені відносно, лише позиція плитки відновлюється).
+                        _c0 = ((_b0[0][0] + _b0[1][0]) / 2.0, (_b0[0][1] + _b0[1][1]) / 2.0)
+                        _c1 = ((_b1[0][0] + _b1[1][0]) / 2.0, (_b1[0][1] + _b1[1][1]) / 2.0)
+                        _dxc, _dyc = _c0[0] - _c1[0], _c0[1] - _c1[1]
+                        if _via == "blender" and (abs(_dxc) > 0.5 or abs(_dyc) > 0.5):
+                            _cutc.apply_translation([_dxc, _dyc, 0.0])
+                            _b1 = _cutc.bounds
+                            print(f"[CONNECTOR] {zone_prefix}re-aligned blender result by ({_dxc:.1f},{_dyc:.1f})")
                         _driftc = max(abs(_b1[0][i] - _b0[0][i]) for i in range(2)) + \
                                   max(abs(_b1[1][i] - _b0[1][i]) for i in range(2))
                         _changed = abs(len(_cutc.faces) - _faces0) > 0
