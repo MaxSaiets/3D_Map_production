@@ -4346,6 +4346,16 @@ def run_flat_plate_pipeline(
             except Exception as exc:
                 print(f"[KEYCHAIN] letter carve from buildings failed: {exc}")
 
+    # ЗʼЄДНУВАЧ (flat, не-keychain): будівлі теж обрізаємо до ЗМЕНШЕНОГО content_area
+    # (2мм бордюр) — інакше будинки лишались на самому краю плитки (дороги/парки вже
+    # обрізані, а будівлі йшли окремим шляхом до повної зони). Тепер чистий обідок.
+    if map_connector and not keychain_mode and gdf_buildings_local is not None:
+        try:
+            _nb = _clip_buildings_to_content(gdf_buildings_local, content_area)
+            gdf_buildings_local = _nb
+            print("[CONNECTOR] flat: buildings clipped to 2mm-inset edge (no slivers at rim)")
+        except Exception as _bce:
+            print(f"[CONNECTOR] flat building edge-clip failed (non-fatal): {_bce}")
     if keychain_mode:
         try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
         except Exception: pass
