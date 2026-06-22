@@ -945,7 +945,10 @@ def run_full_generation_pipeline(
         G_roads=source.G_roads,
         water_geoms_for_bridges=water_geoms_for_bridges,
         road_width_multiplier_effective=zone.road_width_multiplier_effective,
-        zone_polygon_local=zone.zone_polygon_local,
+        # ЗʼЄДНУВАЧ: і ДОРОГИ/парки обрізаємо до ЗМЕНШЕНОЇ зони (_preclip_zone), а не
+        # лише будівлі — інакше дороги доходять до краю і дають тонкі вертикальні
+        # «бокові лінії-стінки» на шві (скарга: 3й раз). Без конектора = повна зона.
+        zone_polygon_local=_preclip_zone,
         building_union_local=terrain_stage.building_union_local,
         merged_roads_geom_local=terrain_stage.merged_roads_geom_local,
         road_cut_mask=terrain_stage.road_cut_mask,
