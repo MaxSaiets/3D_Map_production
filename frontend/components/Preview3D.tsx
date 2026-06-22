@@ -788,33 +788,69 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         );
         const looksGlobal = spread > maxTileDim * 0.6;
 
-        if (!looksGlobal) {
-          // Legacy layout fallback (keep previous behavior)
-          // ВАЖЛИВО: bbox БЕЗ шару Connector (ключі-метелики друкуються ПІД мапою
-          // окремо → роздували габарит плитки на південь і ламали розкладку/стик).
-          // Беремо лише габарит КАРТИ (Base/Roads/Buildings/…), не ключів.
-          const mapBoxOf = (obj: THREE.Object3D): THREE.Box3 => {
-            const b = new THREE.Box3();
-            let any = false;
-            obj.traverse((c: any) => {
-              if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
-                b.expandByObject(c);
-                any = true;
-              }
-            });
-            return any && !b.isEmpty() ? b : new THREE.Box3().setFromObject(obj);
-          };
-          const zoneInfo = models.map((m) => {
-            const box = mapBoxOf(m.obj);
-            return {
-              size: box.getSize(new THREE.Vector3()),
-              center: box.getCenter(new THREE.Vector3()),
-              min: box.min.clone(),
-              model: m
-            };
+        // Габарит БЕЗ шару Connector (ключі друкуються ПІД мапою окремо → роздували
+        // габарит плитки і ламали розкладку/стик). Беремо лише КАРТУ (Base/Roads/…).
+        const mapBoxOf = (obj: THREE.Object3D): THREE.Box3 => {
+          const b = new THREE.Box3();
+          let any = false;
+          obj.traverse((c: any) => {
+            if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
+              b.expandByObject(c);
+              any = true;
+            }
           });
+          return any && !b.isEmpty() ? b : new THREE.Box3().setFromObject(obj);
+        };
+        const zoneInfo = models.map((m) => {
+          const box = mapBoxOf(m.obj);
+          return {
+            size: box.getSize(new THREE.Vector3()),
+            center: box.getCenter(new THREE.Vector3()),
+            min: box.min.clone(),
+            model: m,
+          };
+        });
+        const metaByTaskId = batchZoneMetaByTaskId || {};
 
-          const metaByTaskId = batchZoneMetaByTaskId || {};
+        // ГЕОГРАФІЧНА РОЗКЛАДКА (найточніша): кожна плитка має центроїд cx/cy (lng,lat)
+        // → ставимо за РЕАЛЬНИМИ позиціями → точна тесселяція гекса/квадрата, ключі
+        // сідають під своїми плитками (а не плавають). Раніше row/col-сітка ставила
+        // гекси «криво». Падіння на стару логіку лише якщо центроїдів немає.
+        const canUseGeo = models.length > 0 && models.every((m) => {
+          const mt = (metaByTaskId as any)[m.id];
+          return mt && Number.isFinite(mt.cx) && Number.isFinite(mt.cy);
+        });
+
+        if (canUseGeo) {
+          const cyArr = models.map((m) => Number((metaByTaskId as any)[m.id].cy));
+          const lat0 = cyArr.reduce((a, b) => a + b, 0) / cyArr.length;
+          const cosLat = Math.max(Math.cos((lat0 * Math.PI) / 180), 0.05);
+          const proj = models.map((m) => {
+            const mt = (metaByTaskId as any)[m.id];
+            return { x: Number(mt.cx) * 111320 * cosLat, y: Number(mt.cy) * 110540 };
+          });
+          const meanX = proj.reduce((a, p) => a + p.x, 0) / proj.length;
+          const meanY = proj.reduce((a, p) => a + p.y, 0) / proj.length;
+          let nn = Infinity;
+          for (let a = 0; a < proj.length; a += 1) {
+            for (let b = a + 1; b < proj.length; b += 1) {
+              const d = Math.hypot(proj[a].x - proj[b].x, proj[a].y - proj[b].y);
+              if (d > 1 && d < nn) nn = d;
+            }
+          }
+          const maxW = Math.max(...zoneInfo.map((z) => z.size.x));
+          // nn (гео-крок між сусідами) → maxW (модельна ширина плитки): сусіди стають
+          // рівно на ширину плитки → стикуються впритул. Один тайл → масштаб не потрібен.
+          const scale = (Number.isFinite(nn) && nn > 1) ? maxW / nn : 1;
+          zoneInfo.forEach((item, i) => {
+            const ox = (proj[i].x - meanX) * scale;
+            const oz = -(proj[i].y - meanY) * scale; // північ угору → -z
+            item.model.obj.position.x = ox - item.center.x;
+            item.model.obj.position.z = oz - item.center.z;
+            item.model.obj.position.y = -item.min.y;
+            item.model.obj.updateMatrixWorld(true);
+          });
+        } else if (!looksGlobal) {
           const canUseMapLayout = models.every((m) => {
             const meta = (metaByTaskId as any)[m.id];
             return meta && (meta.row != null || meta.col != null);
@@ -829,18 +865,12 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
             const maxW = Math.max(...zoneInfo.map((z) => z.size.x));
             const maxD = Math.max(...zoneInfo.map((z) => z.size.z));
             const stepX = maxW * 1.0;
-            // ГЕКСАГОНИ тесселюються рядами, що ПЕРЕКРИВАЮТЬСЯ на 25% (крок ряду
-            // = 1.5·hs = 0.75·висота), інакше між рядами зяють щілини і плитки
-            // «стоять криво». Квадрати — повний крок (стик впритул).
             const stepZ = (gridType === "hexagonal") ? maxD * 0.75 : maxD * 1.0;
 
             zoneInfo.forEach((item) => {
               const meta = (metaByTaskId as any)[item.model.id] || {};
               const r = Number(meta.row ?? 0) - minRow;
               const c = Number(meta.col ?? 0) - minCol;
-              // Зсув непарних рядів на пів-клітини — ЛИШЕ для ГЕКСАГОНАЛЬНОЇ сітки
-              // (стільникове укладання). Для КВАДРАТНОЇ цей зсув накладав плитки одна
-              // на одну по діагоналі (скарга власника). Квадрати → рядки в стовпчик.
               const xShift = (gridType === "hexagonal" && (r % 2)) ? stepX * 0.5 : 0.0;
 
               item.model.obj.position.x = c * stepX + xShift - item.center.x;
@@ -849,8 +879,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
               item.model.obj.updateMatrixWorld(true);
             });
           } else {
-            // Fallback: Simple grid layout based on index if no row/col meta
-            console.warn("Batch preview: No row/col metadata found, using fallback grid layout");
+            console.warn("Batch preview: no geo/row-col metadata, using fallback grid layout");
             const count = zoneInfo.length;
             const cols = Math.ceil(Math.sqrt(count));
             const maxW = Math.max(...zoneInfo.map((z) => z.size.x));
