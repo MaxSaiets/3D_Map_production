@@ -790,8 +790,22 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
         if (!looksGlobal) {
           // Legacy layout fallback (keep previous behavior)
+          // ВАЖЛИВО: bbox БЕЗ шару Connector (ключі-метелики друкуються ПІД мапою
+          // окремо → роздували габарит плитки на південь і ламали розкладку/стик).
+          // Беремо лише габарит КАРТИ (Base/Roads/Buildings/…), не ключів.
+          const mapBoxOf = (obj: THREE.Object3D): THREE.Box3 => {
+            const b = new THREE.Box3();
+            let any = false;
+            obj.traverse((c: any) => {
+              if (c.isMesh && !/connector/i.test(String(c.name || ""))) {
+                b.expandByObject(c);
+                any = true;
+              }
+            });
+            return any && !b.isEmpty() ? b : new THREE.Box3().setFromObject(obj);
+          };
           const zoneInfo = models.map((m) => {
-            const box = new THREE.Box3().setFromObject(m.obj);
+            const box = mapBoxOf(m.obj);
             return {
               size: box.getSize(new THREE.Vector3()),
               center: box.getCenter(new THREE.Vector3()),
@@ -815,7 +829,10 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
             const maxW = Math.max(...zoneInfo.map((z) => z.size.x));
             const maxD = Math.max(...zoneInfo.map((z) => z.size.z));
             const stepX = maxW * 1.0;
-            const stepZ = maxD * 1.0;
+            // ГЕКСАГОНИ тесселюються рядами, що ПЕРЕКРИВАЮТЬСЯ на 25% (крок ряду
+            // = 1.5·hs = 0.75·висота), інакше між рядами зяють щілини і плитки
+            // «стоять криво». Квадрати — повний крок (стик впритул).
+            const stepZ = (gridType === "hexagonal") ? maxD * 0.75 : maxD * 1.0;
 
             zoneInfo.forEach((item) => {
               const meta = (metaByTaskId as any)[item.model.id] || {};
