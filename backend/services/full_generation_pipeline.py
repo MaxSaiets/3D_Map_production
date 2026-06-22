@@ -1302,18 +1302,40 @@ def run_full_generation_pipeline(
                     except Exception as _mexc:
                         print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
                         _cutc = None
-                    # (B) ремонт копії → manifold (без Blender)
+                    # (B) РОБАСТНИЙ ремонт копії → watertight → manifold (без Blender).
+                    # Рельєф після грувів доріг/парків НЕ volume (сотні відкритих ребер
+                    # від каналів). fill_holes сам не закриває → manifold кидав «not all
+                    # volumes» і падали у Blender, який на негерметичному мешwe РУЙНУЄ
+                    # геометрію (лишав тонку Y-смужку). Тут: merge+nondegenerate+unique+
+                    # КІЛЬКА проходів fill_holes + fix_winding/fix_normals → зазвичай
+                    # робить volume. manifold зберігає координати (drift≈0).
                     if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
                         try:
+                            import trimesh.repair as _rr
                             _rep = terrain_mesh.copy()
                             _rep.merge_vertices()
                             try:
                                 _rep.update_faces(_rep.nondegenerate_faces())
+                                _rep.update_faces(_rep.unique_faces())
+                                _rep.remove_unreferenced_vertices()
                             except Exception:
                                 pass
-                            _rep.fill_holes()
-                            _rep.fix_normals()
-                            if bool(getattr(_rep, "is_volume", False)):
+                            for _ in range(3):
+                                if bool(getattr(_rep, "is_volume", False)):
+                                    break
+                                _rep.fill_holes()
+                                try:
+                                    _rr.fix_winding(_rep)
+                                except Exception:
+                                    pass
+                            try:
+                                _rep.fix_normals()
+                            except Exception:
+                                pass
+                            _isv = bool(getattr(_rep, "is_volume", False))
+                            print(f"[CONNECTOR] {zone_prefix}repair→volume={_isv} "
+                                  f"(watertight={bool(getattr(_rep,'is_watertight',False))})")
+                            if _isv:
                                 _cutc = _tmc.boolean.difference([_rep, _cutterc], engine="manifold")
                                 _via = "repair+manifold"
                         except Exception as _rexc:
@@ -1378,14 +1400,20 @@ def run_full_generation_pipeline(
                         _driftc = max(abs(_b1[0][i] - _b0[0][i]) for i in range(2)) + \
                                   max(abs(_b1[1][i] - _b0[1][i]) for i in range(2))
                         _changed = abs(len(_cutc.faces) - _faces0) > 0
-                        if _driftc < (5.0 / _sf_c) and _changed:
+                        # Захист від ЗРУЙНОВАНОГО boolean (Blender на не-volume лишав
+                        # тонку смужку): відхиляємо, якщо XY-протяжність впала >40%.
+                        _ext0 = (float(_b0[1][0] - _b0[0][0]), float(_b0[1][1] - _b0[0][1]))
+                        _ext1 = (float(_b1[1][0] - _b1[0][0]), float(_b1[1][1] - _b1[0][1]))
+                        _ext_ok = (_ext0[0] <= 1e-6 or _ext1[0] >= 0.6 * _ext0[0]) and \
+                                  (_ext0[1] <= 1e-6 or _ext1[1] >= 0.6 * _ext0[1])
+                        if _driftc < (5.0 / _sf_c) and _changed and _ext_ok:
                             terrain_mesh = _cutc
                             _notch_carved = True
                             print(f"[CONNECTOR] {zone_prefix}dovetail notch carved into relief base "
                                   f"({_via}, depth {_depth_m * _sf_c:.2f}mm, drift {_driftc:.2f})")
                         else:
                             print(f"[CONNECTOR] {zone_prefix}notch rejected (drift {_driftc:.1f}, "
-                                  f"changed={_changed}) — base kept")
+                                  f"changed={_changed}, ext_ok={_ext_ok}) — base kept")
                     else:
                         print(f"[CONNECTOR] {zone_prefix}notch boolean produced nothing — base kept")
                 else:
