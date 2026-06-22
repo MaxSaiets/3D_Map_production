@@ -850,9 +850,19 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
             }
           }
           const maxW = Math.max(...zoneInfo.map((z) => z.size.x));
-          // nn (гео-крок між сусідами) → maxW (модельна ширина плитки): сусіди стають
-          // рівно на ширину плитки → стикуються впритул. Один тайл → масштаб не потрібен.
-          const scale = (Number.isFinite(nn) && nn > 1) ? maxW / nn : 1;
+          // ТОЧНИЙ масштаб = scale_factor (мм/м), ЄДИНИЙ для конгруентних плиток. Гео-
+          // крок між сусідами × sf = реальна ширина плитки → стикуються ВПРИТУЛ (шов
+          // зникає, бо стінки сусідів збігаються). Раніше scale=maxW/nn брав rendered-
+          // ширину НАЙШИРШОЇ плитки → вужча сусідка лишала зазор («бока»/лінії на шві).
+          // Фолбек на maxW/nn лише якщо sf нема (старі дані).
+          const sfArr = models
+            .map((m) => Number((metaByTaskId as any)[m.id]?.sf))
+            .filter((v) => Number.isFinite(v) && v > 0)
+            .sort((a, b) => a - b);
+          const sfMedian = sfArr.length ? sfArr[Math.floor(sfArr.length / 2)] : 0;
+          const scale = sfMedian > 0
+            ? sfMedian
+            : ((Number.isFinite(nn) && nn > 1) ? maxW / nn : 1);
           zoneInfo.forEach((item, i) => {
             const ox = (proj[i].x - meanX) * scale;
             const oz = -(proj[i].y - meanY) * scale; // північ угору → -z

@@ -149,7 +149,7 @@ export interface RunZoneGenArgs {
 export interface RunZoneGenResult {
   taskId: string;
   taskIds: string[];
-  batchMeta: Record<string, { zoneId: string; row?: number; col?: number }>;
+  batchMeta: Record<string, { zoneId: string; row?: number; col?: number; cx?: number; cy?: number; sf?: number }>;
   zonesSorted: any[];
 }
 export async function runZoneGeneration(args: RunZoneGenArgs): Promise<RunZoneGenResult> {
@@ -187,21 +187,40 @@ export async function runZoneGeneration(args: RunZoneGenArgs): Promise<RunZoneGe
     );
   } catch { /* збереження сітки не критичне для генерації */ }
 
-  const batchMeta: Record<string, { zoneId: string; row?: number; col?: number; cx?: number; cy?: number }> = {};
+  const batchMeta: Record<string, { zoneId: string; row?: number; col?: number; cx?: number; cy?: number; sf?: number }> = {};
+  // Розмір моделі (мм) для обчислення scale_factor — точно як на беку:
+  // scale_factor = model_size_mm / max(zone_w_m, zone_h_m).
+  const _modelMm = Number(request?.model_size_mm) || 80;
   for (let i = 0; i < ids.length; i += 1) {
     const zone = zonesSorted[i];
     const zoneId = String(zone?.id || zone?.properties?.id || `zone_${i}`);
     // ГЕОГРАФІЧНИЙ ЦЕНТРОЇД клітини (lng,lat) → превʼю розкладає плитки за РЕАЛЬНИМИ
     // позиціями (точна тесселяція гекса/квадрата), а не за приблизною row/col-сіткою
     // (через яку плитки «стояли криво»).
-    let cx: number | undefined, cy: number | undefined;
+    let cx: number | undefined, cy: number | undefined, sf: number | undefined;
     const ring: number[][] = zone?.geometry?.coordinates?.[0] || [];
     if (ring.length >= 3) {
       let sx = 0, sy = 0, n = 0;
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
       for (const p of ring) {
-        if (Number.isFinite(p?.[0]) && Number.isFinite(p?.[1])) { sx += p[0]; sy += p[1]; n++; }
+        if (Number.isFinite(p?.[0]) && Number.isFinite(p?.[1])) {
+          sx += p[0]; sy += p[1]; n++;
+          if (p[0] < minLng) minLng = p[0]; if (p[0] > maxLng) maxLng = p[0];
+          if (p[1] < minLat) minLat = p[1]; if (p[1] > maxLat) maxLat = p[1];
+        }
       }
-      if (n > 0) { cx = sx / n; cy = sy / n; }
+      if (n > 0) {
+        cx = sx / n; cy = sy / n;
+        // scale_factor (мм/м) — ЄДИНИЙ геометричний масштаб для конгруентних плиток.
+        // Превʼю ставить сусідів на nn_світ × sf → точна тесселяція (гекс: усі 6
+        // сусідів рівновіддалені = flat-to-flat = nn). Замість per-tile rendered-bbox
+        // ширини (що різниться вмістом доріг → зазори/«бока»).
+        const cosLat = Math.max(Math.cos((cy * Math.PI) / 180), 0.05);
+        const wM = (maxLng - minLng) * 111320 * cosLat;
+        const hM = (maxLat - minLat) * 110540;
+        const zoneSizeM = Math.max(wM, hM, 1);
+        sf = _modelMm / zoneSizeM;
+      }
     }
     batchMeta[String(ids[i])] = {
       zoneId,
@@ -209,6 +228,7 @@ export async function runZoneGeneration(args: RunZoneGenArgs): Promise<RunZoneGe
       col: zone?.properties?.col,
       cx,
       cy,
+      sf,
     };
   }
 
