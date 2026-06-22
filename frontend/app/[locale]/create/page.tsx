@@ -745,7 +745,12 @@ export default function Home() {
                       лише у режимі сітки. z-[500] — над leaflet-панелями. */}
                   {/* МОБ: оверлей у потоці ПІД картою (не плаває), щоб НЕ накладатись
                       на тулбар сітки (лівий-верх). ДЕСКТОП: плаває у правому верху НА мапі. */}
-                  <div className="relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:top-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)]">
+                  {/* ДЕСКТОП top-right: у режимі «Одна ділянка» MapSelector малює
+                      кластер повороту (↺ 0° ↻) теж у right-2 top-2 → накладались
+                      (скарга «елементи перекривають»). У single-zone опускаємо панель
+                      нижче кластера повороту (lg:top-[60px]); у серії повороту немає
+                      → лишаємо top-2. */}
+                  <div className={`relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)] ${showHexGrid ? "lg:top-2" : "lg:top-[60px]"}`}>
                     {/* Сегмент-контрол: дві пігулки в один ряд (доступно в ОБОХ режимах). */}
                     <div className="flex items-center gap-1" role="tablist" aria-label={tc("selectionModeAria")}>
                       <button
