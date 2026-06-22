@@ -951,6 +951,17 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         // композит-група не мала підгону камери (fitCameraToObject звався лише для
         // одиночної моделі) → серія рендерилась ДРІБНОЮ в центрі канви.
         try { fitCameraToObject(group); } catch { /* камера-фіт не критичний */ }
+        try {
+          const _fb = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());
+          const _mb = new THREE.Box3();
+          let _amm = false;
+          group.traverse((c: any) => { if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) { _mb.expandByObject(c); _amm = true; } });
+          const _ms = _amm ? _mb.getSize(new THREE.Vector3()) : null;
+          const _parts: string[] = [];
+          group.traverse((c: any) => { if (c.isMesh && _parts.length < 12) _parts.push(`${c.name || "?"}|${c.userData?.part || "-"}`); });
+          // eslint-disable-next-line no-console
+          console.log("[PREVIEW-DBG] groupScale", group.scale.x.toFixed(3), "fullBox", _fb.toArray().map((v) => Math.round(v)), "mapBox", _ms ? _ms.toArray().map((v) => Math.round(v)) : "FALLBACK", "cam", [camera.position.x | 0, camera.position.y | 0, camera.position.z | 0], "parts", _parts.join(","));
+        } catch { /* debug */ }
 
         // Додаємо легкі візуальні індикатори для кожної зони (опціонально)
         // Для продуктивності не додаємо складні об'єкти, але зберігаємо інформацію
