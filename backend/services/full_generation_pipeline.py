@@ -935,6 +935,19 @@ def run_full_generation_pipeline(
 
     task.update_status("processing", 40, "Генерую дороги, воду, будівлі...")
     stage_start = time.perf_counter()
+    # ЗʼЄДНУВАЧ: і ДОРОГИ/парки обрізаємо до ЗМЕНШЕНОЇ (5мм) зони — інакше дороги
+    # доходять до краю і дають тонкі вертикальні «бокові лінії-стінки» на шві
+    # (скарга: 3й раз). Без конектора = повна зона. (_preclip_zone із terrain_stage
+    # тут НЕ в області видимості — рахуємо заново у цій функції.)
+    _content_zone = zone.zone_polygon_local
+    if (getattr(request, "map_connector", False) and zone.zone_polygon_local is not None
+            and getattr(zone, "scale_factor", 0) and zone.scale_factor > 0):
+        try:
+            _cz = zone.zone_polygon_local.buffer(-(5.0 / float(zone.scale_factor))).buffer(0)
+            if _cz is not None and not _cz.is_empty:
+                _content_zone = _cz
+        except Exception as _cze:
+            print(f"[CONNECTOR] {zone_prefix}detail content-inset failed (non-fatal): {_cze}")
     detail_layers = process_detail_layers(
         task=task,
         request=request,
@@ -945,10 +958,7 @@ def run_full_generation_pipeline(
         G_roads=source.G_roads,
         water_geoms_for_bridges=water_geoms_for_bridges,
         road_width_multiplier_effective=zone.road_width_multiplier_effective,
-        # ЗʼЄДНУВАЧ: і ДОРОГИ/парки обрізаємо до ЗМЕНШЕНОЇ зони (_preclip_zone), а не
-        # лише будівлі — інакше дороги доходять до краю і дають тонкі вертикальні
-        # «бокові лінії-стінки» на шві (скарга: 3й раз). Без конектора = повна зона.
-        zone_polygon_local=_preclip_zone,
+        zone_polygon_local=_content_zone,
         building_union_local=terrain_stage.building_union_local,
         merged_roads_geom_local=terrain_stage.merged_roads_geom_local,
         road_cut_mask=terrain_stage.road_cut_mask,
