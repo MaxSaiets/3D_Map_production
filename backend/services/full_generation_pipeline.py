@@ -663,12 +663,27 @@ def _run_terrain_stage(
     else:
         print(f"[INFO] {zone_prefix} elevation_ref_m not provided, local normalization will be used")
 
+    # ЗʼЄДНУВАЧ (рельєф): обрізаємо КОНТЕНТ (будівлі/вода) до ЗМЕНШЕНОЇ на 2мм зони,
+    # щоб на КРАЮ плитки не було будинків-стінок («бока там, де зʼєднання»). Рельєф-
+    # підложка лишається на ПОВНУ зону (zone.zone_polygon_local далі недоторкана) →
+    # чистий рівний обідок під стик. Без конектора — повна зона (golden недоторканий).
+    _preclip_zone = zone.zone_polygon_local
+    if (getattr(request, "map_connector", False) and zone.zone_polygon_local is not None
+            and getattr(zone, "scale_factor", 0) and zone.scale_factor > 0):
+        try:
+            _ins = zone.zone_polygon_local.buffer(-(2.0 / float(zone.scale_factor))).buffer(0)
+            if _ins is not None and not _ins.is_empty:
+                _preclip_zone = _ins
+                print(f"[CONNECTOR] {zone_prefix}relief: content clipped to 2mm-inset edge "
+                      f"(no building walls at tile seam)")
+        except Exception as _pce:
+            print(f"[CONNECTOR] {zone_prefix}relief preclip-inset failed (non-fatal): {_pce}")
     preclip_result = prepare_preclipped_geometry(
         gdf_buildings_local=building_geometry.gdf_buildings_local,
         building_geometries_for_flatten=building_geometry.building_geometries_for_flatten,
         gdf_water=source.gdf_water,
         global_center=global_center,
-        zone_polygon_local=zone.zone_polygon_local,
+        zone_polygon_local=_preclip_zone,
         zone_prefix=zone_prefix,
     )
 
