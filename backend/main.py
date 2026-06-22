@@ -430,6 +430,13 @@ def _compute_safe_base_thickness_mm(request: "GenerationRequest") -> float:
                 floor = 3.0
             else:
                 floor = 0.2
+            if bool(getattr(request, "map_connector", False)):
+                # ЗʼЄДНУВАЧ (плоский режим): паз-ластівчин-хвіст ріжеться у ДНІ основи,
+                # а дороги/будинки сидять ЗВЕРХУ. Якщо основа тонка — паз (глибина
+                # _cd) дістає до шарів зверху → «частинки будинків/доріг» у пазу
+                # (скарга власника). Лишаємо ≥1.5мм суцільної основи НАД пазом.
+                _cd = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+                floor = max(floor, _cd + 1.5, 3.5)
             return max(float(request.terrain_base_thickness_mm), floor)
         except Exception:
             return 1.0 if bool(getattr(request, "keychain_mode", False)) else 0.2
@@ -440,6 +447,13 @@ def _compute_safe_base_thickness_mm(request: "GenerationRequest") -> float:
             float(request.road_embed_mm),
             float(request.water_depth),
         ) + 0.5
+        if bool(getattr(request, "map_connector", False)):
+            # ЗʼЄДНУВАЧ (рельєф): паз у ДНІ підложки; будинки опускаються до дна для
+            # суцільного друку → у смузі пазу були частинки будинків. Основа має
+            # вмістити паз + запас, щоб нижня смуга лишалась ЧИСТОЮ підложкою
+            # (будинки тоді обрізаються до floor+паз, див. merge_terrain_and_buildings).
+            _cd = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            min_required_base_mm = max(min_required_base_mm, _cd + 1.0)
         return max(float(request.terrain_base_thickness_mm), float(min_required_base_mm))
     except Exception:
         try:

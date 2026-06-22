@@ -3166,11 +3166,13 @@ def run_flat_plate_pipeline(
         base_thickness_mm = max(base_thickness_mm, _mag_depth_mm + 0.8)
 
     # З'ЄДНУВАЧ-ПАЗИ: паз ріжеться у ДНО — лишаємо ≥1мм суцільного лиця над ним,
-    # тож основа мусить бути ≥ (глибина пазу + 1мм) і ≥3мм (узгоджено з flat-AMS).
+    # тож основа мусить бути ≥ (глибина пазу + 1.5мм) і ≥3.5мм — лишаємо ≥1.5мм
+    # суцільної основи НАД пазом, щоб він не дістав шари доріг/будинків зверху
+    # (скарга: частинки будинків/доріг у пазу). Раніше було +1.0/3.0 — замало.
     map_connector = bool(getattr(request, "map_connector", False)) and not keychain_mode
     if map_connector:
         _conn_depth_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
-        base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.0, 3.0)
+        base_thickness_mm = max(base_thickness_mm, _conn_depth_mm + 1.5, 3.5)
 
     # ВИДІЛЕНА БУДІВЛЯ (карта): паз 0.8мм у ВЕРХ бази + лице ≥0.6мм → база ≥1.6мм.
     map_highlight_building = bool(getattr(request, "map_highlight_building", False)) and not keychain_mode

@@ -24,7 +24,12 @@ def merge_terrain_and_buildings(
     building_meshes: Any,
     merged_building_mesh: Optional[trimesh.Trimesh] = None,
     support_meshes: Any = None,
+    bottom_clearance_m: float = 0.0,
 ) -> TerrainBuildingMergeResult:
+    # bottom_clearance_m: будинки опускаємо лише до (дно + clearance), НЕ до самого
+    # дна. Для ЗʼЄДНУВАЧІВ це лишає нижню смугу (де ріжеться паз) ЧИСТОЮ підложкою
+    # без будинків (інакше паз лишав «частинки будинків»). 0 = старе «до дна».
+    _clr = max(float(bottom_clearance_m or 0.0), 0.0)
     if terrain_mesh is None:
         return TerrainBuildingMergeResult(
             terrain_mesh=terrain_mesh,
@@ -41,7 +46,7 @@ def merge_terrain_and_buildings(
         ) or (building_meshes is not None and not isinstance(building_meshes, (list, tuple)))
         if has_buildings:
             try:
-                target_z = float(terrain_mesh.bounds[0][2])
+                target_z = float(terrain_mesh.bounds[0][2]) + _clr
                 extend_buildings_mesh_to_uniform_bottom(building_meshes, target_z=target_z)
             except Exception as exc:
                 print(f"[WARN] extend_buildings (no merged mesh) failed: {exc}")
@@ -79,7 +84,7 @@ def merge_terrain_and_buildings(
     # `union_mesh_collection` об'єднає їх в один merged solid замість
     # лишити плаваючі окремі компоненти.
     try:
-        target_z_for_extend = float(terrain_mesh.bounds[0][2])
+        target_z_for_extend = float(terrain_mesh.bounds[0][2]) + _clr
         extend_buildings_mesh_to_uniform_bottom(
             building_meshes, target_z=target_z_for_extend
         )
@@ -123,7 +128,7 @@ def merge_terrain_and_buildings(
     # building-шар більше НЕ експортується (building_meshes=None).
     if base_mesh is None:
         try:
-            target_z = float(terrain_mesh.bounds[0][2])
+            target_z = float(terrain_mesh.bounds[0][2]) + _clr
             extend_buildings_mesh_to_uniform_bottom(
                 building_meshes, target_z=target_z
             )

@@ -1233,11 +1233,20 @@ def run_full_generation_pipeline(
         )
         _log_stage("merge_terrain_buildings (preview-skip)", stage_start)
     else:
+        # ЗʼЄДНУВАЧ: будинки опускаємо лише до (дно + глибина_пазу + 0.6мм запас),
+        # а НЕ до самого дна → нижня смуга, де ріжеться паз, лишається ЧИСТОЮ
+        # підложкою без будинків (інакше у пазу «частинки будинків»). Без конектора
+        # clearance=0 → стара поведінка (будинки до дна) недоторкана.
+        _merge_bottom_clr = 0.0
+        if getattr(request, "map_connector", False) and _sf_c > 0:
+            _cd_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _merge_bottom_clr = (_cd_mm + 0.6) / _sf_c
         merge_result = merge_terrain_and_buildings(
             terrain_mesh=terrain_mesh,
             building_meshes=building_meshes,
             merged_building_mesh=union_mesh_collection(building_meshes, label="clipped_building_layer"),
             support_meshes=detail_layers.support_meshes,
+            bottom_clearance_m=_merge_bottom_clr,
         )
         _log_stage("merge_terrain_buildings", stage_start)
         if stage_snapshot_collector is not None:
