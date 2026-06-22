@@ -919,7 +919,26 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
           }
         }
 
-        // 5. Центруємо всю групу
+        // 5. Масштабуємо ВСЮ групу під камеру за габаритом КАРТ (без ключів) — ТОЧНО
+        // як одиночна модель (targetSize≈220). Без цього композит лишався у сирих
+        // мм (~160) і рендерився ДРІБНИМ. Масштаб групи рівномірний → тесселяція
+        // зберігається; ключі-метелики не враховуємо, щоб не роздути габарит.
+        const mapBox0 = new THREE.Box3();
+        let anyMapMesh = false;
+        group.traverse((c: any) => {
+          if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
+            mapBox0.expandByObject(c); anyMapMesh = true;
+          }
+        });
+        if (!anyMapMesh || mapBox0.isEmpty()) mapBox0.setFromObject(group);
+        const mapDim = Math.max(...mapBox0.getSize(new THREE.Vector3()).toArray());
+        if (Number.isFinite(mapDim) && mapDim > 0.0001) {
+          const viewScale = 220 / mapDim;
+          group.scale.setScalar(viewScale);
+          group.updateMatrixWorld(true);
+        }
+
+        // 6. Центруємо всю групу (після масштабу)
         const groupBox = new THREE.Box3().setFromObject(group);
         const gCenter = groupBox.getCenter(new THREE.Vector3());
         const gMin = groupBox.min.clone();
@@ -928,10 +947,9 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         group.position.y -= gMin.y;
         group.updateMatrixWorld(true);
 
-        // 6. Кадруємо камеру на ВСЮ серію (карти, без шару Connector). Без цього
+        // 7. Кадруємо камеру на ВСЮ серію (карти, без шару Connector). Без цього
         // композит-група не мала підгону камери (fitCameraToObject звався лише для
-        // одиночної моделі) → серія рендерилась ДРІБНОЮ в центрі канви. Тепер плитки
-        // заповнюють кадр, ключі-метелики не роздувають габарит.
+        // одиночної моделі) → серія рендерилась ДРІБНОЮ в центрі канви.
         try { fitCameraToObject(group); } catch { /* камера-фіт не критичний */ }
 
         // Додаємо легкі візуальні індикатори для кожної зони (опціонально)
