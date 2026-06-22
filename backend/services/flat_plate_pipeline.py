@@ -3216,11 +3216,11 @@ def run_flat_plate_pipeline(
     # База лишається на ПОВНИЙ zone_polygon_local → чистий рівний обідок під стик.
     if map_connector and content_area is not None and not getattr(content_area, "is_empty", True):
         try:
-            _edge_clear_m = _model_mm_to_world_m(2.0, export_scale_factor)
+            _edge_clear_m = _model_mm_to_world_m(5.0, export_scale_factor)
             _shrunk = content_area.buffer(-_edge_clear_m).buffer(0)
             if _shrunk is not None and not _shrunk.is_empty:
                 content_area = _shrunk
-                print("[CONNECTOR] flat: cleared 2.0mm edge margin (clean rim — no road/building slivers at seam)")
+                print("[CONNECTOR] flat: cleared 5.0mm edge margin (clean rim — no road/building slivers at seam)")
             else:
                 print("[CONNECTOR] flat: edge-clear skipped (tile too small for 2mm margin)")
         except Exception as _ece:

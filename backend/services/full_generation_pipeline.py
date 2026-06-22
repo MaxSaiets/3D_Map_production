@@ -671,10 +671,10 @@ def _run_terrain_stage(
     if (getattr(request, "map_connector", False) and zone.zone_polygon_local is not None
             and getattr(zone, "scale_factor", 0) and zone.scale_factor > 0):
         try:
-            _ins = zone.zone_polygon_local.buffer(-(2.0 / float(zone.scale_factor))).buffer(0)
+            _ins = zone.zone_polygon_local.buffer(-(5.0 / float(zone.scale_factor))).buffer(0)
             if _ins is not None and not _ins.is_empty:
                 _preclip_zone = _ins
-                print(f"[CONNECTOR] {zone_prefix}relief: content clipped to 2mm-inset edge "
+                print(f"[CONNECTOR] {zone_prefix}relief: content clipped to 5mm-inset edge "
                       f"(no building walls at tile seam)")
         except Exception as _pce:
             print(f"[CONNECTOR] {zone_prefix}relief preclip-inset failed (non-fatal): {_pce}")
