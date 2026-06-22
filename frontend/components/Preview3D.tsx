@@ -631,10 +631,11 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
     downloadUrl, 
     activeTaskId, 
     exportFormat, 
-    showAllZones, 
-    taskIds, 
-    taskStatuses, 
-    batchZoneMetaByTaskId, 
+    showAllZones,
+    taskIds,
+    taskStatuses,
+    batchZoneMetaByTaskId,
+    gridType,
     terrainSmoothShading,
     previewIncludeBase,
     previewIncludeRoads,
@@ -820,7 +821,10 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
               const meta = (metaByTaskId as any)[item.model.id] || {};
               const r = Number(meta.row ?? 0) - minRow;
               const c = Number(meta.col ?? 0) - minCol;
-              const xShift = (r % 2) ? stepX * 0.5 : 0.0;
+              // Зсув непарних рядів на пів-клітини — ЛИШЕ для ГЕКСАГОНАЛЬНОЇ сітки
+              // (стільникове укладання). Для КВАДРАТНОЇ цей зсув накладав плитки одна
+              // на одну по діагоналі (скарга власника). Квадрати → рядки в стовпчик.
+              const xShift = (gridType === "hexagonal" && (r % 2)) ? stepX * 0.5 : 0.0;
 
               item.model.obj.position.x = c * stepX + xShift - item.center.x;
               item.model.obj.position.z = r * stepZ - item.center.z;
