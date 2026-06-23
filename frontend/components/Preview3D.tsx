@@ -795,34 +795,41 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
           // за XZ-площею) деталі плитки. Ховаємо + тегаємо part="connector", щоб
           // mapBoxOf/масштаб/камера теж його виключали.
           try {
+            // 1) Знаходимо ОСНОВУ = меш з найбільшим bbox-обсягом (база/рельєф плитки).
+            const meshList: any[] = [];
+            m.obj.traverse((c: any) => { if (c.isMesh) meshList.push(c); });
             let baseBox: THREE.Box3 | null = null;
-            let baseArea = -1;
-            m.obj.traverse((c: any) => {
-              if (c.isMesh) {
-                const b = new THREE.Box3().setFromObject(c);
-                const s = b.getSize(new THREE.Vector3());
-                const a = s.x * s.z;
-                if (a > baseArea) { baseArea = a; baseBox = b; }
-              }
-            });
+            let baseVol = -1;
+            for (const c of meshList) {
+              const b = new THREE.Box3().setFromObject(c);
+              const s = b.getSize(new THREE.Vector3());
+              const vol = Math.max(s.x, 0.001) * Math.max(s.y, 0.001) * Math.max(s.z, 0.001);
+              if (vol > baseVol) { baseVol = vol; baseBox = b; }
+            }
             if (baseBox) {
               const bb: THREE.Box3 = baseBox;
-              m.obj.traverse((c: any) => {
-                if (!c.isMesh) return;
+              // 2) ПЛОЩИНА-FOOTPRINT = дві НАЙБІЛЬШІ осі основи (третя = висота). Так
+              // детект НЕ залежить від орієнтації (Y-up чи Z-up після лоадера/повороту).
+              const bs = bb.getSize(new THREE.Vector3());
+              const dims: Array<[string, number]> = [["x", bs.x], ["y", bs.y], ["z", bs.z]];
+              dims.sort((a, b) => b[1] - a[1]);
+              const a1 = dims[0][0] as "x" | "y" | "z";
+              const a2 = dims[1][0] as "x" | "y" | "z";
+              const ov1 = (b: THREE.Box3) => Math.max(0, Math.min((bb.max as any)[a1], (b.max as any)[a1]) - Math.max((bb.min as any)[a1], (b.min as any)[a1]));
+              const ov2 = (b: THREE.Box3) => Math.max(0, Math.min((bb.max as any)[a2], (b.max as any)[a2]) - Math.max((bb.min as any)[a2], (b.min as any)[a2]));
+              for (const c of meshList) {
                 const b = new THREE.Box3().setFromObject(c);
-                // ЧАСТКА ПЕРЕКРИТТЯ XZ-footprint цієї деталі з основою. Карта-контент
-                // (дороги/будинки/парки) лежить В МЕЖАХ основи → ratio≈1. Ключ лежить
-                // ЗБОКУ → майже не перекриває (ratio≈0), НАВІТЬ якщо bbox основи трохи
-                // більший за паддинг. Поріг 0.5 чітко розділяє → надійно для ВСІХ плиток.
-                const ix = Math.max(0, Math.min(bb.max.x, b.max.x) - Math.max(bb.min.x, b.min.x));
-                const iz = Math.max(0, Math.min(bb.max.z, b.max.z) - Math.max(bb.min.z, b.min.z));
-                const meshArea = Math.max(1e-6, (b.max.x - b.min.x) * (b.max.z - b.min.z));
-                const overlapRatio = (ix * iz) / meshArea;
-                if (overlapRatio < 0.5) {
+                const s = b.getSize(new THREE.Vector3());
+                const area = Math.max(1e-6, ((s as any)[a1]) * ((s as any)[a2]));
+                const overlap = (ov1(b) * ov2(b)) / area;
+                const verts = c.geometry?.attributes?.position?.count ?? 9999;
+                // Ключ лежить ПОЗА footprint основи (overlap≈0) І/АБО це крихітний меш
+                // (метелик ~12-24 вершин проти тисяч у карти). Будь-який сигнал → ховаємо.
+                if (overlap < 0.5 || verts < 64) {
                   c.visible = false;
                   c.userData = { ...(c.userData || {}), part: "connector" };
                 }
-              });
+              }
             }
           } catch { /* геометричний детект не критичний */ }
           // Додатково — за назвою/userData (коли теги збереглися, напр. GLB).
