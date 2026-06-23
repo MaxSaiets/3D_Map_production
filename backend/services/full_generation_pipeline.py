@@ -1041,10 +1041,18 @@ def run_full_generation_pipeline(
     water_mesh = detail_layers.water_mesh
     parks_mesh = detail_layers.parks_mesh
 
-    # СЕРІЯ (зʼєднувач): робимо КРАЙ плитки чистим — підняте покриття (дороги/вода/
-    # парки) на краю опускаємо ВРІВЕНЬ з рельєфом, щоб торці зрізу не стирчали як
-    # стінки на шві. Контент доходить до краю, але без вертикальних торців-плавників.
-    if bool(getattr(request, "map_connector", False)):
+    # СЕРІЯ: робимо КРАЙ плитки чистим — підняте покриття (дороги/вода/парки) на
+    # краю опускаємо ВРІВЕНЬ з рельєфом, щоб торці зрізу не стирчали як стінки на шві.
+    # Контент доходить до краю, але без вертикальних торців-плавників.
+    # ВАЖЛИВО: тригер = БУДЬ-ЯКА плитка серії (elevation_ref_m задано — як у preserve_z),
+    # а НЕ лише коли увімкнено зʼєднувачі. Власник часто генерує серію БЕЗ пазів →
+    # раніше flush не запускався → саме там і стирчали «стінки на краях». Одиночна
+    # мапа (ref=None, без конектора) — поведінка незмінна, golden недоторканий.
+    _flush_series_edges = (
+        bool(getattr(request, "map_connector", False))
+        or getattr(request, "elevation_ref_m", None) is not None
+    )
+    if _flush_series_edges:
         _flush_raised_content_at_tile_edge(
             [road_mesh, water_mesh, parks_mesh],
             terrain_provider=terrain_stage.terrain_provider,
