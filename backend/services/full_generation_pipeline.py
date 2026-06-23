@@ -663,21 +663,12 @@ def _run_terrain_stage(
     else:
         print(f"[INFO] {zone_prefix} elevation_ref_m not provided, local normalization will be used")
 
-    # ЗʼЄДНУВАЧ (рельєф): обрізаємо КОНТЕНТ (будівлі/вода) до ЗМЕНШЕНОЇ на 2мм зони,
-    # щоб на КРАЮ плитки не було будинків-стінок («бока там, де зʼєднання»). Рельєф-
-    # підложка лишається на ПОВНУ зону (zone.zone_polygon_local далі недоторкана) →
-    # чистий рівний обідок під стик. Без конектора — повна зона (golden недоторканий).
+    # КОНТЕНТ (будівлі/вода) обрізаємо до ПОВНОЇ зони плитки (як рельєф-підложку) —
+    # будинки доходять до самого краю, НЕ зрізаються всередину. (Раніше тут був 5мм-
+    # інсет «щоб не було стінок на шві», але він РІЗАВ будинки біля країв → погано.
+    # Чистий край тепер робить edge-flush для доріг/води/парків, а будинки лишаємо
+    # цілими до межі.)
     _preclip_zone = zone.zone_polygon_local
-    if (getattr(request, "map_connector", False) and zone.zone_polygon_local is not None
-            and getattr(zone, "scale_factor", 0) and zone.scale_factor > 0):
-        try:
-            _ins = zone.zone_polygon_local.buffer(-(5.0 / float(zone.scale_factor))).buffer(0)
-            if _ins is not None and not _ins.is_empty:
-                _preclip_zone = _ins
-                print(f"[CONNECTOR] {zone_prefix}relief: content clipped to 5mm-inset edge "
-                      f"(no building walls at tile seam)")
-        except Exception as _pce:
-            print(f"[CONNECTOR] {zone_prefix}relief preclip-inset failed (non-fatal): {_pce}")
     preclip_result = prepare_preclipped_geometry(
         gdf_buildings_local=building_geometry.gdf_buildings_local,
         building_geometries_for_flatten=building_geometry.building_geometries_for_flatten,
@@ -996,19 +987,10 @@ def run_full_generation_pipeline(
 
     task.update_status("processing", 40, "Генерую дороги, воду, будівлі...")
     stage_start = time.perf_counter()
-    # ЗʼЄДНУВАЧ: і ДОРОГИ/парки обрізаємо до ЗМЕНШЕНОЇ (5мм) зони — інакше дороги
-    # доходять до краю і дають тонкі вертикальні «бокові лінії-стінки» на шві
-    # (скарга: 3й раз). Без конектора = повна зона. (_preclip_zone із terrain_stage
-    # тут НЕ в області видимості — рахуємо заново у цій функції.)
+    # ДОРОГИ/парки теж обрізаємо до ПОВНОЇ зони (доходять до краю). Тонкі торці-стінки
+    # на краю прибирає edge-flush (опускає верх до рельєфу в кільці біля межі), а не
+    # інсет — щоб контент НЕ зникав біля країв.
     _content_zone = zone.zone_polygon_local
-    if (getattr(request, "map_connector", False) and zone.zone_polygon_local is not None
-            and getattr(zone, "scale_factor", 0) and zone.scale_factor > 0):
-        try:
-            _cz = zone.zone_polygon_local.buffer(-(5.0 / float(zone.scale_factor))).buffer(0)
-            if _cz is not None and not _cz.is_empty:
-                _content_zone = _cz
-        except Exception as _cze:
-            print(f"[CONNECTOR] {zone_prefix}detail content-inset failed (non-fatal): {_cze}")
     detail_layers = process_detail_layers(
         task=task,
         request=request,
