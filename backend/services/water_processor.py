@@ -10,7 +10,7 @@ from typing import Optional
 from services.terrain_provider import TerrainProvider
 from services.global_center import GlobalCenter
 from services.detail_layer_utils import model_mm_to_world_m
-from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid
+from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid, extrude_polygon_quality
 
 
 def process_water(
@@ -211,7 +211,9 @@ def process_water_surface(
                 # РІВНОМІРНА тріангуляція з внутрішніми точками (Delaunay по сітці):
                 # нормальна к-сть вершин + рівні трикутники замість «віяла з однієї
                 # точки» (краще лягає на рельєф). Fallback на uniform/earcut.
-                mesh = extrude_polygon_grid(poly, height=float(thickness_m), target_edge_len_m=4.0)
+                mesh = extrude_polygon_quality(poly, height=float(thickness_m), target_edge_len_m=4.0)
+                if mesh is None:
+                    mesh = extrude_polygon_grid(poly, height=float(thickness_m), target_edge_len_m=4.0)
                 if mesh is None:
                     mesh = extrude_polygon_uniform(poly, height=float(thickness_m), densify_max_m=2.0)
                 if mesh is None:
@@ -376,7 +378,9 @@ def create_water_depression(
     """
     try:
         # РІВНОМІРНА тріангуляція з внутрішніми точками (без «fan from one point»).
-        mesh = extrude_polygon_grid(polygon, height=float(depth), target_edge_len_m=4.0)
+        mesh = extrude_polygon_quality(polygon, height=float(depth), target_edge_len_m=4.0)
+        if mesh is None:
+            mesh = extrude_polygon_grid(polygon, height=float(depth), target_edge_len_m=4.0)
         if mesh is None:
             mesh = extrude_polygon_uniform(polygon, height=float(depth), densify_max_m=2.0)
         if mesh is None:

@@ -21,7 +21,7 @@ from services.terrain_provider import TerrainProvider
 from services.global_center import GlobalCenter
 from services.geometry_context import clean_geometry, clip_geometry, to_local_geodataframe_if_needed, to_local_geometry_if_needed
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM, model_mm_to_world_m
-from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid
+from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid, extrude_polygon_quality
 from services.processing_results import GreenAreaProcessingResult
 
 
@@ -665,6 +665,9 @@ def _create_high_res_mesh(poly: Polygon, height_m: float, target_edge_len_m: flo
         # ПОГАНО лягають на рельєф при драпіруванні). extrude_polygon_grid поважає
         # дірки/угнутість, будує бічні стінки → watertight (перевірено). Fallback на
         # uniform лише якщо grid не вдався.
+        mesh = extrude_polygon_quality(poly, height=float(height_m), target_edge_len_m=max(float(target_edge_len_m), 1.0))
+        if mesh is not None and len(mesh.vertices) > 0:
+            return mesh
         mesh = extrude_polygon_grid(poly, height=float(height_m), target_edge_len_m=max(float(target_edge_len_m), 1.0))
         if mesh is not None and len(mesh.vertices) > 0:
             return mesh

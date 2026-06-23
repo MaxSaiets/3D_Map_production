@@ -20,7 +20,7 @@ from services.global_center import GlobalCenter
 from services.building_supports import union_mesh_collection
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM, MIN_ROAD_WIDTH_MODEL_MM, model_mm_to_world_m
 from services.geometry_context import clean_geometry, looks_like_projected_meters, make_to_local_transformer, to_local_geometry_if_needed
-from services.mesh_triangulation import extrude_polygon_grid, extrude_polygon_uniform, refine_mesh_long_edges
+from services.mesh_triangulation import extrude_polygon_grid, extrude_polygon_uniform, extrude_polygon_quality, refine_mesh_long_edges
 from services.mesh_quality import improve_mesh_for_3d_printing, validate_mesh_for_3d_printing
 from services.processing_results import RoadProcessingResult
 from scipy.spatial import cKDTree
@@ -541,7 +541,9 @@ def create_road_surface_cap(
         # centroid-фільтр бо мережа доріг — складний полігон) → нормальна к-сть точок
         # і рівні трикутники, що ДОБРЕ лягають на рельєф, замість «віяла з однієї
         # точки». Fallback на uniform/earcut.
-        mesh = extrude_polygon_grid(polygon, height=1.0, target_edge_len_m=3.0, fast_filter=True)
+        mesh = extrude_polygon_quality(polygon, height=1.0, target_edge_len_m=3.0)
+        if mesh is None:
+            mesh = extrude_polygon_grid(polygon, height=1.0, target_edge_len_m=3.0, fast_filter=True)
         if mesh is None:
             mesh = extrude_polygon_uniform(polygon, height=1.0, densify_max_m=2.0)
         if mesh is None:

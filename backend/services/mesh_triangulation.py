@@ -259,6 +259,110 @@ def extrude_polygon_grid(
         return extrude_polygon_uniform(polygon, height=float(height), densify_max_m=fallback_step)
 
 
+def extrude_polygon_quality(
+    polygon: Polygon,
+    height: float,
+    target_edge_len_m: float = 4.0,
+) -> Optional[trimesh.Trimesh]:
+    """ЯКІСНА constrained-Delaunay тріангуляція (бібліотека `triangle`, прапори
+    'pq30a{area}'): ТОЧНИЙ контур (PSLG-сегменти) + рівні внутрішні точки (Steiner,
+    обмеження площі) + БЕЗ слівери/голок (q30 = мін. кут 30°). Поважає дірки.
+
+    Замінює і «віяло з однієї точки» (uniform/earcut), і РВАНИЙ контур + слівери
+    (scipy-Delaunay grid). Дає рівний меш, що чисто лягає на рельєф. Watertight +
+    winding-consistent (перевірено). Fallback на uniform/grid при будь-якій помилці.
+    """
+    if polygon is None or polygon.is_empty:
+        return None
+    try:
+        import triangle as _triangle
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)
+        if polygon is None or polygon.is_empty:
+            return None
+        try:
+            cl = polygon.simplify(1e-6, preserve_topology=True)
+            if cl is not None and not cl.is_empty and cl.is_valid:
+                polygon = cl
+        except Exception:
+            pass
+        # Підтримка MultiPolygon (напр. мережа доріг = багато роз'єднаних кластерів):
+        # збираємо PSLG з УСІХ частин (зовнішні контури + дірки) в один виклик triangle.
+        parts = list(polygon.geoms) if getattr(polygon, "geom_type", "") == "MultiPolygon" else [polygon]
+        verts = []
+        segs = []
+        holes = []
+        for part in parts:
+            if part is None or part.is_empty or part.geom_type != "Polygon":
+                continue
+            ext = list(part.exterior.coords)[:-1]
+            if len(ext) < 3:
+                continue
+            base_e = len(verts)
+            segs += [(base_e + i, base_e + (i + 1) % len(ext)) for i in range(len(ext))]
+            verts += ext
+            for ring in part.interiors:
+                rc = list(ring.coords)[:-1]
+                if len(rc) < 3:
+                    continue
+                base = len(verts)
+                segs += [(base + i, base + (i + 1) % len(rc)) for i in range(len(rc))]
+                verts += rc
+                try:
+                    holes.append(list(Polygon(ring).representative_point().coords)[0])
+                except Exception:
+                    pass
+        if len(verts) < 3 or len(segs) < 3:
+            return None
+        A = {"vertices": np.array(verts, dtype=float), "segments": np.array(segs, dtype=int)}
+        if holes:
+            A["holes"] = np.array(holes, dtype=float)
+        max_area = (max(float(target_edge_len_m), 1.0) ** 2) / 2.0
+        B = _triangle.triangulate(A, "pq30a%.4f" % max_area)
+        v2 = B.get("vertices")
+        f2 = B.get("triangles")
+        if v2 is None or f2 is None or len(f2) == 0:
+            return extrude_polygon_grid(polygon, height=float(height), target_edge_len_m=target_edge_len_m, fast_filter=True)
+        v2 = np.asarray(v2, dtype=float)
+        faces_2d = np.asarray(f2, dtype=int)
+        n = len(v2)
+        vertices_3d = np.vstack((
+            np.column_stack((v2, np.zeros(n))),
+            np.column_stack((v2, np.full(n, float(height)))),
+        ))
+        f_bottom = np.fliplr(faces_2d)
+        f_top = faces_2d + n
+        edge_count = {}
+        for face in faces_2d:
+            for i in range(3):
+                e = tuple(sorted((int(face[i]), int(face[(i + 1) % 3]))))
+                edge_count[e] = edge_count.get(e, 0) + 1
+        side_faces = []
+        for face in faces_2d:
+            for i in range(3):
+                a = int(face[i]); b = int(face[(i + 1) % 3])
+                if edge_count.get(tuple(sorted((a, b))), 0) != 1:
+                    continue
+                side_faces.append([a, b, a + n])
+                side_faces.append([b, b + n, a + n])
+        all_faces = np.vstack([
+            f_bottom, f_top,
+            np.array(side_faces, dtype=int) if side_faces else np.empty((0, 3), dtype=int),
+        ])
+        mesh = trimesh.Trimesh(vertices=vertices_3d, faces=all_faces, process=False)
+        mesh.remove_unreferenced_vertices()
+        mesh.fix_normals()
+        return mesh
+    except Exception:
+        try:
+            return extrude_polygon_grid(polygon, height=float(height), target_edge_len_m=target_edge_len_m, fast_filter=True)
+        except Exception:
+            try:
+                return extrude_polygon_uniform(polygon, height=float(height), densify_max_m=min(float(target_edge_len_m or 4.0), 4.0))
+            except Exception:
+                return None
+
+
 def refine_mesh_long_edges(
     mesh: Optional[trimesh.Trimesh],
     max_edge_m: float,
