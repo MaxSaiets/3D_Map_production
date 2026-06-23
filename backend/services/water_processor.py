@@ -200,11 +200,27 @@ def process_water_surface(
         geom = geom.simplify(0.2, preserve_topology=True)
 
         polys = [geom] if isinstance(geom, Polygon) else list(getattr(geom, "geoms", []))
-        
+
+        # Мін. друкований розмір води (залежить від масштабу): дрібні калюжі/слівери
+        # ВИДАЛЯЄМО — вони повертаються до рельєфу (найближча поверхня). Інакше вони
+        # лишають тонкі стінки/голки на березі й не друкуються чисто.
+        min_world_m = model_mm_to_world_m(0.8, scale_factor) if (scale_factor and scale_factor > 0) else 6.0
+        min_world_m = max(float(min_world_m), 1.0)
+
         for poly in polys:
             if not isinstance(poly, Polygon) or poly.is_empty:
                 continue
-            if poly.area < 1.0: # Skip tiny puddles
+            try:
+                pminx, pminy, pmaxx, pmaxy = poly.bounds
+                pmin_dim = min(float(pmaxx - pminx), float(pmaxy - pminy))
+                parea = float(poly.area)
+                pper = float(getattr(poly, "length", 0.0)) or 1.0
+                pequiv = (2.0 * parea) / pper  # еквівалентна ширина смуги
+            except Exception:
+                pmin_dim = parea = pequiv = 0.0
+            if parea < max(min_world_m * min_world_m, 1.0):
+                continue
+            if pmin_dim < min_world_m or pequiv < min_world_m * 0.6:
                 continue
             
             try:
@@ -268,10 +284,22 @@ def process_water_surface(
                         # Fallback: припускаємо що carving був успішний
                         original_ground = depressed_ground + float(depth_meters) if depth_meters else depressed_ground + 2.0
 
-                    # 3. Calculate Water Level per vertex
-                    # Вода 0.2мм нижче рельєфу (дні западини) для розпізнавання
+                    # 3. Calculate Water Level — РІВНА площина на всю водойму.
+                    # БУЛО: base_water_level = depressed_ground (per-vertex) → поверхня води
+                    # драпірувалась по рельєфу дна → ГОРБИСТА вода (видно на фото).
+                    # СТАЛО: один рівень на водойму (перцентиль берегової лінії), щоб
+                    # площина була пласка; clamp нижче підіймає її до дна лише біля берега,
+                    # тож вода чисто стикається з сушею без слівери-стінок.
                     offset_below_m = -0.0002 if (surface_offset_m == 0.0 and depth_meters and depth_meters < 0.1) else surface_offset_m
-                    base_water_level = depressed_ground + offset_below_m
+                    level_src = original_ground if original_ground is not None else depressed_ground
+                    try:
+                        flat_level = float(np.percentile(np.asarray(level_src, dtype=float), 70))
+                    except Exception:
+                        try:
+                            flat_level = float(np.min(level_src))
+                        except Exception:
+                            flat_level = 0.0
+                    base_water_level = flat_level + offset_below_m
                     
                     # 4. Apply Noise (only to top surface)
                     # IMPORTANT: Use GLOBAL (UTM) coordinates for noise so adjacent zones stitch seamlessly.
