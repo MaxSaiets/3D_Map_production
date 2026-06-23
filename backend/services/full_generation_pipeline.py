@@ -801,8 +801,9 @@ def _flush_raised_content_at_tile_edge(
             v = np.asarray(mesh.vertices, dtype=float)
             xy = v[:, :2]
             try:
-                tz = np.asarray(terrain_provider.sample(xy), dtype=float)
-            except Exception:
+                tz = np.asarray(terrain_provider.get_heights_for_points(xy), dtype=float)
+            except Exception as _sx:
+                print(f"[CONNECTOR] {zone_prefix}edge-flush: terrain sample failed: {_sx}")
                 continue
             if _cxy is not None:
                 inside = np.asarray(_cxy(inner, xy[:, 0], xy[:, 1]), dtype=bool)
