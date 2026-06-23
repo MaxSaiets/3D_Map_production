@@ -834,12 +834,6 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
           } catch { /* геометричний детект не критичний */ }
           // Додатково — за назвою/userData (коли теги збереглися, напр. GLB).
           m.obj.traverse((c: any) => { if (isConnectorMesh(c)) c.visible = false; });
-          try {
-            const _dbg: any[] = [];
-            m.obj.traverse((c: any) => { if (c.isMesh) _dbg.push({ n: String(c.name || "?").slice(0, 12), v: c.geometry?.attributes?.position?.count ?? -1, vis: c.visible, p: (c.userData && c.userData.part) || "-" }); });
-            // eslint-disable-next-line no-console
-            console.log("[HIDE-v3] tile meshes:", JSON.stringify(_dbg));
-          } catch { /* dbg */ }
           group.add(m.obj);
         }
 
