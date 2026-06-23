@@ -10,7 +10,7 @@ from typing import Optional
 from services.terrain_provider import TerrainProvider
 from services.global_center import GlobalCenter
 from services.detail_layer_utils import model_mm_to_world_m
-from services.mesh_triangulation import extrude_polygon_uniform
+from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid
 
 
 def process_water(
@@ -208,8 +208,12 @@ def process_water_surface(
                 continue
             
             try:
-                # Використовуємо extrude_polygon_uniform для рівномірної тріангуляції
-                mesh = extrude_polygon_uniform(poly, height=float(thickness_m), densify_max_m=2.0)
+                # РІВНОМІРНА тріангуляція з внутрішніми точками (Delaunay по сітці):
+                # нормальна к-сть вершин + рівні трикутники замість «віяла з однієї
+                # точки» (краще лягає на рельєф). Fallback на uniform/earcut.
+                mesh = extrude_polygon_grid(poly, height=float(thickness_m), target_edge_len_m=4.0)
+                if mesh is None:
+                    mesh = extrude_polygon_uniform(poly, height=float(thickness_m), densify_max_m=2.0)
                 if mesh is None:
                     mesh = trimesh.creation.extrude_polygon(poly, height=float(thickness_m))
                 
@@ -371,8 +375,10 @@ def create_water_depression(
         Trimesh об'єкт западини
     """
     try:
-        # Використовуємо extrude_polygon_uniform для рівномірної тріангуляції (без "fan from one point")
-        mesh = extrude_polygon_uniform(polygon, height=float(depth), densify_max_m=2.0)
+        # РІВНОМІРНА тріангуляція з внутрішніми точками (без «fan from one point»).
+        mesh = extrude_polygon_grid(polygon, height=float(depth), target_edge_len_m=4.0)
+        if mesh is None:
+            mesh = extrude_polygon_uniform(polygon, height=float(depth), densify_max_m=2.0)
         if mesh is None:
             mesh = trimesh.creation.extrude_polygon(polygon, height=float(depth))
         mesh.apply_translation([0, 0, -float(depth)])

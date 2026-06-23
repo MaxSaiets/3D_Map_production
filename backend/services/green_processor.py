@@ -21,7 +21,7 @@ from services.terrain_provider import TerrainProvider
 from services.global_center import GlobalCenter
 from services.geometry_context import clean_geometry, clip_geometry, to_local_geodataframe_if_needed, to_local_geometry_if_needed
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM, model_mm_to_world_m
-from services.mesh_triangulation import extrude_polygon_uniform
+from services.mesh_triangulation import extrude_polygon_uniform, extrude_polygon_grid
 from services.processing_results import GreenAreaProcessingResult
 
 
@@ -659,10 +659,15 @@ def _create_high_res_mesh(poly: Polygon, height_m: float, target_edge_len_m: flo
         if target_edge_len_m <= 0:
             target_edge_len_m = 3.0
 
-        # Use extrude_polygon_uniform for all polygons.
-        # It handles both simple polygons (densified boundary for uniform triangulation)
-        # and holed polygons (no densification to avoid non-manifold edges), and
-        # cleans near-duplicate vertices before extruding.
+        # РІВНОМІРНА тріангуляція з ВНУТРІШНІМИ точками (Delaunay по сітці): дає
+        # нормальну к-сть вершин і рівні трикутники замість «віяла з однієї точки»
+        # (extrude_polygon_uniform давав лише контурні точки → довгі слівери, що ще й
+        # ПОГАНО лягають на рельєф при драпіруванні). extrude_polygon_grid поважає
+        # дірки/угнутість, будує бічні стінки → watertight (перевірено). Fallback на
+        # uniform лише якщо grid не вдався.
+        mesh = extrude_polygon_grid(poly, height=float(height_m), target_edge_len_m=max(float(target_edge_len_m), 1.0))
+        if mesh is not None and len(mesh.vertices) > 0:
+            return mesh
         mesh = extrude_polygon_uniform(poly, height=float(height_m), densify_max_m=target_edge_len_m)
         if mesh is not None and len(mesh.vertices) > 0:
             return mesh
@@ -1165,21 +1170,31 @@ def process_green_areas(
     if not meshes:
         return GreenAreaProcessingResult(mesh=None, processed_polygons=processed_polygons) if return_result else None
 
-    # За запитом: абсолютне плоске дно для всіх зелених зон
-    # Знаходимо найнижчу точку (global_min_z) серед УСІХ парків
-    global_min_z = min(float(np.min(m.vertices[:, 2])) for m in meshes)
-    flattened_count = 0
-    
-    for m in meshes:
-        if hasattr(m, '_bottom_mask'):
-            # Опускаємо всі нижні вершини до цієї єдиної найнижчої точки
-            m.vertices[m._bottom_mask, 2] = global_min_z
-            flattened_count += np.sum(m._bottom_mask)
-            
-    print(f"[INFO] Parks absolute global bottom flattened: {flattened_count} vertices > Z={global_min_z:.4f}")
+    # FIX (2026-05-15): прибрано "absolute global flat bottom".
+    # Раніше всі нижні вершини парків опускались до global_min_z (найнижчий
+    # парк у наборі), через що боковини парків ставали 10-16м "стіною" на
+    # нерівному рельєфі — у слайсері Bambu виглядало як "wall texture".
+    # Тепер нижня грань парку йде по terrain (ground - embed_m), боковини
+    # маленькі (= embed_m + height_m ≈ 0.8м).
 
     try:
         combined_mesh = trimesh.util.concatenate(meshes)
+        # Прибираємо вивернуті бокові трикутники з directed boundary edges:
+        if combined_mesh is not None and len(combined_mesh.faces) > 0:
+            try:
+                combined_mesh.update_faces(combined_mesh.unique_faces())
+                combined_mesh.merge_vertices()
+                combined_mesh.remove_unreferenced_vertices()
+            except Exception:
+                pass
+            try:
+                trimesh.repair.fix_winding(combined_mesh)
+            except Exception:
+                pass
+            try:
+                combined_mesh.fix_normals()
+            except Exception:
+                pass
         if return_result:
             return GreenAreaProcessingResult(mesh=combined_mesh, processed_polygons=processed_polygons)
         return combined_mesh
