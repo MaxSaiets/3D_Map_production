@@ -807,14 +807,18 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
             });
             if (baseBox) {
               const bb: THREE.Box3 = baseBox;
-              const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
-              const hx = (bb.max.x - bb.min.x) / 2, hz = (bb.max.z - bb.min.z) / 2;
               m.obj.traverse((c: any) => {
                 if (!c.isMesh) return;
                 const b = new THREE.Box3().setFromObject(c);
-                const mcx = (b.min.x + b.max.x) / 2, mcz = (b.min.z + b.max.z) / 2;
-                // центр деталі помітно ПОЗА footprint основи → це ключ-конектор
-                if (Math.abs(mcx - cx) > hx * 1.08 || Math.abs(mcz - cz) > hz * 1.08) {
+                // ЧАСТКА ПЕРЕКРИТТЯ XZ-footprint цієї деталі з основою. Карта-контент
+                // (дороги/будинки/парки) лежить В МЕЖАХ основи → ratio≈1. Ключ лежить
+                // ЗБОКУ → майже не перекриває (ratio≈0), НАВІТЬ якщо bbox основи трохи
+                // більший за паддинг. Поріг 0.5 чітко розділяє → надійно для ВСІХ плиток.
+                const ix = Math.max(0, Math.min(bb.max.x, b.max.x) - Math.max(bb.min.x, b.min.x));
+                const iz = Math.max(0, Math.min(bb.max.z, b.max.z) - Math.max(bb.min.z, b.min.z));
+                const meshArea = Math.max(1e-6, (b.max.x - b.min.x) * (b.max.z - b.min.z));
+                const overlapRatio = (ix * iz) / meshArea;
+                if (overlapRatio < 0.5) {
                   c.visible = false;
                   c.userData = { ...(c.userData || {}), part: "connector" };
                 }
