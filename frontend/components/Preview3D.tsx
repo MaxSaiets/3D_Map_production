@@ -75,8 +75,8 @@ async function loadColoredPartsFromBlobs(blobs: Partial<Record<"base" | "roads" 
     roads: 0x141414,
     buildings: 0xc4c4c4,
     water: 0x2f6fd6,
-    parks: 0x3f7a3f,
-    green: 0x3f7a3f,
+    parks: 0x5c965c,
+    green: 0x5c965c,
     highlight: 0xce2626, // виділений будинок — ЧЕРВОНИЙ (як друк)
     frame: 0x191919,     // преміум-рамка — ЧОРНА
     connector: 0xf2f2f2, // з'єднувач — колір основи
@@ -171,8 +171,8 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           buildings: 0xc4c4c4, // будинки — світло-СІРІ у ПРЕВʼЮ (видно на білій основі; друк = білі)
           roads: 0x141414,   // дороги — ЧОРНІ
           water: 0x2f6fd6,   // вода — СИНЯ
-          parks: 0x3f7a3f,   // парки/зелень — темніший зелений
-          green: 0x3f7a3f,
+          parks: 0x5c965c,   // парки/зелень — темніший зелений
+          green: 0x5c965c,
           poi: 0xf0a030,
           track: 0xdc2626, // GPX-маршрут — ЧЕРВОНИЙ, чітко виділяється на превʼю
           marker: 0xc44110, // маркер «особливе місце» — теракотовий
@@ -314,8 +314,8 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           buildings: { color: 0xc4c4c4, part: "buildings" }, // будинки — світло-СІРІ у ПРЕВʼЮ (видно на білій основі; друк = білі)
           roads: { color: 0x141414, part: "roads" },     // дороги — ЧОРНІ
           water: { color: 0x2f6fd6, part: "water" },     // вода — СИНЯ
-          parks: { color: 0x3f7a3f, part: "parks" },     // парки — темніший зелений
-          green: { color: 0x3f7a3f, part: "parks" },
+          parks: { color: 0x5c965c, part: "parks" },     // парки — темніший зелений
+          green: { color: 0x5c965c, part: "parks" },
           poi: { color: 0xf0a030, part: "poi" },
           track: { color: 0xdc2626, part: "track" },     // GPX — червоний
           marker: { color: 0xc44110, part: "marker" },   // маркер «особливе місце» — теракотовий
