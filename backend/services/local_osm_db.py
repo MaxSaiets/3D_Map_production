@@ -27,6 +27,11 @@ _QUERY_CACHE: dict[str, dict] = {}
 _QUERY_CACHE_MAX = 100
 _CONN_LOCK = threading.Lock()
 _CONN = None
+# Кеш колонок таблиці buildings (схема НЕ змінюється в межах процесу). Раніше КОЖЕН
+# запит будівель робив `PRAGMA table_info('buildings')` ПОЗА _CONN_LOCK → на спільному
+# read-only конекті це гонилось з ін. потоком і час від часу псувало результат запиту
+# (повертало 0 будівель при наявних даних). Рахуємо ОДИН раз під локом.
+_BUILDING_COLS: Optional[str] = None
 
 
 def db_path() -> Optional[Path]:
@@ -95,16 +100,22 @@ def get_gdf(
     # Динамічно додаємо height/landmark до buildings, ЯКЩО вони є у схемі (DB
     # зібрано НОВИМ build_osm_db). СТАРИЙ DB (лише id,levels,wkt) працює без змін —
     # defensive: PRAGMA-перевірка наявності колонок, інакше fallback на levels.
-    _bcols = "id, levels, wkt"
-    try:
-        _avail = {r[1] for r in conn.execute("PRAGMA table_info('buildings')").fetchall()}
-        _extra = [c for c in ("height", "landmark") if c in _avail]
-        if _extra:
-            _bcols = "id, levels, " + ", ".join(_extra) + ", wkt"
-    except Exception:
-        pass
+    # Колонки buildings рахуємо ОДИН раз і кешуємо (під локом) — без per-query PRAGMA,
+    # який раніше гонився на спільному конекті й давав «0 будівель».
+    global _BUILDING_COLS
+    if _BUILDING_COLS is None:
+        _bcols = "id, levels, wkt"
+        try:
+            with _CONN_LOCK:
+                _avail = {r[1] for r in conn.execute("PRAGMA table_info('buildings')").fetchall()}
+            _extra = [c for c in ("height", "landmark") if c in _avail]
+            if _extra:
+                _bcols = "id, levels, " + ", ".join(_extra) + ", wkt"
+        except Exception:
+            pass
+        _BUILDING_COLS = _bcols
     cols_map = {
-        "buildings": _bcols,
+        "buildings": _BUILDING_COLS,
         "roads":     "id, highway, bridge, wkt",
         "bridges":   "id, highway, wkt",
         "water":     "id, type, wkt",

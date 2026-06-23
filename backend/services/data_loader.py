@@ -553,6 +553,25 @@ def fetch_city_data(
             local_water = get_gdf("water", target_north, target_south, target_east, target_west, target_crs=target_crs)
             local_bridges = get_gdf("bridges", target_north, target_south, target_east, target_west, target_crs=target_crs)
             local_roads = get_roads_graph(target_north, target_south, target_east, target_west, target_crs=target_crs)
+            # ПАСТКА: DuckDB зрідка повертає 0 БУДІВЕЛЬ для забудованого bbox (роади
+            # норм) — транзієнтний збій запиту на СПІЛЬНОМУ конекті (race з ін. потоком/
+            # warmup). Доведено: повторний той самий запит дає тисячі будівель. У СЕРІЇ
+            # це робило плитку «без будинків» (лише дороги). RETRY будівель, якщо порожньо
+            # а дороги є (built-up → будинки мусять бути). 2 спроби з мікропаузою.
+            try:
+                _roads_ok = local_roads is not None and hasattr(local_roads, "edges") and len(list(local_roads.edges())) > 0
+                _bld_empty = local_buildings is None or getattr(local_buildings, "empty", True)
+                _att = 0
+                while _bld_empty and _roads_ok and _att < 2:
+                    _att += 1
+                    print(f"[LOCAL OSM DB] buildings=0 але дороги є — повтор запиту будівель (спроба {_att})", flush=True)
+                    time.sleep(0.15)
+                    local_buildings = get_gdf("buildings", target_north, target_south, target_east, target_west, target_crs=target_crs)
+                    _bld_empty = local_buildings is None or getattr(local_buildings, "empty", True)
+                    if not _bld_empty:
+                        print(f"[LOCAL OSM DB] повтор відновив {len(local_buildings)} будівель", flush=True)
+            except Exception as _rexc:
+                print(f"[LOCAL OSM DB] buildings-retry skipped: {_rexc}", flush=True)
             print(f"[LOCAL OSM DB] Loaded in {(time.time()-t_local)*1000:.0f}ms: "
                   f"buildings={len(local_buildings) if local_buildings is not None else 0}, "
                   f"water={len(local_water) if local_water is not None else 0}, "
