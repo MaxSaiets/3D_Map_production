@@ -785,12 +785,44 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
         const group = new THREE.Group();
         for (const m of models) {
-          // ЗʼЄДНУВАЧ-КЛЮЧ — окрема «метелик»-пластина, що ЛЕЖИТЬ ПОЗА контуром плитки
-          // (друкується деталлю збоку). У СКЛАДЕНОМУ превʼю ці пластини висять біля
-          // швів як «обривчасті стінки/зуби». Ховаємо їх у композиті (друкований
-          // файл/3MF ключ зберігає). Габарит/масштаб уже виключають конектор окремо.
-          m.obj.traverse((c: any) => { if (isConnectorMesh(c)) c.visible = false; });
           m.obj.updateMatrixWorld(true);
+          // ЗʼЄДНУВАЧ-КЛЮЧ — окрема «метелик»-пластина, що ЛЕЖИТЬ ПОЗА контуром плитки
+          // (бек кладе її збоку/знизу для друку). У СКЛАДЕНОМУ превʼю ці пластини
+          // висять біля швів як «обривчасті стінки/зуби». Ховаємо їх. НАДІЙНО,
+          // НЕЗАЛЕЖНО ВІД ІМЕНІ: 3MF-лоадер (превʼю серії вантажить .3mf, бо GLB для
+          // плитки нема) втрачає теги шарів → isConnectorMesh за назвою НЕ ловить.
+          // Тому ловимо ГЕОМЕТРИЧНО: ключ лежить ПОЗА footprint основної (найбільшої
+          // за XZ-площею) деталі плитки. Ховаємо + тегаємо part="connector", щоб
+          // mapBoxOf/масштаб/камера теж його виключали.
+          try {
+            let baseBox: THREE.Box3 | null = null;
+            let baseArea = -1;
+            m.obj.traverse((c: any) => {
+              if (c.isMesh) {
+                const b = new THREE.Box3().setFromObject(c);
+                const s = b.getSize(new THREE.Vector3());
+                const a = s.x * s.z;
+                if (a > baseArea) { baseArea = a; baseBox = b; }
+              }
+            });
+            if (baseBox) {
+              const bb: THREE.Box3 = baseBox;
+              const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+              const hx = (bb.max.x - bb.min.x) / 2, hz = (bb.max.z - bb.min.z) / 2;
+              m.obj.traverse((c: any) => {
+                if (!c.isMesh) return;
+                const b = new THREE.Box3().setFromObject(c);
+                const mcx = (b.min.x + b.max.x) / 2, mcz = (b.min.z + b.max.z) / 2;
+                // центр деталі помітно ПОЗА footprint основи → це ключ-конектор
+                if (Math.abs(mcx - cx) > hx * 1.08 || Math.abs(mcz - cz) > hz * 1.08) {
+                  c.visible = false;
+                  c.userData = { ...(c.userData || {}), part: "connector" };
+                }
+              });
+            }
+          } catch { /* геометричний детект не критичний */ }
+          // Додатково — за назвою/userData (коли теги збереглися, напр. GLB).
+          m.obj.traverse((c: any) => { if (isConnectorMesh(c)) c.visible = false; });
           group.add(m.obj);
         }
 
