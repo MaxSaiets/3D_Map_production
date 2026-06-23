@@ -447,24 +447,17 @@ function CameraController() {
     // Налаштовуємо камеру для кращого перегляду
     const timer = setTimeout(() => {
       if (cameraRef.current) {
-        // Для batch preview (всі зони) - більша відстань для кращого огляду
-        if (showAllZones && taskIds && taskIds.length > 1) {
-          const zoneCount = taskIds.length;
-          // Відстань залежить від кількості зон (більше зон = більша відстань)
-          const baseDistance = 300;
-          const distanceMultiplier = Math.max(1, Math.sqrt(zoneCount) * 0.5);
-          const distance = baseDistance * distanceMultiplier;
-          cameraRef.current.position.set(distance, distance * 0.8, distance);
-          cameraRef.current.lookAt(0, 0, 0);
-// removed-debug-log
-        } else {
-          // Для однієї зони - стандартна відстань
+        // СЕРІЯ (showAllZones): НЕ виставляємо фіксовану відстань — нею раніше камера
+        // зависала далеко (хардкод 300×) і композит виглядав дрібним, бо це
+        // перебивало точний fitCameraToObject(group) (який кадрує за РЕАЛЬНИМ
+        // габаритом карт). Лишаємо камеру на відкуп batch-fit (фолбек — стартова
+        // позиція PerspectiveCamera). Для ОДНІЄЇ зони лишаємо стандартну відстань.
+        if (!(showAllZones && taskIds && taskIds.length > 1)) {
           const distance = 300;
           cameraRef.current.position.set(distance, distance, distance);
           cameraRef.current.lookAt(0, 0, 0);
-// removed-debug-log
+          cameraRef.current.updateProjectionMatrix();
         }
-        cameraRef.current.updateProjectionMatrix();
       }
     }, 100);
 
