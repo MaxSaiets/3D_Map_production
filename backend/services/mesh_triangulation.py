@@ -103,6 +103,7 @@ def extrude_polygon_grid(
     height: float,
     target_edge_len_m: float = 6.0,
     max_grid_points: int = 12000,
+    fast_filter: bool = False,
 ) -> Optional[trimesh.Trimesh]:
     if polygon is None or polygon.is_empty:
         return None
@@ -186,18 +187,31 @@ def extrude_polygon_grid(
 
             tri = Delaunay(vertices_2d)
             final_faces = []
-            for face in tri.simplices:
-                tri_poly = Polygon(vertices_2d[face])
-                if tri_poly.is_empty or tri_poly.area <= 1e-9:
-                    continue
-                try:
-                    outside_area = float(tri_poly.difference(polygon).area)
-                    inside_area = float(tri_poly.intersection(polygon).area)
-                except Exception:
-                    continue
-                tol_area = max(float(tri_poly.area) * 1e-6, 1e-8)
-                if inside_area > 0.0 and outside_area <= tol_area:
-                    final_faces.append(face)
+            if fast_filter:
+                # ШВИДКИЙ фільтр для СКЛАДНИХ полігонів (мережа доріг): тримаємо
+                # трикутник, якщо його ЦЕНТРОЇД у полігоні (prepared.contains —
+                # мікросекунди), замість дорогих per-triangle difference/intersection
+                # (на тисячах трикутників складного полігону = десятки секунд).
+                from shapely.prepared import prep as _prep
+                _pp = _prep(polygon)
+                cents = vertices_2d[tri.simplices].mean(axis=1)
+                for fi, face in enumerate(tri.simplices):
+                    cx, cy = float(cents[fi][0]), float(cents[fi][1])
+                    if _pp.contains(Point(cx, cy)):
+                        final_faces.append(face)
+            else:
+                for face in tri.simplices:
+                    tri_poly = Polygon(vertices_2d[face])
+                    if tri_poly.is_empty or tri_poly.area <= 1e-9:
+                        continue
+                    try:
+                        outside_area = float(tri_poly.difference(polygon).area)
+                        inside_area = float(tri_poly.intersection(polygon).area)
+                    except Exception:
+                        continue
+                    tol_area = max(float(tri_poly.area) * 1e-6, 1e-8)
+                    if inside_area > 0.0 and outside_area <= tol_area:
+                        final_faces.append(face)
             if not final_faces:
                 return extrude_polygon_uniform(polygon, height=float(height), densify_max_m=min(step_m, 4.0))
             faces_2d = np.array(final_faces, dtype=int)

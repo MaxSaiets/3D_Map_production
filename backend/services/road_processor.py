@@ -537,7 +537,13 @@ def create_road_surface_cap(
         if polygon.is_empty:
             return None
 
-        mesh = extrude_polygon_uniform(polygon, height=1.0, densify_max_m=2.0)
+        # РІВНОМІРНА тріангуляція з внутрішніми точками (Delaunay-сітка, ШВИДКИЙ
+        # centroid-фільтр бо мережа доріг — складний полігон) → нормальна к-сть точок
+        # і рівні трикутники, що ДОБРЕ лягають на рельєф, замість «віяла з однієї
+        # точки». Fallback на uniform/earcut.
+        mesh = extrude_polygon_grid(polygon, height=1.0, target_edge_len_m=3.0, fast_filter=True)
+        if mesh is None:
+            mesh = extrude_polygon_uniform(polygon, height=1.0, densify_max_m=2.0)
         if mesh is None:
             mesh = trimesh.creation.extrude_polygon(polygon, height=1.0)
         if mesh is None or len(mesh.vertices) == 0:
