@@ -785,6 +785,11 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
         const group = new THREE.Group();
         for (const m of models) {
+          // ЗʼЄДНУВАЧ-КЛЮЧ — окрема «метелик»-пластина, що ЛЕЖИТЬ ПОЗА контуром плитки
+          // (друкується деталлю збоку). У СКЛАДЕНОМУ превʼю ці пластини висять біля
+          // швів як «обривчасті стінки/зуби». Ховаємо їх у композиті (друкований
+          // файл/3MF ключ зберігає). Габарит/масштаб уже виключають конектор окремо.
+          m.obj.traverse((c: any) => { if (isConnectorMesh(c)) c.visible = false; });
           m.obj.updateMatrixWorld(true);
           group.add(m.obj);
         }
@@ -831,6 +836,14 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         });
         const metaByTaskId = batchZoneMetaByTaskId || {};
 
+        // СПІЛЬНА ПІДЛОГА для всієї серії: коли бек зберігає абсолютну Z (preserve_z
+        // для серії з elevation_ref), плитки мають РІЗНИЙ нижній край відповідно до
+        // спільного baseline рельєфу. Якщо обнуляти КОЖНУ по власному min.y — це знову
+        // розвалює baseline (сходинка/злам на шві). Тому опускаємо ВСЮ групу на ОДНЕ
+        // спільне глобальне min.y → відносні висоти збережено → рельєф НЕПЕРЕРВНИЙ
+        // через шов. (Якщо плитки й так на одній підлозі — це тотожно старій поведінці.)
+        const sharedFloorY = Math.min(...zoneInfo.map((z) => z.min.y));
+
         // ГЕОГРАФІЧНА РОЗКЛАДКА (найточніша): кожна плитка має центроїд cx/cy (lng,lat)
         // → ставимо за РЕАЛЬНИМИ позиціями → точна тесселяція гекса/квадрата, ключі
         // сідають під своїми плитками (а не плавають). Раніше row/col-сітка ставила
@@ -876,7 +889,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
             const oz = -(proj[i].y - meanY) * scale; // північ угору → -z
             item.model.obj.position.x = ox - item.center.x;
             item.model.obj.position.z = oz - item.center.z;
-            item.model.obj.position.y = -item.min.y;
+            item.model.obj.position.y = -sharedFloorY;
             item.model.obj.updateMatrixWorld(true);
           });
         } else if (!looksGlobal) {
@@ -904,7 +917,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
               item.model.obj.position.x = c * stepX + xShift - item.center.x;
               item.model.obj.position.z = r * stepZ - item.center.z;
-              item.model.obj.position.y = -item.min.y;
+              item.model.obj.position.y = -sharedFloorY;
               item.model.obj.updateMatrixWorld(true);
             });
           } else {
@@ -921,7 +934,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
 
               item.model.obj.position.x = c * (maxW + padding) - item.center.x;
               item.model.obj.position.z = r * (maxD + padding) - item.center.z;
-              item.model.obj.position.y = -item.min.y;
+              item.model.obj.position.y = -sharedFloorY;
               item.model.obj.updateMatrixWorld(true);
             });
           }

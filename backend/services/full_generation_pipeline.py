@@ -1653,6 +1653,14 @@ def run_full_generation_pipeline(
 
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
+    # СЕРІЯ ЗОН: коли задано глобальний elevation_ref (серія з generate-zones) —
+    # зберігаємо АБСОЛЮТНУ висоту Z (preserve_z) у кожній плитці, інакше експортер
+    # обнуляє кожну плитку по власному min-Z (model_exporter ~1189/1822) → спільний
+    # baseline рельєфу (який вже спечено у меш) ВТРАЧАЄТЬСЯ → сусіди стають на різні
+    # висоти (сходинка/злам на шві у композит-превʼю). Одиночні мапи (ref=None) —
+    # стара поведінка (обнулення на 0), golden недоторканий. XY НЕ чіпаємо (превʼю
+    # розкладає плитки за метаданими; preserve_xy зламав би друк — плитка поза столом).
+    _series_preserve_z = bool(getattr(request, "elevation_ref_m", None) is not None)
     export_result = export_generation_outputs(
         task=task,
         request=request,
@@ -1663,6 +1671,7 @@ def run_full_generation_pipeline(
         building_meshes=building_meshes,
         water_mesh=water_mesh,
         parks_mesh=parks_mesh,
+        preserve_z=_series_preserve_z,
         extra_mesh_items=(
             ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
             + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
