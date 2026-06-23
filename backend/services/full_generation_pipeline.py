@@ -758,6 +758,66 @@ def _run_terrain_stage(
     )
 
 
+def _flush_raised_content_at_tile_edge(
+    meshes,
+    *,
+    terrain_provider,
+    zone_polygon_local,
+    scale_factor,
+    edge_mm: float = 2.5,
+    zone_prefix: str = "",
+):
+    """СЕРІЯ: підняте покриття (дороги/вода/парки) сидить на ~0.6–1.3мм ВИЩЕ рельєфу.
+    Коли його ріже по краю плитки — торець зрізу стирчить угору над рельєфом = «стінки/
+    зубці» на шві (річка — найгірша). Тут ОПУСКАЄМО верх контенту до поверхні рельєфу
+    у тонкому кільці (~edge_mm) біля межі зони: контент ДОХОДИТЬ до краю, але ВРІВЕНЬ
+    (без торців-стінок). Внутрішня (піднята) частина не чіпається. Не критично —
+    при будь-якій помилці лишаємо меш як є.
+    """
+    try:
+        import numpy as np
+        if terrain_provider is None or zone_polygon_local is None:
+            return
+        if not scale_factor or float(scale_factor) <= 0:
+            return
+        edge_world = float(edge_mm) / float(scale_factor)
+        inner = zone_polygon_local.buffer(-edge_world).buffer(0)
+        if inner is None or inner.is_empty:
+            return
+        drop_world = 0.3 / float(scale_factor)  # верх контенту трохи НИЖЧЕ рельєфу на краю → без z-fight і без торця
+        _cxy = None
+        try:
+            from shapely import contains_xy as _cxy  # shapely 2.x — векторизовано
+        except Exception:
+            _cxy = None
+        inner_prep = None
+        if _cxy is None:
+            from shapely.prepared import prep as _prep
+            from shapely.geometry import Point as _Pt
+            inner_prep = _prep(inner)
+        for mesh in meshes:
+            if mesh is None or not hasattr(mesh, "vertices") or len(mesh.vertices) == 0:
+                continue
+            v = np.asarray(mesh.vertices, dtype=float)
+            xy = v[:, :2]
+            try:
+                tz = np.asarray(terrain_provider.sample(xy), dtype=float)
+            except Exception:
+                continue
+            if _cxy is not None:
+                inside = np.asarray(_cxy(inner, xy[:, 0], xy[:, 1]), dtype=bool)
+            else:
+                inside = np.array([inner_prep.contains(_Pt(float(x), float(y))) for x, y in xy], dtype=bool)
+            # near = у кільці біля межі; above = верхні вершини що стирчать над рельєфом
+            sel = (~inside) & (v[:, 2] > tz) & np.isfinite(tz)
+            if np.any(sel):
+                v[sel, 2] = tz[sel] - drop_world
+                mesh.vertices = v
+                print(f"[CONNECTOR] {zone_prefix}edge-flush: опущено {int(np.sum(sel))} вершин контенту до рельєфу на краю плитки")
+    except Exception as _exc:
+        print(f"[CONNECTOR] {zone_prefix}edge-flush skipped (non-fatal): {_exc}")
+
+
 def run_full_generation_pipeline(
     *,
     task: Any,
@@ -997,6 +1057,19 @@ def run_full_generation_pipeline(
     building_meshes = detail_layers.building_meshes
     water_mesh = detail_layers.water_mesh
     parks_mesh = detail_layers.parks_mesh
+
+    # СЕРІЯ (зʼєднувач): робимо КРАЙ плитки чистим — підняте покриття (дороги/вода/
+    # парки) на краю опускаємо ВРІВЕНЬ з рельєфом, щоб торці зрізу не стирчали як
+    # стінки на шві. Контент доходить до краю, але без вертикальних торців-плавників.
+    if bool(getattr(request, "map_connector", False)):
+        _flush_raised_content_at_tile_edge(
+            [road_mesh, water_mesh, parks_mesh],
+            terrain_provider=terrain_stage.terrain_provider,
+            zone_polygon_local=zone.zone_polygon_local,
+            scale_factor=zone.scale_factor,
+            edge_mm=2.5,
+            zone_prefix=zone_prefix,
+        )
 
     stage_start = time.perf_counter()
     postprocess_result = postprocess_generated_meshes(
