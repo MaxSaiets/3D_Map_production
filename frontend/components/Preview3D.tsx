@@ -389,6 +389,21 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
   });
 }
 
+// Чи є меш частиною ЗʼЄДНУВАЧА (ключа-метелика). Перевіряємо НАДІЙНО: userData.part
+// (ставить GLB-лоадер), УВЕСЬ ланцюг предків за назвою, і назви матеріалів — бо у
+// композиті ключ може бути на рівні node-обгортки (GLTFLoader кладе імʼя на node,
+// а не на сам Mesh) → перевірки лише c.name/c.parent.name його пропускали і ключі
+// (що лежать ДАЛЕКО від карт) роздували габарит → серія рендерилась дрібною.
+function isConnectorMesh(c: any): boolean {
+  if (!c || !c.isMesh) return false;
+  if (c.userData?.part === "connector") return true;
+  let o: any = c;
+  while (o) { if (/connector/i.test(String(o.name || ""))) return true; o = o.parent; }
+  const mats = Array.isArray(c.material) ? c.material : [c.material];
+  if (mats.some((m: any) => /connector/i.test(String(m?.name || "")))) return true;
+  return false;
+}
+
 async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
   let glbError: unknown = null;
   try {
@@ -702,7 +717,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
     const box = new THREE.Box3();
     let anyMap = false;
     object.traverse((c: any) => {
-      if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
+      if (c.isMesh && !isConnectorMesh(c)) {
         box.expandByObject(c);
         anyMap = true;
       }
@@ -805,7 +820,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
           const b = new THREE.Box3();
           let any = false;
           obj.traverse((c: any) => {
-            if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
+            if (c.isMesh && !isConnectorMesh(c)) {
               b.expandByObject(c);
               any = true;
             }
@@ -926,7 +941,7 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         const mapBox0 = new THREE.Box3();
         let anyMapMesh = false;
         group.traverse((c: any) => {
-          if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) {
+          if (c.isMesh && !isConnectorMesh(c)) {
             mapBox0.expandByObject(c); anyMapMesh = true;
           }
         });
@@ -951,17 +966,6 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
         // композит-група не мала підгону камери (fitCameraToObject звався лише для
         // одиночної моделі) → серія рендерилась ДРІБНОЮ в центрі канви.
         try { fitCameraToObject(group); } catch { /* камера-фіт не критичний */ }
-        try {
-          const _fb = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());
-          const _mb = new THREE.Box3();
-          let _amm = false;
-          group.traverse((c: any) => { if (c.isMesh && c.userData?.part !== "connector" && !/connector/i.test(`${c.name || ""} ${c.parent?.name || ""}`)) { _mb.expandByObject(c); _amm = true; } });
-          const _ms = _amm ? _mb.getSize(new THREE.Vector3()) : null;
-          const _parts: string[] = [];
-          group.traverse((c: any) => { if (c.isMesh && _parts.length < 12) _parts.push(`${c.name || "?"}|${c.userData?.part || "-"}`); });
-          // eslint-disable-next-line no-console
-          console.log("[PREVIEW-DBG] groupScale", group.scale.x.toFixed(3), "fullBox", _fb.toArray().map((v) => Math.round(v)), "mapBox", _ms ? _ms.toArray().map((v) => Math.round(v)) : "FALLBACK", "cam", [camera.position.x | 0, camera.position.y | 0, camera.position.z | 0], "parts", _parts.join(","));
-        } catch { /* debug */ }
 
         // Додаємо легкі візуальні індикатори для кожної зони (опціонально)
         // Для продуктивності не додаємо складні об'єкти, але зберігаємо інформацію
