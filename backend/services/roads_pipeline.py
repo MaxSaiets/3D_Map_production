@@ -35,15 +35,21 @@ def _rebuild_road_mesh_from_mask(
     cap_thickness_m = max(float(road_height_m) + float(road_embed_m), 0.001)
     for poly in _iter_polygons(road_polygons):
         try:
+            # КРИТИЧНО (фікс «дороги по пизді на рельєфі»): НЕ класти дорогу ВРІВЕНЬ
+            # з поверхнею рельєфу. top_z_offset=0 робив верх дороги КОМПЛАНАРНИМ із
+            # рельєфом → на горбистому рельєфі (де дорога тесельована по 3м, а рельєф
+            # дрібно) поверхні майже збігаються → Z-FIGHT (чорний шум у слайсері).
+            # Піднімаємо верх дороги на невеликий ФІКСОВАНИЙ зазор у МОДЕЛІ-мм
+            # (0.4мм) над рельєфом — гарантована вертикальна сепарація прибирає
+            # z-fight, дорога лишається чітко видимою чорною лінією. На пласкому
+            # режимі (flat_plate) інший пайплайн — це його не чіпає.
+            _sep_m = (0.4 / float(scale_factor)) if scale_factor and scale_factor > 0 else 0.0
             mesh = create_road_surface_cap(
                 poly,
                 terrain_provider,
                 scale_factor=float(scale_factor),
-                # Keep the road insert flush with the terrain surface.
-                # Physical road thickness is still preserved by cap_thickness_m,
-                # but the visible top should not float above the relief.
-                top_z_offset=0.0,
-                cap_thickness_m=float(cap_thickness_m),
+                top_z_offset=_sep_m,
+                cap_thickness_m=float(cap_thickness_m) + _sep_m,
             )
         except Exception:
             mesh = None
