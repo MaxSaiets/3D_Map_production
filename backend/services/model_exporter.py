@@ -1745,11 +1745,6 @@ def _prepare_preview_glb_parts_fast(
 ) -> Dict[str, trimesh.Trimesh]:
     valid_items: Dict[str, trimesh.Trimesh] = {}
     for name, mesh in mesh_items:
-        # Ключі-зʼєднувачі (метелики) НЕ йдуть у GLB-превʼю: це друкарська деталь, що
-        # лежить рядком ПІД картою й виглядала як «зубці/стінки» біля пазів на швах.
-        # Виключаємо ще на вході → вони не впливають і на bbox/масштаб превʼю. Друк (3MF) їх лишає.
-        if str(name).lower().startswith("connector"):
-            continue
         tm = _to_preview_trimesh(mesh)
         if tm is None:
             continue
@@ -1867,11 +1862,6 @@ def export_glb(
 
     scene = trimesh.Scene()
     for key, mesh in parts.items():
-        # Ключі-зʼєднувачі (метелики) — ДРУКАРСЬКА деталь, що лежить рядком ПІД картою.
-        # У ПРЕВʼЮ (GLB) вони не потрібні й виглядали як «зубці/стінки» біля пазів на швах.
-        # Викидаємо їх із превʼю повністю; у друкарському 3MF вони лишаються.
-        if str(key).lower().startswith("connector"):
-            continue
         if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
             continue
         color = color_map.get(key.lower(), [150, 150, 150, 255])

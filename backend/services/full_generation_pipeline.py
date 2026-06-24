@@ -579,25 +579,6 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
         if cutc is None or len(getattr(cutc, "faces", [])) == 0:
             print(f"[CONNECTOR] {zone_prefix}pre-groove notch boolean produced nothing — skip")
             return terrain_mesh, None, False
-        # ОЧИСТКА РЕЗУЛЬТАТУ булевого різу: manifold-difference на гострому ввігнутому
-        # ластівчиному хвості лишає degenerate/тонкі трикутники → у превʼю вони стирчать
-        # вертикальними «зубцями/вусами» біля пазу. Раніше чистили лише ВХІД (rep), а не
-        # ВИХІД (cutc). Ці ж операції безпечно застосовує flat_plate_pipeline; у try/except,
-        # тож збій не фатальний. Валідація drift/extent нижче все одно перевірить результат.
-        try:
-            cutc.merge_vertices()
-            cutc.update_faces(cutc.unique_faces())
-            # КЛЮЧОВЕ: nondegenerate_faces БЕЗ height прибирає лише нульові грані; manifold-
-            # різ по дрібно-тріангульованому рельєфу лишає ТОНКІ СЛІВЕРИ (ненульова площа,
-            # висота <мм) — це й є «гребінець» стінок пазу. Фільтруємо за мін.висотою трикутника
-            # ~0.25мм у моделі (= 0.25/sf_c у світ.метрах): слівери летять, реальні стінки пазу
-            # (2мм) і рельєф лишаються.
-            _min_h = 0.25 / float(sf_c) if sf_c else 1e-6
-            cutc.update_faces(cutc.nondegenerate_faces(height=_min_h))
-            cutc.remove_unreferenced_vertices()
-            cutc.fix_normals()
-        except Exception as _ce:
-            print(f"[CONNECTOR] {zone_prefix}notch cleanup skipped (non-fatal): {_ce}")
         b1 = cutc.bounds
         drift = (max(abs(b1[0][i] - b0[0][i]) for i in range(2))
                  + max(abs(b1[1][i] - b0[1][i]) for i in range(2)))
@@ -1642,15 +1623,6 @@ def run_full_generation_pipeline(
                                 print(f"[CONNECTOR] {zone_prefix}clipped {int((~_fm).sum())} stray faces outside tile bbox")
                         except Exception as _clx:
                             print(f"[CONNECTOR] {zone_prefix}stray-clip failed (non-fatal): {_clx}")
-                    # Прибрати ТОНКІ СЛІВЕРИ з різу (як у pre-groove шляху, height-фільтр) →
-                    # стінки пазу чисті, без «гребінця».
-                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
-                        try:
-                            _cutc.merge_vertices()
-                            _cutc.update_faces(_cutc.nondegenerate_faces(height=(0.25 / float(_sf_c) if _sf_c else 1e-6)))
-                            _cutc.remove_unreferenced_vertices()
-                        except Exception as _slx:
-                            print(f"[CONNECTOR] {zone_prefix}fallback sliver-clean skipped: {_slx}")
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds

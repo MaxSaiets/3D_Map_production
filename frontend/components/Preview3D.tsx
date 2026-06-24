@@ -197,15 +197,7 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
 
           const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-          // Ім'я шару шукаємо у ВСЬОМУ ланцюгу (mesh + батьки + матеріали): ThreeMFLoader
-          // часто кладе ім'я <object name="Connector"> на БАТЬКІВСЬКУ групу, а не на сам
-          // mesh, тож стара перевірка лише child.name НЕ ловила «Connector» → ключі-
-          // метелики (паз-зʼєднувачі) лишались видимі й висіли «зубцями/стінками» на швах.
-          const matNamesL = materials.map((m: any) => (m?.name || "")).join(" ");
-          let nameChain = `${child.name || ""} ${matNamesL}`;
-          let _anc: any = child.parent;
-          while (_anc) { nameChain += " " + (_anc.name || ""); _anc = _anc.parent; }
-          const name = nameChain.toLowerCase();
+          const name = child.name.toLowerCase();
           let partKey: string | null = null;
           let partColor: number | null = null;
           for (const [key, color] of Object.entries(colorMap)) {
@@ -217,9 +209,6 @@ async function load3MF(blob: Blob): Promise<THREE.Group> {
           }
           if (partKey) {
             (child as any).userData = { ...(child as any).userData, part: partKey };
-            // Ключі-зʼєднувачі (метелики) — друкарська деталь, що лежить ПІД картою.
-            // У превʼю ховаємо, інакше вони видні як «зубці/стінки» на місцях пазів.
-            if (partKey === "connector") child.visible = false;
           }
 
           for (const material of materials) {
@@ -362,16 +351,10 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
           const materialNames = (Array.isArray(child.material) ? child.material : [child.material])
             .map((material) => material?.name || "")
             .join(" ");
-          let nameChainG = `${child.name || ""} ${materialNames}`;
-          let _ancG: any = child.parent;
-          while (_ancG) { nameChainG += " " + (_ancG.name || ""); _ancG = _ancG.parent; }
-          const name = nameChainG.toLowerCase();
+          const name = `${child.name || ""} ${child.parent?.name || ""} ${materialNames}`.toLowerCase();
           const entry = Object.entries(colorMap).find(([key]) => name.includes(key))?.[1];
           if (entry) {
             child.userData = { ...(child.userData || {}), part: entry.part };
-            // Ключі-зʼєднувачі (метелики) — друкарська деталь під картою; у превʼю ховаємо
-            // (інакше «зубці/стінки» на місцях пазів).
-            if (entry.part === "connector") child.visible = false;
           }
           const isSurfaceDecal =
             entry?.part === "roads" || entry?.part === "parks" || entry?.part === "water";
