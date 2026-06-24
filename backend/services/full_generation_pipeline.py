@@ -504,11 +504,6 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
     Повертає (terrain_mesh, connector_key_mesh, carved)."""
     if not getattr(request, "map_connector", False) or terrain_mesh is None or sf_c <= 0:
         return terrain_mesh, None, False
-    # ПРЕВʼЮ: НЕ ріжемо паз і не робимо ключі. Паз — це виїмка у ДНІ для фізичної збірки;
-    # у превʼю його стінки видно знизу як «зубці/гребінець» біля зʼєднань (скарга власника).
-    # Превʼю показує чисту карту; друкарський 3MF (PREVIEW_MODE не виставлено) паз+ключ ЛИШАЄ.
-    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
-        return terrain_mesh, None, False
     try:
         from services.flat_plate_pipeline import (
             build_map_connector_geometry, build_flat_layer_mesh_from_mask,
@@ -592,7 +587,13 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
         try:
             cutc.merge_vertices()
             cutc.update_faces(cutc.unique_faces())
-            cutc.update_faces(cutc.nondegenerate_faces())
+            # КЛЮЧОВЕ: nondegenerate_faces БЕЗ height прибирає лише нульові грані; manifold-
+            # різ по дрібно-тріангульованому рельєфу лишає ТОНКІ СЛІВЕРИ (ненульова площа,
+            # висота <мм) — це й є «гребінець» стінок пазу. Фільтруємо за мін.висотою трикутника
+            # ~0.25мм у моделі (= 0.25/sf_c у світ.метрах): слівери летять, реальні стінки пазу
+            # (2мм) і рельєф лишаються.
+            _min_h = 0.25 / float(sf_c) if sf_c else 1e-6
+            cutc.update_faces(cutc.nondegenerate_faces(height=_min_h))
             cutc.remove_unreferenced_vertices()
             cutc.fix_normals()
         except Exception as _ce:
@@ -1473,8 +1474,7 @@ def run_full_generation_pipeline(
     # блок — FALLBACK лише якщо pre-groove не вдався (_relief_connector_done=False).
     _sf_c = float(getattr(zone, "scale_factor", 0.0) or 0.0)
     if (getattr(request, "map_connector", False) and not _relief_connector_done
-            and terrain_mesh is not None and _sf_c > 0
-            and os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")):
+            and terrain_mesh is not None and _sf_c > 0):
         try:
             from services.flat_plate_pipeline import (
                 build_map_connector_geometry, build_flat_layer_mesh_from_mask,
@@ -1642,6 +1642,15 @@ def run_full_generation_pipeline(
                                 print(f"[CONNECTOR] {zone_prefix}clipped {int((~_fm).sum())} stray faces outside tile bbox")
                         except Exception as _clx:
                             print(f"[CONNECTOR] {zone_prefix}stray-clip failed (non-fatal): {_clx}")
+                    # Прибрати ТОНКІ СЛІВЕРИ з різу (як у pre-groove шляху, height-фільтр) →
+                    # стінки пазу чисті, без «гребінця».
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            _cutc.merge_vertices()
+                            _cutc.update_faces(_cutc.nondegenerate_faces(height=(0.25 / float(_sf_c) if _sf_c else 1e-6)))
+                            _cutc.remove_unreferenced_vertices()
+                        except Exception as _slx:
+                            print(f"[CONNECTOR] {zone_prefix}fallback sliver-clean skipped: {_slx}")
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
