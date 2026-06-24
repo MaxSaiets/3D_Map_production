@@ -3437,15 +3437,30 @@ async def generate_zones_endpoint(
                 grid_bbox['west']
             )
 
-        global_elevation_ref_m, global_baseline_offset_m, global_elevation_max_m = calculate_global_elevation_reference(
-            zones=request.zones,
-            source_crs=source_crs,
-            terrarium_zoom=request.terrarium_zoom if hasattr(request, 'terrarium_zoom') else 15,
-            z_scale=float(request.terrain_z_scale),
-            sample_points_per_zone=25,  # РљС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РґР»СЏ СЃРµРјРїР»С–РЅРіСѓ РІ РєРѕР¶РЅС–Р№ Р·РѕРЅС–
-            global_center=global_center,  # Р’РђР–Р›РР’Рћ: РїРµСЂРµРґР°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†С–С— РєРѕРѕСЂРґРёРЅР°С‚
-            explicit_bbox=explicit_grid_bbox_tuple  # РљР РРўРР§РќРћ: Р’РёРєРѕСЂРёСЃС‚РѕРІСѓС”РјРѕ СЃС‚Р°Р±С–Р»СЊРЅРёР№ BBOX РјС–СЃС‚Р°
-        )
+        # 524-guard: this DEM sampling is the only synchronous external work BEFORE the
+        # response. On an UNCACHED city Terrarium can take >100s -> Cloudflare 524 (and it
+        # blocks the whole event loop). Offload to a thread + timeout; on timeout fall back
+        # to per-zone normalization (ref=None, supported downstream). Cached city never gets here.
+        import asyncio as _aio
+        try:
+            global_elevation_ref_m, global_baseline_offset_m, global_elevation_max_m = await _aio.wait_for(
+                _aio.to_thread(
+                    calculate_global_elevation_reference,
+                    zones=request.zones,
+                    source_crs=source_crs,
+                    terrarium_zoom=request.terrarium_zoom if hasattr(request, 'terrarium_zoom') else 15,
+                    z_scale=float(request.terrain_z_scale),
+                    sample_points_per_zone=25,
+                    global_center=global_center,
+                    explicit_bbox=explicit_grid_bbox_tuple,
+                ),
+                timeout=25.0,
+            )
+        except Exception as _elev_exc:
+            print(f"[WARN] elevation_ref slow/failed ({_elev_exc}); fallback to per-zone normalization")
+            global_elevation_ref_m = None
+            global_baseline_offset_m = None
+            global_elevation_max_m = None
     
     if global_elevation_ref_m is not None:
         print(f"[INFO] Р“Р»РѕР±Р°Р»СЊРЅРёР№ elevation_ref_m: {global_elevation_ref_m:.2f}Рј (РІРёСЃРѕС‚Р° РЅР°Рґ СЂС–РІРЅРµРј РјРѕСЂСЏ)")

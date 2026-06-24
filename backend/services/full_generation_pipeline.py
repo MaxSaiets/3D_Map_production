@@ -579,6 +579,19 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
         if cutc is None or len(getattr(cutc, "faces", [])) == 0:
             print(f"[CONNECTOR] {zone_prefix}pre-groove notch boolean produced nothing — skip")
             return terrain_mesh, None, False
+        # ОЧИСТКА РЕЗУЛЬТАТУ булевого різу: manifold-difference на гострому ввігнутому
+        # ластівчиному хвості лишає degenerate/тонкі трикутники → у превʼю вони стирчать
+        # вертикальними «зубцями/вусами» біля пазу. Раніше чистили лише ВХІД (rep), а не
+        # ВИХІД (cutc). Ці ж операції безпечно застосовує flat_plate_pipeline; у try/except,
+        # тож збій не фатальний. Валідація drift/extent нижче все одно перевірить результат.
+        try:
+            cutc.merge_vertices()
+            cutc.update_faces(cutc.unique_faces())
+            cutc.update_faces(cutc.nondegenerate_faces())
+            cutc.remove_unreferenced_vertices()
+            cutc.fix_normals()
+        except Exception as _ce:
+            print(f"[CONNECTOR] {zone_prefix}notch cleanup skipped (non-fatal): {_ce}")
         b1 = cutc.bounds
         drift = (max(abs(b1[0][i] - b0[0][i]) for i in range(2))
                  + max(abs(b1[1][i] - b0[1][i]) for i in range(2)))

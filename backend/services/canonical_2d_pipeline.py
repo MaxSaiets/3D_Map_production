@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -846,11 +847,19 @@ def prepare_canonical_2d_stage(
         # 0.3mm radius — thin road strips disappeared, leaving orphan grooves
         # and sparse road networks. _enforce_min_width in the bundle builder
         # handles the min-width floor with gentler join_style=1.
-        cleaned = _smooth_sharp_corners(
-            mask,
-            scale_factor=zone.scale_factor,
-            radius_mm=smoothing_radius_mm,
-        )
+        # ПРЕВʼЮ: пропускаємо дороге згладжування контуру (buffer +r/-r ×2 на маску) —
+        # це чисто косметика, а у превʼю не друкуємо. Прунінг дрібних фрагментів ЛИШАЄМО
+        # (він прибирає слівери, а не додає). Друк/golden (PREVIEW_MODE не виставлено) —
+        # повна гігієна без змін. Економить основну частину canonical_2d-часу у превʼю.
+        _preview = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+        if _preview:
+            cleaned = mask
+        else:
+            cleaned = _smooth_sharp_corners(
+                mask,
+                scale_factor=zone.scale_factor,
+                radius_mm=smoothing_radius_mm,
+            )
         cleaned = _prune_tiny_fragments(
             cleaned,
             scale_factor=zone.scale_factor,
