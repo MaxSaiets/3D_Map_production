@@ -620,7 +620,7 @@ def create_terrain_mesh(
         )
         
         if solid_mesh is None: return None, None
-        
+
         print(f"[TIMING] Total create_terrain_mesh: {time.time() - total_start:.3f} s")
         
         # === FIX: ПОВЕРТАЄМО ТІЛЬКИ 2 ЗНАЧЕННЯ ===

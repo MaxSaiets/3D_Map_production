@@ -579,6 +579,20 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
         if cutc is None or len(getattr(cutc, "faces", [])) == 0:
             print(f"[CONNECTOR] {zone_prefix}pre-groove notch boolean produced nothing — skip")
             return terrain_mesh, None, False
+        # ЛЕГКА очистка: manifold-difference вже дає ГЕРМЕТИЧНИЙ том із ЧИСТИМ
+        # пазом (вертикальні стінки пласкі, виїмка-метелик рівна). Тут лише
+        # зливаємо дублі-вершини та прибираємо ВИРОДЖЕНІ (нульової площі) грані —
+        # БЕЗ порогу висоти. (Старий код різав nondegenerate_faces(height=0.9/sf):
+        # це видаляло ВСІ дрібні грід-трикутники рельєфу → лишалась 40-гранна
+        # «шкаралупа» з барами/стінками. САМЕ це бачив користувач як «гребінець».)
+        try:
+            cutc.merge_vertices()
+            cutc.update_faces(cutc.unique_faces())
+            cutc.update_faces(cutc.nondegenerate_faces())  # лише нульова площа
+            cutc.remove_unreferenced_vertices()
+            cutc.fix_normals()
+        except Exception as _ce:
+            print(f"[CONNECTOR] {zone_prefix}notch cleanup skipped (non-fatal): {_ce}")
         b1 = cutc.bounds
         drift = (max(abs(b1[0][i] - b0[0][i]) for i in range(2))
                  + max(abs(b1[1][i] - b0[1][i]) for i in range(2)))
@@ -1331,6 +1345,8 @@ def run_full_generation_pipeline(
         # clearance=0 → стара поведінка (будинки до дна) недоторкана.
         _merge_bottom_clr = 0.0
         if getattr(request, "map_connector", False) and _sf_c > 0:
+            # Зазор знизу потрібен коли ріжемо паз (щоб будинки не лізли у виїмку).
+            # Без конектора clearance=0 → стара поведінка (будинки до дна).
             _cd_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             _merge_bottom_clr = (_cd_mm + 0.6) / _sf_c
         merge_result = merge_terrain_and_buildings(

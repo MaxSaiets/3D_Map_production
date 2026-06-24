@@ -136,6 +136,7 @@ def create_solid_terrain_robust(
             top_boundary = np.column_stack([boundary_2d, z_vals])
             print(f"[SOLIDIFIER] Sampled boundary: {len(top_boundary)} vertices")
         
+        top_boundary = np.asarray(top_boundary, dtype=np.float64)
         n_boundary = len(top_boundary)
         if n_boundary < 3:
             print("[ERROR] Boundary has less than 3 vertices")
@@ -194,11 +195,41 @@ def create_solid_terrain_robust(
             bottom_cap_faces.append([center_idx, n_boundary + i, n_boundary + i_next])
         
         bottom_cap_faces = np.array(bottom_cap_faces, dtype=np.int32)
-        
+
         # Перевернути нормалі bottom cap (вони мають дивитись вниз)
         bottom_cap_faces = bottom_cap_faces[:, ::-1]  # Reverse winding order
-        
+
         print(f"[SOLIDIFIER] Created {len(bottom_cap_faces)} bottom cap faces (with center vertex)")
+
+        # КРИТИЧНО (фікс «стіни повернуті не туди»): winding стінок/дна залежить від
+        # орієнтації обходу boundary (CW/CCW), яка НЕ гарантована для полігона зони.
+        # При невірній орієнтації нормалі стінок дивляться ВСЕРЕДИНУ — слайсер
+        # (Orca/Bambu) фарбує зворот граней ЗЕЛЕНИМ. Тут ЕМПІРИЧНО перевіряємо
+        # представницьку грань і за потреби перевертаємо ВСІ стінки (та дно).
+        # Тайл опуклий (rect/hex) → радіальний тест «назовні від центроїда» надійний.
+        _verts_chk = np.vstack([top_boundary, bottom_boundary, [bottom_center_3d]])
+        _ctr_xy = top_boundary[:, :2].mean(axis=0)
+
+        def _tri_n(f):
+            a, b, c = _verts_chk[f[0]], _verts_chk[f[1]], _verts_chk[f[2]]
+            return np.cross(b - a, c - a)
+
+        # Стінки: середня радіальна узгодженість нормалей із напрямком «назовні».
+        _agree = 0.0
+        for _wf in wall_faces:
+            _n = _tri_n(_wf)
+            _cen_xy = _verts_chk[_wf][:, :2].mean(axis=0)
+            _rad = _cen_xy - _ctr_xy
+            _agree += float(_n[0] * _rad[0] + _n[1] * _rad[1])
+        if _agree < 0.0:
+            wall_faces = wall_faces[:, ::-1]
+            print(f"[SOLIDIFIER] Wall normals pointed INWARD (agree={_agree:.1f}) → flipped walls OUTWARD")
+
+        # Дно: нормаль має дивитись вниз (z<0).
+        _cap_nz = sum(float(_tri_n(_cf)[2]) for _cf in bottom_cap_faces)
+        if _cap_nz > 0.0:
+            bottom_cap_faces = bottom_cap_faces[:, ::-1]
+            print(f"[SOLIDIFIER] Bottom cap pointed UP (nz={_cap_nz:.1f}) → flipped DOWN")
         
         # 6. ВАЖЛИВО: Об'єднати ВСІ компоненти
         # Vertices: top_boundary + bottom_boundary + center + terrain

@@ -110,8 +110,14 @@ def repair_nonmanifold(
         repaired.remove_unreferenced_vertices()
         
         # Крок 4: Виправлення порядку вершин (winding) ПЕРЕД нормалями
+        # КРИТИЧНО: fix_winding теж пропускаємо для рельєфу з пазами (skip_fix_normals).
+        # merge_vertices зварює окремо-побудовану «стрічку» бічних стінок із топом →
+        # шов стає winding-НЕконсистентним → fix_winding робить BFS-переобхід від
+        # ВИПАДКОВОЇ грані-сіда і ВИВЕРТАЄ стрічку стінок ВСЕРЕДИНУ (топ лишається
+        # правильним) → слайсер зеленить зворот стінок («стіни повернуті не туди»).
+        # Це той самий клас бага, що й fix_normals нижче — лише його раніше прогледіли.
         try:
-            if not repaired.is_winding_consistent:
+            if not repaired.is_winding_consistent and not skip_fix_normals:
                 trimesh.repair.fix_winding(repaired)
                 stats["repairs_applied"].append("Fixed winding consistency")
                 if verbose:
@@ -313,7 +319,14 @@ def improve_mesh_for_3d_printing(
     """
     if mesh is None:
         return None
-    
+    # Preview mode: skip expensive manifold repair (~5-30s). The mesh is not
+    # printed, only shown to buyers — visual fidelity is enough.
+    import os as _os
+    if _os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        if verbose:
+            print("[MESH REPAIR] PREVIEW_MODE: skipping aggressive repair")
+        return mesh
+
     # Використовуємо нову функцію repair_nonmanifold для комплексного ремонту
     improved, stats = repair_nonmanifold(mesh, aggressive=aggressive, verbose=verbose, skip_fix_normals=skip_fix_normals)
     

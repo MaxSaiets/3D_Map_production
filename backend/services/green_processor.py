@@ -1,4 +1,4 @@
-﻿"""
+"""
 Green areas (parks/forests/grass) processor.
 
 Creates a thin embossed mesh that is draped onto terrain:

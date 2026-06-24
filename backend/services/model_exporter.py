@@ -91,14 +91,14 @@ def repair_base_export_mesh(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh
         trimesh.repair.fill_holes(candidate)
     except Exception:
         return original
-    try:
-        trimesh.repair.fix_winding(candidate)
-    except Exception:
-        pass
-    try:
-        candidate.fix_normals()
-    except Exception:
-        pass
+    # КРИТИЧНО: НЕ викликати fix_winding()/fix_normals() на рельєф-базі. База приходить
+    # із ПРАВИЛЬНИМИ нормалями НАЗОВНІ та консистентним winding (solidifier + merge).
+    # Рельєф-база НЕ-герметична (груви/будинки лишають відкриті ребра) і НЕ-опукла →
+    #   • fix_normals: ray/volume-евристика ВИВЕРТАЄ бічні стінки ВСЕРЕДИНУ;
+    #   • fix_winding: після fill_holes робить BFS-переобхід від ВИПАДКОВОЇ грані-сіда
+    #     і може перевернути «стрічку» бічних стінок (топ лишається правильним).
+    # Обидва → слайсер фарбує зворот стінок ЗЕЛЕНИМ («стіни повернуті не туди»).
+    # Лишаємо лише fill_holes (додає кап-грані, НЕ переорієнтує наявні) + dedup.
     try:
         candidate.update_faces(candidate.unique_faces())
         candidate.remove_unreferenced_vertices()
@@ -128,14 +128,8 @@ def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optio
         trimesh.repair.fill_holes(candidate)
     except Exception:
         pass
-    try:
-        trimesh.repair.fix_winding(candidate)
-    except Exception:
-        pass
-    try:
-        candidate.fix_normals()
-    except Exception:
-        pass
+    # КРИТИЧНО: НЕ fix_winding/fix_normals на рельєф-базі (обидва вивертають бічні
+    # стінки всередину на негерметичному грувованому мешеві). Див. repair_base_export_mesh.
     try:
         candidate.update_faces(candidate.unique_faces())
         candidate.remove_unreferenced_vertices()
@@ -1550,15 +1544,22 @@ def export_3mf(
     # нормалі. fix_normals робить winding консистентним; fill_holes закриває базу.
     _SOLID = {"base", "baseback", "rim", "text", "text2", "maplabel"}
     def _repair_for_print(m, key):
+        k = key.split("_")[0].split(".")[0].lower()
         try:
             m.merge_vertices()
         except Exception:  # noqa: BLE001
             pass
-        try:
-            m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
-        except Exception:  # noqa: BLE001
-            pass
-        k = key.split("_")[0].split(".")[0].lower()
+        # КРИТИЧНО: НЕ fix_normals на рельєф-базі/terrain — ray/volume-евристика
+        # вивертає бічні стінки ВСЕРЕДИНУ на негерметичному грувованому мешеві
+        # («стіни повернуті не туди», слайсер зеленить зворот). База приходить із
+        # правильними нормалями назовні; для інших шарів fix_normals лишається.
+        if k not in ("base", "terrain"):
+            try:
+                m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
+            except Exception:  # noqa: BLE001
+                pass
+        # База/terrain: НЕ чіпаємо нормалі — база приходить winding-консистентною
+        # з пайплайну; fix_normals/fix_winding тут лише вивертали б стінки.
         if k in _SOLID and not bool(getattr(m, "is_watertight", True)):
             try:
                 m.fill_holes()
