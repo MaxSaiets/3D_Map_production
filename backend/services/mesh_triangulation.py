@@ -76,7 +76,7 @@ def extrude_polygon_uniform(
         # Skip densification for holed polygons; extrude_polygon handles them correctly.
         has_holes = len(list(polygon.interiors)) > 0
         if has_holes:
-            for engine in ("manifold", "triangle", None):
+            for engine in ("manifold", None):  # triangle прибрано: C-сегфолт вбиває бекенд
                 try:
                     kwargs = {"engine": engine} if engine is not None else {}
                     mesh = trimesh.creation.extrude_polygon(
@@ -274,6 +274,12 @@ def extrude_polygon_quality(
     """
     if polygon is None or polygon.is_empty:
         return None
+    # ⛔ ВИМКНЕНО `triangle`: ця C-бібліотека СЕГФОЛТИТЬ на вироджених PSLG (дублі точок/
+    # колінеарність/самоперетин) і ЖОРСТКО вбиває бекенд — сегфолт НЕ ловиться try/except,
+    # тож процес гине → «Помилка генерації»/втрата задачі (підтверджено dmesg GP-fault у
+    # triangle/core.so під час генерації серії). Використовуємо БЕЗПЕЧНУ scipy-grid
+    # тріангуляцію (рівна сітка, без сегфолтів). triangle прибрано з requirements+venv.
+    return extrude_polygon_grid(polygon, height=float(height), target_edge_len_m=target_edge_len_m, fast_filter=True)
     try:
         import triangle as _triangle
         if not polygon.is_valid:
