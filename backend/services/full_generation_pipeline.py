@@ -504,6 +504,11 @@ def cut_relief_connector_notch(terrain_mesh, *, zone, request, sf_c, zone_prefix
     Повертає (terrain_mesh, connector_key_mesh, carved)."""
     if not getattr(request, "map_connector", False) or terrain_mesh is None or sf_c <= 0:
         return terrain_mesh, None, False
+    # ПРЕВʼЮ: НЕ ріжемо паз і не робимо ключі. Паз — це виїмка у ДНІ для фізичної збірки;
+    # у превʼю його стінки видно знизу як «зубці/гребінець» біля зʼєднань (скарга власника).
+    # Превʼю показує чисту карту; друкарський 3MF (PREVIEW_MODE не виставлено) паз+ключ ЛИШАЄ.
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        return terrain_mesh, None, False
     try:
         from services.flat_plate_pipeline import (
             build_map_connector_geometry, build_flat_layer_mesh_from_mask,
@@ -1468,7 +1473,8 @@ def run_full_generation_pipeline(
     # блок — FALLBACK лише якщо pre-groove не вдався (_relief_connector_done=False).
     _sf_c = float(getattr(zone, "scale_factor", 0.0) or 0.0)
     if (getattr(request, "map_connector", False) and not _relief_connector_done
-            and terrain_mesh is not None and _sf_c > 0):
+            and terrain_mesh is not None and _sf_c > 0
+            and os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")):
         try:
             from services.flat_plate_pipeline import (
                 build_map_connector_geometry, build_flat_layer_mesh_from_mask,
