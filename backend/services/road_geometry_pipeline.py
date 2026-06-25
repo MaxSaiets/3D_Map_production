@@ -303,11 +303,10 @@ def prepare_road_geometry(
                             )
                     except Exception as exc:
                         print(f"[WARN] {zone_prefix} road gap-fill failed: {exc}")
-                # Точкова заливка тонких рельєфних стінок між дорогами ДОРОГОЮ (крихкі
-                # «стовби» ламаються→пустота); opening лише тонкі місця → не зливає широко.
-                merged_roads_geom_local = _fill_thin_terrain_walls_with_road(
-                    merged_roads_geom_local, zone_polygon_local, scale_factor, zone_prefix,
-                )
+                # ВІДКОЧЕНО 2026-06-25: thin-terrain-wall->road fill ЗЛИВАВ дороги в маси
+                # + поглинав зелені медіани/смуги (не виключав parks/water; W*3≈54м
+                # proximity на 1км-зоні), а стовбів НЕ виправляв (маска не доходить до
+                # різу бази, 37-агент review). Прибрано → дороги/зелень як треба.
         # FALLBACK STAGE 1: якщо local-edges branch не дав результату, спробуємо G_roads (повний граф)
         need_fallback_to_global = (
             merged_roads_geom_local is None

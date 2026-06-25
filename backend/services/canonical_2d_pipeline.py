@@ -920,31 +920,9 @@ def prepare_canonical_2d_stage(
     parks_groove_mask = _finalize_mask(parks_groove_mask, label="parks_groove")
     water_polygons = _finalize_mask(water_polygons, label="water")
 
-    # ── ТОНКІ РЕЛЬЄФНІ СТІНКИ між дорогами → ДОРОГА (груви + вставка) ──
-    # Повновисотні тонкі стінки рельєфу між близькими дорожніми грувами ламаються
-    # при друці («стовби»). Заповнюємо їх дорогою у road_groove_mask (база
-    # заглиблюється → повновисотний стовп зникає) І road_insert_mask (дорога накриває
-    # колір). Точково (opening, лише стінки <2.5мм) → широкий рельєф лишається, дороги
-    # не зливаються широко. Гейт THIN_WALL_FILL у самій функції (A/B). Це ПРАВИЛЬНЕ
-    # місце: попередня заливка merged_roads_geom_local не доходила до канонічного грува.
-    try:
-        from services.road_geometry_pipeline import _fill_thin_terrain_walls_with_road
-        _gm = canonical_road_masks.road_groove_mask
-        if _gm is not None and not getattr(_gm, "is_empty", True) and zone.scale_factor:
-            _gm_new = _fill_thin_terrain_walls_with_road(
-                _gm, zone.zone_polygon_local, zone.scale_factor, zone_prefix
-            )
-            if _gm_new is not None and not getattr(_gm_new, "is_empty", True):
-                _added = _gm_new.difference(_gm).buffer(0)
-                canonical_road_masks.road_groove_mask = _gm_new
-                if (canonical_road_masks.road_insert_mask is not None
-                        and _added is not None and not getattr(_added, "is_empty", True)
-                        and not getattr(canonical_road_masks.road_insert_mask, "is_empty", True)):
-                    canonical_road_masks.road_insert_mask = (
-                        canonical_road_masks.road_insert_mask.union(_added).buffer(0)
-                    )
-    except Exception as _twexc:
-        print(f"[WARN] {zone_prefix}thin-terrain-wall fill (canonical) failed: {_twexc}")
+    # ВІДКОЧЕНО 2026-06-25: thin-terrain-wall->road fill (canonical) — та сама причина,
+    # що й у road_geometry: зливав дороги + поглинав зелень (без виключення parks/water),
+    # а стовбів не виправляв (bundle сам відкидав ~65% заливки). Прибрано.
 
     # runtime_canonical_masks now resolves building-vs-road precedence in one
     # place and rebuilds road_groove from the final road insert. Pass the raw
