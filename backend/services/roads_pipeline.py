@@ -35,17 +35,13 @@ def _rebuild_road_mesh_from_mask(
     cap_thickness_m = max(float(road_height_m) + float(road_embed_m), 0.001)
     for poly in _iter_polygons(road_polygons):
         try:
-            # Дорога трохи ВИЩЕ рельєфу (мінімальний зазор 0.2мм у моделі). top_z_offset=0
-            # (врівень) робив верх дороги КОМПЛАНАРНИМ із рельєфом → z-fight (чорне миготіння/
-            # штрихи у слайсері на горбистих місцях). 0.2мм — мінімальна вертикальна сепарація:
-            # прибирає z-fight, але майже не «піднята» (0.4мм власник вважав зависокою).
-            _sep_m = (0.2 / float(scale_factor)) if scale_factor and scale_factor > 0 else 0.0
+            # Дорога лягає ВРІВЕНЬ з поверхнею рельєфу (top_z_offset=0).
             mesh = create_road_surface_cap(
                 poly,
                 terrain_provider,
                 scale_factor=float(scale_factor),
-                top_z_offset=_sep_m,
-                cap_thickness_m=float(cap_thickness_m) + _sep_m,
+                top_z_offset=0.0,
+                cap_thickness_m=float(cap_thickness_m),
             )
         except Exception:
             mesh = None

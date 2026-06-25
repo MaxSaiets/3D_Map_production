@@ -1731,37 +1731,6 @@ def run_full_generation_pipeline(
         except Exception:
             landmark_part = landmark_meshes[0] if landmark_meshes else None
 
-    # ── BLENDER-ОЧИСТКА вироджених мешів у пазах зʼєднувачів («частокіл»/слівери) ──
-    # Булеві операції (notch + груви + злиття будинків) на густому грід-рельєфі
-    # лишають тисячі тонких-вироджених граней (zero-area + слівери + вертикальні
-    # спайки), яких trimesh НЕ прибирає (merge не бере високі тонкі слівери; видалення
-    # рве герметичність). Blender weld+dissolve_degenerate+dissolve_limited збиває їх
-    # ~92% і ЗБЕРІГАЄ будинки/рельєф/пази (перевірено). Лише для конектор-рельєфу (де
-    # найгірше); безпечний fallback на оригінал, якщо Blender відсутній/помилка.
-    # Очистка пазів УВІМКНЕНА за замовчуванням (верифіковано на проді: ~2с, gen 56с,
-    # частокіл прибрано, watertight). Kill-switch: env CONNECTOR_MESH_CLEANUP=0 вимикає.
-    # Timeout у функції тугий (45с) → під пам'ять-тиском падає на оригінал, НЕ блокує чергу.
-    import os as _os_cl
-    _mesh_cleanup_on = _os_cl.environ.get("CONNECTOR_MESH_CLEANUP", "1") != "0"
-    if _mesh_cleanup_on and getattr(request, "map_connector", False) and terrain_mesh is not None and _sf_c > 0:
-        try:
-            from services.mesh_blender_cleanup import blender_cleanup_mesh
-            _cleanup_t = time.perf_counter()
-            terrain_mesh = blender_cleanup_mesh(
-                terrain_mesh,
-                scale_factor=_sf_c,
-                merge_mm=0.08,
-                degen_mm=0.10,
-                planar_deg=0.0,  # НЕ огрублювати верхню поверхню рельєфу (dissolve_limited
-                                 # зливав грані → дороги/парки на ній протикались); лише
-                                 # weld+dissolve_degenerate(+fill_holes) прибирають сліверний
-                                 # бруд у пазах і тримають базу герметичною, НЕ рухаючи поверхню
-                label=f"{zone_prefix}connector-base",
-            )
-            _log_stage("connector_mesh_cleanup", _cleanup_t)
-        except Exception as _clx:
-            print(f"[MESH CLEANUP] {zone_prefix}connector-base cleanup skipped (non-fatal): {_clx}")
-
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     # СЕРІЯ ЗОН: коли задано глобальний elevation_ref (серія з generate-zones) —
