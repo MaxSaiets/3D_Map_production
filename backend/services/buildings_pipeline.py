@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Optional
 
 import pandas as pd
@@ -231,7 +232,13 @@ def process_building_layer(
         coordinates_already_local=True,
         return_records=True,
         exclusion_polygons=building_exclusion_polygons,
-        min_feature_m=model_mm_to_world_m(MICRO_REGION_THRESHOLD_MM, scale_factor) if scale_factor and scale_factor > 0 else 0.0,
+        # Будинки: вищий поріг ніж дороги/парки (MICRO_REGION_THRESHOLD_MM=0.7мм) —
+        # тонкі «ларки» <1.0мм друку ламаються (особливо коли union падає в concatenate
+        # на 4ГБ → стають окремими крихкими вежами). Орієнтири (is_landmark) НЕ чіпає.
+        # ENV BUILDING_MIN_FOOTPRINT_MM для тюнінгу без редеплою.
+        min_feature_m=model_mm_to_world_m(
+            max(MICRO_REGION_THRESHOLD_MM, float(os.environ.get("BUILDING_MIN_FOOTPRINT_MM", "1.0"))),
+            scale_factor) if scale_factor and scale_factor > 0 else 0.0,
         scale_factor=scale_factor,
         max_height=max_building_height_m,
     )
