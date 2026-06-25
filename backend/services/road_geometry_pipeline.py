@@ -26,9 +26,21 @@ from services.geometry_context import looks_like_projected_meters
 # КОЖНУ вулицю до туширини сусідів → unary_union зливав у пляму. 6м×0.1=0.6мм
 # ще друкується (>0.4мм сопло), але вулиці з кроком ≥10м лишаються окремими.
 # gap-fill 6→3.5 закриває лише міжсмугові щілини, НЕ цілі квартали.
+# 2026-06-25: gap-fill 3.5→2.5 (скарга «дороги не так сильно обєднувались») —
+# ШИРОКЕ proximity-злиття зменшено; крихкі ТОНКІ рельєфні стінки між дорогами
+# тепер заповнює ТОЧКОВИЙ thinness-based fill (_fill_thin_terrain_walls_with_road),
+# що ріже дорогою ЛИШЕ непридатно-тонкі місця, а не зближені дороги загалом.
 ROAD_MIN_WIDTH_WORLD_CAP_M = 6.0    # макс. роздування вузької вулиці (друковано 0.6мм)
-ROAD_GAP_FILL_WORLD_CAP_M = 3.5     # лише міжсмугові щілини/трикутники перехресть
+ROAD_GAP_FILL_WORLD_CAP_M = 2.5     # лише вузькі міжсмугові щілини/трикутники перехресть
 ROAD_ORPHAN_HOLE_WORLD_CAP_M = 2.0  # дрібні дірки в перехрестях
+
+# Точкова заливка ДОРОГОЮ тонких рельєфних стінок між дорогами: рельєфна стінка
+# тонша за це ламається при друці («малі стовби» → пустота). Заповнюємо дорогою
+# ЛИШЕ де тонко (morphological opening) → широкі ділянки рельєфу лишаються, дороги
+# НЕ зливаються широко. Поріг у мм МОДЕЛІ; світовий кап — щоб на великих зонах не
+# роздувало. Юзер може тюнити.
+PRINT_SAFE_TERRAIN_WALL_MM = 2.5
+ROAD_THIN_WALL_FILL_WORLD_CAP_M = 16.0  # honor 2.5мм-model threshold up to ~1km zones
 
 
 @dataclass
@@ -97,6 +109,62 @@ def _build_local_road_edges_subset(
     except Exception as exc:
         print(f"[WARN] {zone_prefix} Failed to prefilter road edges locally: {exc}")
         return None
+
+
+def _fill_thin_terrain_walls_with_road(
+    roads: Optional[BaseGeometry],
+    zone_polygon_local: Optional[BaseGeometry],
+    scale_factor: Optional[float],
+    zone_prefix: str = "",
+) -> Optional[BaseGeometry]:
+    """Заповнює ДОРОГОЮ тонкі рельєфні стінки між/біля доріг (тонші за друкопридатне).
+
+    Точково через morphological opening — лише там, де рельєф між дорогами тонший за
+    PRINT_SAFE_TERRAIN_WALL_MM. Широкі ділянки рельєфу лишаються (дороги НЕ зливаються
+    широко). Так зникають крихкі «стовби», що ломаються при друці й лишають пустоту.
+    Безпечно: будь-яка помилка → повертаємо вихідні дороги (нічого не ламає).
+    """
+    try:
+        import os
+        if os.environ.get("THIN_WALL_FILL", "1") == "0":   # toggle для A/B-перевірки
+            return roads
+        if (roads is None or getattr(roads, "is_empty", True)
+                or zone_polygon_local is None or getattr(zone_polygon_local, "is_empty", True)
+                or not scale_factor or float(scale_factor) <= 0):
+            return roads
+        W = min(
+            model_mm_to_world_m(PRINT_SAFE_TERRAIN_WALL_MM, float(scale_factor)),
+            ROAD_THIN_WALL_FILL_WORLD_CAP_M,
+        )
+        if W <= 0.05:
+            return roads
+        r = W / 2.0
+        terrain_gap = zone_polygon_local.difference(roads).buffer(0)
+        if getattr(terrain_gap, "is_empty", True):
+            return roads
+        # opening прибирає смужки тонші за W → різниця = тонкі стінки
+        opened = terrain_gap.buffer(-r, join_style=2).buffer(r, join_style=2)
+        thin = terrain_gap.difference(opened).buffer(0)
+        if getattr(thin, "is_empty", True):
+            return roads
+        # стінки МІЖ/біля доріг (буфер W*3 щоб впіймати центри стінок і між дальшими
+        # дорогами; далекий від доріг тонкий рельєф — парки/край зони — не чіпаємо)
+        near = thin.intersection(roads.buffer(W * 3.0, join_style=2)).buffer(0)
+        if getattr(near, "is_empty", True):
+            return roads
+        out = roads.union(near).buffer(0)
+        out = out.intersection(zone_polygon_local).buffer(0)
+        added = float(getattr(near, "area", 0.0) or 0.0)
+        if added > 1e-6:
+            try:  # ASCII + guarded: a print/encoding failure must NOT lose the fill
+                print(f"[INFO] {zone_prefix} thin-terrain-wall->road fill: +{added:.0f} m2 road "
+                      f"(walls <{W:.1f}m world / {PRINT_SAFE_TERRAIN_WALL_MM}mm model)")
+            except Exception:
+                pass
+        return out
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix} thin-terrain-wall fill failed (non-fatal): {exc}")
+        return roads
 
 
 def prepare_road_geometry(
@@ -235,6 +303,11 @@ def prepare_road_geometry(
                             )
                     except Exception as exc:
                         print(f"[WARN] {zone_prefix} road gap-fill failed: {exc}")
+                # Точкова заливка тонких рельєфних стінок між дорогами ДОРОГОЮ (крихкі
+                # «стовби» ламаються→пустота); opening лише тонкі місця → не зливає широко.
+                merged_roads_geom_local = _fill_thin_terrain_walls_with_road(
+                    merged_roads_geom_local, zone_polygon_local, scale_factor, zone_prefix,
+                )
         # FALLBACK STAGE 1: якщо local-edges branch не дав результату, спробуємо G_roads (повний граф)
         need_fallback_to_global = (
             merged_roads_geom_local is None
