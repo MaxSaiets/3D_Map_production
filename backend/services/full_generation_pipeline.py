@@ -1738,11 +1738,11 @@ def run_full_generation_pipeline(
     # рве герметичність). Blender weld+dissolve_degenerate+dissolve_limited збиває їх
     # ~92% і ЗБЕРІГАЄ будинки/рельєф/пази (перевірено). Лише для конектор-рельєфу (де
     # найгірше); безпечний fallback на оригінал, якщо Blender відсутній/помилка.
-    # ⚠️ ВИМКНЕНО за замовчуванням: на ПРОДІ Blender у headless завис (>180с) і блокував
-    # чергу генерації («пише черга, не генерується»), хоча локально працював за 1.7с.
-    # Вмикати ЛИШЕ env CONNECTOR_MESH_CLEANUP=1 (після фіксу серверного Blender-виклику).
+    # Очистка пазів УВІМКНЕНА за замовчуванням (верифіковано на проді: ~2с, gen 56с,
+    # частокіл прибрано, watertight). Kill-switch: env CONNECTOR_MESH_CLEANUP=0 вимикає.
+    # Timeout у функції тугий (45с) → під пам'ять-тиском падає на оригінал, НЕ блокує чергу.
     import os as _os_cl
-    _mesh_cleanup_on = _os_cl.environ.get("CONNECTOR_MESH_CLEANUP", "0") == "1"
+    _mesh_cleanup_on = _os_cl.environ.get("CONNECTOR_MESH_CLEANUP", "1") != "0"
     if _mesh_cleanup_on and getattr(request, "map_connector", False) and terrain_mesh is not None and _sf_c > 0:
         try:
             from services.mesh_blender_cleanup import blender_cleanup_mesh

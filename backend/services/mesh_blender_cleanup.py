@@ -35,7 +35,9 @@ def blender_cleanup_mesh(
     planar_deg: float = 3.0,
     delete_loose: bool = True,
     label: str = "base",
-    timeout_s: int = 240,
+    timeout_s: int = 45,  # ТУГИЙ timeout: норма ~2с; якщо під пам'ять-тиском (сервер 4ГБ)
+                          # Blender засвопить — за 45с впадемо на ОРИГІНАЛ (fallback), НЕ
+                          # блокуючи чергу генерації на хвилини (раніше 240с клав чергу).
 ) -> Optional[trimesh.Trimesh]:
     """Прогнати меш через Blender-очистку вироджених граней.
 
