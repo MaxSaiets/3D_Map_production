@@ -9,6 +9,7 @@ This makes parks/green areas stand out visually and be printable (has thickness)
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 import geopandas as gpd
@@ -483,8 +484,19 @@ def _finalize_land_masks(
     ):
         return parks_geom
 
+    # ПАРК ВИГРАЄ НАД ДОРОГОЮ (узгоджено з canonical "зелень виграє всередині зелені",
+    # canonical_2d ~788). Раніше дороги були серед блокерів → parks ∩ legal_land прибирав
+    # парк там, де дороги. Центральний парк Вугледара (Шахтарська слава, 31365 м²) у щільній
+    # service-сітці ПОВНІСТЮ зникав (parks_final=0, дороги заливали його). Тепер дороги НЕ
+    # блокують парк; canonical нижче прибирає service-дороги ПІД зеленню (roads − green) →
+    # зелень зʼявляється + центральна дорожня маса меншає. ENV PARKS_OVER_ROADS=0 = старе.
+    _block_candidates = (
+        (road_polygons, water_polygons, building_polygons)
+        if os.environ.get("PARKS_OVER_ROADS", "1") == "0"
+        else (water_polygons, building_polygons)
+    )
     blockers = [
-        geom for geom in (road_polygons, water_polygons, building_polygons)
+        geom for geom in _block_candidates
         if geom is not None and not getattr(geom, "is_empty", True)
     ]
     blocker_union = None
@@ -823,9 +835,12 @@ def process_green_areas(
         local_blockers = []
 
         # --- ROAD CLIPPING (ВИРІЗАННЯ ДОРІГ) ---
-        # Це найважливіший момент: віднімаємо дороги від зеленої зони
-        # Це запобігає z-fighting та перетину між дорогами та парками
-        if road_mask is not None:
+        # ПАРК ВИГРАЄ НАД ДОРОГОЮ (дефолт): пропускаємо вирізання доріг із парку. Інакше
+        # щільна service-сітка ШМАТУВАЛА центральний парк (Шахтарська слава) на суб-min-feature
+        # слівери ще ДО _finalize_land_masks → парк зникав повністю (processed=0). canonical
+        # нижче прибирає дороги ПІД зеленню (roads − green). ENV PARKS_OVER_ROADS=0 = старе
+        # (дороги ріжуть парк). z-fighting вирішує canonical roads−green, не тут.
+        if road_mask is not None and os.environ.get("PARKS_OVER_ROADS", "1") == "0":
             try:
                 # ОПТИМІЗАЦІЯ: Обрізаємо road_mask по bounds поточного парку перед вирізанням
                 # Це значно прискорює Boolean операцію для великих MultiPolygon доріг
@@ -1004,7 +1019,8 @@ def process_green_areas(
         # Після simplify park footprint може знову підрости у road/water/building voids.
         # Повторно застосовуємо ті ж пріоритети, щоб фінальний insert/groove брався вже з коректної маски.
         try:
-            if road_mask is not None and poly is not None and not poly.is_empty:
+            if (road_mask is not None and os.environ.get("PARKS_OVER_ROADS", "1") == "0"
+                    and poly is not None and not poly.is_empty):
                 poly = poly.difference(road_mask)
         except Exception:
             pass
