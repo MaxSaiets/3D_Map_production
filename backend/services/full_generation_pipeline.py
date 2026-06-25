@@ -1269,23 +1269,30 @@ def run_full_generation_pipeline(
                     pass
             if _hl_chosen:
                 from services.flat_plate_pipeline import _mesh_xy_footprint
+                from services.highlight_relief_groove import carve_highlight_groove
                 for _i in _hl_chosen:
                     _bm = building_meshes[_i]
                     _bm_top = float(_bm.bounds[1][2])
                     _bm_bot = float(_bm.bounds[0][2])   # НАЙНИЖЧА точка мешу = пласке дно/підлога пазу
-                    # ПАЗ ЯК У ДОРІГ: зберігаємо ФУТПРИНТ+верх+низ; паз (пласку кишеню на
-                    # рівні низу будинку) ріжемо ПІЗНІШЕ у фінальний рельєф опусканням
-                    # вершин, а будинок СТОЇТЬ на пласкому дні. НЕ плаский boolean (фейлив).
                     try:
                         _foot = _mesh_xy_footprint(_bm)
                     except Exception:
                         _foot = None
-                    if _foot is not None and not getattr(_foot, "is_empty", True):
-                        _hl_pockets.append((_foot, _bm_top, _bm_bot))
+                    if _foot is None or getattr(_foot, "is_empty", True):
+                        continue
+                    # ПАЗ ЯК У ДОРІГ, ЧИСТО: ріжемо ТУТ (рельєф ще ГЕРМЕТИЧНИЙ том, ДО merge)
+                    # boolean-ом → рівні стінки (не обривчасті). Будинок СТОЇТЬ на пласкому
+                    # дні (доробленому до найнижчої точки мешу). НЕ пізній vertex-set.
+                    terrain_mesh, _red = carve_highlight_groove(
+                        terrain_mesh, _foot, _bm_top, _bm_bot,
+                        scale_factor=_sf_c, clearance_mm=0.15, zone_prefix=zone_prefix,
+                    )
+                    if _red is not None:
+                        highlight_meshes.append(_red)
                 # ВИКЛЮЧАЄМО обрані будинки з merge (стають окремою червоною вставкою)
                 _hl_cs = set(_hl_chosen)
                 building_meshes = [b for j, b in enumerate(building_meshes) if j not in _hl_cs]
-                print(f"[HIGHLIGHT] {zone_prefix}{len(_hl_pockets)} building(s) selected for road-like groove (relief)")
+                print(f"[HIGHLIGHT] {zone_prefix}{len(highlight_meshes)} highlight building(s) -> CLEAN pre-merge pocket")
         except Exception as _hexc:
             print(f"[HIGHLIGHT] {zone_prefix}relief highlight select failed (non-fatal): {_hexc}")
             highlight_meshes = []
@@ -1684,25 +1691,9 @@ def run_full_generation_pipeline(
             print(f"[CONNECTOR] {zone_prefix}relief connector failed (non-fatal): {_cexc}")
             connector_key_mesh = None
 
-    # ── ВИДІЛЕННЯ ДОМУ (РЕЛЬЄФ): ПАЗ у ФІНАЛЬНИЙ рельєф (відбір+деталь зроблено ДО merge) ──
-    # _hl_pockets = [(footprint, base_z, depth, bm_top), ...] з pre-merge блоку. Ріжемо
-    # паз у ФІНАЛЬНИЙ (змерджений) terrain_mesh 3D-булеаном (manifold + guard, як
-    # конектор/GPX). Будинок уже виключено з merge + червона деталь уже у highlight_meshes,
-    # тож тут лише виріз під вставку. Сумнів boolean → рельєф лишаємо (деталь = приклеїти).
-    if _hl_pockets and terrain_mesh is not None and _sf_c > 0:
-        try:
-            from services.highlight_relief_groove import carve_highlight_groove
-            for (_foot, _bm_top, _bm_bot) in _hl_pockets:
-                terrain_mesh, _red = carve_highlight_groove(
-                    terrain_mesh, _foot, _bm_top, _bm_bot,
-                    scale_factor=_sf_c, clearance_mm=0.15,
-                    zone_prefix=zone_prefix,
-                )
-                if _red is not None:
-                    highlight_meshes.append(_red)
-        except Exception as _hexc:
-            print(f"[HIGHLIGHT] {zone_prefix}relief road-like groove carve failed (non-fatal): {_hexc}")
-
+    # ── ВИДІЛЕННЯ ДОМУ (РЕЛЬЄФ): паз+будинок зроблено ВИЩЕ, ДО merge (ЧИСТА boolean-кишеня
+    # на герметичному рельєфі). Тут більше нічого не ріжемо (пізній виріз давав обривчасті
+    # стінки на негерметичному мерджі). highlight_meshes уже заповнено.
     highlight_part = None
     if highlight_meshes:
         try:
