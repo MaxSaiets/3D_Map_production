@@ -35,11 +35,13 @@ def _rebuild_road_mesh_from_mask(
     cap_thickness_m = max(float(road_height_m) + float(road_embed_m), 0.001)
     for poly in _iter_polygons(road_polygons):
         try:
-            # Дорога лягає ВРІВЕНЬ з поверхнею рельєфу (top_z_offset=0).
             mesh = create_road_surface_cap(
                 poly,
                 terrain_provider,
                 scale_factor=float(scale_factor),
+                # Keep the road insert flush with the terrain surface.
+                # Physical road thickness is still preserved by cap_thickness_m,
+                # but the visible top should not float above the relief.
                 top_z_offset=0.0,
                 cap_thickness_m=float(cap_thickness_m),
             )
