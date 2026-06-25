@@ -789,7 +789,7 @@ def _flush_raised_content_at_tile_edge(
         inner = zone_polygon_local.buffer(-edge_world).buffer(0)
         if inner is None or inner.is_empty:
             return
-        drop_world = 0.3 / float(scale_factor)  # верх контенту трохи НИЖЧЕ рельєфу на краю → без z-fight і без торця
+        drop_world = 0.0  # верх контенту ВРІВЕНЬ з рельєфом на краю (НЕ нижче — інакше зелені/дороги тонуть у землю)
         _cxy = None
         try:
             from shapely import contains_xy as _cxy  # shapely 2.x — векторизовано
@@ -819,7 +819,7 @@ def _flush_raised_content_at_tile_edge(
             if np.any(sel):
                 v[sel, 2] = tz[sel] - drop_world
                 mesh.vertices = v
-                print(f"[CONNECTOR] {zone_prefix}edge-flush: опущено {int(np.sum(sel))} вершин контенту до рельєфу на краю плитки")
+                print(f"[CONNECTOR] {zone_prefix}edge-flush: опущено {int(np.sum(sel))} вершин контенту на краю")
     except Exception as _exc:
         print(f"[CONNECTOR] {zone_prefix}edge-flush skipped (non-fatal): {_exc}")
 
