@@ -106,24 +106,48 @@ def carve_highlight_groove(
             groove, bottom_z_m=floor, thickness_m=cut_thick,
             color=[128, 128, 128], min_area_m2=1e-12,
         )
-        if (cutter is not None and len(cutter.faces) > 0
-                and bool(getattr(cutter, "is_volume", False))
-                and bool(getattr(terrain_mesh, "is_volume", False))):
+        import os
+        cutter_ok = (cutter is not None and len(cutter.faces) > 0
+                     and bool(getattr(cutter, "is_volume", False)))
+        force_blender = os.environ.get("HL_FORCE_BLENDER") == "1"
+
+        def _drift_ok(res, b0):
+            if res is None or len(getattr(res, "faces", [])) == 0:
+                return False
+            b1 = res.bounds
+            drift = (max(abs(b1[0][i] - b0[0][i]) for i in (0, 1))
+                     + max(abs(b1[1][i] - b0[1][i]) for i in (0, 1)))
+            return drift < (5.0 / sf)
+
+        # 1) manifold — швидко, ЧИСТІ стінки, але потребує ГЕРМЕТИЧНИЙ рельєф.
+        if cutter_ok and not force_blender and bool(getattr(terrain_mesh, "is_volume", False)):
             b0 = terrain_mesh.bounds
             try:
                 res = trimesh.boolean.difference([terrain_mesh, cutter], engine="manifold")
             except Exception:
                 res = None
-            if (res is not None and len(getattr(res, "faces", [])) > 0
-                    and bool(getattr(res, "is_volume", False))):
-                b1 = res.bounds
-                drift = (max(abs(b1[0][i] - b0[0][i]) for i in (0, 1))
-                         + max(abs(b1[1][i] - b0[1][i]) for i in (0, 1)))
-                if drift < (5.0 / sf):
-                    print(f"[HIGHLIGHT] {zone_prefix}CLEAN boolean pocket (стінки рівні, зазор "
-                          f"{clearance_mm}мм, підлога {floor:.2f}); будинок СТОЇТЬ {len(red.faces)} граней")
-                    return res, red
-        # FALLBACK: рельєф негерметичний → опускання вершин (обривчасто, але працює).
+            if res is not None and bool(getattr(res, "is_volume", False)) and _drift_ok(res, b0):
+                print(f"[HIGHLIGHT] {zone_prefix}CLEAN manifold pocket (стінки рівні, зазор "
+                      f"{clearance_mm}мм); будинок СТОЇТЬ {len(red.faces)} граней")
+                return res, red
+
+        # 2) Blender boolean — ріже ЧИСТО і на НЕгерметичному рельєфі (саме твої зони,
+        #    де manifold не проходив і падав на кривий vertex-set).
+        if cutter_ok:
+            try:
+                from services.terrain_cutter import _run_blender_boolean
+                b0 = terrain_mesh.bounds
+                bres = _run_blender_boolean(terrain_mesh, cutter, label="highlight")
+                if (bres is not None and len(getattr(bres, "faces", [])) > 0
+                        and abs(len(bres.faces) - len(terrain_mesh.faces)) > 4  # реально вирізало
+                        and _drift_ok(bres, b0)):
+                    print(f"[HIGHLIGHT] {zone_prefix}CLEAN Blender pocket (рівні стінки на "
+                          f"негерметичному рельєфі); будинок СТОЇТЬ {len(red.faces)} граней")
+                    return bres, red
+            except Exception as _bexc:
+                print(f"[HIGHLIGHT] {zone_prefix}blender pocket failed (non-fatal): {_bexc}")
+
+        # 3) ОСТАННІЙ резерв (обидва boolean не вийшли): vertex-set — обривчасто.
         terrain_mesh = _vertex_set_fallback(terrain_mesh, groove, floor, zone_prefix)
         return terrain_mesh, red
     except Exception as exc:
