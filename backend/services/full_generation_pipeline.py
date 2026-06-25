@@ -1268,19 +1268,24 @@ def run_full_generation_pipeline(
                 except Exception:
                     pass
             if _hl_chosen:
+                from services.flat_plate_pipeline import _mesh_xy_footprint
                 for _i in _hl_chosen:
                     _bm = building_meshes[_i]
-                    _base_z = float(_bm.bounds[0][2])   # будинок сидить на рельєфі тут
                     _bm_top = float(_bm.bounds[1][2])
-                    _red, _pk, _d = build_highlight_insert(_bm, base_top_m=_base_z, export_scale_factor=_sf_c)
-                    if _red is not None:
-                        highlight_meshes.append(_red)
-                    if _pk is not None and _d > 1e-9:
-                        _hl_pockets.append((_pk, _base_z, _d, _bm_top))
+                    _bm_bot = float(_bm.bounds[0][2])   # НАЙНИЖЧА точка мешу = пласке дно/підлога пазу
+                    # ПАЗ ЯК У ДОРІГ: зберігаємо ФУТПРИНТ+верх+низ; паз (пласку кишеню на
+                    # рівні низу будинку) ріжемо ПІЗНІШЕ у фінальний рельєф опусканням
+                    # вершин, а будинок СТОЇТЬ на пласкому дні. НЕ плаский boolean (фейлив).
+                    try:
+                        _foot = _mesh_xy_footprint(_bm)
+                    except Exception:
+                        _foot = None
+                    if _foot is not None and not getattr(_foot, "is_empty", True):
+                        _hl_pockets.append((_foot, _bm_top, _bm_bot))
                 # ВИКЛЮЧАЄМО обрані будинки з merge (стають окремою червоною вставкою)
                 _hl_cs = set(_hl_chosen)
                 building_meshes = [b for j, b in enumerate(building_meshes) if j not in _hl_cs]
-                print(f"[HIGHLIGHT] {zone_prefix}{len(highlight_meshes)} building(s) -> red insert (relief, pre-merge)")
+                print(f"[HIGHLIGHT] {zone_prefix}{len(_hl_pockets)} building(s) selected for road-like groove (relief)")
         except Exception as _hexc:
             print(f"[HIGHLIGHT] {zone_prefix}relief highlight select failed (non-fatal): {_hexc}")
             highlight_meshes = []
@@ -1686,32 +1691,17 @@ def run_full_generation_pipeline(
     # тож тут лише виріз під вставку. Сумнів boolean → рельєф лишаємо (деталь = приклеїти).
     if _hl_pockets and terrain_mesh is not None and _sf_c > 0:
         try:
-            import trimesh as _tmh
-            from services.flat_plate_pipeline import build_flat_layer_mesh_from_mask
-            _eps_h = max((float(terrain_mesh.bounds[1][2]) - float(terrain_mesh.bounds[0][2])) * 0.02, 0.5 / _sf_c)
-            for (_pk, _base_z, _d, _bm_top) in _hl_pockets:
-                try:
-                    _hbot = _base_z - _d
-                    _hthk = (_bm_top + _eps_h) - _hbot   # від під-пазу аж вище будинку
-                    _hcut = build_flat_layer_mesh_from_mask(
-                        _pk, bottom_z_m=_hbot, thickness_m=_hthk,
-                        color=[128, 128, 128], min_area_m2=1e-12,
-                    )
-                    if (_hcut is not None and bool(getattr(_hcut, "is_volume", False))
-                            and bool(getattr(terrain_mesh, "is_volume", False))):
-                        _hb0 = terrain_mesh.bounds
-                        _hres = _tmh.boolean.difference([terrain_mesh, _hcut], engine="manifold")
-                        if (_hres is not None and len(getattr(_hres, "faces", [])) > 0
-                                and bool(getattr(_hres, "is_volume", False))):
-                            _hb1 = _hres.bounds
-                            _hdrift = max(abs(_hb1[0][i] - _hb0[0][i]) for i in range(2)) + \
-                                      max(abs(_hb1[1][i] - _hb0[1][i]) for i in range(2))
-                            if _hdrift < (5.0 / _sf_c):
-                                terrain_mesh = _hres
-                except Exception as _hpx:
-                    print(f"[HIGHLIGHT] {zone_prefix}pocket boolean failed (non-fatal, glue-on): {_hpx}")
+            from services.highlight_relief_groove import carve_highlight_groove
+            for (_foot, _bm_top, _bm_bot) in _hl_pockets:
+                terrain_mesh, _red = carve_highlight_groove(
+                    terrain_mesh, _foot, _bm_top, _bm_bot,
+                    scale_factor=_sf_c, clearance_mm=0.15,
+                    zone_prefix=zone_prefix,
+                )
+                if _red is not None:
+                    highlight_meshes.append(_red)
         except Exception as _hexc:
-            print(f"[HIGHLIGHT] {zone_prefix}relief pocket carve failed (non-fatal): {_hexc}")
+            print(f"[HIGHLIGHT] {zone_prefix}relief road-like groove carve failed (non-fatal): {_hexc}")
 
     highlight_part = None
     if highlight_meshes:
