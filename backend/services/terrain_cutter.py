@@ -178,6 +178,26 @@ print("BOOLEAN_SUCCESS")
                     print(f"[TERRAIN CUT] WARNING: {label}: Blender returned empty scene")
                     return terrain_mesh
 
+            # AUTO-FIX осьового свопу: Blender 4.x wm.obj_import робить Y-up→Z-up
+            # ротацію, яку STL-export не скасовує → результат повернутий (Y↔Z; саме
+            # це ламало груви ЛОКАЛЬНО на 4.3.2). Детект: чи -90° навколо X наближає
+            # bounds результату до вхідного terrain. На проді (не свопнуто) — no-op.
+            try:
+                import numpy as _np
+                _tb = _np.array(terrain_mesh.bounds)
+                def _bdiff(_m):
+                    return float(_np.max(_np.abs(_np.array(_m.bounds) - _tb)))
+                _d0 = _bdiff(result_mesh)
+                if _d0 > 5.0:
+                    _Rx = trimesh.transformations.rotation_matrix(-_np.pi / 2.0, [1, 0, 0])
+                    _rot = result_mesh.copy()
+                    _rot.apply_transform(_Rx)
+                    if _bdiff(_rot) < _d0 * 0.5:
+                        result_mesh = _rot
+                        print(f"[TERRAIN CUT] {label}: fixed Blender Y/Z axis-swap (rot -90 X)")
+            except Exception:
+                pass
+
             if len(result_mesh.vertices) >= 4:
                 # КРИТИЧНО: НЕ викликаємо fix_normals() на результаті Boolean!
                 # Ray casting heuristic інвертує нормалі на нековпуклих мешах з пазами.
