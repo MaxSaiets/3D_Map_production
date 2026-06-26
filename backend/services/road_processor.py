@@ -2389,7 +2389,19 @@ def normalize_road_mask_for_print(
 
     normalized = road_geom
     effective_gap_fill_m = float(gap_fill_m or 0.0)
-    pass_count = 3 if (effective_gap_fill_m > 0 and min_feature_m and min_feature_m > 0) else (2 if (min_feature_m and min_feature_m > 0) else 1)
+    # The fill loop is CUMULATIVE: each pass re-fills against the already-fattened
+    # mask, so compact wedges between well-spaced roads snowball into a solid slab
+    # (measured Вугледар: 8% real road -> 92% paved in the worst cell). Was 3
+    # passes for the gap-fill case -> runaway over-merge. 1 pass closes the real
+    # sub-printable gaps WITHOUT the snowball (near-solid masses 1->0, all roads
+    # kept). ENV ROAD_FILL_PASSES (>0) overrides if a zone ever needs more closing.
+    pass_count = 1 if (effective_gap_fill_m > 0 and min_feature_m and min_feature_m > 0) else (2 if (min_feature_m and min_feature_m > 0) else 1)
+    try:
+        _pc = int(os.environ.get("ROAD_FILL_PASSES", "0"))
+        if _pc > 0:
+            pass_count = _pc
+    except Exception:
+        pass
     effective_orphan_hole_width_m = float(orphan_hole_width_m or 0.0)
     boundary_gap_width_m = float(
         effective_orphan_hole_width_m if effective_orphan_hole_width_m > 0 else effective_gap_fill_m
