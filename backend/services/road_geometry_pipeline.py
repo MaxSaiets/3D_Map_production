@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -167,6 +168,63 @@ def _fill_thin_terrain_walls_with_road(
         return roads
 
 
+def _drop_dense_service_clusters(gdf_local, *, cluster_gap_m=9.0, min_cluster_edges=4,
+                                 zone_prefix=""):
+    """Прибирає service-смуги, що утворюють КЛАСТЕР (паркінг/дворовий лабіринт), лишаючи
+    ПООДИНОКІ service-заїзди + УСІ residential та вищі (скелет вулиць). КОРІНЬ
+    (верифіковано wf_3b3880fd + OSM-аналіз Вугледара: 153 service vs 19 residential у
+    дворах): на масштабі друку (sf<~0.15) service-смуги <~5м одна від одної отримують
+    min-width floor ~4.5м → перекриваються → суцільна чорна плита, яку НІЯКИЙ fill/guard
+    не розділить (фізика: зазор <0.6мм друку). Прибирання кластерів service ДО
+    buffer/union → двір стає чистою відкритою основою з будинками (skeleton residential
+    лишається, бо ті рознесені >10м і не зливаються).
+
+    Правило РІВНОМІРНЕ (без density/hull-порогів = БЕЗ «латковості», яку власник
+    відкинув): буфер service на cluster_gap_m/2, union; БУДЬ-ЯКИЙ зв'язний blob із
+    ≥ min_cluster_edges service-ребер = лабіринт → дропнути ВСІ його service-ребра.
+    Поодинокі заїзди (1..min_cluster_edges-1 у blob) ЛИШАЮТЬСЯ. residential+ не чіпає
+    взагалі (фільтр лише по _normalized_highway=='service'). ENV: DENSE_SERVICE_PRUNE=0
+    вимикає; DENSE_SERVICE_MIN_EDGES перекриває поріг кластера.
+    (Прод DuckDB road-таблиця: лише id/highway/bridge/wkt — 'service'-підтегу немає →
+    детект геометричний, не за підтегом.)
+    """
+    try:
+        if os.environ.get("DENSE_SERVICE_PRUNE", "1") == "0":
+            return gdf_local
+        if gdf_local is None or getattr(gdf_local, "empty", True):
+            return gdf_local
+        if "_normalized_highway" not in getattr(gdf_local, "columns", []):
+            return gdf_local
+        try:
+            min_cluster_edges = int(os.environ.get("DENSE_SERVICE_MIN_EDGES", str(min_cluster_edges)))
+        except Exception:
+            pass
+        svc = gdf_local[gdf_local["_normalized_highway"] == "service"]
+        if len(svc) < min_cluster_edges:
+            return gdf_local
+        items = [(idx, g) for idx, g in zip(svc.index, svc.geometry)
+                 if g is not None and not getattr(g, "is_empty", True)]
+        if len(items) < min_cluster_edges:
+            return gdf_local
+        # зв'язні кластери: буфер кожної смуги на пів-зазору, union
+        merged = unary_union([g.buffer(cluster_gap_m / 2.0) for _, g in items]).buffer(0)
+        blobs = list(getattr(merged, "geoms", [merged]))
+        drop_idx = []
+        for blob in blobs:
+            members = [idx for (idx, g) in items if g.intersects(blob)]
+            if len(members) >= min_cluster_edges:
+                drop_idx.extend(members)
+        if not drop_idx:
+            return gdf_local
+        keep_mask = ~gdf_local.index.isin(drop_idx)
+        print(f"[INFO] {zone_prefix} dropped {len(drop_idx)} clustered service lanes "
+              f"({len(svc)} service total, {len(blobs)} cluster blobs) -> open courtyards")
+        return gdf_local[keep_mask].copy()
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix} dense-service prune failed (non-fatal): {exc}")
+        return gdf_local
+
+
 def prepare_road_geometry(
     *,
     G_roads: Any,
@@ -293,6 +351,7 @@ def prepare_road_geometry(
                             trim_width_m=0.0,
                             orphan_hole_width_m=float(orphan_hole_m),
                             zone_polygon=zone_polygon_local,
+                            scale_factor=float(scale_factor) if scale_factor else 0.0,
                         )
                         if filled is not None and not getattr(filled, "is_empty", True):
                             merged_roads_geom_local = filled

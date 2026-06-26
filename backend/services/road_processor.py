@@ -2378,6 +2378,7 @@ def normalize_road_mask_for_print(
     preserve_geom=None,
     zone_polygon=None,
     orphan_hole_width_m: float = 0.0,
+    scale_factor: float = 0.0,
 ):
     """
     Normalize a 2D road mask for printing.
@@ -2423,6 +2424,17 @@ def normalize_road_mask_for_print(
             (boundary_gap_width_m ** 2) * 7.0 if boundary_gap_width_m > 0 else 0.0,
         )
     )
+    # Print-driven floor for the enclosed-island cap: any terrain pad smaller than
+    # a ~3mm MODEL square is a non-printable junction sliver → merge it into the
+    # road. Uniform across zones (model-mm via scale_factor). Stays an order of
+    # magnitude below a real city block (tens of m = thousands of m²), which the
+    # area gate + preserve_geom still reject.
+    if scale_factor and scale_factor > 0:
+        try:
+            _pad = model_mm_to_world_m(3.0, float(scale_factor))
+            enclosed_island_area_m2 = max(enclosed_island_area_m2, _pad * _pad)
+        except Exception:
+            pass
 
     for _ in range(pass_count):
         try:
