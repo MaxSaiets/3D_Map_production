@@ -87,9 +87,9 @@ def process_buildings(
     # (rotation-independent, на відміну від bbox min_dim, що роздуває діагональні).
     # Орієнтири (is_landmark) НЕ чіпаємо. ENV BUILDING_MIN_WIDTH_MM (дефолт 1.5мм).
     try:
-        _bmw_mm = float(os.environ.get("BUILDING_MIN_WIDTH_MM", "1.5"))
+        _bmw_mm = float(os.environ.get("BUILDING_MIN_WIDTH_MM", "1.75"))
     except Exception:
-        _bmw_mm = 1.5
+        _bmw_mm = 1.75
     building_min_width_m = (
         float(_bmw_mm) / float(scale_factor)
         if (scale_factor is not None and float(scale_factor) > 0.0 and _bmw_mm > 0)

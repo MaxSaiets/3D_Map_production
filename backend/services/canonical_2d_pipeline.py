@@ -831,6 +831,35 @@ def prepare_canonical_2d_stage(
         building_exclusion_for_roads,
     )
 
+    # Прибрати тонкі ШИЙКИ/ПАЛЬЦІ парку («стовпи всередині зеленої зони»): parks_final =
+    # parks − roads − buildings лишає тонкі перешийки, що екструдуються у тонкі
+    # стіни-стовпи. Морфологічне ВІДКРИТТЯ (erode+dilate) прибирає шийки <~1.6мм ТУТ —
+    # ДО деривації parks_groove нижче (рядок ~861), тож рівчак слідує відкритому
+    # інсерту → БЕЗ orphan-grooves (інакше різало б рівчак у базі без зеленої вставки).
+    # ЛИШЕ parks (дороги НЕ чіпаємо — там opening рве смуги, документована регресія).
+    # Гард: якщо площа падає >5% або стає порожньо — лишаємо як було.
+    try:
+        if (parks_final is not None and not getattr(parks_final, "is_empty", True)
+                and zone.scale_factor and float(zone.scale_factor) > 0
+                and os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")):
+            _pf_a0 = float(getattr(parks_final, "area", 0.0) or 0.0)
+            _pf_open = _collapse_acute_corners(
+                parks_final,
+                scale_factor=zone.scale_factor,
+                collapse_mm=float(os.environ.get("PARK_NECK_COLLAPSE_MM", "1.6")),
+            )
+            _pf_a1 = float(getattr(_pf_open, "area", 0.0) or 0.0)
+            if (_pf_open is not None and not getattr(_pf_open, "is_empty", True)
+                    and _pf_a0 > 0 and _pf_a1 >= 0.95 * _pf_a0):
+                parks_final = _pf_open
+                print(f"[INFO] {zone_prefix}park neck-collapse: area {_pf_a0:.0f}->{_pf_a1:.0f} m2 "
+                      f"(thin park fingers/pillars removed)")
+            else:
+                print(f"[INFO] {zone_prefix}park neck-collapse skipped "
+                      f"(area {_pf_a0:.0f}->{_pf_a1:.0f}, >5% loss guard)")
+    except Exception as _pexc:
+        print(f"[WARN] {zone_prefix}park neck-collapse failed: {_pexc}")
+
     # Дороги НЕ залазять у зелень: віднімаємо зелену зону від road-масок, тож
     # службові алеї всередині кладовища/парку зникають, а зелень читається суцільною.
     # ВАЖЛИВО: ЗАПОВНЮЄМО building-holes у парку (parks−buildings лишає дірки де будинки)
