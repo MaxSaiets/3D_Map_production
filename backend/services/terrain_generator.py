@@ -452,9 +452,36 @@ def create_terrain_mesh(
         except Exception as _exc:
             print(f"[TERRAIN] relief lift skipped: {_exc}")
 
+    # Conservative DEM DESPIKE (runs AFTER relief gain so amplified spikes are
+    # caught, BEFORE water/building flatten so seats stay crisp). Replaces a cell
+    # with its 3x3 median ONLY if it deviates by more than ~SLOPE_RATIO:1 over one
+    # grid cell — an impossibly steep LONE spike (DEM artifact / "шпичка"). Real
+    # terrain slopes are gentler and multi-cell, so ridges/embankments are NOT
+    # flagged (a blanket smooth/clamp would flatten them — this does not). Geologic
+    # slope rule => scale-independent, no per-zone tuning.
+    try:
+        from scipy.ndimage import median_filter as _median_filter
+        if Z.ndim == 2 and Z.shape[0] > 2 and Z.shape[1] > 2:
+            _dx = float(abs(X[0, 1] - X[0, 0])) if X.shape[1] > 1 else 0.0
+            _dy = float(abs(Y[1, 0] - Y[0, 0])) if X.shape[0] > 1 else 0.0
+            _step = max(0.5 * (_dx + _dy), 0.1)
+            _spike_T = _step * 4.0  # >4:1 rise over one cell = artifact
+            _med = _median_filter(Z, size=3)
+            _spikes = np.abs(Z - _med) > _spike_T
+            _n = int(_spikes.sum())
+            if 0 < _n <= int(0.02 * Z.size):  # safety: never touch >2% of cells
+                Z = np.where(_spikes, _med, Z)
+                print(f"[TERRAIN] despike: clipped {_n} isolated outlier cells "
+                      f"(>{_spike_T:.1f}m over {_step:.1f}m cell)")
+            elif _n > int(0.02 * Z.size):
+                print(f"[TERRAIN] despike SKIPPED: {_n} flagged (> 2% of grid) — "
+                      f"likely real steep relief, not noise")
+    except Exception as _despike_exc:
+        print(f"[TERRAIN] despike skipped: {_despike_exc}")
+
     # Зберігаємо оригінальні висоти
     Z_original = Z.copy()
-    
+
     # 3. Модифікатори рельєфу
     modifiers_start = time.time()
     

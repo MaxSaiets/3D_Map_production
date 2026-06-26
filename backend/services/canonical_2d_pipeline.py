@@ -108,6 +108,46 @@ def _fill_orphan_holes(
         return rebuilt[0]
 
 
+def _fill_small_enclosed_holes(geometry: Any, *, max_hole_area_m2: float) -> Any:
+    """Fill tiny fully-enclosed interior holes (road-surrounded terrain pads, the
+    "white diamonds" at junctions) below max_hole_area_m2 — merge them into the
+    mask. A hole is enclosed by the mask by definition, so this NEVER absorbs
+    edge terrain or large courtyards (those exceed the cap or are not holes).
+    Topology-only: keeps the exterior + the large holes, drops the small ones."""
+    if geometry is None or getattr(geometry, "is_empty", True) or max_hole_area_m2 <= 0:
+        return geometry
+    polygons = [geometry] if getattr(geometry, "geom_type", "") == "Polygon" else list(getattr(geometry, "geoms", []))
+    rebuilt = []
+    changed = False
+    for poly in polygons:
+        if getattr(poly, "geom_type", "") != "Polygon" or poly.is_empty:
+            if not getattr(poly, "is_empty", True):
+                rebuilt.append(poly)
+            continue
+        kept_holes = []
+        for ring in poly.interiors:
+            try:
+                if float(Polygon(ring.coords).area) > float(max_hole_area_m2):
+                    kept_holes.append(ring)
+                else:
+                    changed = True
+            except Exception:
+                kept_holes.append(ring)
+        if len(kept_holes) != len(list(poly.interiors)):
+            try:
+                rebuilt.append(Polygon(poly.exterior.coords, holes=kept_holes).buffer(0))
+            except Exception:
+                rebuilt.append(poly)
+        else:
+            rebuilt.append(poly)
+    if not changed or not rebuilt:
+        return geometry
+    try:
+        return unary_union(rebuilt).buffer(0)
+    except Exception:
+        return rebuilt[0] if len(rebuilt) == 1 else geometry
+
+
 def _smooth_sharp_corners(geometry: Any, *, scale_factor: Optional[float], radius_mm: float = 0.15) -> Any:
     """Round convex and concave corners sharper than the printer can resolve.
 
@@ -792,15 +832,29 @@ def prepare_canonical_2d_stage(
     )
 
     # Дороги НЕ залазять у зелень: віднімаємо зелену зону від road-масок, тож
-    # службові алеї всередині кладовища/парку зникають, а зелень читається
-    # суцільною. (Магістраль крізь великий парк зникне в межах парку — рідко.)
+    # службові алеї всередині кладовища/парку зникають, а зелень читається суцільною.
+    # ВАЖЛИВО: ЗАПОВНЮЄМО building-holes у парку (parks−buildings лишає дірки де будинки)
+    # перед відніманням — інакше у дірці лишається service-дорога, яка ріже будинок
+    # (building_exclusion=road_groove) → будинок-у-парку НЕ рендериться → темна пляма
+    # «будинок став дорогою» (скарга власника). З заповненими дірками footprint будинку
+    # чистий від road_groove → будинок малюється на зеленому, дорога під ним прибрана.
     _green_src = parks_result.processed_polygons if parks_result is not None else None
     if _green_src is not None and not getattr(_green_src, "is_empty", True):
+        try:
+            from shapely.geometry import Polygon as _GPoly
+            _gp = [_green_src] if _green_src.geom_type == "Polygon" else list(getattr(_green_src, "geoms", []))
+            _green_fill = unary_union(
+                [_GPoly(p.exterior) for p in _gp if p.geom_type == "Polygon"]
+            ).buffer(0)
+            if _green_fill is None or getattr(_green_fill, "is_empty", True):
+                _green_fill = _green_src
+        except Exception:
+            _green_fill = _green_src
         for _attr in ("road_insert_mask", "road_groove_mask"):
             _m = getattr(canonical_road_masks, _attr, None)
             if _m is not None and not getattr(_m, "is_empty", True):
                 try:
-                    setattr(canonical_road_masks, _attr, _m.difference(_green_src).buffer(0))
+                    setattr(canonical_road_masks, _attr, _m.difference(_green_fill).buffer(0))
                 except Exception:
                     pass
 
@@ -882,6 +936,23 @@ def prepare_canonical_2d_stage(
     canonical_road_masks.road_groove_mask = _finalize_mask(
         canonical_road_masks.road_groove_mask, label="road_groove"
     )
+    # Fill tiny fully-enclosed terrain islands (the "white diamond" junction pads,
+    # interior holes < ~3mm model) in the canonical road mask so they print as
+    # road instead of a fragile sub-printable pad. Safe: only holes (road-enclosed
+    # by definition) below the cap are filled — edge terrain and real courtyards
+    # (bigger, or not holes) are untouched. Insert+groove both, to stay consistent.
+    try:
+        if zone.scale_factor and float(zone.scale_factor) > 0:
+            _pad = model_mm_to_world_m(3.0, float(zone.scale_factor))
+            _hole_cap = float(_pad * _pad)
+            canonical_road_masks.road_insert_mask = _fill_small_enclosed_holes(
+                canonical_road_masks.road_insert_mask, max_hole_area_m2=_hole_cap
+            )
+            canonical_road_masks.road_groove_mask = _fill_small_enclosed_holes(
+                canonical_road_masks.road_groove_mask, max_hole_area_m2=_hole_cap
+            )
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix}small road-hole fill failed: {exc}")
     # Hard invariant: if road insert survived, road groove MUST also exist so
     # the 3D stages can cut terrain and the handoff validator sees matching
     # masks. If the upstream groove was lost to topology noise or an aggressive
