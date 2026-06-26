@@ -16,6 +16,7 @@ from services.geometry_context import to_local_geodataframe_if_needed
 import mapbox_earcut  # Для fallback методу extrude_building
 import re
 import gc  # For memory cleanup
+import os
 
 
 # Рендер визначних місць окремим БРОНЗОВИМ «Landmark»-шаром ВИМКНЕНО за рішенням
@@ -79,12 +80,35 @@ def process_buildings(
     building_meshes = []
     building_records: List[BuildingMeshRecord] = []
 
+    # Мін. ДРУКОВНА ширина будинку (СПРАВЖНЯ, не bbox): тонкі «голки»/стовбці —
+    # footprint вужчий за поріг УСЮДИ — ламаються на друку (і стають окремими
+    # крихкими вежами коли union падає в concatenate на 4ГБ) → відкидаємо.
+    # Тест = ерозія на півширини: якщо зникає весь полігон, він тонкий СКРІЗЬ
+    # (rotation-independent, на відміну від bbox min_dim, що роздуває діагональні).
+    # Орієнтири (is_landmark) НЕ чіпаємо. ENV BUILDING_MIN_WIDTH_MM (дефолт 1.5мм).
+    try:
+        _bmw_mm = float(os.environ.get("BUILDING_MIN_WIDTH_MM", "1.5"))
+    except Exception:
+        _bmw_mm = 1.5
+    building_min_width_m = (
+        float(_bmw_mm) / float(scale_factor)
+        if (scale_factor is not None and float(scale_factor) > 0.0 and _bmw_mm > 0)
+        else 0.0
+    )
+
     def _geometry_meets_threshold(poly: Optional[Polygon], is_landmark: bool = False) -> bool:
         if poly is None or poly.is_empty:
             return False
         # Орієнтири (церкви/вежі/історичні) НЕ відкидаємо за розміром — навіть малі мусять лишитись
         if is_landmark:
             return True
+        # Тонкі будинки-голки: справжня ширина < поріг СКРІЗЬ → відкинути (стовбці)
+        if building_min_width_m > 0:
+            try:
+                if poly.buffer(-building_min_width_m / 2.0).is_empty:
+                    return False
+            except Exception:
+                pass
         if min_feature_m <= 0:
             return True
         try:

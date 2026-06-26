@@ -1304,12 +1304,21 @@ def merge_close_road_gaps(
                 width = float(maxx - minx)
                 height = float(maxy - miny)
                 min_dim = min(width, height)
+                max_dim = max(width, height)
+                aspect_ratio = max_dim / max(min_dim, 1e-9)
                 perimeter = float(getattr(poly, "length", 0.0) or 0.0)
                 area = float(getattr(poly, "area", 0.0) or 0.0)
                 equiv_width = (2.0 * area / perimeter) if perimeter > 0 else max(width, height)
                 if min_dim > (min_gap_m * 1.25):
                     continue
                 if equiv_width > (min_gap_m * 1.1):
+                    continue
+                # Reject LONG thin strips: the gap between two parallel
+                # parking/yard lanes runs the whole length of the lanes (high
+                # aspect, long max_dim). Bridging it paves the courtyard into a
+                # solid slab. A genuine intersection gap is SHORT and compact,
+                # so only those survive this guard.
+                if max_dim > (min_gap_m * 6.0) or aspect_ratio > 5.0:
                     continue
                 keep_additions.append(poly)
             except Exception:
