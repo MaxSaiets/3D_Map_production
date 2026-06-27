@@ -102,8 +102,17 @@ def process_buildings(
     def _geometry_meets_threshold(poly: Optional[Polygon], is_landmark: bool = False) -> bool:
         if poly is None or poly.is_empty:
             return False
-        # Орієнтири (церкви/вежі/історичні) НЕ відкидаємо за розміром — навіть малі мусять лишитись
+        # Орієнтири (церкви/вежі/історичні) НЕ відкидаємо за розміром — АЛЕ навіть вони
+        # мусять бути ДРУКОВНИМИ: ширина АБО довжина <0.3мм-екв = голка-стовп, що
+        # ламається/не друкується → відкинути (раніше landmark обходив усі фільтри).
         if is_landmark:
+            _lm_floor = (0.3 / float(scale_factor)) if (scale_factor and float(scale_factor) > 0) else 0.0
+            if _lm_floor > 0:
+                try:
+                    if poly.buffer(-_lm_floor / 2.0).is_empty:
+                        return False
+                except Exception:
+                    pass
             return True
         # Тонкі будинки-голки: справжня ширина < поріг СКРІЗЬ → відкинути (стовбці)
         if building_min_width_m > 0:
@@ -465,8 +474,20 @@ def process_buildings(
                     # several metres above the surface. ground_min seats the base on
                     # the pad; on the high side terrain rises into the wall (natural
                     # cut-in), never a gap. Sinks 0.1 model-mm to kill the seam.
-                    base_z = float(ground_min) - float(terrain_sink_m)
-                    required_foundation_m = max(float(ground_max) - float(ground_min), 0.0) + float(terrain_sink_m)
+                    # СХИЛИ: база на МЕДІАНІ рельєфу під footprint (не на min). При min
+                    # будинок «тонув» у схил (дах=min+height нижчий за горішній рельєф) і
+                    # давав глибокий фундамент-стіну (max-min) на низовому боці = «висота
+                    # неправильна». Медіана піднімає дах (median+height — видно повну висоту),
+                    # а фундамент лише median..min (дно сідає ≈ на пад=min, як flatten) → без
+                    # зависання й без зайвої стіни.
+                    try:
+                        ground_median = float(np.median(heights))
+                        if not np.isfinite(ground_median):
+                            ground_median = ground_min
+                    except Exception:
+                        ground_median = ground_min
+                    base_z = float(ground_median) - float(terrain_sink_m)
+                    required_foundation_m = max(float(ground_median) - float(ground_min), 0.0) + float(terrain_sink_m)
                     foundation_depth_m = max(float(foundation_depth_eff), float(required_foundation_m), 0.05)
 
                     # translate_z - Z координата нижньої точки будівлі (base_z мінус фундамент)
@@ -613,16 +634,22 @@ def process_buildings(
                                 if valid_ph.size > 0:
                                     poly_ground_min = float(np.min(valid_ph))
                                     poly_ground_max = float(np.max(valid_ph))
+                                    try:
+                                        poly_ground_median = float(np.median(valid_ph))
+                                        if not np.isfinite(poly_ground_median):
+                                            poly_ground_median = poly_ground_min
+                                    except Exception:
+                                        poly_ground_median = poly_ground_min
                                 else:
                                     poly_ground_min = ground_min
                                     poly_ground_max = ground_max
+                                    poly_ground_median = poly_ground_min  # без даних схилу → як було
 
-                                # ground_min (not max) — seats base on the flattened
-                                # pad; ground_max floated the building (see single-poly
-                                # branch above for the full explanation).
-                                poly_base_z = float(poly_ground_min) - float(terrain_sink_m)
+                                # СХИЛИ: база на МЕДІАНІ (не min) — будинок не тоне і без
+                                # глибокого фундаменту-стіни (див. single-poly гілку вище).
+                                poly_base_z = float(poly_ground_median) - float(terrain_sink_m)
                                 poly_required_foundation_m = max(
-                                    float(poly_ground_max) - float(poly_ground_min),
+                                    float(poly_ground_median) - float(poly_ground_min),
                                     0.0,
                                 ) + float(terrain_sink_m)
                                 poly_foundation_depth_m = max(
@@ -835,6 +862,14 @@ def get_building_height(row, min_height: float) -> float:
             seed = 0
         height = float(min_height) + float(seed % 4) * 2.0  # 0,2,4,6 м понад базу
 
+    # САНІТІ-КАП сирої висоти: грубі OSM-помилки (height=200, levels=99) не мають робити
+    # «хмарочос». Реальні будинки цих міст рідко >75м. Фінальний друк-кап (× множник)
+    # окремо у buildings_pipeline (max_height).
+    try:
+        if height is not None and float(height) > 75.0:
+            height = 75.0
+    except Exception:
+        pass
     return height
 
 
