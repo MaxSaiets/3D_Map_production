@@ -463,8 +463,47 @@ def _fetch_source_stage(
         task=task,
         zone_prefix=zone_prefix,
     )
+    # Drop tiny kiosk/stall buildings (OSM market kiosks, ларки) by real AREA.
+    # They pass the min-WIDTH filter (one side can be 5-8m) but have a tiny area,
+    # so on the print they stand as thin "pillars" in the park/street. A real
+    # building is hundreds of m2; a kiosk is < ~30m2. Filtering at the source
+    # removes them from BOTH the masks and the 3D mesh. Env: BUILDING_MIN_AREA_M2
+    # (default 25; 0 disables).
+    _gdf_b = data_result.gdf_buildings
+    try:
+        _min_area = float(os.environ.get("BUILDING_MIN_AREA_M2", "25"))
+    except (TypeError, ValueError):
+        _min_area = 25.0
+    if _min_area > 0 and _gdf_b is not None and not getattr(_gdf_b, "empty", True):
+        try:
+            import math as _math
+
+            _is_geographic = bool(getattr(getattr(_gdf_b, "crs", None), "is_geographic", False))
+            _keep = []
+            for _g in _gdf_b.geometry.values:
+                if _g is None or getattr(_g, "is_empty", True):
+                    _keep.append(True)
+                    continue
+                try:
+                    if _is_geographic:
+                        _lat = _g.centroid.y
+                        _m2 = _g.area * (111320.0 ** 2) * _math.cos(_math.radians(_lat))
+                    else:
+                        _m2 = _g.area
+                    _keep.append(_m2 >= _min_area)
+                except Exception:
+                    _keep.append(True)
+            _dropped = sum(1 for _k in _keep if not _k)
+            if _dropped:
+                _gdf_b = _gdf_b[_keep]
+                print(
+                    f"[BUILDINGS] dropped {_dropped} tiny (<{_min_area:.0f} m2) "
+                    f"kiosk/stall buildings"
+                )
+        except Exception as _exc:
+            print(f"[BUILDINGS] kiosk-area filter failed: {_exc}")
     return SourceDataResult(
-        gdf_buildings=data_result.gdf_buildings,
+        gdf_buildings=_gdf_b,
         gdf_water=data_result.gdf_water,
         G_roads=data_result.G_roads,
         gdf_green=data_result.gdf_green,
