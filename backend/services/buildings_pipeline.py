@@ -214,15 +214,10 @@ def process_building_layer(
     # хмарочоси ~30мм на 90мм-плитці (друк-крихкі тонкі вежі + «висоти дико
     # перепадають» між плитками). Капуємо до ~15% розміру моделі (мін 6мм). Лише
     # коли map_connector → golden/звичайний рельєф недоторкані (байт-в-байт).
-    # КАП діє ЗАВЖДИ (не лише для конекторів): без нього множник × levels×3 робив
-    # «хмарочоси» (деякі будинки дико високі). map_connector тримає тісніший 15%
-    # (golden недоторканий), звичайний режим — 10% розміру моделі (мін 6мм): реальні
-    # високі будинки лишаються видимими, але абсурдні вежі від битих тегів капуються.
     max_building_height_m = None
-    if scale_factor and scale_factor > 0:
+    if bool(getattr(request, "map_connector", False)) and scale_factor and scale_factor > 0:
         _model_mm = float(getattr(request, "model_size_mm", 90.0) or 90.0)
-        _pct = 0.15 if bool(getattr(request, "map_connector", False)) else 0.10
-        _cap_mm = max(_model_mm * _pct, 6.0)
+        _cap_mm = max(_model_mm * 0.15, 6.0)
         max_building_height_m = _cap_mm / scale_factor
     building_embed_m = stl_extra_embed_m if not request.is_ams_mode else 0.0
     gdf_buildings_for_mesh = split_building_parts_from_parent_footprints(gdf_buildings_local)

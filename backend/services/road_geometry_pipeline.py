@@ -168,7 +168,7 @@ def _fill_thin_terrain_walls_with_road(
         return roads
 
 
-def _drop_dense_service_clusters(gdf_local, *, cluster_gap_m=6.0, min_cluster_edges=8,
+def _drop_dense_service_clusters(gdf_local, *, cluster_gap_m=9.0, min_cluster_edges=4,
                                  zone_prefix=""):
     """Прибирає service-смуги, що утворюють КЛАСТЕР (паркінг/дворовий лабіринт), лишаючи
     ПООДИНОКІ service-заїзди + УСІ residential та вищі (скелет вулиць). КОРІНЬ
@@ -197,10 +197,6 @@ def _drop_dense_service_clusters(gdf_local, *, cluster_gap_m=6.0, min_cluster_ed
             return gdf_local
         try:
             min_cluster_edges = int(os.environ.get("DENSE_SERVICE_MIN_EDGES", str(min_cluster_edges)))
-        except Exception:
-            pass
-        try:
-            cluster_gap_m = float(os.environ.get("DENSE_SERVICE_GAP_M", str(cluster_gap_m)))
         except Exception:
             pass
         svc = gdf_local[gdf_local["_normalized_highway"] == "service"]
@@ -286,11 +282,6 @@ def prepare_road_geometry(
                     normalize_drivable_highway_tag
                 )
                 local_edges_subset = local_edges_subset[local_edges_subset["_normalized_highway"].notna()].copy()
-                # Прибрати ЩІЛЬНІ service-кластери (дворові/церковні лабіринти проїздів),
-                # що зливаються в суцільну чорну плиту (напр. територія церкви у Хмельницькому:
-                # 291 service-проїздів злились ~49% щільності). Лишає скелет вулиць (residential+)
-                # та поодинокі заїзди. ENV DENSE_SERVICE_PRUNE=0 вимикає; DENSE_SERVICE_MIN_EDGES тюнить.
-                local_edges_subset = _drop_dense_service_clusters(local_edges_subset)
             try:
                 semantic_parts = [
                     geom

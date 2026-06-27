@@ -1222,22 +1222,6 @@ def prepare_scene_parts(
             continue
         try:
             transformed_parts[key] = repair_base_export_mesh(transformed_parts[key])
-            # Прибрати ДРІБНІ ВІДʼЄДНАНІ фрагменти основи/рельєфу (сабсоплові слівери,
-            # boolean-сміття, артефакти кліпу), що не друкуються. Той самий перевірений
-            # фільтр, що для water/parks — лишає головну плиту + злиті будинки, дропає
-            # лише крихітні ізольовані компоненти (<0.4мм сопла / <0.05мм²). Гейт на
-            # body_count>1: коли основа — один суцільний солід, фільтрувати нічого
-            # (уникаємо зайвого repair цілого меша на 4ГБ).
-            try:
-                _multibody = int(getattr(transformed_parts[key], "body_count", 1) or 1) > 1
-            except Exception:
-                _multibody = True
-            if _multibody:
-                transformed_parts[key] = _filter_mesh_components_for_export(
-                    transformed_parts[key],
-                    min_feature_mm=0.4,
-                    min_area_mm2=0.05,
-                )
         except Exception:
             pass
 
