@@ -1020,9 +1020,96 @@ def prepare_canonical_2d_stage(
     parks_groove_mask = _finalize_mask(parks_groove_mask, label="parks_groove")
     water_polygons = _finalize_mask(water_polygons, label="water")
 
-    # ВІДКОЧЕНО 2026-06-25: thin-terrain-wall->road fill (canonical) — та сама причина,
-    # що й у road_geometry: зливав дороги + поглинав зелень (без виключення parks/water),
-    # а стовбів не виправляв (bundle сам відкидав ~65% заливки). Прибрано.
+    # ── Merge thin terrain slivers between GREEN and a road INTO the green ────
+    # User's case: a <0.3mm line of terrain left standing between a park edge and
+    # a road. Grow the park into that thin terrain up to whatever bounds it (road/
+    # building/water) so the green meets the road and no standing sliver remains.
+    # Why this is clean (unlike absorbing into the ROAD, which raggedizes the road
+    # edge and just relocates the sliver — measured 27.7->29.7mm2): the park is a
+    # large area, its new edge simply becomes the road edge, and nothing else moves
+    # (road/building/water untouched, park's far edges untouched) -> no new sliver.
+    # Only thin terrain that TOUCHES a park is absorbed, so road-road slivers are
+    # left alone. Env: GREEN_SLIVER_MERGE_MM (default 0.3; 0 disables).
+    try:
+        _sf = float(zone.scale_factor or 0.0)
+        try:
+            _gm = float(os.environ.get("GREEN_SLIVER_MERGE_MM", "0.3"))
+        except (TypeError, ValueError):
+            _gm = 0.3
+        _ri = canonical_road_masks.road_insert_mask
+        _zone_poly = zone.zone_polygon_local
+        if (
+            _sf > 0
+            and _gm > 0
+            and parks_final is not None
+            and not getattr(parks_final, "is_empty", True)
+            and _zone_poly is not None
+            and not getattr(_zone_poly, "is_empty", True)
+        ):
+            _r = model_mm_to_world_m(_gm / 2.0, _sf)
+            # Standing terrain = zone minus every recessed/raised feature. Use the
+            # road GROOVE (insert + clearance), not the insert: the strip that
+            # actually stands is between the groove edges, so the park must reach
+            # the groove edge or the clearance band is left as a standing sliver.
+            _rg = canonical_road_masks.road_groove_mask
+            _road_ref = (
+                _rg if (_rg is not None and not getattr(_rg, "is_empty", True)) else _ri
+            )
+            _occupied = [
+                _g
+                for _g in (
+                    _road_ref,
+                    parks_final,
+                    water_polygons,
+                    getattr(building_geometry, "building_union_local", None),
+                )
+                if _g is not None and not getattr(_g, "is_empty", True)
+            ]
+            _terrain = _zone_poly
+            if _occupied:
+                _terrain = _terrain.difference(unary_union(_occupied)).buffer(0)
+            # Thin terrain = terrain minus its morphological opening (width < gm).
+            _core = _terrain.buffer(-_r, join_style=2).buffer(_r, join_style=2).buffer(0)
+            _thin = _terrain.difference(_core).buffer(0)
+            # Keep only thin terrain adjacent to a park -> absorb it into the park.
+            if _thin is not None and not getattr(_thin, "is_empty", True):
+                _sliver = _thin.intersection(parks_final.buffer(_r * 3.0)).buffer(0)
+                if _sliver is not None and not getattr(_sliver, "is_empty", True):
+                    _before = float(getattr(parks_final, "area", 0.0) or 0.0)
+                    # The sliver is the standing terrain between the green and the
+                    # road. Absorbing only the terrain leaves the groove-clearance
+                    # gap (green reaches the road GROOVE, not the road itself). To
+                    # close it fully, also bridge a sub-0.3mm margin of the road
+                    # INSERT into the green and then let green win there (subtract
+                    # the bridge from the road). Result: green meets the road with
+                    # no standing terrain and no clearance gap. Bridge is < nozzle,
+                    # so the road only recedes invisibly.
+                    _bridge = None
+                    if _ri is not None and not getattr(_ri, "is_empty", True):
+                        _bridge = (
+                            _sliver.buffer(_r * 1.2, join_style=2).intersection(_ri).buffer(0)
+                        )
+                    _absorb = _sliver if (_bridge is None or _bridge.is_empty) else _sliver.union(_bridge)
+                    parks_final = parks_final.union(_absorb).intersection(_zone_poly).buffer(0)
+                    if parks_groove_mask is not None and not getattr(
+                        parks_groove_mask, "is_empty", True
+                    ):
+                        parks_groove_mask = (
+                            parks_groove_mask.union(_absorb).intersection(_zone_poly).buffer(0)
+                        )
+                    # Green wins over road in the bridged margin (road recedes).
+                    if _bridge is not None and not getattr(_bridge, "is_empty", True):
+                        canonical_road_masks.road_insert_mask = _ri.difference(_bridge).buffer(0)
+                        _rg2 = canonical_road_masks.road_groove_mask
+                        if _rg2 is not None and not getattr(_rg2, "is_empty", True):
+                            canonical_road_masks.road_groove_mask = _rg2.difference(_bridge).buffer(0)
+                    _after = float(getattr(parks_final, "area", 0.0) or 0.0)
+                    print(
+                        f"[INFO] {zone_prefix}green-sliver merge (<{_gm}mm wide): "
+                        f"absorbed {_after - _before:.1f} m2 into green ({_before:.0f}->{_after:.0f})"
+                    )
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix}green-sliver merge failed: {exc}")
 
     # runtime_canonical_masks now resolves building-vs-road precedence in one
     # place and rebuilds road_groove from the final road insert. Pass the raw

@@ -304,6 +304,30 @@ def prepare_road_geometry(
             if merged_roads_geom_local is not None and not getattr(merged_roads_geom_local, "is_empty", True):
                 if zone_polygon_local is not None:
                     merged_roads_geom_local = merged_roads_geom_local.intersection(zone_polygon_local)
+                    # ── Pull roads off the boundary cliff ──────────────────
+                    # The base has a vertical side-wall at the zone edge. A road
+                    # whose polygon touches that edge gets a full-height vertical
+                    # side face there -> a thin tall road "pillar" at the rim
+                    # (and it chops the rim terrain into thin slivers between
+                    # road-ends and the corner). Clip roads to a slightly-inset
+                    # zone so they stop just short of the cliff; the rim stays a
+                    # single continuous terrain band. Env: ROAD_EDGE_INSET_MM.
+                    try:
+                        _inset_mm = float(os.environ.get("ROAD_EDGE_INSET_MM", "2.0"))
+                    except (TypeError, ValueError):
+                        _inset_mm = 2.0
+                    if _inset_mm > 0.0:
+                        try:
+                            _band_m = model_mm_to_world_m(_inset_mm, float(scale_factor))
+                            _inset_zone = zone_polygon_local.buffer(-_band_m)
+                            if (
+                                _inset_zone is not None
+                                and not getattr(_inset_zone, "is_empty", True)
+                                and _inset_zone.area > 0.0
+                            ):
+                                merged_roads_geom_local = merged_roads_geom_local.intersection(_inset_zone)
+                        except Exception:
+                            pass
                 try:
                     merged_roads_geom_local = merged_roads_geom_local.buffer(0)
                 except Exception:
