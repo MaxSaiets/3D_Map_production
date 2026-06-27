@@ -312,10 +312,14 @@ def prepare_road_geometry(
                     # road-ends and the corner). Clip roads to a slightly-inset
                     # zone so they stop just short of the cliff; the rim stays a
                     # single continuous terrain band. Env: ROAD_EDGE_INSET_MM.
+                    # ДЕФОЛТ 0 (вимкнено): власник хоче, щоб дороги ДОХОДИЛИ до краю
+                    # моделі. Дорога, зрізана врівень з боковою стінкою основи на краю —
+                    # це нормально/очікувано, а не «стовп». Лишається env-перемикач
+                    # на випадок, якщо колись знадобиться відсунути від обриву.
                     try:
-                        _inset_mm = float(os.environ.get("ROAD_EDGE_INSET_MM", "2.0"))
+                        _inset_mm = float(os.environ.get("ROAD_EDGE_INSET_MM", "0.0"))
                     except (TypeError, ValueError):
-                        _inset_mm = 2.0
+                        _inset_mm = 0.0
                     if _inset_mm > 0.0:
                         try:
                             _band_m = model_mm_to_world_m(_inset_mm, float(scale_factor))

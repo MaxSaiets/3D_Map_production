@@ -85,11 +85,14 @@ def process_buildings(
     # крихкими вежами коли union падає в concatenate на 4ГБ) → відкидаємо.
     # Тест = ерозія на півширини: якщо зникає весь полігон, він тонкий СКРІЗЬ
     # (rotation-independent, на відміну від bbox min_dim, що роздуває діагональні).
-    # Орієнтири (is_landmark) НЕ чіпаємо. ENV BUILDING_MIN_WIDTH_MM (дефолт 1.5мм).
+    # Орієнтири (is_landmark) НЕ чіпаємо. ENV BUILDING_MIN_WIDTH_MM (дефолт 0.6мм = поріг ДРУКОВНОСТІ ~1.5×сопло).
+    # ВАЖЛИВО: це поріг ДРУКОВНОСТІ, а не «виглядає тонко». 1.75мм на масштабі цілого міста (~0.13мм/м)
+    # = ~13м у світі → видаляло 73% НОРМАЛЬНИХ будинків (<13м) → «немає будинків».
+    # Кіоски/ятки прибирає окремий фільтр ПЛОЩІ (BUILDING_MIN_AREA_M2) у full_generation_pipeline, не ширина.
     try:
-        _bmw_mm = float(os.environ.get("BUILDING_MIN_WIDTH_MM", "1.75"))
+        _bmw_mm = float(os.environ.get("BUILDING_MIN_WIDTH_MM", "0.6"))
     except Exception:
-        _bmw_mm = 1.75
+        _bmw_mm = 0.6
     building_min_width_m = (
         float(_bmw_mm) / float(scale_factor)
         if (scale_factor is not None and float(scale_factor) > 0.0 and _bmw_mm > 0)
