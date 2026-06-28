@@ -218,18 +218,45 @@ def _blender_fill_watertight(mesh, work_dir):
     return mesh
 
 
-def _rings_pslg(rings):
+def _rings_pslg(rings, snap=1e-4):
     """Manual PSLG from a list of closed rings [[(x,y),...],...] → (pts, segs).
-    Кожне кільце = замкнений ланцюг сегментів. Спільні вершини між викликами
-    зберігаються (ті самі координати) → шви закриваються під merge_vertices."""
+    РОБАСТНО для `triangle` (інакше «invalid geometry on input» на реальних масках):
+    snap координат до сітки + ГЛОБАЛЬНИЙ dedup вершин (ті самі координати між
+    кільцями = ОДИН індекс, не дубль) + викид вироджених (нульова довжина) сегментів.
+    Спільні вершини між викликами зберігаються детерміновано → шви закриваються."""
     pts, segs = [], []
+    index = {}
+
+    def _key(c):
+        return (round(float(c[0]) / snap), round(float(c[1]) / snap))
+
     for ring in rings:
-        start = len(pts)
-        n = len(ring)
+        # 1) зняти послідовні дублі + замикаючу копію (snap-простір)
+        cleaned = []
         for c in ring:
-            pts.append((float(c[0]), float(c[1])))
+            k = _key(c)
+            if cleaned and cleaned[-1][0] == k:
+                continue
+            cleaned.append((k, c))
+        if len(cleaned) > 1 and cleaned[0][0] == cleaned[-1][0]:
+            cleaned.pop()
+        if len(cleaned) < 3:
+            continue  # вироджене кільце — пропустити
+        # 2) глобальний dedup → індекси
+        ids = []
+        for k, c in cleaned:
+            j = index.get(k)
+            if j is None:
+                j = len(pts)
+                index[k] = j
+                pts.append((float(c[0]), float(c[1])))
+            ids.append(j)
+        # 3) сегменти, без нульової довжини
+        n = len(ids)
         for i in range(n):
-            segs.append((start + i, start + ((i + 1) % n)))
+            a, b = ids[i], ids[(i + 1) % n]
+            if a != b:
+                segs.append((a, b))
     return pts, segs
 
 
@@ -299,6 +326,27 @@ def build_cdt_grooved_terrain(
         if inlays is not None and not inlays.is_empty:
             inlays = inlays.intersection(zone)
         has_inlays = inlays is not None and not inlays.is_empty
+
+        # ── САНІТАЦІЯ inlays (КРИТИЧНО проти triangle «invalid geometry on input» на
+        # реальних OSM-масках) ── реальні дорожні маски = сотні полігонів, що
+        # самоперетинаються / торкаються одне одного / торкаються межі зони → сирий
+        # PSLG невалідний → triangle падає → fallback boolean (старий гребінець).
+        # Фікс: unary_union+buffer(0) (злити дотичні, прибрати самоперетини) + СТРОГИЙ
+        # інсет від межі зони (розірвати збіг з zone_ext) + simplify (зняти майже-дублі
+        # колінеарні вершини). Дороги біля краю клипляться на ~0.3м (тонка смужка терену).
+        if has_inlays:
+            try:
+                _geoms = list(inlays.geoms) if isinstance(inlays, MultiPolygon) else [inlays]
+                inlays = unary_union([g.buffer(0) for g in _geoms
+                                      if g is not None and not g.is_empty]).buffer(0)
+                _inset = max(seg_len * 0.15, 0.25)
+                inlays = inlays.intersection(zone.buffer(-_inset))
+                if inlays is not None and not inlays.is_empty:
+                    inlays = inlays.simplify(max(seg_len * 0.2, 0.3)).buffer(0)
+                has_inlays = inlays is not None and not inlays.is_empty
+            except Exception as _sanex:  # noqa: BLE001
+                print(f"[CDT] inlay sanitize failed (continue raw): {_sanex}")
+                has_inlays = inlays is not None and not inlays.is_empty
 
         # ── 1) TERRAIN top: CDT з ЯВНИМИ обмежувальними кільцями (НЕ difference) ──
         # Спільна densified геометрія: zone_ext + inlay_rings використовуються І для
@@ -521,7 +569,28 @@ def build_cdt_grooved_terrain(
             trimesh.repair.fix_inversion(result)
         except Exception:  # noqa: BLE001
             pass
-        # Закрити структурні шви кап-стінка → герметично (Blender надійніший).
+        # 1) Закрити структурні шви кап-стінка СПЕРШУ (Blender зшиває стінки↔дно↔підлогу).
+        if not bool(getattr(result, "is_volume", False)):
+            result = _blender_fill_watertight(result, work_dir)
+        # 2) ГОЛОВНИЙ солід: на складних масках/межах ПІСЛЯ зшивання інколи лишається
+        # ОКРЕМИЙ компонент (напр. плоский bottom-аркуш vol≈0, що не злився, або дрібний
+        # острівець після інсету) → беремо найбільший ГЕРМЕТИЧНИЙ компонент (повний
+        # рельєф-солід); якщо герметичних нема — найбільший за гранями.
+        try:
+            comps = result.split(only_watertight=False)
+        except Exception:  # noqa: BLE001
+            comps = [result]
+        if len(comps) > 1:
+            wt_comps = [c for c in comps if bool(getattr(c, "is_volume", False))]
+            if wt_comps:
+                result = max(wt_comps, key=lambda c: abs(float(c.volume)))
+            else:
+                result = max(comps, key=lambda c: len(c.faces))
+            try:
+                result.remove_unreferenced_vertices()
+            except Exception:  # noqa: BLE001
+                pass
+        # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)
         return result
