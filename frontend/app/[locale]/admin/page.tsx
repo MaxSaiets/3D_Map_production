@@ -504,6 +504,26 @@ function RecentVisits({ visitors }: { visitors: any[] }) {
     try { return new Date(iso).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
     catch { return (iso || "").slice(5, 16).replace("T", " "); }
   };
+  const hm = (iso: string) => {
+    try { return new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }); }
+    catch { return (iso || "").slice(11, 16); }
+  };
+  // Час на сайті у людському вигляді: «12 с», «3 хв 20 с», «1 год 05 хв».
+  const dur = (s: number) => {
+    s = Math.max(0, Math.round(s || 0));
+    if (s < 60) return `${s} с`;
+    const m = Math.floor(s / 60), ss = s % 60;
+    if (m < 60) return ss ? `${m} хв ${ss} с` : `${m} хв`;
+    const h = Math.floor(m / 60), mm = m % 60;
+    return `${h} год ${String(mm).padStart(2, "0")} хв`;
+  };
+  // Українська множина: 1 захід / 2-4 заходи / 5+ заходів.
+  const plural = (n: number, one: string, few: string, many: string) => {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+    return many;
+  };
   const flag = (cc: string) => {
     if (!cc || cc.length !== 2) return "🌐";
     try { return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)); }
@@ -512,11 +532,11 @@ function RecentVisits({ visitors }: { visitors: any[] }) {
   return (
     <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
       <div className="mb-1 text-[13px] font-semibold text-ink-2">Останні візити (анонімні)</div>
-      <div className="mb-3 text-[11px] text-ink-3">Кожен рядок = ОДИН відвідувач (без cookie/IP). Видно: звідки прийшов, з якої країни, які сторінки дивився, коли.</div>
+      <div className="mb-3 text-[11px] text-ink-3">Кожен рядок = ОДИН відвідувач (без cookie/IP). Видно: звідки прийшов, з якої країни, <b>скільки часу був на сайті</b>, які сторінки дивився та коли.</div>
       <div className="space-y-1.5">
         {visitors.map((v, i) => (
-          <div key={(v.id || "") + i} className="flex flex-col gap-1 rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px] sm:flex-row sm:items-center sm:gap-3">
-            <div className="flex items-center gap-2 sm:w-40 sm:shrink-0">
+          <div key={(v.id || "") + i} className="flex flex-col gap-1 rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px] sm:flex-row sm:items-start sm:gap-3">
+            <div className="flex items-center gap-2 sm:w-36 sm:shrink-0">
               <span className="text-base leading-none">{flag(v.cc)}</span>
               <span className="font-semibold text-ink-2">{v.cc}</span>
               <span className="font-mono text-[10px] text-ink-3">#{v.id}</span>
@@ -525,8 +545,13 @@ function RecentVisits({ visitors }: { visitors: any[] }) {
               <div className="truncate text-ink-2"><span className="text-ink-3">звідки:</span> <b>{v.ref}</b></div>
               <div className="truncate text-[11px] text-ink-3">{(v.paths || []).join("  ›  ") || "—"}</div>
             </div>
-            <div className="shrink-0 text-left text-[11px] text-ink-3 sm:text-right">
-              <span className="sm:block">{v.events} подій · </span><span>{fmt(v.last)}</span>
+            <div className="shrink-0 text-left text-[11px] sm:w-44 sm:text-right">
+              <div className="font-semibold text-forest">⏱ був {dur(v.duration)}</div>
+              <div className="text-ink-3">
+                {v.events} {plural(v.events, "дія", "дії", "дій")}
+                {v.sessions > 1 ? ` · ${v.sessions} ${plural(v.sessions, "захід", "заходи", "заходів")}` : ""}
+              </div>
+              <div className="text-ink-3">{fmt(v.first)} → {hm(v.last)}</div>
             </div>
           </div>
         ))}

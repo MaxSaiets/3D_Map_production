@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, isOwnerOptOut, gtagConsentUpdate, clickLabel } from "@/lib/analytics";
+import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, trackPing, isOwnerOptOut, gtagConsentUpdate, clickLabel } from "@/lib/analytics";
 
 // Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
 // «Connection to Indexed Database server lost» = Firebase Auth persistence у
@@ -51,6 +51,34 @@ export default function SiteAnalytics() {
     document.addEventListener("click", onClick, { passive: true, capture: true });
     return () => document.removeEventListener("click", onClick, { capture: true } as any);
   }, [consent, pathname]);
+
+  // Серцебиття присутності: поки вкладка ВИДИМА, раз на 30с шлемо «ping», щоб
+  // бекенд рахував РЕАЛЬНИЙ час на сайті (а не лише проміжок між кліками — інакше
+  // хто прочитав одну сторінку без кліків показувався б як 0 хв). Пауза, коли
+  // вкладку приховано (перемкнули таб) → рахуємо лише активний час. Фінальний ping
+  // при відході ловить останній відрізок (тож короткі візити точні й без інтервалу).
+  // 30с (а не 15с) удвічі менше роздуває лог; кап 240/завантаження (~2 год).
+  // track()-гарди (dev/згода/власник) — всередині trackPing().
+  useEffect(() => {
+    if (consent !== "granted") return;
+    let pings = 0;
+    const beat = () => {
+      if (document.visibilityState !== "visible") return;
+      if (pings >= 240) return;
+      pings++;
+      trackPing();
+    };
+    const id = window.setInterval(beat, 30000);
+    const onHidden = () => { if (document.visibilityState === "hidden") trackPing(); };
+    const onLeave = () => trackPing();
+    document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("pagehide", onLeave);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onHidden);
+      window.removeEventListener("pagehide", onLeave);
+    };
+  }, [consent]);
 
   // Google Consent Mode v2: push the consent decision to gtag (Ads/GA4). Default
   // is denied (set in the init script) → conversions modelled cookielessly until accept.

@@ -1506,6 +1506,21 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         raise HTTPException(status_code=403, detail="Лише для адміністраторів")
     import json
     from collections import Counter, defaultdict
+    from datetime import datetime as _dt
+
+    # ── Час на сайті (dwell): подія з фронта містить ISO-час `ts`. «Реальний»
+    # активний час = сума проміжків між послідовними подіями одного відвідувача,
+    # але лише коли пауза ≤ 30 хв (більша пауза = НОВИЙ захід, простій не рахуємо).
+    # Лог глобально впорядкований за часом, тож для кожного visitor події йдуть
+    # хронологічно → можна рахувати потоково, без зберігання списків.
+    _SESSION_GAP = 1800.0  # секунд: пауза, після якої вважаємо це окремим заходом
+
+    def _epoch(s: str) -> Optional[float]:
+        try:
+            return _dt.fromisoformat(s).timestamp()
+        except Exception:  # noqa: BLE001
+            return None
+
     totals = {"events": 0, "pageviews": 0, "uniqueVisitors": 0}
     by_day: Dict[str, Dict[str, Any]] = {}
     ev_counter: Counter = Counter()
@@ -1523,15 +1538,27 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     visitor_sessions: Dict[str, Dict] = {}
     FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"]
     try:
-        if ANALYTICS_LOG.exists():
-            for line in ANALYTICS_LOG.read_text(encoding="utf-8").splitlines():
+        # Читаємо ПОПЕРЕДНІЙ ротований лог (.jsonl.1, якщо є) + поточний — щоб одна
+        # ротація (при перевищенні 25МБ) не ховала й не втрачала недавню історію.
+        # Файли йдуть у хронологічному порядку (старіший → новіший), тож потокова
+        # логіка тривалості (per-visitor _prev) лишається коректною.
+        for _lp in (ANALYTICS_LOG.with_name("analytics.jsonl.1"), ANALYTICS_LOG):
+            if not _lp.exists():
+                continue
+            for line in _lp.read_text(encoding="utf-8").splitlines():
                 try:
                     r = json.loads(line)
                 except Exception:  # noqa: BLE001
                     continue
-                totals["events"] += 1
                 ev = r.get("event", "")
-                ev_counter[ev] += 1
+                # «ping» = серцебиття присутності (вимір часу на сайті), НЕ дія
+                # користувача → НЕ рахуємо його ні в «усього подій», ні в топ-подіях
+                # (інакше хедлайн розходився б із розбивкою). first/last/тривалість
+                # нижче все одно враховують ping.
+                if ev != "ping":
+                    totals["events"] += 1
+                    if ev:
+                        ev_counter[ev] += 1
                 props = r.get("props") or {}
                 path = r.get("path", "")
                 if ev == "pageview":
@@ -1564,12 +1591,30 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                     vs = visitor_sessions.setdefault(vis, {
                         "id": vis[:6], "cc": "", "ref": "", "paths": [], "events": 0,
                         "first": _ts, "last": _ts, "locale": "",
+                        "dur": 0.0, "sessions": 0, "_prev": None,
                     })
-                    vs["events"] += 1
+                    # Лічильник ДІЙ (без ping-серцебиття) — щоб «N подій» = реальні
+                    # переходи/кліки, а не технічні пінги присутності.
+                    if ev != "ping":
+                        vs["events"] += 1
                     if _ts > vs["last"]:
                         vs["last"] = _ts
                     if _ts and _ts < vs["first"]:
                         vs["first"] = _ts
+                    # Активний час на сайті: додаємо проміжок до попередньої події,
+                    # якщо він ≤ 30 хв; інакше це новий захід (простій не рахуємо).
+                    _ep = _epoch(_ts)
+                    if _ep is not None:
+                        _prev = vs["_prev"]
+                        if _prev is not None:
+                            _gap = _ep - _prev
+                            if 0.0 <= _gap <= _SESSION_GAP:
+                                vs["dur"] += _gap
+                            else:
+                                vs["sessions"] += 1
+                        else:
+                            vs["sessions"] += 1
+                        vs["_prev"] = _ep
                     if not vs["cc"] and r.get("cc"):
                         vs["cc"] = r["cc"]
                     if not vs["locale"] and r.get("locale"):
@@ -1581,7 +1626,8 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                     if ev == "pageview" and path and path not in vs["paths"] and len(vs["paths"]) < 12:
                         vs["paths"].append(path)
                 bd = by_day.setdefault(d, {"day": d, "events": 0, "pageviews": 0})
-                bd["events"] += 1
+                if ev != "ping":  # ping = серцебиття, не дія → не роздуваємо лічильник
+                    bd["events"] += 1
                 if ev == "pageview":
                     bd["pageviews"] += 1
     except Exception:  # noqa: BLE001
@@ -1685,6 +1731,8 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "locale": v["locale"] or "",
         "first": v["first"],
         "last": v["last"],
+        "duration": int(round(v.get("dur", 0.0))),   # активний час на сайті, сек
+        "sessions": max(1, v.get("sessions", 1)),     # к-сть окремих заходів
     } for v in recent_visitors]
 
     return {

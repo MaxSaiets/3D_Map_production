@@ -75,6 +75,29 @@ export function track(event: string, props?: Record<string, unknown>) {
   if (typeof g === "function") g("event", event, props || {});
 }
 
+/** Серцебиття присутності: поки вкладка відкрита й видима, шлемо легкий «ping»
+ *  у власну аналітику, щоб адмінка рахувала РЕАЛЬНИЙ час на сайті (а не лише
+ *  проміжок між кліками). НЕ йде в Google Analytics — щоб не роздувати GA
+ *  технічними подіями. Ті ж гарди, що й track(): dev/localhost, згода, власник. */
+export function trackPing() {
+  if (typeof window === "undefined") return;
+  const host = location.hostname;
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
+  if (getConsent() !== "granted") return;
+  if (isOwnerOptOut()) return;
+  try {
+    const body = JSON.stringify({
+      event: "ping",
+      path: location.pathname,
+      locale: document.documentElement.lang || "",
+      ref: document.referrer || "",
+    });
+    const url = `${API}/api/track`;
+    if (navigator.sendBeacon) navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
+    else fetch(url, { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+  } catch { /* ignore */ }
+}
+
 /** Воронка конверсії — ключові кроки шляху покупця. Адмінка показує, де
  *  користувачі «відвалюються» (view → area → generate → order_open → order_submit). */
 export const FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"] as const;
