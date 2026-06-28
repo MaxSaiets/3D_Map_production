@@ -348,6 +348,15 @@ def build_cdt_grooved_terrain(
                 print(f"[CDT] inlay sanitize failed (continue raw): {_sanex}")
                 has_inlays = inlays is not None and not inlays.is_empty
 
+        # ── ЩІЛЬНІСТЬ масштабована до площі зони (інакше великі зони (1.5км/model_150)
+        # дають ~929к-гранний терен → 8хв ген + boolean парків/води ламає герметичність
+        # на велетенському меші + ризик OOM на 4ГБ). Терен обмежуємо ~150к трикутників;
+        # ПЛОСКІ капи (bottom/floor) грубо (їм щільність не потрібна) ~6к. Малі зони
+        # лишаються як були (max з tri_area). ──
+        _zone_area = max(float(zone.area), 1.0)
+        _top_area = max(float(tri_area), _zone_area / 150000.0)
+        _cap_area = max(float(tri_area) * 6.0, _zone_area / 6000.0)
+
         # ── 1) TERRAIN top: CDT з ЯВНИМИ обмежувальними кільцями (НЕ difference) ──
         # Спільна densified геометрія: zone_ext + inlay_rings використовуються І для
         # terrain-дірок, І для floor/bottom-капів → ТІ САМІ вершини → герметично за
@@ -365,7 +374,7 @@ def build_cdt_grooved_terrain(
                     rp = gp.representative_point()
                     inlay_hole_pts.append((rp.x, rp.y))
         t_pts, t_segs = _rings_pslg([zone_ext] + inlay_rings)
-        Vt2, Ft = _run_triangle(t_pts, t_segs, inlay_hole_pts, f"pq30a{tri_area:g}YY", "terrain", work_dir)
+        Vt2, Ft = _run_triangle(t_pts, t_segs, inlay_hole_pts, f"pq30a{_top_area:g}YY", "terrain", work_dir)
         zt = np.asarray(height_fn(Vt2[:, 0], Vt2[:, 1]), dtype=float)
         Vt = np.column_stack([Vt2[:, 0], Vt2[:, 1], zt])
         terrain_mesh = trimesh.Trimesh(vertices=Vt, faces=Ft, process=False)
@@ -541,7 +550,7 @@ def build_cdt_grooved_terrain(
         floor_mesh = None
         if has_inlays and inlay_rings:
             f_pts, f_segs = _rings_pslg(inlay_rings)
-            Vf2, Ff = _run_triangle(f_pts, f_segs, [], f"pq30a{tri_area:g}YY", "floor", work_dir)
+            Vf2, Ff = _run_triangle(f_pts, f_segs, [], f"pq30a{_cap_area:g}YY", "floor", work_dir)
             Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
             floor_mesh = trimesh.Trimesh(vertices=Vf, faces=Ff, process=False)
             floor_mesh.fix_normals()
@@ -550,7 +559,7 @@ def build_cdt_grooved_terrain(
 
         # ── 3) BOTTOM at floor_z: CDT zone_ext (= terrain-периметр → ТІ САМІ вершини) ──
         b_pts, b_segs = _rings_pslg([zone_ext])
-        Vb2, Fb = _run_triangle(b_pts, b_segs, [], f"pq30a{tri_area:g}YY", "bottom", work_dir)
+        Vb2, Fb = _run_triangle(b_pts, b_segs, [], f"pq30a{_cap_area:g}YY", "bottom", work_dir)
         Vb = np.column_stack([Vb2[:, 0], Vb2[:, 1], np.full(len(Vb2), floor_z)])
         bottom_mesh = trimesh.Trimesh(vertices=Vb, faces=Fb, process=False)
         bottom_mesh.fix_normals()

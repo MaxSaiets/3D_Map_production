@@ -1349,13 +1349,23 @@ def run_full_generation_pipeline(
                         return it
                 return None
 
+            # Щільність decal масштабуємо до розміру зони: на великих зонах (1.5км)
+            # parks-decal при edge=3м роздувався до ~420к граней. Рельєф пологий →
+            # грубіший крок не псує вигляд, але різко зменшує меш. ~3м для ≤540м,
+            # лінійно грубіше далі (1.5км → ~8м → у ~7× менше).
+            try:
+                _zw = float(max(terrain_mesh.bounds[1][0] - terrain_mesh.bounds[0][0],
+                                terrain_mesh.bounds[1][1] - terrain_mesh.bounds[0][1]))
+            except Exception:
+                _zw = 540.0
+            _decal_edge = max(3.0, _zw / 180.0)
             _pk_mask = _cdt_first_surface(
                 getattr(canonical_mask_bundle, "parks_final", None) if canonical_mask_bundle is not None else None,
                 getattr(getattr(detail_layers, "parks_result", None), "processed_polygons", None),
             )
             if parks_mesh is not None:
                 _rb = build_terrain_decal_from_2d_mask(_pk_mask, _tp, offset_m=0.03,
-                                                       target_edge_len_m=3.0, simplify_tolerance_m=0.05)
+                                                       target_edge_len_m=_decal_edge, simplify_tolerance_m=0.05)
                 parks_mesh = _rb if _rb is not None else flatten_inlay_to_terrain_decal(parks_mesh, _tp, offset_m=0.03)
             _wt_mask = _cdt_first_surface(
                 getattr(canonical_mask_bundle, "water_final", None) if canonical_mask_bundle is not None else None,
@@ -1363,7 +1373,7 @@ def run_full_generation_pipeline(
             )
             if water_mesh is not None:
                 _rb = build_terrain_decal_from_2d_mask(_wt_mask, _tp, offset_m=0.02,
-                                                       target_edge_len_m=3.0, simplify_tolerance_m=0.05)
+                                                       target_edge_len_m=_decal_edge, simplify_tolerance_m=0.05)
                 water_mesh = _rb if _rb is not None else flatten_inlay_to_terrain_decal(water_mesh, _tp, offset_m=0.02)
             print(f"[CDT] {zone_prefix}parks/water → flush terrain decals (roads via CDT slots)")
         except Exception as _cdtdex:
