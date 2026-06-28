@@ -514,7 +514,6 @@ class GrooveCutResult:
     changed_vertices: bool = False
     volume_removed_m3: Optional[float] = None
     volume_removed_ratio: Optional[float] = None
-    cdt_used: bool = False  # CDT clean-wall terrain реально збудовано (не fallback)
 
 
 def _mesh_component_count(mesh: Optional[trimesh.Trimesh]) -> int:
@@ -977,7 +976,6 @@ def cut_inlay_grooves(
     has_road_grooves = terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     has_park_grooves = terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
     has_water_grooves = terrain_mesh is not None and water_mesh is not None and scale_factor and scale_factor > 0
-    _cdt_terrain_used = False  # стає True, якщо CDT збудував рельєф (roads-only fallthrough)
 
     if not has_road_grooves and not has_park_grooves and not has_water_grooves:
         return GrooveCutResult(
@@ -1207,22 +1205,25 @@ def cut_inlay_grooves(
                 zone_polygon_local, _inlays, _height_fn, slab_z=_slab_z, floor_z=_floor_z)
             print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
                   f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
-            # Дороги зроблено CDT-чисто. Парки/воду НЕ ріжемо boolean-ом у CDT-рельєф:
-            # на великих зонах boolean парків ламає герметичність (9+ відкритих ребер,
-            # seal не закриває) + повільно/OOM. Замість цього парки/вода → flush
-            # terrain-decals (full_generation_pipeline, гейт cdt_used) → терен лишається
-            # ЧИСТИМ герметичним CDT-солідом, а парки/вода рівними на поверхні (юзер:
-            # без «втоплення»/«стіни-води»). ЗАВЖДИ повертаємось після CDT.
-            return GrooveCutResult(
-                terrain_mesh=_cdt,
-                road_polygons_used=road_polys_for_groove,
-                parks_polygons_used=parks_polys_for_cutting,
-                water_polygons_used=water_polys_for_cutting,
-                boolean_backend_name="cdt",
-                grooves_expected=True,
-                change_applied=True,
-                cdt_used=True,
-            )
+            _has_pw = any(_geometry_has_area(g)
+                          for g in (parks_polys_for_cutting, water_polys_for_cutting))
+            if _cdt_roads_only and _has_pw:
+                # дороги зроблено CDT-чисто; парки/воду ріжемо boolean-ом у CDT-рельєф
+                # НИЖЧЕ (велика площа → їхній шов менш критичний за дорожній гребінець).
+                terrain_mesh = _cdt
+                road_polys_for_groove = None
+                road_mesh = None
+                print(f"[GROOVE] {zone_prefix}CDT roads done (clean); parks/water via boolean below")
+            else:
+                return GrooveCutResult(
+                    terrain_mesh=_cdt,
+                    road_polygons_used=road_polys_for_groove,
+                    parks_polygons_used=parks_polys_for_cutting,
+                    water_polygons_used=water_polys_for_cutting,
+                    boolean_backend_name="cdt",
+                    grooves_expected=True,
+                    change_applied=True,
+                )
         except Exception as _cdtexc:
             import traceback as _tb
             print(f"[GROOVE] {zone_prefix}CDT groove FAILED ({_cdtexc}); falling back to boolean")
@@ -1452,5 +1453,4 @@ def cut_inlay_grooves(
         changed_vertices=changed_vertices,
         volume_removed_m3=volume_removed_m3,
         volume_removed_ratio=volume_removed_ratio,
-        cdt_used=_cdt_terrain_used,
     )

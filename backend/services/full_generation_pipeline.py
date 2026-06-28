@@ -1194,13 +1194,6 @@ def run_full_generation_pipeline(
     water_mesh = detail_layers.water_mesh
     parks_mesh = detail_layers.parks_mesh
 
-    # CDT-маркер: True ЛИШЕ якщо CDT реально збудував рельєф (не fallback у boolean).
-    # Джерело правди — groove_result.cdt_used (булевий, переживає всі трансформації
-    # terrain_mesh). Гейтить decal/seal-кроки нижче → flat/keychain/boolean не зачеплені.
-    _cdt_terrain_built = bool(getattr(getattr(detail_layers, "groove_result", None), "cdt_used", False))
-    if _cdt_terrain_built:
-        print(f"[CDT] {zone_prefix}CDT terrain confirmed (cdt_used=True) → decals/seal active")
-
     # СЕРІЯ: робимо КРАЙ плитки чистим — підняте покриття (дороги/вода/парки) на
     # краю опускаємо ВРІВЕНЬ з рельєфом, щоб торці зрізу не стирчали як стінки на шві.
     # Контент доходить до краю, але без вертикальних торців-плавників.
@@ -1328,56 +1321,6 @@ def run_full_generation_pipeline(
             )
         except Exception as exc:
             print(f"[WARN] {zone_prefix}PREVIEW_MODE flatten_inlay failed: {exc}")
-
-    # CDT mode: дороги отримали ЧИСТІ глибокі CDT-слоти; парки/воду рендеримо як
-    # ПЛАСКІ decal-аркуші на рельєфі (без boolean → без drift/перекриття/гребінця).
-    # Boolean парків на CDT-рельєфі дрейфує (manifold робить union замість subtract),
-    # тож для парків/води decal — надійно. Дороги НЕ чіпаємо (вони у CDT-слотах).
-    if (_cdt_terrain_built
-            and os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")
-            and (water_mesh is not None or parks_mesh is not None)):
-        try:
-            from services.terrain_cutter import (build_terrain_decal_from_2d_mask,
-                                                 flatten_inlay_to_terrain_decal)
-            _tp = getattr(terrain_stage, "terrain_provider", None)
-
-            def _cdt_first_surface(*items):
-                for it in items:
-                    if it is None or getattr(it, "is_empty", False):
-                        continue
-                    if getattr(it, "geom_type", "") in ("Polygon", "MultiPolygon", "GeometryCollection"):
-                        return it
-                return None
-
-            # Щільність decal масштабуємо до розміру зони: на великих зонах (1.5км)
-            # parks-decal при edge=3м роздувався до ~420к граней. Рельєф пологий →
-            # грубіший крок не псує вигляд, але різко зменшує меш. ~3м для ≤540м,
-            # лінійно грубіше далі (1.5км → ~8м → у ~7× менше).
-            try:
-                _zw = float(max(terrain_mesh.bounds[1][0] - terrain_mesh.bounds[0][0],
-                                terrain_mesh.bounds[1][1] - terrain_mesh.bounds[0][1]))
-            except Exception:
-                _zw = 540.0
-            _decal_edge = max(3.0, _zw / 180.0)
-            _pk_mask = _cdt_first_surface(
-                getattr(canonical_mask_bundle, "parks_final", None) if canonical_mask_bundle is not None else None,
-                getattr(getattr(detail_layers, "parks_result", None), "processed_polygons", None),
-            )
-            if parks_mesh is not None:
-                _rb = build_terrain_decal_from_2d_mask(_pk_mask, _tp, offset_m=0.03,
-                                                       target_edge_len_m=_decal_edge, simplify_tolerance_m=0.05)
-                parks_mesh = _rb if _rb is not None else flatten_inlay_to_terrain_decal(parks_mesh, _tp, offset_m=0.03)
-            _wt_mask = _cdt_first_surface(
-                getattr(canonical_mask_bundle, "water_final", None) if canonical_mask_bundle is not None else None,
-                getattr(detail_layers, "water_cut_polygons", None),
-            )
-            if water_mesh is not None:
-                _rb = build_terrain_decal_from_2d_mask(_wt_mask, _tp, offset_m=0.02,
-                                                       target_edge_len_m=_decal_edge, simplify_tolerance_m=0.05)
-                water_mesh = _rb if _rb is not None else flatten_inlay_to_terrain_decal(water_mesh, _tp, offset_m=0.02)
-            print(f"[CDT] {zone_prefix}parks/water → flush terrain decals (roads via CDT slots)")
-        except Exception as _cdtdex:
-            print(f"[CDT] {zone_prefix}parks/water decal failed (non-fatal): {_cdtdex}")
 
     # Road/groove validation report is a DIAGNOSTIC print (~165s on real OSM) that
     # doesn't alter the model. Off by default; enable with PIPELINE_DEBUG=1.
@@ -1974,60 +1917,27 @@ def run_full_generation_pipeline(
     # висоти (сходинка/злам на шві у композит-превʼю). Одиночні мапи (ref=None) —
     # стара поведінка (обнулення на 0), golden недоторканий. XY НЕ чіпаємо (превʼю
     # розкладає плитки за метаданими; preserve_xy зламав би друк — плитка поза столом).
-    # CDT mode: ФІНАЛЬНИЙ гарант герметичності Base. CDT-рельєф виходить герметичним,
-    # але пост-груув кроки (highlight-паз / connector / merge) можуть лишити дрібні
-    # відкриті ребра → закриваємо Blender-ом перед експортом («без дегенеративних штук»).
-    if (_cdt_terrain_built
-            and os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")
-            and terrain_mesh is not None
-            and not bool(getattr(terrain_mesh, "is_volume", False))):
-        try:
-            from services.cdt_groove_terrain import _blender_fill_watertight
-            import tempfile as _tf
-            import shutil as _sh
-            _wd = _tf.mkdtemp(prefix="cdt_seal_")
-            try:
-                _sealed = _blender_fill_watertight(terrain_mesh, _wd)
-            finally:
-                _sh.rmtree(_wd, ignore_errors=True)
-            if _sealed is not None and bool(getattr(_sealed, "is_volume", False)):
-                terrain_mesh = _sealed
-                print(f"[CDT] {zone_prefix}final terrain seal → watertight Base")
-            else:
-                print(f"[CDT] {zone_prefix}final terrain seal: still {len(_sealed.faces) if _sealed is not None else 0}f, not volume")
-        except Exception as _sealexc:
-            print(f"[CDT] {zone_prefix}final terrain seal skipped: {_sealexc}")
-
     _series_preserve_z = bool(getattr(request, "elevation_ref_m", None) is not None)
-    # CDT export Base seal вмикаємо ЛИШЕ для цієї relief-генерації з реальним CDT.
-    # ContextVar читає prepare_scene_parts глибоко в експорті; flat_plate_pipeline
-    # ctx НЕ виставляє → seal не торкається flat/keychain/golden бази. try/finally
-    # гарантує reset навіть на винятку (без leak у наступну генерацію в цьому потоці).
-    from services.model_exporter import CDT_BASE_SEAL_CTX as _CDT_SEAL_CTX
-    _cdt_seal_tok = _CDT_SEAL_CTX.set(bool(_cdt_terrain_built))
-    try:
-        export_result = export_generation_outputs(
-            task=task,
-            request=request,
-            task_id=task_id,
-            output_dir=output_dir,
-            terrain_mesh=terrain_mesh,
-            road_mesh=road_mesh,
-            building_meshes=building_meshes,
-            water_mesh=water_mesh,
-            parks_mesh=parks_mesh,
-            preserve_z=_series_preserve_z,
-            extra_mesh_items=(
-                ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
-                + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
-                + ([("Highlight", highlight_part)] if highlight_part is not None else [])
-                + ([("Landmark", landmark_part)] if landmark_part is not None else [])
-            ) or None,
-            reference_xy_m=zone.reference_xy_m,
-            file_basename=file_basename,
-        )
-    finally:
-        _CDT_SEAL_CTX.reset(_cdt_seal_tok)
+    export_result = export_generation_outputs(
+        task=task,
+        request=request,
+        task_id=task_id,
+        output_dir=output_dir,
+        terrain_mesh=terrain_mesh,
+        road_mesh=road_mesh,
+        building_meshes=building_meshes,
+        water_mesh=water_mesh,
+        parks_mesh=parks_mesh,
+        preserve_z=_series_preserve_z,
+        extra_mesh_items=(
+            ([("Track", gpx_mesh)] if gpx_mesh is not None else [])
+            + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
+            + ([("Highlight", highlight_part)] if highlight_part is not None else [])
+            + ([("Landmark", landmark_part)] if landmark_part is not None else [])
+        ) or None,
+        reference_xy_m=zone.reference_xy_m,
+        file_basename=file_basename,
+    )
     _log_stage("export_outputs", stage_start)
     if stage_snapshot_collector is not None:
         try:
