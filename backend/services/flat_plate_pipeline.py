@@ -753,6 +753,100 @@ def build_highlight_insert(
     return out, pocket_poly, depth
 
 
+def clip_buildings_around_highlight(
+    building_meshes: list,
+    highlight_footprints: list,
+    *,
+    export_scale_factor: float,
+    clearance_mm: float = 0.15,
+    label: str = "HIGHLIGHT",
+) -> list:
+    """Обрізає СУСІДНІ будинки з-під зони вставної (виділеної) деталі.
+
+    Виділений будинок друкується ОКРЕМОЮ деталлю й МЕХАНІЧНО вставляється у паз
+    бази. Якщо сусідній будинок перекриває (чи впритул торкається) його footprint,
+    стіна сусіда фізично блокує вставку — обрана деталь не сідає. Тут для КОЖНОГО
+    сусіда, що лізе у (highlight_footprint + clearance), вирізаємо цю зону й
+    переекструдовуємо призму на тій самій висоті; повністю поглинутих або залишкові
+    волосини (<0.5мм мін-ширина) прибираємо (антивідлам). Зазор = той самий 0.15мм,
+    що в дорожніх жолобах і пазу вставки → деталь сідає з рівним боковим люфтом.
+
+    Виклик гейтнутий наявністю highlight (map_highlight_building) → golden (без
+    highlight) байт-ідентичний. Колір сусіда зберігається (сірі будинки / бронзові
+    орієнтири). Повертає НОВИЙ список мешів (оригінали не мутуються).
+
+    Kill-switch: HL_NEIGHBOR_CLIP=0 вимикає (rollback) — лишає сусідів як є."""
+    if not building_meshes or not highlight_footprints:
+        return building_meshes
+    import os as _os
+    if _os.environ.get("HL_NEIGHBOR_CLIP", "1").strip().lower() in ("0", "false", "no", "off"):
+        print(f"[{label}] neighbor clip DISABLED via HL_NEIGHBOR_CLIP")
+        return building_meshes
+    try:
+        _zone = unary_union([f for f in highlight_footprints
+                             if f is not None and not getattr(f, "is_empty", True)])
+    except Exception:
+        return building_meshes
+    if _zone is None or getattr(_zone, "is_empty", True):
+        return building_meshes
+    _clear = _model_mm_to_world_m(clearance_mm, export_scale_factor)
+    try:
+        _zone = _zone.buffer(_clear, join_style=2).buffer(0)
+    except Exception:
+        pass
+    if _zone is None or getattr(_zone, "is_empty", True):
+        return building_meshes
+    _minw = _model_mm_to_world_m(0.5, export_scale_factor)
+    _min_area = _minw * _minw
+    out: list = []
+    n_trim, n_drop = 0, 0
+    for _b in building_meshes:
+        if _b is None or len(getattr(_b, "faces", [])) == 0:
+            continue
+        try:
+            _f = _mesh_xy_footprint(_b)
+        except Exception:
+            _f = None
+        if _f is None or getattr(_f, "is_empty", True) or not _f.intersects(_zone):
+            out.append(_b)
+            continue
+        try:
+            _nf = _f.difference(_zone)
+        except Exception:
+            out.append(_b)  # diff впав — лишаємо як є (краще ніж дірка)
+            continue
+        if _nf is None or getattr(_nf, "is_empty", True) or float(_nf.area) < _min_area:
+            n_drop += 1   # сусід цілком у зоні вставки → прибрати
+            continue
+        _bz = float(_b.bounds[0][2])
+        _tz = float(_b.bounds[1][2])
+        if _tz - _bz <= 1e-9:
+            out.append(_b)
+            continue
+        _col = LAYER_COLORS["buildings"]
+        try:
+            _fc = getattr(getattr(_b, "visual", None), "face_colors", None)
+            if _fc is not None and len(_fc) > 0:
+                _col = [int(_fc[0][0]), int(_fc[0][1]), int(_fc[0][2]),
+                        int(_fc[0][3]) if len(_fc[0]) > 3 else 255]
+        except Exception:
+            _col = LAYER_COLORS["buildings"]
+        _nb = build_flat_layer_mesh_from_mask(
+            _nf, bottom_z_m=_bz, thickness_m=_tz - _bz, color=_col, min_area_m2=1e-9,
+        )
+        if _nb is None:
+            out.append(_b)   # ребілд не вдався — лишаємо оригінал
+            continue
+        if _mesh_footprint_min_width_m(_nb) < _minw:
+            n_drop += 1      # після вирізу лишилась волосина → антивідлам
+            continue
+        out.append(_nb)
+        n_trim += 1
+    if n_trim or n_drop:
+        print(f"[{label}] neighbor clip around insert: {n_trim} trimmed, {n_drop} removed")
+    return out
+
+
 def _ensure_no_through_hole(
     *,
     base_top_m: float,
@@ -4677,8 +4771,14 @@ def run_flat_plate_pipeline(
                 if _i is not None and _i not in _chosen:
                     _chosen.append(_i)
             if _chosen:
-                _hl_meshes, _pockets = [], []
+                _hl_meshes, _pockets, _hl_foots = [], [], []
                 for _i in _chosen:  # будуємо вставки (НЕ видаляємо поки — індекси стабільні)
+                    try:  # footprint ОБРАНОГО будинку (для обрізки сусідів)
+                        _hf = _mesh_xy_footprint(building_meshes[_i])
+                        if _hf is not None and not getattr(_hf, "is_empty", True):
+                            _hl_foots.append(_hf)
+                    except Exception:
+                        pass
                     _m, _pk, _d = build_highlight_insert(
                         building_meshes[_i], base_top_m=base_top_m, export_scale_factor=export_scale_factor,
                     )
@@ -4690,6 +4790,18 @@ def run_flat_plate_pipeline(
                 # прибираємо обрані будинки з шару Buildings
                 _chosen_set = set(_chosen)
                 building_meshes[:] = [b for j, b in enumerate(building_meshes) if j not in _chosen_set]
+                # ОБРІЗАЄМО СУСІДІВ із зони вставки — інакше стіна сусіда блокує посадку
+                # обраної деталі (вона друкується окремо й вставляється у паз).
+                if _hl_foots:
+                    building_meshes[:] = clip_buildings_around_highlight(
+                        building_meshes, _hl_foots,
+                        export_scale_factor=export_scale_factor, label="MAP HIGHLIGHT",
+                    )
+                    if landmark_meshes:  # бронзові орієнтири теж не мають блокувати вставку
+                        landmark_meshes[:] = clip_buildings_around_highlight(
+                            landmark_meshes, _hl_foots,
+                            export_scale_factor=export_scale_factor, label="MAP HIGHLIGHT/landmark",
+                        )
                 if _pockets:  # ОДИН виріз усіх пазів (+ збережений нижній виріз)
                     _pocket_union = unary_union(_pockets).buffer(0)
                     # THROUGH-HOLE GUARD (late): паз highlight (верх) ⨯ магніт/конектор

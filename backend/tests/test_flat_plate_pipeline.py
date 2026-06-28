@@ -756,3 +756,83 @@ def test_gpx_track_gps_gap_splits_segments_but_still_builds():
     assert poly is not None
     parts = list(poly.geoms) if hasattr(poly, "geoms") else [poly]
     assert len(parts) == 2
+
+
+def test_clip_buildings_around_highlight_clears_insert_zone():
+    """Сусідні будинки, що лізуть у зону виділеної (вставної) деталі, мають бути
+    обрізані/прибрані з боковим зазором 0.15мм — інакше стіна сусіда фізично
+    блокує посадку обраної червоної деталі у паз."""
+    import trimesh
+    from shapely.geometry import box as _box
+    from services.flat_plate_pipeline import (
+        clip_buildings_around_highlight,
+        _mesh_xy_footprint,
+        _mesh_footprint_min_width_m,
+    )
+
+    def _prism(x0, y0, x1, y1, color=(150, 150, 150, 255)):
+        m = trimesh.creation.extrude_polygon(_box(x0, y0, x1, y1), height=5.0)
+        m.visual.face_colors = color
+        return m
+
+    hl = _box(0, 0, 10, 10)                                       # виділений будинок
+    overlap = _prism(8, 0, 18, 10, color=(100, 110, 120, 255))   # перекриває → обрізати
+    far = _prism(50, 50, 60, 60)                                  # далеко → без змін
+    inside = _prism(2, 2, 8, 8)                                   # цілком всередині → прибрати
+    abut = _prism(10, 0, 20, 10)                                  # впритул → обрізати на зазор
+    sliver = _prism(0, 0, 10.3, 10)                              # лишок-волосина → прибрати
+
+    res = clip_buildings_around_highlight(
+        [overlap, far, inside, abut, sliver], [hl],
+        export_scale_factor=1.0, clearance_mm=0.15, label="TEST",
+    )
+
+    assert any(m is far for m in res), "далекий сусід не має чіпатись (identity)"
+    assert not any(m is inside for m in res), "сусід цілком у зоні має бути прибраний"
+    assert not any(m is sliver for m in res), "залишкова волосина має бути прибрана"
+    assert len(res) == 3, f"очікувалось 3 (overlap', far, abut'), отримано {len(res)}"
+    for m in res:
+        if m is far:
+            continue
+        f = _mesh_xy_footprint(m)
+        assert f.intersection(hl).area < 1e-6, "обрізаний сусід ще лізе у footprint вставки"
+        assert f.bounds[0] >= 10.15 - 1e-6, "немає бокового зазору 0.15мм навколо вставки"
+        assert _mesh_footprint_min_width_m(m) >= 0.5, "обрізаний сусід став волосиною"
+        assert abs(m.bounds[0][2] - 0.0) < 1e-6 and abs(m.bounds[1][2] - 5.0) < 1e-6, "висота змінилась"
+        assert m.is_watertight or m.is_volume, "обрізаний сусід не суцільний"
+    cols = {tuple(int(c) for c in m.visual.face_colors[0][:3]) for m in res if m is not far}
+    assert (100, 110, 120) in cols, "колір сусіда не збережено при ребілді"
+
+
+def test_clip_buildings_around_highlight_noop_without_highlight():
+    """Без виділення (порожній список footprint-ів) — список будинків НЕ чіпається
+    (golden/звичайна мапа байт-ідентична)."""
+    import trimesh
+    from shapely.geometry import box as _box
+    from services.flat_plate_pipeline import clip_buildings_around_highlight
+
+    b = trimesh.creation.extrude_polygon(_box(0, 0, 10, 10), height=5.0)
+    same = clip_buildings_around_highlight([b], [], export_scale_factor=1.0)
+    assert same and same[0] is b
+
+
+def test_clip_buildings_around_highlight_splits_into_multipolygon():
+    """Якщо виріз зони ділить сусіда на ДВІ частини (наскрізна смуга) — обидві
+    лишаються суцільними деталями (build_flat_layer_mesh_from_mask ітерує полігони)."""
+    import trimesh
+    from shapely.geometry import box as _box
+    from services.flat_plate_pipeline import clip_buildings_around_highlight, _mesh_xy_footprint
+
+    hl = _box(8, -5, 12, 25)  # вертикальна смуга ПЕРЕТИНАЄ широкий сусід посередині
+    wide = trimesh.creation.extrude_polygon(_box(0, 0, 20, 10), height=4.0)
+    res = clip_buildings_around_highlight([wide], [hl], export_scale_factor=1.0, clearance_mm=0.15)
+    assert len(res) == 1
+    m = res[0]
+    # ОБИДВІ частини збудовані: меш тягнеться x[0..20] із порожнечею посередині.
+    assert m.bounds[0][0] < 0.01 and m.bounds[1][0] > 19.99, "ліва+права частини мають існувати"
+    bodies = m.split(only_watertight=False)
+    assert len(bodies) == 2, f"очікувались 2 окремі частини, отримано {len(bodies)}"
+    for body in bodies:  # жодна частина не лізе у зону вставки
+        bf = _mesh_xy_footprint(body)
+        assert bf.intersection(hl).area < 1e-6, "частина ще перетинає зону вставки"
+    assert m.is_watertight or m.is_volume, "розділений сусід не суцільний"

@@ -1407,8 +1407,9 @@ def run_full_generation_pipeline(
                 except Exception:
                     pass
             if _hl_chosen:
-                from services.flat_plate_pipeline import _mesh_xy_footprint
+                from services.flat_plate_pipeline import _mesh_xy_footprint, clip_buildings_around_highlight
                 from services.highlight_relief_groove import carve_highlight_groove
+                _hl_foots = []
                 for _i in _hl_chosen:
                     _bm = building_meshes[_i]
                     _bm_top = float(_bm.bounds[1][2])
@@ -1419,6 +1420,7 @@ def run_full_generation_pipeline(
                         _foot = None
                     if _foot is None or getattr(_foot, "is_empty", True):
                         continue
+                    _hl_foots.append(_foot)   # для обрізки сусідів з-під вставки
                     # ПАЗ ЯК У ДОРІГ, ЧИСТО: ріжемо ТУТ (рельєф ще ГЕРМЕТИЧНИЙ том, ДО merge)
                     # boolean-ом → рівні стінки (не обривчасті). Будинок СТОЇТЬ на пласкому
                     # дні (доробленому до найнижчої точки мешу). НЕ пізній vertex-set.
@@ -1431,6 +1433,16 @@ def run_full_generation_pipeline(
                 # ВИКЛЮЧАЄМО обрані будинки з merge (стають окремою червоною вставкою)
                 _hl_cs = set(_hl_chosen)
                 building_meshes = [b for j, b in enumerate(building_meshes) if j not in _hl_cs]
+                # ОБРІЗАЄМО СУСІДІВ із зони вставки ДО merge — інакше їхня стіна (злита
+                # в рельєф) фізично блокує посадку обраної червоної деталі.
+                if _hl_foots:
+                    try:
+                        building_meshes = clip_buildings_around_highlight(
+                            building_meshes, _hl_foots,
+                            export_scale_factor=_sf_c, label=f"HIGHLIGHT {zone_prefix}",
+                        )
+                    except Exception as _ncx:
+                        print(f"[HIGHLIGHT] {zone_prefix}neighbor clip failed (non-fatal): {_ncx}")
                 print(f"[HIGHLIGHT] {zone_prefix}{len(highlight_meshes)} highlight building(s) -> CLEAN pre-merge pocket")
         except Exception as _hexc:
             print(f"[HIGHLIGHT] {zone_prefix}relief highlight select failed (non-fatal): {_hexc}")
