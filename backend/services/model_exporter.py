@@ -10,12 +10,20 @@ Guarantees:
 
 from typing import List, Tuple, Optional, Union, Dict
 import os
+import contextvars
 import numpy as np
 import trimesh
 import trimesh.visual
 from services.mesh_quality import improve_mesh_for_3d_printing, detect_nonmanifold_edges
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM
 # from trimesh.exchange.stl import export_stl_binary
+
+# CDT export Base seal: вмикається ЛИШЕ для relief-генерації, де CDT реально збудував
+# рельєф (export_generation_outputs виставляє True). Flat/keychain/golden експорт НЕ
+# виставляє → seal не торкається їхньої НЕгерметичної бази (інакше Blender зсунув би
+# обʼєм за golden ±5% і додав Blender-субпроцес до КОЖНОГО експорту). ContextVar
+# ізольований по потоку/контексту → одночасні гени не перетинаються.
+CDT_BASE_SEAL_CTX: "contextvars.ContextVar[bool]" = contextvars.ContextVar("cdt_base_seal", default=False)
 
 
 def _boundary_edge_count(mesh: trimesh.Trimesh) -> int:
@@ -81,8 +89,19 @@ def _dominant_component_if_safe(
     return dominant.copy()
 
 
+def _cdt_preserve_watertight(mesh) -> bool:
+    """CDT mode: якщо база ВЖЕ герметична (CDT+seal) — НЕ чіпати її repair-кроками
+    (dedup/fill_holes/нормалі переламують герметичність назад). Гейт на CDT_GROOVE
+    → golden/flat/boolean (їхні relief-бази НЕгерметичні) повністю не зачеплено."""
+    import os as _os
+    return (_os.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+            and mesh is not None and bool(getattr(mesh, "is_volume", False)))
+
+
 def repair_base_export_mesh(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh.Trimesh]:
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
+        return mesh
+    if _cdt_preserve_watertight(mesh):
         return mesh
 
     original = mesh.copy()
@@ -112,6 +131,8 @@ def repair_base_export_mesh(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh
 
 def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh.Trimesh]:
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
+        return mesh
+    if _cdt_preserve_watertight(mesh):
         return mesh
 
     original = mesh.copy()
@@ -1222,6 +1243,30 @@ def prepare_scene_parts(
             continue
         try:
             transformed_parts[key] = repair_base_export_mesh(transformed_parts[key])
+            # CDT mode: ФІНАЛЬНИЙ seal на готовій (model-mm) базі — transform/quantize/
+            # nondegenerate могли лишити дрібні дірки; Blender edge_face_add закриває
+            # на МАЛИХ координатах точно → герметична Base («без дегенеративних штук»).
+            # ГЕЙТ на CDT_BASE_SEAL_CTX (виставляє export_generation_outputs ЛИШЕ коли
+            # CDT реально збудував рельєф) — НЕ на env! Інакше при CDT_GROOVE=1 глобально
+            # цей seal спрацював би на flat/keychain/golden базі (Blender на кожному
+            # експорті + зсув обʼєму за golden ±5%). Flat-шлях ctx не виставляє → пропуск.
+            import os as _os_cdt
+            _bm = transformed_parts[key]
+            if (CDT_BASE_SEAL_CTX.get()
+                    and _os_cdt.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes")
+                    and _bm is not None and len(getattr(_bm, "faces", [])) > 0
+                    and not bool(getattr(_bm, "is_volume", False))):
+                from services.cdt_groove_terrain import _blender_fill_watertight
+                import tempfile as _tf_cdt
+                import shutil as _sh_cdt
+                _wd_cdt = _tf_cdt.mkdtemp(prefix="cdt_basefill_")
+                try:
+                    _sealed_b = _blender_fill_watertight(_bm, _wd_cdt)
+                finally:
+                    _sh_cdt.rmtree(_wd_cdt, ignore_errors=True)
+                if _sealed_b is not None and len(getattr(_sealed_b, "faces", [])) > 0:
+                    transformed_parts[key] = _sealed_b
+                    print(f"[CDT] export Base seal → watertight={bool(getattr(_sealed_b, 'is_volume', False))}")
         except Exception:
             pass
 

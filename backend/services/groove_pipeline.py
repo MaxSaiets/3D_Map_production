@@ -514,6 +514,7 @@ class GrooveCutResult:
     changed_vertices: bool = False
     volume_removed_m3: Optional[float] = None
     volume_removed_ratio: Optional[float] = None
+    cdt_used: bool = False  # CDT clean-wall terrain реально збудовано (не fallback)
 
 
 def _mesh_component_count(mesh: Optional[trimesh.Trimesh]) -> int:
@@ -976,6 +977,7 @@ def cut_inlay_grooves(
     has_road_grooves = terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     has_park_grooves = terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
     has_water_grooves = terrain_mesh is not None and water_mesh is not None and scale_factor and scale_factor > 0
+    _cdt_terrain_used = False  # стає True, якщо CDT збудував рельєф (roads-only fallthrough)
 
     if not has_road_grooves and not has_park_grooves and not has_water_grooves:
         return GrooveCutResult(
@@ -1213,6 +1215,7 @@ def cut_inlay_grooves(
                 terrain_mesh = _cdt
                 road_polys_for_groove = None
                 road_mesh = None
+                _cdt_terrain_used = True
                 print(f"[GROOVE] {zone_prefix}CDT roads done (clean); parks/water via boolean below")
             else:
                 return GrooveCutResult(
@@ -1223,6 +1226,7 @@ def cut_inlay_grooves(
                     boolean_backend_name="cdt",
                     grooves_expected=True,
                     change_applied=True,
+                    cdt_used=True,
                 )
         except Exception as _cdtexc:
             import traceback as _tb
@@ -1453,4 +1457,5 @@ def cut_inlay_grooves(
         changed_vertices=changed_vertices,
         volume_removed_m3=volume_removed_m3,
         volume_removed_ratio=volume_removed_ratio,
+        cdt_used=_cdt_terrain_used,
     )

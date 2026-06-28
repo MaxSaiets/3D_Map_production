@@ -172,7 +172,10 @@ except: bpy.ops.import_mesh.stl(filepath=inp)
 o=bpy.context.selected_objects[0]; bpy.context.view_layer.objects.active=o
 bpy.ops.object.mode_set(mode='EDIT')
 bpy.ops.mesh.select_all(action='SELECT')
-bpy.ops.mesh.remove_doubles(threshold=1e-4)
+bpy.ops.mesh.remove_doubles(threshold=1e-3)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.fill_holes(sides=0)
 bpy.ops.mesh.select_all(action='DESELECT')
 bpy.ops.mesh.select_non_manifold()
 bpy.ops.mesh.edge_face_add()
@@ -213,6 +216,21 @@ def _blender_fill_watertight(mesh, work_dir):
     except Exception as exc:  # noqa: BLE001
         print(f"[CDT] blender fill skipped ({exc})")
     return mesh
+
+
+def _rings_pslg(rings):
+    """Manual PSLG from a list of closed rings [[(x,y),...],...] → (pts, segs).
+    Кожне кільце = замкнений ланцюг сегментів. Спільні вершини між викликами
+    зберігаються (ті самі координати) → шви закриваються під merge_vertices."""
+    pts, segs = [], []
+    for ring in rings:
+        start = len(pts)
+        n = len(ring)
+        for c in ring:
+            pts.append((float(c[0]), float(c[1])))
+        for i in range(n):
+            segs.append((start + i, start + ((i + 1) % n)))
+    return pts, segs
 
 
 def _boundary_loops(mesh):
@@ -282,11 +300,24 @@ def build_cdt_grooved_terrain(
             inlays = inlays.intersection(zone)
         has_inlays = inlays is not None and not inlays.is_empty
 
-        # ── 1) TERRAIN top: CDT of (zone − inlays) ──────────────────────────
-        terrain_poly = zone.difference(inlays) if has_inlays else zone
-        terrain_poly_d = _densify_polygon(terrain_poly, seg_len)
-        pts, segs, holes = _poly_to_pslg(terrain_poly_d)
-        Vt2, Ft = _run_triangle(pts, segs, holes, f"pq30a{tri_area:g}YY", "terrain", work_dir)
+        # ── 1) TERRAIN top: CDT з ЯВНИМИ обмежувальними кільцями (НЕ difference) ──
+        # Спільна densified геометрія: zone_ext + inlay_rings використовуються І для
+        # terrain-дірок, І для floor/bottom-капів → ТІ САМІ вершини → герметично за
+        # побудовою (надійніше за loop-extraction, який фрагментує на щільних мережах).
+        SP_zone = zone
+        zone_ext = _densify_ring(list(SP_zone.exterior.coords)[:-1], seg_len)
+        inlay_rings, inlay_hole_pts = [], []
+        if has_inlays:
+            for gp in (inlays.geoms if isinstance(inlays, MultiPolygon) else [inlays]):
+                if getattr(gp, "is_empty", True) or gp.area < 1e-9:
+                    continue
+                ring = _densify_ring(list(gp.exterior.coords)[:-1], seg_len)
+                if len(ring) >= 3:
+                    inlay_rings.append(ring)
+                    rp = gp.representative_point()
+                    inlay_hole_pts.append((rp.x, rp.y))
+        t_pts, t_segs = _rings_pslg([zone_ext] + inlay_rings)
+        Vt2, Ft = _run_triangle(t_pts, t_segs, inlay_hole_pts, f"pq30a{tri_area:g}YY", "terrain", work_dir)
         zt = np.asarray(height_fn(Vt2[:, 0], Vt2[:, 1]), dtype=float)
         Vt = np.column_stack([Vt2[:, 0], Vt2[:, 1], zt])
         terrain_mesh = trimesh.Trimesh(vertices=Vt, faces=Ft, process=False)
@@ -458,17 +489,25 @@ def build_cdt_grooved_terrain(
                 bridge_mesh = trimesh.Trimesh(vertices=np.asarray(bverts),
                                               faces=np.asarray(bfaces), process=False)
 
-        # ── 2+3) FLOOR (slab_z) + BOTTOM (floor_z) з БОРДЮР-ПЕТЕЛЬ СТІНОК ────
-        # Беремо ТОЧНІ бордюр-вершини зі стінок (+мостів) → каже шиються без шва.
-        wb_parts = [m for m in (wall_mesh, bridge_mesh) if m is not None and len(m.faces) > 0]
-        wb = trimesh.util.concatenate(wb_parts) if len(wb_parts) > 1 else wb_parts[0]
-        wb.merge_vertices(digits_vertex=5)
-        slab_loops = _z_loops(wb, slab_z)
-        floor_z_loops = _z_loops(wb, floor_z)
-        # підлога слотів на slab_z (нормаль ВГОРУ — дивимось у слот зверху)
-        floor_mesh = _cap_from_loops(slab_loops, slab_z, "floor", faces_up=True) if slab_loops else None
-        # дно плити на floor_z (нормаль ВНИЗ)
-        bottom_mesh = _cap_from_loops(floor_z_loops, floor_z, "bottom", faces_up=False) if floor_z_loops else None
+        # ── 2) FLOOR at slab_z: CDT inlay_rings (= terrain-дірки → ТІ САМІ вершини) ──
+        floor_mesh = None
+        if has_inlays and inlay_rings:
+            f_pts, f_segs = _rings_pslg(inlay_rings)
+            Vf2, Ff = _run_triangle(f_pts, f_segs, [], f"pq30a{tri_area:g}YY", "floor", work_dir)
+            Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
+            floor_mesh = trimesh.Trimesh(vertices=Vf, faces=Ff, process=False)
+            floor_mesh.fix_normals()
+            if floor_mesh.face_normals[:, 2].mean() < 0:  # підлога слота дивиться ВГОРУ
+                floor_mesh.faces = floor_mesh.faces[:, ::-1]
+
+        # ── 3) BOTTOM at floor_z: CDT zone_ext (= terrain-периметр → ТІ САМІ вершини) ──
+        b_pts, b_segs = _rings_pslg([zone_ext])
+        Vb2, Fb = _run_triangle(b_pts, b_segs, [], f"pq30a{tri_area:g}YY", "bottom", work_dir)
+        Vb = np.column_stack([Vb2[:, 0], Vb2[:, 1], np.full(len(Vb2), floor_z)])
+        bottom_mesh = trimesh.Trimesh(vertices=Vb, faces=Fb, process=False)
+        bottom_mesh.fix_normals()
+        if bottom_mesh.face_normals[:, 2].mean() > 0:  # дно плити дивиться ВНИЗ
+            bottom_mesh.faces = bottom_mesh.faces[:, ::-1]
 
         parts = [m for m in (terrain_mesh, wall_mesh, floor_mesh, bottom_mesh, bridge_mesh)
                  if m is not None and len(m.faces) > 0]
