@@ -2016,8 +2016,13 @@ def run_full_generation_pipeline(
 
     stage_start = time.perf_counter()
     _preview_mode_on = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
-    if _preview_mode_on:
-        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping debug bundle")
+    # Debug bundle = пост-ген дамп у debug/runs/ (~57с + диск), потрібен ЛИШЕ для
+    # розслідувань. У проді OFF за замовч. (юзер: «треба пришвидшити генерацію»).
+    # Увімкнути для дебагу: SAVE_DEBUG_BUNDLE=1. (canonical-маски будуються окремо —
+    # не залежать від цього.)
+    _save_debug_bundle = os.environ.get("SAVE_DEBUG_BUNDLE", "").lower() in ("1", "true", "yes")
+    if _preview_mode_on or not _save_debug_bundle:
+        print(f"[INFO] {zone_prefix}debug bundle skipped (~57s saved; SAVE_DEBUG_BUNDLE=1 to enable)")
     else:
         try:
             debug_bundle_dir = create_debug_bundle(
