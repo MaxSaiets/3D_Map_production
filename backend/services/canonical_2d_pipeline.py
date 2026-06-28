@@ -1111,6 +1111,94 @@ def prepare_canonical_2d_stage(
     except Exception as exc:
         print(f"[WARN] {zone_prefix}green-sliver merge failed: {exc}")
 
+    # ── Fill small COMPACT terrain islands enclosed by road INTO the road (①) ─────
+    # User's case: a small terrain pocket left standing between two roads that is
+    # neither cut nor replaced by road (a sub-printable island). Absorb ONLY pockets
+    # that are SMALL, COMPACT (low aspect) and MOSTLY bounded by road, and NOT
+    # adjacent to park/water. Filling a compact, road-surrounded blob just grows the
+    # road by a hair — it does NOT create a new thin strip. Long high-aspect strips
+    # between PARALLEL roads are deliberately LEFT: filling those welds the two roads
+    # into a courtyard plate (the documented black-plate / whack-a-mole regression).
+    # NOTE (2026-06-28): gated OFF by default. Verified on Vuhledar that absorbing
+    # the islands into the canonical road_insert/groove mask here does NOT propagate
+    # to the exported Roads inlay mesh (that mesh is built from road centerlines, not
+    # this mask), so the islands survive in the print while road components fragment
+    # (8->15). Same mask->mesh disconnect as the relief-buildings drop. Left in place
+    # for a future fix that makes the road inlay mesh consume the canonical mask;
+    # enable with ROAD_ISLAND_FILL_MM=3.
+    # Env: ROAD_ISLAND_FILL_MM (default 0 = off; model-mm cap side),
+    #      ROAD_ISLAND_FILL_MAX_ASPECT (default 3.0),
+    #      ROAD_ISLAND_FILL_MIN_ROAD_FRAC (default 0.6).
+    try:
+        # GATED OFF (=0): empirically REGRESSES. Filling open compact islands into the
+        # insert DOES now propagate to the print (inlay+cut rebuild from roads_final),
+        # but absorbing them SHIFTS the road boundary and FRAGMENTS the surrounding
+        # terrain into MORE slivers (Vuhledar: absorbed 12 but islands 17 -> 30). This
+        # is the documented whack-a-mole: only FULLY-ENCLOSED holes are safe to fill
+        # (handled separately by road_geometry._fill_small_road_holes), and open
+        # pockets between narrowed roads cannot be removed without redesigning the
+        # road-clearance model. Left env-enablable for experiments only.
+        _rif_mm = float(os.environ.get("ROAD_ISLAND_FILL_MM", "0"))
+        _rif_aspect = float(os.environ.get("ROAD_ISLAND_FILL_MAX_ASPECT", "3.0"))
+        _rif_frac = float(os.environ.get("ROAD_ISLAND_FILL_MIN_ROAD_FRAC", "0.6"))
+        _sf3 = float(zone.scale_factor or 0.0)
+        _ri3 = canonical_road_masks.road_insert_mask
+        _rg3 = canonical_road_masks.road_groove_mask
+        _zp3 = zone.zone_polygon_local
+        if (
+            _rif_mm > 0 and _sf3 > 0
+            and _ri3 is not None and not getattr(_ri3, "is_empty", True)
+            and _zp3 is not None and not getattr(_zp3, "is_empty", True)
+        ):
+            _cap3 = float(model_mm_to_world_m(_rif_mm, _sf3)) ** 2          # world m^2
+            _touch3 = float(model_mm_to_world_m(0.4, _sf3))                 # adjacency band
+            # Detect against the INSERT (not the groove): the island then physically
+            # TOUCHES the insert, so filling it into the insert CONNECTS it (no
+            # clearance gap) and it survives the runtime-bundle filters instead of
+            # becoming a dropped fragment. roads_final (=insert) feeds inlay + cut.
+            _road_ref3 = _ri3
+            _bu3 = getattr(building_geometry, "building_union_local", None)
+            _occ3 = [g for g in (_road_ref3, parks_final, water_polygons, _bu3)
+                     if g is not None and not getattr(g, "is_empty", True)]
+            _terr3 = _zp3
+            if _occ3:
+                _terr3 = _terr3.difference(unary_union(_occ3)).buffer(0)
+            _pieces3 = [_terr3] if getattr(_terr3, "geom_type", "") == "Polygon" else list(getattr(_terr3, "geoms", []))
+            _fill3 = []
+            for _p in _pieces3:
+                if getattr(_p, "geom_type", "") != "Polygon" or _p.is_empty or _p.area > _cap3:
+                    continue
+                _minx, _miny, _maxx, _maxy = _p.bounds
+                _dx, _dy = (_maxx - _minx), (_maxy - _miny)
+                if max(_dx, _dy) / max(min(_dx, _dy), 1e-6) > _rif_aspect:
+                    continue  # long strip -> leave (would weld parallel roads)
+                _bnd = _p.boundary
+                if getattr(_bnd, "length", 0.0) <= 0:
+                    continue
+                try:
+                    _rlen = _bnd.intersection(_road_ref3.buffer(_touch3)).length
+                except Exception:
+                    continue
+                if (_rlen / _bnd.length) < _rif_frac:
+                    continue  # not mostly road-bounded -> leave
+                _grow = _p.buffer(_touch3)
+                if parks_final is not None and not getattr(parks_final, "is_empty", True) and _grow.intersects(parks_final):
+                    continue
+                if water_polygons is not None and not getattr(water_polygons, "is_empty", True) and _grow.intersects(water_polygons):
+                    continue
+                _fill3.append(_p)
+            if _fill3:
+                _fillu3 = unary_union(_fill3)
+                canonical_road_masks.road_insert_mask = _ri3.union(_fillu3).intersection(_zp3).buffer(0)
+                if _rg3 is not None and not getattr(_rg3, "is_empty", True):
+                    canonical_road_masks.road_groove_mask = _rg3.union(_fillu3).intersection(_zp3).buffer(0)
+                print(
+                    f"[INFO] {zone_prefix}road-island fill: absorbed {len(_fill3)} compact "
+                    f"road-bounded terrain islands ({_fillu3.area:.1f} m2) into road"
+                )
+    except Exception as exc:
+        print(f"[WARN] {zone_prefix}road-island fill failed: {exc}")
+
     # runtime_canonical_masks now resolves building-vs-road precedence in one
     # place and rebuilds road_groove from the final road insert. Pass the raw
     # building union in and let that resolver decide which buildings yield,

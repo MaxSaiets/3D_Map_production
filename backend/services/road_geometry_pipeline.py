@@ -225,6 +225,50 @@ def _drop_dense_service_clusters(gdf_local, *, cluster_gap_m=9.0, min_cluster_ed
         return gdf_local
 
 
+def _fill_small_road_holes(geometry: Optional[BaseGeometry], *, max_hole_area_m2: float) -> Optional[BaseGeometry]:
+    """Fill small fully-ENCLOSED interior holes (terrain islands surrounded by road —
+    e.g. a pocket between two close roads) below max_hole_area_m2. On THIS raw road
+    polygon the islands are topological holes (the full-width road polygons close
+    around them), unlike the narrower canonical insert mask where the same pocket
+    reads as an open gap and the existing fill misses it. A hole is enclosed by
+    definition, so this NEVER welds parallel roads (open gaps are not holes) — only
+    road-surrounded pockets are filled. This geom feeds BOTH the inlay mesh and the
+    canonical mask, so the fix propagates to the printed model."""
+    from shapely.geometry import Polygon as _Poly
+    if geometry is None or getattr(geometry, "is_empty", True) or max_hole_area_m2 <= 0:
+        return geometry
+    polys = [geometry] if getattr(geometry, "geom_type", "") == "Polygon" else list(getattr(geometry, "geoms", []))
+    rebuilt = []
+    changed = False
+    for poly in polys:
+        if getattr(poly, "geom_type", "") != "Polygon" or poly.is_empty:
+            if not getattr(poly, "is_empty", True):
+                rebuilt.append(poly)
+            continue
+        kept = []
+        for ring in poly.interiors:
+            try:
+                if float(_Poly(ring.coords).area) > float(max_hole_area_m2):
+                    kept.append(ring)
+                else:
+                    changed = True
+            except Exception:
+                kept.append(ring)
+        if len(kept) != len(list(poly.interiors)):
+            try:
+                rebuilt.append(_Poly(poly.exterior.coords, holes=kept).buffer(0))
+            except Exception:
+                rebuilt.append(poly)
+        else:
+            rebuilt.append(poly)
+    if not changed or not rebuilt:
+        return geometry
+    try:
+        return unary_union(rebuilt).buffer(0)
+    except Exception:
+        return rebuilt[0] if len(rebuilt) == 1 else geometry
+
+
 def prepare_road_geometry(
     *,
     G_roads: Any,
@@ -390,6 +434,32 @@ def prepare_road_geometry(
                             )
                     except Exception as exc:
                         print(f"[WARN] {zone_prefix} road gap-fill failed: {exc}")
+                # ① Fill small ENCLOSED terrain islands (pockets fully surrounded by
+                # road, e.g. between two close roads) up to ROAD_ISLAND_HOLE_MM. Safe:
+                # only topological holes are filled (never welds parallel roads), and
+                # it runs on the raw road geom that feeds BOTH inlay + canonical mask,
+                # so the island is genuinely replaced by road in the print.
+                try:
+                    _isl_mm = float(os.environ.get("ROAD_ISLAND_HOLE_MM", "3.0"))
+                except (TypeError, ValueError):
+                    _isl_mm = 3.0
+                if _isl_mm > 0 and merged_roads_geom_local is not None and scale_factor and float(scale_factor) > 0:
+                    try:
+                        _isl_cap = float(model_mm_to_world_m(_isl_mm, float(scale_factor))) ** 2
+                        _a0 = float(getattr(merged_roads_geom_local, "area", 0.0) or 0.0)
+                        _filled_isl = _fill_small_road_holes(
+                            merged_roads_geom_local, max_hole_area_m2=_isl_cap
+                        )
+                        if _filled_isl is not None and not getattr(_filled_isl, "is_empty", True):
+                            _a1 = float(getattr(_filled_isl, "area", 0.0) or 0.0)
+                            if _a1 > _a0:
+                                merged_roads_geom_local = _filled_isl
+                                print(
+                                    f"[INFO] {zone_prefix} road-island hole-fill "
+                                    f"(<{_isl_mm}mm): +{_a1 - _a0:.1f} m2 road"
+                                )
+                    except Exception as exc:
+                        print(f"[WARN] {zone_prefix} road-island hole-fill failed: {exc}")
                 # ВІДКОЧЕНО 2026-06-25: thin-terrain-wall->road fill ЗЛИВАВ дороги в маси
                 # + поглинав зелені медіани/смуги (не виключав parks/water; W*3≈54м
                 # proximity на 1км-зоні), а стовбів НЕ виправляв (маска не доходить до

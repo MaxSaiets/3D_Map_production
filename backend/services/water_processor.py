@@ -1,6 +1,7 @@
 """
 Сервіс для обробки водних об'єктів з булевим відніманням
 """
+import os
 import geopandas as gpd
 import trimesh
 import numpy as np
@@ -204,8 +205,10 @@ def process_water_surface(
         # Мін. друкований розмір води (залежить від масштабу): дрібні калюжі/слівери
         # ВИДАЛЯЄМО — вони повертаються до рельєфу (найближча поверхня). Інакше вони
         # лишають тонкі стінки/голки на березі й не друкуються чисто.
-        min_world_m = model_mm_to_world_m(0.8, scale_factor) if (scale_factor and scale_factor > 0) else 6.0
-        min_world_m = max(float(min_world_m), 1.0)
+        # Owner rule: delete water smaller than ~0.4mm on the model (sub-printable
+        # puddles/slivers leave hairs on the shore); keep & seat anything >= 0.4mm.
+        min_world_m = model_mm_to_world_m(0.4, scale_factor) if (scale_factor and scale_factor > 0) else 3.0
+        min_world_m = max(float(min_world_m), 0.5)
 
         for poly in polys:
             if not isinstance(poly, Polygon) or poly.is_empty:
@@ -300,7 +303,7 @@ def process_water_surface(
                         except Exception:
                             flat_level = 0.0
                     base_water_level = flat_level + offset_below_m
-                    
+
                     # 4. Apply Noise (only to top surface)
                     # IMPORTANT: Use GLOBAL (UTM) coordinates for noise so adjacent zones stitch seamlessly.
                     # Otherwise each zone would have different noise at shared borders.

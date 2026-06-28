@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Optional
 
 import trimesh
@@ -100,6 +101,27 @@ def merge_terrain_and_buildings(
     except Exception as exc:
         print(f"[WARN] pre-merge extend_buildings failed: {exc}")
 
+    # DETERMINISTIC by default: export relief buildings as a SEPARATE part instead of
+    # boolean-fusing them into the terrain. The terrain<->building manifold union is
+    # NON-DETERMINISTIC (memory: sometimes 0 separate components, sometimes 100+):
+    # when it fragments, the disjoint building bodies are dropped downstream and
+    # buildings vanish; when it fuses, they merge into the Base. That made the model
+    # STRUCTURE vary between identical runs. Skipping the union makes the output
+    # stable (Base = terrain, Buildings = its own part, always present + distinct),
+    # is faster, and keeps each building a clean watertight solid. Bottoms were
+    # already extended to the floor above, so buildings overlap the base and don't
+    # float; single-material slicing unions them. Set BUILDINGS_FORCE_FUSE=1 to
+    # attempt the old one-layer fusion (only fused when it actually collapses to ~one
+    # solid; otherwise still falls back to a separate part so nothing is dropped).
+    _force_fuse = os.environ.get("BUILDINGS_FORCE_FUSE", "").lower() in ("1", "true", "yes")
+    if not _force_fuse:
+        return TerrainBuildingMergeResult(
+            terrain_mesh=terrain_mesh,
+            building_meshes=building_meshes,
+            merged_building_mesh=merged_building_mesh,
+            support_meshes=support_meshes,
+        )
+
     base_mesh = None
     try:
         base_mesh = union_mesh_collection(
@@ -110,23 +132,29 @@ def merge_terrain_and_buildings(
         print(f"[WARN] terrain/building boolean merge failed: {exc}")
         base_mesh = None
 
-    if base_mesh is not None:
-        merged_components = _component_count(base_mesh)
-        # NOTE: фрагментація більше НЕ скидає union у None. Юзер вимагає, щоб
-        # будівлі та база були ОДНИМ шаром (без окремого building-меша). Навіть
-        # якщо boolean union дав кілька disjoint-компонентів — це все одно один
-        # combined mesh-об'єкт у 3MF, що й потрібно. Лишаємо лише діагностику.
-        if merged_components > max(terrain_components + 8, terrain_components * 4):
-            print(
-                "[INFO] terrain/building union has multiple components "
-                f"({merged_components}; terrain={terrain_components}, buildings={building_components}); "
-                "still exported as a SINGLE base+buildings layer (user requested one layer)"
-            )
+    merged_components = _component_count(base_mesh) if base_mesh is not None else None
+    fusion_ok = (
+        base_mesh is not None
+        and merged_components is not None
+        and merged_components <= max(terrain_components + 2, 2)
+    )
 
-    # ОДИН ШАР: будівлі ЗАВЖДИ зливаються з базою. Якщо boolean union не вдався,
-    # робимо концат (геометричне об'єднання в один mesh-об'єкт) — для
-    # одноматеріального друку це коректно нарізається слайсером. Окремий
-    # building-шар більше НЕ експортується (building_meshes=None).
+    if base_mesh is not None and not fusion_ok:
+        # Forced fuse but it fragmented — still export separate so nothing is dropped.
+        print(
+            f"[INFO] BUILDINGS_FORCE_FUSE: union fragmented "
+            f"(components={merged_components}; terrain={terrain_components}, "
+            f"buildings={building_components}); exporting buildings as a SEPARATE part"
+        )
+        return TerrainBuildingMergeResult(
+            terrain_mesh=terrain_mesh,
+            building_meshes=building_meshes,
+            merged_building_mesh=merged_building_mesh,
+            support_meshes=support_meshes,
+        )
+
+    # ОДИН ШАР: будівлі зливаються з базою (boolean union вдався — або форсовано).
+    # Якщо union ВЗАГАЛІ впав (base_mesh is None) — концат у один mesh-об'єкт.
     if base_mesh is None:
         try:
             target_z = float(terrain_mesh.bounds[0][2]) + _clr
@@ -153,6 +181,11 @@ def merge_terrain_and_buildings(
         except Exception as exc:
             print(f"[WARN] concatenate base+buildings failed ({exc}); keeping terrain only")
             base_mesh = terrain_mesh
+    elif merged_components is not None and merged_components > max(terrain_components + 8, terrain_components * 4):
+        print(
+            "[INFO] terrain/building union fused with multiple components "
+            f"({merged_components}; terrain={terrain_components}, buildings={building_components})"
+        )
 
     return TerrainBuildingMergeResult(
         terrain_mesh=base_mesh,

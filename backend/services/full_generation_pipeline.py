@@ -502,6 +502,106 @@ def _fetch_source_stage(
                 )
         except Exception as _exc:
             print(f"[BUILDINGS] kiosk-area filter failed: {_exc}")
+
+    # Drop SMALL buildings that sit (almost) entirely INSIDE a green park. Buildings
+    # share the base/ivory colour, so a small building inside the green renders as a
+    # pale "white blob in the park" (owner complaint). A building whose footprint is
+    # >= PARK_BUILDING_DROP_RATIO inside the green AND below PARK_BUILDING_DROP_M2 is
+    # removed at the source, so the green reads solid (no carved hole, no speck). Large
+    # structures (a pavilion/palace genuinely in a park) stay because of the area cap.
+    # Env: PARK_BUILDING_DROP_M2 (default 250 m2 world; 0 = off — owner-tunable:
+    #      raise to drop larger in-park structures, lower to keep more),
+    #      PARK_BUILDING_DROP_RATIO (default 0.85).
+    try:
+        _park_drop_m2 = float(os.environ.get("PARK_BUILDING_DROP_M2", "250"))
+    except (TypeError, ValueError):
+        _park_drop_m2 = 0.0
+    _grn = data_result.gdf_green
+    # Only REAL parks count for the in-park drop. A building inside grass / meadow /
+    # forest / cemetery / allotments / orchard is legitimate (a chapel, a shed, a
+    # forest cabin) and must NOT be removed — those broad landuse polygons are where
+    # using ALL green over-dropped real buildings. Restrict to park-like OSM types via
+    # the green `type` column; if it's absent, fall back to all green (old behaviour).
+    # Park-LIKE types only (NOT grass/meadow/forest/cemetery/allotments/orchard — a
+    # building inside those is legitimate, e.g. a chapel/shed/cabin). 'garden' is
+    # included but the green polygon AREA cap below (PARK_MAX_AREA_M2) protects against
+    # mis-tagged huge "garden" polygons (seen: 20-hectare gardens over residential
+    # blocks) — a building inside a manicured park/square is a visible blob, but a
+    # building inside a landuse-scale polygon is a normal city block, never dropped.
+    _PARK_TYPES = {
+        "park", "garden", "recreation_ground", "playground",
+        "village_green", "common", "dog_park",
+    }
+    try:
+        _park_max_area = float(os.environ.get("PARK_MAX_AREA_M2", "50000"))
+    except (TypeError, ValueError):
+        _park_max_area = 50000.0
+    if (
+        _park_drop_m2 > 0
+        and _gdf_b is not None and not getattr(_gdf_b, "empty", True)
+        and _grn is not None and not getattr(_grn, "empty", True)
+    ):
+        try:
+            import math as _math
+            from shapely.ops import unary_union as _unary_union
+            try:
+                _drop_ratio = float(os.environ.get("PARK_BUILDING_DROP_RATIO", "0.85"))
+            except (TypeError, ValueError):
+                _drop_ratio = 0.85
+            _is_geo2 = bool(getattr(getattr(_gdf_b, "crs", None), "is_geographic", False))
+
+            def _world_m2(g):
+                if _is_geo2:
+                    return g.area * (111320.0 ** 2) * _math.cos(_math.radians(g.centroid.y))
+                return g.area
+
+            _grn_for_drop = _grn
+            try:
+                if "type" in list(getattr(_grn, "columns", [])):
+                    _ptype = _grn["type"].astype(str).str.strip().str.lower()
+                    _pmask = _ptype.isin(_PARK_TYPES)
+                    if bool(_pmask.any()):
+                        _grn_for_drop = _grn[_pmask]
+            except Exception:
+                _grn_for_drop = _grn
+            # Only park-like polygons SMALL ENOUGH to be a manicured park/square — a
+            # building inside a huge (mis-tagged) green polygon is a normal block.
+            _green_u = _unary_union(
+                [g for g in _grn_for_drop.geometry.values
+                 if g is not None and not getattr(g, "is_empty", True)
+                 and _world_m2(g) <= _park_max_area]
+            ).buffer(0)
+
+            _keep_park = []
+            for _g in _gdf_b.geometry.values:
+                if _g is None or getattr(_g, "is_empty", True) or _green_u.is_empty:
+                    _keep_park.append(True)
+                    continue
+                try:
+                    if _g.area <= 0 or not _g.intersects(_green_u):
+                        _keep_park.append(True)
+                        continue
+                    _frac = _g.intersection(_green_u).area / _g.area
+                    _keep_park.append(not (_frac >= _drop_ratio and _world_m2(_g) < _park_drop_m2))
+                except Exception:
+                    _keep_park.append(True)
+            _dropped_park = sum(1 for _k in _keep_park if not _k)
+            try:
+                _gtot = len(_grn); _gpark = len(_grn_for_drop)
+            except Exception:
+                _gtot = _gpark = -1
+            if _dropped_park:
+                _gdf_b = _gdf_b[_keep_park]
+                print(
+                    f"[BUILDINGS] dropped {_dropped_park} small (<{_park_drop_m2:.0f} m2) "
+                    f"buildings >={_drop_ratio:.0%} inside a park "
+                    f"(park-like green {_gpark}/{_gtot} polys)"
+                )
+            else:
+                print(f"[BUILDINGS] park-drop: 0 dropped (park-like green {_gpark}/{_gtot} polys)")
+        except Exception as _exc:
+            print(f"[BUILDINGS] park-building drop failed: {_exc}")
+
     return SourceDataResult(
         gdf_buildings=_gdf_b,
         gdf_water=data_result.gdf_water,
@@ -1400,10 +1500,11 @@ def run_full_generation_pipeline(
             # Без конектора clearance=0 → стара поведінка (будинки до дна).
             _cd_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             _merge_bottom_clr = (_cd_mm + 0.6) / _sf_c
+        _merged_bmesh = union_mesh_collection(building_meshes, label="clipped_building_layer")
         merge_result = merge_terrain_and_buildings(
             terrain_mesh=terrain_mesh,
             building_meshes=building_meshes,
-            merged_building_mesh=union_mesh_collection(building_meshes, label="clipped_building_layer"),
+            merged_building_mesh=_merged_bmesh,
             support_meshes=detail_layers.support_meshes,
             bottom_clearance_m=_merge_bottom_clr,
         )
@@ -1750,6 +1851,50 @@ def run_full_generation_pipeline(
                              else _tmh3.util.concatenate([m for m in landmark_meshes if m is not None]))
         except Exception:
             landmark_part = landmark_meshes[0] if landmark_meshes else None
+
+    # WATER seated CORRECTLY on the relief. A water polygon on a DEM spike is seated
+    # against the terrain PROVIDER (which still has the spike) while the exported
+    # terrain MESH was despiked/smoothed — so the water floats far above the land as a
+    # vertical blue column (owner's screenshot). Here we have the ACTUAL final terrain
+    # mesh: if the water surface pokes above it, RE-DRAPE the body as a thin layer that
+    # hugs the real terrain (top a hair above grade so it reads as water, bottom just
+    # below) — a visible flat water patch, never a pillar, never deleted. Correctly
+    # seated water (surface already at/below the terrain mesh) is left untouched.
+    if water_mesh is not None and terrain_mesh is not None and len(getattr(water_mesh, "vertices", [])) > 0:
+        try:
+            import numpy as _wnp
+            _wv = water_mesh.vertices.copy()
+            _wsf = float(getattr(zone, "scale_factor", 0.0) or 0.0)
+            _orig = _wnp.column_stack([_wv[:, 0], _wv[:, 1],
+                                       _wnp.full(len(_wv), float(terrain_mesh.bounds[1][2]) + 10.0)])
+            _loc, _ridx, _ = terrain_mesh.ray.intersects_location(
+                _orig, _wnp.tile([0.0, 0.0, -1.0], (len(_wv), 1)), multiple_hits=True)
+            _tz = _wnp.full(len(_wv), _wnp.nan)
+            for _i in range(len(_wv)):
+                _h = _loc[_ridx == _i]
+                if len(_h):
+                    _tz[_i] = _h[:, 2].max()
+            _valid = _wnp.isfinite(_tz)
+            _terr_max = float(_wnp.max(_tz[_valid])) if int(_valid.sum()) > 0 else None
+            _poke_thr = (0.3 / _wsf) if _wsf > 0 else 0.3
+            if _terr_max is not None and float(_wv[:, 2].max()) > _terr_max + _poke_thr and int(_valid.sum()) >= 3:
+                # Re-drape: thin water layer hugging the terrain, top +0.15mm, bottom
+                # -0.45mm (model) about the local grade. Per-vertex terrain so it
+                # follows the surface; fills the despike gap where the water groove was
+                # smoothed away. Vertices without a terrain hit fall back to the median.
+                _raise = (0.15 / _wsf) if _wsf > 0 else 0.15
+                _sink = (0.45 / _wsf) if _wsf > 0 else 0.45
+                _med = float(_wnp.median(_tz[_valid]))
+                _tzf = _wnp.where(_valid, _tz, _med)
+                _zmin, _zmax = float(_wv[:, 2].min()), float(_wv[:, 2].max())
+                _span = max(_zmax - _zmin, 1e-9)
+                _ratio = (_wv[:, 2] - _zmin) / _span          # 0=floor, 1=surface
+                _wv[:, 2] = (_tzf - _sink) + _ratio * (_sink + _raise)
+                water_mesh.vertices = _wv
+                print(f"[WATER] re-draped DEM-spike water onto the relief as a thin "
+                      f"layer (was poking {float(_wv[:,2].max()):.2f}m, terrain {_terr_max:.2f}m)")
+        except Exception as _wexc:
+            print(f"[WARN] water re-drape failed: {_wexc}")
 
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()

@@ -123,11 +123,33 @@ def process_buildings(
         except Exception:
             return True
 
+    def _filter_to_threshold(geometry: Optional[BaseGeometry], is_landmark: bool) -> Optional[BaseGeometry]:
+        """Keep only footprint parts that pass the printability threshold (drops thin
+        tall "стовби"/needles — e.g. a building sliced by the zone window into a
+        sub-nozzle strip). Returns None when nothing survives. Landmarks are exempt."""
+        if geometry is None or getattr(geometry, "is_empty", True):
+            return None
+        if isinstance(geometry, Polygon):
+            return geometry if _geometry_meets_threshold(geometry, is_landmark=is_landmark) else None
+        if isinstance(geometry, MultiPolygon) or hasattr(geometry, "geoms"):
+            try:
+                parts = [
+                    p for p in geometry.geoms
+                    if isinstance(p, Polygon) and _geometry_meets_threshold(p, is_landmark=is_landmark)
+                ]
+            except Exception:
+                return geometry
+            if not parts:
+                return None
+            return parts[0] if len(parts) == 1 else MultiPolygon(parts)
+        return geometry
+
     def _clip_building_geometry(geometry: Optional[BaseGeometry], landmark_category: str = "") -> Optional[BaseGeometry]:
         if geometry is None or getattr(geometry, "is_empty", True):
             return None
         if exclusion_polygons is None or getattr(exclusion_polygons, "is_empty", True):
-            return geometry
+            # No road/exclusion to clip against, but still drop needle footprints.
+            return _filter_to_threshold(geometry, bool(landmark_category))
         lhs = geometry
         try:
             minx, miny, maxx, maxy = geometry.bounds
@@ -146,7 +168,9 @@ def process_buildings(
         except Exception:
             pass
         if local_exclusion is None or getattr(local_exclusion, "is_empty", True):
-            return lhs
+            # Building is not near any road exclusion — still drop needle footprints
+            # (zone-window slivers) so thin tall "стовби" never reach the mesh.
+            return _filter_to_threshold(lhs, bool(landmark_category))
         try:
             clipped = lhs.difference(local_exclusion)
         except Exception:
@@ -346,7 +370,62 @@ def process_buildings(
         except Exception as e:
             mz = float(getattr(terrain_provider, "min_z", 0.0))
             return np.array([mz], dtype=float)
-    
+
+    def original_grade_max(g) -> Optional[float]:
+        """Highest ORIGINAL (pre-flatten) terrain at the footprint boundary AND just
+        outside it — the real grade the roof must clear so the building is not
+        half-buried in a slope. We sample a ring a couple of metres OUTSIDE the
+        footprint (not only the boundary): on a hillside the terrain that buries the
+        uphill wall is the neighbour grade just beyond the footprint, which sits above
+        the boundary itself. We use the *original* surface (before
+        flatten_heightfield_under_buildings dug a min-pad and before gaussian
+        smoothing); the smoothed final surface the building merges into is always
+        <= original, so clearing the original guarantees no burial. Returns None when
+        no original surface is available (then seating is unchanged)."""
+        op = getattr(terrain_provider, "original_heights_provider", None) if terrain_provider is not None else None
+        if op is None:
+            return None
+        try:
+            if isinstance(g, Polygon):
+                polys = [g]
+            else:
+                polys = [p for p in getattr(g, "geoms", []) if isinstance(p, Polygon)]
+            coords = []
+            for poly in polys:
+                if poly.exterior is not None:
+                    coords.append(np.asarray(poly.exterior.coords)[:, :2])
+                # ring just outside this part captures the uphill neighbour grade
+                try:
+                    outer = poly.buffer(_grade_ring_m).exterior
+                    if outer is not None and outer.length > 0:
+                        n = int(min(96, max(16, outer.length / max(_grade_ring_m, 0.5))))
+                        ts = np.linspace(0.0, 1.0, n)
+                        coords.append(np.array([outer.interpolate(t, normalized=True).coords[0] for t in ts]))
+                except Exception:
+                    pass
+            if not coords:
+                return None
+            pts = np.vstack(coords)
+            h = np.asarray(op.get_heights_for_points(pts), dtype=float)
+            h = h[np.isfinite(h)]
+            return float(h.max()) if h.size else None
+        except Exception:
+            return None
+
+    # Minimum visible building height above the LOCAL grade on a slope (model mm).
+    # Used to lift the roof so the uphill side is not swallowed by the terrain.
+    try:
+        _min_visible_slope_mm = float(os.environ.get("BUILDING_MIN_VISIBLE_ON_SLOPE_MM", "1.5"))
+    except (TypeError, ValueError):
+        _min_visible_slope_mm = 1.5
+    _min_visible_slope_m = _model_mm_to_world_m(_min_visible_slope_mm) if _min_visible_slope_mm > 0 else 0.0
+    # How far outside the footprint to sample the uphill neighbour grade (world m).
+    try:
+        _grade_ring_mm = float(os.environ.get("BUILDING_GRADE_RING_MM", "1.0"))
+    except (TypeError, ValueError):
+        _grade_ring_mm = 1.0
+    _grade_ring_m = max(2.0, _model_mm_to_world_m(_grade_ring_mm))
+
     # MEMORY OPTIMIZATION: Process buildings in batches to reduce RAM usage
     # iterrows() is very slow and memory-intensive, so we process by indexing instead
     # Adaptive batch size: smaller batches for large datasets to avoid memory exhaustion
@@ -468,6 +547,22 @@ def process_buildings(
                     base_z = float(ground_min) - float(terrain_sink_m)
                     required_foundation_m = max(float(ground_max) - float(ground_min), 0.0) + float(terrain_sink_m)
                     foundation_depth_m = max(float(foundation_depth_eff), float(required_foundation_m), 0.05)
+
+                    # SLOPE FIX (half-buried buildings): keep base_z at ground_min so the
+                    # downhill side and foundation stay covered, but RAISE the roof so it
+                    # clears the local uphill grade by _min_visible_slope_m. Without this,
+                    # the (unflattened) terrain just outside the footprint rises ABOVE
+                    # roof = base_z + height for short buildings on a slope, so the uphill
+                    # side is swallowed -> the building reads as half-buried. We bump the
+                    # effective height once here; it propagates to the extrude + the wall
+                    # remap (and, for a MultiPolygon, every part inherits the same height,
+                    # which is >= each part's local grade clearance since base_z is global
+                    # ground_min). Relief-only (inside the terrain_provider branch).
+                    _grade_max = original_grade_max(geom)
+                    if _grade_max is not None and _min_visible_slope_m > 0.0:
+                        _needed_h = (float(_grade_max) + float(_min_visible_slope_m)) - float(base_z)
+                        if _needed_h > float(height):
+                            height = float(_needed_h)
 
                     # translate_z - Z координата нижньої точки будівлі (base_z мінус фундамент)
                     translate_z = float(base_z) - float(foundation_depth_m)

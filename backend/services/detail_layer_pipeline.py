@@ -203,6 +203,84 @@ def process_detail_layers(
     # inset by the same full amount or the shared white gap becomes visually
     # doubled. Use a split-fit for parks/water inserts.
     shared_inlay_fit_clearance_mm = float(fit_config.groove_side_clearance_mm) * 0.5
+
+    # ① Replace small COMPACT terrain islands enclosed by road WITH road. This is the
+    # one stage that has roads + parks (gdf_green) + buildings together AND owns the
+    # source (merged_roads_geom_local) that process_road_layer turns into BOTH the
+    # road inlay mesh AND road_cut_source — so the island is cut out of the terrain
+    # AND filled with road, consistently, in the printed model. STRONG guards keep it
+    # safe (this is the owner-sensitive road-merge area): only SMALL, COMPACT (low
+    # aspect), >=70%-road-surrounded pockets that do NOT touch parks/buildings/zone-
+    # edge are filled. Long strips between parallel roads (the courtyard-plate /
+    # whack-a-mole regression) and any green/building-adjacent terrain are LEFT alone.
+    # GATED OFF by default (ROAD_ISLAND_FILL_MM=0): proven no-op here because the
+    # islands are NOT present in this source geometry — merged_roads_geom_local is the
+    # FULL-WIDTH road, and the islands only appear DOWNSTREAM after the clearance/groove
+    # narrowing exposes terrain between the narrowed roads. By then the geometry is
+    # split between the canonical cut-mask and the centerline-built inlay mesh, so no
+    # single injection reaches both. Kept (env-enablable) for the rare zone whose raw
+    # road geometry genuinely encloses a compact terrain pocket; a real fix needs a
+    # road-pipeline refactor that gives one island-aware source to cut + inlay.
+    try:
+        _rif_mm = float(os.environ.get("ROAD_ISLAND_FILL_MM", "0"))
+    except (TypeError, ValueError):
+        _rif_mm = 0.0
+    if (
+        _rif_mm > 0 and merged_roads_geom_local is not None
+        and not getattr(merged_roads_geom_local, "is_empty", True)
+        and scale_factor and float(scale_factor) > 0
+        and zone_polygon_local is not None and not getattr(zone_polygon_local, "is_empty", True)
+    ):
+        try:
+            from shapely.ops import unary_union as _uu
+            _sf = float(scale_factor)
+            _cap = float(model_mm_to_world_m(_rif_mm, _sf)) ** 2
+            _touch = float(model_mm_to_world_m(0.4, _sf))
+            _roads_g = merged_roads_geom_local
+            _parks_g = getattr(canonical_mask_bundle, "parks_final", None) if canonical_mask_bundle is not None else None
+            if (_parks_g is None or getattr(_parks_g, "is_empty", True)) and gdf_green is not None and not getattr(gdf_green, "empty", True):
+                try:
+                    _parks_g = _uu([g for g in gdf_green.geometry.values if g is not None and not getattr(g, "is_empty", True)]).buffer(0)
+                except Exception:
+                    _parks_g = None
+            _occ = [g for g in (_roads_g, _parks_g, building_union_local) if g is not None and not getattr(g, "is_empty", True)]
+            _terr = zone_polygon_local.difference(_uu(_occ)).buffer(0) if _occ else zone_polygon_local
+            _pieces = [_terr] if getattr(_terr, "geom_type", "") == "Polygon" else list(getattr(_terr, "geoms", []))
+            _zedge = zone_polygon_local.boundary
+            _fill = []
+            for _p in _pieces:
+                if getattr(_p, "geom_type", "") != "Polygon" or _p.is_empty or _p.area > _cap:
+                    continue
+                _b = _p.bounds
+                _dx, _dy = (_b[2] - _b[0]), (_b[3] - _b[1])
+                if max(_dx, _dy) / max(min(_dx, _dy), 1e-6) > 3.0:
+                    continue  # long strip -> would weld parallel roads
+                _bnd = _p.boundary
+                if getattr(_bnd, "length", 0.0) <= 0:
+                    continue
+                try:
+                    if _bnd.intersection(_roads_g.buffer(_touch)).length / _bnd.length < 0.70:
+                        continue  # not mostly road-surrounded -> leave
+                except Exception:
+                    continue
+                _grow = _p.buffer(_touch)
+                if _parks_g is not None and not getattr(_parks_g, "is_empty", True) and _grow.intersects(_parks_g):
+                    continue
+                if building_union_local is not None and not getattr(building_union_local, "is_empty", True) and _grow.intersects(building_union_local):
+                    continue
+                if _grow.intersects(_zedge):
+                    continue  # at the tile border -> leave
+                _fill.append(_p)
+            if _fill:
+                _fu = _uu(_fill)
+                merged_roads_geom_local = _uu([merged_roads_geom_local, _fu]).buffer(0)
+                print(
+                    f"[INFO] {zone_prefix}road-island fill: replaced {len(_fill)} compact "
+                    f"road-enclosed terrain islands ({_fu.area:.1f} m2) with road"
+                )
+        except Exception as _exc:
+            print(f"[WARN] {zone_prefix}road-island fill failed: {_exc}")
+
     stage_start = time.perf_counter()
     preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
     preview_roads_mask = (
