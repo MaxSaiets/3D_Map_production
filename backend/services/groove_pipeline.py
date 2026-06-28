@@ -1156,6 +1156,79 @@ def cut_inlay_grooves(
             change_applied=False,
         )
 
+    # ── CDT CLEAN-WALL grooved terrain (experimental, env-gated CDT_GROOVE=1) ──
+    # Замість boolean-вирізу (шматує стінки слотів на «гребінець») будуємо рельєф
+    # конструкцією через Constrained Delaunay: межі інлеїв = обмеж. ребра →
+    # стінки слотів ЧИСТІ. Доведено combWalls 93→1. Dev-safety: на будь-якій
+    # помилці лог + провал у boolean (щоб баг CDT не валив генерацію під час тесту).
+    import os as _os
+    if (_os.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+            and zone_polygon_local is not None
+            and not getattr(zone_polygon_local, "is_empty", True)
+            and terrain_mesh is not None):
+        try:
+            from services.cdt_groove_terrain import build_cdt_grooved_terrain
+            from shapely.ops import unary_union as _uu
+            import numpy as _np
+            from scipy.interpolate import griddata as _griddata
+            # ЛИШЕ ДОРОГИ як глибокі чисті слоти (вузькі → рельєф лишається цілим).
+            # Парки/вода покривають велику площу → як глибокі слоти роздробили б
+            # рельєф на острови-вежі (доведено) — їх лишаємо boolean-у нижче.
+            _cdt_roads_only = _os.environ.get("CDT_ROADS_ONLY", "1").strip().lower() in ("1", "true", "yes", "on")
+            if _cdt_roads_only:
+                _inlays = road_polys_for_groove
+            else:
+                _inlays = _uu([g for g in (road_polys_for_groove, parks_polys_for_cutting,
+                                           water_polys_for_cutting)
+                               if g is not None and not getattr(g, "is_empty", True)])
+            if _inlays is not None and getattr(_inlays, "is_empty", True):
+                _inlays = None
+            _tn = terrain_mesh.face_normals
+            _topf = _tn[:, 2] > 0.3
+            _ctop = terrain_mesh.triangles_center[_topf] if bool(_topf.any()) else terrain_mesh.triangles_center
+
+            def _height_fn(xs, ys):
+                pts = _np.column_stack([_np.asarray(xs, dtype=float), _np.asarray(ys, dtype=float)])
+                z = _griddata(_ctop[:, :2], _ctop[:, 2], pts, method="linear")
+                zn = _griddata(_ctop[:, :2], _ctop[:, 2], pts, method="nearest")
+                return _np.where(_np.isfinite(z), z, zn)
+
+            _floor_z = float(terrain_mesh.bounds[0][2])
+            _top_z = float(terrain_mesh.bounds[1][2])
+            if _cdt_roads_only and road_mesh is not None:
+                _slab_z = float(road_mesh.bounds[0][2])
+            else:
+                _bottoms = [float(m.bounds[0][2]) for m in (road_mesh, parks_mesh, water_mesh) if m is not None]
+                _slab_z = min(_bottoms) if _bottoms else (_floor_z + (_top_z - _floor_z) * 0.2)
+            _slab_z = max(_slab_z, _floor_z + 0.3)
+            _cdt = build_cdt_grooved_terrain(
+                zone_polygon_local, _inlays, _height_fn, slab_z=_slab_z, floor_z=_floor_z)
+            print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
+                  f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
+            _has_pw = any(_geometry_has_area(g)
+                          for g in (parks_polys_for_cutting, water_polys_for_cutting))
+            if _cdt_roads_only and _has_pw:
+                # дороги зроблено CDT-чисто; парки/воду ріжемо boolean-ом у CDT-рельєф
+                # НИЖЧЕ (велика площа → їхній шов менш критичний за дорожній гребінець).
+                terrain_mesh = _cdt
+                road_polys_for_groove = None
+                road_mesh = None
+                print(f"[GROOVE] {zone_prefix}CDT roads done (clean); parks/water via boolean below")
+            else:
+                return GrooveCutResult(
+                    terrain_mesh=_cdt,
+                    road_polygons_used=road_polys_for_groove,
+                    parks_polygons_used=parks_polys_for_cutting,
+                    water_polygons_used=water_polys_for_cutting,
+                    boolean_backend_name="cdt",
+                    grooves_expected=True,
+                    change_applied=True,
+                )
+        except Exception as _cdtexc:
+            import traceback as _tb
+            print(f"[GROOVE] {zone_prefix}CDT groove FAILED ({_cdtexc}); falling back to boolean")
+            _tb.print_exc()
+
     print("[GROOVE] === Unified groove cutting ===")
     print(
         f"[GROOVE] Terrain: {len(terrain_mesh.vertices)} verts, "
