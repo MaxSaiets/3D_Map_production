@@ -172,10 +172,7 @@ except: bpy.ops.import_mesh.stl(filepath=inp)
 o=bpy.context.selected_objects[0]; bpy.context.view_layer.objects.active=o
 bpy.ops.object.mode_set(mode='EDIT')
 bpy.ops.mesh.select_all(action='SELECT')
-bpy.ops.mesh.remove_doubles(threshold=1e-3)
-bpy.ops.mesh.select_all(action='DESELECT')
-bpy.ops.mesh.select_non_manifold()
-bpy.ops.mesh.fill_holes(sides=0)
+bpy.ops.mesh.remove_doubles(threshold=1e-4)
 bpy.ops.mesh.select_all(action='DESELECT')
 bpy.ops.mesh.select_non_manifold()
 bpy.ops.mesh.edge_face_add()
@@ -216,48 +213,6 @@ def _blender_fill_watertight(mesh, work_dir):
     except Exception as exc:  # noqa: BLE001
         print(f"[CDT] blender fill skipped ({exc})")
     return mesh
-
-
-def _rings_pslg(rings, snap=1e-4):
-    """Manual PSLG from a list of closed rings [[(x,y),...],...] → (pts, segs).
-    РОБАСТНО для `triangle` (інакше «invalid geometry on input» на реальних масках):
-    snap координат до сітки + ГЛОБАЛЬНИЙ dedup вершин (ті самі координати між
-    кільцями = ОДИН індекс, не дубль) + викид вироджених (нульова довжина) сегментів.
-    Спільні вершини між викликами зберігаються детерміновано → шви закриваються."""
-    pts, segs = [], []
-    index = {}
-
-    def _key(c):
-        return (round(float(c[0]) / snap), round(float(c[1]) / snap))
-
-    for ring in rings:
-        # 1) зняти послідовні дублі + замикаючу копію (snap-простір)
-        cleaned = []
-        for c in ring:
-            k = _key(c)
-            if cleaned and cleaned[-1][0] == k:
-                continue
-            cleaned.append((k, c))
-        if len(cleaned) > 1 and cleaned[0][0] == cleaned[-1][0]:
-            cleaned.pop()
-        if len(cleaned) < 3:
-            continue  # вироджене кільце — пропустити
-        # 2) глобальний dedup → індекси
-        ids = []
-        for k, c in cleaned:
-            j = index.get(k)
-            if j is None:
-                j = len(pts)
-                index[k] = j
-                pts.append((float(c[0]), float(c[1])))
-            ids.append(j)
-        # 3) сегменти, без нульової довжини
-        n = len(ids)
-        for i in range(n):
-            a, b = ids[i], ids[(i + 1) % n]
-            if a != b:
-                segs.append((a, b))
-    return pts, segs
 
 
 def _boundary_loops(mesh):
@@ -327,54 +282,11 @@ def build_cdt_grooved_terrain(
             inlays = inlays.intersection(zone)
         has_inlays = inlays is not None and not inlays.is_empty
 
-        # ── САНІТАЦІЯ inlays (КРИТИЧНО проти triangle «invalid geometry on input» на
-        # реальних OSM-масках) ── реальні дорожні маски = сотні полігонів, що
-        # самоперетинаються / торкаються одне одного / торкаються межі зони → сирий
-        # PSLG невалідний → triangle падає → fallback boolean (старий гребінець).
-        # Фікс: unary_union+buffer(0) (злити дотичні, прибрати самоперетини) + СТРОГИЙ
-        # інсет від межі зони (розірвати збіг з zone_ext) + simplify (зняти майже-дублі
-        # колінеарні вершини). Дороги біля краю клипляться на ~0.3м (тонка смужка терену).
-        if has_inlays:
-            try:
-                _geoms = list(inlays.geoms) if isinstance(inlays, MultiPolygon) else [inlays]
-                inlays = unary_union([g.buffer(0) for g in _geoms
-                                      if g is not None and not g.is_empty]).buffer(0)
-                _inset = max(seg_len * 0.15, 0.25)
-                inlays = inlays.intersection(zone.buffer(-_inset))
-                if inlays is not None and not inlays.is_empty:
-                    inlays = inlays.simplify(max(seg_len * 0.2, 0.3)).buffer(0)
-                has_inlays = inlays is not None and not inlays.is_empty
-            except Exception as _sanex:  # noqa: BLE001
-                print(f"[CDT] inlay sanitize failed (continue raw): {_sanex}")
-                has_inlays = inlays is not None and not inlays.is_empty
-
-        # ── ЩІЛЬНІСТЬ масштабована до площі зони (інакше великі зони (1.5км/model_150)
-        # дають ~929к-гранний терен → 8хв ген + boolean парків/води ламає герметичність
-        # на велетенському меші + ризик OOM на 4ГБ). Терен обмежуємо ~150к трикутників;
-        # ПЛОСКІ капи (bottom/floor) грубо (їм щільність не потрібна) ~6к. Малі зони
-        # лишаються як були (max з tri_area). ──
-        _zone_area = max(float(zone.area), 1.0)
-        _top_area = max(float(tri_area), _zone_area / 150000.0)
-        _cap_area = max(float(tri_area) * 6.0, _zone_area / 6000.0)
-
-        # ── 1) TERRAIN top: CDT з ЯВНИМИ обмежувальними кільцями (НЕ difference) ──
-        # Спільна densified геометрія: zone_ext + inlay_rings використовуються І для
-        # terrain-дірок, І для floor/bottom-капів → ТІ САМІ вершини → герметично за
-        # побудовою (надійніше за loop-extraction, який фрагментує на щільних мережах).
-        SP_zone = zone
-        zone_ext = _densify_ring(list(SP_zone.exterior.coords)[:-1], seg_len)
-        inlay_rings, inlay_hole_pts = [], []
-        if has_inlays:
-            for gp in (inlays.geoms if isinstance(inlays, MultiPolygon) else [inlays]):
-                if getattr(gp, "is_empty", True) or gp.area < 1e-9:
-                    continue
-                ring = _densify_ring(list(gp.exterior.coords)[:-1], seg_len)
-                if len(ring) >= 3:
-                    inlay_rings.append(ring)
-                    rp = gp.representative_point()
-                    inlay_hole_pts.append((rp.x, rp.y))
-        t_pts, t_segs = _rings_pslg([zone_ext] + inlay_rings)
-        Vt2, Ft = _run_triangle(t_pts, t_segs, inlay_hole_pts, f"pq30a{_top_area:g}YY", "terrain", work_dir)
+        # ── 1) TERRAIN top: CDT of (zone − inlays) ──────────────────────────
+        terrain_poly = zone.difference(inlays) if has_inlays else zone
+        terrain_poly_d = _densify_polygon(terrain_poly, seg_len)
+        pts, segs, holes = _poly_to_pslg(terrain_poly_d)
+        Vt2, Ft = _run_triangle(pts, segs, holes, f"pq30a{tri_area:g}YY", "terrain", work_dir)
         zt = np.asarray(height_fn(Vt2[:, 0], Vt2[:, 1]), dtype=float)
         Vt = np.column_stack([Vt2[:, 0], Vt2[:, 1], zt])
         terrain_mesh = trimesh.Trimesh(vertices=Vt, faces=Ft, process=False)
@@ -546,25 +458,17 @@ def build_cdt_grooved_terrain(
                 bridge_mesh = trimesh.Trimesh(vertices=np.asarray(bverts),
                                               faces=np.asarray(bfaces), process=False)
 
-        # ── 2) FLOOR at slab_z: CDT inlay_rings (= terrain-дірки → ТІ САМІ вершини) ──
-        floor_mesh = None
-        if has_inlays and inlay_rings:
-            f_pts, f_segs = _rings_pslg(inlay_rings)
-            Vf2, Ff = _run_triangle(f_pts, f_segs, [], f"pq30a{_cap_area:g}YY", "floor", work_dir)
-            Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
-            floor_mesh = trimesh.Trimesh(vertices=Vf, faces=Ff, process=False)
-            floor_mesh.fix_normals()
-            if floor_mesh.face_normals[:, 2].mean() < 0:  # підлога слота дивиться ВГОРУ
-                floor_mesh.faces = floor_mesh.faces[:, ::-1]
-
-        # ── 3) BOTTOM at floor_z: CDT zone_ext (= terrain-периметр → ТІ САМІ вершини) ──
-        b_pts, b_segs = _rings_pslg([zone_ext])
-        Vb2, Fb = _run_triangle(b_pts, b_segs, [], f"pq30a{_cap_area:g}YY", "bottom", work_dir)
-        Vb = np.column_stack([Vb2[:, 0], Vb2[:, 1], np.full(len(Vb2), floor_z)])
-        bottom_mesh = trimesh.Trimesh(vertices=Vb, faces=Fb, process=False)
-        bottom_mesh.fix_normals()
-        if bottom_mesh.face_normals[:, 2].mean() > 0:  # дно плити дивиться ВНИЗ
-            bottom_mesh.faces = bottom_mesh.faces[:, ::-1]
+        # ── 2+3) FLOOR (slab_z) + BOTTOM (floor_z) з БОРДЮР-ПЕТЕЛЬ СТІНОК ────
+        # Беремо ТОЧНІ бордюр-вершини зі стінок (+мостів) → каже шиються без шва.
+        wb_parts = [m for m in (wall_mesh, bridge_mesh) if m is not None and len(m.faces) > 0]
+        wb = trimesh.util.concatenate(wb_parts) if len(wb_parts) > 1 else wb_parts[0]
+        wb.merge_vertices(digits_vertex=5)
+        slab_loops = _z_loops(wb, slab_z)
+        floor_z_loops = _z_loops(wb, floor_z)
+        # підлога слотів на slab_z (нормаль ВГОРУ — дивимось у слот зверху)
+        floor_mesh = _cap_from_loops(slab_loops, slab_z, "floor", faces_up=True) if slab_loops else None
+        # дно плити на floor_z (нормаль ВНИЗ)
+        bottom_mesh = _cap_from_loops(floor_z_loops, floor_z, "bottom", faces_up=False) if floor_z_loops else None
 
         parts = [m for m in (terrain_mesh, wall_mesh, floor_mesh, bottom_mesh, bridge_mesh)
                  if m is not None and len(m.faces) > 0]
@@ -578,28 +482,7 @@ def build_cdt_grooved_terrain(
             trimesh.repair.fix_inversion(result)
         except Exception:  # noqa: BLE001
             pass
-        # 1) Закрити структурні шви кап-стінка СПЕРШУ (Blender зшиває стінки↔дно↔підлогу).
-        if not bool(getattr(result, "is_volume", False)):
-            result = _blender_fill_watertight(result, work_dir)
-        # 2) ГОЛОВНИЙ солід: на складних масках/межах ПІСЛЯ зшивання інколи лишається
-        # ОКРЕМИЙ компонент (напр. плоский bottom-аркуш vol≈0, що не злився, або дрібний
-        # острівець після інсету) → беремо найбільший ГЕРМЕТИЧНИЙ компонент (повний
-        # рельєф-солід); якщо герметичних нема — найбільший за гранями.
-        try:
-            comps = result.split(only_watertight=False)
-        except Exception:  # noqa: BLE001
-            comps = [result]
-        if len(comps) > 1:
-            wt_comps = [c for c in comps if bool(getattr(c, "is_volume", False))]
-            if wt_comps:
-                result = max(wt_comps, key=lambda c: abs(float(c.volume)))
-            else:
-                result = max(comps, key=lambda c: len(c.faces))
-            try:
-                result.remove_unreferenced_vertices()
-            except Exception:  # noqa: BLE001
-                pass
-        # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
+        # Закрити структурні шви кап-стінка → герметично (Blender надійніший).
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)
         return result
