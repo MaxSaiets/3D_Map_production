@@ -1507,11 +1507,36 @@ def run_full_generation_pipeline(
         # підложкою без будинків (інакше у пазу «частинки будинків»). Без конектора
         # clearance=0 → стара поведінка (будинки до дна) недоторкана.
         _merge_bottom_clr = 0.0
+        _notch_band = None
         if getattr(request, "map_connector", False) and _sf_c > 0:
             # Зазор знизу потрібен коли ріжемо паз (щоб будинки не лізли у виїмку).
             # Без конектора clearance=0 → стара поведінка (будинки до дна).
             _cd_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             _merge_bottom_clr = (_cd_mm + 0.6) / _sf_c
+            # Смуга паза (світові коорд.) = стрип біля конектор-КРАЇВ на глибину пазу
+            # (+запас). Лише ТАМ будинки тримаємо на clearance; решта → до дна (слідують
+            # рельєфу, не висять). Без цього clearance діяв на ВСІ будинки → висіли.
+            try:
+                from shapely.geometry import box as _sbox
+                from shapely.ops import unary_union as _suu
+                _len_mm = float(getattr(request, "map_connector_length_mm", 15.0) or 15.0)
+                _span_mm = float(getattr(request, "map_connector_span_mm", 10.0) or 10.0)
+                _depth_w = (_len_mm + 3.0) / _sf_c    # world: how deep the notch goes IN
+                _half_w = (_span_mm * 0.5 + 4.0) / _sf_c  # world: half-width ALONG the edge (+margin)
+                _bx0, _by0 = float(terrain_mesh.bounds[0][0]), float(terrain_mesh.bounds[0][1])
+                _bx1, _by1 = float(terrain_mesh.bounds[1][0]), float(terrain_mesh.bounds[1][1])
+                _cx, _cy = (_bx0 + _bx1) * 0.5, (_by0 + _by1) * 0.5  # tile centre (notch is centred)
+                _edges = str(getattr(request, "map_connector_edges", "NSEW") or "NSEW").upper()
+                _bands = []
+                # Паз = вузький dovetail ПО ЦЕНТРУ краю (span завширшки), а не весь край.
+                if "S" in _edges: _bands.append(_sbox(_cx - _half_w, _by0, _cx + _half_w, _by0 + _depth_w))
+                if "N" in _edges: _bands.append(_sbox(_cx - _half_w, _by1 - _depth_w, _cx + _half_w, _by1))
+                if "W" in _edges: _bands.append(_sbox(_bx0, _cy - _half_w, _bx0 + _depth_w, _cy + _half_w))
+                if "E" in _edges: _bands.append(_sbox(_bx1 - _depth_w, _cy - _half_w, _bx1, _cy + _half_w))
+                _notch_band = _suu(_bands) if _bands else None
+            except Exception as _nbe:
+                print(f"[WARN] {zone_prefix}notch band calc failed (uniform clearance): {_nbe}")
+                _notch_band = None
         _merged_bmesh = union_mesh_collection(building_meshes, label="clipped_building_layer")
         merge_result = merge_terrain_and_buildings(
             terrain_mesh=terrain_mesh,
@@ -1519,6 +1544,7 @@ def run_full_generation_pipeline(
             merged_building_mesh=_merged_bmesh,
             support_meshes=detail_layers.support_meshes,
             bottom_clearance_m=_merge_bottom_clr,
+            notch_band_world=_notch_band,
         )
         _log_stage("merge_terrain_buildings", stage_start)
         if stage_snapshot_collector is not None:

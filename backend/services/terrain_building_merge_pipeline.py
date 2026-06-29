@@ -26,10 +26,15 @@ def merge_terrain_and_buildings(
     merged_building_mesh: Optional[trimesh.Trimesh] = None,
     support_meshes: Any = None,
     bottom_clearance_m: float = 0.0,
+    notch_band_world: Any = None,
 ) -> TerrainBuildingMergeResult:
     # bottom_clearance_m: будинки опускаємо лише до (дно + clearance), НЕ до самого
     # дна. Для ЗʼЄДНУВАЧІВ це лишає нижню смугу (де ріжеться паз) ЧИСТОЮ підложкою
     # без будинків (інакше паз лишав «частинки будинків»). 0 = старе «до дна».
+    # notch_band_world: shapely-геометрія (світові коорд.) смуги біля конектор-краю,
+    # де РЕАЛЬНО паз. Якщо задана + clearance>0 → PER-BUILDING: будинки ПОЗА смугою
+    # опускаємо до САМОГО дна (слідують рельєфу, не висять), будинки У смузі — лише
+    # до floor+clearance (паз чистий). Інакше — рівномірно (стара поведінка).
     _clr = max(float(bottom_clearance_m or 0.0), 0.0)
     if terrain_mesh is None:
         return TerrainBuildingMergeResult(
@@ -85,19 +90,47 @@ def merge_terrain_and_buildings(
     # `union_mesh_collection` об'єднає їх в один merged solid замість
     # лишити плаваючі окремі компоненти.
     try:
-        target_z_for_extend = float(terrain_mesh.bounds[0][2]) + _clr
-        extend_buildings_mesh_to_uniform_bottom(
-            building_meshes, target_z=target_z_for_extend
+        _floor_z = float(terrain_mesh.bounds[0][2])
+        _do_per_building = (
+            notch_band_world is not None and _clr > 0.0
+            and isinstance(building_meshes, (list, tuple))
+            and not getattr(notch_band_world, "is_empty", True)
         )
-        # Той самий extend на агрегаті, щоб не довелось перебудовувати union.
-        extend_buildings_mesh_to_uniform_bottom(
-            [merged_building_mesh], target_z=target_z_for_extend
-        )
-        print(
-            f"[INFO] pre-merge: building bottoms extended to Z={target_z_for_extend:.4f} "
-            f"(floor={float(terrain_mesh.bounds[0][2]):.4f} clearance={_clr:.4f}) "
-            f"(connector keeps notch band clear of buildings)"
-        )
+        if _do_per_building:
+            # PER-BUILDING: поза смугою паза → до САМОГО дна (слідують рельєфу, НЕ
+            # висять); у смузі паза → лише до floor+clearance (паз лишається чистим).
+            from shapely.geometry import Point as _Pt
+            _n_floor = _n_band = 0
+            for _m in building_meshes:
+                if _m is None or len(getattr(_m, "vertices", [])) == 0:
+                    continue
+                try:
+                    _c = _m.centroid
+                    _in_band = bool(notch_band_world.intersects(_Pt(float(_c[0]), float(_c[1]))))
+                except Exception:
+                    _in_band = True  # невпевнені → безпечніше тримати у смузі (чистий паз)
+                _tz = (_floor_z + _clr) if _in_band else _floor_z
+                extend_buildings_mesh_to_uniform_bottom([_m], target_z=_tz)
+                _n_band += int(_in_band)
+                _n_floor += int(not _in_band)
+            # Агрегат (для FORCE_FUSE-шляху) — до дна; у default-шляху не експортується.
+            extend_buildings_mesh_to_uniform_bottom([merged_building_mesh], target_z=_floor_z)
+            print(
+                f"[INFO] pre-merge: PER-BUILDING extend — {_n_floor} buildings to floor "
+                f"(follow relief, no float), {_n_band} in notch band kept at floor+{_clr:.3f}m"
+            )
+        else:
+            target_z_for_extend = _floor_z + _clr
+            extend_buildings_mesh_to_uniform_bottom(
+                building_meshes, target_z=target_z_for_extend
+            )
+            extend_buildings_mesh_to_uniform_bottom(
+                [merged_building_mesh], target_z=target_z_for_extend
+            )
+            print(
+                f"[INFO] pre-merge: building bottoms extended to Z={target_z_for_extend:.4f} "
+                f"(floor={_floor_z:.4f} clearance={_clr:.4f})"
+            )
     except Exception as exc:
         print(f"[WARN] pre-merge extend_buildings failed: {exc}")
 
