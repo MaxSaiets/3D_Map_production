@@ -471,6 +471,15 @@ def process_detail_layers(
                     else None
                 ),
                 use_exact_masks=canonical_mask_bundle is not None,
+                # CDT clean-wall груви ПРОПУСКАЄМО (→ boolean) на SERIES-тайлах
+                # (elevation_ref_m: CDT перебудовує межу з interior-only griddata → рве
+                # шов-Z сусідів). CONNECTOR тепер ДОЗВОЛЕНО: pre-groove паз пропускається
+                # коли CDT активний (у full_generation_pipeline), а ПІЗНІЙ блок ріже паз у
+                # ЧИСТИЙ герметичний CDT-терен (manifold, drift≈0, стінки паза чисті) —
+                # замість boolean-комба на ВСІХ стінках грувів (те, що бачив користувач).
+                cdt_allowed=(
+                    getattr(request, "elevation_ref_m", None) is None
+                ),
             )
             terrain_mesh = groove_result.terrain_mesh
             _log_stage("grooves", stage_start)

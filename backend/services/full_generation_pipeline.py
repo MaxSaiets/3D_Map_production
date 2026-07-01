@@ -1124,13 +1124,28 @@ def run_full_generation_pipeline(
     _relief_connector_done = False
     _conn_terrain = terrain_stage.terrain_mesh
     if getattr(request, "map_connector", False):
-        _conn_terrain, connector_key_mesh, _relief_connector_done = cut_relief_connector_notch(
-            terrain_stage.terrain_mesh,
-            zone=zone,
-            request=request,
-            sf_c=float(getattr(zone, "scale_factor", 0.0) or 0.0),
-            zone_prefix=zone_prefix,
-        )
+        # Коли CDT-грувы АКТИВНІ для цього тайла — паз НЕ ріжемо тут (до грувів): CDT
+        # перебудовує терен з нуля й зітре паз. Натомість ПІЗНІЙ блок (нижче) вріже паз
+        # у ЧИСТИЙ герметичний CDT-терен (manifold, drift≈0) → стінки паза чисті, а грувы
+        # доріг/парків/води теж чисті (CDT) замість boolean-комба. Коли CDT вимкнено
+        # (CDT_GROOVE off — як на проді) або зона завелика → старий надійний pre-groove.
+        import os as _osc
+        _cdt_on = _osc.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+        _zarea_c = float(getattr(zone.zone_polygon_local, "area", 0.0) or 0.0) \
+            if getattr(zone, "zone_polygon_local", None) is not None else 0.0
+        _cdt_conn_elig = (_cdt_on and 0.0 < _zarea_c <= 2.0e6
+                          and terrain_stage.terrain_mesh is not None)
+        if _cdt_conn_elig:
+            print(f"[CONNECTOR] {zone_prefix}CDT active → відкладаю паз на POST-groove "
+                  f"(чисті стінки; area={_zarea_c:.0f})")
+        else:
+            _conn_terrain, connector_key_mesh, _relief_connector_done = cut_relief_connector_notch(
+                terrain_stage.terrain_mesh,
+                zone=zone,
+                request=request,
+                sf_c=float(getattr(zone, "scale_factor", 0.0) or 0.0),
+                zone_prefix=zone_prefix,
+            )
 
     water_geoms_for_bridges = prepare_bridge_water_geometries(
         request=request,

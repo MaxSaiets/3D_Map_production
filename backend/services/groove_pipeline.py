@@ -972,6 +972,7 @@ def cut_inlay_grooves(
     parks_groove_override: Optional[BaseGeometry] = None,
     water_groove_override: Optional[BaseGeometry] = None,
     use_exact_masks: bool = False,
+    cdt_allowed: bool = True,
 ) -> GrooveCutResult:
     has_road_grooves = terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     has_park_grooves = terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
@@ -1162,9 +1163,18 @@ def cut_inlay_grooves(
     # стінки слотів ЧИСТІ. Доведено combWalls 93→1. Dev-safety: на будь-якій
     # помилці лог + провал у boolean (щоб баг CDT не валив генерацію під час тесту).
     import os as _os
+    # Дуже великі зони (>2км², напр. model_150 Хмельницький ~2.25e6): CDT-терен виходить
+    # 200к+ граней, blender-seal НЕ дозшиває надійно → все одно fallback boolean. Тому
+    # НЕ заходимо в CDT взагалі (економія ~200с марної спроби); boolean тут = поведінка
+    # сервера (пайплайн приймає dominant-fallback для таких велетнів). Дрібні/середні
+    # зони (<2км²) отримують чисті CDT-стінки.
+    _cdt_zone_area = float(getattr(zone_polygon_local, "area", 0.0) or 0.0) \
+        if zone_polygon_local is not None else 0.0
     if (_os.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+            and cdt_allowed
             and zone_polygon_local is not None
             and not getattr(zone_polygon_local, "is_empty", True)
+            and 0.0 < _cdt_zone_area <= 2.0e6
             and terrain_mesh is not None):
         try:
             from services.cdt_groove_terrain import build_cdt_grooved_terrain
@@ -1175,6 +1185,22 @@ def cut_inlay_grooves(
             # Парки/вода покривають велику площу → як глибокі слоти роздробили б
             # рельєф на острови-вежі (доведено) — їх лишаємо boolean-у нижче.
             _cdt_roads_only = _os.environ.get("CDT_ROADS_ONLY", "1").strip().lower() in ("1", "true", "yes", "on")
+            # ГАРД: на ВЕЛИКИХ або ПАРК/ВОДА-важких зонах all-inlay CDT дає велетенський
+            # PSLG → OOM/timeout, + keep-largest може викинути терен-острови в парках.
+            # → форсуємо roads-only (легше, дороги лишаються чисті; парки/вода boolean).
+            if not _cdt_roads_only:
+                try:
+                    _zarea = float(getattr(zone_polygon_local, "area", 0.0) or 0.0)
+                    _pw_area = sum(float(getattr(g, "area", 0.0) or 0.0)
+                                   for g in (parks_polygons, water_polygons)
+                                   if g is not None and not getattr(g, "is_empty", True))
+                    _pw_ratio = _pw_area / max(_zarea, 1.0)
+                    if _zarea > 3.0e6 or _pw_ratio > 0.72:
+                        _cdt_roads_only = True
+                        print(f"[GROOVE] {zone_prefix}CDT: very-large/park-dominant zone "
+                              f"(area={_zarea:.0f}m2 pw={_pw_ratio:.0%}) → roads-only (avoid OOM/fragment)")
+                except Exception:  # noqa: BLE001
+                    pass
             if _cdt_roads_only:
                 _inlays = road_polys_for_groove
             else:
@@ -1201,10 +1227,29 @@ def cut_inlay_grooves(
                 _bottoms = [float(m.bounds[0][2]) for m in (road_mesh, parks_mesh, water_mesh) if m is not None]
                 _slab_z = min(_bottoms) if _bottoms else (_floor_z + (_top_z - _floor_z) * 0.2)
             _slab_z = max(_slab_z, _floor_z + 0.3)
+            # seg_len (довжина сегмента densify меж інлеїв = ширина стінки-смужки)
+            # масштабуємо до розміру зони: на ВЕЛИКИХ зонах seg_len=3м дає велетенський
+            # PSLG (усі park/water/road-межі × сотні точок) → triangle OOM. Грубіший
+            # seg_len → менше constraint-точок → менший PSLG → без OOM (стінки трохи
+            # ширші, на 150мм-моделі непомітно). Малі зони лишаються 3м.
+            try:
+                _zx0, _zy0, _zx1, _zy1 = zone_polygon_local.bounds
+                _zw = max(float(_zx1 - _zx0), float(_zy1 - _zy0))
+                _seg_len = max(3.0, _zw / 260.0)
+            except Exception:  # noqa: BLE001
+                _seg_len = 3.0
             _cdt = build_cdt_grooved_terrain(
-                zone_polygon_local, _inlays, _height_fn, slab_z=_slab_z, floor_z=_floor_z)
+                zone_polygon_local, _inlays, _height_fn,
+                slab_z=_slab_z, floor_z=_floor_z, seg_len=_seg_len)
             print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
                   f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
+            # ЗАПОБІЖНИК: CDT — це ОПТИМІЗАЦІЯ (чисті стінки), не має шипити биту геометрію.
+            # На дуже великих/складних масках seal інколи не дозшиває → негерметично.
+            # → викидаємо у наявний boolean-fallback (перевірений серверний шлях, завжди
+            # герметичний, ціна — гребінець). Ніколи не віддаємо негерметичний CDT-меш.
+            if not bool(getattr(_cdt, "is_volume", False)):
+                raise RuntimeError(
+                    f"CDT terrain not watertight (faces={len(_cdt.faces)}) → fallback boolean")
             _has_pw = any(_geometry_has_area(g)
                           for g in (parks_polys_for_cutting, water_polys_for_cutting))
             if _cdt_roads_only and _has_pw:
