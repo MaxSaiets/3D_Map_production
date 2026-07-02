@@ -1263,19 +1263,15 @@ def cut_inlay_grooves(
                     _oe_ratio = _oe / max(len(_cdt.edges), 1)
                 except Exception:  # noqa: BLE001
                     _oe, _mainfrac, _oe_ratio = 1, 1.0, 0.0
-                # КРИТЕРІЙ = лише ВІДКРИТІ РЕБРА (≤400). Кілька ЗАКРИТИХ компонент — ОК:
-                # це окремі суцільні тіла (терен-острів у великому парку + свої стінки/дно),
-                # слайсер друкує їх як multi-shell без проблем. Раніше гейт main>90%
-                # відкидав такі меші (oe=2-3!) у boolean → юзер знову бачив гребінець
-                # + 700+ дір boolean-фолбека («пустоти»). Реальні уламки мають СОТНІ
-                # відкритих ребер і далі відкидаються.
-                if _oe <= 400:
-                    print(f"[GROOVE] {zone_prefix}CDT near-watertight (openEdges={_oe} "
-                          f"{_oe_ratio:.2%}, main={_mainfrac:.0%}) → KEEP чисті стінки "
-                          f"(export-repair закриє шви; boolean-fallback гірший: гребінець+діри)")
-                else:
-                    raise RuntimeError(
-                        f"CDT badly broken (openEdges={_oe} main={_mainfrac:.0%}) → fallback boolean")
+                # ЖОРСТКО: НЕгерметичний CDT (після weld+union у build_cdt) → BOOLEAN.
+                # Спроба «KEEP чисті стінки з дірками» довела каскад (юзер-зона 7a2412e1):
+                # boolean-грувы парків/води на негерметичному терені ВІДМОВЛЯЮТЬ
+                # (drift 2м, «keeping previous terrain») → вода/зелень без ванни →
+                # рябизна+шари розʼїхались по Z. Гребінець boolean-фолбека — робочий
+                # компроміс; чисті стінки лишаються на зонах, де CDT герметичний.
+                raise RuntimeError(
+                    f"CDT not a volume after weld+union (openEdges={_oe} "
+                    f"main={_mainfrac:.0%}) → fallback boolean")
             _has_pw = any(_geometry_has_area(g)
                           for g in (parks_polys_for_cutting, water_polys_for_cutting))
             if _cdt_roads_only and _has_pw:
