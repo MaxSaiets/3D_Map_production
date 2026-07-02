@@ -659,17 +659,29 @@ def build_cdt_grooved_terrain(
             wt_comps = [c for c in comps if bool(getattr(c, "is_volume", False))]
             _cand = (max(wt_comps, key=lambda c: abs(float(c.volume)))
                      if wt_comps else max(comps, key=lambda c: len(c.faces)))
-            # ЗАПОБІЖНИК: keep-largest НЕ має викинути >20% РЕЛЬЄФ-поверхні (терен-острови
-            # у парк-важких зонах). Якщо викидає — лишаємо ПОВНИЙ результат + Blender-seal.
-            if _full_top > 1e-6 and _topface_area(_cand) < 0.8 * _full_top:
-                print(f"[CDT] keep-largest would drop terrain "
-                      f"(top-area {_topface_area(_cand):.0f} < 80% of {_full_top:.0f}) → keep full + seal")
-            else:
+            # ЗАПОБІЖНИК: keep-largest НЕ має викинути РЕЛЬЄФ (терен-острови у парк-важких
+            # зонах). ЕТАЛОН = ПЛОЩА ЗОНИ (не сумарний top-area результату!): Blender-fill
+            # інколи заливає ДРУГУ «кришку» поверх усього (top-area → 2× зони) → порівняння
+            # з full_top хибно блокувало вибір ПРАВИЛЬНОГО герметичного компонента → далі
+            # негерметичний меш ламав manifold-виріз паза (Blender-виріз нищив дно/паз:
+            # «пази не створились, підложки немає»). Кандидат ОК, якщо покриває ≥55% зони.
+            _zone_ref = float(zone.area)
+            _cand_top = _topface_area(_cand)
+            if _zone_ref > 1e-6 and _cand_top >= 0.55 * _zone_ref:
                 result = _cand
                 try:
                     result.remove_unreferenced_vertices()
                 except Exception:  # noqa: BLE001
                     pass
+            elif _full_top > 1e-6 and _cand_top >= 0.8 * _full_top:
+                result = _cand
+                try:
+                    result.remove_unreferenced_vertices()
+                except Exception:  # noqa: BLE001
+                    pass
+            else:
+                print(f"[CDT] keep-largest would drop terrain "
+                      f"(top-area {_cand_top:.0f} < 55% zone {_zone_ref:.0f}) → keep full + seal")
         # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)

@@ -1818,6 +1818,22 @@ def run_full_generation_pipeline(
                                 print(f"[CONNECTOR] {zone_prefix}clipped {int((~_fm).sum())} stray faces outside tile bbox")
                         except Exception as _clx:
                             print(f"[CONNECTOR] {zone_prefix}stray-clip failed (non-fatal): {_clx}")
+                    # Blender-виріз на НЕгерметичному вході інколи РУЙНУЄ меш (нищить
+                    # дно/паз, «пази не створились, підложки немає»), але габарити
+                    # лишаються ОК → стара валідація пропускала. Детект руйнування =
+                    # РІЗКЕ ЗРОСТАННЯ відкритих ребер (у юзер-кейсі 3→80). manifold
+                    # зберігає топологію — перевірка лише для blender-шляху.
+                    if _via == "blender" and _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            from trimesh.grouping import group_rows as _grc
+                            _oe_in = len(_grc(terrain_mesh.edges_sorted, require_count=1))
+                            _oe_out = len(_grc(_cutc.edges_sorted, require_count=1))
+                            if _oe_out > _oe_in + 40:
+                                print(f"[CONNECTOR] {zone_prefix}blender notch DAMAGED mesh "
+                                      f"(openEdges {_oe_in}→{_oe_out}) → reject, base kept intact")
+                                _cutc = None
+                        except Exception:  # noqa: BLE001
+                            pass
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
@@ -2031,8 +2047,11 @@ def run_full_generation_pipeline(
 
     stage_start = time.perf_counter()
     _preview_mode_on = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
-    if _preview_mode_on:
-        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping debug bundle")
+    # debug_bundle = пост-ген дамп (~42-57с + диск), лише для розслідувань. OFF за
+    # замовч. (оптимізація). Увімкнути: SAVE_DEBUG_BUNDLE=1. canonical-маски окремо.
+    _save_debug_bundle = os.environ.get("SAVE_DEBUG_BUNDLE", "").lower() in ("1", "true", "yes")
+    if _preview_mode_on or not _save_debug_bundle:
+        print(f"[INFO] {zone_prefix}debug bundle skipped (~50s saved; SAVE_DEBUG_BUNDLE=1 to enable)")
     else:
         try:
             debug_bundle_dir = create_debug_bundle(
