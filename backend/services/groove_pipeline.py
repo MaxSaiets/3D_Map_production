@@ -1248,8 +1248,28 @@ def cut_inlay_grooves(
             # → викидаємо у наявний boolean-fallback (перевірений серверний шлях, завжди
             # герметичний, ціна — гребінець). Ніколи не віддаємо негерметичний CDT-меш.
             if not bool(getattr(_cdt, "is_volume", False)):
-                raise RuntimeError(
-                    f"CDT terrain not watertight (faces={len(_cdt.faces)}) → fallback boolean")
+                # CDT негерметичний. АЛЕ boolean-fallback ТЕЖ негерметичний на складних
+                # зонах — тільки ще й з гребінцем. Тому НЕ відкидаємо ЧИСТИЙ CDT через
+                # кілька незшитих швів: лишаємо його (export-repair + слайсер закривають
+                # дрібні діри), ЯКЩО він структурно цілий (1 головна компонента + мала
+                # частка відкритих ребер). Fallback у boolean ЛИШЕ якщо CDT реально
+                # розбитий (багато дір / фрагментований) — там boolean не гірший.
+                from trimesh.grouping import group_rows as _gr
+                try:
+                    _oe = len(_gr(_cdt.edges_sorted, require_count=1))
+                    _comps = _cdt.split(only_watertight=False)
+                    _mainfrac = (max(len(c.faces) for c in _comps) / max(len(_cdt.faces), 1)
+                                 if _comps else 1.0)
+                    _oe_ratio = _oe / max(len(_cdt.edges), 1)
+                except Exception:  # noqa: BLE001
+                    _oe, _mainfrac, _oe_ratio = 1, 1.0, 0.0
+                if _oe <= 400 and _mainfrac > 0.9:
+                    print(f"[GROOVE] {zone_prefix}CDT near-watertight (openEdges={_oe} "
+                          f"{_oe_ratio:.2%}, main={_mainfrac:.0%}) → KEEP чисті стінки "
+                          f"(export-repair закриє шви; boolean-fallback теж негерметичний+гребінець)")
+                else:
+                    raise RuntimeError(
+                        f"CDT badly broken (openEdges={_oe} main={_mainfrac:.0%}) → fallback boolean")
             _has_pw = any(_geometry_has_area(g)
                           for g in (parks_polys_for_cutting, water_polys_for_cutting))
             if _cdt_roads_only and _has_pw:
