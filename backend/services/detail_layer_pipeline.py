@@ -457,8 +457,45 @@ def process_detail_layers(
             )
             if _ntc0 is not None and _dm > 1e-6:
                 _epsn = max(_mh * 0.01, 0.5 / _sfn)
-                _notch_cutter = _bflm(_ntc0, bottom_z_m=_flz - _epsn, thickness_m=_dm + _epsn,
-                                      color=[128, 128, 128], min_area_m2=1e-12)
+                # ГЛИБИНА ПАЗА ≤ ЛОКАЛЬНОЇ ТОВЩИНИ МАТЕРІАЛУ: фронт шле плиту 0.3мм,
+                # і на низькому рельєфі (край біля ріки) матеріалу над пазом < 2мм →
+                # паз ПРОБИВАВ поверхню наскрізь (у дірі видно дороги — «чорні
+                # штрихи в пазі»). Per-полігон: семплимо верх терену над кожним
+                # пазом і ріжемо не глибше (мін.дах 0.5мм; мін.глибина паза 0.6мм).
+                try:
+                    import numpy as _npn2
+                    import trimesh as _tmn3
+                    _tN = terrain_mesh.face_normals
+                    _tc = terrain_mesh.triangles_center
+                    _topc = _tc[_tN[:, 2] > 0.3]
+                    _geoms_n = list(getattr(_ntc0, "geoms", [_ntc0]))
+                    _cutters = []
+                    _roof_m = 0.5 / _sfn      # мін. 0.5мм даху над пазом
+                    _mind_m = 0.6 / _sfn      # мін. глибина паза 0.6мм (інакше не тримає)
+                    for _gp in _geoms_n:
+                        if getattr(_gp, "is_empty", True):
+                            continue
+                        _gb = _gp.bounds
+                        _sel = ((_topc[:, 0] > _gb[0] - 1) & (_topc[:, 0] < _gb[2] + 1)
+                                & (_topc[:, 1] > _gb[1] - 1) & (_topc[:, 1] < _gb[3] + 1))
+                        _avail = (float(_topc[_sel][:, 2].min()) - _flz) if bool(_sel.any()) else _dm + _roof_m
+                        _dp = min(_dm, max(_avail - _roof_m, 0.0))
+                        if _dp < _mind_m:
+                            print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
+                                  f"матеріалу лише {_avail * _sfn:.2f}мм (< паз+дах)")
+                            continue
+                        _cp = _bflm(_gp, bottom_z_m=_flz - _epsn, thickness_m=_dp + _epsn,
+                                    color=[128, 128, 128], min_area_m2=1e-12)
+                        if _cp is not None and bool(getattr(_cp, "is_volume", False)):
+                            _cutters.append(_cp)
+                            if _dp < _dm - 1e-9:
+                                print(f"[GROOVE] {zone_prefix}notch depth reduced to "
+                                      f"{_dp * _sfn:.2f}мм on one edge (тонкий рельєф)")
+                    _notch_cutter = _tmn3.util.concatenate(_cutters) if _cutters else None
+                except Exception as _pdx:  # noqa: BLE001
+                    print(f"[GROOVE] {zone_prefix}per-edge notch depth failed ({_pdx}); uniform")
+                    _notch_cutter = _bflm(_ntc0, bottom_z_m=_flz - _epsn, thickness_m=_dm + _epsn,
+                                          color=[128, 128, 128], min_area_m2=1e-12)
                 if _notch_cutter is not None and not bool(getattr(_notch_cutter, "is_volume", False)):
                     _notch_cutter = None
         except Exception as _ncx:  # noqa: BLE001
