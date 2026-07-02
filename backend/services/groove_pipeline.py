@@ -973,6 +973,7 @@ def cut_inlay_grooves(
     water_groove_override: Optional[BaseGeometry] = None,
     use_exact_masks: bool = False,
     cdt_allowed: bool = True,
+    notch_cutter_mesh: Optional[trimesh.Trimesh] = None,
 ) -> GrooveCutResult:
     has_road_grooves = terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     has_park_grooves = terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
@@ -1272,6 +1273,31 @@ def cut_inlay_grooves(
                 raise RuntimeError(
                     f"CDT not a volume after weld+union (openEdges={_oe} "
                     f"main={_mainfrac:.0%}) → fallback boolean")
+            # ── ПАЗ ЗʼЄДНУВАЧА — ЗАРАЗ, поки CDT-меш ГАРАНТОВАНО ГЕРМЕТИЧНИЙ ──
+            # Пізній різ (після boolean-грувів парків/води) ламався: грувы відкривають
+            # меш (десятки дір) → manifold відмовляє → Blender нівечить (18→514 дір) →
+            # захисник відкидає → «пазів взагалі немає» (юзер-кейс a880ae1b). Тут меш
+            # щойно пройшов is_volume-перевірку → manifold ріже чисто (drift 0).
+            if notch_cutter_mesh is not None and bool(getattr(_cdt, "is_volume", False)):
+                try:
+                    import trimesh as _tmn
+                    _f0 = len(_cdt.faces)
+                    _ncut = _tmn.boolean.difference([_cdt, notch_cutter_mesh], engine="manifold")
+                    if (_ncut is not None and len(_ncut.faces) > 0
+                            and bool(getattr(_ncut, "is_volume", False))
+                            and len(_ncut.faces) != _f0):
+                        _cdt = _ncut
+                        try:
+                            _cdt.metadata["connector_notch_carved"] = True
+                        except Exception:  # noqa: BLE001
+                            pass
+                        print(f"[GROOVE] {zone_prefix}connector notch carved INTO watertight "
+                              f"CDT terrain (manifold, faces {_f0}→{len(_cdt.faces)})")
+                    else:
+                        print(f"[GROOVE] {zone_prefix}early notch cut produced no valid volume — "
+                              f"залишаю пізньому блоку")
+                except Exception as _nex:  # noqa: BLE001
+                    print(f"[GROOVE] {zone_prefix}early notch cut failed (non-fatal): {_nex}")
             _has_pw = any(_geometry_has_area(g)
                           for g in (parks_polys_for_cutting, water_polys_for_cutting))
             if _cdt_roads_only and _has_pw:
@@ -1328,6 +1354,11 @@ def cut_inlay_grooves(
     backend = resolve_boolean_backend(boolean_backend)
     backend_name = getattr(backend, "name", backend.__class__.__name__)
     print(f"[GROOVE] Boolean backend: {backend_name}")
+    # Прапорець «паз уже вирізаний» (ранній різ у герметичний CDT) — boolean-різ
+    # нижче ЗАМІНЮЄ обʼєкт меша → metadata губиться → пізній блок різав би вдруге
+    # (і падав) та НЕ створював ключ. Зберігаємо і відновлюємо.
+    _notch_flag_before = bool(getattr(getattr(terrain_mesh, "metadata", None) or {}, "get", lambda *_: False)("connector_notch_carved", False)) \
+        if terrain_mesh is not None else False
     terrain_mesh = backend.cut_grooves(
         GrooveBooleanRequest(
             terrain_mesh=terrain_mesh,
@@ -1344,6 +1375,11 @@ def cut_inlay_grooves(
             groove_depth_m=groove_depth_m,
         )
     )
+    if _notch_flag_before and terrain_mesh is not None:
+        try:
+            terrain_mesh.metadata["connector_notch_carved"] = True
+        except Exception:  # noqa: BLE001
+            pass
     if terrain_mesh is not None:
         try:
             terrain_mesh = _stabilize_groove_result_mesh(
@@ -1359,6 +1395,11 @@ def cut_inlay_grooves(
             )
         except Exception as exc:
             print(f"[DEBUG] {zone_prefix} terrain groove stabilization skipped: {exc}")
+    if _notch_flag_before and terrain_mesh is not None:
+        try:
+            terrain_mesh.metadata["connector_notch_carved"] = True
+        except Exception:  # noqa: BLE001
+            pass
 
     # Hard spatial invariant: groove boolean must not teleport terrain bounds.
     # If a backend returns a shifted mesh (axis/units mismatch), keep previous.

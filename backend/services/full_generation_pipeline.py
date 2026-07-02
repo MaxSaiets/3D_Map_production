@@ -1695,7 +1695,14 @@ def run_full_generation_pipeline(
                 key_dirs=parse_connector_azimuths(getattr(request, "map_connector_key_az", "")),
             )
             _notch_carved = False
-            if _ntc is not None and _depth_m > 1e-6:
+            # Паз уже міг бути вирізаний РАННІМ різом у ГЕРМЕТИЧНИЙ CDT-меш
+            # (groove_pipeline, до boolean-грувів) → різати вдруге не треба,
+            # лише створити ключ-метелик нижче.
+            if bool(getattr(terrain_mesh, "metadata", {}).get("connector_notch_carved", False)):
+                _notch_carved = True
+                print(f"[CONNECTOR] {zone_prefix}notch already carved early into watertight "
+                      f"CDT terrain — skipping late cut, building key only")
+            if not _notch_carved and _ntc is not None and _depth_m > 1e-6:
                 _eps = max(_model_h * 0.01, 0.5 / _sf_c)
                 _cutterc = build_flat_layer_mesh_from_mask(
                     _ntc, bottom_z_m=_floor_z - _eps, thickness_m=_depth_m + _eps,

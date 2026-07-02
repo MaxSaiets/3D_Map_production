@@ -427,12 +427,50 @@ def process_detail_layers(
     )
 
     groove_result = None
+    # Різак паза зʼєднувача — щоб CDT-гілка вирізала паз ПОКИ меш герметичний
+    # (до boolean-грувів парків/води, які відкривають меш і ламають manifold).
+    _notch_cutter = None
+    if (getattr(request, "map_connector", False) and terrain_mesh is not None
+            and scale_factor and float(scale_factor) > 0 and not preview_mode):
+        try:
+            from services.flat_plate_pipeline import (
+                build_map_connector_geometry as _bmcg,
+                build_flat_layer_mesh_from_mask as _bflm,
+                parse_connector_azimuths as _pca,
+            )
+            _sfn = float(scale_factor)
+            _flz = float(terrain_mesh.bounds[0][2])
+            _mh = float(terrain_mesh.bounds[1][2]) - _flz
+            _dmm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _dm = min(_dmm / _sfn, max(_mh * 0.6, 0.0))
+            _ntc0, _ = _bmcg(
+                zone_polygon_local,
+                edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
+                span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
+                length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
+                waist_frac=0.5,
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
+                export_scale_factor=_sfn,
+                key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
+                edge_dirs=_pca(getattr(request, "map_connector_edge_az", "")),
+                key_dirs=_pca(getattr(request, "map_connector_key_az", "")),
+            )
+            if _ntc0 is not None and _dm > 1e-6:
+                _epsn = max(_mh * 0.01, 0.5 / _sfn)
+                _notch_cutter = _bflm(_ntc0, bottom_z_m=_flz - _epsn, thickness_m=_dm + _epsn,
+                                      color=[128, 128, 128], min_area_m2=1e-12)
+                if _notch_cutter is not None and not bool(getattr(_notch_cutter, "is_volume", False)):
+                    _notch_cutter = None
+        except Exception as _ncx:  # noqa: BLE001
+            print(f"[GROOVE] {zone_prefix}notch cutter build failed (non-fatal): {_ncx}")
+            _notch_cutter = None
     if preview_mode:
         print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipped groove cutting; local preview uses surface decals")
     elif has_road_grooves or has_park_grooves or has_water_grooves:
         try:
             stage_start = time.perf_counter()
             groove_result = cut_inlay_grooves(
+                notch_cutter_mesh=_notch_cutter,
                 terrain_mesh=terrain_mesh,
                 road_mesh=road_mesh,
                 parks_mesh=parks_mesh,
