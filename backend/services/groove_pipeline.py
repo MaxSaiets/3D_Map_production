@@ -1263,10 +1263,16 @@ def cut_inlay_grooves(
                     _oe_ratio = _oe / max(len(_cdt.edges), 1)
                 except Exception:  # noqa: BLE001
                     _oe, _mainfrac, _oe_ratio = 1, 1.0, 0.0
-                if _oe <= 400 and _mainfrac > 0.9:
+                # КРИТЕРІЙ = лише ВІДКРИТІ РЕБРА (≤400). Кілька ЗАКРИТИХ компонент — ОК:
+                # це окремі суцільні тіла (терен-острів у великому парку + свої стінки/дно),
+                # слайсер друкує їх як multi-shell без проблем. Раніше гейт main>90%
+                # відкидав такі меші (oe=2-3!) у boolean → юзер знову бачив гребінець
+                # + 700+ дір boolean-фолбека («пустоти»). Реальні уламки мають СОТНІ
+                # відкритих ребер і далі відкидаються.
+                if _oe <= 400:
                     print(f"[GROOVE] {zone_prefix}CDT near-watertight (openEdges={_oe} "
                           f"{_oe_ratio:.2%}, main={_mainfrac:.0%}) → KEEP чисті стінки "
-                          f"(export-repair закриє шви; boolean-fallback теж негерметичний+гребінець)")
+                          f"(export-repair закриє шви; boolean-fallback гірший: гребінець+діри)")
                 else:
                     raise RuntimeError(
                         f"CDT badly broken (openEdges={_oe} main={_mainfrac:.0%}) → fallback boolean")

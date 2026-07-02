@@ -70,7 +70,7 @@ def _run_triangle(vertices, segments, holes, triangle_args, tag, work_dir):
     with open(spec_path, "w") as f:
         json.dump(spec, f)
     last = None
-    for _ in range(3):
+    for _attempt in range(4):
         if os.path.exists(out_path):
             try:
                 os.remove(out_path)
@@ -85,6 +85,14 @@ def _run_triangle(vertices, segments, holes, triangle_args, tag, work_dir):
                 res = json.load(f)
             return np.asarray(res["vertices"]), np.asarray(res["triangles"], dtype=np.int64)
         last = f"rc={proc.returncode} stderr={(proc.stderr or '')[-400:]}"
+        # rc=0xC0000142/0xC0000005 без stderr = субпроцес НЕ СТАРТУВАВ (DLL init /
+        # тиск памʼяті під час важкої генерації) — ТРАНЗІЄНТНО. Пауза + gc дає ОС
+        # звільнити памʼять/хендли перед новою спробою (без паузи всі ретраї падали
+        # підряд за мс → CDT хибно валився у boolean-гребінець на реальних зонах).
+        import gc as _gc
+        import time as _time
+        _gc.collect()
+        _time.sleep(1.5 * (_attempt + 1))
     raise RuntimeError(f"triangle subprocess failed [{tag}]: {last}")
 
 
