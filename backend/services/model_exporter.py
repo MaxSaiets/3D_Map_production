@@ -1255,6 +1255,15 @@ def prepare_scene_parts(
                     if key in ("roads", "water", "parks", "green"):
                         print(f"  [{key}] Skipping aggressive exporter repair to preserve canonical layer geometry")
                         continue
+                    # BASE ТЕЖ НЕ ЧІПАТИ: після злиття будинків у Base меш = багато
+                    # закритих оболонок, що ТОРКАЮТЬСЯ терену → non-manifold ребра →
+                    # агресивний repair (fill_holes+rebuild) ЗАКРИВАВ ПАЗ зʼєднувача і
+                    # перебудовував дно (12404→1964 граней; «пазів взагалі немає» хоча
+                    # notch carved manifold drift 0). Терен будується герметичним вище;
+                    # мульти-оболонки друкуються нормально — repair тут лише шкодить.
+                    if is_terrain:
+                        print(f"  [{key}] Skipping aggressive exporter repair (merged multi-shell base; would eat the connector notch)")
+                        continue
                     repaired = improve_mesh_for_3d_printing(mesh, aggressive=True, verbose=False, skip_fix_normals=is_terrain)
                     nm_after, _ = detect_nonmanifold_edges(repaired)
                     if nm_after < nm_before:
@@ -1308,9 +1317,13 @@ def prepare_scene_parts(
                 _v = np.asarray(_m.vertices, dtype=float)
                 _hit = False
                 for _ax, _val, _sgn in _planes:
-                    _sel = np.abs(_v[:, _ax] - _val) < 0.02
+                    # ±0.12мм: edge-flush/драпування зсувають вершини контенту на
+                    # ~0.05-0.1мм від площини периметра → «майже-коллінеарні» стінки
+                    # ДАЛІ блимали (юзер: «біла стінка блимає»). Ловимо ширше і
+                    # відсуваємо на 0.06мм усередину (для друку невидимо).
+                    _sel = np.abs(_v[:, _ax] - _val) < 0.12
                     if bool(_sel.any()):
-                        _v[_sel, _ax] = _val + _sgn * 0.03
+                        _v[_sel, _ax] = _val + _sgn * 0.06
                         _hit = True
                 if _hit:
                     _m.vertices = _v

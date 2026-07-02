@@ -1946,7 +1946,11 @@ def run_full_generation_pipeline(
                 # -0.45mm (model) about the local grade. Per-vertex terrain so it
                 # follows the surface; fills the despike gap where the water groove was
                 # smoothed away. Vertices without a terrain hit fall back to the median.
-                _raise = (0.15 / _wsf) if _wsf > 0 else 0.15
+                # Верх води трохи НИЖЧЕ грейду (−0.06мм): якщо класти НА грейд, вода
+                # й зелень (парки ~ +0.13мм) опиняються в 0.02-0.1мм одна від одної →
+                # синьо-зелена РЯБИЗНА (z-fight) на річках у парках. Вода нижче
+                # землі — і фізично правильно, і роздільно у вьювері.
+                _raise = (-0.06 / _wsf) if _wsf > 0 else -0.06
                 _sink = (0.45 / _wsf) if _wsf > 0 else 0.45
                 _med = float(_wnp.median(_tz[_valid]))
                 _tzf = _wnp.where(_valid, _tz, _med)
