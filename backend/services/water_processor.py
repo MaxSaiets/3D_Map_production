@@ -296,7 +296,14 @@ def process_water_surface(
                     offset_below_m = -0.0002 if (surface_offset_m == 0.0 and depth_meters and depth_meters < 0.1) else surface_offset_m
                     level_src = original_ground if original_ground is not None else depressed_ground
                     try:
-                        flat_level = float(np.percentile(np.asarray(level_src, dtype=float), 70))
+                        # ПЕРЦЕНТИЛЬ 20 (було 70): рівень = p70 оригінального терену під
+                        # водоймою ставив воду ВИЩЕ 70% власного басейну → на рельєфі
+                        # (похила річка) вода ВИПИРАЛА над сухим берегом (виміряно
+                        # +1..4мм на 76-82% берегової лінії — «вода піднімається над
+                        # рельєфом»). p20 садить площину під більшість берега; на
+                        # «верхів'ї» кламп до дна (нижче) підтягує воду до русла як і
+                        # раніше; на пласких озерах p20≈p70 → без змін.
+                        flat_level = float(np.percentile(np.asarray(level_src, dtype=float), 20))
                     except Exception:
                         try:
                             flat_level = float(np.min(level_src))
