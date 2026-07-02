@@ -1929,15 +1929,31 @@ def run_full_generation_pipeline(
             import numpy as _wnp
             _wv = water_mesh.vertices.copy()
             _wsf = float(getattr(zone, "scale_factor", 0.0) or 0.0)
-            _orig = _wnp.column_stack([_wv[:, 0], _wv[:, 1],
-                                       _wnp.full(len(_wv), float(terrain_mesh.bounds[1][2]) + 10.0)])
-            _loc, _ridx, _ = terrain_mesh.ray.intersects_location(
-                _orig, _wnp.tile([0.0, 0.0, -1.0], (len(_wv), 1)), multiple_hits=True)
+            # Висоти терену — з PROVIDER (детерміновано, БЕЗ променів): ray-семплінг
+            # на проді флакі (частина променів мажe → median-fallback ПЛЮЩИВ воду в
+            # пласку плиту нижче терену — 74% води ховалось під землею). Provider =
+            # та сама поверхня, з якої будувався CDT-терен → збіг гарантований.
             _tz = _wnp.full(len(_wv), _wnp.nan)
-            for _i in range(len(_wv)):
-                _h = _loc[_ridx == _i]
-                if len(_h):
-                    _tz[_i] = _h[:, 2].max()
+            _prov = getattr(terrain_stage, "terrain_provider", None) if "terrain_stage" in dir() else None
+            try:
+                _prov = terrain_stage.terrain_provider
+            except Exception:  # noqa: BLE001
+                _prov = None
+            if _prov is not None:
+                try:
+                    _tz = _wnp.asarray(
+                        _prov.get_surface_heights_for_points(_wv[:, :2]), dtype=float)
+                except Exception:  # noqa: BLE001
+                    pass
+            if not _wnp.isfinite(_tz).any():
+                _orig = _wnp.column_stack([_wv[:, 0], _wv[:, 1],
+                                           _wnp.full(len(_wv), float(terrain_mesh.bounds[1][2]) + 10.0)])
+                _loc, _ridx, _ = terrain_mesh.ray.intersects_location(
+                    _orig, _wnp.tile([0.0, 0.0, -1.0], (len(_wv), 1)), multiple_hits=True)
+                for _i in range(len(_wv)):
+                    _h = _loc[_ridx == _i]
+                    if len(_h):
+                        _tz[_i] = _h[:, 2].max()
             _valid = _wnp.isfinite(_tz)
             _terr_max = float(_wnp.max(_tz[_valid])) if int(_valid.sum()) > 0 else None
             _poke_thr = (0.3 / _wsf) if _wsf > 0 else 0.3
