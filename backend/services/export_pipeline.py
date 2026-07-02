@@ -351,7 +351,17 @@ def export_generation_outputs(
     try:
         if terrain_mesh is not None and len(getattr(terrain_mesh, "vertices", [])) > 0:
             import numpy as _cnp
-            _floor_w = float(terrain_mesh.bounds[0][2]) + 1e-4
+            # +0.25мм МОДЕЛІ над дном (не 0.1мм світу!): кламп точно В площину дна
+            # давав Z-FIGHT знизу (рябизна дна у вьювері). Клампнуті днища й так
+            # всередині суцільної бази — підняти їх глибше безпечно й невидимо.
+            _sfc2 = float(getattr(request, "model_size_mm", 0.0) or 0.0)
+            _zlift = 0.0
+            try:
+                _bw = float(terrain_mesh.bounds[1][0]) - float(terrain_mesh.bounds[0][0])
+                _zlift = (0.25 * _bw / _sfc2) if _sfc2 > 0 and _bw > 0 else 1.5
+            except Exception:  # noqa: BLE001
+                _zlift = 1.5
+            _floor_w = float(terrain_mesh.bounds[0][2]) + max(_zlift, 0.5)
             _clamped_layers = 0
             for _cm in (road_mesh, water_mesh, parks_mesh):
                 if _cm is None or len(getattr(_cm, "vertices", [])) == 0:

@@ -1606,8 +1606,19 @@ def export_3mf(
                 m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
             except Exception:  # noqa: BLE001
                 pass
-        # База/terrain: НЕ чіпаємо нормалі — база приходить winding-консистентною
-        # з пайплайну; fix_normals/fix_winding тут лише вивертали б стінки.
+        else:
+            # БАЗА: після CDT+паз+boolean-ланцюга частина трикутників приходить із
+            # ВИВЕРНУТИМ winding (меш закритий, openEdges=0, але не «volume») →
+            # three.js кулить ці грані → у вьювері «чорні штрихи/смуги» в пазі та
+            # прогалини в стінках (юзер-скріни). fix_normals із ray-евристикою тут
+            # заборонений ([[relief-wall-normals-inverted]]), але ТОПОЛОГІЧНИЙ
+            # fix_winding (пропагація сусідством) + fix_inversion (знак обʼєму по
+            # компонентах) безпечні: без променів, без заливки дір.
+            try:
+                trimesh.repair.fix_winding(m)
+                trimesh.repair.fix_inversion(m, multibody=True)
+            except Exception:  # noqa: BLE001
+                pass
         if k in _SOLID and not bool(getattr(m, "is_watertight", True)):
             try:
                 m.fill_holes()
