@@ -1834,6 +1834,27 @@ def run_full_generation_pipeline(
                                 _cutc = None
                         except Exception:  # noqa: BLE001
                             pass
+                    # СУВОРА ВАЛІДАЦІЯ «паз РЕАЛЬНО вирізаний»: у footprint різака
+                    # мають зʼявитись донні грані на рівні floor+depth (стеля паза).
+                    # Blender-виріз на негерметичному вході писав «carved» при
+                    # незмінних габаритах, хоча паза НЕМАЄ (юзер-кейс ce68afde).
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            import numpy as _npn
+                            _nb = _ntc.bounds  # (minx,miny,maxx,maxy) маски пазів
+                            _cN = _cutc.face_normals
+                            _cc = _cutc.triangles_center
+                            _dn = (_cN[:, 2] < -0.5) \
+                                & (_cc[:, 0] > _nb[0] - 1) & (_cc[:, 0] < _nb[2] + 1) \
+                                & (_cc[:, 1] > _nb[1] - 1) & (_cc[:, 1] < _nb[3] + 1) \
+                                & (_cc[:, 2] > _floor_z + _depth_m * 0.4) \
+                                & (_cc[:, 2] < _floor_z + _depth_m * 1.6)
+                            if not bool(_dn.any()):
+                                print(f"[CONNECTOR] {zone_prefix}notch NOT actually cut "
+                                      f"(no ceiling faces at floor+depth in cutter bbox, via={_via}) → reject")
+                                _cutc = None
+                        except Exception as _nvx:  # noqa: BLE001
+                            print(f"[CONNECTOR] {zone_prefix}notch-exists check failed (keep): {_nvx}")
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
@@ -1968,6 +1989,10 @@ def run_full_generation_pipeline(
         ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,
+        # Власник (2026-07-02): основа+рельєф+будинки = ОДИН шар (один колір у
+        # палітрі й так; злиття прибирає окремий обʼєкт Buildings у 3MF/превʼю).
+        # Лише relief-шлях; брелки/магніти (flat_plate) не зачеплені.
+        merge_buildings_into_base=True,
     )
     _log_stage("export_outputs", stage_start)
     if stage_snapshot_collector is not None:

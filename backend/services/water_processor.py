@@ -309,7 +309,18 @@ def process_water_surface(
                             flat_level = float(np.min(level_src))
                         except Exception:
                             flat_level = 0.0
-                    base_water_level = flat_level + offset_below_m
+                    # ⭐ВОДА НІКОЛИ НЕ ВИЩЕ ТЕРЕНУ: пласка площина на ПОХИЛІЙ ріці
+                    # (Дніпро/довгі ріки) неминуче стирчить над нижнім берегом
+                    # (виміряно 96% берега, median +4.5мм — «вода піднімається над
+                    # рельєфом»). Рівень per-vertex = min(пласка, оригінальний терен
+                    # − осідання): в улоговині вода ПЛАСКА (min бере flat), на схилі
+                    # спускається долиною ЯК СПРАВЖНЯ РІКА (min бере терен−drop) —
+                    # ніколи не випирає. Кламп до дна нижче лишається як був.
+                    _drop_m = max(0.35 * float(depth_meters or 0.0), 0.0005)
+                    base_water_level = np.minimum(
+                        flat_level,
+                        np.asarray(original_ground, dtype=float) - _drop_m,
+                    ) + offset_below_m
 
                     # 4. Apply Noise (only to top surface)
                     # IMPORTANT: Use GLOBAL (UTM) coordinates for noise so adjacent zones stitch seamlessly.

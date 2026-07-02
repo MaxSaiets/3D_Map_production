@@ -698,6 +698,26 @@ def build_cdt_grooved_terrain(
         # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)
+        # 4) ОСТАННІЙ ШАНС — ГРУБИЙ WELD (~1мм світу): коли верхнє тіло і плита-основа
+        # не злилися мікро-щілиною по slab-шву (флакі кейс реальних зон), меш лишався
+        # НЕгерметичним → manifold-виріз паза відмовляв → Blender-виріз БРЕХАВ «carved»
+        # і нищив дно («пази не створюються»). Грубе злиття вершин заварює шов;
+        # приймаємо ЛИШЕ якщо реально стало volume (інакше повертаємо як було).
+        if not bool(getattr(result, "is_volume", False)):
+            try:
+                _welded = result.copy()
+                _welded.merge_vertices(digits_vertex=3)  # 1e-3 світу ≈ 1мм welding
+                _welded.update_faces(_welded.unique_faces())
+                _welded.update_faces(_welded.nondegenerate_faces())
+                _welded.remove_unreferenced_vertices()
+                _welded.fill_holes()
+                trimesh.repair.fix_winding(_welded)
+                trimesh.repair.fix_inversion(_welded)
+                if bool(getattr(_welded, "is_volume", False)) and len(_welded.faces) > 0.8 * len(result.faces):
+                    print(f"[CDT] coarse weld sealed the mesh (faces {len(result.faces)}→{len(_welded.faces)}, volume=True)")
+                    result = _welded
+            except Exception as _wex:  # noqa: BLE001
+                print(f"[CDT] coarse weld failed (non-fatal): {_wex}")
         return result
     finally:
         try:

@@ -308,6 +308,7 @@ def export_generation_outputs(
     file_basename: Optional[str] = None,
     extra_mesh_items: Optional[list[Tuple[str, trimesh.Trimesh]]] = None,
     repair_meshes: bool = True,
+    merge_buildings_into_base: bool = False,
 ) -> ExportPipelineResult:
     primary_format = request.export_format.lower()
     # Descriptive filename: model_<grid>_<mm>_<row>_<col>.<ext>, fallback to task_id.
@@ -319,7 +320,29 @@ def export_generation_outputs(
 
     terrain_mesh_for_export = terrain_mesh
     building_meshes_for_export = building_meshes
-    merge_buildings_into_base = False
+    # ── ВОДА: закрити дрібні відкриті ребра (дірки біля обʼєктів на воді — мости/
+    # опори лишали незашиті вирізи → у вьювері «дирки» на синій поверхні). ──
+    water_mesh_export = water_mesh
+    try:
+        if water_mesh is not None and len(getattr(water_mesh, "faces", [])) > 0 \
+                and not bool(getattr(water_mesh, "is_volume", False)):
+            from trimesh.grouping import group_rows as _gr_w
+            _w = water_mesh.copy()
+            _oe0 = len(_gr_w(_w.edges_sorted, require_count=1))
+            if _oe0 > 0:
+                _w.fill_holes()
+                try:
+                    trimesh.repair.fix_winding(_w)
+                    trimesh.repair.fix_inversion(_w)
+                except Exception:  # noqa: BLE001
+                    pass
+                _oe1 = len(_gr_w(_w.edges_sorted, require_count=1))
+                if _oe1 < _oe0:
+                    print(f"[EXPORT] water holes sealed: openEdges {_oe0}→{_oe1}")
+                    water_mesh_export = _w
+    except Exception as _wex:  # noqa: BLE001
+        print(f"[EXPORT] water hole-fill skipped: {_wex}")
+    water_mesh = water_mesh_export
     if merge_buildings_into_base:
         try:
             valid_buildings = [mesh for mesh in building_meshes if mesh is not None and len(mesh.vertices) > 0]
