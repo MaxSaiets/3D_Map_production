@@ -1702,9 +1702,11 @@ def run_full_generation_pipeline(
                 _notch_carved = True
                 print(f"[CONNECTOR] {zone_prefix}notch already carved early into watertight "
                       f"CDT terrain — skipping late cut, building key only")
-            if not _notch_carved and _ntc is not None and _depth_m > 1e-6:
+            if _ntc is not None and _depth_m > 1e-6:
                 _eps = max(_model_h * 0.01, 0.5 / _sf_c)
-                _cutterc = build_flat_layer_mesh_from_mask(
+                # Якщо паз уже вирізано раннім різом — різак не будуємо (різ пропущено),
+                # але блок ключа-метелика нижче ВИКОНУЄТЬСЯ (_notch_carved=True).
+                _cutterc = None if _notch_carved else build_flat_layer_mesh_from_mask(
                     _ntc, bottom_z_m=_floor_z - _eps, thickness_m=_depth_m + _eps,
                     color=[128, 128, 128], min_area_m2=1e-12,
                 )
