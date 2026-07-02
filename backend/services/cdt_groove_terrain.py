@@ -698,6 +698,24 @@ def build_cdt_grooved_terrain(
         # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)
+        # 3b) РОЗКОЛ ВЕРХ/НИЗ (флакі на реальних зонах): blender-lids дають ДВА
+        # закриті тіла (терен+стінки zmin=slab І плита-основа slab→floor) з різною
+        # тесселяцією кришок → weld вершин НЕ зшиває, меш не volume → manifold-паз
+        # відмовляє → «пазів немає». Фікс: якщо компоненти ЗАКРИТІ — обʼєднати їх
+        # manifold-UNION (обидва солідні → union детерміновано дає ОДИН герметичний).
+        if not bool(getattr(result, "is_volume", False)):
+            try:
+                _comps3 = result.split(only_watertight=False)
+                _closed3 = [c for c in _comps3 if bool(getattr(c, "is_volume", False))]
+                if len(_comps3) > 1 and len(_closed3) >= 2 and \
+                        sum(len(c.faces) for c in _closed3) > 0.9 * len(result.faces):
+                    _uni = trimesh.boolean.union(_closed3, engine="manifold")
+                    if _uni is not None and len(_uni.faces) > 0 and bool(getattr(_uni, "is_volume", False)):
+                        print(f"[CDT] manifold-union sealed split bodies "
+                              f"({len(_closed3)} closed comps → one volume, faces={len(_uni.faces)})")
+                        result = _uni
+            except Exception as _uex:  # noqa: BLE001
+                print(f"[CDT] union of split bodies failed (non-fatal): {_uex}")
         # 4) ОСТАННІЙ ШАНС — ГРУБИЙ WELD (~1мм світу): коли верхнє тіло і плита-основа
         # не злилися мікро-щілиною по slab-шву (флакі кейс реальних зон), меш лишався
         # НЕгерметичним → manifold-виріз паза відмовляв → Blender-виріз БРЕХАВ «carved»
