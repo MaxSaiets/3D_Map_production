@@ -667,7 +667,20 @@ def build_cdt_grooved_terrain(
             # «пази не створились, підложки немає»). Кандидат ОК, якщо покриває ≥55% зони.
             _zone_ref = float(zone.area)
             _cand_top = _topface_area(_cand)
-            if _zone_ref > 1e-6 and _cand_top >= 0.55 * _zone_ref:
+            # ⚠️КРИТИЧНО: кандидат мусить СЯГАТИ ДНА ПЛИТИ (floor_z). Коли шов
+            # стінка↔низ не злився, меш = ВЕРХНЄ тіло (терен+стінки, zmin=slab) +
+            # НИЖНЯ коробка slab→floor. Вибір верхнього ВИКИДАВ ПІДЛОЖКУ → модель
+            # без низу, дно=slab → «будинки в повітрі» (extend-до-floor брав slab),
+            # дороги над пусткою (юзер-кейс fe979dea, 40/215 будинків плавали).
+            try:
+                _cand_reaches_floor = float(_cand.bounds[0][2]) <= float(floor_z) + 0.05
+            except Exception:  # noqa: BLE001
+                _cand_reaches_floor = False
+            if not _cand_reaches_floor:
+                print(f"[CDT] keep-largest candidate misses the base plate "
+                      f"(zmin={float(_cand.bounds[0][2]):.2f} > floor {float(floor_z):.2f}) "
+                      f"→ keep full + seal (не викидати підложку)")
+            elif _zone_ref > 1e-6 and _cand_top >= 0.55 * _zone_ref:
                 result = _cand
                 try:
                     result.remove_unreferenced_vertices()
