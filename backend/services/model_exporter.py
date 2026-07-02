@@ -1286,6 +1286,41 @@ def prepare_scene_parts(
         
         print(f"[FINAL REPAIR] Complete\n")
 
+    # ── ДЕКОНФЛІКТ ПЕРИМЕТР-СТІНОК (фікс «вертикальні смуги на стінках моделі») ──
+    # Контент-шари (дороги/парки/вода/будинки) кліпляться тим самим zone-полігоном,
+    # що й основа → їхні бічні стінки лежать ТОЧНО в площині периметр-стінки Base →
+    # у вьювері/превʼю z-fighting = мерехтливі вертикальні смуги (зелені=парки,
+    # чорні=дороги) на всю висоту стінки. Друку це не шкодить, але виглядає як брак.
+    # Фікс: вершини НЕ-Base шарів, що лежать у площинах bbox основи, відсуваємо
+    # ВСЕРЕДИНУ на 0.03мм (менше сопла 0.4мм → друк незмінний, z-fight зникає).
+    # Connector-ключ НЕ чіпаємо (окрема деталь, 0.03мм змінив би посадку в паз).
+    try:
+        _base_key = next((k for k in ("base", "terrain") if k in transformed_parts
+                          and transformed_parts[k] is not None), None)
+        if _base_key is not None:
+            _bb = transformed_parts[_base_key].bounds
+            _planes = ((0, float(_bb[0][0]), 1.0), (0, float(_bb[1][0]), -1.0),
+                       (1, float(_bb[0][1]), 1.0), (1, float(_bb[1][1]), -1.0))
+            _deconf_n = 0
+            for _k, _m in transformed_parts.items():
+                if _m is None or _k in (_base_key, "baseback", "connector"):
+                    continue
+                _v = np.asarray(_m.vertices, dtype=float)
+                _hit = False
+                for _ax, _val, _sgn in _planes:
+                    _sel = np.abs(_v[:, _ax] - _val) < 0.02
+                    if bool(_sel.any()):
+                        _v[_sel, _ax] = _val + _sgn * 0.03
+                        _hit = True
+                if _hit:
+                    _m.vertices = _v
+                    _deconf_n += 1
+            if _deconf_n:
+                print(f"[EXPORT] deconflicted perimeter walls of {_deconf_n} layers "
+                      f"(+0.03mm inset — прибирає z-fight смуги на стінках)")
+    except Exception as _dcx:  # noqa: BLE001
+        print(f"[EXPORT] perimeter deconflict skipped (non-fatal): {_dcx}")
+
     return transformed_parts
 
 
