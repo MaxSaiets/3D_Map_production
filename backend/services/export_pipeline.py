@@ -343,6 +343,30 @@ def export_generation_outputs(
     except Exception as _wex:  # noqa: BLE001
         print(f"[EXPORT] water hole-fill skipped: {_wex}")
     water_mesh = water_mesh_export
+    # ── КЛАМП ДНИЩ КОНТЕНТУ ДО ПІДЛОГИ БАЗИ ── фронт шле terrain_base_thickness
+    # 0.3мм (плита ~2м світу), а днища контенту глибші (вода = water_thickness ~6м)
+    # → контент СТИРЧИТЬ ПІД плитою → експорт вирівнює по найнижчій точці (воді) →
+    # base «злітає» над нулем (юзер-кейс d51b3ebe: +1.65мм, знизу видно дороги/воду).
+    # Обрізаємо: жодна вершина контенту не нижче підлоги бази (плюс волосина).
+    try:
+        if terrain_mesh is not None and len(getattr(terrain_mesh, "vertices", [])) > 0:
+            import numpy as _cnp
+            _floor_w = float(terrain_mesh.bounds[0][2]) + 1e-4
+            _clamped_layers = 0
+            for _cm in (road_mesh, water_mesh, parks_mesh):
+                if _cm is None or len(getattr(_cm, "vertices", [])) == 0:
+                    continue
+                _cv = _cnp.asarray(_cm.vertices, dtype=float)
+                _below = _cv[:, 2] < _floor_w
+                if bool(_below.any()):
+                    _cv[_below, 2] = _floor_w
+                    _cm.vertices = _cv
+                    _clamped_layers += 1
+            if _clamped_layers:
+                print(f"[EXPORT] clamped {_clamped_layers} content layers to base floor "
+                      f"(нічого не стирчить під плитою)")
+    except Exception as _clx:  # noqa: BLE001
+        print(f"[EXPORT] content floor clamp skipped: {_clx}")
     if merge_buildings_into_base:
         try:
             valid_buildings = [mesh for mesh in building_meshes if mesh is not None and len(mesh.vertices) > 0]

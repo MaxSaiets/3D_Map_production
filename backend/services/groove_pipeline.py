@@ -1354,6 +1354,27 @@ def cut_inlay_grooves(
     backend = resolve_boolean_backend(boolean_backend)
     backend_name = getattr(backend, "name", backend.__class__.__name__)
     print(f"[GROOVE] Boolean backend: {backend_name}")
+    # ── ПАЗ ЗʼЄДНУВАЧА у BOOLEAN-гілці — ТЕЖ ДО грувів, поки терен герметичний ──
+    # Коли CDT падає → сюди; пізній різ на пост-грув-меші ламався (діри→manifold
+    # відмовляє→Blender нівечить→reject → «пазів немає», юзер-кейс d51b3ebe).
+    if (notch_cutter_mesh is not None and terrain_mesh is not None
+            and not bool(getattr(getattr(terrain_mesh, "metadata", None) or {}, "get", lambda *_: False)("connector_notch_carved", False))
+            and bool(getattr(terrain_mesh, "is_volume", False))):
+        try:
+            import trimesh as _tmn2
+            _f0b = len(terrain_mesh.faces)
+            _ncut2 = _tmn2.boolean.difference([terrain_mesh, notch_cutter_mesh], engine="manifold")
+            if (_ncut2 is not None and len(_ncut2.faces) > 0
+                    and bool(getattr(_ncut2, "is_volume", False)) and len(_ncut2.faces) != _f0b):
+                terrain_mesh = _ncut2
+                try:
+                    terrain_mesh.metadata["connector_notch_carved"] = True
+                except Exception:  # noqa: BLE001
+                    pass
+                print(f"[GROOVE] {zone_prefix}connector notch carved into watertight terrain "
+                      f"BEFORE boolean grooves (manifold, faces {_f0b}→{len(terrain_mesh.faces)})")
+        except Exception as _nex2:  # noqa: BLE001
+            print(f"[GROOVE] {zone_prefix}pre-boolean notch cut failed (non-fatal): {_nex2}")
     # Прапорець «паз уже вирізаний» (ранній різ у герметичний CDT) — boolean-різ
     # нижче ЗАМІНЮЄ обʼєкт меша → metadata губиться → пізній блок різав би вдруге
     # (і падав) та НЕ створював ключ. Зберігаємо і відновлюємо.
