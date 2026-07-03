@@ -1723,18 +1723,45 @@ def run_full_generation_pipeline(
                     # результат, що реально змінив геометрію в межах дрейф-ліміту.
                     _b0 = terrain_mesh.bounds
                     _faces0 = len(getattr(terrain_mesh, "faces", []))
+                    if os.environ.get("DUMP_NOTCH_MESH", "") == "1":
+                        try:
+                            _dd = os.environ.get("DUMP_NOTCH_DIR", ".")
+                            _dp = os.path.join(_dd, f"notchdump_{zone_prefix.strip('[] ') or 'z'}.stl")
+                            terrain_mesh.export(_dp)
+                            _cutterc.export(_dp.replace(".stl", "_cutter.stl"))
+                            with open(_dp.replace(".stl", "_meta.txt"), "w") as _mf:
+                                _mf.write(f"floor_z={_floor_z}\ndepth_m={_depth_m}\nsf_c={_sf_c}\n"
+                                          f"ntc_bounds={list(_ntc.bounds)}\n")
+                            print(f"[CONNECTOR] {zone_prefix}DUMPED notch mesh -> {_dp}")
+                        except Exception as _dxx:
+                            print(f"[CONNECTOR] {zone_prefix}dump failed: {_dxx}")
                     _cutc = None
                     _via = None
-                    # (A) manifold — ПРОБУЄМО ЗАВЖДИ (рушій manifold терпить помірну
-                    # негерметичність і ЗБЕРІГАЄ координати → drift≈0). Blender-шлях у
-                    # СЕРІЇ дрейфував на ~офсет плитки (~700м) і коректний паз хибно
-                    # відкидався — тож manifold має пріоритет навіть на не-watertight.
+                    # (A0) manifold3d-РЕМОНТ→виріз — ГОЛОВНИЙ ШЛЯХ. Конструктор
+                    # Manifold(mesh) робить ТОПОЛОГІЧНИЙ РЕМОНТ негерметичного рельєфу
+                    # у валідний том (чого fill_holes/Blender НЕ вміли), тоді різниця.
+                    # Доведено на щільній юзер-зоні: 290138 граней wt=False → manifold3d
+                    # → wt=True → виріз wt=True (паз чисто, без нівечення). Зберігає
+                    # координати (drift≈0) → працює і в серії. Замінює тиждень падінь
+                    # «пази не ріжуться на щільних/серійних мешах».
                     try:
-                        _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
-                        _via = "manifold"
-                    except Exception as _mexc:
-                        print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                        from services.terrain_cutter import manifold_repair_subtract as _mrs
+                        _cutc = _mrs(terrain_mesh, _cutterc)
+                        if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                            _via = "manifold-repair"
+                        else:
+                            _cutc = None
+                    except Exception as _m0exc:
+                        print(f"[CONNECTOR] {zone_prefix}manifold-repair notch failed ({_m0exc})")
                         _cutc = None
+                    # (A) manifold engine (без ремонту) — ПРОБУЄМО якщо ремонт не дав.
+                    if _cutc is None:
+                        try:
+                            _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
+                            _via = "manifold"
+                        except Exception as _mexc:
+                            print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                            _cutc = None
                     # (B) РОБАСТНИЙ ремонт копії → watertight → manifold (без Blender).
                     # Рельєф після грувів доріг/парків НЕ volume (сотні відкритих ребер
                     # від каналів). fill_holes сам не закриває → manifold кидав «not all
