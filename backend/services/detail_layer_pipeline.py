@@ -472,9 +472,22 @@ def process_detail_layers(
                     _cutters = []
                     _roof_m = 0.5 / _sfn      # мін. 0.5мм даху над пазом
                     _mind_m = 0.6 / _sfn      # мін. глибина паза 0.6мм (інакше не тримає)
+                    _wmask = getattr(canonical_mask_bundle, "water_final", None) \
+                        if canonical_mask_bundle is not None else None
                     for _gp in _geoms_n:
                         if getattr(_gp, "is_empty", True):
                             continue
+                        # ВОДА над пазом: водна ванна (2мм) глибша за дах паза →
+                        # паз ВІДКРИВАЄТЬСЯ у ванну («пустота» на скрінах власника).
+                        # На краю з водою паз пропускаємо (зʼєднання там і не друкується).
+                        try:
+                            if _wmask is not None and not getattr(_wmask, "is_empty", True) \
+                                    and _gp.buffer(1.0).intersects(_wmask):
+                                print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
+                                      f"водна ванна перетинає footprint паза")
+                                continue
+                        except Exception:  # noqa: BLE001
+                            pass
                         _gb = _gp.bounds
                         _sel = ((_topc[:, 0] > _gb[0] - 1) & (_topc[:, 0] < _gb[2] + 1)
                                 & (_topc[:, 1] > _gb[1] - 1) & (_topc[:, 1] < _gb[3] + 1))

@@ -283,7 +283,17 @@ def process_generation_stage(
             terrarium_zoom=request.terrarium_zoom,
             elevation_ref_m=elevation_ref_m,
             baseline_offset_m=baseline_offset_m,
-            base_thickness=(float(request.terrain_base_thickness_mm) / float(scale_factor)) if scale_factor else 5.0,
+            # ЗʼЄДНУВАЧІ: паз (2мм) ріжеться у ДНІ плити — з тонкою плитою (фронт шле
+            # 0.3мм) біля низького рельєфу над пазом НЕМАЄ стінок (паз відкривається
+            # всередину/у грувы: «пустота, нема внутрішніх сторін»). Гарантуємо
+            # мінімум плити = глибина паза + 0.7мм даху (запит власника «+ до основи»).
+            base_thickness=(
+                (max(
+                    float(request.terrain_base_thickness_mm),
+                    (float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0) + 0.7)
+                    if getattr(request, "map_connector", False) else 0.0,
+                ) / float(scale_factor)) if scale_factor else 5.0
+            ),
             max_relief_m=_max_relief_m,
             target_relief_m=_target_relief_m,
             relief_gain=_relief_gain,
