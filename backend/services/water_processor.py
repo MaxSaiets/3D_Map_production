@@ -319,7 +319,12 @@ def process_water_surface(
                     # − осідання): в улоговині вода ПЛАСКА (min бере flat), на схилі
                     # спускається долиною ЯК СПРАВЖНЯ РІКА (min бере терен−drop) —
                     # ніколи не випирає. Кламп до дна нижче лишається як був.
+                    # Осідання води під терен: пропорція від depth ТОПИЛА воду на
+                    # глибоких ваннах (0.35×12м=4.2м≈0.7мм моделі → вода невидима у
+                    # вузьких річках). Кап 0.18мм моделі: видима, але не випирає.
                     _drop_m = max(0.35 * float(depth_meters or 0.0), 0.0005)
+                    if scale_factor and float(scale_factor) > 0:
+                        _drop_m = min(_drop_m, 0.18 / float(scale_factor))
                     base_water_level = np.minimum(
                         flat_level,
                         np.asarray(original_ground, dtype=float) - _drop_m,
