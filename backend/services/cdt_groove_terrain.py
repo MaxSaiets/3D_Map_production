@@ -313,6 +313,7 @@ def build_cdt_grooved_terrain(
     floor_z: float,
     seg_len: float = 3.0,
     tri_area: float = 8.0,
+    follow_depth_m: Optional[float] = None,
 ):
     """Будує ГЕРМЕТИЧНИЙ рельєф-солід із ЧИСТИМИ стінками слотів інлеїв.
 
@@ -441,8 +442,15 @@ def build_cdt_grooved_terrain(
 
         def col_levels(x, y, z_hi, z_lo):
             levels = [z_hi]
-            if (round(x, 4), round(y, 4)) in corner_posts and z_lo < slab_z < z_hi:
-                levels.append(slab_z)
+            if (round(x, 4), round(y, 4)) in corner_posts:
+                if follow_depth_m is not None:
+                    # follow-режим: bridge-стінка на межі стартує з (поверхня−глибина)
+                    # → перимeтр-колону ділимо там само, щоб ребра збіглись.
+                    _mid = z_hi - follow_depth_m
+                    if z_lo < _mid < z_hi:
+                        levels.append(_mid)
+                elif z_lo < slab_z < z_hi:
+                    levels.append(slab_z)
             levels.append(z_lo)
             return levels
 
@@ -459,11 +467,19 @@ def build_cdt_grooved_terrain(
                 a = P[i]
                 b = P[(i + 1) % n]
                 if edge_is_perim(a, b):
-                    z_lo, outward_neg = floor_z, True
+                    z_lo_a = z_lo_b = floor_z
+                    outward_neg = True
+                elif follow_depth_m is not None:
+                    # ⭐FOLLOW-режим: дно слота слідує за ПОВЕРХНЕЮ (стінка коротка,
+                    # глибина стала) — замість плаского глибокого slab. Це прибирає
+                    # «дороги на всю висоту стінки» на краях і зубці між слотами.
+                    z_lo_a, z_lo_b = a[2] - follow_depth_m, b[2] - follow_depth_m
+                    outward_neg = False
                 else:
-                    z_lo, outward_neg = slab_z, False
-                la = col_levels(a[0], a[1], a[2], z_lo)
-                lb = col_levels(b[0], b[1], b[2], z_lo)
+                    z_lo_a = z_lo_b = slab_z
+                    outward_neg = False
+                la = col_levels(a[0], a[1], a[2], z_lo_a)
+                lb = col_levels(b[0], b[1], b[2], z_lo_b)
                 colA = [vidx(a[0], a[1], z) for z in la]
                 colB = [vidx(b[0], b[1], z) for z in lb]
                 poly = colA + list(reversed(colB))
@@ -575,8 +591,13 @@ def build_cdt_grooved_terrain(
                     a = ch[i]
                     b = ch[(i + 1) % m]
                     if edge_is_perim(a, b):
-                        ta = bvidx(a[0], a[1], slab_z)
-                        tb = bvidx(b[0], b[1], slab_z)
+                        if follow_depth_m is not None:
+                            _za = float(np.asarray(height_fn([a[0]], [a[1]]))[0]) - follow_depth_m
+                            _zb = float(np.asarray(height_fn([b[0]], [b[1]]))[0]) - follow_depth_m
+                        else:
+                            _za = _zb = slab_z
+                        ta = bvidx(a[0], a[1], _za)
+                        tb = bvidx(b[0], b[1], _zb)
                         ba = bvidx(a[0], a[1], floor_z)
                         bb = bvidx(b[0], b[1], floor_z)
                         bfaces.append((ta, ba, bb))
@@ -590,7 +611,8 @@ def build_cdt_grooved_terrain(
         if has_inlays and inlay_rings:
             f_pts, f_segs = _rings_pslg(inlay_rings)  # snapped → збіг з terrain/walls
             # hole-точки у кварталах (interiors) → slab НЕ капить квартали (вони = терен)
-            Vf2, Ff = _run_triangle(f_pts, f_segs, block_hole_pts, f"pq30a{_cap_area:g}YY", "floor", work_dir)
+            _floor_args = f"pq30a{_cap_area:g}YY" if follow_depth_m is None else f"pq30a{_top_area:g}YY"
+            Vf2, Ff = _run_triangle(f_pts, f_segs, block_hole_pts, _floor_args, "floor", work_dir)
             # ЗРІЗ: triangle лишає трикутники у ввігнутостях між exterior і опуклою
             # оболонкою → тримаємо ЛИШЕ ті, чий центроїд у дорожній смузі inlays_d,
             # інакше slab-плита вилазить за межі доріг (відкриті ребра / не-герметично).
@@ -606,7 +628,13 @@ def build_cdt_grooved_terrain(
                         Ff = Ff[_keep]
                 except Exception:  # noqa: BLE001
                     pass
-            Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
+            if follow_depth_m is not None:
+                # дно слота ДРАПІРУЄТЬСЯ: z = поверхня(x,y) − глибина (слот дрібний,
+                # слідує рельєфу — як старі boolean-грувы, але зі СТІНКАМИ CDT)
+                _zf = np.asarray(height_fn(Vf2[:, 0], Vf2[:, 1]), dtype=float) - follow_depth_m
+                Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], _zf])
+            else:
+                Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
             floor_mesh = trimesh.Trimesh(vertices=Vf, faces=Ff, process=False)
             try:
                 floor_mesh.remove_unreferenced_vertices()

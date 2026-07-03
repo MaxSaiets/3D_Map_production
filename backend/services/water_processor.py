@@ -256,8 +256,11 @@ def process_water_surface(
                     # We iterate subdivision a few times to get enough density for noise
                     # Don't overdo it. 2 levels is usually enough for visual noise.
                     # Check edge lengths?
-                    for _ in range(2):
-                        if len(mesh.vertices) < 10000: # Limit count
+                    # 3 ітерації / 40к вершин (було 2/10к): на похилих ріках рівень
+                    # min(пласка, терен−drop) інтерполюється по ВЕЛИКИХ трикутниках →
+                    # видимі СХОДИНКИ води на схилі. Дрібніша сітка = плавний спуск.
+                    for _ in range(3):
+                        if len(mesh.vertices) < 40000: # Limit count
                              mesh = mesh.subdivide()
                 
                 if mesh is None or len(mesh.vertices) == 0:

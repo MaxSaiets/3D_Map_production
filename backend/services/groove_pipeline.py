@@ -1239,9 +1239,23 @@ def cut_inlay_grooves(
                 _seg_len = max(3.0, _zw / 260.0)
             except Exception:  # noqa: BLE001
                 _seg_len = 3.0
+            # ⭐FOLLOW-глибина: слот = стала мілка глибина від ПОВЕРХНІ (embed×1.5,
+            # як boolean groove_depth_m) замість плаского глибокого slab. Це прибирає
+            # «дороги чорні на всю висоту стінки» на краях плитки, зубці між
+            # глибокими слотами біля пазів і конфлікти слотів із пазом зʼєднувача.
+            # roads-only: глибина ЛИШЕ від дорожнього embed (води/парків тут НЕМАЄ у
+            # слотах — брати water_depth означало 3мм-траншеї з дорогами-пʼєдесталами)
+            if _cdt_roads_only:
+                _embeds = [road_embed_m if road_embed_m else 0.0]
+            else:
+                _embeds = [road_embed_m if road_embed_m else 0.0,
+                           (float(parks_embed_mm) / float(scale_factor)) if (parks_embed_mm and scale_factor) else 0.0,
+                           float(water_depth_m) if water_depth_m else 0.0]
+            _follow_m = max(max(_embeds) * 1.5, (0.45 / float(scale_factor)) if scale_factor else 0.45)
             _cdt = build_cdt_grooved_terrain(
                 zone_polygon_local, _inlays, _height_fn,
-                slab_z=_slab_z, floor_z=_floor_z, seg_len=_seg_len)
+                slab_z=_slab_z, floor_z=_floor_z, seg_len=_seg_len,
+                follow_depth_m=_follow_m)
             print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
                   f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
             # ЗАПОБІЖНИК: CDT — це ОПТИМІЗАЦІЯ (чисті стінки), не має шипити биту геометрію.
