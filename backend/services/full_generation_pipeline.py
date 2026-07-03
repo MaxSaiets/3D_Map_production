@@ -1777,7 +1777,7 @@ def run_full_generation_pipeline(
                     if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
                         try:
                             from services.terrain_cutter import _run_blender_boolean
-                            _bres = _run_blender_boolean(terrain_mesh, _cutterc, label="connector")
+                            _bres = _run_blender_boolean(terrain_mesh, _cutterc, label="connector", pre_seal=True)
                             # повертає ВХІДНИЙ меш при невдачі → приймаємо лише якщо
                             # це інший об'єкт із гранями.
                             if (_bres is not None and _bres is not terrain_mesh

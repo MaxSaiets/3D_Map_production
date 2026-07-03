@@ -38,6 +38,7 @@ def _run_blender_boolean(
     cutter_mesh: trimesh.Trimesh,
     label: str = "mesh",
     clearance_m: float = 0.0,
+    pre_seal: bool = False,
 ) -> Optional[trimesh.Trimesh]:
     """
     Запускає Blender Boolean DIFFERENCE: terrain - cutter.
@@ -67,6 +68,24 @@ def _run_blender_boolean(
 
         terrain_mesh.export(terrain_path)
         cutter_mesh.export(cutter_path)
+
+        # PRE-SEAL лише для КОНЕКТОР-паза (pre_seal=True). Для доріг/парків/all_grooves
+        # fill_holes ЗАЛИВ БИ грувы — тому там pre_seal=False (порожній блок).
+        _seal = ("""
+bpy.context.view_layer.objects.active = terrain
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.mesh.select_all(action='SELECT')
+bpy.ops.mesh.remove_doubles(threshold=2e-4)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.fill_holes(sides=0)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.edge_face_add()
+bpy.ops.mesh.select_all(action='SELECT')
+bpy.ops.mesh.normals_make_consistent(inside=False)
+bpy.ops.object.mode_set(mode='OBJECT')
+""") if pre_seal else ""
 
         blender_script = f"""
 import bpy
@@ -100,6 +119,9 @@ for obj in [terrain, cutter]:
     bpy.ops.mesh.normals_make_consistent(inside=False)
     bpy.ops.object.mode_set(mode='OBJECT')
 
+# PRE-SEAL (лише конектор-паз): зашити дірки ДО EXACT-різу → не нівечить негерметичний
+# меш (openEdges 18→514 РАНІШЕ). Для грувів порожньо (fill_holes залив би жолоби).
+{_seal}
 # Apply Displace for clearance (Minkowski sum expansion)
 if {clearance_m} > 0.0:
     bpy.context.view_layer.objects.active = cutter
