@@ -537,7 +537,13 @@ def extend_buildings_mesh_to_uniform_bottom(
             if not np.any(bottom_face_mask):
                 continue
             bottom_vertex_indices = np.unique(faces[bottom_face_mask].ravel())
-            vertices[bottom_vertex_indices, 2] = float(target_z)
+            # Only LOWER bottoms toward target_z, never RAISE. Connector
+            # notch_clearance on a high-floor/relief DEM can put target_z ABOVE a
+            # building bottom; the old assignment then LIFTED it off the terrain
+            # (floating buildings). min() keeps seated buildings put; taller ones
+            # still extend down to the base.
+            _cur = vertices[bottom_vertex_indices, 2]
+            vertices[bottom_vertex_indices, 2] = np.minimum(_cur, float(target_z))
             mesh.vertices = vertices
             try:
                 mesh.fix_normals()
