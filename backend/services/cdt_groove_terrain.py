@@ -70,7 +70,7 @@ def _run_triangle(vertices, segments, holes, triangle_args, tag, work_dir):
     with open(spec_path, "w") as f:
         json.dump(spec, f)
     last = None
-    for _ in range(3):
+    for _attempt in range(4):
         if os.path.exists(out_path):
             try:
                 os.remove(out_path)
@@ -85,6 +85,14 @@ def _run_triangle(vertices, segments, holes, triangle_args, tag, work_dir):
                 res = json.load(f)
             return np.asarray(res["vertices"]), np.asarray(res["triangles"], dtype=np.int64)
         last = f"rc={proc.returncode} stderr={(proc.stderr or '')[-400:]}"
+        # rc=0xC0000142/0xC0000005 без stderr = субпроцес НЕ СТАРТУВАВ (DLL init /
+        # тиск памʼяті під час важкої генерації) — ТРАНЗІЄНТНО. Пауза + gc дає ОС
+        # звільнити памʼять/хендли перед новою спробою (без паузи всі ретраї падали
+        # підряд за мс → CDT хибно валився у boolean-гребінець на реальних зонах).
+        import gc as _gc
+        import time as _time
+        _gc.collect()
+        _time.sleep(1.5 * (_attempt + 1))
     raise RuntimeError(f"triangle subprocess failed [{tag}]: {last}")
 
 
@@ -172,7 +180,10 @@ except: bpy.ops.import_mesh.stl(filepath=inp)
 o=bpy.context.selected_objects[0]; bpy.context.view_layer.objects.active=o
 bpy.ops.object.mode_set(mode='EDIT')
 bpy.ops.mesh.select_all(action='SELECT')
-bpy.ops.mesh.remove_doubles(threshold=1e-4)
+bpy.ops.mesh.remove_doubles(threshold=1e-3)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.fill_holes(sides=0)
 bpy.ops.mesh.select_all(action='DESELECT')
 bpy.ops.mesh.select_non_manifold()
 bpy.ops.mesh.edge_face_add()
@@ -213,6 +224,48 @@ def _blender_fill_watertight(mesh, work_dir):
     except Exception as exc:  # noqa: BLE001
         print(f"[CDT] blender fill skipped ({exc})")
     return mesh
+
+
+def _rings_pslg(rings, snap=1e-4):
+    """Manual PSLG from a list of closed rings [[(x,y),...],...] → (pts, segs).
+    РОБАСТНО для `triangle` (інакше «invalid geometry on input» на реальних масках):
+    snap координат до сітки + ГЛОБАЛЬНИЙ dedup вершин (ті самі координати між
+    кільцями = ОДИН індекс, не дубль) + викид вироджених (нульова довжина) сегментів.
+    Спільні вершини між викликами зберігаються детерміновано → шви закриваються."""
+    pts, segs = [], []
+    index = {}
+
+    def _key(c):
+        return (round(float(c[0]) / snap), round(float(c[1]) / snap))
+
+    for ring in rings:
+        # 1) зняти послідовні дублі + замикаючу копію (snap-простір)
+        cleaned = []
+        for c in ring:
+            k = _key(c)
+            if cleaned and cleaned[-1][0] == k:
+                continue
+            cleaned.append((k, c))
+        if len(cleaned) > 1 and cleaned[0][0] == cleaned[-1][0]:
+            cleaned.pop()
+        if len(cleaned) < 3:
+            continue  # вироджене кільце — пропустити
+        # 2) глобальний dedup → індекси
+        ids = []
+        for k, c in cleaned:
+            j = index.get(k)
+            if j is None:
+                j = len(pts)
+                index[k] = j
+                pts.append((float(c[0]), float(c[1])))
+            ids.append(j)
+        # 3) сегменти, без нульової довжини
+        n = len(ids)
+        for i in range(n):
+            a, b = ids[i], ids[(i + 1) % n]
+            if a != b:
+                segs.append((a, b))
+    return pts, segs
 
 
 def _boundary_loops(mesh):
@@ -260,6 +313,7 @@ def build_cdt_grooved_terrain(
     floor_z: float,
     seg_len: float = 3.0,
     tri_area: float = 8.0,
+    follow_depth_m: Optional[float] = None,
 ):
     """Будує ГЕРМЕТИЧНИЙ рельєф-солід із ЧИСТИМИ стінками слотів інлеїв.
 
@@ -282,11 +336,85 @@ def build_cdt_grooved_terrain(
             inlays = inlays.intersection(zone)
         has_inlays = inlays is not None and not inlays.is_empty
 
-        # ── 1) TERRAIN top: CDT of (zone − inlays) ──────────────────────────
-        terrain_poly = zone.difference(inlays) if has_inlays else zone
-        terrain_poly_d = _densify_polygon(terrain_poly, seg_len)
-        pts, segs, holes = _poly_to_pslg(terrain_poly_d)
-        Vt2, Ft = _run_triangle(pts, segs, holes, f"pq30a{tri_area:g}YY", "terrain", work_dir)
+        # ── САНІТАЦІЯ inlays (КРИТИЧНО проти triangle «invalid geometry on input» на
+        # реальних OSM-масках) ── реальні дорожні маски = сотні полігонів, що
+        # самоперетинаються / торкаються одне одного / торкаються межі зони → сирий
+        # PSLG невалідний → triangle падає → fallback boolean (старий гребінець).
+        # Фікс: unary_union+buffer(0) (злити дотичні, прибрати самоперетини) + СТРОГИЙ
+        # інсет від межі зони (розірвати збіг з zone_ext) + simplify (зняти майже-дублі
+        # колінеарні вершини). Дороги біля краю клипляться на ~0.3м (тонка смужка терену).
+        if has_inlays:
+            try:
+                _geoms = list(inlays.geoms) if isinstance(inlays, MultiPolygon) else [inlays]
+                _clean = unary_union([g.buffer(0) for g in _geoms
+                                      if g is not None and not g.is_empty]).buffer(0)
+                _area_before = float(getattr(_clean, "area", 0.0) or 0.0)
+                _inset = max(seg_len * 0.15, 0.25)
+                _inset_res = _clean.intersection(zone.buffer(-_inset))
+                # ЗАПОБІЖНИК: якщо інсет стер >85% площі (інлеї здебільшого вздовж/поперек
+                # межі тайла — напр. річка чи парк уздовж краю) → НЕ інсетимо (лишаємо
+                # у межах zone), інакше груви біля краю зникають / шов відкривається.
+                _area_after = float(getattr(_inset_res, "area", 0.0) or 0.0)
+                if _area_before > 1e-6 and _area_after < 0.15 * _area_before:
+                    print(f"[CDT] inset collapsed inlays ({_area_after:.0f}<15% of {_area_before:.0f}) "
+                          f"→ skip inset (clip to zone only)")
+                    inlays = _clean.intersection(zone)
+                else:
+                    inlays = _inset_res
+                if inlays is not None and not inlays.is_empty:
+                    inlays = inlays.simplify(max(seg_len * 0.2, 0.3)).buffer(0)
+                has_inlays = inlays is not None and not inlays.is_empty
+            except Exception as _sanex:  # noqa: BLE001
+                print(f"[CDT] inlay sanitize failed (continue raw): {_sanex}")
+                has_inlays = inlays is not None and not inlays.is_empty
+
+        # ── ЩІЛЬНІСТЬ масштабована до площі зони (інакше великі зони (1.5км/model_150)
+        # дають ~929к-гранний терен → 8хв ген + boolean парків/води ламає герметичність
+        # на велетенському меші + ризик OOM на 4ГБ). Терен обмежуємо ~150к трикутників;
+        # ПЛОСКІ капи (bottom/floor) грубо (їм щільність не потрібна) ~6к. Малі зони
+        # лишаються як були (max з tri_area). ──
+        _zone_area = max(float(zone.area), 1.0)
+        _top_area = max(float(tri_area), _zone_area / 150000.0)
+        _cap_area = max(float(tri_area) * 6.0, _zone_area / 6000.0)
+
+        # ── 1) TERRAIN top: CDT з ЯВНИМИ обмежувальними кільцями (НЕ difference) ──
+        # Спільна densified геометрія: zone_ext + inlay_rings використовуються І для
+        # terrain-дірок, І для floor/bottom-капів → ТІ САМІ вершини → герметично за
+        # побудовою (надійніше за loop-extraction, який фрагментує на щільних мережах).
+        SP_zone = zone
+        zone_ext = _densify_ring(list(SP_zone.exterior.coords)[:-1], seg_len)
+        inlay_rings, inlay_hole_pts, block_hole_pts = [], [], []
+        inlays_d = None
+        if has_inlays:
+            # densify ОДИН раз → ТІ САМІ кільця для terrain-дірок, floor-капу та bridge.
+            inlays_d = _densify_polygon(inlays, seg_len)
+            for gp in (inlays_d.geoms if isinstance(inlays_d, MultiPolygon) else [inlays_d]):
+                if getattr(gp, "is_empty", True) or gp.area < 1e-9:
+                    continue
+                ext = [(c[0], c[1]) for c in list(gp.exterior.coords)[:-1]]
+                if len(ext) < 3:
+                    continue
+                inlay_rings.append(ext)
+                # ⭐КРИТИЧНО (root cause «в центрі рельєфу немає»): зв'язна дорожня сітка
+                # після unary_union = ОДИН полігон, чий exterior ≈ вся зона, а МІСЬКІ
+                # КВАРТАЛИ = ДІРКИ (interiors). Якщо interiors НЕ додати як обмежувальні
+                # кільця — hole-point заливає ВЕСЬ інтер'єр екстер'єра → усі квартали
+                # зникають у slab-плиту, рельєф лишається лише тонкою смужкою по краю.
+                # Interior-кільця = constraints (терен зупиняється на межі кварталу);
+                # для floor запам'ятовуємо точку в КОЖНОМУ кварталі (щоб slab не капив його).
+                for it in gp.interiors:
+                    ir = [(c[0], c[1]) for c in list(it.coords)[:-1]]
+                    if len(ir) >= 3:
+                        inlay_rings.append(ir)
+                        try:
+                            _bp = Polygon(it).representative_point()
+                            block_hole_pts.append((_bp.x, _bp.y))
+                        except Exception:  # noqa: BLE001
+                            pass
+                rp = gp.representative_point()  # ГАРАНТОВАНО у дорожній смузі (не в кварталі)
+                inlay_hole_pts.append((rp.x, rp.y))
+        t_pts, t_segs = _rings_pslg([zone_ext] + inlay_rings)
+        Vt2, Ft = _run_triangle(t_pts, t_segs, inlay_hole_pts, f"pq30a{_top_area:g}YY", "terrain", work_dir)
         zt = np.asarray(height_fn(Vt2[:, 0], Vt2[:, 1]), dtype=float)
         Vt = np.column_stack([Vt2[:, 0], Vt2[:, 1], zt])
         terrain_mesh = trimesh.Trimesh(vertices=Vt, faces=Ft, process=False)
@@ -314,8 +442,15 @@ def build_cdt_grooved_terrain(
 
         def col_levels(x, y, z_hi, z_lo):
             levels = [z_hi]
-            if (round(x, 4), round(y, 4)) in corner_posts and z_lo < slab_z < z_hi:
-                levels.append(slab_z)
+            if (round(x, 4), round(y, 4)) in corner_posts:
+                if follow_depth_m is not None:
+                    # follow-режим: bridge-стінка на межі стартує з (поверхня−глибина)
+                    # → перимeтр-колону ділимо там само, щоб ребра збіглись.
+                    _mid = z_hi - follow_depth_m
+                    if z_lo < _mid < z_hi:
+                        levels.append(_mid)
+                elif z_lo < slab_z < z_hi:
+                    levels.append(slab_z)
             levels.append(z_lo)
             return levels
 
@@ -332,11 +467,19 @@ def build_cdt_grooved_terrain(
                 a = P[i]
                 b = P[(i + 1) % n]
                 if edge_is_perim(a, b):
-                    z_lo, outward_neg = floor_z, True
+                    z_lo_a = z_lo_b = floor_z
+                    outward_neg = True
+                elif follow_depth_m is not None:
+                    # ⭐FOLLOW-режим: дно слота слідує за ПОВЕРХНЕЮ (стінка коротка,
+                    # глибина стала) — замість плаского глибокого slab. Це прибирає
+                    # «дороги на всю висоту стінки» на краях і зубці між слотами.
+                    z_lo_a, z_lo_b = a[2] - follow_depth_m, b[2] - follow_depth_m
+                    outward_neg = False
                 else:
-                    z_lo, outward_neg = slab_z, False
-                la = col_levels(a[0], a[1], a[2], z_lo)
-                lb = col_levels(b[0], b[1], b[2], z_lo)
+                    z_lo_a = z_lo_b = slab_z
+                    outward_neg = False
+                la = col_levels(a[0], a[1], a[2], z_lo_a)
+                lb = col_levels(b[0], b[1], b[2], z_lo_b)
                 colA = [vidx(a[0], a[1], z) for z in la]
                 colB = [vidx(b[0], b[1], z) for z in lb]
                 poly = colA + list(reversed(colB))
@@ -448,8 +591,13 @@ def build_cdt_grooved_terrain(
                     a = ch[i]
                     b = ch[(i + 1) % m]
                     if edge_is_perim(a, b):
-                        ta = bvidx(a[0], a[1], slab_z)
-                        tb = bvidx(b[0], b[1], slab_z)
+                        if follow_depth_m is not None:
+                            _za = float(np.asarray(height_fn([a[0]], [a[1]]))[0]) - follow_depth_m
+                            _zb = float(np.asarray(height_fn([b[0]], [b[1]]))[0]) - follow_depth_m
+                        else:
+                            _za = _zb = slab_z
+                        ta = bvidx(a[0], a[1], _za)
+                        tb = bvidx(b[0], b[1], _zb)
                         ba = bvidx(a[0], a[1], floor_z)
                         bb = bvidx(b[0], b[1], floor_z)
                         bfaces.append((ta, ba, bb))
@@ -458,17 +606,52 @@ def build_cdt_grooved_terrain(
                 bridge_mesh = trimesh.Trimesh(vertices=np.asarray(bverts),
                                               faces=np.asarray(bfaces), process=False)
 
-        # ── 2+3) FLOOR (slab_z) + BOTTOM (floor_z) з БОРДЮР-ПЕТЕЛЬ СТІНОК ────
-        # Беремо ТОЧНІ бордюр-вершини зі стінок (+мостів) → каже шиються без шва.
-        wb_parts = [m for m in (wall_mesh, bridge_mesh) if m is not None and len(m.faces) > 0]
-        wb = trimesh.util.concatenate(wb_parts) if len(wb_parts) > 1 else wb_parts[0]
-        wb.merge_vertices(digits_vertex=5)
-        slab_loops = _z_loops(wb, slab_z)
-        floor_z_loops = _z_loops(wb, floor_z)
-        # підлога слотів на slab_z (нормаль ВГОРУ — дивимось у слот зверху)
-        floor_mesh = _cap_from_loops(slab_loops, slab_z, "floor", faces_up=True) if slab_loops else None
-        # дно плити на floor_z (нормаль ВНИЗ)
-        bottom_mesh = _cap_from_loops(floor_z_loops, floor_z, "bottom", faces_up=False) if floor_z_loops else None
+        # ── 2) FLOOR at slab_z: ЛИШЕ дорожня смуга (НЕ квартали) → ТІ САМІ вершини ──
+        floor_mesh = None
+        if has_inlays and inlay_rings:
+            f_pts, f_segs = _rings_pslg(inlay_rings)  # snapped → збіг з terrain/walls
+            # hole-точки у кварталах (interiors) → slab НЕ капить квартали (вони = терен)
+            _floor_args = f"pq30a{_cap_area:g}YY" if follow_depth_m is None else f"pq30a{_top_area:g}YY"
+            Vf2, Ff = _run_triangle(f_pts, f_segs, block_hole_pts, _floor_args, "floor", work_dir)
+            # ЗРІЗ: triangle лишає трикутники у ввігнутостях між exterior і опуклою
+            # оболонкою → тримаємо ЛИШЕ ті, чий центроїд у дорожній смузі inlays_d,
+            # інакше slab-плита вилазить за межі доріг (відкриті ребра / не-герметично).
+            if inlays_d is not None and len(Ff):
+                try:
+                    from shapely.prepared import prep as _prep
+                    _pin = _prep(inlays_d)
+                    _cen = Vf2[Ff].mean(axis=1)
+                    _keep = np.fromiter(
+                        (_pin.contains(Point(float(x), float(y))) for x, y in _cen[:, :2]),
+                        dtype=bool, count=len(Ff))
+                    if _keep.any():
+                        Ff = Ff[_keep]
+                except Exception:  # noqa: BLE001
+                    pass
+            if follow_depth_m is not None:
+                # дно слота ДРАПІРУЄТЬСЯ: z = поверхня(x,y) − глибина (слот дрібний,
+                # слідує рельєфу — як старі boolean-грувы, але зі СТІНКАМИ CDT)
+                _zf = np.asarray(height_fn(Vf2[:, 0], Vf2[:, 1]), dtype=float) - follow_depth_m
+                Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], _zf])
+            else:
+                Vf = np.column_stack([Vf2[:, 0], Vf2[:, 1], np.full(len(Vf2), slab_z)])
+            floor_mesh = trimesh.Trimesh(vertices=Vf, faces=Ff, process=False)
+            try:
+                floor_mesh.remove_unreferenced_vertices()
+            except Exception:  # noqa: BLE001
+                pass
+            floor_mesh.fix_normals()
+            if floor_mesh.face_normals[:, 2].mean() < 0:  # підлога слота дивиться ВГОРУ
+                floor_mesh.faces = floor_mesh.faces[:, ::-1]
+
+        # ── 3) BOTTOM at floor_z: CDT zone_ext (= terrain-периметр → ТІ САМІ вершини) ──
+        b_pts, b_segs = _rings_pslg([zone_ext])
+        Vb2, Fb = _run_triangle(b_pts, b_segs, [], f"pq30a{_cap_area:g}YY", "bottom", work_dir)
+        Vb = np.column_stack([Vb2[:, 0], Vb2[:, 1], np.full(len(Vb2), floor_z)])
+        bottom_mesh = trimesh.Trimesh(vertices=Vb, faces=Fb, process=False)
+        bottom_mesh.fix_normals()
+        if bottom_mesh.face_normals[:, 2].mean() > 0:  # дно плити дивиться ВНИЗ
+            bottom_mesh.faces = bottom_mesh.faces[:, ::-1]
 
         parts = [m for m in (terrain_mesh, wall_mesh, floor_mesh, bottom_mesh, bridge_mesh)
                  if m is not None and len(m.faces) > 0]
@@ -482,9 +665,105 @@ def build_cdt_grooved_terrain(
             trimesh.repair.fix_inversion(result)
         except Exception:  # noqa: BLE001
             pass
-        # Закрити структурні шви кап-стінка → герметично (Blender надійніший).
+        # 1) Закрити структурні шви кап-стінка СПЕРШУ (Blender зшиває стінки↔дно↔підлогу).
         if not bool(getattr(result, "is_volume", False)):
             result = _blender_fill_watertight(result, work_dir)
+        # 2) ГОЛОВНИЙ солід: на складних масках/межах ПІСЛЯ зшивання інколи лишається
+        # ОКРЕМИЙ компонент (напр. плоский bottom-аркуш vol≈0, що не злився, або дрібний
+        # острівець після інсету) → беремо найбільший ГЕРМЕТИЧНИЙ компонент (повний
+        # рельєф-солід); якщо герметичних нема — найбільший за гранями.
+        try:
+            comps = result.split(only_watertight=False)
+        except Exception:  # noqa: BLE001
+            comps = [result]
+        if len(comps) > 1:
+            def _topface_area(_m):
+                try:
+                    _n = _m.face_normals
+                    return float(_m.area_faces[_n[:, 2] > 0.5].sum())
+                except Exception:  # noqa: BLE001
+                    return 0.0
+            _full_top = _topface_area(result)
+            wt_comps = [c for c in comps if bool(getattr(c, "is_volume", False))]
+            _cand = (max(wt_comps, key=lambda c: abs(float(c.volume)))
+                     if wt_comps else max(comps, key=lambda c: len(c.faces)))
+            # ЗАПОБІЖНИК: keep-largest НЕ має викинути РЕЛЬЄФ (терен-острови у парк-важких
+            # зонах). ЕТАЛОН = ПЛОЩА ЗОНИ (не сумарний top-area результату!): Blender-fill
+            # інколи заливає ДРУГУ «кришку» поверх усього (top-area → 2× зони) → порівняння
+            # з full_top хибно блокувало вибір ПРАВИЛЬНОГО герметичного компонента → далі
+            # негерметичний меш ламав manifold-виріз паза (Blender-виріз нищив дно/паз:
+            # «пази не створились, підложки немає»). Кандидат ОК, якщо покриває ≥55% зони.
+            _zone_ref = float(zone.area)
+            _cand_top = _topface_area(_cand)
+            # ⚠️КРИТИЧНО: кандидат мусить СЯГАТИ ДНА ПЛИТИ (floor_z). Коли шов
+            # стінка↔низ не злився, меш = ВЕРХНЄ тіло (терен+стінки, zmin=slab) +
+            # НИЖНЯ коробка slab→floor. Вибір верхнього ВИКИДАВ ПІДЛОЖКУ → модель
+            # без низу, дно=slab → «будинки в повітрі» (extend-до-floor брав slab),
+            # дороги над пусткою (юзер-кейс fe979dea, 40/215 будинків плавали).
+            try:
+                _cand_reaches_floor = float(_cand.bounds[0][2]) <= float(floor_z) + 0.05
+            except Exception:  # noqa: BLE001
+                _cand_reaches_floor = False
+            if not _cand_reaches_floor:
+                print(f"[CDT] keep-largest candidate misses the base plate "
+                      f"(zmin={float(_cand.bounds[0][2]):.2f} > floor {float(floor_z):.2f}) "
+                      f"→ keep full + seal (не викидати підложку)")
+            elif _zone_ref > 1e-6 and _cand_top >= 0.55 * _zone_ref:
+                result = _cand
+                try:
+                    result.remove_unreferenced_vertices()
+                except Exception:  # noqa: BLE001
+                    pass
+            elif _full_top > 1e-6 and _cand_top >= 0.8 * _full_top:
+                result = _cand
+                try:
+                    result.remove_unreferenced_vertices()
+                except Exception:  # noqa: BLE001
+                    pass
+            else:
+                print(f"[CDT] keep-largest would drop terrain "
+                      f"(top-area {_cand_top:.0f} < 55% zone {_zone_ref:.0f}) → keep full + seal")
+        # 3) Якщо все ще не герметично (вибрали негерметичний найбільший) — досшити.
+        if not bool(getattr(result, "is_volume", False)):
+            result = _blender_fill_watertight(result, work_dir)
+        # 3b) РОЗКОЛ ВЕРХ/НИЗ (флакі на реальних зонах): blender-lids дають ДВА
+        # закриті тіла (терен+стінки zmin=slab І плита-основа slab→floor) з різною
+        # тесселяцією кришок → weld вершин НЕ зшиває, меш не volume → manifold-паз
+        # відмовляє → «пазів немає». Фікс: якщо компоненти ЗАКРИТІ — обʼєднати їх
+        # manifold-UNION (обидва солідні → union детерміновано дає ОДИН герметичний).
+        if not bool(getattr(result, "is_volume", False)):
+            try:
+                _comps3 = result.split(only_watertight=False)
+                _closed3 = [c for c in _comps3 if bool(getattr(c, "is_volume", False))]
+                if len(_comps3) > 1 and len(_closed3) >= 2 and \
+                        sum(len(c.faces) for c in _closed3) > 0.9 * len(result.faces):
+                    _uni = trimesh.boolean.union(_closed3, engine="manifold")
+                    if _uni is not None and len(_uni.faces) > 0 and bool(getattr(_uni, "is_volume", False)):
+                        print(f"[CDT] manifold-union sealed split bodies "
+                              f"({len(_closed3)} closed comps → one volume, faces={len(_uni.faces)})")
+                        result = _uni
+            except Exception as _uex:  # noqa: BLE001
+                print(f"[CDT] union of split bodies failed (non-fatal): {_uex}")
+        # 4) ОСТАННІЙ ШАНС — ГРУБИЙ WELD (~1мм світу): коли верхнє тіло і плита-основа
+        # не злилися мікро-щілиною по slab-шву (флакі кейс реальних зон), меш лишався
+        # НЕгерметичним → manifold-виріз паза відмовляв → Blender-виріз БРЕХАВ «carved»
+        # і нищив дно («пази не створюються»). Грубе злиття вершин заварює шов;
+        # приймаємо ЛИШЕ якщо реально стало volume (інакше повертаємо як було).
+        if not bool(getattr(result, "is_volume", False)):
+            try:
+                _welded = result.copy()
+                _welded.merge_vertices(digits_vertex=3)  # 1e-3 світу ≈ 1мм welding
+                _welded.update_faces(_welded.unique_faces())
+                _welded.update_faces(_welded.nondegenerate_faces())
+                _welded.remove_unreferenced_vertices()
+                _welded.fill_holes()
+                trimesh.repair.fix_winding(_welded)
+                trimesh.repair.fix_inversion(_welded)
+                if bool(getattr(_welded, "is_volume", False)) and len(_welded.faces) > 0.8 * len(result.faces):
+                    print(f"[CDT] coarse weld sealed the mesh (faces {len(result.faces)}→{len(_welded.faces)}, volume=True)")
+                    result = _welded
+            except Exception as _wex:  # noqa: BLE001
+                print(f"[CDT] coarse weld failed (non-fatal): {_wex}")
         return result
     finally:
         try:

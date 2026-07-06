@@ -1255,6 +1255,15 @@ def prepare_scene_parts(
                     if key in ("roads", "water", "parks", "green"):
                         print(f"  [{key}] Skipping aggressive exporter repair to preserve canonical layer geometry")
                         continue
+                    # BASE ТЕЖ НЕ ЧІПАТИ: після злиття будинків у Base меш = багато
+                    # закритих оболонок, що ТОРКАЮТЬСЯ терену → non-manifold ребра →
+                    # агресивний repair (fill_holes+rebuild) ЗАКРИВАВ ПАЗ зʼєднувача і
+                    # перебудовував дно (12404→1964 граней; «пазів взагалі немає» хоча
+                    # notch carved manifold drift 0). Терен будується герметичним вище;
+                    # мульти-оболонки друкуються нормально — repair тут лише шкодить.
+                    if is_terrain:
+                        print(f"  [{key}] Skipping aggressive exporter repair (merged multi-shell base; would eat the connector notch)")
+                        continue
                     repaired = improve_mesh_for_3d_printing(mesh, aggressive=True, verbose=False, skip_fix_normals=is_terrain)
                     nm_after, _ = detect_nonmanifold_edges(repaired)
                     if nm_after < nm_before:
@@ -1285,6 +1294,45 @@ def prepare_scene_parts(
                 print(f"  [{key}] Repair failed: {e}")
         
         print(f"[FINAL REPAIR] Complete\n")
+
+    # ── ДЕКОНФЛІКТ ПЕРИМЕТР-СТІНОК (фікс «вертикальні смуги на стінках моделі») ──
+    # Контент-шари (дороги/парки/вода/будинки) кліпляться тим самим zone-полігоном,
+    # що й основа → їхні бічні стінки лежать ТОЧНО в площині периметр-стінки Base →
+    # у вьювері/превʼю z-fighting = мерехтливі вертикальні смуги (зелені=парки,
+    # чорні=дороги) на всю висоту стінки. Друку це не шкодить, але виглядає як брак.
+    # Фікс: вершини НЕ-Base шарів, що лежать у площинах bbox основи, відсуваємо
+    # ВСЕРЕДИНУ на 0.03мм (менше сопла 0.4мм → друк незмінний, z-fight зникає).
+    # Connector-ключ НЕ чіпаємо (окрема деталь, 0.03мм змінив би посадку в паз).
+    try:
+        _base_key = next((k for k in ("base", "terrain") if k in transformed_parts
+                          and transformed_parts[k] is not None), None)
+        if _base_key is not None:
+            _bb = transformed_parts[_base_key].bounds
+            _planes = ((0, float(_bb[0][0]), 1.0), (0, float(_bb[1][0]), -1.0),
+                       (1, float(_bb[0][1]), 1.0), (1, float(_bb[1][1]), -1.0))
+            _deconf_n = 0
+            for _k, _m in transformed_parts.items():
+                if _m is None or _k in (_base_key, "baseback", "connector"):
+                    continue
+                _v = np.asarray(_m.vertices, dtype=float)
+                _hit = False
+                for _ax, _val, _sgn in _planes:
+                    # ±0.12мм: edge-flush/драпування зсувають вершини контенту на
+                    # ~0.05-0.1мм від площини периметра → «майже-коллінеарні» стінки
+                    # ДАЛІ блимали (юзер: «біла стінка блимає»). Ловимо ширше і
+                    # відсуваємо на 0.06мм усередину (для друку невидимо).
+                    _sel = np.abs(_v[:, _ax] - _val) < 0.12
+                    if bool(_sel.any()):
+                        _v[_sel, _ax] = _val + _sgn * 0.06
+                        _hit = True
+                if _hit:
+                    _m.vertices = _v
+                    _deconf_n += 1
+            if _deconf_n:
+                print(f"[EXPORT] deconflicted perimeter walls of {_deconf_n} layers "
+                      f"(+0.03mm inset — прибирає z-fight смуги на стінках)")
+    except Exception as _dcx:  # noqa: BLE001
+        print(f"[EXPORT] perimeter deconflict skipped (non-fatal): {_dcx}")
 
     return transformed_parts
 
@@ -1558,8 +1606,19 @@ def export_3mf(
                 m.fix_normals()  # консистентний winding (виправляє bad-winding шарів)
             except Exception:  # noqa: BLE001
                 pass
-        # База/terrain: НЕ чіпаємо нормалі — база приходить winding-консистентною
-        # з пайплайну; fix_normals/fix_winding тут лише вивертали б стінки.
+        else:
+            # БАЗА: після CDT+паз+boolean-ланцюга частина трикутників приходить із
+            # ВИВЕРНУТИМ winding (меш закритий, openEdges=0, але не «volume») →
+            # three.js кулить ці грані → у вьювері «чорні штрихи/смуги» в пазі та
+            # прогалини в стінках (юзер-скріни). fix_normals із ray-евристикою тут
+            # заборонений ([[relief-wall-normals-inverted]]), але ТОПОЛОГІЧНИЙ
+            # fix_winding (пропагація сусідством) + fix_inversion (знак обʼєму по
+            # компонентах) безпечні: без променів, без заливки дір.
+            try:
+                trimesh.repair.fix_winding(m)
+                trimesh.repair.fix_inversion(m, multibody=True)
+            except Exception:  # noqa: BLE001
+                pass
         if k in _SOLID and not bool(getattr(m, "is_watertight", True)):
             try:
                 m.fill_holes()

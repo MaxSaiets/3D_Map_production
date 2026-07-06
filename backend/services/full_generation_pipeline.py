@@ -1124,13 +1124,28 @@ def run_full_generation_pipeline(
     _relief_connector_done = False
     _conn_terrain = terrain_stage.terrain_mesh
     if getattr(request, "map_connector", False):
-        _conn_terrain, connector_key_mesh, _relief_connector_done = cut_relief_connector_notch(
-            terrain_stage.terrain_mesh,
-            zone=zone,
-            request=request,
-            sf_c=float(getattr(zone, "scale_factor", 0.0) or 0.0),
-            zone_prefix=zone_prefix,
-        )
+        # Коли CDT-грувы АКТИВНІ для цього тайла — паз НЕ ріжемо тут (до грувів): CDT
+        # перебудовує терен з нуля й зітре паз. Натомість ПІЗНІЙ блок (нижче) вріже паз
+        # у ЧИСТИЙ герметичний CDT-терен (manifold, drift≈0) → стінки паза чисті, а грувы
+        # доріг/парків/води теж чисті (CDT) замість boolean-комба. Коли CDT вимкнено
+        # (CDT_GROOVE off — як на проді) або зона завелика → старий надійний pre-groove.
+        import os as _osc
+        _cdt_on = _osc.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+        _zarea_c = float(getattr(zone.zone_polygon_local, "area", 0.0) or 0.0) \
+            if getattr(zone, "zone_polygon_local", None) is not None else 0.0
+        _cdt_conn_elig = (_cdt_on and 0.0 < _zarea_c <= 2.0e6
+                          and terrain_stage.terrain_mesh is not None)
+        if _cdt_conn_elig:
+            print(f"[CONNECTOR] {zone_prefix}CDT active → відкладаю паз на POST-groove "
+                  f"(чисті стінки; area={_zarea_c:.0f})")
+        else:
+            _conn_terrain, connector_key_mesh, _relief_connector_done = cut_relief_connector_notch(
+                terrain_stage.terrain_mesh,
+                zone=zone,
+                request=request,
+                sf_c=float(getattr(zone, "scale_factor", 0.0) or 0.0),
+                zone_prefix=zone_prefix,
+            )
 
     water_geoms_for_bridges = prepare_bridge_water_geometries(
         request=request,
@@ -1680,9 +1695,18 @@ def run_full_generation_pipeline(
                 key_dirs=parse_connector_azimuths(getattr(request, "map_connector_key_az", "")),
             )
             _notch_carved = False
+            # Паз уже міг бути вирізаний РАННІМ різом у ГЕРМЕТИЧНИЙ CDT-меш
+            # (groove_pipeline, до boolean-грувів) → різати вдруге не треба,
+            # лише створити ключ-метелик нижче.
+            if bool(getattr(terrain_mesh, "metadata", {}).get("connector_notch_carved", False)):
+                _notch_carved = True
+                print(f"[CONNECTOR] {zone_prefix}notch already carved early into watertight "
+                      f"CDT terrain — skipping late cut, building key only")
             if _ntc is not None and _depth_m > 1e-6:
                 _eps = max(_model_h * 0.01, 0.5 / _sf_c)
-                _cutterc = build_flat_layer_mesh_from_mask(
+                # Якщо паз уже вирізано раннім різом — різак не будуємо (різ пропущено),
+                # але блок ключа-метелика нижче ВИКОНУЄТЬСЯ (_notch_carved=True).
+                _cutterc = None if _notch_carved else build_flat_layer_mesh_from_mask(
                     _ntc, bottom_z_m=_floor_z - _eps, thickness_m=_depth_m + _eps,
                     color=[128, 128, 128], min_area_m2=1e-12,
                 )
@@ -1699,18 +1723,45 @@ def run_full_generation_pipeline(
                     # результат, що реально змінив геометрію в межах дрейф-ліміту.
                     _b0 = terrain_mesh.bounds
                     _faces0 = len(getattr(terrain_mesh, "faces", []))
+                    if os.environ.get("DUMP_NOTCH_MESH", "") == "1":
+                        try:
+                            _dd = os.environ.get("DUMP_NOTCH_DIR", ".")
+                            _dp = os.path.join(_dd, f"notchdump_{zone_prefix.strip('[] ') or 'z'}.stl")
+                            terrain_mesh.export(_dp)
+                            _cutterc.export(_dp.replace(".stl", "_cutter.stl"))
+                            with open(_dp.replace(".stl", "_meta.txt"), "w") as _mf:
+                                _mf.write(f"floor_z={_floor_z}\ndepth_m={_depth_m}\nsf_c={_sf_c}\n"
+                                          f"ntc_bounds={list(_ntc.bounds)}\n")
+                            print(f"[CONNECTOR] {zone_prefix}DUMPED notch mesh -> {_dp}")
+                        except Exception as _dxx:
+                            print(f"[CONNECTOR] {zone_prefix}dump failed: {_dxx}")
                     _cutc = None
                     _via = None
-                    # (A) manifold — ПРОБУЄМО ЗАВЖДИ (рушій manifold терпить помірну
-                    # негерметичність і ЗБЕРІГАЄ координати → drift≈0). Blender-шлях у
-                    # СЕРІЇ дрейфував на ~офсет плитки (~700м) і коректний паз хибно
-                    # відкидався — тож manifold має пріоритет навіть на не-watertight.
+                    # (A0) manifold3d-РЕМОНТ→виріз — ГОЛОВНИЙ ШЛЯХ. Конструктор
+                    # Manifold(mesh) робить ТОПОЛОГІЧНИЙ РЕМОНТ негерметичного рельєфу
+                    # у валідний том (чого fill_holes/Blender НЕ вміли), тоді різниця.
+                    # Доведено на щільній юзер-зоні: 290138 граней wt=False → manifold3d
+                    # → wt=True → виріз wt=True (паз чисто, без нівечення). Зберігає
+                    # координати (drift≈0) → працює і в серії. Замінює тиждень падінь
+                    # «пази не ріжуться на щільних/серійних мешах».
                     try:
-                        _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
-                        _via = "manifold"
-                    except Exception as _mexc:
-                        print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                        from services.terrain_cutter import manifold_repair_subtract as _mrs
+                        _cutc = _mrs(terrain_mesh, _cutterc)
+                        if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                            _via = "manifold-repair"
+                        else:
+                            _cutc = None
+                    except Exception as _m0exc:
+                        print(f"[CONNECTOR] {zone_prefix}manifold-repair notch failed ({_m0exc})")
                         _cutc = None
+                    # (A) manifold engine (без ремонту) — ПРОБУЄМО якщо ремонт не дав.
+                    if _cutc is None:
+                        try:
+                            _cutc = _tmc.boolean.difference([terrain_mesh, _cutterc], engine="manifold")
+                            _via = "manifold"
+                        except Exception as _mexc:
+                            print(f"[CONNECTOR] {zone_prefix}manifold notch failed ({_mexc})")
+                            _cutc = None
                     # (B) РОБАСТНИЙ ремонт копії → watertight → manifold (без Blender).
                     # Рельєф після грувів доріг/парків НЕ volume (сотні відкритих ребер
                     # від каналів). fill_holes сам не закриває → manifold кидав «not all
@@ -1753,7 +1804,7 @@ def run_full_generation_pipeline(
                     if _cutc is None or len(getattr(_cutc, "faces", [])) == 0:
                         try:
                             from services.terrain_cutter import _run_blender_boolean
-                            _bres = _run_blender_boolean(terrain_mesh, _cutterc, label="connector")
+                            _bres = _run_blender_boolean(terrain_mesh, _cutterc, label="connector", pre_seal=True)
                             # повертає ВХІДНИЙ меш при невдачі → приймаємо лише якщо
                             # це інший об'єкт із гранями.
                             if (_bres is not None and _bres is not terrain_mesh
@@ -1803,6 +1854,43 @@ def run_full_generation_pipeline(
                                 print(f"[CONNECTOR] {zone_prefix}clipped {int((~_fm).sum())} stray faces outside tile bbox")
                         except Exception as _clx:
                             print(f"[CONNECTOR] {zone_prefix}stray-clip failed (non-fatal): {_clx}")
+                    # Blender-виріз на НЕгерметичному вході інколи РУЙНУЄ меш (нищить
+                    # дно/паз, «пази не створились, підложки немає»), але габарити
+                    # лишаються ОК → стара валідація пропускала. Детект руйнування =
+                    # РІЗКЕ ЗРОСТАННЯ відкритих ребер (у юзер-кейсі 3→80). manifold
+                    # зберігає топологію — перевірка лише для blender-шляху.
+                    if _via == "blender" and _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            from trimesh.grouping import group_rows as _grc
+                            _oe_in = len(_grc(terrain_mesh.edges_sorted, require_count=1))
+                            _oe_out = len(_grc(_cutc.edges_sorted, require_count=1))
+                            if _oe_out > _oe_in + 40:
+                                print(f"[CONNECTOR] {zone_prefix}blender notch DAMAGED mesh "
+                                      f"(openEdges {_oe_in}→{_oe_out}) → reject, base kept intact")
+                                _cutc = None
+                        except Exception:  # noqa: BLE001
+                            pass
+                    # СУВОРА ВАЛІДАЦІЯ «паз РЕАЛЬНО вирізаний»: у footprint різака
+                    # мають зʼявитись донні грані на рівні floor+depth (стеля паза).
+                    # Blender-виріз на негерметичному вході писав «carved» при
+                    # незмінних габаритах, хоча паза НЕМАЄ (юзер-кейс ce68afde).
+                    if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
+                        try:
+                            import numpy as _npn
+                            _nb = _ntc.bounds  # (minx,miny,maxx,maxy) маски пазів
+                            _cN = _cutc.face_normals
+                            _cc = _cutc.triangles_center
+                            _dn = (_cN[:, 2] < -0.5) \
+                                & (_cc[:, 0] > _nb[0] - 1) & (_cc[:, 0] < _nb[2] + 1) \
+                                & (_cc[:, 1] > _nb[1] - 1) & (_cc[:, 1] < _nb[3] + 1) \
+                                & (_cc[:, 2] > _floor_z + _depth_m * 0.4) \
+                                & (_cc[:, 2] < _floor_z + _depth_m * 1.6)
+                            if not bool(_dn.any()):
+                                print(f"[CONNECTOR] {zone_prefix}notch NOT actually cut "
+                                      f"(no ceiling faces at floor+depth in cutter bbox, via={_via}) → reject")
+                                _cutc = None
+                        except Exception as _nvx:  # noqa: BLE001
+                            print(f"[CONNECTOR] {zone_prefix}notch-exists check failed (keep): {_nvx}")
                     # Валідація: меш існує, реально змінився, межі не «втекли».
                     if _cutc is not None and len(getattr(_cutc, "faces", [])) > 0:
                         _b1 = _cutc.bounds
@@ -1877,15 +1965,31 @@ def run_full_generation_pipeline(
             import numpy as _wnp
             _wv = water_mesh.vertices.copy()
             _wsf = float(getattr(zone, "scale_factor", 0.0) or 0.0)
-            _orig = _wnp.column_stack([_wv[:, 0], _wv[:, 1],
-                                       _wnp.full(len(_wv), float(terrain_mesh.bounds[1][2]) + 10.0)])
-            _loc, _ridx, _ = terrain_mesh.ray.intersects_location(
-                _orig, _wnp.tile([0.0, 0.0, -1.0], (len(_wv), 1)), multiple_hits=True)
+            # Висоти терену — з PROVIDER (детерміновано, БЕЗ променів): ray-семплінг
+            # на проді флакі (частина променів мажe → median-fallback ПЛЮЩИВ воду в
+            # пласку плиту нижче терену — 74% води ховалось під землею). Provider =
+            # та сама поверхня, з якої будувався CDT-терен → збіг гарантований.
             _tz = _wnp.full(len(_wv), _wnp.nan)
-            for _i in range(len(_wv)):
-                _h = _loc[_ridx == _i]
-                if len(_h):
-                    _tz[_i] = _h[:, 2].max()
+            _prov = getattr(terrain_stage, "terrain_provider", None) if "terrain_stage" in dir() else None
+            try:
+                _prov = terrain_stage.terrain_provider
+            except Exception:  # noqa: BLE001
+                _prov = None
+            if _prov is not None:
+                try:
+                    _tz = _wnp.asarray(
+                        _prov.get_surface_heights_for_points(_wv[:, :2]), dtype=float)
+                except Exception:  # noqa: BLE001
+                    pass
+            if not _wnp.isfinite(_tz).any():
+                _orig = _wnp.column_stack([_wv[:, 0], _wv[:, 1],
+                                           _wnp.full(len(_wv), float(terrain_mesh.bounds[1][2]) + 10.0)])
+                _loc, _ridx, _ = terrain_mesh.ray.intersects_location(
+                    _orig, _wnp.tile([0.0, 0.0, -1.0], (len(_wv), 1)), multiple_hits=True)
+                for _i in range(len(_wv)):
+                    _h = _loc[_ridx == _i]
+                    if len(_h):
+                        _tz[_i] = _h[:, 2].max()
             _valid = _wnp.isfinite(_tz)
             _terr_max = float(_wnp.max(_tz[_valid])) if int(_valid.sum()) > 0 else None
             _poke_thr = (0.3 / _wsf) if _wsf > 0 else 0.3
@@ -1894,6 +1998,10 @@ def run_full_generation_pipeline(
                 # -0.45mm (model) about the local grade. Per-vertex terrain so it
                 # follows the surface; fills the despike gap where the water groove was
                 # smoothed away. Vertices without a terrain hit fall back to the median.
+                # Верх води НАД грейдом (+0.15мм — ПЕРЕВІРЕНИЙ стан): спроба −0.06мм
+                # «під грейд» дала КАТАСТРОФУ на великій воді (7a2412e1): там грув
+                # у терені не вирізаний → терен пробивав воду → синьо-біла рябизна
+                # на всю ріку. +0.15 накриває терен чисто.
                 _raise = (0.15 / _wsf) if _wsf > 0 else 0.15
                 _sink = (0.45 / _wsf) if _wsf > 0 else 0.45
                 _med = float(_wnp.median(_tz[_valid]))
@@ -1937,6 +2045,10 @@ def run_full_generation_pipeline(
         ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,
+        # Власник (2026-07-02): основа+рельєф+будинки = ОДИН шар (один колір у
+        # палітрі й так; злиття прибирає окремий обʼєкт Buildings у 3MF/превʼю).
+        # Лише relief-шлях; брелки/магніти (flat_plate) не зачеплені.
+        merge_buildings_into_base=True,
     )
     _log_stage("export_outputs", stage_start)
     if stage_snapshot_collector is not None:
@@ -2016,8 +2128,11 @@ def run_full_generation_pipeline(
 
     stage_start = time.perf_counter()
     _preview_mode_on = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
-    if _preview_mode_on:
-        print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipping debug bundle")
+    # debug_bundle = пост-ген дамп (~42-57с + диск), лише для розслідувань. OFF за
+    # замовч. (оптимізація). Увімкнути: SAVE_DEBUG_BUNDLE=1. canonical-маски окремо.
+    _save_debug_bundle = os.environ.get("SAVE_DEBUG_BUNDLE", "").lower() in ("1", "true", "yes")
+    if _preview_mode_on or not _save_debug_bundle:
+        print(f"[INFO] {zone_prefix}debug bundle skipped (~50s saved; SAVE_DEBUG_BUNDLE=1 to enable)")
     else:
         try:
             debug_bundle_dir = create_debug_bundle(

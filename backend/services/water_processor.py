@@ -256,8 +256,11 @@ def process_water_surface(
                     # We iterate subdivision a few times to get enough density for noise
                     # Don't overdo it. 2 levels is usually enough for visual noise.
                     # Check edge lengths?
-                    for _ in range(2):
-                        if len(mesh.vertices) < 10000: # Limit count
+                    # 3 ітерації / 40к вершин (було 2/10к): на похилих ріках рівень
+                    # min(пласка, терен−drop) інтерполюється по ВЕЛИКИХ трикутниках →
+                    # видимі СХОДИНКИ води на схилі. Дрібніша сітка = плавний спуск.
+                    for _ in range(3):
+                        if len(mesh.vertices) < 40000: # Limit count
                              mesh = mesh.subdivide()
                 
                 if mesh is None or len(mesh.vertices) == 0:
@@ -296,13 +299,36 @@ def process_water_surface(
                     offset_below_m = -0.0002 if (surface_offset_m == 0.0 and depth_meters and depth_meters < 0.1) else surface_offset_m
                     level_src = original_ground if original_ground is not None else depressed_ground
                     try:
-                        flat_level = float(np.percentile(np.asarray(level_src, dtype=float), 70))
+                        # ПЕРЦЕНТИЛЬ 20 (було 70): рівень = p70 оригінального терену під
+                        # водоймою ставив воду ВИЩЕ 70% власного басейну → на рельєфі
+                        # (похила річка) вода ВИПИРАЛА над сухим берегом (виміряно
+                        # +1..4мм на 76-82% берегової лінії — «вода піднімається над
+                        # рельєфом»). p20 садить площину під більшість берега; на
+                        # «верхів'ї» кламп до дна (нижче) підтягує воду до русла як і
+                        # раніше; на пласких озерах p20≈p70 → без змін.
+                        flat_level = float(np.percentile(np.asarray(level_src, dtype=float), 20))
                     except Exception:
                         try:
                             flat_level = float(np.min(level_src))
                         except Exception:
                             flat_level = 0.0
-                    base_water_level = flat_level + offset_below_m
+                    # ⭐ВОДА НІКОЛИ НЕ ВИЩЕ ТЕРЕНУ: пласка площина на ПОХИЛІЙ ріці
+                    # (Дніпро/довгі ріки) неминуче стирчить над нижнім берегом
+                    # (виміряно 96% берега, median +4.5мм — «вода піднімається над
+                    # рельєфом»). Рівень per-vertex = min(пласка, оригінальний терен
+                    # − осідання): в улоговині вода ПЛАСКА (min бере flat), на схилі
+                    # спускається долиною ЯК СПРАВЖНЯ РІКА (min бере терен−drop) —
+                    # ніколи не випирає. Кламп до дна нижче лишається як був.
+                    # Осідання води під терен: пропорція від depth ТОПИЛА воду на
+                    # глибоких ваннах (0.35×12м=4.2м≈0.7мм моделі → вода невидима у
+                    # вузьких річках). Кап 0.18мм моделі: видима, але не випирає.
+                    _drop_m = max(0.35 * float(depth_meters or 0.0), 0.0005)
+                    if scale_factor and float(scale_factor) > 0:
+                        _drop_m = min(_drop_m, 0.18 / float(scale_factor))
+                    base_water_level = np.minimum(
+                        flat_level,
+                        np.asarray(original_ground, dtype=float) - _drop_m,
+                    ) + offset_below_m
 
                     # 4. Apply Noise (only to top surface)
                     # IMPORTANT: Use GLOBAL (UTM) coordinates for noise so adjacent zones stitch seamlessly.

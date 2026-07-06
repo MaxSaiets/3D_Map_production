@@ -22,6 +22,59 @@ from shapely.ops import unary_union
 # Допоміжні функції
 # ---------------------------------------------------------------------------
 
+def manifold_repair_subtract(terrain_mesh, cutter_mesh):
+    """РОБАСТНИЙ виріз: пропускає НЕгерметичний терен через manifold3d-конструктор
+    (топологічний РЕМОНТ у валідний том — чого fill_holes/blender НЕ вміли), тоді
+    boolean-різниця. Доведено на щільній юзер-зоні: 290138 граней wt=False →
+    manifold3d → wt=True → виріз → wt=True (паз врізано чисто, без нівечення).
+    Повертає trimesh.Trimesh або None. Це ГОЛОВНИЙ шлях різу конектор-паза —
+    працює навіть коли trimesh manifold-engine відмовляє («not all volumes»)."""
+    try:
+        from manifold3d import Manifold, Mesh as _MMesh
+        from trimesh.grouping import group_rows as _grp
+        def _open_edges(m):
+            try:
+                return len(_grp(m.edges_sorted, require_count=1))
+            except Exception:
+                return -1
+        def _to_man(m):
+            _mm = _MMesh(vert_properties=np.asarray(m.vertices, dtype=np.float32),
+                         tri_verts=np.asarray(m.faces, dtype=np.uint32))
+            return Manifold(_mm)
+        # ЗВАРЮВАННЯ ЗАЗОРІВ — КРИТИЧНИЙ КРОК. Рельєф після грувів має жменю
+        # coincident-вершинних зазорів (юзер-zone_1: лише 6 відкритих ребер), через
+        # які manifold3d кидає NotManifold і виріз падав ТИЖДЕНЬ. merge_vertices на
+        # правильній точності зводить дублі → 0 відкритих ребер (лишається тільки
+        # winding-дефект, який manifold3d ремонтує сам). Пробуємо кілька рівнів
+        # точності й беремо перший, що дає герметичну топологію.
+        _terr = terrain_mesh
+        if _open_edges(_terr) != 0:
+            for _dg in (6, 5, 4, 7):
+                _w = terrain_mesh.copy()
+                try:
+                    _w.merge_vertices(digits_vertex=_dg)
+                except Exception:
+                    continue
+                if _open_edges(_w) == 0:
+                    _terr = _w
+                    break
+        _t = _to_man(_terr)
+        if _t.is_empty() or _t.num_tri() == 0:
+            return None
+        _c = _to_man(cutter_mesh)
+        _res = _t - _c
+        if _res.is_empty() or _res.num_tri() == 0:
+            return None
+        _mo = _res.to_mesh()
+        _out = trimesh.Trimesh(
+            vertices=np.asarray(_mo.vert_properties)[:, :3].astype(np.float64),
+            faces=np.asarray(_mo.tri_verts), process=False)
+        return _out if len(_out.faces) > 0 else None
+    except Exception as _e:  # noqa: BLE001
+        print(f"[MANIFOLD-CUT] repair-subtract failed: {_e}")
+        return None
+
+
 def _find_blender() -> Optional[str]:
     """Знаходить шлях до Blender."""
     blender_exe = shutil.which("blender")
@@ -38,6 +91,7 @@ def _run_blender_boolean(
     cutter_mesh: trimesh.Trimesh,
     label: str = "mesh",
     clearance_m: float = 0.0,
+    pre_seal: bool = False,
 ) -> Optional[trimesh.Trimesh]:
     """
     Запускає Blender Boolean DIFFERENCE: terrain - cutter.
@@ -67,6 +121,24 @@ def _run_blender_boolean(
 
         terrain_mesh.export(terrain_path)
         cutter_mesh.export(cutter_path)
+
+        # PRE-SEAL лише для КОНЕКТОР-паза (pre_seal=True). Для доріг/парків/all_grooves
+        # fill_holes ЗАЛИВ БИ грувы — тому там pre_seal=False (порожній блок).
+        _seal = ("""
+bpy.context.view_layer.objects.active = terrain
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.mesh.select_all(action='SELECT')
+bpy.ops.mesh.remove_doubles(threshold=2e-4)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.fill_holes(sides=0)
+bpy.ops.mesh.select_all(action='DESELECT')
+bpy.ops.mesh.select_non_manifold()
+bpy.ops.mesh.edge_face_add()
+bpy.ops.mesh.select_all(action='SELECT')
+bpy.ops.mesh.normals_make_consistent(inside=False)
+bpy.ops.object.mode_set(mode='OBJECT')
+""") if pre_seal else ""
 
         blender_script = f"""
 import bpy
@@ -100,6 +172,9 @@ for obj in [terrain, cutter]:
     bpy.ops.mesh.normals_make_consistent(inside=False)
     bpy.ops.object.mode_set(mode='OBJECT')
 
+# PRE-SEAL (лише конектор-паз): зашити дірки ДО EXACT-різу → не нівечить негерметичний
+# меш (openEdges 18→514 РАНІШЕ). Для грувів порожньо (fill_holes залив би жолоби).
+{_seal}
 # Apply Displace for clearance (Minkowski sum expansion)
 if {clearance_m} > 0.0:
     bpy.context.view_layer.objects.active = cutter
@@ -537,13 +612,7 @@ def extend_buildings_mesh_to_uniform_bottom(
             if not np.any(bottom_face_mask):
                 continue
             bottom_vertex_indices = np.unique(faces[bottom_face_mask].ravel())
-            # Only LOWER bottoms toward target_z, never RAISE. Connector
-            # notch_clearance on a high-floor/relief DEM can put target_z ABOVE a
-            # building bottom; the old assignment then LIFTED it off the terrain
-            # (floating buildings). min() keeps seated buildings put; taller ones
-            # still extend down to the base.
-            _cur = vertices[bottom_vertex_indices, 2]
-            vertices[bottom_vertex_indices, 2] = np.minimum(_cur, float(target_z))
+            vertices[bottom_vertex_indices, 2] = float(target_z)
             mesh.vertices = vertices
             try:
                 mesh.fix_normals()

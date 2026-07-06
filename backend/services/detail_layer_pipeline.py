@@ -427,12 +427,100 @@ def process_detail_layers(
     )
 
     groove_result = None
+    # Різак паза зʼєднувача — щоб CDT-гілка вирізала паз ПОКИ меш герметичний
+    # (до boolean-грувів парків/води, які відкривають меш і ламають manifold).
+    _notch_cutter = None
+    if (getattr(request, "map_connector", False) and terrain_mesh is not None
+            and scale_factor and float(scale_factor) > 0 and not preview_mode):
+        try:
+            from services.flat_plate_pipeline import (
+                build_map_connector_geometry as _bmcg,
+                build_flat_layer_mesh_from_mask as _bflm,
+                parse_connector_azimuths as _pca,
+            )
+            _sfn = float(scale_factor)
+            _flz = float(terrain_mesh.bounds[0][2])
+            _mh = float(terrain_mesh.bounds[1][2]) - _flz
+            _dmm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
+            _dm = min(_dmm / _sfn, max(_mh * 0.6, 0.0))
+            _ntc0, _ = _bmcg(
+                zone_polygon_local,
+                edges=str(getattr(request, "map_connector_edges", "NSEW") or "NSEW"),
+                span_mm=float(getattr(request, "map_connector_span_mm", 10.0) or 10.0),
+                length_mm=float(getattr(request, "map_connector_length_mm", 15.0) or 15.0),
+                waist_frac=0.5,
+                clearance_mm=float(getattr(request, "map_connector_clearance_mm", 0.03) or 0.03),
+                export_scale_factor=_sfn,
+                key_edges=(str(getattr(request, "map_connector_key_edges", "") or "") or None),
+                edge_dirs=_pca(getattr(request, "map_connector_edge_az", "")),
+                key_dirs=_pca(getattr(request, "map_connector_key_az", "")),
+            )
+            if _ntc0 is not None and _dm > 1e-6:
+                _epsn = max(_mh * 0.01, 0.5 / _sfn)
+                # ГЛИБИНА ПАЗА ≤ ЛОКАЛЬНОЇ ТОВЩИНИ МАТЕРІАЛУ: фронт шле плиту 0.3мм,
+                # і на низькому рельєфі (край біля ріки) матеріалу над пазом < 2мм →
+                # паз ПРОБИВАВ поверхню наскрізь (у дірі видно дороги — «чорні
+                # штрихи в пазі»). Per-полігон: семплимо верх терену над кожним
+                # пазом і ріжемо не глибше (мін.дах 0.5мм; мін.глибина паза 0.6мм).
+                try:
+                    import numpy as _npn2
+                    import trimesh as _tmn3
+                    _tN = terrain_mesh.face_normals
+                    _tc = terrain_mesh.triangles_center
+                    _topc = _tc[_tN[:, 2] > 0.3]
+                    _geoms_n = list(getattr(_ntc0, "geoms", [_ntc0]))
+                    _cutters = []
+                    _roof_m = 0.5 / _sfn      # мін. 0.5мм даху над пазом
+                    _mind_m = 0.6 / _sfn      # мін. глибина паза 0.6мм (інакше не тримає)
+                    _wmask = getattr(canonical_mask_bundle, "water_final", None) \
+                        if canonical_mask_bundle is not None else None
+                    for _gp in _geoms_n:
+                        if getattr(_gp, "is_empty", True):
+                            continue
+                        # ВОДА над пазом: водна ванна (2мм) глибша за дах паза →
+                        # паз ВІДКРИВАЄТЬСЯ у ванну («пустота» на скрінах власника).
+                        # На краю з водою паз пропускаємо (зʼєднання там і не друкується).
+                        try:
+                            if _wmask is not None and not getattr(_wmask, "is_empty", True) \
+                                    and _gp.buffer(1.0).intersects(_wmask):
+                                print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
+                                      f"водна ванна перетинає footprint паза")
+                                continue
+                        except Exception:  # noqa: BLE001
+                            pass
+                        _gb = _gp.bounds
+                        _sel = ((_topc[:, 0] > _gb[0] - 1) & (_topc[:, 0] < _gb[2] + 1)
+                                & (_topc[:, 1] > _gb[1] - 1) & (_topc[:, 1] < _gb[3] + 1))
+                        _avail = (float(_topc[_sel][:, 2].min()) - _flz) if bool(_sel.any()) else _dm + _roof_m
+                        _dp = min(_dm, max(_avail - _roof_m, 0.0))
+                        if _dp < _mind_m:
+                            print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
+                                  f"матеріалу лише {_avail * _sfn:.2f}мм (< паз+дах)")
+                            continue
+                        _cp = _bflm(_gp, bottom_z_m=_flz - _epsn, thickness_m=_dp + _epsn,
+                                    color=[128, 128, 128], min_area_m2=1e-12)
+                        if _cp is not None and bool(getattr(_cp, "is_volume", False)):
+                            _cutters.append(_cp)
+                            if _dp < _dm - 1e-9:
+                                print(f"[GROOVE] {zone_prefix}notch depth reduced to "
+                                      f"{_dp * _sfn:.2f}мм on one edge (тонкий рельєф)")
+                    _notch_cutter = _tmn3.util.concatenate(_cutters) if _cutters else None
+                except Exception as _pdx:  # noqa: BLE001
+                    print(f"[GROOVE] {zone_prefix}per-edge notch depth failed ({_pdx}); uniform")
+                    _notch_cutter = _bflm(_ntc0, bottom_z_m=_flz - _epsn, thickness_m=_dm + _epsn,
+                                          color=[128, 128, 128], min_area_m2=1e-12)
+                if _notch_cutter is not None and not bool(getattr(_notch_cutter, "is_volume", False)):
+                    _notch_cutter = None
+        except Exception as _ncx:  # noqa: BLE001
+            print(f"[GROOVE] {zone_prefix}notch cutter build failed (non-fatal): {_ncx}")
+            _notch_cutter = None
     if preview_mode:
         print(f"[INFO] {zone_prefix}PREVIEW_MODE: skipped groove cutting; local preview uses surface decals")
     elif has_road_grooves or has_park_grooves or has_water_grooves:
         try:
             stage_start = time.perf_counter()
             groove_result = cut_inlay_grooves(
+                notch_cutter_mesh=_notch_cutter,
                 terrain_mesh=terrain_mesh,
                 road_mesh=road_mesh,
                 parks_mesh=parks_mesh,
@@ -471,6 +559,15 @@ def process_detail_layers(
                     else None
                 ),
                 use_exact_masks=canonical_mask_bundle is not None,
+                # CDT clean-wall груви ПРОПУСКАЄМО (→ boolean) на SERIES-тайлах
+                # (elevation_ref_m: CDT перебудовує межу з interior-only griddata → рве
+                # шов-Z сусідів). CONNECTOR тепер ДОЗВОЛЕНО: pre-groove паз пропускається
+                # коли CDT активний (у full_generation_pipeline), а ПІЗНІЙ блок ріже паз у
+                # ЧИСТИЙ герметичний CDT-терен (manifold, drift≈0, стінки паза чисті) —
+                # замість boolean-комба на ВСІХ стінках грувів (те, що бачив користувач).
+                cdt_allowed=(
+                    getattr(request, "elevation_ref_m", None) is None
+                ),
             )
             terrain_mesh = groove_result.terrain_mesh
             _log_stage("grooves", stage_start)

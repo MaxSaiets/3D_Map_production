@@ -972,6 +972,8 @@ def cut_inlay_grooves(
     parks_groove_override: Optional[BaseGeometry] = None,
     water_groove_override: Optional[BaseGeometry] = None,
     use_exact_masks: bool = False,
+    cdt_allowed: bool = True,
+    notch_cutter_mesh: Optional[trimesh.Trimesh] = None,
 ) -> GrooveCutResult:
     has_road_grooves = terrain_mesh is not None and road_mesh is not None and scale_factor and scale_factor > 0
     has_park_grooves = terrain_mesh is not None and parks_mesh is not None and scale_factor and scale_factor > 0
@@ -1162,9 +1164,18 @@ def cut_inlay_grooves(
     # стінки слотів ЧИСТІ. Доведено combWalls 93→1. Dev-safety: на будь-якій
     # помилці лог + провал у boolean (щоб баг CDT не валив генерацію під час тесту).
     import os as _os
+    # Дуже великі зони (>2км², напр. model_150 Хмельницький ~2.25e6): CDT-терен виходить
+    # 200к+ граней, blender-seal НЕ дозшиває надійно → все одно fallback boolean. Тому
+    # НЕ заходимо в CDT взагалі (економія ~200с марної спроби); boolean тут = поведінка
+    # сервера (пайплайн приймає dominant-fallback для таких велетнів). Дрібні/середні
+    # зони (<2км²) отримують чисті CDT-стінки.
+    _cdt_zone_area = float(getattr(zone_polygon_local, "area", 0.0) or 0.0) \
+        if zone_polygon_local is not None else 0.0
     if (_os.environ.get("CDT_GROOVE", "").strip().lower() in ("1", "true", "yes", "on")
+            and cdt_allowed
             and zone_polygon_local is not None
             and not getattr(zone_polygon_local, "is_empty", True)
+            and 0.0 < _cdt_zone_area <= 2.0e6
             and terrain_mesh is not None):
         try:
             from services.cdt_groove_terrain import build_cdt_grooved_terrain
@@ -1175,6 +1186,22 @@ def cut_inlay_grooves(
             # Парки/вода покривають велику площу → як глибокі слоти роздробили б
             # рельєф на острови-вежі (доведено) — їх лишаємо boolean-у нижче.
             _cdt_roads_only = _os.environ.get("CDT_ROADS_ONLY", "1").strip().lower() in ("1", "true", "yes", "on")
+            # ГАРД: на ВЕЛИКИХ або ПАРК/ВОДА-важких зонах all-inlay CDT дає велетенський
+            # PSLG → OOM/timeout, + keep-largest може викинути терен-острови в парках.
+            # → форсуємо roads-only (легше, дороги лишаються чисті; парки/вода boolean).
+            if not _cdt_roads_only:
+                try:
+                    _zarea = float(getattr(zone_polygon_local, "area", 0.0) or 0.0)
+                    _pw_area = sum(float(getattr(g, "area", 0.0) or 0.0)
+                                   for g in (parks_polygons, water_polygons)
+                                   if g is not None and not getattr(g, "is_empty", True))
+                    _pw_ratio = _pw_area / max(_zarea, 1.0)
+                    if _zarea > 3.0e6 or _pw_ratio > 0.72:
+                        _cdt_roads_only = True
+                        print(f"[GROOVE] {zone_prefix}CDT: very-large/park-dominant zone "
+                              f"(area={_zarea:.0f}m2 pw={_pw_ratio:.0%}) → roads-only (avoid OOM/fragment)")
+                except Exception:  # noqa: BLE001
+                    pass
             if _cdt_roads_only:
                 _inlays = road_polys_for_groove
             else:
@@ -1201,10 +1228,90 @@ def cut_inlay_grooves(
                 _bottoms = [float(m.bounds[0][2]) for m in (road_mesh, parks_mesh, water_mesh) if m is not None]
                 _slab_z = min(_bottoms) if _bottoms else (_floor_z + (_top_z - _floor_z) * 0.2)
             _slab_z = max(_slab_z, _floor_z + 0.3)
+            # seg_len (довжина сегмента densify меж інлеїв = ширина стінки-смужки)
+            # масштабуємо до розміру зони: на ВЕЛИКИХ зонах seg_len=3м дає велетенський
+            # PSLG (усі park/water/road-межі × сотні точок) → triangle OOM. Грубіший
+            # seg_len → менше constraint-точок → менший PSLG → без OOM (стінки трохи
+            # ширші, на 150мм-моделі непомітно). Малі зони лишаються 3м.
+            try:
+                _zx0, _zy0, _zx1, _zy1 = zone_polygon_local.bounds
+                _zw = max(float(_zx1 - _zx0), float(_zy1 - _zy0))
+                _seg_len = max(3.0, _zw / 260.0)
+            except Exception:  # noqa: BLE001
+                _seg_len = 3.0
+            # ⭐FOLLOW-глибина: слот = стала мілка глибина від ПОВЕРХНІ (embed×1.5,
+            # як boolean groove_depth_m) замість плаского глибокого slab. Це прибирає
+            # «дороги чорні на всю висоту стінки» на краях плитки, зубці між
+            # глибокими слотами біля пазів і конфлікти слотів із пазом зʼєднувача.
+            # roads-only: глибина ЛИШЕ від дорожнього embed (води/парків тут НЕМАЄ у
+            # слотах — брати water_depth означало 3мм-траншеї з дорогами-пʼєдесталами)
+            if _cdt_roads_only:
+                _embeds = [road_embed_m if road_embed_m else 0.0]
+            else:
+                _embeds = [road_embed_m if road_embed_m else 0.0,
+                           (float(parks_embed_mm) / float(scale_factor)) if (parks_embed_mm and scale_factor) else 0.0,
+                           float(water_depth_m) if water_depth_m else 0.0]
+            _follow_m = max(max(_embeds) * 1.5, (0.45 / float(scale_factor)) if scale_factor else 0.45)
             _cdt = build_cdt_grooved_terrain(
-                zone_polygon_local, _inlays, _height_fn, slab_z=_slab_z, floor_z=_floor_z)
+                zone_polygon_local, _inlays, _height_fn,
+                slab_z=_slab_z, floor_z=_floor_z, seg_len=_seg_len,
+                follow_depth_m=_follow_m)
             print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
                   f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
+            # ЗАПОБІЖНИК: CDT — це ОПТИМІЗАЦІЯ (чисті стінки), не має шипити биту геометрію.
+            # На дуже великих/складних масках seal інколи не дозшиває → негерметично.
+            # → викидаємо у наявний boolean-fallback (перевірений серверний шлях, завжди
+            # герметичний, ціна — гребінець). Ніколи не віддаємо негерметичний CDT-меш.
+            if not bool(getattr(_cdt, "is_volume", False)):
+                # CDT негерметичний. АЛЕ boolean-fallback ТЕЖ негерметичний на складних
+                # зонах — тільки ще й з гребінцем. Тому НЕ відкидаємо ЧИСТИЙ CDT через
+                # кілька незшитих швів: лишаємо його (export-repair + слайсер закривають
+                # дрібні діри), ЯКЩО він структурно цілий (1 головна компонента + мала
+                # частка відкритих ребер). Fallback у boolean ЛИШЕ якщо CDT реально
+                # розбитий (багато дір / фрагментований) — там boolean не гірший.
+                from trimesh.grouping import group_rows as _gr
+                try:
+                    _oe = len(_gr(_cdt.edges_sorted, require_count=1))
+                    _comps = _cdt.split(only_watertight=False)
+                    _mainfrac = (max(len(c.faces) for c in _comps) / max(len(_cdt.faces), 1)
+                                 if _comps else 1.0)
+                    _oe_ratio = _oe / max(len(_cdt.edges), 1)
+                except Exception:  # noqa: BLE001
+                    _oe, _mainfrac, _oe_ratio = 1, 1.0, 0.0
+                # ЖОРСТКО: НЕгерметичний CDT (після weld+union у build_cdt) → BOOLEAN.
+                # Спроба «KEEP чисті стінки з дірками» довела каскад (юзер-зона 7a2412e1):
+                # boolean-грувы парків/води на негерметичному терені ВІДМОВЛЯЮТЬ
+                # (drift 2м, «keeping previous terrain») → вода/зелень без ванни →
+                # рябизна+шари розʼїхались по Z. Гребінець boolean-фолбека — робочий
+                # компроміс; чисті стінки лишаються на зонах, де CDT герметичний.
+                raise RuntimeError(
+                    f"CDT not a volume after weld+union (openEdges={_oe} "
+                    f"main={_mainfrac:.0%}) → fallback boolean")
+            # ── ПАЗ ЗʼЄДНУВАЧА — ЗАРАЗ, поки CDT-меш ГАРАНТОВАНО ГЕРМЕТИЧНИЙ ──
+            # Пізній різ (після boolean-грувів парків/води) ламався: грувы відкривають
+            # меш (десятки дір) → manifold відмовляє → Blender нівечить (18→514 дір) →
+            # захисник відкидає → «пазів взагалі немає» (юзер-кейс a880ae1b). Тут меш
+            # щойно пройшов is_volume-перевірку → manifold ріже чисто (drift 0).
+            if notch_cutter_mesh is not None and bool(getattr(_cdt, "is_volume", False)):
+                try:
+                    import trimesh as _tmn
+                    _f0 = len(_cdt.faces)
+                    _ncut = _tmn.boolean.difference([_cdt, notch_cutter_mesh], engine="manifold")
+                    if (_ncut is not None and len(_ncut.faces) > 0
+                            and bool(getattr(_ncut, "is_volume", False))
+                            and len(_ncut.faces) != _f0):
+                        _cdt = _ncut
+                        try:
+                            _cdt.metadata["connector_notch_carved"] = True
+                        except Exception:  # noqa: BLE001
+                            pass
+                        print(f"[GROOVE] {zone_prefix}connector notch carved INTO watertight "
+                              f"CDT terrain (manifold, faces {_f0}→{len(_cdt.faces)})")
+                    else:
+                        print(f"[GROOVE] {zone_prefix}early notch cut produced no valid volume — "
+                              f"залишаю пізньому блоку")
+                except Exception as _nex:  # noqa: BLE001
+                    print(f"[GROOVE] {zone_prefix}early notch cut failed (non-fatal): {_nex}")
             _has_pw = any(_geometry_has_area(g)
                           for g in (parks_polys_for_cutting, water_polys_for_cutting))
             if _cdt_roads_only and _has_pw:
@@ -1261,6 +1368,32 @@ def cut_inlay_grooves(
     backend = resolve_boolean_backend(boolean_backend)
     backend_name = getattr(backend, "name", backend.__class__.__name__)
     print(f"[GROOVE] Boolean backend: {backend_name}")
+    # ── ПАЗ ЗʼЄДНУВАЧА у BOOLEAN-гілці — ТЕЖ ДО грувів, поки терен герметичний ──
+    # Коли CDT падає → сюди; пізній різ на пост-грув-меші ламався (діри→manifold
+    # відмовляє→Blender нівечить→reject → «пазів немає», юзер-кейс d51b3ebe).
+    if (notch_cutter_mesh is not None and terrain_mesh is not None
+            and not bool(getattr(getattr(terrain_mesh, "metadata", None) or {}, "get", lambda *_: False)("connector_notch_carved", False))
+            and bool(getattr(terrain_mesh, "is_volume", False))):
+        try:
+            import trimesh as _tmn2
+            _f0b = len(terrain_mesh.faces)
+            _ncut2 = _tmn2.boolean.difference([terrain_mesh, notch_cutter_mesh], engine="manifold")
+            if (_ncut2 is not None and len(_ncut2.faces) > 0
+                    and bool(getattr(_ncut2, "is_volume", False)) and len(_ncut2.faces) != _f0b):
+                terrain_mesh = _ncut2
+                try:
+                    terrain_mesh.metadata["connector_notch_carved"] = True
+                except Exception:  # noqa: BLE001
+                    pass
+                print(f"[GROOVE] {zone_prefix}connector notch carved into watertight terrain "
+                      f"BEFORE boolean grooves (manifold, faces {_f0b}→{len(terrain_mesh.faces)})")
+        except Exception as _nex2:  # noqa: BLE001
+            print(f"[GROOVE] {zone_prefix}pre-boolean notch cut failed (non-fatal): {_nex2}")
+    # Прапорець «паз уже вирізаний» (ранній різ у герметичний CDT) — boolean-різ
+    # нижче ЗАМІНЮЄ обʼєкт меша → metadata губиться → пізній блок різав би вдруге
+    # (і падав) та НЕ створював ключ. Зберігаємо і відновлюємо.
+    _notch_flag_before = bool(getattr(getattr(terrain_mesh, "metadata", None) or {}, "get", lambda *_: False)("connector_notch_carved", False)) \
+        if terrain_mesh is not None else False
     terrain_mesh = backend.cut_grooves(
         GrooveBooleanRequest(
             terrain_mesh=terrain_mesh,
@@ -1277,6 +1410,11 @@ def cut_inlay_grooves(
             groove_depth_m=groove_depth_m,
         )
     )
+    if _notch_flag_before and terrain_mesh is not None:
+        try:
+            terrain_mesh.metadata["connector_notch_carved"] = True
+        except Exception:  # noqa: BLE001
+            pass
     if terrain_mesh is not None:
         try:
             terrain_mesh = _stabilize_groove_result_mesh(
@@ -1292,6 +1430,11 @@ def cut_inlay_grooves(
             )
         except Exception as exc:
             print(f"[DEBUG] {zone_prefix} terrain groove stabilization skipped: {exc}")
+    if _notch_flag_before and terrain_mesh is not None:
+        try:
+            terrain_mesh.metadata["connector_notch_carved"] = True
+        except Exception:  # noqa: BLE001
+            pass
 
     # Hard spatial invariant: groove boolean must not teleport terrain bounds.
     # If a backend returns a shifted mesh (axis/units mismatch), keep previous.
