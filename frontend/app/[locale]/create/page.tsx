@@ -435,7 +435,9 @@ export default function Home() {
           // ЗАТРИМКА: даємо динамічному MapSelector змонтуватись і повісити слухач.
           timer = setTimeout(() => {
             try {
-              window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label: r.label } }));
+              // centerOnly: лише центруємо карту на країні відвідувача (zoom рівня
+              // країни), БЕЗ авто-розміщення зони виділення в столиці.
+              window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label: r.label, centerOnly: true, zoom: 6 } }));
             } catch { /* no-op */ }
           }, 900);
         } catch { /* graceful no-op */ }

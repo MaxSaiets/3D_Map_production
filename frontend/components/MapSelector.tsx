@@ -761,9 +761,19 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
 
     // Пошук локації (MapSearchBox) → фокус карти + перенос зони у знайдене місце.
     const onMapGoto = (e: Event) => {
-      const d = (e as CustomEvent).detail as { lat: number; lon: number; widthM?: number } | undefined;
+      const d = (e as CustomEvent).detail as { lat: number; lon: number; widthM?: number; centerOnly?: boolean; zoom?: number } | undefined;
       if (!d || !Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
       const center = L.latLng(d.lat, d.lon);
+      // ГЕО-ПРИ-ВХОДІ (centerOnly): лише центруємо карту на країні відвідувача
+      // (Cloudflare CF-IPCountry → /api/geo), БЕЗ розміщення зони виділення. Пошук
+      // MapSearchBox (без centerOnly) далі переносить зону як і раніше.
+      if (d.centerOnly) {
+        try {
+          map.invalidateSize();
+          map.setView(center, Number.isFinite(d.zoom as number) ? (d.zoom as number) : 6, { animate: false });
+        } catch { /* ignore */ }
+        return;
+      }
       let widthM: number;
       if (typeof d.widthM === "number" && d.widthM > 0) {
         // ЯВНА ширина зони (готовий район/приклад): ставимо рівно стільки (зона = розмір
