@@ -319,6 +319,16 @@ def process_detail_layers(
         )
     _log_stage("roads", stage_start)
     road_mesh = road_layer.mesh
+    # UNIFORM FLAT ROAD BOTTOM (support-free print + insert): flatten every road's
+    # underside to the single lowest point of the road mesh so the printed road piece
+    # has one flat bottom (no supports) and the matching CDT slot floor is flat too.
+    if os.environ.get("FLAT_ROAD_BOTTOM", "1") == "1" and road_mesh is not None and len(getattr(road_mesh, "faces", [])) > 0:
+        try:
+            from services.terrain_cutter import extend_road_mesh_to_uniform_bottom as _errb
+            _errb(road_mesh)
+            print(f"[ROADS] uniform flat bottom z={float(road_mesh.bounds[0][2]):.3f} (support-free)")
+        except Exception as _rue:  # noqa: BLE001
+            print(f"[ROADS] uniform bottom skipped: {_rue}")
     road_result = road_layer.road_result
     road_cut_source = road_layer.road_cut_source
     road_insert_source = (

@@ -1252,10 +1252,14 @@ def cut_inlay_grooves(
                            (float(parks_embed_mm) / float(scale_factor)) if (parks_embed_mm and scale_factor) else 0.0,
                            float(water_depth_m) if water_depth_m else 0.0]
             _follow_m = max(max(_embeds) * 1.5, (0.45 / float(scale_factor)) if scale_factor else 0.45)
+            # FLAT_ROAD_BOTTOM: flat slot floor at slab_z (=min road bottom) so it
+            # matches the uniform flat road underside (support-free insert). Else the
+            # legacy terrain-following shallow slot (non-uniform bottom).
+            _flatb = os.environ.get("FLAT_ROAD_BOTTOM", "1") == "1"
             _cdt = build_cdt_grooved_terrain(
                 zone_polygon_local, _inlays, _height_fn,
                 slab_z=_slab_z, floor_z=_floor_z, seg_len=_seg_len,
-                follow_depth_m=_follow_m)
+                follow_depth_m=(None if _flatb else _follow_m))
             print(f"[GROOVE] {zone_prefix}CDT clean-wall terrain: faces={len(_cdt.faces)} "
                   f"watertight={_cdt.is_volume} slab_z={_slab_z:.3f} floor_z={_floor_z:.3f}")
             # ЗАПОБІЖНИК: CDT — це ОПТИМІЗАЦІЯ (чисті стінки), не має шипити биту геометрію.
