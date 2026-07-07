@@ -228,7 +228,12 @@ def compare(case_id: str, got: dict, want: dict) -> list[str]:
 def main() -> int:
     results: dict = {}
     failures: list[str] = []
-    for case in CASES:
+    for _ci, case in enumerate(CASES):
+        # ЛІМІТ /api/generate = 5/60с (localhost НЕ звільнений) → швидкі keychain-кейси
+        # бурстили і ловили HTTP 429 → неповний еталон. Пауза 15с між кейсами тримає
+        # ≤4 запити у будь-якому 60с-вікні. Перед першим кейсом не спимо.
+        if _ci > 0:
+            time.sleep(15)
         try:
             print(f"[GOLDEN] running {case['id']}...")
             results[case["id"]] = run_case(case)

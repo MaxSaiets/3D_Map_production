@@ -227,12 +227,18 @@ def process_water_surface(
                 continue
             
             try:
-                # РІВНОМІРНА тріангуляція з внутрішніми точками (Delaunay по сітці):
-                # нормальна к-сть вершин + рівні трикутники замість «віяла з однієї
-                # точки» (краще лягає на рельєф). Fallback на uniform/earcut.
-                mesh = extrude_polygon_quality(poly, height=float(thickness_m), target_edge_len_m=4.0)
+                # ⭐ГРИД ПЕРШИМ (було extrude_polygon_quality): CDT-«quality» на
+                # РЕАЛЬНИХ річкових полігонах (після кліпу до зони) дає ВИРОДЖЕНІ
+                # трикутники-слівери (degen до 64+ на плитку) + non-manifold ребра →
+                # у серії/панно слайсер лається «крайки без колектора» (виміряно на
+                # r5_c3: 1117 вироджених граней, 1106 на межі плитки). extrude_polygon_grid
+                # дає ЧИСТИЙ герметичний меш (degen=0, wt=True) на всіх формах —
+                # річки/діри-острови/увігнуті/тонкі (перевірено Kyiv/Dnipro/Mykolaiv), а
+                # регулярна сітка ще й РІВНІШЕ лягає на рельєф при драпіруванні.
+                # quality/uniform лишаються фолбеком, якщо grid поверне None.
+                mesh = extrude_polygon_grid(poly, height=float(thickness_m), target_edge_len_m=4.0)
                 if mesh is None:
-                    mesh = extrude_polygon_grid(poly, height=float(thickness_m), target_edge_len_m=4.0)
+                    mesh = extrude_polygon_quality(poly, height=float(thickness_m), target_edge_len_m=4.0)
                 if mesh is None:
                     mesh = extrude_polygon_uniform(poly, height=float(thickness_m), densify_max_m=2.0)
                 if mesh is None:

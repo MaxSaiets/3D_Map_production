@@ -488,14 +488,23 @@ def process_detail_layers(
                         if getattr(_gp, "is_empty", True):
                             continue
                         # ВОДА над пазом: водна ванна (2мм) глибша за дах паза →
-                        # паз ВІДКРИВАЄТЬСЯ у ванну («пустота» на скрінах власника).
-                        # На краю з водою паз пропускаємо (зʼєднання там і не друкується).
+                        # паз може ВІДКРИТИСЬ у ванну («пустота»). БУЛО: пропускали паз
+                        # на БУДЬ-ЯКОМУ дотику води → у серії/панно на водних краях
+                        # ЗНИКАВ конектор («з однієї сторони немає пазу»; напр. r5_c3
+                        # North=0). СТАЛО: пропускаємо ЛИШЕ якщо паз майже ПОВНІСТЮ під
+                        # водою (>85% площі) — там сенсу немає. Інакше пускаємо в per-edge
+                        # depth-reduction нижче: воно семплить МІН верху терену над пазом
+                        # (над водою = дно ванни) і ріже не глибше, лишаючи 0.5мм дах →
+                        # паз у СУЦІЛЬНОМУ матеріалі, БЕЗ прориву у ванну. На геть тонкому
+                        # краю depth-reduction сам пропустить (матеріал < паз+дах).
                         try:
-                            if _wmask is not None and not getattr(_wmask, "is_empty", True) \
-                                    and _gp.buffer(1.0).intersects(_wmask):
-                                print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
-                                      f"водна ванна перетинає footprint паза")
-                                continue
+                            if _wmask is not None and not getattr(_wmask, "is_empty", True):
+                                _inter = _gp.intersection(_wmask)
+                                _wfrac = (float(_inter.area) / float(_gp.area)) if (_gp.area > 0 and not getattr(_inter, "is_empty", True)) else 0.0
+                                if _wfrac > 0.85:
+                                    print(f"[GROOVE] {zone_prefix}notch skipped on one edge: "
+                                          f"паз під водою на {_wfrac*100:.0f}% (немає суходолу)")
+                                    continue
                         except Exception:  # noqa: BLE001
                             pass
                         _gb = _gp.bounds

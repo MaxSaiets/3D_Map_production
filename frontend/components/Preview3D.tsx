@@ -404,13 +404,36 @@ function isConnectorMesh(c: any): boolean {
   return false;
 }
 
+// Download a preview blob with retry+backoff. The preview file (GLB/3MF) may still be
+// generating when the viewer first asks for it — a non-ready file comes back empty
+// (<=100 bytes) or 404s. Retrying a few times fixes the "Помилка завантаження моделі"
+// race for both single and multi-model (series) creation.
+async function downloadPreviewBlobWithRetry(
+  taskId: string,
+  format: "glb" | "3mf",
+  attempts = 5,
+): Promise<Blob> {
+  let lastErr: unknown = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const blob = await api.downloadModel(taskId, format);
+      if (blob && blob.size > 100) return blob;
+      lastErr = new Error(`${format.toUpperCase()} preview порожнє (спроба ${i + 1}/${attempts})`);
+    } catch (e) {
+      lastErr = e;
+    }
+    if (i < attempts - 1) {
+      // 0.8s, 1.6s, 2.4s, 3.2s — total ~8s of grace while the file finishes.
+      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr || "download failed"));
+}
+
 async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
   let glbError: unknown = null;
   try {
-    const blobGlb = await api.downloadModel(taskId, "glb");
-    if (!blobGlb || blobGlb.size <= 100) {
-      throw new Error("Локальне GLB preview порожнє або не створене");
-    }
+    const blobGlb = await downloadPreviewBlobWithRetry(taskId, "glb");
     try {
       return await loadGLB(blobGlb);
     } catch (error) {
@@ -426,15 +449,12 @@ async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
   }
 
   try {
-    const blob3mf = await api.downloadModel(taskId, "3mf");
-    if (!blob3mf || blob3mf.size <= 100) {
-      throw new Error("Локальне 3MF preview порожнє або не створене");
-    }
+    const blob3mf = await downloadPreviewBlobWithRetry(taskId, "3mf");
     return await load3MF(blob3mf);
   } catch (error3mf: any) {
     const glbMessage = glbError instanceof Error ? glbError.message : String(glbError || "");
     const mfMessage = error3mf instanceof Error ? error3mf.message : String(error3mf || "");
-    throw new Error(`Не вдалося завантажити preview: GLB (${glbMessage}); 3MF (${mfMessage})`);
+    throw new Error(`Не вдалося завантажити preview після кількох спроб: GLB (${glbMessage}); 3MF (${mfMessage})`);
   }
 }
 
