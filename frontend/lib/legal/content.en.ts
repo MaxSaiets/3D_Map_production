@@ -91,7 +91,7 @@ export const en: LegalSet = {
         { p: "Product prices (delivery is charged separately by the carrier):" },
         { ul: [
           "Map keychain — from 120 ₴ (≈ 3 €).",
-          "3D district map: S 5.5 cm — 150 ₴, M 8 cm — 240 ₴, L 11 cm — 360 ₴, XL 15 cm — 550 ₴ (maps — from 4 €).",
+          "3D district map: S 5.5 cm — 250 ₴, M 8 cm — 350 ₴, L 11 cm — 450 ₴, XL 15 cm — 550 ₴ (maps — from 6 €).",
           "Fridge magnet (map) — 150 ₴.",
           "Downloading the finished 3MF/STL file for self-printing — free within your account limit.",
         ] },
