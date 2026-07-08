@@ -53,7 +53,7 @@ const PR = {
 const uk: Catalog = {
   metaTitle: "Ціни на 3D-мапи, магніти та брелоки",
   metaDescription:
-    "Актуальні ціни в гривнях: 3D-мапа міста від 150 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
+    "Актуальні ціни в гривнях: 3D-мапа міста від 250 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
   h1: "Ціни",
   intro:
     "Ціна вказана за готовий виріб (3D-друк з біопластику Eco PLA). Доставка оплачується окремо за тарифом перевізника. Оплата — карткою Visa / Mastercard онлайн або при отриманні.",
@@ -104,7 +104,7 @@ const uk: Catalog = {
 const en: Catalog = {
   metaTitle: "Prices for 3D city maps, magnets & keychains",
   metaDescription:
-    "Current prices in UAH: 3D city map from 150 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
+    "Current prices in UAH: 3D city map from 250 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
   h1: "Prices",
   intro:
     "The price is for the finished item (3D-printed in Eco PLA bioplastic). Delivery is paid separately at the carrier's tariff. Payment by Visa / Mastercard online or on delivery.",
@@ -155,7 +155,7 @@ const en: Catalog = {
 const de: Catalog = {
   metaTitle: "Preise für 3D-Stadtkarten, Magnete & Schlüsselanhänger",
   metaDescription:
-    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 150 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
+    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 250 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
   h1: "Preise",
   intro:
     "Der Preis gilt für das fertige Produkt (3D-Druck aus Eco-PLA-Biokunststoff). Der Versand wird separat zum Tarif des Zustellers berechnet. Zahlung per Visa / Mastercard online oder bei Lieferung.",
@@ -206,7 +206,7 @@ const de: Catalog = {
 const es: Catalog = {
   metaTitle: "Precios de mapas 3D, imanes y llaveros",
   metaDescription:
-    "Precios actuales en UAH: mapa 3D de ciudad desde 150 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
+    "Precios actuales en UAH: mapa 3D de ciudad desde 250 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
   h1: "Precios",
   intro:
     "El precio corresponde al producto terminado (impreso en 3D con bioplástico Eco PLA). El envío se paga aparte según la tarifa del transportista. Pago con Visa / Mastercard en línea o contra entrega.",
@@ -257,7 +257,7 @@ const es: Catalog = {
 const fr: Catalog = {
   metaTitle: "Prix des cartes 3D, aimants et porte-clés",
   metaDescription:
-    "Prix actuels en UAH : carte 3D de ville dès 150 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
+    "Prix actuels en UAH : carte 3D de ville dès 250 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
   h1: "Tarifs",
   intro:
     "Le prix concerne le produit fini (imprimé en 3D en bioplastique Eco PLA). La livraison est facturée séparément au tarif du transporteur. Paiement par Visa / Mastercard en ligne ou à la livraison.",
@@ -308,7 +308,7 @@ const fr: Catalog = {
 const pl: Catalog = {
   metaTitle: "Ceny map 3D, magnesów i breloków",
   metaDescription:
-    "Aktualne ceny w UAH: mapa 3D miasta od 150 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
+    "Aktualne ceny w UAH: mapa 3D miasta od 250 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
   h1: "Cennik",
   intro:
     "Cena dotyczy gotowego produktu (druk 3D z biotworzywa Eco PLA). Dostawa płatna osobno według taryfy przewoźnika. Płatność kartą Visa / Mastercard online lub przy odbiorze.",
