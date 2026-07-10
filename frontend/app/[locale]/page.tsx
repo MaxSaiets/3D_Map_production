@@ -7,16 +7,18 @@ import {
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 
-// «Друкуємо й доставляємо · від 150 ₴» — конкретна пропозиція у героя (раніше герой
+// «Друкуємо й доставляємо · від 250 ₴» — конкретна пропозиція у героя (раніше герой
 // тільки про «завантаж файл», а реальний бізнес=друк+доставка був прихований). Inline
 // локалізований мап → без правок 6 messages-файлів.
+// ⚠️ БУЛО застарілим (150₴): ціна мапи змінилась на S250/M350/L450/XL550 2026-07-09,
+// цей hardcoded pill не оновили разом з messages/*.json — знайдено при живій перевірці.
 const SHIP_PILL: Record<string, string> = {
-  uk: "Друкуємо й доставляємо · від 150 ₴",
-  en: "We print & ship · from 150 ₴",
-  de: "Wir drucken & versenden · ab 150 ₴",
-  es: "Imprimimos y enviamos · desde 150 ₴",
-  fr: "Nous imprimons et livrons · dès 150 ₴",
-  pl: "Drukujemy i wysyłamy · od 150 ₴",
+  uk: "Друкуємо й доставляємо · від 250 ₴",
+  en: "We print & ship · from 250 ₴",
+  de: "Wir drucken & versenden · ab 250 ₴",
+  es: "Imprimimos y enviamos · desde 250 ₴",
+  fr: "Nous imprimons et livrons · dès 250 ₴",
+  pl: "Drukujemy i wysyłamy · od 250 ₴",
 };
 
 // Блок «Популярні міста» на лендінгу — ПРЯМІ лінки з найавторитетнішої сторінки на
