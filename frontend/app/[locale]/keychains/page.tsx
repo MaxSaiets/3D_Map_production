@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+// ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
+// посилання з /en/keychains губили префікс локалі.
+import { Link } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, User } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";

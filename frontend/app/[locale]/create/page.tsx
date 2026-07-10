@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+// ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
+// посилання з /en/create губили префікс локалі (/keychains замість /en/keychains).
+import { Link } from "@/i18n/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, KeyRound, User, X, Home as HomeIcon } from "lucide-react";
 import { ControlPanel } from "@/components/ControlPanel";
@@ -657,6 +659,24 @@ export default function Home() {
                 🧊 {tc("stageRender")}{isGenerating ? ` · ${progress}%` : ""}
               </button>
             </div>
+            {/* ПОСТІЙНИЙ КРОК-БАНЕР (UX-аудит P0): selectionLabel раніше рахувався,
+                але НІДЕ не рендерився — новий користувач не бачив «що робити далі».
+                Тонкий рядок над сценою: поточний крок + наступна дія. Видно на
+                мобільному І десктопі; ховається лише під час генерації (там прогрес). */}
+            {!isGenerating && (
+              <div className="order-0 flex shrink-0 items-center gap-2 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.07)] px-3.5 py-1.5" aria-live="polite">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[11px] font-bold text-white">
+                  {downloadUrl ? "3" : (hasMapSelection || zoneCount > 0) ? "2" : "1"}
+                </span>
+                <p className="min-w-0 truncate text-[12.5px] font-semibold text-[var(--text-primary)]">
+                  {downloadUrl
+                    ? tc("stepReadyOrder")
+                    : (hasMapSelection || zoneCount > 0)
+                      ? tc("stepNextSize")
+                      : selectionLabel}
+                </p>
+              </div>
+            )}
             <div id="panel-map" className={`${mapPanelClasses} ${stageView === "map" ? "" : "hidden"}`}>
               {/* Карта — головна взаємодія: на десктопі вся сцена (перемикач +
                   картка) ВЛІЗАЄ в один екран (calc під шапку) → без скролу
@@ -709,9 +729,11 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* МАПА НА ВЕСЬ РОЗМІР + плаваючі оверлеї. relative — щоб
-                    абсолютно-позиційовані контроли лягали поверх карти. */}
-                <div className="relative flex min-h-[60dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
+                {/* МАПА + плаваючі оверлеї. relative — щоб абсолютно-позиційовані
+                    контроли лягали поверх карти. МОБ: 42dvh (було 60dvh — карта
+                    з'їдала весь перший екран і ховала розмір/ціну/CTA нижче згину;
+                    UX-аудит P0 «користувачам нічого не ясно»). */}
+                <div className="relative flex min-h-[42dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини

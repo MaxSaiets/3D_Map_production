@@ -12,6 +12,9 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 const STORE_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Store",
+  // Посилаємось на ГОЛОВНИЙ Organization/Store вузол з layout (${site}/#org),
+  // а не плодимо другий безіменний Store того самого бізнесу (SEO-дедуп).
+  "@id": `${BUSINESS.site}/#org`,
   name: BUSINESS.storeName,
   url: BUSINESS.site,
   image: `${BUSINESS.site}/opengraph-image`,

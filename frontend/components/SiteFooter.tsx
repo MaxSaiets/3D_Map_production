@@ -7,6 +7,10 @@ import { BUSINESS } from "@/lib/legal";
 
 // Локалізований лейбл сторінки «Ціни» (без правок 6 messages-файлів).
 const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de: "Preise", es: "Precios", fr: "Tarifs", pl: "Cennik" };
+// Лейбли нових SEO-сторінок (blog/showcase/worlds) — теж без правок messages.
+const BLOG_LABEL: Record<string, string> = { uk: "Блог", en: "Blog", de: "Blog", es: "Blog", fr: "Blog", pl: "Blog" };
+const SHOWCASE_LABEL: Record<string, string> = { uk: "Галерея", en: "Gallery", de: "Galerie", es: "Galería", fr: "Galerie", pl: "Galeria" };
+const WORLDS_LABEL: Record<string, string> = { uk: "3D-світи", en: "3D Worlds", de: "3D-Welten", es: "Mundos 3D", fr: "Mondes 3D", pl: "Światy 3D" };
 
 /* ---------- Footer ----------
    Shared global footer: legal links + ФОП requisites + contacts.
@@ -14,7 +18,11 @@ const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de:
    gets a consistent footer + a way home. */
 export function SiteFooter() {
   const t = useTranslations("home.footer");
-  const pricesLabel = PRICES_LABEL[useLocale()] ?? PRICES_LABEL.uk;
+  const locale = useLocale();
+  const pricesLabel = PRICES_LABEL[locale] ?? PRICES_LABEL.uk;
+  const blogLabel = BLOG_LABEL[locale] ?? BLOG_LABEL.uk;
+  const showcaseLabel = SHOWCASE_LABEL[locale] ?? SHOWCASE_LABEL.uk;
+  const worldsLabel = WORLDS_LABEL[locale] ?? WORLDS_LABEL.uk;
   return (
     <footer className="border-t border-line-soft py-12">
       <div className="mx-auto flex max-w-[1360px] flex-col gap-6 px-5 text-sm text-ink-3 lg:px-8">
@@ -29,6 +37,9 @@ export function SiteFooter() {
             <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pricesLabel}</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
             <Link href="/podarunok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("gift")}</Link>
+            <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{blogLabel}</Link>
+            <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{showcaseLabel}</Link>
+            <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{worldsLabel}</Link>
             <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
             <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>
             <Link href="/refund" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("refund")}</Link>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES } from "@/lib/cityPages";
+import { BLOG_ARTICLES } from "@/lib/blog";
 
 const BASE = "https://monadruk.com";
 const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
@@ -12,6 +13,13 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/prices", changeFrequency: "monthly", priority: 0.7 },
   { path: "/maps", changeFrequency: "monthly", priority: 0.8 },
   { path: "/podarunok", changeFrequency: "monthly", priority: 0.7 },
+  // Блог: індекс + статті (контент-глибина під інформаційні запити)
+  { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
+  ...BLOG_ARTICLES.map((a) => ({
+    path: `/blog/${a.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  })),
   // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей)
   ...CITY_PAGES.map((c) => ({
     path: `/maps/${c.slug}`,

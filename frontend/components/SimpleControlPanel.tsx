@@ -1338,11 +1338,21 @@ export function SimpleControlPanel({
               </span>
             ))}
           </div>
+          {/* ГОЛОВНА CTA = «Замовити друк · ціна» (бронза) — ПЕРША і єдина домінантна
+              кнопка (UX-аудит: 3 стеки кнопок давали параліч вибору; покупцю не було
+              ясно, що для покупки досить одного кліку). Превʼю — вторинна контурна. */}
+          <button
+            type="button"
+            onClick={orderNow}
+            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+          >
+            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
+          </button>
           <button
             type="button"
             onClick={() => handleGenerate()}
             disabled={!canGenerate || isGenerating}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white/70 px-5 py-3 text-sm font-bold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.10)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isGenerating ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>
@@ -1389,17 +1399,9 @@ export function SimpleControlPanel({
             </button>
           )}
 
-          {/* «Замовити друк» — одразу після «Створити», завжди на видному місці.
-              orderNow() (а НЕ голий setOrderOpen): якщо на екрані лише GLB-прев'ю або
-              нічого — стартує ПОВНУ 3MF-генерацію у фоні, щоб оператор отримав готовий
-              файл (раніше десктоп-замовлення приходили з task_id=null — критичний баг). */}
-          <button
-            type="button"
-            onClick={orderNow}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
-          >
-            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
-          </button>
+          {/* «Замовити друк» перенесено НАГОРУ як головну CTA (див. вище). orderNow()
+              лишився той самий: якщо на екрані лише GLB-прев'ю або нічого — стартує
+              ПОВНУ 3MF-генерацію у фоні, щоб оператор отримав готовий файл. */}
 
           {error && (
             <div role="alert" aria-atomic="true" className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
@@ -1509,11 +1511,13 @@ export function SimpleControlPanel({
         <>
           <div className="h-20 lg:hidden" aria-hidden="true" />
           <StickyActionBar
-            // Ціну у нижньому барі НЕ показуємо постійно (власник: «не була завжди на
-            // виду, а тільки при замовленні») → price=null. Ціна видно на inline-кнопці
-            // «Замовити друк · N₴» та у формі замовлення. Бар лишає лише дії (на всю ширину).
+            // ЦІНА ЗАВЖДИ ВИДИМА у мобільному барі (UX-аудит P0: на мобільному вся
+            // панель з розміром/ціною ховалась нижче карти → користувач НЕ бачив ціну
+            // взагалі до глибокого скролу; для конверсії ціна має бути біля дії).
+            // Раніше price=null за давнім побажанням власника — свідомо повернено
+            // за новою вимогою «максимальна зручність та продажі».
             priceLabel={t("estPrice")}
-            price={null}
+            price={orderPriceText || null}
             actionLabel={
               downloadUrl
                 ? t("orderShort")

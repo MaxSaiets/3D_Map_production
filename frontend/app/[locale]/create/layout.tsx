@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { mapPriceRange } from "@/lib/mapPrices";
+import { seoProse } from "@/lib/seoProse";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   // Colocated [locale]-OG дають 307→404 (next-intl as-needed) → беремо робочий рут-OG.
@@ -56,10 +57,19 @@ export default async function CreateLayout({
     ],
   };
 
+  const prose = seoProse("create", locale);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       {children}
+      {/* SEO-проза ПІД конструктором: client-builder майже не має індексованого
+          тексту, хоча таргетить грошові запити. Серверний блок = краулер бачить
+          контент; користувачу нижче згину не заважає. */}
+      <section className="mx-auto max-w-[820px] px-5 py-10">
+        <h2 className="text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{prose.h2}</h2>
+        <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{prose.p1}</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{prose.p2}</p>
+      </section>
     </>
   );
 }

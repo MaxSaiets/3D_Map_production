@@ -33,10 +33,11 @@ export default function ShowcasePage() {
   ];
   const [active, setActive] = useState(VIEW_MODELS[0]);
 
-  type Item = { src: string; kind: "key" | "map" };
+  type Item = { src: string; kind: "key" | "map"; n: number };
+  // n → унікальний alt на кожне фото (SEO: 19 зображень мали 2 дубль-alt).
   const ITEMS: Item[] = [
-    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const })),
-    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const })),
+    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const, n: i + 1 })),
+    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const, n: i + 1 })),
   ];
   const items = ITEMS.filter((it) => filter === "all" || it.kind === filter);
   const viewModels = VIEW_MODELS.filter((m) => filter === "all" || m.kind === filter);
@@ -122,7 +123,7 @@ export default function ShowcasePage() {
           <button key={it.src} onClick={() => openItem(it)} className="group overflow-hidden rounded-[20px] border border-line bg-paper text-left" title={t("rotate3d")}>
             <div className="relative aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.src} alt={it.kind === "key" ? t("keyItem") : t("mapItem")} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
+              <img src={it.src} alt={`${it.kind === "key" ? t("keyItem") : t("mapItem")} — ${t("printedSampleAlt")} ${it.n}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
                 <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">{t("rotate3d")} ↻</span>
               </span>
