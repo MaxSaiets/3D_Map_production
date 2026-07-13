@@ -241,6 +241,18 @@ export default async function CityPage({
         </Link>
       </section>
 
+      {/* Крос-лінки на brelok/podarunok сторінки цього ж міста (кластер міста,
+          хвиля 2 programmatic SEO). Тексти bilingual-inline (контент цих сторінок
+          uk/en з lib/cityLanding — той самий принцип, без нових i18n-ключів). */}
+      <section className="mt-12 flex flex-col gap-2 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
+        <Link href={`/brelok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+          {locale === "uk" ? `Брелок з картою міста — ${name}` : `City map keychain — ${name}`} →
+        </Link>
+        <Link href={`/podarunok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+          {locale === "uk" ? `Подарунок з міста — ${name}` : `A gift from ${name}`} →
+        </Link>
+      </section>
+
       <h2 className="mt-14 text-[20px] font-semibold">{t("others")}</h2>
       <ul className="mt-4 flex flex-wrap gap-2">
         {others.map((c) => (

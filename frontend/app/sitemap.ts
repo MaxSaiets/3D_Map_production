@@ -1,9 +1,14 @@
 import type { MetadataRoute } from "next";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES } from "@/lib/cityPages";
+import { BLOG_ARTICLES } from "@/lib/blog";
+import { OCCASION_PAGES } from "@/lib/cityLanding";
 
 const BASE = "https://monadruk.com";
-const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
+// Дата контенту хвилі city×product/occasion сторінок (2026-07-13) — окремо від
+// STATIC_LASTMOD, щоб не сигналити «змінилось усе» для старих сторінок.
+const WAVE2_LASTMOD = new Date("2026-07-13");
+const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date }[] = [
   { path: "", changeFrequency: "weekly", priority: 1.0 },
   { path: "/create", changeFrequency: "monthly", priority: 0.9 },
   { path: "/keychains", changeFrequency: "monthly", priority: 0.9 },
@@ -12,11 +17,38 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/prices", changeFrequency: "monthly", priority: 0.7 },
   { path: "/maps", changeFrequency: "monthly", priority: 0.8 },
   { path: "/podarunok", changeFrequency: "monthly", priority: 0.7 },
+  // Блог: індекс + статті (контент-глибина під інформаційні запити)
+  { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
+  ...BLOG_ARTICLES.map((a) => ({
+    path: `/blog/${a.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+    lastmod: new Date(a.date), // дата публікації статті — точніша за глобальний STATIC_LASTMOD
+  })),
   // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей)
   ...CITY_PAGES.map((c) => ({
     path: `/maps/${c.slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
+  })),
+  // Хвиля 2 (2026-07-13): місто × продукт + лендінги під нагоду
+  ...CITY_PAGES.map((c) => ({
+    path: `/brelok/${c.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+    lastmod: WAVE2_LASTMOD,
+  })),
+  ...CITY_PAGES.map((c) => ({
+    path: `/podarunok/${c.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+    lastmod: WAVE2_LASTMOD,
+  })),
+  ...OCCASION_PAGES.map((o) => ({
+    path: `/podarunok/${o.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+    lastmod: WAVE2_LASTMOD,
   })),
   { path: "/delivery", changeFrequency: "monthly", priority: 0.4 },
   { path: "/contacts", changeFrequency: "yearly", priority: 0.3 },
@@ -39,13 +71,13 @@ const DYNAMIC_PATHS = new Set(["", "/create", "/keychains", "/showcase"]);
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];
-  for (const { path, changeFrequency, priority } of PATHS) {
+  for (const { path, changeFrequency, priority, lastmod } of PATHS) {
     const languages: Record<string, string> = {};
     for (const l of locales) languages[localeMeta[l].htmlLang] = url(l, path);
     for (const l of locales) {
       entries.push({
         url: url(l, path),
-        lastModified: DYNAMIC_PATHS.has(path) ? now : STATIC_LASTMOD,
+        lastModified: DYNAMIC_PATHS.has(path) ? now : lastmod ?? STATIC_LASTMOD,
         changeFrequency,
         priority: l === defaultLocale ? priority : Math.max(0.1, priority - 0.1),
         alternates: { languages },

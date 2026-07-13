@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { localeUrl, pageMetadata } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
+import { CITY_PAGES } from "@/lib/cityPages";
 
 /**
  * Подарункова/під-нагоду посадкова сторінка («3D-мапа та брелок на подарунок»).
@@ -14,13 +15,14 @@ import { Link } from "@/i18n/navigation";
 export const dynamicParams = false;
 
 // Нагоди (data-driven): id → i18n-ключ (gift.<id>Title/<id>Desc/<id>Cta) + ціль CTA.
-// «для пари» веде на /keychains (там серце-брелок — перший помітний шаблон).
+// Хвиля 2: картки ведуть на повні лендінги /podarunok/[slug] (глибший контент),
+// а не одразу в конструктор.
 const OCCASIONS = [
-  { id: "anniversary", href: "/create" },
-  { id: "birthday", href: "/create" },
-  { id: "housewarming", href: "/create" },
-  { id: "couple", href: "/keychains" },
-  { id: "corporate", href: "/create" },
+  { id: "anniversary", href: "/podarunok/na-richnytsyu" },
+  { id: "birthday", href: "/podarunok/na-den-narodzhennya" },
+  { id: "housewarming", href: "/podarunok/na-novosillya" },
+  { id: "couple", href: "/podarunok/dlya-pary" },
+  { id: "corporate", href: "/podarunok/korporatyvnyi-podarunok" },
 ] as const;
 
 export async function generateMetadata({
@@ -109,6 +111,26 @@ export default async function GiftPage({
                   {t(`${o.id}Cta`)} →
                 </Link>
               </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Подарунок × місто (хвиля 2 programmatic SEO): чіпи на /podarunok/[city].
+          Заголовок bilingual-inline — контент цільових сторінок uk/en з lib. */}
+      <section className="mt-12">
+        <h2 className="text-[20px] font-semibold">
+          {locale === "uk" ? "Подарунок з вашого міста" : "A gift from your city"}
+        </h2>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {CITY_PAGES.map((c) => (
+            <li key={c.slug}>
+              <Link
+                href={`/podarunok/${c.slug}`}
+                className="inline-block rounded-full border border-line-soft bg-white/70 px-4 py-2 text-[13.5px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink"
+              >
+                {c.names[locale]}
+              </Link>
             </li>
           ))}
         </ul>
