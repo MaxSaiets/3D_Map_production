@@ -10,10 +10,13 @@ import { mapPriceRange } from "@/lib/mapPrices";
 import {
   giftCityCopy,
   contentLocale,
+  cityFaq,
+  occasionFaq,
   OCCASION_PAGES,
   OCCASION_BY_SLUG,
   type CityLandingCopy,
 } from "@/lib/cityLanding";
+import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
 
 /**
  * Programmatic SEO рівень 2: подарунок × місто (23) + лендінги під нагоду (5).
@@ -89,6 +92,10 @@ export default async function GiftSlugPage({
   const path = `/podarunok/${params.slug}`;
   const city = isCity ? CITY_PAGE_BY_SLUG[params.slug] : undefined;
   const occ = !isCity ? OCCASION_BY_SLUG[params.slug] : undefined;
+  const facts = city ? cityFacts(city.slug) : undefined;
+  const faq = city ? cityFaq(contentLocale(locale), r.cityName ?? "", "podarunok") : occasionFaq(contentLocale(locale));
+  const nf = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale);
+  const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
 
   const range = mapPriceRange(locale);
   const ld = {
@@ -119,6 +126,14 @@ export default async function GiftSlugPage({
           { "@type": "ListItem", position: 2, name: isUA ? "Подарунки" : "Gifts", item: localeUrl(locale, "/podarunok") },
           { "@type": "ListItem", position: 3, name: c.h1, item: localeUrl(locale, path) },
         ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
       },
     ],
   };
@@ -202,6 +217,44 @@ export default async function GiftSlugPage({
         </section>
       ))}
 
+      {/* Факти про місто (лише для city-варіанту) — анти-doorway. */}
+      {facts && city && (
+        <section className="mt-10 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
+          <h2 className="text-[16px] font-semibold text-ink">
+            {isUA ? `Факти про місто — ${r.cityName}` : `Facts about ${r.cityName}`}
+          </h2>
+          <dl className="mt-3 grid gap-x-7 gap-y-1.5 text-[14px] sm:grid-cols-2">
+            {[
+              [isUA ? "Населення" : "Population", `${nf.format(facts.population)} (${facts.populationYear})`],
+              [
+                facts.firstMention ? (isUA ? "Перша згадка" : "First mentioned") : (isUA ? "Засноване" : "Founded"),
+                String(facts.founded),
+              ],
+              [isUA ? "Річка" : "River", pn(facts.river)],
+              [isUA ? "Візитівка" : "Landmark", pn(facts.landmark)],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
+                <dt className="text-ink-3">{label}</dt>
+                <dd className="text-right font-semibold text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {/* FAQ (видимий, +FAQPage JSON-LD вище). */}
+      <section className="mt-10">
+        <h2 className="text-[20px] font-semibold">{isUA ? "Часті запитання" : "FAQ"}</h2>
+        <dl className="mt-4 flex flex-col gap-4">
+          {faq.map((f) => (
+            <div key={f.q}>
+              <dt className="text-[15px] font-semibold text-ink">{f.q}</dt>
+              <dd className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       {ui.cityLinks && city && (
         <section className="mt-12 flex flex-col gap-2 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
           <Link href={`/maps/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
@@ -212,6 +265,20 @@ export default async function GiftSlugPage({
           </Link>
         </section>
       )}
+
+      {/* Читати далі: 2 статті блогу — контент↔продукт перелінковка. */}
+      <section className="mt-10">
+        <h2 className="text-[18px] font-semibold text-ink">{isUA ? "Читати далі" : "Read more"}</h2>
+        <ul className="mt-3 flex flex-col gap-2">
+          {BLOG_ARTICLES.slice(2, 4).map((a) => (
+            <li key={a.slug}>
+              <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
+                {a.content[blogLocale(locale)].h1} →
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Нагоди — з міської сторінки і з іншої нагоди (перелінковка кластера). */}
       <section className="mt-12">

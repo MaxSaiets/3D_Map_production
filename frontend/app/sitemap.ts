@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES } from "@/lib/blog";
-import { OCCASION_PAGES } from "@/lib/cityLanding";
+import { OCCASION_PAGES, DISTRICT_PAGES } from "@/lib/cityLanding";
 
 const BASE = "https://monadruk.com";
 // Дата контенту хвилі city×product/occasion сторінок (2026-07-13) — окремо від
@@ -25,11 +25,20 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
     priority: 0.6,
     lastmod: new Date(a.date), // дата публікації статті — точніша за глобальний STATIC_LASTMOD
   })),
-  // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей)
+  // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей). lastmod=WAVE2 —
+  // сторінки допрацьовано 2026-07-13 (FAQ+факти+блог-лінки), не чіпаний June STATIC_LASTMOD.
   ...CITY_PAGES.map((c) => ({
     path: `/maps/${c.slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
+    lastmod: WAVE2_LASTMOD,
+  })),
+  // Хвиля 3 (2026-07-13): райони міст — найточніший рівень запиту
+  ...DISTRICT_PAGES.map((d) => ({
+    path: `/maps/${d.citySlug}/${d.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.65,
+    lastmod: WAVE2_LASTMOD,
   })),
   // Хвиля 2 (2026-07-13): місто × продукт + лендінги під нагоду
   ...CITY_PAGES.map((c) => ({

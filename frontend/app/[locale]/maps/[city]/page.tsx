@@ -9,6 +9,8 @@ import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
+import { cityFaq, contentLocale, DISTRICT_PAGES } from "@/lib/cityLanding";
+import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
 
 /**
  * Programmatic SEO: статична сторінка під кожне місто (23 × 6 локалей).
@@ -76,6 +78,7 @@ export default async function CityPage({
   const facts = cityFacts(city.slug);
   const nf = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale);
   const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
+  const faq = cityFaq(contentLocale(locale), name, "podarunok");
 
   const ld = {
     "@context": "https://schema.org",
@@ -107,6 +110,14 @@ export default async function CityPage({
           { "@type": "ListItem", position: 2, name: t("breadcrumb"), item: localeUrl(locale, "/maps") },
           { "@type": "ListItem", position: 3, name, item: localeUrl(locale, `/maps/${city.slug}`) },
         ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
       },
     ],
   };
@@ -206,19 +217,23 @@ export default async function CityPage({
         <section className="mt-12">
           <h2 className="text-[20px] font-semibold">{t("districtsTitle")}</h2>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {districts.map((d) => (
-              <li key={d.id}>
-                <Link
-                  href={`/create?template=${d.id}`}
-                  className="block h-full rounded-[16px] border border-line-soft bg-white/70 px-4 py-3 transition hover:border-[var(--accent)]"
-                >
-                  <span className="text-[15px] font-semibold text-ink">{d.district}</span>
-                  {locale === "uk" && d.blurb ? (
-                    <span className="mt-1 block text-[13px] leading-snug text-ink-2">{d.blurb}</span>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
+            {districts.map((d) => {
+              const dp = DISTRICT_PAGES.find((x) => x.templateId === d.id);
+              const href = dp ? `/maps/${city.slug}/${dp.slug}` : `/create?template=${d.id}`;
+              return (
+                <li key={d.id}>
+                  <Link
+                    href={href}
+                    className="block h-full rounded-[16px] border border-line-soft bg-white/70 px-4 py-3 transition hover:border-[var(--accent)]"
+                  >
+                    <span className="text-[15px] font-semibold text-ink">{d.district}</span>
+                    {locale === "uk" && d.blurb ? (
+                      <span className="mt-1 block text-[13px] leading-snug text-ink-2">{d.blurb}</span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
@@ -239,6 +254,33 @@ export default async function CityPage({
         <Link href="/prices" className="mt-3 inline-block text-[13.5px] font-semibold text-[var(--accent-strong)] hover:underline">
           {cat.h1} →
         </Link>
+      </section>
+
+      {/* FAQ (видимий, +FAQPage JSON-LD вище). */}
+      <section className="mt-12">
+        <h2 className="text-[20px] font-semibold">{locale === "uk" ? "Часті запитання" : "FAQ"}</h2>
+        <dl className="mt-4 flex flex-col gap-4">
+          {faq.map((f) => (
+            <div key={f.q}>
+              <dt className="text-[15px] font-semibold text-ink">{f.q}</dt>
+              <dd className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* Читати далі: 2 статті блогу. */}
+      <section className="mt-10">
+        <h2 className="text-[18px] font-semibold text-ink">{locale === "uk" ? "Читати далі" : "Read more"}</h2>
+        <ul className="mt-3 flex flex-col gap-2">
+          {BLOG_ARTICLES.slice(4, 6).map((a) => (
+            <li key={a.slug}>
+              <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
+                {a.content[blogLocale(locale)].h1} →
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* Крос-лінки на brelok/podarunok сторінки цього ж міста (кластер міста,
