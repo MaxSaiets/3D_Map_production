@@ -80,7 +80,20 @@ const WORLDS_FAQ: Record<"uk" | "en", ProseFaqItem[]> = {
   ],
 };
 
-export function proseFaq(page: "create" | "worlds", locale: string): ProseFaqItem[] {
-  const dict = page === "create" ? CREATE_FAQ : WORLDS_FAQ;
+const SHOWCASE_FAQ: Record<"uk" | "en", ProseFaqItem[]> = {
+  uk: [
+    { q: "Це реальні фото чи 3D-рендери?", a: "У галереї є і те, і те: розділ «Як це виглядає надрукованим» — реальні фото готових виробів, решта плиток — інтерактивні 3D-моделі (можна покрутити пальцем чи мишею)." },
+    { q: "З якого матеріалу друкуються ці зразки?", a: "Усі зразки — з біопластику Eco PLA, того самого матеріалу, яким друкуються замовлення покупців." },
+    { q: "Чи можна замовити точно такий самий розмір чи район?", a: "Так — у конструкторі можна обрати будь-яку ділянку та розмір, включно з тими, що показані в галереї." },
+  ],
+  en: [
+    { q: "Are these real photos or 3D renders?", a: "Both: the 'Printed in real life' section shows real photos of finished items, while the rest of the grid is interactive 3D models you can rotate with a finger or mouse." },
+    { q: "What material are these samples printed in?", a: "All samples are printed in Eco PLA bioplastic — the same material used for customer orders." },
+    { q: "Can I order the exact same size or district?", a: "Yes — the builder lets you pick any area and size, including the ones shown in the gallery." },
+  ],
+};
+
+export function proseFaq(page: "create" | "worlds" | "showcase", locale: string): ProseFaqItem[] {
+  const dict = page === "create" ? CREATE_FAQ : page === "worlds" ? WORLDS_FAQ : SHOWCASE_FAQ;
   return dict[locale === "uk" ? "uk" : "en"];
 }
