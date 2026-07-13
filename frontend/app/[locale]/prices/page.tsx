@@ -44,25 +44,45 @@ export default function PricesPage({ params }: { params: { locale: string } }) {
   const locale = params.locale;
   const c = getCatalog(locale);
 
-  // Structured data: каталог пропозицій з реальними цінами (UAH) для пошуковиків.
+  // Structured data: каталог пропозицій з реальними цінами (UAH) для пошуковиків
+  // + BreadcrumbList (консистентність з рештою контент-сторінок).
   const ld = {
     "@context": "https://schema.org",
-    "@type": "OfferCatalog",
-    name: c.metaTitle,
-    url: localeUrl(locale as never, "/prices"),
-    itemListElement: c.categories.flatMap((cat) =>
-      cat.items
-        .filter((it) => it.uah > 0)
-        .map((it) => ({
-          "@type": "Offer",
-          name: it.name,
-          description: it.desc,
-          price: String(it.uah),
-          priceCurrency: "UAH",
-          availability: "https://schema.org/InStock",
-          seller: { "@type": "Organization", name: BUSINESS.storeName },
+    "@graph": [
+      {
+        "@type": "OfferCatalog",
+        name: c.metaTitle,
+        url: localeUrl(locale as never, "/prices"),
+        itemListElement: c.categories.flatMap((cat) =>
+          cat.items
+            .filter((it) => it.uah > 0)
+            .map((it) => ({
+              "@type": "Offer",
+              name: it.name,
+              description: it.desc,
+              price: String(it.uah),
+              priceCurrency: "UAH",
+              availability: "https://schema.org/InStock",
+              seller: { "@type": "Organization", name: BUSINESS.storeName },
+            })),
+        ),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Monadruk", item: localeUrl(locale as never, "/") },
+          { "@type": "ListItem", position: 2, name: c.h1, item: localeUrl(locale as never, "/prices") },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: c.faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
         })),
-    ),
+      },
+    ],
   };
 
   return (
@@ -103,6 +123,19 @@ export default function PricesPage({ params }: { params: { locale: string } }) {
             <li key={i}>{n}</li>
           ))}
         </ul>
+      </section>
+
+      {/* FAQ (видимий, +FAQPage JSON-LD вище). */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-ink-3">{c.faqTitle}</h2>
+        <dl className="flex flex-col gap-4">
+          {c.faq.map((f) => (
+            <div key={f.q}>
+              <dt className="text-[14.5px] font-semibold text-ink">{f.q}</dt>
+              <dd className="mt-1 text-[13.5px] leading-relaxed text-ink-2">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* Реквізити продавця (ФОП) — вимога платіжних систем */}

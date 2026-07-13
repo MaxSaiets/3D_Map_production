@@ -4,6 +4,7 @@ import { localeUrl, pageMetadata } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES } from "@/lib/cityPages";
+import { occasionFaq, contentLocale } from "@/lib/cityLanding";
 
 /**
  * Подарункова/під-нагоду посадкова сторінка («3D-мапа та брелок на подарунок»).
@@ -43,6 +44,8 @@ export default async function GiftPage({
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "gift" });
+  const isUA = locale === "uk";
+  const faq = occasionFaq(contentLocale(locale));
 
   const path = "/podarunok";
   const ld = {
@@ -65,6 +68,14 @@ export default async function GiftPage({
           { "@type": "ListItem", position: 1, name: "Monadruk", item: localeUrl(locale, "/") },
           { "@type": "ListItem", position: 2, name: t("breadcrumb"), item: localeUrl(locale, path) },
         ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
       },
     ],
   };
@@ -114,6 +125,19 @@ export default async function GiftPage({
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* FAQ (видимий, +FAQPage JSON-LD вище). */}
+      <section className="mt-12">
+        <h2 className="text-[20px] font-semibold">{isUA ? "Часті запитання" : "FAQ"}</h2>
+        <dl className="mt-4 flex flex-col gap-4">
+          {faq.map((f) => (
+            <div key={f.q}>
+              <dt className="text-[15px] font-semibold text-ink">{f.q}</dt>
+              <dd className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* Подарунок × місто (хвиля 2 programmatic SEO): чіпи на /podarunok/[city].

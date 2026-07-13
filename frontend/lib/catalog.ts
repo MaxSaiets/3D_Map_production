@@ -22,6 +22,7 @@ export type CatalogItem = {
 };
 export type CatalogCategory = { title: string; items: CatalogItem[] };
 
+export type CatalogFaqItem = { q: string; a: string };
 export type Catalog = {
   metaTitle: string;
   metaDescription: string;
@@ -35,6 +36,8 @@ export type Catalog = {
   docsIntro: string;
   docs: { offer: string; delivery: string; refund: string; contacts: string };
   ctaLabel: string;
+  faqTitle: string;
+  faq: CatalogFaqItem[];
 };
 
 const P = MAP_SIZE_PRICES_UAH;
@@ -53,7 +56,7 @@ const PR = {
 const uk: Catalog = {
   metaTitle: "Ціни на 3D-мапи, магніти та брелоки",
   metaDescription:
-    "Актуальні ціни в гривнях: 3D-мапа міста від 150 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
+    "Актуальні ціни в гривнях: 3D-мапа міста від 250 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
   h1: "Ціни",
   intro:
     "Ціна вказана за готовий виріб (3D-друк з біопластику Eco PLA). Доставка оплачується окремо за тарифом перевізника. Оплата — карткою Visa / Mastercard онлайн або при отриманні.",
@@ -99,12 +102,19 @@ const uk: Catalog = {
   docsIntro: "Замовлення регулюється договором публічної оферти. Деталі:",
   docs: { offer: "Договір публічної оферти", delivery: "Оплата і доставка", refund: "Повернення та обмін", contacts: "Контакти" },
   ctaLabel: "Створити свою мапу",
+  faqTitle: "Часті запитання",
+  faq: [
+    { q: "Скільки триває виготовлення?", a: "1–3 робочі дні на друк, потім доставка Новою Поштою по Україні або Nova Post/Meest у 15 країн ЄС." },
+    { q: "Чи є знижки для великих замовлень?", a: "Так — для тиражів від 5 однакових виробів (наприклад, корпоративні брелоки) вартість узгоджується окремо, напишіть нам." },
+    { q: "Що входить у ціну?", a: "Ціна — за готовий надрукований виріб з Eco PLA. Доставка та рельєф місцевості (+60 ₴) оплачуються окремо." },
+    { q: "Чи можна оплатити при отриманні?", a: "Так, крім оплати карткою онлайн через LiqPay доступний накладений платіж при отриманні." },
+  ],
 };
 
 const en: Catalog = {
   metaTitle: "Prices for 3D city maps, magnets & keychains",
   metaDescription:
-    "Current prices in UAH: 3D city map from 150 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
+    "Current prices in UAH: 3D city map from 250 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
   h1: "Prices",
   intro:
     "The price is for the finished item (3D-printed in Eco PLA bioplastic). Delivery is paid separately at the carrier's tariff. Payment by Visa / Mastercard online or on delivery.",
@@ -150,12 +160,19 @@ const en: Catalog = {
   docsIntro: "Orders are governed by the public offer agreement. Details:",
   docs: { offer: "Public offer agreement", delivery: "Payment & delivery", refund: "Returns & refunds", contacts: "Contacts" },
   ctaLabel: "Create your map",
+  faqTitle: "FAQ",
+  faq: [
+    { q: "How long does production take?", a: "1–3 business days to print, then delivery across Ukraine or via Nova Post/Meest to 15 EU countries." },
+    { q: "Are there discounts for bulk orders?", a: "Yes — for runs of 5+ identical items (e.g. corporate keychains) pricing is agreed individually, just message us." },
+    { q: "What's included in the price?", a: "The price covers the finished item printed in Eco PLA. Delivery and terrain relief (+≈€1.5) are charged separately." },
+    { q: "Can I pay on delivery?", a: "Yes, besides online card payment via LiqPay, cash on delivery is available." },
+  ],
 };
 
 const de: Catalog = {
   metaTitle: "Preise für 3D-Stadtkarten, Magnete & Schlüsselanhänger",
   metaDescription:
-    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 150 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
+    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 250 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
   h1: "Preise",
   intro:
     "Der Preis gilt für das fertige Produkt (3D-Druck aus Eco-PLA-Biokunststoff). Der Versand wird separat zum Tarif des Zustellers berechnet. Zahlung per Visa / Mastercard online oder bei Lieferung.",
@@ -201,12 +218,19 @@ const de: Catalog = {
   docsIntro: "Bestellungen unterliegen dem öffentlichen Angebotsvertrag. Details:",
   docs: { offer: "Öffentlicher Angebotsvertrag", delivery: "Zahlung & Versand", refund: "Rückgabe & Umtausch", contacts: "Kontakte" },
   ctaLabel: "Eigene Karte erstellen",
+  faqTitle: "Häufige Fragen",
+  faq: [
+    { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druckzeit, danach Versand innerhalb der Ukraine oder per Nova Post/Meest in die EU." },
+    { q: "Gibt es Rabatte für größere Bestellungen?", a: "Ja — bei 5 oder mehr identischen Stücken (z. B. Firmen-Schlüsselanhänger) wird der Preis individuell vereinbart." },
+    { q: "Was ist im Preis enthalten?", a: "Der Preis gilt für das fertige Eco-PLA-Produkt. Versand und Geländerelief (+≈1,5 €) werden separat berechnet." },
+    { q: "Kann ich bei Lieferung bezahlen?", a: "Ja, neben Online-Zahlung per LiqPay ist auch Nachnahme möglich." },
+  ],
 };
 
 const es: Catalog = {
   metaTitle: "Precios de mapas 3D, imanes y llaveros",
   metaDescription:
-    "Precios actuales en UAH: mapa 3D de ciudad desde 150 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
+    "Precios actuales en UAH: mapa 3D de ciudad desde 250 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
   h1: "Precios",
   intro:
     "El precio corresponde al producto terminado (impreso en 3D con bioplástico Eco PLA). El envío se paga aparte según la tarifa del transportista. Pago con Visa / Mastercard en línea o contra entrega.",
@@ -252,12 +276,19 @@ const es: Catalog = {
   docsIntro: "Los pedidos se rigen por el contrato de oferta pública. Detalles:",
   docs: { offer: "Contrato de oferta pública", delivery: "Pago y envío", refund: "Devoluciones y cambios", contacts: "Contactos" },
   ctaLabel: "Crea tu mapa",
+  faqTitle: "Preguntas frecuentes",
+  faq: [
+    { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío por Ucrania o vía Nova Post/Meest a la UE." },
+    { q: "¿Hay descuentos para pedidos grandes?", a: "Sí — para tandas de 5 o más piezas idénticas (por ejemplo, llaveros corporativos) el precio se acuerda por separado." },
+    { q: "¿Qué incluye el precio?", a: "El precio corresponde al producto terminado en Eco PLA. El envío y el relieve del terreno (+≈1,5 €) se cobran aparte." },
+    { q: "¿Puedo pagar contra entrega?", a: "Sí, además del pago con tarjeta online vía LiqPay, está disponible el pago contra reembolso." },
+  ],
 };
 
 const fr: Catalog = {
   metaTitle: "Prix des cartes 3D, aimants et porte-clés",
   metaDescription:
-    "Prix actuels en UAH : carte 3D de ville dès 150 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
+    "Prix actuels en UAH : carte 3D de ville dès 250 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
   h1: "Tarifs",
   intro:
     "Le prix concerne le produit fini (imprimé en 3D en bioplastique Eco PLA). La livraison est facturée séparément au tarif du transporteur. Paiement par Visa / Mastercard en ligne ou à la livraison.",
@@ -303,12 +334,19 @@ const fr: Catalog = {
   docsIntro: "Les commandes sont régies par le contrat d'offre publique. Détails :",
   docs: { offer: "Contrat d'offre publique", delivery: "Paiement et livraison", refund: "Retours et remboursements", contacts: "Contacts" },
   ctaLabel: "Créer votre carte",
+  faqTitle: "Questions fréquentes",
+  faq: [
+    { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés d'impression, puis livraison en Ukraine ou via Nova Post/Meest vers l'UE." },
+    { q: "Y a-t-il des remises pour les grandes commandes ?", a: "Oui — pour 5 pièces identiques ou plus (porte-clés d'entreprise par exemple), le prix se négocie séparément." },
+    { q: "Qu'est-ce qui est inclus dans le prix ?", a: "Le prix concerne le produit fini en Eco PLA. La livraison et le relief du terrain (+≈1,5 €) sont facturés à part." },
+    { q: "Puis-je payer à la livraison ?", a: "Oui, en plus du paiement en ligne par carte via LiqPay, le paiement à la livraison est disponible." },
+  ],
 };
 
 const pl: Catalog = {
   metaTitle: "Ceny map 3D, magnesów i breloków",
   metaDescription:
-    "Aktualne ceny w UAH: mapa 3D miasta od 150 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
+    "Aktualne ceny w UAH: mapa 3D miasta od 250 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
   h1: "Cennik",
   intro:
     "Cena dotyczy gotowego produktu (druk 3D z biotworzywa Eco PLA). Dostawa płatna osobno według taryfy przewoźnika. Płatność kartą Visa / Mastercard online lub przy odbiorze.",
@@ -354,6 +392,13 @@ const pl: Catalog = {
   docsIntro: "Zamówienia reguluje umowa oferty publicznej. Szczegóły:",
   docs: { offer: "Umowa oferty publicznej", delivery: "Płatność i dostawa", refund: "Zwroty i wymiana", contacts: "Kontakt" },
   ctaLabel: "Stwórz swoją mapę",
+  faqTitle: "Częste pytania",
+  faq: [
+    { q: "Ile trwa wykonanie?", a: "1–3 dni robocze druku, potem dostawa po Ukrainie lub przez Nova Post/Meest do UE." },
+    { q: "Czy są rabaty przy większych zamówieniach?", a: "Tak — przy 5 i więcej identycznych sztukach (np. breloki firmowe) cena ustalana jest indywidualnie." },
+    { q: "Co zawiera cena?", a: "Cena dotyczy gotowego produktu z Eco PLA. Dostawa i relief terenu (+≈1,5 €) są płatne osobno." },
+    { q: "Czy mogę zapłacić przy odbiorze?", a: "Tak, oprócz płatności kartą online przez LiqPay dostępna jest płatność za pobraniem." },
+  ],
 };
 
 const CATALOGS: Record<string, Catalog> = { uk, en, de, es, fr, pl };
