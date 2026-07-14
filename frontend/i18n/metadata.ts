@@ -23,6 +23,24 @@ export function priceValidUntil(): string {
   return `${new Date().getFullYear()}-12-31`;
 }
 
+/** Companion до priceValidUntil — Offer.validFrom (GSC "Пропозиції від продавців"
+ *  просить це поле). Початок поточного року — чесно й детерміновано на білді. */
+export function priceValidFrom(): string {
+  return `${new Date().getFullYear()}-01-01`;
+}
+
+/**
+ * Offer.hasMerchantReturnPolicy — GSC просить це поле для "Пропозицій від
+ * продавців". Відповідає РЕАЛЬНІЙ політиці /refund: вироби виготовляються на
+ * індивідуальне замовлення → поверненню не підлягають (окрім браку, що не
+ * кодується схемою окремо). НЕ вигадувати "легше" категорію — ця найточніша.
+ */
+export const MERCHANT_RETURN_POLICY_LD = {
+  "@type": "MerchantReturnPolicy",
+  applicableCountry: "UA",
+  returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+} as const;
+
 /**
  * Build localized SEO metadata for a page in one call.
  *

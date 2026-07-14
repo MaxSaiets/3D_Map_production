@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { pageMetadata, BASE, localeUrl, priceValidUntil, priceValidFrom, MERCHANT_RETURN_POLICY_LD } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { seoProse } from "@/lib/seoProse";
 import { Link } from "@/i18n/navigation";
@@ -41,8 +41,10 @@ export default async function KeychainsLayout({
           priceCurrency: isUA ? "UAH" : "EUR",
           price: isUA ? "120" : "3",
           priceValidUntil: priceValidUntil(),
+          validFrom: priceValidFrom(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/keychains"),
+          hasMerchantReturnPolicy: MERCHANT_RETURN_POLICY_LD,
         },
       },
       {

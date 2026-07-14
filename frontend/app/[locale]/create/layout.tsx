@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { pageMetadata, BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { pageMetadata, BASE, localeUrl, priceValidUntil, priceValidFrom, MERCHANT_RETURN_POLICY_LD } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { seoProse, proseFaq } from "@/lib/seoProse";
@@ -43,8 +43,10 @@ export default async function CreateLayout({
           priceCurrency: mapPriceRange(locale).currency,
           price: mapPriceRange(locale).low,
           priceValidUntil: priceValidUntil(),
+          validFrom: priceValidFrom(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, "/create"),
+          hasMerchantReturnPolicy: MERCHANT_RETURN_POLICY_LD,
         },
       },
       {

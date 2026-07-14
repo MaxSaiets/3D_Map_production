@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { BASE, localeUrl, priceValidUntil, priceValidFrom, MERCHANT_RETURN_POLICY_LD } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
@@ -90,8 +90,10 @@ export default async function BrelokCityPage({
           priceCurrency: isUA ? "UAH" : "EUR",
           price: isUA ? String(KEYCHAIN_PRICE_UAH) : String(mapPriceEur(KEYCHAIN_PRICE_UAH)),
           priceValidUntil: priceValidUntil(),
+          validFrom: priceValidFrom(),
           availability: "https://schema.org/InStock",
           url: localeUrl(locale, path),
+          hasMerchantReturnPolicy: MERCHANT_RETURN_POLICY_LD,
         },
       },
       {
