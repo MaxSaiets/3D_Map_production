@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { capturePreviewImages } from "@/lib/capturePreview";
 import { useAuth } from "@/components/AuthProvider";
 import { NovaPoshtaPicker } from "@/components/NovaPoshtaPicker";
+import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH, mapPriceEur } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -198,10 +199,19 @@ export function OrderDialog({
         // Валюту беремо з ТОГО САМОГО рядка, що й число (priceText), а не з region —
         // інакше EUR-замовлення слало б UAH-суму як EUR (×10 інфляція конверсії).
         const raw = String(priceText || "");
-        const value = raw ? Number(raw.replace(/[^\d]/g, "")) || undefined : undefined;
+        let value = raw ? Number(raw.replace(/[^\d]/g, "")) || undefined : undefined;
+        let currency = raw.includes("€") ? "EUR" : "UAH";
+        // Фолбек: якщо quote ще не завантажився (priceText порожній), конверсія без
+        // value марна для Smart Bidding. Беремо мінімальну ціну продукту у валюті
+        // регіону, щоб КОЖНА конверсія несла суму. (KEYCHAIN 120 / MAP S=250 ₴.)
+        if (value === undefined) {
+          const floorUah = productType === "keychain" ? KEYCHAIN_PRICE_UAH : MAP_SIZE_PRICES_UAH[55];
+          if (region === "eu") { value = mapPriceEur(floorUah); currency = "EUR"; }
+          else { value = floorUah; currency = "UAH"; }
+        }
         trackConversion("order", {
           value,
-          currency: raw.includes("€") ? "EUR" : "UAH",
+          currency,
           transactionId: String(data.order_number),
           props: { product: productType, delivery },
         });
@@ -335,10 +345,19 @@ export function OrderDialog({
               </div>
 
               {region === "eu" && (
-                <select className={fieldCls} aria-label={t("phCountry")} {...errAttrs("euCountry")} value={euCountry} onChange={(e) => setEuCountry(e.target.value)}>
-                  <option value="">{t("phCountry")}</option>
-                  {EU_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                // Датасписок замість жорсткого <select>: українець за кордоном у країні
+                // поза списком (UK, Ireland, Sverige, Schweiz…) раніше не міг завершити
+                // замовлення — тепер можна ОБРАТИ підказку АБО ввести будь-яку країну.
+                <>
+                  <input
+                    list="eu-countries" className={fieldCls} aria-label={t("phCountry")}
+                    placeholder={t("phCountry")} {...errAttrs("euCountry")}
+                    value={euCountry} onChange={(e) => setEuCountry(e.target.value)}
+                  />
+                  <datalist id="eu-countries">
+                    {EU_COUNTRIES.map((c) => <option key={c} value={c} />)}
+                  </datalist>
+                </>
               )}
 
               {delivery !== "pickup" && (

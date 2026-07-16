@@ -1,20 +1,7 @@
 "use client";
 
-import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import {
-  GoogleAuthProvider,
-  getAuth,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  sendEmailVerification,
-  signOut,
-  type Auth,
-  type ConfirmationResult,
-} from "firebase/auth";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth, ConfirmationResult, User } from "firebase/auth";
 
 // Public Firebase web config (safe to ship to the client). Env overrides allowed.
 const firebaseConfig = {
@@ -30,55 +17,83 @@ function hasFirebaseConfig() {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId);
 }
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-
 export function isFirebaseAuthConfigured() {
   return hasFirebaseConfig();
 }
 
-export function getFirebaseAuth() {
+// Firebase SDK (firebase/app + firebase/auth) — завантажується ЛІНИВО через dynamic
+// import(), а не статичним top-level import. Інакше AuthProvider (обгортає ВЕСЬ
+// застосунок у root layout) тягнув би весь SDK у shared client-чанк КОЖНОЇ сторінки,
+// включно з лендингом і юр-сторінками, де авторизація не потрібна одразу.
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let authModPromise: Promise<typeof import("firebase/auth")> | null = null;
+
+function loadAuthMod() {
+  if (!authModPromise) authModPromise = import("firebase/auth");
+  return authModPromise;
+}
+
+export async function getFirebaseAuth(): Promise<Auth | null> {
   if (!hasFirebaseConfig()) return null;
+  const [{ getApps, initializeApp }, authMod] = await Promise.all([
+    import("firebase/app"),
+    loadAuthMod(),
+  ]);
   if (!app) app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   if (!auth) {
-    auth = getAuth(app);
+    auth = authMod.getAuth(app);
     try { auth.useDeviceLanguage(); } catch {/* ignore */}
   }
   return auth;
 }
 
-function requireAuth(): Auth {
-  const a = getFirebaseAuth();
+async function requireAuth(): Promise<Auth> {
+  const a = await getFirebaseAuth();
   if (!a) throw new Error("Firebase не налаштований");
   return a;
 }
 
+// ── Auth-state subscription (для AuthProvider — без прямого імпорту firebase/auth) ──
+export async function subscribeAuthState(cb: (user: User | null) => void): Promise<() => void> {
+  const a = await getFirebaseAuth();
+  if (!a) return () => {};
+  const authMod = await loadAuthMod();
+  return authMod.onAuthStateChanged(a, cb);
+}
+
 // ── Google ──
 export async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
+  const authMod = await loadAuthMod();
+  const a = await requireAuth();
+  const provider = new authMod.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  return signInWithPopup(requireAuth(), provider);
+  return authMod.signInWithPopup(a, provider);
 }
 
 // ── Email / password ──
 export async function signInWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(requireAuth(), email, password);
+  const authMod = await loadAuthMod();
+  return authMod.signInWithEmailAndPassword(await requireAuth(), email, password);
 }
 export async function signUpWithEmail(email: string, password: string) {
-  const cred = await createUserWithEmailAndPassword(requireAuth(), email, password);
-  try { if (cred.user) await sendEmailVerification(cred.user); } catch {/* non-fatal */}
+  const authMod = await loadAuthMod();
+  const cred = await authMod.createUserWithEmailAndPassword(await requireAuth(), email, password);
+  try { if (cred.user) await authMod.sendEmailVerification(cred.user); } catch {/* non-fatal */}
   return cred;
 }
 export async function resetPassword(email: string) {
-  return sendPasswordResetEmail(requireAuth(), email);
+  const authMod = await loadAuthMod();
+  return authMod.sendPasswordResetEmail(await requireAuth(), email);
 }
 
 // ── Phone ──
-let recaptcha: RecaptchaVerifier | null = null;
-export function getRecaptcha(containerId = "recaptcha-container"): RecaptchaVerifier {
-  const a = requireAuth();
+let recaptcha: InstanceType<typeof import("firebase/auth").RecaptchaVerifier> | null = null;
+async function getRecaptcha(containerId = "recaptcha-container") {
+  const authMod = await loadAuthMod();
+  const a = await requireAuth();
   if (!recaptcha) {
-    recaptcha = new RecaptchaVerifier(a, containerId, { size: "invisible" });
+    recaptcha = new authMod.RecaptchaVerifier(a, containerId, { size: "invisible" });
   }
   return recaptcha;
 }
@@ -87,16 +102,22 @@ export function resetRecaptcha() {
   recaptcha = null;
 }
 export async function startPhoneSignIn(phoneE164: string, containerId = "recaptcha-container"): Promise<ConfirmationResult> {
-  return signInWithPhoneNumber(requireAuth(), phoneE164, getRecaptcha(containerId));
+  const authMod = await loadAuthMod();
+  const a = await requireAuth();
+  const verifier = await getRecaptcha(containerId);
+  return authMod.signInWithPhoneNumber(a, phoneE164, verifier);
 }
 
 // ── common ──
 export async function signOutUser() {
-  const a = getFirebaseAuth();
-  if (a) await signOut(a);
+  const a = await getFirebaseAuth();
+  if (a) {
+    const authMod = await loadAuthMod();
+    await authMod.signOut(a);
+  }
 }
 export async function getIdToken(): Promise<string | null> {
-  const a = getFirebaseAuth();
+  const a = await getFirebaseAuth();
   const user = a?.currentUser;
   if (!user) return null;
   try { return await user.getIdToken(); } catch { return null; }

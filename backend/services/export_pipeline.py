@@ -304,7 +304,7 @@ def export_generation_outputs(
     include_preview_parts: bool = True,
     include_parallel_stl: bool = True,
     include_print_package: bool = True,
-    completion_message: str = "РњРѕРґРµР»СЊ РіРѕС‚РѕРІР°!",
+    completion_message: str = "Модель готова!",
     file_basename: Optional[str] = None,
     extra_mesh_items: Optional[list[Tuple[str, trimesh.Trimesh]]] = None,
     repair_meshes: bool = True,
@@ -395,6 +395,11 @@ def export_generation_outputs(
         f"parks={'OK' if parks_mesh else 'None'}"
     )
 
+    # PERF: [TIMING][EXPORT] breakdown of the ~80s export_outputs stage — was one
+    # opaque number before; splitting it shows which of the 3 export passes
+    # (primary/preview-parts/print-package) actually dominates. Pure logging.
+    import time as _time_exp
+    _t_main_start = _time_exp.perf_counter()
     parts_from_main = export_scene(
         terrain_mesh=terrain_mesh_for_export,
         road_mesh=road_mesh,
@@ -413,6 +418,7 @@ def export_generation_outputs(
         extra_mesh_items=extra_mesh_items,
         repair_meshes=repair_meshes,
     )
+    print(f"[TIMING][EXPORT] primary_scene_export: {_time_exp.perf_counter() - _t_main_start:.2f}s")
 
     # ТЕМА/ПАЛІТРА (#2): post-export перепатч m:colorgroup 3MF на тематичні кольори
     # (sepia/noir/ocean/neon). classic/порожньо → пропуск (основний експорт не зачеплено).
@@ -473,6 +479,7 @@ def export_generation_outputs(
     # uses one local 3MF scene only; writing five extra archives just slows the
     # local viewer path down.
     if include_preview_parts and not _preview_mode:
+        _t_parts_start = _time_exp.perf_counter()
         try:
             preview_items: list[Tuple[str, trimesh.Trimesh]] = []
             if terrain_mesh_for_export is not None:
@@ -522,6 +529,8 @@ def export_generation_outputs(
                     task.set_output(part_name, str(Path(path).resolve()))
         except Exception as exc:
             print(f"[WARN] Preview parts export failed: {exc}")
+        print(f"[TIMING][EXPORT] preview_parts_5x (Base/Roads/Buildings/Water/Parks): "
+              f"{_time_exp.perf_counter() - _t_parts_start:.2f}s")
 
     if not output_file_abs.exists():
         if primary_format == "3mf":
@@ -529,7 +538,7 @@ def export_generation_outputs(
             if stl_fallback.exists():
                 task.set_output("stl", str(stl_fallback))
                 task.complete(str(stl_fallback))
-                task.update_status("completed", 100, "3MF РЅРµ Р·РіРµРЅРµСЂРѕРІР°РЅРѕ, Р°Р»Рµ STL СЃС‚РІРѕСЂРµРЅРѕ (fallback).")
+                task.update_status("completed", 100, "3MF не згенеровано, але STL створено (fallback).")
                 print(f"[WARN] 3MF РЅРµ СЃС‚РІРѕСЂРµРЅРѕ РґР»СЏ {task_id}, РІРёРєРѕСЂРёСЃС‚Р°РЅРѕ STL fallback: {stl_fallback}")
                 return ExportPipelineResult(
                     output_file_abs=stl_fallback,
@@ -544,6 +553,7 @@ def export_generation_outputs(
         task.set_output("stl", str(stl_preview_abs))
 
     if include_print_package and not _preview_mode:
+        _t_pkg_start = _time_exp.perf_counter()
         parts_for_layout = stl_parts_from_preview or parts_from_main
         print_layout_3mf_abs = _create_print_layout_3mf(
             output_dir=output_dir,
@@ -565,6 +575,7 @@ def export_generation_outputs(
         )
         if package_abs and package_abs.exists():
             task.set_output("print_package", str(package_abs))
+        print(f"[TIMING][EXPORT] print_layout_and_package: {_time_exp.perf_counter() - _t_pkg_start:.2f}s")
     elif _preview_mode:
         print("[INFO] PREVIEW_MODE: skipping print layout/package export")
     else:

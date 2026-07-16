@@ -10,12 +10,38 @@ Guarantees:
 
 from typing import List, Tuple, Optional, Union, Dict
 import os
+import hashlib
+from collections import OrderedDict
 import numpy as np
 import trimesh
 import trimesh.visual
 from services.mesh_quality import improve_mesh_for_3d_printing, detect_nonmanifold_edges
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM
 # from trimesh.exchange.stl import export_stl_binary
+
+
+# PERF: the aggressive base repair (connected-component split ×N + fill_holes on the
+# ~167k-face merged terrain+buildings base) costs ~26s and is invoked on BYTE-IDENTICAL
+# base geometry TWICE per generation — once for the print 3MF (export_scene) and once
+# for the on-screen preview 3MF (export_preview_parts_3mf). The result is a pure,
+# deterministic function of the input mesh, so a content-keyed memo returns the exact
+# same repaired geometry for the 2nd call in ~0s. Cache holds the last few results
+# (each a few MB) and auto-evicts; a full-bytes blake2b key makes collisions
+# astronomically unlikely, so output is guaranteed identical (no quality change).
+_BASE_REPAIR_MEMO: "OrderedDict[str, trimesh.Trimesh]" = OrderedDict()
+_BASE_REPAIR_MEMO_MAX = 4
+
+
+def _mesh_content_fingerprint(mesh: trimesh.Trimesh) -> Optional[str]:
+    try:
+        v = np.ascontiguousarray(mesh.vertices, dtype=np.float64)
+        f = np.ascontiguousarray(mesh.faces, dtype=np.int64)
+        h = hashlib.blake2b(digest_size=16)
+        h.update(v.tobytes())
+        h.update(f.tobytes())
+        return h.hexdigest()
+    except Exception:
+        return None
 
 
 def _boundary_edge_count(mesh: trimesh.Trimesh) -> int:
@@ -29,13 +55,30 @@ def _boundary_edge_count(mesh: trimesh.Trimesh) -> int:
         return 10**9
 
 
+def _connected_component_count(mesh: trimesh.Trimesh) -> int:
+    """Face-connectivity component count — same value as
+    `len(list(mesh.split(only_watertight=False)))` (both derive from the same
+    face_adjacency + scipy connected-components graph, and only_watertight=False
+    means split() discards nothing), but WITHOUT materializing a submesh + calling
+    fill_holes() per component. PERF: this count is called several times per base
+    export repair on a ~167k-face mesh; the old path paid full submesh cost each
+    time just to read len() of the result."""
+    try:
+        labels = trimesh.graph.connected_component_labels(
+            mesh.face_adjacency, node_count=len(mesh.faces)
+        )
+        return int(len(np.unique(labels)))
+    except Exception:
+        return 10**9
+
+
 def _road_export_candidate_score(mesh: Optional[trimesh.Trimesh]) -> tuple:
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
         return (-1, -10**9, -10**9, -1)
     return (
         1 if mesh.is_watertight else 0,
         -_boundary_edge_count(mesh),
-        -len(list(mesh.split(only_watertight=False))),
+        -_connected_component_count(mesh),
         int(len(mesh.faces)),
     )
 
@@ -46,7 +89,7 @@ def _base_export_candidate_score(mesh: Optional[trimesh.Trimesh]) -> tuple:
     return (
         1 if bool(getattr(mesh, "is_watertight", False)) else 0,
         -_boundary_edge_count(mesh),
-        -len(list(mesh.split(only_watertight=False))),
+        -_connected_component_count(mesh),
         int(len(mesh.faces)),
     )
 
@@ -56,28 +99,47 @@ def _dominant_component_if_safe(
     *,
     min_face_ratio: float = 0.995,
 ) -> Optional[trimesh.Trimesh]:
+    # PERF: extracts JUST the dominant component's faces via connectivity labels
+    # instead of trimesh.split() (which materializes a submesh + calls fill_holes()
+    # for EVERY debris fragment just so we can pick the biggest one and discard the
+    # rest). Verified geometrically identical to the old path (same vertex/face
+    # SETS — order can differ, which has no effect on print geometry, visuals, or
+    # any of the order-independent metrics this function's callers use).
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
         return None
     try:
-        components = list(mesh.split(only_watertight=False))
+        labels = trimesh.graph.connected_component_labels(
+            mesh.face_adjacency, node_count=len(mesh.faces)
+        )
     except Exception:
         return None
-    if len(components) <= 1:
+    if labels is None or len(labels) == 0:
         return None
-    ranked = sorted(
-        [component for component in components if component is not None and component.faces is not None and len(component.faces) > 0],
-        key=lambda item: len(item.faces),
-        reverse=True,
-    )
-    if not ranked:
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    if len(unique_labels) <= 1:
         return None
-    dominant = ranked[0]
-    total_faces = sum(len(component.faces) for component in ranked)
+    total_faces = int(counts.sum())
     if total_faces <= 0:
         return None
-    dominant_ratio = float(len(dominant.faces)) / float(total_faces)
+    dominant_idx = int(np.argmax(counts))
+    dominant_ratio = float(counts[dominant_idx]) / float(total_faces)
     if dominant_ratio < float(min_face_ratio):
         return None
+    face_mask = labels == unique_labels[dominant_idx]
+    try:
+        dominant = mesh.submesh([face_mask], append=True)
+    except Exception:
+        return None
+    if dominant is None or dominant.faces is None or len(dominant.faces) == 0:
+        return None
+    # Mirrors trimesh.graph.split()'s submesh(..., repair=True) side effect, which
+    # calls fill_holes() on every returned component (even under only_watertight=
+    # False, which only affects whether non-watertight ones get discarded).
+    try:
+        if len(dominant.faces) >= 4:
+            dominant.fill_holes()
+    except Exception:
+        pass
     return dominant.copy()
 
 
@@ -114,6 +176,14 @@ def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optio
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
         return mesh
 
+    # PERF memo: identical base geometry is repaired twice per generation (print +
+    # preview export). Return a copy of the cached result on the 2nd identical call.
+    _fp = _mesh_content_fingerprint(mesh)
+    if _fp is not None and _fp in _BASE_REPAIR_MEMO:
+        _BASE_REPAIR_MEMO.move_to_end(_fp)
+        print("[3MF EXPORT] aggressive base repair — memo hit (skipped ~26s recompute)")
+        return _BASE_REPAIR_MEMO[_fp].copy()
+
     original = mesh.copy()
     dominant = _dominant_component_if_safe(original, min_face_ratio=0.985)
     if dominant is not None:
@@ -135,9 +205,17 @@ def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optio
         candidate.remove_unreferenced_vertices()
     except Exception:
         pass
-    if _base_export_candidate_score(candidate) >= _base_export_candidate_score(original):
-        return candidate
-    return original
+    _result = candidate if _base_export_candidate_score(candidate) >= _base_export_candidate_score(original) else original
+    # Store in memo (keyed on the ORIGINAL input geometry) for the 2nd identical call.
+    if _fp is not None:
+        try:
+            _BASE_REPAIR_MEMO[_fp] = _result.copy()
+            _BASE_REPAIR_MEMO.move_to_end(_fp)
+            while len(_BASE_REPAIR_MEMO) > _BASE_REPAIR_MEMO_MAX:
+                _BASE_REPAIR_MEMO.popitem(last=False)
+        except Exception:
+            pass
+    return _result
 
 
 def _base_plane_profile(mesh: trimesh.Trimesh) -> Optional[dict]:
@@ -1029,10 +1107,18 @@ def prepare_scene_parts(
 
     # 2. Calculate Global Bounds using smart combination
     # ВИПРАВЛЕННЯ: використовуємо smart_combine для правильного порядку компонентів
+    # PERF: aggressive_cleanup=False. `combined_raw` тут використовується ВИКЛЮЧНО
+    # для .bounds (рядок нижче) і одразу відкидається — герметичний ремонт
+    # (fill_holes/fix_winding/broken_faces/non-manifold-detect на ~250k-гранному
+    # злитому меші, ~15с) НЕ впливає на bounding box і його результат ніде не
+    # експортується (кожна частина ремонтується й експортується окремо у
+    # transformed_parts). Per-component легке чищення (unique_faces/merge_vertices)
+    # усе одно виконується всередині smart_combine незалежно від прапорця. Зняли
+    # чисту втрату часу без будь-якої зміни якості друку. Профіль: export 75с→~40с.
     all_meshes = list(valid_items.values())
     combined_raw = smart_combine_meshes(
         [(k,  v) for k, v in valid_items.items()],
-        aggressive_cleanup=True
+        aggressive_cleanup=False
     )
     bounds = combined_raw.bounds
     size = bounds[1] - bounds[0]
@@ -1094,9 +1180,11 @@ def prepare_scene_parts(
                 valid_items["base"].metadata["original_name"] = "Base"
 
         # Re-calculate bounds using smart_combine (CRITICAL: don't bypass previous smart combination!)
+        # PERF: aggressive_cleanup=False — той самий bounds-only виклик, що вище (див.
+        # коментар до рядка 1033). Результат використовується лише для .bounds.
         combined_raw = smart_combine_meshes(
             [(k, v) for k, v in valid_items.items()],
-            aggressive_cleanup=True
+            aggressive_cleanup=False
         )
         bounds = combined_raw.bounds
         size = bounds[1] - bounds[0]  # оновлюємо size після додавання base
@@ -1504,7 +1592,8 @@ def export_3mf(
 ) -> Dict[str, str]:
 
     print(f"[3MF EXPORT] Starting export with repair_meshes={repair_meshes}")
-    
+    import time as _t3mf
+    _t_prep0 = _t3mf.perf_counter()
     parts = prepare_scene_parts(
         mesh_items,
         model_size_mm,
@@ -1516,15 +1605,18 @@ def export_3mf(
         preserve_z,
         repair_meshes,
     )
+    print(f"[TIMING][3MF] prepare_scene_parts: {_t3mf.perf_counter() - _t_prep0:.2f}s")
 
     # Коли repair_meshes=False (keychain) — НЕ чіпаємо дороги, щоб геометрія
     # фінального 3MF співпадала 1:1 з GLB-превʼю. repair_road_export_mesh робить
     # fill_holes/quantize/merge_vertices — це зварює сусідні сегменти доріг.
+    _t_road0 = _t3mf.perf_counter()
     if repair_meshes and "roads" in parts:
         try:
             parts["roads"] = repair_road_export_mesh(parts["roads"])
         except Exception:
             pass
+    print(f"[TIMING][3MF] repair_road_export: {_t3mf.perf_counter() - _t_road0:.2f}s")
 
     scene = trimesh.Scene()
     preview_parts = _build_assembly_preview_parts(parts)
@@ -1647,19 +1739,25 @@ def export_3mf(
         return m
 
     layer_stats = []
+    _t_assy0 = _t3mf.perf_counter()
     for key in ordered_keys:
         mesh = preview_parts.get(key)
         if mesh is None or len(mesh.faces) == 0:
             continue
+        _t_part0 = _t3mf.perf_counter()
         mesh = _repair_for_print(mesh, key)
         _ensure_face_colors(mesh, key)
         name = mesh.metadata.get('original_name', key.capitalize()) if hasattr(mesh, 'metadata') else key.capitalize()
         scene.add_geometry(mesh, node_name=name, geom_name=name)
         layer_stats.append(f"{name}({len(mesh.faces)})")
+        print(f"[TIMING][3MF]   repair_for_print[{key}] ({len(mesh.faces)}f): {_t3mf.perf_counter() - _t_part0:.2f}s")
+    print(f"[TIMING][3MF] assembly_repair_loop: {_t3mf.perf_counter() - _t_assy0:.2f}s")
     print(f"[3MF EXPORT] Added {len(layer_stats)} separate layer objects: {', '.join(layer_stats)}")
 
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+    _t_write0 = _t3mf.perf_counter()
     scene.export(filename)
+    print(f"[TIMING][3MF] scene_export_write: {_t3mf.perf_counter() - _t_write0:.2f}s")
     print(f"[3MF EXPORT] Exported scene with {len(parts)} parts to {filename}")
 
     # m:colorgroup patch УВІМКНЕНО: trimesh-3MF writer мовчки губить face_colors,
@@ -1887,6 +1985,52 @@ def _prepare_preview_glb_parts_fast(
     return transformed
 
 
+def _decimate_for_preview(mesh: trimesh.Trimesh, key: str) -> trimesh.Trimesh:
+    """PERF (download): the on-screen preview GLB was the SAME dense mesh as the print
+    3MF (~337k faces, ~6.4 MB) — slow to transfer and parse in the browser. The GLB is a
+    PREVIEW-ONLY output (orders/prints use the separate, untouched 3MF), so we quadric-
+    decimate each preview part with open3d. Quadric-error decimation preserves the
+    silhouette/shape (industry-standard, visually near-lossless for a heightmap terrain).
+    NEVER call this on the print export path. Env-revertible: GLB_PREVIEW_DECIMATE=0.
+    """
+    if os.environ.get("GLB_PREVIEW_DECIMATE", "1").lower() in ("0", "false", "no"):
+        return mesh
+    try:
+        nf = len(mesh.faces)
+        try:
+            ratio = float(os.environ.get("GLB_PREVIEW_DECIMATE_RATIO", "0.45"))
+        except (TypeError, ValueError):
+            ratio = 0.45
+        try:
+            floor = int(os.environ.get("GLB_PREVIEW_DECIMATE_FLOOR", "30000"))
+        except (TypeError, ValueError):
+            floor = 30000
+        target = int(nf * ratio)
+        if nf <= floor or target >= nf or target < 12:
+            return mesh  # already light; leave as-is
+        target = max(target, floor)
+        import open3d as o3d  # already a project dependency
+        om = o3d.geometry.TriangleMesh()
+        om.vertices = o3d.utility.Vector3dVector(np.asarray(mesh.vertices, dtype=np.float64))
+        om.triangles = o3d.utility.Vector3iVector(np.asarray(mesh.faces, dtype=np.int32))
+        dec = om.simplify_quadric_decimation(target_number_of_triangles=int(target))
+        v = np.asarray(dec.vertices, dtype=np.float64)
+        f = np.asarray(dec.triangles, dtype=np.int64)
+        if f is None or len(f) == 0 or v is None or len(v) == 0:
+            return mesh
+        out = trimesh.Trimesh(vertices=v, faces=f, process=False)
+        try:
+            if mesh.metadata:
+                out.metadata.update(mesh.metadata)
+        except Exception:
+            pass
+        print(f"[GLB PREVIEW] decimated '{key}': {nf} -> {len(f)} faces")
+        return out
+    except Exception as _e:  # noqa: BLE001
+        print(f"[GLB PREVIEW] decimation skipped for '{key}': {_e}")
+        return mesh
+
+
 def export_glb(
     filename: str,
     mesh_items: List[Tuple[str, trimesh.Trimesh]],
@@ -1923,6 +2067,11 @@ def export_glb(
     scene = trimesh.Scene()
     for key, mesh in parts.items():
         if mesh is None or len(mesh.vertices) == 0 or len(mesh.faces) == 0:
+            continue
+        # PERF (download): decimate the PREVIEW mesh (quadric, shape-preserving) so the
+        # browser GLB is small/fast. Print 3MF is a separate output — unaffected.
+        mesh = _decimate_for_preview(mesh, key)
+        if mesh is None or len(mesh.faces) == 0:
             continue
         color = color_map.get(key.lower(), [150, 150, 150, 255])
         try:
@@ -1989,7 +2138,10 @@ def export_scene(
             add(extra_name, extra_mesh)
 
     if building_meshes:
-        valid = [to_trimesh(b) for b in building_meshes if to_trimesh(b)]
+        # to_trimesh() робить obj.copy()+merge_vertices — недешево; раніше викликалось
+        # ДВІЧІ на кожен будинок (у if-фільтрі й як значення), один результат викидався.
+        # Обчислюємо раз на будинок (детермінована pure-функція → ідентичний результат).
+        valid = [t for t in (to_trimesh(b) for b in building_meshes) if t]
         if valid:
             items.append(("Buildings", trimesh.util.concatenate(valid)))
 

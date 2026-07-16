@@ -408,6 +408,23 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
             set_order_status(str(order_id), "paid")
         except Exception as e:  # noqa: BLE001
             print(f"[ORDER] mark_paid status fold error: {e}")
+        # ВОРОНКА submit→paid: оплата приходить LiqPay-вебхуком (браузера НЕМА),
+        # тож фронт-funnel («paid») не спрацює. Дописуємо серверну funnel-подію в
+        # ANALYTICS-лог, щоб admin-воронка показувала оплачені конверсії, а не
+        # зупинялась на order_submit. Best-effort.
+        try:
+            from datetime import datetime, timezone
+            _alog = DATA_DIR / "analytics.jsonl"
+            _now = datetime.now(timezone.utc)
+            _alog.parent.mkdir(parents=True, exist_ok=True)
+            with _alog.open("a", encoding="utf-8") as af:
+                af.write(json.dumps({
+                    "ts": _now.isoformat(timespec="seconds"), "day": _now.strftime("%Y-%m-%d"),
+                    "event": "funnel", "path": "/", "locale": "", "ref": "", "cc": "",
+                    "visitor": "server", "props": {"step": "paid", "order": str(order_id)},
+                }, ensure_ascii=False) + "\n")
+        except Exception as e:  # noqa: BLE001
+            print(f"[ORDER] mark_paid funnel-event error: {e}")
     if telegram_configured():
         emoji = "💰" if paid else "⏳"
         _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML",

@@ -86,7 +86,7 @@ export default function PricesPage({ params }: { params: { locale: string } }) {
   };
 
   return (
-    <div className="mx-auto max-w-[860px] px-5 py-12 lg:px-8">
+    <div id="main-content" tabIndex={-1} className="mx-auto max-w-[860px] px-5 py-12 lg:px-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <Link href="/" className="text-[13px] font-semibold text-ink-2 hover:text-ink">← monadruk</Link>
 

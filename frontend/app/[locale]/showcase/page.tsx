@@ -33,10 +33,11 @@ export default function ShowcasePage() {
   ];
   const [active, setActive] = useState(VIEW_MODELS[0]);
 
-  type Item = { src: string; kind: "key" | "map" };
+  type Item = { src: string; kind: "key" | "map"; n: number };
+  // n → унікальний alt на кожне фото (SEO: 19 зображень мали 2 дубль-alt).
   const ITEMS: Item[] = [
-    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const })),
-    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const })),
+    ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const, n: i + 1 })),
+    ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const, n: i + 1 })),
   ];
   const items = ITEMS.filter((it) => filter === "all" || it.kind === filter);
   const viewModels = VIEW_MODELS.filter((m) => filter === "all" || m.kind === filter);
@@ -47,7 +48,7 @@ export default function ShowcasePage() {
   };
 
   return (
-    <div className="mx-auto min-h-[100dvh] max-w-[1280px] px-5 py-8 lg:px-8">
+    <div id="main-content" tabIndex={-1} className="mx-auto min-h-[100dvh] max-w-[1280px] px-5 py-8 lg:px-8">
       <Link href="/" className="mb-6 inline-flex min-h-[40px] items-center gap-1.5 py-2 text-[13px] font-semibold text-ink-2 hover:text-ink">
         <ArrowLeft size={15} /> {t("back")}
       </Link>
@@ -116,13 +117,37 @@ export default function ShowcasePage() {
         </div>
       </div>
 
+      {/* Реальні фото надрукованих виробів (НЕ 3D-рендери) — довіра/автентичність */}
+      <div className="mt-16">
+        <div className="text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-forest">{t("realEyebrow")}</p>
+          <h2 className="mt-2 font-serif text-[clamp(24px,3vw,38px)] text-ink">{t("realTitle")}</h2>
+          <p className="mx-auto mt-2 max-w-[560px] text-[14px] text-ink-2">{t("realSubtitle")}</p>
+        </div>
+        <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+            <div key={n} className="overflow-hidden rounded-[20px] border border-line bg-paper">
+              <div className="relative aspect-square overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/showcase/real-${n}.webp`}
+                  alt={`${t("realAlt")} ${n}`}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 hover:scale-[1.06]"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Gallery */}
       <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((it) => (
           <button key={it.src} onClick={() => openItem(it)} className="group overflow-hidden rounded-[20px] border border-line bg-paper text-left" title={t("rotate3d")}>
             <div className="relative aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.src} alt={it.kind === "key" ? t("keyItem") : t("mapItem")} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
+              <img src={it.src} alt={`${it.kind === "key" ? t("keyItem") : t("mapItem")} — ${t("printedSampleAlt")} ${it.n}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
                 <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">{t("rotate3d")} ↻</span>
               </span>

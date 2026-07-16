@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+// ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
+// посилання з /en/keychains губили префікс локалі.
+import { Link } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, User } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
@@ -14,6 +16,7 @@ import {
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
@@ -96,7 +99,14 @@ export default function KeychainsPage() {
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("map");
   const [cropPolygon, setCropPolygon] = useState<Array<[number, number]> | null>(null);
-  const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea, setTaskGroup, setGenerating, taskGroupId } = useGenerationStore();
+  // useShallow: без селектора сторінка ре-рендерилась на кожен store.set() і каскадно
+  // ре-рендерила MapSelector/KeychainDesigner/Preview3D (не memoized). Той самий патерн,
+  // що вже застосований у 4 панелях і на /create. (line 104 нижче вже юзає селектор.)
+  const { selectedArea, downloadUrl, isGenerating, progress, status, setSelectedArea, setTaskGroup, setGenerating, taskGroupId } = useGenerationStore(useShallow((s) => ({
+    selectedArea: s.selectedArea, downloadUrl: s.downloadUrl, isGenerating: s.isGenerating,
+    progress: s.progress, status: s.status, setSelectedArea: s.setSelectedArea,
+    setTaskGroup: s.setTaskGroup, setGenerating: s.setGenerating, taskGroupId: s.taskGroupId,
+  })));
   // Завантажений GPX-трек (store.gpxFocus) → зона має розширюватись як на /create,
   // інакше довгий маршрут обрізало (maxMetersPerMm був жорстко 7).
   const gpxFocus = useGenerationStore((s) => s.gpxFocus);
@@ -211,7 +221,7 @@ export default function KeychainsPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-transparent">
+    <div id="main-content" tabIndex={-1} className="min-h-[100dvh] bg-transparent">
       {/* UX: тур лише до першої генерації — не перекриває прогрес/3D-результат */}
       {!isGenerating && !downloadUrl && (
         <OnboardingTour

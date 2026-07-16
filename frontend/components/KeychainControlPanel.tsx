@@ -13,6 +13,7 @@ import { mapPriceEur } from "@/lib/mapPrices";
 import { getKeychainDesignerSvg, svgToPngDataUrl } from "@/lib/capturePreview";
 import { api } from "@/lib/api";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import {
   DEFAULT_KEYCHAIN_DESIGN,
   type KeychainBaseShape,
@@ -389,7 +390,27 @@ export function KeychainControlPanel({
     // писати у store, інакше кліки по карті мертві).
     mapHighlightBuilding, setMapHighlightBuilding,
     highlightPoints, clearHighlights,
-  } = useGenerationStore();
+  } = useGenerationStore(useShallow((st) => ({
+    selectedArea: st.selectedArea,
+    isGenerating: st.isGenerating,
+    taskGroupId: st.taskGroupId,
+    activeTaskId: st.activeTaskId,
+    progress: st.progress,
+    status: st.status,
+    downloadUrl: st.downloadUrl,
+    taskStatuses: st.taskStatuses,
+    setGenerating: st.setGenerating,
+    setTaskGroup: st.setTaskGroup,
+    setActiveTaskId: st.setActiveTaskId,
+    setTaskStatuses: st.setTaskStatuses,
+    setShowAllZones: st.setShowAllZones,
+    updateProgress: st.updateProgress,
+    setDownloadUrl: st.setDownloadUrl,
+    setSelectedArea: st.setSelectedArea,
+    gpxFocus: st.gpxFocus, setGpxFocus: st.setGpxFocus, gpxName: st.gpxName, setGpxName: st.setGpxName,
+    mapHighlightBuilding: st.mapHighlightBuilding, setMapHighlightBuilding: st.setMapHighlightBuilding,
+    highlightPoints: st.highlightPoints, clearHighlights: st.clearHighlights,
+  })));
   // D4 GPX-трек на брелку — точки живуть у store.gpxFocus (їх же використовує
   // карта-оверлей для авто-фокусу зони на маршрут).
   const gpxTrack = gpxFocus?.points ?? null;

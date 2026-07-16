@@ -7,17 +7,24 @@ import {
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 
-// «Друкуємо й доставляємо · від 150 ₴» — конкретна пропозиція у героя (раніше герой
+// «Друкуємо й доставляємо · від {p} ₴» — конкретна пропозиція у героя (раніше герой
 // тільки про «завантаж файл», а реальний бізнес=друк+доставка був прихований). Inline
 // локалізований мап → без правок 6 messages-файлів.
-const SHIP_PILL: Record<string, string> = {
-  uk: "Друкуємо й доставляємо · від 150 ₴",
-  en: "We print & ship · from 150 ₴",
-  de: "Wir drucken & versenden · ab 150 ₴",
-  es: "Imprimimos y enviamos · desde 150 ₴",
-  fr: "Nous imprimons et livrons · dès 150 ₴",
-  pl: "Drukujemy i wysyłamy · od 150 ₴",
+// Ціна БЕРЕТЬСЯ з mapPrices.ts (MAP_PRICE_RANGE.uk.low), а не хардкодиться — раніше
+// цей pill вручну не оновили разом зі зміною цін S250/M350/L450/XL550 2026-07-09
+// (був застарілим 150₴), знайдено при живій перевірці.
+const SHIP_PILL_TMPL: Record<string, string> = {
+  uk: "Друкуємо й доставляємо · від {p} ₴",
+  en: "We print & ship · from {p} ₴",
+  de: "Wir drucken & versenden · ab {p} ₴",
+  es: "Imprimimos y enviamos · desde {p} ₴",
+  fr: "Nous imprimons et livrons · dès {p} ₴",
+  pl: "Drukujemy i wysyłamy · od {p} ₴",
 };
+function shipPillText(locale: string): string {
+  const tmpl = SHIP_PILL_TMPL[locale] ?? SHIP_PILL_TMPL.uk;
+  return tmpl.replace("{p}", MAP_PRICE_RANGE.uk.low);
+}
 
 // Блок «Популярні міста» на лендінгу — ПРЯМІ лінки з найавторитетнішої сторінки на
 // city-сторінки (раніше вони були ОРФАНАМИ: лише футер→/maps, 2 кліки → Google не
@@ -40,6 +47,7 @@ const ALL_CITIES_L: Record<string, string> = {
 import { Link } from "@/i18n/navigation";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { CITY_PAGES } from "@/lib/cityPages";
+import { MAP_PRICE_RANGE } from "@/lib/mapPrices";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -216,7 +224,7 @@ function Hero() {
             </Link>
           </div>
           <Link href="/prices" className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-soft bg-paper/70 px-4 py-2 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink">
-            <Truck size={15} className="text-forest" /> {SHIP_PILL[locale] ?? SHIP_PILL.uk}
+            <Truck size={15} className="text-forest" /> {shipPillText(locale)}
           </Link>
           <div className="mt-12 flex flex-wrap gap-x-9 gap-y-5 border-t border-line-soft pt-8">
             <Stat n={t("stat1n")} l={t("stat1l")} />

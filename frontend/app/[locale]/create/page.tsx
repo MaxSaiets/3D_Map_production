@@ -1,18 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+// ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
+// посилання з /en/create губили префікс локалі (/keychains замість /en/keychains).
+import { Link } from "@/i18n/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, KeyRound, User, X, Home as HomeIcon } from "lucide-react";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { SIMPLE_SIZES } from "@/lib/generation";
+import { mapPriceEur } from "@/lib/mapPrices";
 
 function MapLoading() {
   const tc = useTranslations("create");
@@ -96,6 +101,7 @@ const CITIES: Record<
 export default function Home() {
   const tc = useTranslations("create");
   const tCity = useTranslations("cities");
+  const locale = useLocale();
   // СІТКА СЕРІЇ — у store (НЕ page-level useState): панель монтується ДВІЧІ
   // (desktop aside + mobile section), локальний стан розсинхронізовувався б між
   // копіями (той самий клас багу, що й simplePanelMode). Сітка тепер валідна і в
@@ -162,8 +168,19 @@ export default function Home() {
     if (isAuto) store.setSimpleMapLabel(cityKeychainText(currentCityKey));
   }, [currentCityKey]);
 
+  // useShallow: без селектора ця top-level сторінка ре-рендерилась на КОЖЕН store.set()
+  // (кожен тік Pro-слайдера) і каскадно ре-рендерила важке дерево (leaflet-мапа +
+  // three.js-превʼю + обидві панелі, жодна не memoized) — це зводило нанівець
+  // per-field селектори самих панелей. Тепер сторінка ре-рендериться лише коли реально
+  // змінюється одне з ЦИХ полів. Output-identical (ті самі значення).
   const { isGenerating, progress, status, downloadUrl, selectedArea, taskGroupId, taskIds, setTaskGroup, setGenerating, setActiveTaskId, setSelectedArea,
-    modelSizeMm, cropRotationDeg, setCropRotationDeg, setZonePolygonCoords } = useGenerationStore();
+    modelSizeMm, cropRotationDeg, setCropRotationDeg, setZonePolygonCoords } = useGenerationStore(useShallow((st) => ({
+      isGenerating: st.isGenerating, progress: st.progress, status: st.status, downloadUrl: st.downloadUrl,
+      selectedArea: st.selectedArea, taskGroupId: st.taskGroupId, taskIds: st.taskIds,
+      setTaskGroup: st.setTaskGroup, setGenerating: st.setGenerating, setActiveTaskId: st.setActiveTaskId,
+      setSelectedArea: st.setSelectedArea, modelSizeMm: st.modelSizeMm, cropRotationDeg: st.cropRotationDeg,
+      setCropRotationDeg: st.setCropRotationDeg, setZonePolygonCoords: st.setZonePolygonCoords,
+    })));
 
   // Rotatable single-figure selector (only when NOT in grid mode). Reuses the
   // proven keychain crop overlay as a plain rotatable rectangle; its rotated
@@ -354,7 +371,7 @@ export default function Home() {
           building_min_height: 5.0, building_height_multiplier: 1.8,
           building_foundation_mm: 0.6, building_embed_mm: 0.2,
           water_depth: 2.0, terrain_enabled: false, terrain_z_scale: 1.0,
-          terrain_base_thickness_mm: 0.3, terrain_resolution: 180, terrarium_zoom: 15,
+          terrain_base_thickness_mm: 1.3, terrain_resolution: 180, terrarium_zoom: 15,
           flatten_buildings_on_terrain: false, flatten_roads_on_terrain: false,
           export_format: "3mf", model_size_mm: 80, context_padding_m: 400.0,
           is_ams_mode: false, flat_plate_mode: false, preview_mode: true,
@@ -400,14 +417,21 @@ export default function Home() {
   // Відновлюємо task_id з localStorage після refresh — ЛИШЕ задачі мап (не брелків,
   // бо /create і /keychains ділять той самий ключ; інакше відновили б чужу задачу).
   useEffect(() => {
-    const savedGroupId = localStorage.getItem("3dmap_task_group_id");
-    const savedTaskIds = localStorage.getItem("3dmap_task_ids");
-    const savedProduct = localStorage.getItem("3dmap_task_product");
-    if (savedGroupId && !taskGroupId && savedProduct !== "keychain") {
-      const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
-      setTaskGroup(savedGroupId, ids, "map");
-      setGenerating(true);
-    }
+    // try/catch: битий/підмінений 3dmap_task_ids (частковий запис при краші браузера,
+    // storage-eviction) кинув би JSON.parse синхронно у useEffect → error boundary /
+    // розмонтування дерева = порожній /create при завантаженні. /keychains уже
+    // обгорнутий так само; Array.isArray-guard проти valid-non-array (напр. "5").
+    try {
+      const savedGroupId = localStorage.getItem("3dmap_task_group_id");
+      const savedTaskIds = localStorage.getItem("3dmap_task_ids");
+      const savedProduct = localStorage.getItem("3dmap_task_product");
+      if (savedGroupId && !taskGroupId && savedProduct !== "keychain") {
+        const parsed = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
+        const ids = Array.isArray(parsed) ? parsed : [savedGroupId];
+        setTaskGroup(savedGroupId, ids, "map");
+        setGenerating(true);
+      }
+    } catch { /* ignore corrupt saved task ids */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -472,6 +496,22 @@ export default function Home() {
   const currentCity = CITIES[currentCityKey];
   const hasMapSelection = Boolean(selectedArea);
   const zoneCount = selectedZones.length;
+  // Живий підсумок ціни серії (UX-аудит): раніше сума за клітини зʼявлялась лише
+  // на фінальній CTA-кнопці — пізній sticker-shock при 3×3+ сітці. Показуємо
+  // «N зон × ціна = сума» одразу в степ-банері, щойно обрано ≥1 клітину.
+  const isEuLocale = locale !== "uk";
+  const dispZonePrice = (uah: number) => (isEuLocale ? `€${mapPriceEur(uah)}` : `${uah} ₴`);
+  const nearestSimpleSize = SIMPLE_SIZES.reduce(
+    (best, s) => (Math.abs(s.mm - (modelSizeMm || 80)) < Math.abs(best.mm - (modelSizeMm || 80)) ? s : best),
+    SIMPLE_SIZES[0],
+  );
+  const zonesPriceSummary = zoneCount > 0
+    ? tc("zonesPriceSummary", {
+        count: zoneCount,
+        perZone: dispZonePrice(nearestSimpleSize.price),
+        total: dispZonePrice(nearestSimpleSize.price * zoneCount),
+      })
+    : null;
   // Авто-перехід на 3D-рендер у мить старту генерації (rising edge). Назад на
   // карту — лише ручним перемикачем (deps не міняються → ефект не вертає).
   const prevGenStageRef = useRef(false);
@@ -525,7 +565,7 @@ export default function Home() {
           ]}
         />
       )}
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
+      <div id="main-content" tabIndex={-1} className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
         <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Back to home (prominent, always visible). Суцільний білий +
@@ -657,6 +697,26 @@ export default function Home() {
                 🧊 {tc("stageRender")}{isGenerating ? ` · ${progress}%` : ""}
               </button>
             </div>
+            {/* ПОСТІЙНИЙ КРОК-БАНЕР (UX-аудит P0): selectionLabel раніше рахувався,
+                але НІДЕ не рендерився — новий користувач не бачив «що робити далі».
+                Тонкий рядок над сценою: поточний крок + наступна дія. Видно на
+                мобільному І десктопі; ховається лише під час генерації (там прогрес). */}
+            {!isGenerating && (
+              <div className="order-0 flex shrink-0 items-center gap-2 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.07)] px-3.5 py-1.5" aria-live="polite">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[11px] font-bold text-white">
+                  {downloadUrl ? "3" : (hasMapSelection || zoneCount > 0) ? "2" : "1"}
+                </span>
+                <p className="min-w-0 truncate text-[12.5px] font-semibold text-[var(--text-primary)]">
+                  {downloadUrl
+                    ? tc("stepReadyOrder")
+                    : (showHexGrid && zonesPriceSummary)
+                      ? zonesPriceSummary
+                      : (hasMapSelection || zoneCount > 0)
+                        ? tc("stepNextSize")
+                        : selectionLabel}
+                </p>
+              </div>
+            )}
             <div id="panel-map" className={`${mapPanelClasses} ${stageView === "map" ? "" : "hidden"}`}>
               {/* Карта — головна взаємодія: на десктопі вся сцена (перемикач +
                   картка) ВЛІЗАЄ в один екран (calc під шапку) → без скролу
@@ -709,9 +769,11 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* МАПА НА ВЕСЬ РОЗМІР + плаваючі оверлеї. relative — щоб
-                    абсолютно-позиційовані контроли лягали поверх карти. */}
-                <div className="relative flex min-h-[60dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
+                {/* МАПА + плаваючі оверлеї. relative — щоб абсолютно-позиційовані
+                    контроли лягали поверх карти. МОБ: 42dvh (було 60dvh — карта
+                    з'їдала весь перший екран і ховала розмір/ціну/CTA нижче згину;
+                    UX-аудит P0 «користувачам нічого не ясно»). */}
+                <div className="relative flex min-h-[42dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини

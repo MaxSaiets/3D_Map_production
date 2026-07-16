@@ -571,6 +571,12 @@ def _fetch_source_stage(
                  if g is not None and not getattr(g, "is_empty", True)
                  and _world_m2(g) <= _park_max_area]
             ).buffer(0)
+            # PERF: prepared geometry caches a spatial index for repeated .intersects()
+            # against this same _green_u — most buildings fast-reject here (don't
+            # overlap any park) and never reach the expensive .intersection() below.
+            # .intersects() on a prepared geom, .intersection() still needs the raw one.
+            from shapely.prepared import prep as _prep_green
+            _green_u_prep = _prep_green(_green_u) if not _green_u.is_empty else None
 
             _keep_park = []
             for _g in _gdf_b.geometry.values:
@@ -578,7 +584,7 @@ def _fetch_source_stage(
                     _keep_park.append(True)
                     continue
                 try:
-                    if _g.area <= 0 or not _g.intersects(_green_u):
+                    if _g.area <= 0 or not _green_u_prep.intersects(_g):
                         _keep_park.append(True)
                         continue
                     _frac = _g.intersection(_green_u).area / _g.area
@@ -1527,7 +1533,14 @@ def run_full_generation_pipeline(
             # Без конектора clearance=0 → стара поведінка (будинки до дна).
             _cd_mm = float(getattr(request, "map_connector_depth_mm", 2.0) or 2.0)
             _merge_bottom_clr = (_cd_mm + 0.6) / _sf_c
+        # PERF: split the ~30-60s figure above into its two real sub-costs — building
+        # union vs terrain merge — so future optimization work knows which half to
+        # target instead of guessing. Pure logging, no behavior change.
+        _t_union_start = time.perf_counter()
         _merged_bmesh = union_mesh_collection(building_meshes, label="clipped_building_layer")
+        _t_union_end = time.perf_counter()
+        print(f"[TIMING][MERGE] building_union ({len(building_meshes)} buildings): "
+              f"{_t_union_end - _t_union_start:.2f}s")
         merge_result = merge_terrain_and_buildings(
             terrain_mesh=terrain_mesh,
             building_meshes=building_meshes,
@@ -1535,6 +1548,7 @@ def run_full_generation_pipeline(
             support_meshes=detail_layers.support_meshes,
             bottom_clearance_m=_merge_bottom_clr,
         )
+        print(f"[TIMING][MERGE] terrain_merge_only: {time.perf_counter() - _t_union_end:.2f}s")
         _log_stage("merge_terrain_buildings", stage_start)
         if stage_snapshot_collector is not None:
             try:

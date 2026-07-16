@@ -8,6 +8,10 @@ export const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 export const GADS_ID = process.env.NEXT_PUBLIC_GADS_ID;
 export const GTAG_ON = Boolean(GA_ID || GADS_ID); // load gtag.js if any Google ID is set
 
+// Optional Meta (Facebook/Instagram) Pixel — off until the owner creates a Meta
+// Business/Ads account and sets the ID. NEXT_PUBLIC_META_PIXEL_ID = "1234567890123".
+export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+
 export type ConversionAction = "order" | "contact" | "generate" | "lead";
 const GADS_LABELS: Record<ConversionAction, string | undefined> = {
   order: process.env.NEXT_PUBLIC_GADS_LABEL_ORDER,
@@ -47,6 +51,23 @@ export function setConsent(value: "granted" | "denied") {
 }
 
 /** Track an event (pageview by default). No-ops without consent. */
+/** Кампанія-параметри з URL приземлення (utm_*, gclid, fbclid) — для атрибуції
+ *  платного трафіку. Раніше НЕ захоплювались, тож платні кліки Google/Facebook
+ *  зливались у голий google.com/facebook.com referrer і кампанію було не розрізнити.
+ *  Повертає {} якщо параметрів немає. */
+export function campaignParams(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const q = new URLSearchParams(location.search);
+    const out: Record<string, string> = {};
+    for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid"]) {
+      const v = q.get(k);
+      if (v) out[k] = v.slice(0, 120);
+    }
+    return out;
+  } catch { return {}; }
+}
+
 export function track(event: string, props?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   // DEV/PREVIEW guard: не логуємо з localhost/прев'ю — інакше тестування
@@ -100,7 +121,7 @@ export function trackPing() {
 
 /** Воронка конверсії — ключові кроки шляху покупця. Адмінка показує, де
  *  користувачі «відвалюються» (view → area → generate → order_open → order_submit). */
-export const FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"] as const;
+export const FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit", "paid"] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 
 /** Фіксує крок воронки ОДИН раз за сесію (щоб лічильник = к-сть сесій, що дійшли
@@ -135,14 +156,26 @@ export function clickLabel(target: EventTarget | null): string {
   return (el?.tagName || "?").toLowerCase();
 }
 
+// Meta standard-event mapping (Purchase/Lead have built-in Ads-optimisation value
+// on Meta; "generate" has no standard equivalent → sent as a custom event).
+const META_STANDARD_EVENT: Record<ConversionAction, string | null> = {
+  order: "Purchase",
+  contact: "Lead",
+  lead: "Lead",
+  generate: null,
+};
+
 /**
- * Conversion tracking for Google Ads + GA4. Fire on revenue/lead actions
- * (order submitted, contact request, generation finished). Sends:
+ * Conversion tracking for Google Ads + GA4 + Meta Pixel. Fire on revenue/lead
+ * actions (order submitted, contact request, generation finished). Sends:
  *   1) self-hosted /api/track (consent-gated, for /admin stats)
  *   2) a GA4 event (mark as a key event/conversion in the GA4 UI)
  *   3) a Google Ads conversion (`send_to: AW-XXX/label`) so Smart Bidding can optimise.
+ *   4) a Meta Pixel event (Purchase/Lead/custom), if NEXT_PUBLIC_META_PIXEL_ID is set.
  * Google Consent Mode v2 handles privacy: with ad_storage denied the conversion is
  * still MODELLED (cookieless), so ad campaigns keep learning even from decliners.
+ * Meta has no consent-mode equivalent — the fbq script itself only loads post-consent
+ * (see SiteAnalytics.tsx), so no separate gate is needed here.
  */
 export function trackConversion(
   action: ConversionAction,
@@ -154,17 +187,29 @@ export function trackConversion(
   // (1) self-hosted (own banner consent gates this inside track())
   track(`conv_${action}`, { value, ...(opts?.props || {}) });
   const g = (window as any).gtag;
-  if (typeof g !== "function") return;
-  // (2) GA4 key event — name it generate_lead/purchase per GA conventions
-  const ga4Event = action === "order" ? "generate_lead" : action === "contact" ? "contact" : action;
-  try { g("event", ga4Event, { value, currency, ...(opts?.props || {}) }); } catch { /* noop */ }
-  // (3) Google Ads conversion
-  const sendTo = GADS_LABELS[action];
-  if (sendTo) {
-    const payload: Record<string, unknown> = { send_to: sendTo };
-    if (value != null) { payload.value = value; payload.currency = currency; }
-    if (opts?.transactionId) payload.transaction_id = opts.transactionId;
-    try { g("event", "conversion", payload); } catch { /* noop */ }
+  if (typeof g === "function") {
+    // (2) GA4 key event — name it generate_lead/purchase per GA conventions
+    const ga4Event = action === "order" ? "generate_lead" : action === "contact" ? "contact" : action;
+    try { g("event", ga4Event, { value, currency, ...(opts?.props || {}) }); } catch { /* noop */ }
+    // (3) Google Ads conversion
+    const sendTo = GADS_LABELS[action];
+    if (sendTo) {
+      const payload: Record<string, unknown> = { send_to: sendTo };
+      if (value != null) { payload.value = value; payload.currency = currency; }
+      if (opts?.transactionId) payload.transaction_id = opts.transactionId;
+      try { g("event", "conversion", payload); } catch { /* noop */ }
+    }
+  }
+  // (4) Meta Pixel
+  const fbq = (window as any).fbq;
+  if (typeof fbq === "function") {
+    const std = META_STANDARD_EVENT[action];
+    const params: Record<string, unknown> = {};
+    if (value != null) { params.value = value; params.currency = currency; }
+    try {
+      if (std) fbq("track", std, params);
+      else fbq("trackCustom", "Generate", params);
+    } catch { /* noop */ }
   }
 }
 

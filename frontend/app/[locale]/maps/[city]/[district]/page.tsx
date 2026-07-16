@@ -7,7 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
-import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq } from "@/lib/cityLanding";
+import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq, landingCopy } from "@/lib/cityLanding";
 
 /**
  * Programmatic SEO рівень 3: район міста (/maps/[city]/[district], 12 × 6 локалей).
@@ -42,7 +42,7 @@ export async function generateMetadata({
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
     ? params.locale
     : defaultLocale) as AppLocale;
-  const c = r.district.content[contentLocale(locale)];
+  const c = landingCopy(r.district.content, contentLocale(locale));
   const path = `/maps/${r.city.slug}/${r.district.slug}`;
   const languages: Record<string, string> = {};
   for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
@@ -78,7 +78,7 @@ export default async function DistrictPage({
   setRequestLocale(locale);
   const isUA = locale === "uk";
   const cl = contentLocale(locale);
-  const c = district.content[cl];
+  const c = landingCopy(district.content, cl);
   const cityName = city.names[locale];
   const districtName = isUA ? tpl.district : district.enName;
   const path = `/maps/${city.slug}/${district.slug}`;

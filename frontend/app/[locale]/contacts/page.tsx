@@ -12,6 +12,9 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 const STORE_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Store",
+  // Посилаємось на ГОЛОВНИЙ Organization/Store вузол з layout (${site}/#org),
+  // а не плодимо другий безіменний Store того самого бізнесу (SEO-дедуп).
+  "@id": `${BUSINESS.site}/#org`,
   name: BUSINESS.storeName,
   url: BUSINESS.site,
   image: `${BUSINESS.site}/opengraph-image`,
@@ -31,7 +34,7 @@ const STORE_JSON_LD = {
 export default function ContactsPage({ params }: { params: { locale: string } }) {
   const doc = getLegalSet(params.locale).contacts;
   return (
-    <div className="mx-auto max-w-[760px] px-5 py-12 lg:px-8">
+    <div id="main-content" tabIndex={-1} className="mx-auto max-w-[760px] px-5 py-12 lg:px-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STORE_JSON_LD) }} />
       <Link href="/" className="text-[13px] font-semibold text-ink-2 hover:text-ink">← monadruk</Link>
       <LegalArticle doc={doc} locale={params.locale} path="/contacts" />

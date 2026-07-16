@@ -1,11 +1,11 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, GADS_ID, GTAG_ON, getConsent, setConsent, track, trackPing, isOwnerOptOut, gtagConsentUpdate, clickLabel } from "@/lib/analytics";
+import { GA_ID, GADS_ID, GTAG_ON, META_PIXEL_ID, getConsent, setConsent, track, trackPing, isOwnerOptOut, gtagConsentUpdate, clickLabel, campaignParams } from "@/lib/analytics";
 
 // Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
 // «Connection to Indexed Database server lost» = Firebase Auth persistence у
@@ -32,7 +32,27 @@ export default function SiteAnalytics() {
   }, []);
 
   // Page-view tracking (only fires once consent is granted; track() self-guards).
-  useEffect(() => { if (consent === "granted") track("pageview"); }, [consent, pathname]);
+  // Перший pageview несе кампанія-параметри (utm/gclid/fbclid) з URL приземлення —
+  // атрибуція платного трафіку (раніше зливалось у голий google/facebook referrer).
+  const firstPvRef = useRef(true);
+  useEffect(() => {
+    if (consent !== "granted") return;
+    if (firstPvRef.current) {
+      firstPvRef.current = false;
+      const camp = campaignParams();
+      track("pageview", Object.keys(camp).length ? camp : undefined);
+    } else {
+      track("pageview");
+    }
+  }, [consent, pathname]);
+
+  // Meta Pixel page-view on route change (base pixel + first PageView fire on
+  // script load below; this catches subsequent client-side navigations).
+  useEffect(() => {
+    if (consent !== "granted" || !META_PIXEL_ID) return;
+    const fbq = (window as any).fbq;
+    if (typeof fbq === "function") fbq("track", "PageView");
+  }, [consent, pathname]);
 
   // Карта кліків: де користувачі тикають (нормовані % в'юпорта) + підпис елемента.
   // Допомагає зрозуміти, що приваблює увагу й де люди «застрягають». Капи на сесію,
@@ -62,8 +82,17 @@ export default function SiteAnalytics() {
   useEffect(() => {
     if (consent !== "granted") return;
     let pings = 0;
+    // Гейт БЕЗДІЯЛЬНОСТІ: раніше видима-але-покинута вкладка (юзер відійшов, таб
+    // на передньому плані) продовжувала пінгувати ~2 год і роздувала «час на сайті».
+    // Тепер пінгуємо лише якщо була реальна активність за останні IDLE_MS.
+    const IDLE_MS = 5 * 60 * 1000;
+    let lastActivity = Date.now();
+    const bump = () => { lastActivity = Date.now(); };
+    const acts = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
+    acts.forEach((e) => window.addEventListener(e, bump, { passive: true }));
     const beat = () => {
       if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastActivity > IDLE_MS) return; // видима, але покинута
       if (pings >= 240) return;
       pings++;
       trackPing();
@@ -75,6 +104,7 @@ export default function SiteAnalytics() {
     window.addEventListener("pagehide", onLeave);
     return () => {
       window.clearInterval(id);
+      acts.forEach((e) => window.removeEventListener(e, bump));
       document.removeEventListener("visibilitychange", onHidden);
       window.removeEventListener("pagehide", onLeave);
     };
@@ -129,6 +159,16 @@ export default function SiteAnalytics() {
               (GADS_ID ? `gtag('config','${GADS_ID}');` : ``)}
           </Script>
         </>
+      )}
+
+      {/* Meta Pixel — loaded ONLY after explicit consent (no cookieless modelling
+          equivalent to Google Consent Mode exists for Meta, so this is the privacy-safe
+          gate). Dormant until NEXT_PUBLIC_META_PIXEL_ID is set. */}
+      {consent === "granted" && META_PIXEL_ID && (
+        <Script id="meta-pixel-init" strategy="afterInteractive">
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');` +
+            `fbq('init','${META_PIXEL_ID}');fbq('track','PageView');`}
+        </Script>
       )}
 
       {ready && consent === null && (

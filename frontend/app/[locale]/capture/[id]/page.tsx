@@ -3,9 +3,15 @@ export const dynamic = "force-dynamic";
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Preview3D } from "@/components/Preview3D";
+import nextDynamic from "next/dynamic";
 import { useGenerationStore } from "@/store/generation-store";
 import { MAP_TEMPLATES } from "@/lib/templates";
+
+// three.js (Preview3D) — динамічний імпорт, без SSR: важкий client-only рендерер,
+// не має сенсу в серверному бандлі цього internal-роуту (той самий патерн, що й
+// на / та /worlds). Іменований експорт → `dynamic` тут зайнятий Next.js
+// route-config (export const dynamic вище), тому імпорт з аліасом nextDynamic.
+const Preview3D = nextDynamic(() => import("@/components/Preview3D").then((m) => m.Preview3D), { ssr: false });
 
 /**
  * Internal capture route for generating gallery thumbnails through the real
@@ -36,7 +42,7 @@ export default function CapturePage() {
         building_min_height: 5.0, building_height_multiplier: 1.8,
         building_foundation_mm: 0.6, building_embed_mm: 0.2,
         water_depth: 2.0, terrain_enabled: false, terrain_z_scale: 1.0,
-        terrain_base_thickness_mm: 0.3, terrain_resolution: 180, terrarium_zoom: 15,
+        terrain_base_thickness_mm: 1.3, terrain_resolution: 180, terrarium_zoom: 15,
         flatten_buildings_on_terrain: false, flatten_roads_on_terrain: false,
         export_format: "3mf", model_size_mm: 80, context_padding_m: 400.0,
         is_ams_mode: false, flat_plate_mode: false, preview_mode: true,

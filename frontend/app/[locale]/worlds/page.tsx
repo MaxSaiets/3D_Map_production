@@ -68,7 +68,7 @@ export default function WorldsPage() {
   }, [taskId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-10 sm:py-14">
+    <div id="main-content" tabIndex={-1} className="mx-auto max-w-[1100px] px-4 py-10 sm:py-14">
       <header className="mb-8 text-center">
         <span className="inline-block rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-secondary)]">
           {t("badge")}

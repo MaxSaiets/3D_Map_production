@@ -72,7 +72,7 @@ export function buildMapRequest(p: MapRequestParams) {
     water_depth: p.waterDepth ?? 2.0,
     terrain_enabled: p.terrainEnabled ?? true,
     terrain_z_scale: p.terrainZScale ?? 1.0,
-    terrain_base_thickness_mm: p.terrainBaseThicknessMm ?? 0.3,
+    terrain_base_thickness_mm: p.terrainBaseThicknessMm ?? 1.3,
     flat_uniform_building_height: Boolean(p.flatUniformBuildingHeight),
     ...(p.flatMaxBuildingHeightMm ? { flat_max_building_height_mm: p.flatMaxBuildingHeightMm } : {}),
     color_palette: p.colorPalette ?? "classic",

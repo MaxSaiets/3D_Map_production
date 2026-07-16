@@ -6,7 +6,7 @@ import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
-import { mapPriceRange } from "@/lib/mapPrices";
+import { mapPriceRange, KEYCHAIN_PRICE_UAH, mapPriceEur } from "@/lib/mapPrices";
 import {
   giftCityCopy,
   contentLocale,
@@ -14,6 +14,7 @@ import {
   occasionFaq,
   OCCASION_PAGES,
   OCCASION_BY_SLUG,
+  landingCopy,
   type CityLandingCopy,
 } from "@/lib/cityLanding";
 import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
@@ -36,7 +37,7 @@ export const dynamicParams = false;
 function resolveCopy(slug: string, locale: AppLocale): { c: CityLandingCopy; isCity: boolean; cityName?: string } | null {
   const cl = contentLocale(locale);
   const occ = OCCASION_BY_SLUG[slug];
-  if (occ) return { c: occ.content[cl], isCity: false };
+  if (occ) return { c: landingCopy(occ.content, cl), isCity: false };
   const city = CITY_PAGE_BY_SLUG[slug];
   if (city) {
     const name = city.names[locale];
@@ -98,6 +99,10 @@ export default async function GiftSlugPage({
   const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
 
   const range = mapPriceRange(locale);
+  // Сторінка подарунка рекламує «від 120 ₴» (брелок — найдешевший SKU), тож
+  // AggregateOffer.lowPrice МУСИТЬ = ціні брелка, а не мапи (250) — інакше
+  // structured-data суперечить видимій ціні → Google Merchant price-mismatch.
+  const giftLowPrice = locale === "uk" ? String(KEYCHAIN_PRICE_UAH) : String(mapPriceEur(KEYCHAIN_PRICE_UAH));
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
@@ -111,7 +116,7 @@ export default async function GiftSlugPage({
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: range.currency,
-          lowPrice: range.low,
+          lowPrice: giftLowPrice,
           highPrice: range.high,
           offerCount: range.offerCount,
           priceValidUntil: priceValidUntil(),
@@ -290,7 +295,7 @@ export default async function GiftSlugPage({
                 href={`/podarunok/${o.slug}`}
                 className="inline-block rounded-full border border-line-soft bg-white/70 px-4 py-2 text-[13.5px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink"
               >
-                {o.content[contentLocale(locale)].h1}
+                {landingCopy(o.content, contentLocale(locale)).h1}
               </Link>
             </li>
           ))}

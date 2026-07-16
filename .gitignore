@@ -63,6 +63,11 @@ tools/external/
 # PM2 logs
 frontend/frontend-dev.*.log
 
+# Build/test artifacts (deterministically regenerated — no need to track)
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+
 # IDE
 .vscode/
 .idea/

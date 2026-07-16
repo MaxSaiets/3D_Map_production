@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM, runZoneGeneration } from "@/lib/generation";
 import { OrderDialog } from "@/components/OrderDialog";
@@ -148,7 +149,97 @@ export function SimpleControlPanel({
   const isEu = locale !== "uk";
   const dispPrice = (uah: number) => (isEu ? `€${mapPriceEur(uah)}` : `${uah} ₴`);
   const tOrder = useTranslations("order");
-  const s = useGenerationStore();
+  const s = useGenerationStore(useShallow((st) => ({
+    activeTaskId: st.activeTaskId,
+    buildingEmbedMm: st.buildingEmbedMm,
+    buildingFoundationMm: st.buildingFoundationMm,
+    buildingHeightMultiplier: st.buildingHeightMultiplier,
+    buildingMinHeight: st.buildingMinHeight,
+    clearHighlights: st.clearHighlights,
+    downloadUrl: st.downloadUrl,
+    exportFormat: st.exportFormat,
+    flatPlateMode: st.flatPlateMode,
+    gpxFocus: st.gpxFocus,
+    gpxName: st.gpxName,
+    gpxNote: st.gpxNote,
+    gridRotationDeg: st.gridRotationDeg,
+    gridType: st.gridType,
+    highlightPoints: st.highlightPoints,
+    isAmsMode: st.isAmsMode,
+    isGenerating: st.isGenerating,
+    mapHighlightBuilding: st.mapHighlightBuilding,
+    modelSizeMm: st.modelSizeMm,
+    previewIncludeBase: st.previewIncludeBase,
+    previewIncludeBuildings: st.previewIncludeBuildings,
+    previewIncludeParks: st.previewIncludeParks,
+    previewIncludeRoads: st.previewIncludeRoads,
+    previewIncludeWater: st.previewIncludeWater,
+    previewMode: st.previewMode,
+    printQuality: st.printQuality,
+    progress: st.progress,
+    roadEmbedMm: st.roadEmbedMm,
+    roadHeightMm: st.roadHeightMm,
+    roadWidthMultiplier: st.roadWidthMultiplier,
+    selectedArea: st.selectedArea,
+    selectedZones: st.selectedZones,
+    setActiveTaskId: st.setActiveTaskId,
+    setBatchZoneMetaByTaskId: st.setBatchZoneMetaByTaskId,
+    setDownloadUrl: st.setDownloadUrl,
+    setGenerating: st.setGenerating,
+    setGpxFocus: st.setGpxFocus,
+    setGpxName: st.setGpxName,
+    setGpxNote: st.setGpxNote,
+    setMapHighlightBuilding: st.setMapHighlightBuilding,
+    setModelSizeMm: st.setModelSizeMm,
+    setPreviewIncludeBuildings: st.setPreviewIncludeBuildings,
+    setPreviewIncludeParks: st.setPreviewIncludeParks,
+    setPreviewIncludeRoads: st.setPreviewIncludeRoads,
+    setPreviewIncludeWater: st.setPreviewIncludeWater,
+    setSelectedArea: st.setSelectedArea,
+    setShowAllZones: st.setShowAllZones,
+    setSimpleConnector: st.setSimpleConnector,
+    setSimpleFlatAms: st.setSimpleFlatAms,
+    setSimpleFlatBuildings: st.setSimpleFlatBuildings,
+    setSimpleFormat: st.setSimpleFormat,
+    setSimpleFrame: st.setSimpleFrame,
+    setSimpleFrameStyle: st.setSimpleFrameStyle,
+    setSimpleMagnetMode: st.setSimpleMagnetMode,
+    setSimpleMapLabel: st.setSimpleMapLabel,
+    setSimpleRelief: st.setSimpleRelief,
+    setSimpleSeriesConnectors: st.setSimpleSeriesConnectors,
+    setSimpleStyleId: st.setSimpleStyleId,
+    setSimpleTemplate: st.setSimpleTemplate,
+    setTaskGroup: st.setTaskGroup,
+    setTaskStatuses: st.setTaskStatuses,
+    setTerrainEnabled: st.setTerrainEnabled,
+    showAllZones: st.showAllZones,
+    showHexGrid: st.showHexGrid,
+    simpleColorPalette: st.simpleColorPalette,
+    simpleConnector: st.simpleConnector,
+    simpleFlatAms: st.simpleFlatAms,
+    simpleFlatBuildings: st.simpleFlatBuildings,
+    simpleFormat: st.simpleFormat,
+    simpleFrame: st.simpleFrame,
+    simpleFrameStyle: st.simpleFrameStyle,
+    simpleMagnetMode: st.simpleMagnetMode,
+    simpleMapLabel: st.simpleMapLabel,
+    simplePanelMode: st.simplePanelMode,
+    simpleRelief: st.simpleRelief,
+    simpleSeriesConnectors: st.simpleSeriesConnectors,
+    simpleStyleId: st.simpleStyleId,
+    simpleTemplate: st.simpleTemplate,
+    status: st.status,
+    taskGroupId: st.taskGroupId,
+    taskIds: st.taskIds,
+    taskStatuses: st.taskStatuses,
+    terrainBaseThicknessMm: st.terrainBaseThicknessMm,
+    terrainResolution: st.terrainResolution,
+    terrainZScale: st.terrainZScale,
+    terrariumZoom: st.terrariumZoom,
+    updateProgress: st.updateProgress,
+    waterDepth: st.waterDepth,
+    zonePolygonCoords: st.zonePolygonCoords,
+  })));
   const {
     selectedArea, setSelectedArea,
     isGenerating, downloadUrl, progress, status, printQuality,
@@ -694,7 +785,11 @@ export function SimpleControlPanel({
         const res = await runZoneGeneration({ selectedZones: _seriesZones, request: req, onSeriesGenerated });
         setTaskGroup(res.taskId, res.taskIds);
         setActiveTaskId(res.taskIds[0] ?? null);
-        s.setShowAllZones(true);
+        // БАГ: раніше вмикали showAllZones завжди, навіть коли обрана лише ОДНА
+        // клітина сітки (taskIds.length===1) — тоді ні одиночний, ні композитний
+        // ефект прев'ю не спрацьовували (обидва гейтяться протилежно) → порожній
+        // екран назавжди. Вмикаємо composite-режим лише коли зон справді кілька.
+        s.setShowAllZones(res.taskIds.length > 1);
         s.setBatchZoneMetaByTaskId(res.batchMeta);
       } catch (e: any) {
         setError(e?.message || t("errGen"));
@@ -752,7 +847,9 @@ export function SimpleControlPanel({
         setActiveTaskId(ids[0] ?? null);
         // СКЛАДЕНЕ ПРЕВʼЮ: показуємо всі плитки разом (та сама механіка, що
         // «Показати всі зони» у Профі) + row/col, щоб кожна стала на місце.
-        s.setShowAllZones(true);
+        // Гейт на length>1 — інакше 1×1 «серія» лишає showAllZones=true з
+        // одним task_id → жоден ефект прев'ю не спрацьовує (порожній екран).
+        s.setShowAllZones(ids.length > 1);
         const meta: Record<string, { zoneId: string; row?: number; col?: number }> = {};
         for (let i = 0; i < ids.length && i < zones.length; i += 1) {
           meta[String(ids[i])] = {
@@ -1338,11 +1435,21 @@ export function SimpleControlPanel({
               </span>
             ))}
           </div>
+          {/* ГОЛОВНА CTA = «Замовити друк · ціна» (бронза) — ПЕРША і єдина домінантна
+              кнопка (UX-аудит: 3 стеки кнопок давали параліч вибору; покупцю не було
+              ясно, що для покупки досить одного кліку). Превʼю — вторинна контурна. */}
+          <button
+            type="button"
+            onClick={orderNow}
+            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
+          >
+            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
+          </button>
           <button
             type="button"
             onClick={() => handleGenerate()}
             disabled={!canGenerate || isGenerating}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white/70 px-5 py-3 text-sm font-bold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.10)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isGenerating ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")} {progress}%</>
@@ -1389,17 +1496,9 @@ export function SimpleControlPanel({
             </button>
           )}
 
-          {/* «Замовити друк» — одразу після «Створити», завжди на видному місці.
-              orderNow() (а НЕ голий setOrderOpen): якщо на екрані лише GLB-прев'ю або
-              нічого — стартує ПОВНУ 3MF-генерацію у фоні, щоб оператор отримав готовий
-              файл (раніше десктоп-замовлення приходили з task_id=null — критичний баг). */}
-          <button
-            type="button"
-            onClick={orderNow}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3.5 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90"
-          >
-            <ShoppingBag className="h-5 w-5" /> {t("orderPrint")} · {orderPriceText}
-          </button>
+          {/* «Замовити друк» перенесено НАГОРУ як головну CTA (див. вище). orderNow()
+              лишився той самий: якщо на екрані лише GLB-прев'ю або нічого — стартує
+              ПОВНУ 3MF-генерацію у фоні, щоб оператор отримав готовий файл. */}
 
           {error && (
             <div role="alert" aria-atomic="true" className="rounded-[16px] border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
@@ -1425,6 +1524,62 @@ export function SimpleControlPanel({
           {downloadUrl && downloadUrl.includes("/download_all") && (
             <div data-testid="panel-howto" className="rounded-[16px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.07)] px-4 py-2.5 text-xs leading-5 text-[var(--text-primary)]">
               {t("panelHowto", { count: s.taskIds?.length ?? 0 })}
+            </div>
+          )}
+
+          {/* НУМЕРОВАНИЙ список зон (сітка/серія): раніше цієї панелі не було
+              взагалі у «Просто»-режимі — користувач не бачив ні скільки зон
+              генерується, ні їхній статус. Дзеркалить список у Профі-панелі
+              (ControlPanel.tsx), номер = позиція у taskIds (стабільна: бек
+              сортує row→col). */}
+          {s.taskIds && s.taskIds.length > 1 && (
+            <div className="rounded-[24px] border border-[var(--surface-border)] bg-white/80 p-4">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">{t("generatedZones")}</div>
+              <div className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{t("generatedZonesDesc")}</div>
+              <div className="mt-3 grid max-h-52 grid-cols-2 gap-2 overflow-auto pr-1 sm:grid-cols-3">
+                {s.taskIds.map((id: string, idx: number) => {
+                  const zoneStatus = s.taskStatuses?.[id]?.status;
+                  const isActive = id === s.activeTaskId;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={async () => {
+                        if (s.showAllZones) return;
+                        setActiveTaskId(id);
+                        setError(null);
+                        const known = s.taskStatuses?.[id];
+                        if (known && known.status === "completed" && known.download_url) {
+                          setDownloadUrl(known.download_url);
+                          return;
+                        }
+                        try {
+                          const { api } = await import("@/lib/api");
+                          const resp: any = await api.getStatus(id);
+                          if (resp?.status === "completed" && resp?.download_url) setDownloadUrl(resp.download_url);
+                        } catch { /* ignore single fetch issues */ }
+                      }}
+                      className={`flex items-center gap-2 rounded-[14px] border px-3 py-2 text-left transition ${
+                        isActive
+                          ? "border-[rgba(11,92,87,0.22)] bg-[rgba(11,92,87,0.08)]"
+                          : "border-[var(--surface-border)] bg-white hover:bg-[rgba(15,23,42,0.03)]"
+                      }`}
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgba(11,92,87,0.12)] text-[11px] font-bold text-[var(--accent-strong)]">
+                        {idx + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[12px] font-semibold text-[var(--text-primary)]">
+                          {t("zoneNumber", { n: idx + 1 })}
+                        </span>
+                        <span className="block truncate text-[10px] text-[var(--text-secondary)]">
+                          {zoneStatus === "completed" ? <Check className="inline h-3 w-3" /> : (zoneStatus || t("awaitingStatus"))}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -1509,11 +1664,13 @@ export function SimpleControlPanel({
         <>
           <div className="h-20 lg:hidden" aria-hidden="true" />
           <StickyActionBar
-            // Ціну у нижньому барі НЕ показуємо постійно (власник: «не була завжди на
-            // виду, а тільки при замовленні») → price=null. Ціна видно на inline-кнопці
-            // «Замовити друк · N₴» та у формі замовлення. Бар лишає лише дії (на всю ширину).
+            // ЦІНА ЗАВЖДИ ВИДИМА у мобільному барі (UX-аудит P0: на мобільному вся
+            // панель з розміром/ціною ховалась нижче карти → користувач НЕ бачив ціну
+            // взагалі до глибокого скролу; для конверсії ціна має бути біля дії).
+            // Раніше price=null за давнім побажанням власника — свідомо повернено
+            // за новою вимогою «максимальна зручність та продажі».
             priceLabel={t("estPrice")}
-            price={null}
+            price={orderPriceText || null}
             actionLabel={
               downloadUrl
                 ? t("orderShort")

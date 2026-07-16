@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import type { User } from "firebase/auth";
 import { X, Mail, Phone as PhoneIcon, Loader2 } from "lucide-react";
 import {
-  getFirebaseAuth, isFirebaseAuthConfigured, getIdToken,
+  isFirebaseAuthConfigured, getIdToken, subscribeAuthState,
   signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword,
   startPhoneSignIn, resetRecaptcha, signOutUser,
 } from "@/lib/firebase";
@@ -31,10 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!configured) { setLoading(false); return; }
-    const auth = getFirebaseAuth();
-    if (!auth) { setLoading(false); return; }
-    const unsub = onAuthStateChanged(auth, (u: User | null) => { setUser(u); setLoading(false); });
-    return () => unsub();
+    let cancelled = false;
+    let unsub: (() => void) | undefined;
+    subscribeAuthState((u: User | null) => { if (!cancelled) { setUser(u); setLoading(false); } })
+      .then((fn) => { if (cancelled) fn(); else unsub = fn; })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; unsub?.(); };
   }, [configured]);
 
   const value = useMemo<AuthContextValue>(() => ({

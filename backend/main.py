@@ -137,11 +137,17 @@ def _client_ip(request: Request) -> str:
 
 
 def _check_rate(ip: str, scope: str, limit: int, window_s: float) -> bool:
-    """Return True if the (ip, scope) bucket is still under `limit` within the
-    trailing `window_s` seconds; records the hit. Thread-safe (background tasks
-    + request handlers may share the process)."""
+    """Return True if the (ip, scope, window) bucket is still under `limit` within
+    the trailing `window_s` seconds; records the hit. Thread-safe (background tasks
+    + request handlers may share the process).
+
+    КРИТИЧНО: ключ ВКЛЮЧАЄ window_s. Раніше було (ip, scope) → усі правила scope
+    ділили ОДИН deque: (а) кожен запит писав N timestamp-ів (по одному на правило)
+    у той самий deque, тож 5/хв фактично спрацьовував як ~2.5/хв; (б) 60-секундне
+    очищення виганяло timestamp-и, потрібні 3600-секундному правилу, тож годинний
+    ліміт ніколи не діяв. Окремий deque на правило вирішує обидва."""
     now = _time.monotonic()
-    key = (ip, scope)
+    key = (ip, scope, window_s)
     with _RATE_LOCK:
         dq = _RATE_BUCKETS.get(key)
         if dq is None:
@@ -716,7 +722,7 @@ class GenerationRequest(BaseModel):
     terrain_enabled: bool = True
     terrain_z_scale: float = 3.0  # Р—Р±С–Р»СЊС€РµРЅРѕ РґР»СЏ РєСЂР°С‰РѕС— РІРёРґРёРјРѕСЃС‚С– СЂРµР»СЊС”С„Сѓ
     # РўРѕРЅРєР° РѕСЃРЅРѕРІР° РґР»СЏ РґСЂСѓРєСѓ: Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј 1РјРј (РєРѕСЂРёСЃС‚СѓРІР°С‡ РјРѕР¶Рµ Р·РјС–РЅРёС‚Рё).
-    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
+    terrain_base_thickness_mm: float = Field(default=1.3, ge=0.2, le=20.0)  # РўРѕРЅРєР° РїС–РґР»РѕР¶РєР°, РјС–РЅС–РјСѓРј 0.2РјРј
     # Р”РµС‚Р°Р»С–Р·Р°С†С–СЏ СЂРµР»СЊС”С„Сѓ
     # - terrain_resolution: РєС–Р»СЊРєС–СЃС‚СЊ С‚РѕС‡РѕРє РїРѕ РѕСЃС– (mesh РґРµС‚Р°Р»СЊ). Р’РёС‰Р° = РґРµС‚Р°Р»СЊРЅС–С€Рµ, РїРѕРІС–Р»СЊРЅС–С€Рµ.
     # Default 200 (was 350): 350×350 + subdivide gave ~640k vertices on a ~500m
@@ -1366,8 +1372,11 @@ async def create_order_endpoint(
                             amount = round(amount * len(_tile_ids), 2)
                 except Exception:  # noqa: BLE001
                     pass
-                # parse_amount лишається в коді (фід — серверна цифра, не клієнтська).
-                amount, currency = parse_amount(f"{amount:.2f}", order.product_type, pricing)
+                # parse_amount лишається в коді (фід — серверна цифра, не клієнтська)
+                # ЛИШЕ як захисний clamp валюти до _ALLOWED_CCY. КРИТИЧНО: формат "%.0f",
+                # а НЕ "%.2f" — parse_amount робить re.sub(r"[^\d]","") і "250.00" → "25000"
+                # (×100 переплата!). Ціни — цілі гривні, тож .0f безпечно й коректно.
+                amount, currency = parse_amount(f"{amount:.0f}", order.product_type, pricing)
                 site = (os.getenv("PUBLIC_SITE_URL") or "https://monadruk.com").rstrip("/")
                 checkout = build_checkout(
                     amount=amount, currency=currency,
@@ -1462,6 +1471,18 @@ async def track_event(
     Country code comes from Cloudflare (Cf-Ipcountry) — coarse geo, no raw IP."""
     import hashlib, json
     from datetime import datetime, timezone
+    # BOT-ФІЛЬТР: відсіюємо краулерів/прев'ю-фетчі/headless ще ДО запису в лог, щоб
+    # адмін-аналітика («Останні візити») не забруднювалась ботами. Класичний винуватець
+    # US-Facebook-сміття = facebookexternalhit (link-preview) + in-app prefetch. Порожній
+    # UA теж підозрілий. Повертаємо 200 (щоб бот не детектив фільтр), але НЕ пишемо.
+    _ua = (user_agent or "").lower()
+    _BOT_UA = ("bot", "crawl", "spider", "slurp", "headless", "facebookexternalhit",
+               "facebookcatalog", "facebot", "preview", "curl/", "wget", "python-requests",
+               "scrapy", "phantomjs", "puppeteer", "playwright", "lighthouse", "gtmetrix",
+               "pingdom", "uptimerobot", "dataprovider", "semrush", "ahrefs", "mj12",
+               "dotbot", "petalbot", "bytespider", "google-inspectiontool", "chrome-lighthouse")
+    if not _ua or any(b in _ua for b in _BOT_UA):
+        return {"status": "ok"}
     try:
         day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         ip = (x_forwarded_for or "").split(",")[0].strip()
@@ -1536,7 +1557,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     # Стрічка ВІЗИТІВ: групуємо події за анонімним visitor-хешем → бачимо кожного
     # відвідувача (анонім) ОКРЕМО: країна, ЗВІДКИ (реферер), які сторінки, коли.
     visitor_sessions: Dict[str, Dict] = {}
-    FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit"]
+    FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit", "paid"]
     try:
         # Читаємо ПОПЕРЕДНІЙ ротований лог (.jsonl.1, якщо є) + поточний — щоб одна
         # ротація (при перевищенні 25МБ) не ховала й не втрачала недавню історію.
@@ -1931,6 +1952,11 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     _is_batch = "/download_all" in _dl_url or (req.task_id or "").startswith("batch_")
     if _is_batch:
         _bid = req.task_id if (req.task_id or "").startswith("batch_") else _dl_url.split("/zones/")[-1].split("/download_all")[0]
+        # ПОРЯДОК: спершу будуємо ZIP (409 поки плитки готуються / 404 якщо втрачено),
+        # і ЛИШЕ на успіху списуємо квоту — інакше клік по «ще не готово» спалював би
+        # безкоштовне завантаження без файлу. Дзеркалить безпечний порядок non-batch
+        # гілки нижче (resolve-then-charge). Dedup за task_id зберігається.
+        resp = await download_all_zones(_bid)
         _res = register_download(u["uid"], u.get("email") or "", u["is_admin"], _bid or "")
         if not _res["ok"]:
             raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
@@ -1939,7 +1965,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
             "product_type": req.product_type, "download_url": _dl_url,
             "preview": (req.preview or "")[:200000],
         })
-        return await download_all_zones(_bid)
+        return resp
     path = _resolve_model_path(req)
     if path is None:
         raise HTTPException(status_code=404, detail="Файл моделі не знайдено")
@@ -2162,14 +2188,14 @@ async def generate_model(
         )
         
         print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С–")
-        return GenerationResponse(task_id=task_id, status="processing", message="Р—Р°РґР°С‡Р° СЃС‚РІРѕСЂРµРЅР°")
+        return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
     except HTTPException:
         raise
     except Exception as e:
         print(f"[ERROR] РџРѕРјРёР»РєР° СЃС‚РІРѕСЂРµРЅРЅСЏ Р·Р°РґР°С‡С–: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° СЃС‚РІРѕСЂРµРЅРЅСЏ Р·Р°РґР°С‡С–: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Помилка створення задачі: {str(e)}")
 
 
 class CustomWorldRequest(BaseModel):
@@ -2831,7 +2857,7 @@ async def merge_zones_endpoint(
         РћР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р» РјРѕРґРµР»С–
     """
     if not task_ids or len(task_ids) == 0:
-        raise HTTPException(status_code=400, detail="РќРµ РІРєР°Р·Р°РЅРѕ task_ids РґР»СЏ РѕР±'С”РґРЅР°РЅРЅСЏ")
+        raise HTTPException(status_code=400, detail="Не вказано task_ids для об'єднання")
     
     # РџРµСЂРµРІС–СЂСЏС”РјРѕ, С‡Рё РІСЃС– Р·Р°РґР°С‡С– Р·Р°РІРµСЂС€РµРЅС–
     completed_tasks = []
@@ -2859,15 +2885,15 @@ async def merge_zones_endpoint(
             continue
     
     if not all_meshes:
-        raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ Р·Р°РІР°РЅС‚Р°Р¶РёС‚Рё Р¶РѕРґРЅРѕРіРѕ РјРµС€Сѓ")
+        raise HTTPException(status_code=400, detail="Не вдалося завантажити жодного мешу")
     
     # РћР±'С”РґРЅСѓС”РјРѕ РІСЃС– РјРµС€С–
     try:
         merged_mesh = trimesh.util.concatenate(all_meshes)
         if merged_mesh is None:
-            raise HTTPException(status_code=500, detail="РќРµ РІРґР°Р»РѕСЃСЏ РѕР±'С”РґРЅР°С‚Рё РјРµС€С–")
+            raise HTTPException(status_code=500, detail="Не вдалося об'єднати меші")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"РџРѕРјРёР»РєР° РѕР±'С”РґРЅР°РЅРЅСЏ РјРµС€С–РІ: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Помилка об'єднання мешів: {str(e)}")
     
     # Р—Р±РµСЂС–РіР°С”РјРѕ РѕР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р»
     # Р—Р±РµСЂС–РіР°С”РјРѕ РѕР±'С”РґРЅР°РЅРёР№ С„Р°Р№Р»
@@ -2981,7 +3007,7 @@ async def set_global_center_endpoint(
             "message": f"Р“Р»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕ: ({center_lat:.6f}, {center_lon:.6f})"
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"РџРѕРјРёР»РєР° РІСЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ С†РµРЅС‚СЂСѓ: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Помилка встановлення глобального центру: {str(e)}")
 
 
 @app.get("/api/osm/extract")
@@ -3216,7 +3242,7 @@ class ZoneGenerationRequest(BaseModel):
     water_depth: float = Field(default=1.2, ge=0.1, le=10.0)  # 1.2РјРј РІ Р·РµРјР»С–, РїРѕРІРµСЂС…РЅСЏ 0.2РјРј РЅРёР¶С‡Рµ СЂРµР»СЊС”С„Сѓ
     terrain_enabled: bool = True
     terrain_z_scale: float = Field(default=0.5, ge=0.1, le=10.0)
-    terrain_base_thickness_mm: float = Field(default=0.3, ge=0.2, le=20.0)  # РџС–РґР»РѕР¶РєР° 0.3РјРј Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј
+    terrain_base_thickness_mm: float = Field(default=1.3, ge=0.2, le=20.0)  # РџС–РґР»РѕР¶РєР° 1.3РјРј Р·Р° Р·Р°РјРѕРІС‡СѓРІР°РЅРЅСЏРј (+1РјРј РІС–Рґ РІР»Р°СЃРЅРёРєР°, 2026-07-12)
     terrain_resolution: int = Field(default=180, ge=50, le=500)
     terrarium_zoom: int = Field(default=15, ge=10, le=18)
     terrain_smoothing_sigma: Optional[float] = Field(default=None, ge=0.0, le=5.0)
@@ -3346,7 +3372,7 @@ async def generate_zones_endpoint(
 ):
 
     if not request.zones or len(request.zones) == 0:
-        raise HTTPException(status_code=400, detail="РќРµ РІРёР±СЂР°РЅРѕ Р¶РѕРґРЅРѕС— Р·РѕРЅРё")
+        raise HTTPException(status_code=400, detail="Не вибрано жодної зони")
     
     # РљР РРўРР§РќРћ: Р’РёР·РЅР°С‡Р°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅРёР№ С†РµРЅС‚СЂ РґР»СЏ Р’РЎР†Р„Р‡ СЃС–С‚РєРё.
     # If client provides city bbox, use it for a stable reference; otherwise fallback to selected zones bbox.
@@ -3385,7 +3411,7 @@ async def generate_zones_endpoint(
             all_lons.extend(zone_lons)
             all_lats.extend(zone_lats)
         if len(all_lons) == 0 or len(all_lats) == 0:
-            raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ РІРёР·РЅР°С‡РёС‚Рё РєРѕРѕСЂРґРёРЅР°С‚Рё Р·РѕРЅ")
+            raise HTTPException(status_code=400, detail="Не вдалося визначити координати зон")
         grid_bbox = {
             'north': max(all_lats),
             'south': min(all_lats),
@@ -3762,7 +3788,7 @@ async def generate_zones_endpoint(
         print(f"[DEBUG] Р—Р°РґР°С‡Р° {task_id} РґРѕРґР°РЅР° РґРѕ background_tasks. Р’СЃСЊРѕРіРѕ Р·Р°РґР°С‡: {len(task_ids)}")
     
     if len(task_ids) == 0:
-        raise HTTPException(status_code=400, detail="РќРµ РІРґР°Р»РѕСЃСЏ СЃС‚РІРѕСЂРёС‚Рё Р·Р°РґР°С‡С– РґР»СЏ Р·РѕРЅ")
+        raise HTTPException(status_code=400, detail="Не вдалося створити задачі для зон")
     
     print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ {len(task_ids)} Р·Р°РґР°С‡ РґР»СЏ РіРµРЅРµСЂР°С†С–С— Р·РѕРЅ: {task_ids}")
     
@@ -3794,7 +3820,7 @@ async def generate_zones_endpoint(
     return GenerationResponse(
         task_id=main_task_id,
         status="processing",
-        message=f"РЎС‚РІРѕСЂРµРЅРѕ {len(task_ids)} Р·Р°РґР°С‡ РґР»СЏ РіРµРЅРµСЂР°С†С–С— Р·РѕРЅ. Р’РёРєРѕСЂРёСЃС‚РѕРІСѓР№С‚Рµ all_task_ids РґР»СЏ Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ РІСЃС–С… Р·РѕРЅ.",
+        message=f"Створено {len(task_ids)} задач для генерації зон. Використовуйте all_task_ids для завантаження всіх зон.",
         all_task_ids=task_ids  # Р”РѕРґР°С”РјРѕ СЃРїРёСЃРѕРє РІСЃС–С… task_id
     )
 

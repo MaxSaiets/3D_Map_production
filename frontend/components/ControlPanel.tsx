@@ -19,6 +19,7 @@ import {
 import { api } from "@/lib/api";
 import { runZoneGeneration } from "@/lib/generation";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 
@@ -280,7 +281,75 @@ export function ControlPanel({
     updateProgress,
     setDownloadUrl,
     setPrintQuality,
-  } = useGenerationStore();
+  } = useGenerationStore(useShallow((st) => ({
+    selectedArea: st.selectedArea,
+    isGenerating: st.isGenerating,
+    taskGroupId: st.taskGroupId,
+    taskIds: st.taskIds,
+    activeTaskId: st.activeTaskId,
+    taskStatuses: st.taskStatuses,
+    showAllZones: st.showAllZones,
+    progress: st.progress,
+    status: st.status,
+    downloadUrl: st.downloadUrl,
+    printQuality: st.printQuality,
+    roadWidthMultiplier: st.roadWidthMultiplier,
+    roadHeightMm: st.roadHeightMm,
+    roadEmbedMm: st.roadEmbedMm,
+    buildingMinHeight: st.buildingMinHeight,
+    buildingHeightMultiplier: st.buildingHeightMultiplier,
+    buildingFoundationMm: st.buildingFoundationMm,
+    buildingEmbedMm: st.buildingEmbedMm,
+    waterDepth: st.waterDepth,
+    terrainEnabled: st.terrainEnabled,
+    terrainZScale: st.terrainZScale,
+    terrainBaseThicknessMm: st.terrainBaseThicknessMm,
+    terrainResolution: st.terrainResolution,
+    terrariumZoom: st.terrariumZoom,
+    exportFormat: st.exportFormat,
+    modelSizeMm: st.modelSizeMm,
+    isAmsMode: st.isAmsMode,
+    flatPlateMode: st.flatPlateMode,
+    previewMode: st.previewMode,
+    previewIncludeBase: st.previewIncludeBase,
+    previewIncludeRoads: st.previewIncludeRoads,
+    previewIncludeBuildings: st.previewIncludeBuildings,
+    previewIncludeWater: st.previewIncludeWater,
+    previewIncludeParks: st.previewIncludeParks,
+    zonePolygonCoords: st.zonePolygonCoords,
+    setRoadWidthMultiplier: st.setRoadWidthMultiplier,
+    setRoadHeightMm: st.setRoadHeightMm,
+    setRoadEmbedMm: st.setRoadEmbedMm,
+    setBuildingMinHeight: st.setBuildingMinHeight,
+    setBuildingHeightMultiplier: st.setBuildingHeightMultiplier,
+    setBuildingFoundationMm: st.setBuildingFoundationMm,
+    setBuildingEmbedMm: st.setBuildingEmbedMm,
+    setWaterDepth: st.setWaterDepth,
+    setTerrainEnabled: st.setTerrainEnabled,
+    setTerrainZScale: st.setTerrainZScale,
+    setTerrainBaseThicknessMm: st.setTerrainBaseThicknessMm,
+    setTerrainResolution: st.setTerrainResolution,
+    setTerrariumZoom: st.setTerrariumZoom,
+    setExportFormat: st.setExportFormat,
+    setModelSizeMm: st.setModelSizeMm,
+    setAmsMode: st.setAmsMode,
+    setFlatPlateMode: st.setFlatPlateMode,
+    setPreviewMode: st.setPreviewMode,
+    setPreviewIncludeBase: st.setPreviewIncludeBase,
+    setPreviewIncludeRoads: st.setPreviewIncludeRoads,
+    setPreviewIncludeBuildings: st.setPreviewIncludeBuildings,
+    setPreviewIncludeWater: st.setPreviewIncludeWater,
+    setPreviewIncludeParks: st.setPreviewIncludeParks,
+    setGenerating: st.setGenerating,
+    setTaskGroup: st.setTaskGroup,
+    setActiveTaskId: st.setActiveTaskId,
+    setTaskStatuses: st.setTaskStatuses,
+    setBatchZoneMetaByTaskId: st.setBatchZoneMetaByTaskId,
+    setShowAllZones: st.setShowAllZones,
+    updateProgress: st.updateProgress,
+    setDownloadUrl: st.setDownloadUrl,
+    setPrintQuality: st.setPrintQuality,
+  })));
 
   const { getIdToken, openLogin } = useAuth();
   const t = useTranslations("pro");
@@ -472,6 +541,12 @@ export function ControlPanel({
       const response = await api.generateModel(request);
       setTaskGroup(response.task_id, [response.task_id]);
       setActiveTaskId(response.task_id);
+      // БАГ: якщо перед цим була сітка/серія (showAllZones=true лишався в сторі),
+      // одиночне прев'ю НЕ показувалось — і одиночний, і композитний ефект у
+      // Preview3D гейтяться протилежно, тож жоден не спрацьовував. Скидаємо на
+      // одиночну генерацію.
+      setShowAllZones(false);
+      setBatchZoneMetaByTaskId({});
     } catch (generateError: any) {
       console.error("[ERROR] Помилка генерації моделі:", generateError);
       setError(generateError.message || t("errorGenerate"));
@@ -919,7 +994,7 @@ export function ControlPanel({
               </div>
 
               <div className="mt-4 max-h-52 space-y-2 overflow-auto pr-1">
-                {taskIds.map((id) => (
+                {taskIds.map((id, idx) => (
                   <button
                     key={id}
                     type="button"
@@ -952,7 +1027,12 @@ export function ControlPanel({
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">{id}</span>
+                      <span className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgba(11,92,87,0.12)] text-[11px] font-bold text-[var(--accent-strong)]">
+                          {idx + 1}
+                        </span>
+                        {t("zoneNumber", { n: idx + 1 })}
+                      </span>
                       {id === activeTaskId && <CheckCircle2 className="h-4 w-4 text-[var(--accent-strong)]" />}
                     </div>
                     <div className="mt-1 text-xs text-[var(--text-secondary)]">

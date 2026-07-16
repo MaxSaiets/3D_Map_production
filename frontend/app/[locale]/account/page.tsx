@@ -3,14 +3,19 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import nextDynamic from "next/dynamic";
 import { ArrowLeft, Box, Download, Loader2, LogOut, ShieldCheck, Map as MapIcon, KeyRound, CheckCircle2, AlertTriangle, ChevronDown } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 import { OrderDialog } from "@/components/OrderDialog";
-import Model3DViewer from "@/components/Model3DViewer";
 import { ShoppingBag } from "lucide-react";
+
+// three.js (Model3DViewer) — динамічний імпорт, без SSR: важкий client-only
+// рендерер, той самий патерн, що й на / та /worlds. `dynamic` тут зайнятий
+// Next.js route-config (export const dynamic вище), тому аліас nextDynamic.
+const Model3DViewer = nextDynamic(() => import("@/components/Model3DViewer"), { ssr: false });
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -41,6 +46,10 @@ const ORDER_STATUS_KEYS: Record<string, string> = {
 
 export default function AccountPage() {
   const t = useTranslations("account");
+  // Дати форматуємо за активною локаллю, а не хардкодом "uk" (не-UA юзери бачили
+  // українське форматування дат). Усі 6 кодів локалей — валідні BCP47-теги.
+  const locale = useLocale();
+  const dateLoc = locale === "uk" ? "uk-UA" : locale;
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
   const [quota, setQuota] = useState<Quota | null>(null);
   const [models, setModels] = useState<AccModel[]>([]);
@@ -143,7 +152,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="mx-auto min-h-[100dvh] max-w-[1100px] px-5 py-8 lg:px-8">
+    <div id="main-content" tabIndex={-1} className="mx-auto min-h-[100dvh] max-w-[1100px] px-5 py-8 lg:px-8">
       <Link href="/create" className="mb-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-2 hover:text-ink">
         <ArrowLeft size={15} /> {t("backToBuilder")}
       </Link>
@@ -264,7 +273,7 @@ export default function AccountPage() {
                     <div className="mt-1 text-[12px] text-ink-3">
                       {o.product_type === "keychain" ? t("keychain") : t("map3d")}
                       {o.summary?.size ? ` · ${o.summary.size}` : ""}
-                      {o.created_at ? ` · ${new Date(o.created_at).toLocaleDateString("uk")}` : ""}
+                      {o.created_at ? ` · ${new Date(o.created_at).toLocaleDateString(dateLoc)}` : ""}
                     </div>
                     {(o.summary?.city || o.summary?.label) && (
                       <div className="mt-1 truncate text-[12px] text-ink-2">
@@ -316,7 +325,7 @@ export default function AccountPage() {
                     {m.ts ? (
                       <div className="flex items-center gap-1.5">
                         <dt className="text-ink-3">{t("detailDate")}:</dt>
-                        <dd className="font-medium text-ink-2">{new Date(m.ts * 1000).toLocaleDateString("uk")}</dd>
+                        <dd className="font-medium text-ink-2">{new Date(m.ts * 1000).toLocaleDateString(dateLoc)}</dd>
                       </div>
                     ) : null}
                     {m.city ? (
@@ -379,7 +388,7 @@ export default function AccountPage() {
                     {g.grid_type === "square" ? t("gridSquare") : g.grid_type === "circle" ? t("gridCircle") : t("gridHex")}
                     {g.hex_size_m ? ` · ${t("gridMeters", { n: Math.round(g.hex_size_m) })}` : ""}
                     {` · ${t("gridCells", { n: (g.cells || []).length })}`}
-                    {g.updated_at ? ` · ${new Date(g.updated_at * 1000).toLocaleDateString("uk")}` : ""}
+                    {g.updated_at ? ` · ${new Date(g.updated_at * 1000).toLocaleDateString(dateLoc)}` : ""}
                   </div>
                   <div className="mt-3 flex gap-2">
                     <Link href={`/create?grid=${g.id}`}

@@ -469,6 +469,7 @@ const FUNNEL_LABELS: Record<string, string> = {
   generate: "Натиснули «Згенерувати»",
   order_open: "Відкрили форму замовлення",
   order_submit: "Оформили замовлення",
+  paid: "Оплатили (LiqPay)",
 };
 
 function Funnel({ funnel }: { funnel: { step: string; count: number; pct: number }[] }) {

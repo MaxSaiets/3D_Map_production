@@ -3232,7 +3232,7 @@ def run_flat_plate_pipeline(
                 export_scale_factor = float(getattr(request, "model_size_mm", 80.0)) / ref
     except Exception:
         export_scale_factor = scale_factor
-    base_thickness_mm = max(float(getattr(request, "terrain_base_thickness_mm", 0.8) or 0.8), 0.2)
+    base_thickness_mm = max(float(getattr(request, "terrain_base_thickness_mm", 1.8) or 1.8), 0.2)
     water_layer_mm = max(float(getattr(request, "flat_water_layer_mm", 0.22) or 0.22), 0.0)
     roads_layer_mm = max(float(getattr(request, "flat_roads_layer_mm", 0.42) or 0.42), 0.0)
     parks_layer_mm = max(float(getattr(request, "flat_parks_layer_mm", 0.36) or 0.36), 0.0)

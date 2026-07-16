@@ -91,7 +91,7 @@ export const pl: LegalSet = {
         { p: "Ceny wyrobów (dostawa płatna osobno wg taryfy przewoźnika):" },
         { ul: [
           "Brelok-mapa — od 120 ₴ (≈ 3 €).",
-          "Mapa 3D dzielnicy: S 5,5 cm — 150 ₴, M 8 cm — 240 ₴, L 11 cm — 360 ₴, XL 15 cm — 550 ₴ (mapy — od 4 €).",
+          "Mapa 3D dzielnicy: S 5,5 cm — 250 ₴, M 8 cm — 350 ₴, L 11 cm — 450 ₴, XL 15 cm — 550 ₴ (mapy — od 6 €).",
           "Magnes na lodówkę (mapa) — 150 ₴.",
           "Pobranie gotowego pliku 3MF/STL do samodzielnego druku — bezpłatnie w ramach limitu konta.",
         ] },

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import L from "leaflet";
 import "leaflet-draw";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { MapSearchBox } from "@/components/MapSearchBox";
 
 // Виправлення іконок Leaflet для Next.js (тільки на клієнті)
@@ -44,7 +45,7 @@ function clampBoundsToMaxMeters(bounds: L.LatLngBounds, maxSpanM: number): { bou
 function DrawControl() {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
-  const { setSelectedArea, modelSizeMm } = useGenerationStore();
+  const { setSelectedArea, modelSizeMm } = useGenerationStore(useShallow((s) => ({ setSelectedArea: s.setSelectedArea, modelSizeMm: s.modelSizeMm })));
 
   useEffect(() => {
     if (!map) return;
@@ -494,7 +495,7 @@ function safeCropMeters(spec: KeychainCropSpec) {
 function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
   const map = useMap();
   const t = useTranslations("map");
-  const { selectedArea, setSelectedArea } = useGenerationStore();
+  const { selectedArea, setSelectedArea } = useGenerationStore(useShallow((s) => ({ selectedArea: s.selectedArea, setSelectedArea: s.setSelectedArea })));
   const initialSelectedAreaRef = useRef(selectedArea);
   const shapeRef = useRef<L.Polygon | null>(null);
   // Current shape kind + corner fraction kept in refs so the drag handler
@@ -1127,7 +1128,9 @@ interface MapSelectorProps {
 export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSelectorProps) {
   const t = useTranslations("map");
   const [tileMode, setTileMode] = useState<"map" | "satellite">("map");
-  const { selectedArea } = useGenerationStore();
+  // single-field селектор (без useShallow) — MapSelector рендерить весь MapContainer,
+  // тож повна підписка ре-рендерила його на кожен store.set() (напр. Pro-слайдери).
+  const selectedArea = useGenerationStore((s) => s.selectedArea);
   const isKeychainCrop = Boolean(keychainCrop);
   const mapInstanceKey = useMemo(
     () => `${center[0].toFixed(5)}:${center[1].toFixed(5)}:${isKeychainCrop ? "keychain" : "draw"}`,

@@ -59,11 +59,3 @@ export async function deleteGrid(token: string | null, id: string): Promise<bool
   return r.ok;
 }
 
-export async function markGridCell(token: string | null, id: string, cell: GridCell): Promise<CityGrid | null> {
-  const r = await fetch(`${API_BASE}/api/account/grids/${id}/cells`, {
-    method: "POST", headers: authHeaders(token), body: JSON.stringify(cell),
-  });
-  if (!r.ok) return null;
-  const d = await r.json();
-  return d.grid || null;
-}

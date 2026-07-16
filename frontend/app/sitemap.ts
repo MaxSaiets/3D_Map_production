@@ -16,6 +16,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/worlds", changeFrequency: "monthly", priority: 0.6 },
   { path: "/prices", changeFrequency: "monthly", priority: 0.7 },
   { path: "/maps", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/brelok", changeFrequency: "monthly", priority: 0.8 }, // індекс-хаб брелоків (keychain money-path)
   { path: "/podarunok", changeFrequency: "monthly", priority: 0.7 },
   // Блог: індекс + статті (контент-глибина під інформаційні запити)
   { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
@@ -83,6 +84,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   for (const { path, changeFrequency, priority, lastmod } of PATHS) {
     const languages: Record<string, string> = {};
     for (const l of locales) languages[localeMeta[l].htmlLang] = url(l, path);
+    languages["x-default"] = url(defaultLocale, path); // консистентно з per-page hreflang
     for (const l of locales) {
       entries.push({
         url: url(l, path),

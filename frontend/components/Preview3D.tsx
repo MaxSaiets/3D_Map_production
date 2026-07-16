@@ -6,6 +6,7 @@ import { Component, Suspense, useEffect, useMemo, useState, useRef } from "react
 import type { ErrorInfo, ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
+import { useShallow } from "zustand/react/shallow";
 import { api } from "@/lib/api";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
@@ -460,7 +461,9 @@ async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
 
 // Компонент для автоматичного позиціювання камери
 function CameraController() {
-  const { downloadUrl, showAllZones, taskIds } = useGenerationStore();
+  const { downloadUrl, showAllZones, taskIds } = useGenerationStore(useShallow((st) => ({
+    downloadUrl: st.downloadUrl, showAllZones: st.showAllZones, taskIds: st.taskIds,
+  })));
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
 
   useEffect(() => {
@@ -655,10 +658,10 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
   const three = useThree();
   const camera = three.camera;
   const controls = (three as any).controls as { target?: THREE.Vector3; update?: () => void } | undefined;
-  const { 
-    downloadUrl, 
-    activeTaskId, 
-    exportFormat, 
+  const {
+    downloadUrl,
+    activeTaskId,
+    exportFormat,
     showAllZones,
     taskIds,
     taskStatuses,
@@ -670,7 +673,22 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
     previewIncludeBuildings,
     previewIncludeWater,
     previewIncludeParks,
-  } = useGenerationStore();
+  } = useGenerationStore(useShallow((st) => ({
+    downloadUrl: st.downloadUrl,
+    activeTaskId: st.activeTaskId,
+    exportFormat: st.exportFormat,
+    showAllZones: st.showAllZones,
+    taskIds: st.taskIds,
+    taskStatuses: st.taskStatuses,
+    batchZoneMetaByTaskId: st.batchZoneMetaByTaskId,
+    gridType: st.gridType,
+    terrainSmoothShading: st.terrainSmoothShading,
+    previewIncludeBase: st.previewIncludeBase,
+    previewIncludeRoads: st.previewIncludeRoads,
+    previewIncludeBuildings: st.previewIncludeBuildings,
+    previewIncludeWater: st.previewIncludeWater,
+    previewIncludeParks: st.previewIncludeParks,
+  })));
   const [model, setModel] = useState<THREE.Group | THREE.Mesh | null>(null);
   // Звільняємо GPU-пам'ять попередньої моделі при заміні/розмонтуванні: кожне прев'ю
   // вантажить нову сцену, а стара лишала geometry/material/texture у VRAM → WebGL-витік
@@ -1355,7 +1373,25 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
     setPreviewIncludeBuildings,
     setPreviewIncludeWater,
     setPreviewIncludeParks,
-  } = useGenerationStore();
+  } = useGenerationStore(useShallow((st) => ({
+    downloadUrl: st.downloadUrl,
+    isGenerating: st.isGenerating,
+    progress: st.progress,
+    terrainSmoothShading: st.terrainSmoothShading,
+    setTerrainSmoothShading: st.setTerrainSmoothShading,
+    taskStatuses: st.taskStatuses,
+    activeTaskId: st.activeTaskId,
+    previewIncludeBase: st.previewIncludeBase,
+    previewIncludeRoads: st.previewIncludeRoads,
+    previewIncludeBuildings: st.previewIncludeBuildings,
+    previewIncludeWater: st.previewIncludeWater,
+    previewIncludeParks: st.previewIncludeParks,
+    setPreviewIncludeBase: st.setPreviewIncludeBase,
+    setPreviewIncludeRoads: st.setPreviewIncludeRoads,
+    setPreviewIncludeBuildings: st.setPreviewIncludeBuildings,
+    setPreviewIncludeWater: st.setPreviewIncludeWater,
+    setPreviewIncludeParks: st.setPreviewIncludeParks,
+  })));
   const [gridVisible, setGridVisible] = useState(false);
   const [axesVisible, setAxesVisible] = useState(false);
   const [rotateMode, setRotateMode] = useState<RotateMode>("camera");
