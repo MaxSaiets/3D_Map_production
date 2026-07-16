@@ -589,7 +589,8 @@
     "fOblast": "Region",
     "fLandmark": "Landmark",
     "factsProse": "The 3D model clearly shows the city’s main body of water ({river}) and its architectural landmark ({landmark}) — the details that make the map recognisable at a glance.",
-    "districtsTitle": "Districts & landmarks"
+    "districtsTitle": "Districts & landmarks",
+    "readMore": "Read more"
   },
   "share": {
     "title": "My 3D map on Monadruk",

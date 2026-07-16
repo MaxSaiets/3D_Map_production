@@ -589,7 +589,8 @@
     "fOblast": "Region",
     "fLandmark": "Wahrzeichen",
     "factsProse": "Das 3D-Modell zeigt deutlich das Hauptgewässer der Stadt ({river}) und ihr architektonisches Wahrzeichen ({landmark}) — genau diese Details machen die Karte auf den ersten Blick erkennbar.",
-    "districtsTitle": "Stadtteile & Wahrzeichen"
+    "districtsTitle": "Stadtteile & Wahrzeichen",
+    "readMore": "Mehr lesen"
   },
   "share": {
     "title": "Meine 3D-Karte auf Monadruk",

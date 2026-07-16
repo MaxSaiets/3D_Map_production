@@ -589,7 +589,8 @@
     "fOblast": "Région",
     "fLandmark": "Monument emblématique",
     "factsProse": "Le modèle 3D fait clairement apparaître le principal plan d’eau de la ville ({river}) et son emblème architectural ({landmark}) — les détails qui rendent la carte reconnaissable au premier coup d’œil.",
-    "districtsTitle": "Quartiers et monuments"
+    "districtsTitle": "Quartiers et monuments",
+    "readMore": "En savoir plus"
   },
   "share": {
     "title": "Ma carte 3D sur Monadruk",

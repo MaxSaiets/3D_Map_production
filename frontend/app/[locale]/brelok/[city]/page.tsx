@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { BASE, localeUrl, priceValidUntil, priceValidFrom, MERCHANT_RETURN_POLICY_LD } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
@@ -66,6 +66,7 @@ export default async function BrelokCityPage({
     ? params.locale
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "cityPages" });
   const name = city.names[locale];
   const isUA = locale === "uk";
   const facts = cityFacts(city.slug);
@@ -189,17 +190,14 @@ export default async function BrelokCityPage({
       {facts && (
         <section className="mt-10 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
           <h2 className="text-[16px] font-semibold text-ink">
-            {isUA ? `Факти про місто — ${name}` : `Facts about ${name}`}
+            {t("factsTitle", { city: name })}
           </h2>
           <dl className="mt-3 grid gap-x-7 gap-y-1.5 text-[14px] sm:grid-cols-2">
             {[
-              [isUA ? "Населення" : "Population", `${nf.format(facts.population)} (${facts.populationYear})`],
-              [
-                facts.firstMention ? (isUA ? "Перша згадка" : "First mentioned") : (isUA ? "Засноване" : "Founded"),
-                String(facts.founded),
-              ],
-              [isUA ? "Річка" : "River", pn(facts.river)],
-              [isUA ? "Візитівка" : "Landmark", pn(facts.landmark)],
+              [t("fPopulation"), `${nf.format(facts.population)} (${facts.populationYear})`],
+              [facts.firstMention ? t("fFirstMention") : t("fFounded"), String(facts.founded)],
+              [t("fRiver"), pn(facts.river)],
+              [t("fLandmark"), pn(facts.landmark)],
             ].map(([label, value]) => (
               <div key={label} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
                 <dt className="text-ink-3">{label}</dt>
@@ -257,7 +255,7 @@ export default async function BrelokCityPage({
 
       {/* Читати далі: 2 статті блогу — контент↔продукт перелінковка. */}
       <section className="mt-10">
-        <h2 className="text-[18px] font-semibold text-ink">{isUA ? "Читати далі" : "Read more"}</h2>
+        <h2 className="text-[18px] font-semibold text-ink">{t("readMore")}</h2>
         <ul className="mt-3 flex flex-col gap-2">
           {BLOG_ARTICLES.slice(0, 2).map((a) => (
             <li key={a.slug}>

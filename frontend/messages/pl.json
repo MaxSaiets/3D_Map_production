@@ -589,7 +589,8 @@
     "fOblast": "Obwód",
     "fLandmark": "Symbol miasta",
     "factsProse": "Model 3D wyraźnie pokazuje główny akwen miasta ({river}) oraz architektoniczną wizytówkę ({landmark}) — to właśnie te detale sprawiają, że mapa jest rozpoznawalna od pierwszego spojrzenia.",
-    "districtsTitle": "Dzielnice i punkty orientacyjne"
+    "districtsTitle": "Dzielnice i punkty orientacyjne",
+    "readMore": "Czytaj dalej"
   },
   "share": {
     "title": "Moja mapa 3D na Monadruk",

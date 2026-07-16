@@ -589,7 +589,8 @@
     "fOblast": "Región",
     "fLandmark": "Emblema",
     "factsProse": "El modelo 3D muestra con claridad el principal cuerpo de agua de la ciudad ({river}) y su símbolo arquitectónico ({landmark}): los detalles que hacen el mapa reconocible al instante.",
-    "districtsTitle": "Distritos y monumentos"
+    "districtsTitle": "Distritos y monumentos",
+    "readMore": "Leer más"
   },
   "share": {
     "title": "Mi mapa 3D en Monadruk",
