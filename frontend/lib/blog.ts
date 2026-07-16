@@ -1033,6 +1033,91 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       },
     },
   },
+  {
+    slug: "3d-druk-na-zamovlennya",
+    date: "2026-07-16",
+    content: {
+      uk: {
+        title: "3D-друк на замовлення: Київ, Львів, Вінниця та вся Україна",
+        description:
+          "3D-друк мап, брелоків і панно на замовлення з доставкою в будь-яке місто України: Київ, Львів, Одесу, Дніпро, Вінницю. Eco PLA, 1–3 робочі дні, від 120 ₴.",
+        h1: "3D-друк на замовлення з доставкою по всій Україні",
+        intro:
+          "Шукаєте 3D-друк на замовлення у своєму місті? Ми спеціалізуємось на одному типі виробів — персональних 3D-мапах: карти районів, брелоки з маршрутами, настінні панно й магніти. Друкуємо у власній майстерні та надсилаємо Новою Поштою в будь-яке місто України за 1–3 робочі дні — тож не важливо, чи ви в Києві, Львові, Вінниці чи маленькому селищі: доставка працює однаково швидко.",
+        sections: [
+          {
+            h2: "Що ми друкуємо",
+            p: [
+              "3D-мапи міст (від 250 ₴): обираєте будь-який район — вулиці, будинки з реальними висотами, парки й річки друкуються об'ємною моделлю 5,5–15 см. Брелоки з картою чи GPX-маршрутом (від 120 ₴): жетон 55×30 мм з вашим районом і написом. Панно на стіну: великі мапи з кількох плиток. Магніти з районом міста (150 ₴).",
+              "Ми не друкуємо чужі STL-файли, деталі чи фігурки — лише мапи. Зате мапи робимо краще за будь-кого: власний конструктор будує модель з даних OpenStreetMap за кілька хвилин, і ви бачите 3D-превʼю до оплати.",
+            ],
+          },
+          {
+            h2: "Як це працює для будь-якого міста",
+            p: [
+              "Київ, Харків, Одеса, Дніпро, Львів, Запоріжжя, Вінниця, Полтава, Луцьк, Хмельницький, Ужгород — конструктор працює з будь-якою точкою України та світу. Обираєте ділянку на карті, налаштовуєте розмір і стиль, тиснете «Створити» — за 2–4 хвилини модель готова.",
+              "Далі два шляхи: замовляєте друк у нас (Eco PLA, виготовлення 1–3 робочі дні, доставка Новою Поштою) — або завантажуєте файл 3MF/STL і друкуєте на власному принтері. Файл відкривається у Bambu Studio та PrusaSlicer без жодної підготовки.",
+            ],
+          },
+          {
+            h2: "Ціни",
+            p: [
+              "Брелок з картою або GPX-треком — від 120 ₴. Магніт на холодильник — 150 ₴. 3D-мапа міста: S (5,5 см) 250 ₴, M (8 см) 350 ₴, L (11 см) 450 ₴, XL (15 см) 550 ₴. Рельєф місцевості +60 ₴. Панно з плиток — ціна за кількість плиток, рахується у конструкторі одразу.",
+            ],
+          },
+          {
+            h2: "Чому не звичайна друк-студія",
+            p: [
+              "Класичні 3D-друк-студії беруть будь-які замовлення й потребують готовий файл. У нас навпаки: файл не потрібен — конструктор сам будує модель вашого району. Це означає нуль передоплат за моделювання, передбачувану ціну і превʼю до замовлення.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити свою модель",
+        ctaHref: "/create",
+        outro:
+          "Не впевнені, який район обрати чи який розмір підійде? Напишіть нам — підкажемо й зберемо превʼю безкоштовно.",
+      },
+      en: {
+        title: "Custom 3D printing of maps — shipping across Ukraine & EU",
+        description:
+          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia and the EU. Eco PLA, 1–3 business days, from ≈€3.",
+        h1: "Custom 3D printing of maps with delivery across Ukraine and the EU",
+        intro:
+          "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 1–3 business days, plus 15 EU countries — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
+        sections: [
+          {
+            h2: "What we print",
+            p: [
+              "3D city maps (from ≈€6): pick any district — streets, buildings with real heights, parks and rivers printed as a 5.5–15 cm model. Map or GPX-route keychains (from ≈€3): a 55×30 mm tag with your district and text. Wall panels assembled from tiles. Fridge magnets with a city district.",
+              "We don't print third-party STL files, parts or figurines — only maps. But we do maps better than anyone: our builder assembles the model from OpenStreetMap data in minutes, and you see a 3D preview before paying.",
+            ],
+          },
+          {
+            h2: "How it works for any city",
+            p: [
+              "The builder works with any point in Ukraine and the world. Pick an area on the map, set the size and style, hit «Create» — the model is ready in 2–4 minutes.",
+              "Then two paths: order the print from us (Eco PLA, made in 1–3 business days, shipped) — or download the 3MF/STL and print on your own machine. The file opens in Bambu Studio and PrusaSlicer with zero preparation.",
+            ],
+          },
+          {
+            h2: "Prices",
+            p: [
+              "Map or GPX keychain — from ≈€3. Fridge magnet — ≈€4. 3D city map: S (5.5 cm) ≈€6, M (8 cm) ≈€8, L (11 cm) ≈€11, XL (15 cm) ≈€13. Terrain relief +≈€1.5. Tile panels are priced per tile, calculated live in the builder.",
+            ],
+          },
+          {
+            h2: "Why not a regular print studio",
+            p: [
+              "Classic 3D-print studios take any job and need a ready file. With us it's the opposite: no file needed — the builder constructs the model of your district itself. That means no modelling fees, a predictable price and a preview before you order.",
+            ],
+          },
+        ],
+        ctaLabel: "Create your model",
+        ctaHref: "/create",
+        outro: "Not sure which district or size to pick? Message us — we'll help and build a free preview.",
+      },
+    },
+  },
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(
