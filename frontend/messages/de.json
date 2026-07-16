@@ -180,8 +180,8 @@
     "keywords": "3D Stadtkarte erstellen, Stadtkarten Generator online, 3MF Karte herunterladen, STL Stadtplan Download, Stadtkarte 3D drucken, Karte mit Gebäudehöhen, Stadtkarte Magnet, eigene Stadtkarte erstellen, 3D Karte Berlin, 3D Karte München"
   },
   "keychainsMeta": {
-    "title": "Schlüsselanhänger mit Stadtkarte — individuell",
-    "description": "Karten-Anhänger deiner Stadt: 3D-Anhänger mit Straßen und eigenem Text oder Topo-Anhänger mit Gebirgsrelief. Online erstellen oder Druck bestellen.",
+    "title": "Karten-Schlüsselanhänger — mit Gravur und Text, ab ≈3 €",
+    "description": "Karten-Anhänger 55×30 mm auf Bestellung: die Straßen deines Viertels als Relief, eigener Text bzw. Gravur auf der Rückseite — Name, Datum, Koordinaten. 3D-Druck ab ≈3 €, Versand EU-weit.",
     "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
@@ -571,8 +571,8 @@
     "ctaKeychain": "Karten-Anhänger"
   },
   "cityPages": {
-    "title": "3D-Karte von {city} — drucken oder als Schlüsselanhänger",
-    "description": "Erstelle eine 3D-Karte von {city}: Viertel wählen, Modell anpassen und 3MF/STL herunterladen — oder eine gedruckte Karte bzw. einen {city}-Schlüsselanhänger bestellen.",
+    "title": "3D-Karte von {city} kaufen — Druck oder Datei",
+    "description": "3D-Karte von {city} auf Bestellung kaufen: Viertel wählen, Modell anpassen — wir drucken in Eco PLA und liefern EU-weit, oder lade die 3MF/STL-Datei zum Selbstdrucken. Ab ≈6 €; Karten-Anhänger ab ≈3 €.",
     "h1": "3D-Karte von {city}",
     "p1": "Verwandle {city} in ein taktiles dreidimensionales Modell: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
     "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern in die Ukraine und in die EU. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",

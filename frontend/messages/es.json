@@ -180,8 +180,8 @@
     "keywords": "crear mapa 3d de ciudad, generador de mapas 3d online, descargar mapa 3mf, mapa stl para descargar, imprimir mapa ciudad 3d, mapa con alturas de edificios, imán mapa ciudad, mapa personalizado de mi ciudad, mapa 3d de Madrid, mapa 3d de Barcelona"
   },
   "keychainsMeta": {
-    "title": "Llavero con mapa de ciudad — 3D personalizado",
-    "description": "Llavero-mapa de tu ciudad: llavero 3D con calles, edificios y texto, o llavero topográfico con relieve de montañas. Créalo online o pide la impresión.",
+    "title": "Llavero con mapa de ciudad — grabado con tu texto, desde ≈3 €",
+    "description": "Llavero-mapa 55×30 mm a medida: las calles de tu barrio en relieve, texto grabado al dorso — nombre, fecha, coordenadas. Impresión 3D desde ≈3 €, envío a la UE.",
     "keywords": "llavero mapa de ciudad, llavero mapa, llavero 3d personalizado, llavero con nombre, llavero grabado, llavero topográfico, llavero relieve montaña, llavero corazón mapa, llavero casa, regalo para él, regalo para ella, regalo de aniversario, llavero pareja"
   },
   "showcaseMeta": {
@@ -571,8 +571,8 @@
     "ctaKeychain": "Llavero-mapa"
   },
   "cityPages": {
-    "title": "Mapa 3D de {city} — imprímelo o pide un llavero",
-    "description": "Crea un mapa 3D de {city}: elige un barrio, ajusta el modelo y descarga el 3MF/STL para imprimir — o pide un mapa impreso o un llavero con el mapa de {city}.",
+    "title": "Mapa 3D de {city} — comprar impresión o archivo",
+    "description": "Compra un mapa 3D de {city} a medida: elige un barrio, ajusta el modelo — lo imprimimos en Eco PLA y enviamos a la UE, o descarga el archivo 3MF/STL. Desde ≈6 €; llavero con mapa desde ≈3 €.",
     "h1": "Mapa 3D de {city}",
     "p1": "Convierte {city} en un modelo tridimensional táctil: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
     "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un regalo perfecto para quien ama su ciudad.",

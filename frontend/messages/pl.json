@@ -180,8 +180,8 @@
     "keywords": "stwórz mapę miasta 3d, generator map 3d online, pobierz mapę 3mf, mapa stl do pobrania, druk 3d mapy miasta, mapa z wysokościami budynków, magnes z mapą miasta, własna mapa miasta, mapa 3d Warszawy, mapa 3d Krakowa"
   },
   "keychainsMeta": {
-    "title": "Brelok z mapą miasta — spersonalizowany 3D",
-    "description": "Brelok-mapa twojego miasta: brelok 3D z ulicami i własnym napisem lub brelok topo z rzeźbą gór. Stwórz online lub zamów druk z Eco PLA.",
+    "title": "Brelok z mapą miasta — z grawerem i napisem, od ≈3 €",
+    "description": "Brelok-mapa 55×30 mm na zamówienie: ulice Twojej dzielnicy w reliefie, własny napis lub grawer z tyłu — imię, data, współrzędne. Druk 3D od ≈3 €, wysyłka do UE.",
     "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d personalizowany, brelok z imieniem, brelok z grawerem, brelok topograficzny, brelok z rzeźbą gór, brelok serce z mapą, brelok domek, prezent dla niego, prezent dla niej, prezent na rocznicę, brelok dla pary"
   },
   "showcaseMeta": {
@@ -571,8 +571,8 @@
     "ctaKeychain": "Brelok-mapa"
   },
   "cityPages": {
-    "title": "Mapa 3D miasta {city} — wydrukuj lub zamów brelok",
-    "description": "Stwórz mapę 3D miasta {city}: wybierz dzielnicę, dostosuj model i pobierz 3MF/STL do druku — albo zamów wydrukowaną mapę lub brelok z mapą miasta {city}.",
+    "title": "Mapa 3D miasta {city} — kup wydruk lub plik",
+    "description": "Kup mapę 3D miasta {city} na zamówienie: wybierz dzielnicę, dostosuj model — wydrukujemy z Eco PLA i wyślemy do UE, albo pobierz plik 3MF/STL do własnego druku. Od ≈6 €; brelok z mapą od ≈3 €.",
     "h1": "Mapa 3D miasta {city}",
     "p1": "Zamień {city} w dotykowy trójwymiarowy model: ulice, budynki z prawdziwymi wysokościami, parki i rzeki z danych OpenStreetMap. Wybierz dowolną dzielnicę miasta {city} w kreatorze — model będzie gotowy w kilka minut jako 3MF lub STL dla Bambu Studio czy PrusaSlicer.",
     "p2": "Nie masz drukarki 3D? Wydrukujemy mapę lub brelok z mapą miasta {city} z ekologicznego Eco PLA i wyślemy po Ukrainie i do UE. Idealny prezent dla każdego, kto kocha swoje miasto.",

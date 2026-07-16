@@ -11,6 +11,7 @@ const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de:
 const BLOG_LABEL: Record<string, string> = { uk: "Блог", en: "Blog", de: "Blog", es: "Blog", fr: "Blog", pl: "Blog" };
 const SHOWCASE_LABEL: Record<string, string> = { uk: "Галерея", en: "Gallery", de: "Galerie", es: "Galería", fr: "Galerie", pl: "Galeria" };
 const WORLDS_LABEL: Record<string, string> = { uk: "3D-світи", en: "3D Worlds", de: "3D-Welten", es: "Mundos 3D", fr: "Mondes 3D", pl: "Światy 3D" };
+const PANNO_LABEL: Record<string, string> = { uk: "Карта на стіну", en: "Wall map", de: "Wandkarte", es: "Mapa de pared", fr: "Carte murale", pl: "Mapa na ścianę" };
 
 /* ---------- Footer ----------
    Shared global footer: legal links + ФОП requisites + contacts.
@@ -23,6 +24,7 @@ export function SiteFooter() {
   const blogLabel = BLOG_LABEL[locale] ?? BLOG_LABEL.uk;
   const showcaseLabel = SHOWCASE_LABEL[locale] ?? SHOWCASE_LABEL.uk;
   const worldsLabel = WORLDS_LABEL[locale] ?? WORLDS_LABEL.uk;
+  const pannoLabel = PANNO_LABEL[locale] ?? PANNO_LABEL.uk;
   return (
     <footer className="border-t border-line-soft py-12">
       <div className="mx-auto flex max-w-[1360px] flex-col gap-6 px-5 text-sm text-ink-3 lg:px-8">
@@ -37,6 +39,7 @@ export function SiteFooter() {
             <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pricesLabel}</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
             <Link href="/podarunok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("gift")}</Link>
+            <Link href="/panno" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pannoLabel}</Link>
             <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{blogLabel}</Link>
             <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{showcaseLabel}</Link>
             <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{worldsLabel}</Link>

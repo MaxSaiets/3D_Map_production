@@ -180,8 +180,8 @@
     "keywords": "créer carte de ville 3D, générateur de carte 3D en ligne, télécharger carte 3MF, carte STL à télécharger, imprimer carte de ville 3D, carte avec hauteurs des bâtiments, magnet carte de ville, carte personnalisée de ma ville, carte 3D de Paris, carte 3D de Lyon"
   },
   "keychainsMeta": {
-    "title": "Porte-clés carte de ville — 3D personnalisé",
-    "description": "Porte-clés carte de ta ville : porte-clés 3D avec rues et texte, ou porte-clés topo avec relief de montagnes. Crée en ligne ou commande l’impression.",
+    "title": "Porte-clés carte de ville — gravé à votre texte, dès ≈3 €",
+    "description": "Porte-clés carte 55×30 mm sur mesure : les rues de votre quartier en relief, texte gravé au dos — prénom, date, coordonnées. Impression 3D dès ≈3 €, livraison UE.",
     "keywords": "porte-clés carte de ville, porte-clés carte, porte-clés 3D personnalisé, porte-clés avec prénom, porte-clés gravé, porte-clés topographique, porte-clés relief montagne, porte-clés cœur carte, porte-clés maison, cadeau pour lui, cadeau pour elle, cadeau d'anniversaire, porte-clés couple"
   },
   "showcaseMeta": {
@@ -571,8 +571,8 @@
     "ctaKeychain": "Porte-clés carte"
   },
   "cityPages": {
-    "title": "Carte 3D de {city} — à imprimer ou en porte-clés",
-    "description": "Créez une carte 3D de {city} : choisissez un quartier, ajustez le modèle et téléchargez le 3MF/STL — ou commandez une carte imprimée ou un porte-clés carte de {city}.",
+    "title": "Carte 3D de {city} — acheter l'impression ou le fichier",
+    "description": "Achetez une carte 3D de {city} sur mesure : choisissez un quartier, ajustez le modèle — nous l'imprimons en Eco PLA et livrons dans l'UE, ou téléchargez le fichier 3MF/STL. Dès ≈6 € ; porte-clés carte dès ≈3 €.",
     "h1": "Carte 3D de {city}",
     "p1": "Transformez {city} en modèle tridimensionnel tactile : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
     "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine et dans l'UE. Un cadeau parfait pour qui aime sa ville.",

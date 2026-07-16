@@ -180,8 +180,8 @@
     "keywords": "create 3d city map, 3d map maker online, 3d map generator, download 3mf map, stl city map download, 3d print city map, building heights map, city map magnet, custom map of my city, 3d map of London, 3d map of Berlin"
   },
   "keychainsMeta": {
-    "title": "City map keychain — custom 3D keychain",
-    "description": "A map keychain of your city: a 3D keychain with streets, buildings and custom text, or a topo keychain with mountain relief. Create online or order a print.",
+    "title": "City map keychain — engraved with your text, from ≈€3",
+    "description": "A 55×30 mm map keychain made to order: your district's streets in relief, custom engraved text on the back — a name, date or coordinates. 3D-printed from ≈€3, shipped to Ukraine & EU.",
     "keywords": "city map keychain, map keychain, custom 3d keychain, keychain with name, engraved keychain, topographic keychain, mountain relief keychain, heart map keychain, house keychain, gift for him, gift for her, anniversary gift, couple keychain"
   },
   "showcaseMeta": {
@@ -571,8 +571,8 @@
     "ctaKeychain": "Map keychain"
   },
   "cityPages": {
-    "title": "3D map of {city} — print it or get a map keychain",
-    "description": "Create a 3D map of {city}: pick a district, tune the model and download a 3MF/STL for printing — or order a printed map or a {city} map keychain.",
+    "title": "3D map of {city} — buy a print or download the file",
+    "description": "Buy a 3D map of {city} made to order: pick a district, tune the model — we print it in Eco PLA and ship EU-wide, or download the 3MF/STL to print yourself. From ≈€6; map keychain from ≈€3.",
     "h1": "3D map of {city}",
     "p1": "Turn {city} into a tactile three-dimensional model: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
     "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine and to the EU. A perfect gift for anyone who loves their city.",
