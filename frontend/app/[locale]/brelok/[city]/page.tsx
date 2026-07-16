@@ -9,7 +9,7 @@ import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { KEYCHAIN_PRICE_UAH, mapPriceEur } from "@/lib/mapPrices";
 import { brelokCityCopy, cityFaq, contentLocale, DISTRICT_PAGES } from "@/lib/cityLanding";
-import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
+import { BLOG_ARTICLES, blogContent } from "@/lib/blog";
 
 /**
  * Programmatic SEO рівень 2: брелок × місто (23 × 6 локалей).
@@ -260,7 +260,7 @@ export default async function BrelokCityPage({
           {BLOG_ARTICLES.slice(0, 2).map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
-                {a.content[blogLocale(locale)].h1} →
+                {blogContent(a, locale).h1} →
               </Link>
             </li>
           ))}

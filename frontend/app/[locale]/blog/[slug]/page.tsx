@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { BLOG_ARTICLES, BLOG_BY_SLUG, BLOG_INDEX_META, blogLocale } from "@/lib/blog";
+import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta } from "@/lib/blog";
 
 /**
  * Сторінка статті блогу: Article JSON-LD + breadcrumbs + внутрішні лінки
@@ -27,7 +27,7 @@ export async function generateMetadata({
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
     ? params.locale
     : defaultLocale) as AppLocale;
-  const c = article.content[blogLocale(locale)];
+  const c = blogContent(article, locale);
   const path = `/blog/${article.slug}`;
   const languages: Record<string, string> = {};
   for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
@@ -58,9 +58,8 @@ export default async function BlogArticlePage({
     ? params.locale
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
-  const bl = blogLocale(locale);
-  const c = article.content[bl];
-  const m = BLOG_INDEX_META[bl];
+  const c = blogContent(article, locale);
+  const m = blogIndexMeta(locale);
   const path = `/blog/${article.slug}`;
 
   const ld = {
@@ -131,7 +130,7 @@ export default async function BlogArticlePage({
           {BLOG_ARTICLES.filter((a) => a.slug !== article.slug).map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
-                {a.content[bl].h1} →
+                {blogContent(a, locale).h1} →
               </Link>
             </li>
           ))}

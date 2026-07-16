@@ -6,6 +6,7 @@
 // «подарунок 3d карта», «брелок з маршрутом gpx», «3d мапа києва»...) —
 // сторінки, що можуть ранжуватись самі і лінкують у конструктор/каталог.
 // ──────────────────────────────────────────────────────────────────────────
+import type { AppLocale } from "@/i18n/routing";
 
 export type BlogSection = { h2?: string; p: string[] };
 export type BlogArticleContent = {
@@ -21,10 +22,19 @@ export type BlogArticleContent = {
 export type BlogArticle = {
   slug: string;
   date: string;         // ISO — published
-  content: { uk: BlogArticleContent; en: BlogArticleContent };
+  // uk + en завжди; de/es/fr/pl додаються поступово. Доступ через blogContent()
+  // з м'яким en-фолбеком, щоб частково перекладені статті не падали.
+  content: { uk: BlogArticleContent; en: BlogArticleContent } & Partial<Record<AppLocale, BlogArticleContent>>;
 };
 
-export const BLOG_INDEX_META = {
+/** Контент статті для локалі з м'яким фолбеком на en (для ще-не-перекладених de/es/fr/pl). */
+export function blogContent(article: BlogArticle, locale: string): BlogArticleContent {
+  return article.content[locale as AppLocale] ?? article.content.en;
+}
+
+type BlogIndexMeta = { title: string; description: string; h1: string; intro: string; readLabel: string };
+
+export const BLOG_INDEX_META: Partial<Record<AppLocale, BlogIndexMeta>> = {
   uk: {
     title: "Блог про 3D-мапи, брелоки та 3D-друк — Monadruk",
     description:
@@ -41,10 +51,48 @@ export const BLOG_INDEX_META = {
     intro: "Guides and ideas: personal 3D city maps, route keychains and gifts that mean something.",
     readLabel: "Read",
   },
-} as const;
+  de: {
+    title: "Blog: 3D-Stadtkarten, Anhänger & 3D-Druck — Monadruk",
+    description:
+      "Anleitungen und Ideen: wie man eine 3D-Stadtkarte erstellt, Geschenkideen mit Karte, Anhänger mit GPX-Route, Tipps zum 3D-Druck.",
+    h1: "Monadruk-Blog",
+    intro: "Anleitungen und Ideen: persönliche 3D-Stadtkarten, Routen-Anhänger und Geschenke mit Bedeutung.",
+    readLabel: "Lesen",
+  },
+  pl: {
+    title: "Blog: mapy miast 3D, breloki i druk 3D — Monadruk",
+    description:
+      "Poradniki i pomysły: jak stworzyć mapę miasta 3D, pomysły na prezent z mapą, breloki z trasą GPX, porady dotyczące druku 3D.",
+    h1: "Blog Monadruk",
+    intro: "Poradniki i pomysły: spersonalizowane mapy miast 3D, breloki z trasami i prezenty, które coś znaczą.",
+    readLabel: "Czytaj",
+  },
+  fr: {
+    title: "Blog : cartes de ville 3D, porte-clés et impression 3D — Monadruk",
+    description:
+      "Guides et idées : comment créer une carte de ville 3D, idées de cadeaux avec carte, porte-clés avec trace GPX, conseils d'impression 3D.",
+    h1: "Blog Monadruk",
+    intro: "Guides et idées : cartes de ville 3D personnalisées, porte-clés d'itinéraire et cadeaux qui ont du sens.",
+    readLabel: "Lire",
+  },
+  es: {
+    title: "Blog: mapas de ciudad 3D, llaveros e impresión 3D — Monadruk",
+    description:
+      "Guías e ideas: cómo crear un mapa de ciudad 3D, ideas de regalo con mapa, llaveros con ruta GPX, consejos de impresión 3D.",
+    h1: "Blog Monadruk",
+    intro: "Guías e ideas: mapas de ciudad 3D personalizados, llaveros de ruta y regalos con significado.",
+    readLabel: "Leer",
+  },
+};
 
-export function blogLocale(locale: string): "uk" | "en" {
-  return locale === "uk" ? "uk" : "en";
+/** Мета блог-індексу для локалі з en-фолбеком. */
+export function blogIndexMeta(locale: string): BlogIndexMeta {
+  return BLOG_INDEX_META[locale as AppLocale] ?? BLOG_INDEX_META.en!;
+}
+
+/** Локаль для блогу: uk|en повні; de/es/fr/pl де вже перекладено, інакше en-фолбек у blogContent/blogIndexMeta. */
+export function blogLocale(locale: string): AppLocale {
+  return (["uk", "en", "de", "pl", "fr", "es"].includes(locale) ? locale : "en") as AppLocale;
 }
 
 export const BLOG_ARTICLES: BlogArticle[] = [
@@ -132,6 +180,166 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Create your 3D map",
         ctaHref: "/create",
         outro: "Creating a model is free — you only pay for printing and delivery if you order the finished item.",
+      },
+      de: {
+        title: "3D-Stadtkarte zum Drucken erstellen: Schritt für Schritt",
+        description:
+          "Schritt für Schritt: In 5 Minuten eine 3D-Karte deines Viertels erstellen — Bereich, Größe, Relief wählen, zu Hause drucken oder bestellen. Kostenloser Konfigurator.",
+        h1: "3D-Stadtkarte erstellen: Schritt für Schritt",
+        intro:
+          "Eine 3D-Stadtkarte ist ein physisches Modell eines Viertels mit echten Gebäuden, Straßen, Parks und Flüssen. Du kannst sie auf einem 3D-Drucker drucken, ins Regal stellen oder verschenken. Diese Anleitung zeigt, wie du eine solche Karte in wenigen Minuten selbst erstellst — ganz ohne 3D-Modellierungskenntnisse.",
+        sections: [
+          {
+            h2: "Schritt 1. Bereich auf der Karte wählen",
+            p: [
+              "Öffne den Konfigurator und finde deine Stadt — Kyiv, Lwiw, Odessa oder jeden Punkt der Welt. Schiebe den Rahmen über das Viertel, das du festhalten möchtest: deine Straße, das Stadtzentrum, den Ort des ersten Treffens. Was im Rahmen liegt, wird zum Modell.",
+              "Tipp: Bereiche mit gemischtem Inhalt wirken am besten — ein paar Straßen, ein Park, ein Fluss. Für ein 8–11-cm-Modell ist ein Bereich von 400–800 Metern ideal.",
+            ],
+          },
+          {
+            h2: "Schritt 2. Größe und Relief",
+            p: [
+              "Wähle die Endgröße: S (5,5 cm) ist ein kompaktes Souvenir, M (8 cm) die goldene Mitte, L (11 cm) und XL (15 cm) fallen im Regal auf. Der Preis richtet sich nach der Größe — ab ≈6 €.",
+              "Ist die Gegend hügelig (Kyiv, Lwiw, die Karpaten), aktiviere das Relief: Das Modell erhält echte Höhenunterschiede, und die Hügel sind sichtbar und fühlbar. Für flache Städte kannst du es weglassen.",
+            ],
+          },
+          {
+            h2: "Schritt 3. Generieren und prüfen",
+            p: [
+              "Klicke auf «Erstellen» — in 2–4 Minuten baut der Dienst das Modell aus OpenStreetMap-Daten: Gebäude mit echten Höhen, Straßen, Grünflächen, Wasser. Das fertige Modell kannst du direkt im Browser drehen.",
+            ],
+          },
+          {
+            h2: "Schritt 4. Zu Hause drucken oder bestellen",
+            p: [
+              "Hast du einen Drucker? Lade die fertige 3MF- oder STL-Datei herunter — sie öffnet sich direkt in Bambu Studio oder PrusaSlicer, mit vorbelegten Schichtfarben.",
+              "Kein Drucker? Bestelle den Druck: Wir drucken aus umweltfreundlichem Eco PLA und versenden in die Ukraine und in 15 EU-Länder. Kartenzahlung online oder bei Lieferung.",
+            ],
+          },
+        ],
+        ctaLabel: "Deine 3D-Karte erstellen",
+        ctaHref: "/create",
+        outro: "Das Erstellen des Modells ist kostenlos — du zahlst nur für Druck und Versand, wenn du das fertige Stück bestellst.",
+      },
+      pl: {
+        title: "Jak stworzyć mapę miasta 3D do druku: krok po kroku",
+        description:
+          "Krok po kroku: zrób mapę 3D swojej okolicy w 5 minut — wybierz obszar, rozmiar, rzeźbę, wydrukuj w domu lub zamów. Darmowy kreator.",
+        h1: "Jak stworzyć mapę miasta 3D: krok po kroku",
+        intro:
+          "Mapa miasta 3D to fizyczny model dzielnicy z prawdziwymi budynkami, ulicami, parkami i rzekami. Możesz ją wydrukować na drukarce 3D, postawić na półce lub podarować. Ten poradnik pokazuje, jak zrobić taką mapę w kilka minut, bez umiejętności modelowania 3D.",
+        sections: [
+          {
+            h2: "Krok 1. Wybierz obszar na mapie",
+            p: [
+              "Otwórz kreator i znajdź swoje miasto — Kijów, Lwów, Odessę lub dowolny punkt na świecie. Przesuń ramkę na dzielnicę, którą chcesz zachować: swoją ulicę, centrum miasta, miejsce pierwszego spotkania. To, co znajdzie się w ramce, staje się modelem.",
+              "Wskazówka: obszary o zróżnicowanej zabudowie wyglądają najlepiej — kilka ulic, park, rzeka. Dla modelu 8–11 cm idealny jest obszar 400–800 metrów.",
+            ],
+          },
+          {
+            h2: "Krok 2. Rozmiar i rzeźba terenu",
+            p: [
+              "Wybierz rozmiar końcowy: S (5,5 cm) to kompaktowa pamiątka, M (8 cm) złoty środek, L (11 cm) i XL (15 cm) wyróżniają się na półce. Cena zależy od rozmiaru — od ≈6 €.",
+              "Jeśli teren jest pagórkowaty (Kijów, Lwów, Karpaty), włącz rzeźbę: model otrzyma prawdziwe różnice wysokości, a wzgórza będzie widać i można je wyczuć. Dla płaskich miast można ją pominąć.",
+            ],
+          },
+          {
+            h2: "Krok 3. Wygeneruj i sprawdź",
+            p: [
+              "Kliknij «Utwórz» — w 2–4 minuty serwis złoży model z danych OpenStreetMap: budynki o prawdziwych wysokościach, drogi, zieleń, woda. Gotowy model możesz obrócić bezpośrednio w przeglądarce.",
+            ],
+          },
+          {
+            h2: "Krok 4. Wydrukuj w domu lub zamów",
+            p: [
+              "Masz drukarkę? Pobierz gotowy plik 3MF lub STL — otwiera się bezpośrednio w Bambu Studio lub PrusaSlicer, z przypisanymi kolorami warstw.",
+              "Nie masz drukarki? Zamów druk: drukujemy z ekologicznego Eco PLA i wysyłamy na Ukrainę oraz do 15 krajów UE. Płatność kartą online lub przy odbiorze.",
+            ],
+          },
+        ],
+        ctaLabel: "Utwórz swoją mapę 3D",
+        ctaHref: "/create",
+        outro: "Tworzenie modelu jest darmowe — płacisz tylko za druk i wysyłkę, jeśli zamówisz gotowy przedmiot.",
+      },
+      fr: {
+        title: "Comment créer une carte de ville 3D à imprimer : étape par étape",
+        description:
+          "Étape par étape : créez une carte 3D de votre quartier en 5 minutes — zone, taille, relief, impression à la maison ou commande. Configurateur gratuit.",
+        h1: "Comment créer une carte de ville 3D : étape par étape",
+        intro:
+          "Une carte de ville 3D est un modèle physique d'un quartier avec de vrais bâtiments, rues, parcs et rivières. Vous pouvez l'imprimer sur une imprimante 3D, la poser sur une étagère ou l'offrir. Ce guide montre comment en réaliser une en quelques minutes, sans compétences en modélisation 3D.",
+        sections: [
+          {
+            h2: "Étape 1. Choisissez une zone sur la carte",
+            p: [
+              "Ouvrez le configurateur et trouvez votre ville — Kyiv, Lviv, Odessa ou n'importe quel point du globe. Déplacez le cadre sur le quartier que vous voulez garder : votre rue, le centre-ville, le lieu de votre première rencontre. Ce qui est dans le cadre devient le modèle.",
+              "Astuce : les zones au contenu varié rendent le mieux — quelques rues, un parc, une rivière. Pour un modèle de 8–11 cm, une zone de 400–800 mètres est idéale.",
+            ],
+          },
+          {
+            h2: "Étape 2. Taille et relief",
+            p: [
+              "Choisissez la taille finale : S (5,5 cm) est un souvenir compact, M (8 cm) le juste milieu, L (11 cm) et XL (15 cm) se remarquent sur une étagère. Le prix dépend de la taille — dès ≈6 €.",
+              "Si le terrain est vallonné (Kyiv, Lviv, les Carpates), activez le relief : le modèle obtient de vrais dénivelés et les collines se voient et se touchent. Pour les villes plates, vous pouvez l'omettre.",
+            ],
+          },
+          {
+            h2: "Étape 3. Générez et vérifiez",
+            p: [
+              "Cliquez sur «Créer» — en 2–4 minutes le service assemble le modèle à partir des données OpenStreetMap : bâtiments aux hauteurs réelles, routes, espaces verts, eau. Vous pouvez faire pivoter le modèle terminé dans le navigateur.",
+            ],
+          },
+          {
+            h2: "Étape 4. Imprimez chez vous ou commandez",
+            p: [
+              "Vous avez une imprimante ? Téléchargez le fichier 3MF ou STL prêt — il s'ouvre directement dans Bambu Studio ou PrusaSlicer, avec les couleurs de couche déjà attribuées.",
+              "Pas d'imprimante ? Commandez l'impression : nous imprimons en Eco PLA écologique et livrons en Ukraine et dans 15 pays de l'UE. Paiement par carte en ligne ou à la livraison.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer votre carte 3D",
+        ctaHref: "/create",
+        outro: "Créer le modèle est gratuit — vous ne payez que l'impression et la livraison si vous commandez la pièce finie.",
+      },
+      es: {
+        title: "Cómo crear un mapa de ciudad 3D para imprimir: paso a paso",
+        description:
+          "Paso a paso: haz un mapa 3D de tu barrio en 5 minutos — elige zona, tamaño, relieve, imprime en casa o pídelo. Configurador gratis.",
+        h1: "Cómo crear un mapa de ciudad 3D: paso a paso",
+        intro:
+          "Un mapa de ciudad 3D es un modelo físico de un barrio con edificios, calles, parques y ríos reales. Puedes imprimirlo en una impresora 3D, ponerlo en una estantería o regalarlo. Esta guía muestra cómo hacer uno en minutos, sin conocimientos de modelado 3D.",
+        sections: [
+          {
+            h2: "Paso 1. Elige una zona en el mapa",
+            p: [
+              "Abre el configurador y encuentra tu ciudad — Kyiv, Leópolis, Odesa o cualquier punto del mundo. Mueve el marco sobre el barrio que quieres conservar: tu calle, el centro de la ciudad, el lugar del primer encuentro. Lo que queda dentro del marco se convierte en el modelo.",
+              "Consejo: las zonas con contenido variado quedan mejor — algunas calles, un parque, un río. Para un modelo de 8–11 cm, una zona de 400–800 metros es lo ideal.",
+            ],
+          },
+          {
+            h2: "Paso 2. Tamaño y relieve",
+            p: [
+              "Elige el tamaño final: S (5,5 cm) es un recuerdo compacto, M (8 cm) el punto justo, L (11 cm) y XL (15 cm) destacan en una estantería. El precio depende del tamaño — desde ≈6 €.",
+              "Si el terreno es montañoso (Kyiv, Leópolis, los Cárpatos), activa el relieve: el modelo obtiene desniveles reales y las colinas se ven y se tocan. Para ciudades llanas puedes omitirlo.",
+            ],
+          },
+          {
+            h2: "Paso 3. Genera y revisa",
+            p: [
+              "Pulsa «Crear» — en 2–4 minutos el servicio ensambla el modelo con datos de OpenStreetMap: edificios con alturas reales, carreteras, zonas verdes, agua. Puedes girar el modelo terminado en el navegador.",
+            ],
+          },
+          {
+            h2: "Paso 4. Imprime en casa o pídelo",
+            p: [
+              "¿Tienes impresora? Descarga el archivo 3MF o STL listo — se abre directamente en Bambu Studio o PrusaSlicer, con los colores de capa ya asignados.",
+              "¿Sin impresora? Pide la impresión: imprimimos en Eco PLA ecológico y enviamos a Ucrania y a 15 países de la UE. Pago con tarjeta online o contra entrega.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear tu mapa 3D",
+        ctaHref: "/create",
+        outro: "Crear el modelo es gratis — solo pagas la impresión y el envío si pides la pieza terminada.",
       },
     },
   },

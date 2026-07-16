@@ -10,7 +10,7 @@ import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 import { cityFaq, contentLocale, DISTRICT_PAGES } from "@/lib/cityLanding";
-import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
+import { BLOG_ARTICLES, blogContent } from "@/lib/blog";
 
 /**
  * Programmatic SEO: статична сторінка під кожне місто (23 × 6 локалей).
@@ -276,7 +276,7 @@ export default async function CityPage({
           {BLOG_ARTICLES.slice(4, 6).map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
-                {a.content[blogLocale(locale)].h1} →
+                {blogContent(a, locale).h1} →
               </Link>
             </li>
           ))}

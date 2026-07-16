@@ -17,7 +17,7 @@ import {
   landingCopy,
   type CityLandingCopy,
 } from "@/lib/cityLanding";
-import { BLOG_ARTICLES, blogLocale } from "@/lib/blog";
+import { BLOG_ARTICLES, blogContent } from "@/lib/blog";
 
 /**
  * Programmatic SEO рівень 2: подарунок × місто (23) + лендінги під нагоду (5).
@@ -276,7 +276,7 @@ export default async function GiftSlugPage({
           {BLOG_ARTICLES.slice(2, 4).map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
-                {a.content[blogLocale(locale)].h1} →
+                {blogContent(a, locale).h1} →
               </Link>
             </li>
           ))}

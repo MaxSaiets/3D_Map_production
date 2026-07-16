@@ -3,7 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { BLOG_ARTICLES, BLOG_INDEX_META, blogLocale } from "@/lib/blog";
+import { BLOG_ARTICLES, blogContent, blogIndexMeta } from "@/lib/blog";
 
 /**
  * Блог-індекс: контент-глибина під інформаційні запити (top-of-funnel SEO).
@@ -19,7 +19,7 @@ export async function generateMetadata({
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
     ? params.locale
     : defaultLocale) as AppLocale;
-  const m = BLOG_INDEX_META[blogLocale(locale)];
+  const m = blogIndexMeta(locale);
   const path = "/blog";
   const languages: Record<string, string> = {};
   for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
@@ -41,8 +41,7 @@ export default async function BlogIndexPage({
     ? params.locale
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
-  const bl = blogLocale(locale);
-  const m = BLOG_INDEX_META[bl];
+  const m = blogIndexMeta(locale);
 
   const ld = {
     "@context": "https://schema.org",
@@ -54,7 +53,7 @@ export default async function BlogIndexPage({
         url: localeUrl(locale, "/blog"),
         blogPost: BLOG_ARTICLES.map((a) => ({
           "@type": "BlogPosting",
-          headline: a.content[bl].h1,
+          headline: blogContent(a, locale).h1,
           datePublished: a.date,
           url: localeUrl(locale, `/blog/${a.slug}`),
         })),
@@ -82,7 +81,7 @@ export default async function BlogIndexPage({
 
       <ul className="mt-10 grid gap-5">
         {BLOG_ARTICLES.map((a) => {
-          const c = a.content[bl];
+          const c = blogContent(a, locale);
           return (
             <li key={a.slug}>
               <Link
