@@ -479,6 +479,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Create a keychain with your district",
         ctaHref: "/keychains",
       },
+      de: {
+        title: "Schlüsselanhänger mit Stadtkarte: persönliches Accessoire ab ≈3 €",
+        description:
+          "Karten-Anhänger 55×30 mm: Straßen und Parks deines Viertels als Relief, eigener Text auf der Rückseite. 3D-Druck auf Bestellung ab ≈3 €, Versand Ukraine & EU.",
+        h1: "Schlüsselanhänger mit Stadtkarte — eine kleine Karte, die immer dabei ist",
+        intro:
+          "Der Karten-Anhänger ist ein 55×30-mm-Täfelchen, auf dem das gewählte Viertel als Relief gedruckt ist: Straßen, Parks, Flüsse. Auf der Rückseite dein Text: Stadtname, Datum, Name oder Koordinaten. Die günstigste Art, einen Ort bei sich zu tragen, der etwas bedeutet.",
+        sections: [
+          {
+            h2: "Was man darauf abbilden kann",
+            p: [
+              "Jeden Punkt der Erde: dein Heimatviertel, die Stadt, in der dein Kind geboren wurde, die Straße, in der ihr als Studenten gewohnt habt. Eine Meeresküste mit Strandlinie oder ein Bergkamm mit Höhenrelief geht auch — für Berge gibt es einen eigenen Topo-Modus, in dem Gipfel und Täler unter den Fingern lesbar werden.",
+              "Beliebte Varianten: ein Paar «Herz»-Anhänger mit den Vierteln zweier Menschen (sie fügen sich wie ein Puzzle zusammen), ein Läufer-Anhänger mit GPX-Track der Lieblingsstrecke, Firmen-Anhänger mit dem Büro-Viertel fürs Team.",
+            ],
+          },
+          {
+            h2: "Material und Qualität",
+            p: [
+              "Gedruckt aus Eco-PLA-Bioplastik — leicht, angenehm griffig, hält den täglichen Gebrauch am Schlüssel aus. Straßenlinien werden mit 0,4 mm Auflösung gedruckt, sodass selbst kleine Gassen lesbar bleiben.",
+            ],
+          },
+          {
+            h2: "Preis und Lieferzeit",
+            p: [
+              "Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand mit Nova Poshta in der Ukraine oder Nova Post/Meest in 15 EU-Länder. Kartenzahlung online oder bei Lieferung.",
+            ],
+          },
+        ],
+        ctaLabel: "Anhänger mit deinem Viertel erstellen",
+        ctaHref: "/keychains",
+      },
+      pl: {
+        title: "Brelok z mapą miasta: osobiste akcesorium od ≈3 €",
+        description:
+          "Brelok-mapa 55×30 mm: ulice i parki Twojej dzielnicy w reliefie, własny napis z tyłu. Druk 3D na zamówienie od ≈3 €, wysyłka Ukraina i UE.",
+        h1: "Brelok z mapą miasta — mała mapa, która zawsze jest przy Tobie",
+        intro:
+          "Brelok-mapa to zawieszka 55×30 mm, na której wybraną dzielnicę wydrukowano reliefem: ulice, parki, rzeki. Z tyłu Twój napis: nazwa miasta, data, imię lub współrzędne. Najtańszy sposób, by nosić przy sobie miejsce, które coś znaczy.",
+        sections: [
+          {
+            h2: "Co można przedstawić",
+            p: [
+              "Dowolny punkt świata: rodzinną dzielnicę, miasto, w którym urodziło się dziecko, ulicę, przy której mieszkaliście jako studenci. Wybrzeże morza z linią plaży lub grzbiet górski z reliefem wysokości też działa — dla gór jest osobny tryb topo, w którym szczyty i doliny czyta się palcami.",
+              "Popularne warianty: para breloków-«serc» z dzielnicami dwóch osób (łączą się jak puzzle), brelok biegacza ze śladem GPX ulubionej trasy, firmowe breloki z dzielnicą biura dla zespołu.",
+            ],
+          },
+          {
+            h2: "Materiał i jakość",
+            p: [
+              "Drukujemy z bioplastiku Eco PLA — lekki, przyjemny w dotyku, wytrzymuje codzienne noszenie przy kluczach. Linie ulic drukowane z rozdzielczością 0,4 mm — nawet małe uliczki pozostają czytelne.",
+            ],
+          },
+          {
+            h2: "Cena i termin",
+            p: [
+              "Brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka Nova Poshta na Ukrainie lub Nova Post/Meest do 15 krajów UE. Płatność kartą online lub przy odbiorze.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz brelok ze swoją dzielnicą",
+        ctaHref: "/keychains",
+      },
+      fr: {
+        title: "Porte-clés avec carte de ville : accessoire personnel dès ≈3 €",
+        description:
+          "Porte-clés carte 55×30 mm : les rues et parcs de votre quartier en relief, texte personnel au dos. Impression 3D sur mesure dès ≈3 €, livraison Ukraine et UE.",
+        h1: "Porte-clés avec carte de ville — une petite carte toujours avec vous",
+        intro:
+          "Le porte-clés carte est une plaque de 55×30 mm sur laquelle le quartier choisi est imprimé en relief : rues, parcs, rivières. Au dos, votre texte : nom de ville, date, prénom ou coordonnées. La façon la plus abordable de porter sur soi un lieu qui compte.",
+        sections: [
+          {
+            h2: "Ce qu'on peut y représenter",
+            p: [
+              "N'importe quel point du globe : votre quartier natal, la ville où votre enfant est né, la rue où vous viviez étudiants. Un littoral avec la ligne de plage ou une crête de montagne en relief fonctionne aussi — pour la montagne il y a un mode topo dédié où sommets et vallées se lisent du bout des doigts.",
+              "Choix populaires : une paire de porte-clés «cœur» avec les quartiers de deux personnes (ils s'emboîtent comme un puzzle), un porte-clés de coureur avec une trace GPX, des porte-clés d'entreprise avec le quartier du bureau pour l'équipe.",
+            ],
+          },
+          {
+            h2: "Matériau et qualité",
+            p: [
+              "Imprimé en Eco PLA — léger, agréable au toucher, supporte l'usage quotidien sur les clés. Les lignes de rues sont imprimées à 0,4 mm de résolution, si bien que même les petites ruelles restent lisibles.",
+            ],
+          },
+          {
+            h2: "Prix et délai",
+            p: [
+              "Porte-clés carte — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison par Nova Poshta en Ukraine ou Nova Post/Meest dans 15 pays de l'UE. Paiement par carte en ligne ou à la livraison.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer un porte-clés avec votre quartier",
+        ctaHref: "/keychains",
+      },
+      es: {
+        title: "Llavero con mapa de ciudad: accesorio personal desde ≈3 €",
+        description:
+          "Llavero-mapa 55×30 mm: las calles y parques de tu barrio en relieve, texto personal al dorso. Impresión 3D a medida desde ≈3 €, envío Ucrania y UE.",
+        h1: "Llavero con mapa de ciudad — un pequeño mapa que siempre te acompaña",
+        intro:
+          "El llavero-mapa es una placa de 55×30 mm en la que el barrio elegido está impreso en relieve: calles, parques, ríos. Al dorso, tu texto: nombre de la ciudad, fecha, nombre o coordenadas. La forma más asequible de llevar contigo un lugar que significa algo.",
+        sections: [
+          {
+            h2: "Qué se puede representar",
+            p: [
+              "Cualquier punto del mundo: tu barrio natal, la ciudad donde nació tu hijo, la calle donde vivíais de estudiantes. Una costa con la línea de playa o una cresta de montaña con relieve también funciona — para montañas hay un modo topo propio donde cumbres y valles se leen con los dedos.",
+              "Opciones populares: un par de llaveros «corazón» con los barrios de dos personas (encajan como un puzle), un llavero de corredor con un track GPX, llaveros corporativos con el barrio de la oficina para el equipo.",
+            ],
+          },
+          {
+            h2: "Material y calidad",
+            p: [
+              "Impreso en bioplástico Eco PLA — ligero, agradable al tacto, aguanta el uso diario en las llaves. Las líneas de las calles se imprimen a 0,4 mm de resolución, de modo que hasta las callejuelas pequeñas siguen siendo legibles.",
+            ],
+          },
+          {
+            h2: "Precio y plazo",
+            p: [
+              "Llavero-mapa — desde ≈3 €. Fabricación 1–3 días hábiles, envío con Nova Poshta en Ucrania o Nova Post/Meest a 15 países de la UE. Pago con tarjeta online o contra entrega.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear un llavero con tu barrio",
+        ctaHref: "/keychains",
+      },
     },
   },
   {
@@ -545,6 +669,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           },
         ],
         ctaLabel: "Upload your GPX track",
+        ctaHref: "/keychains",
+      },
+      de: {
+        title: "Schlüsselanhänger mit GPX-Route: verewige deinen Lauf, deine Wanderung oder Radtour",
+        description:
+          "Lade einen GPX-Track aus Strava oder Garmin hoch — und erhalte einen Anhänger mit der Reliefline deiner Route über der Viertelkarte. Marathon- oder Wander-Andenken ab ≈3 €.",
+        h1: "Schlüsselanhänger mit GPX-Route: dein Track in Plastik",
+        intro:
+          "Der erste Marathon, eine 100-km-Radtour, eine Hoverla-Wanderung — der Track dieser Routen liegt in Strava oder Garmin und niemand sieht ihn. Ein GPX-Anhänger macht den Track zu einem physischen Objekt: die Reliefline der Route verläuft über der Viertelkarte direkt auf dem Anhänger, der immer am Schlüssel ist.",
+        sections: [
+          {
+            h2: "Wie es funktioniert",
+            p: [
+              "Exportiere eine GPX-Datei aus Strava, Garmin Connect, Komoot oder einem beliebigen Tracker. Lade sie in den Konfigurator — der Dienst findet den Ort der Route, wählt den Maßstab, damit der ganze Track passt, und legt die Routenlinie über die Straßen. Die Linie wird an die Straßen angezogen, sodass selbst eine «verrauschte» GPS-Aufzeichnung sauber aussieht.",
+            ],
+          },
+          {
+            h2: "Wem man das schenkt",
+            p: [
+              "Läufern — das Ziel des ersten Marathons oder die Lieblingsrunde durch den Park. Radfahrern — die Route einer Mehrtagestour. Wanderern — der Track einer Karpaten-Tour. Ein Geschenk, das man nicht fertig kaufen kann: jeder hat seine eigene Route.",
+              "Auf der Rückseite lässt sich Text hinzufügen: Eventname, Datum, Zielzeit — «Kyiv Marathon 2026 · 3:58».",
+            ],
+          },
+          {
+            h2: "Preis",
+            p: [
+              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand in die Ukraine und die EU.",
+            ],
+          },
+        ],
+        ctaLabel: "Deinen GPX-Track hochladen",
+        ctaHref: "/keychains",
+      },
+      pl: {
+        title: "Brelok z trasą GPX: uwiecznij swój bieg, wędrówkę lub trasę rowerową",
+        description:
+          "Wgraj ślad GPX ze Stravy lub Garmina — i otrzymaj brelok z reliefową linią swojej trasy na mapie dzielnicy. Pamiątka z maratonu lub wędrówki od ≈3 €.",
+        h1: "Brelok z trasą GPX: Twój ślad w plastiku",
+        intro:
+          "Pierwszy maraton, setka na rowerze, wejście na Howerlę — ślad tych tras leży w Stravie lub Garminie i nikt go nie widzi. Brelok GPX zamienia ślad w fizyczną rzecz: reliefowa linia trasy biegnie po mapie dzielnicy prosto na zawieszce, która zawsze jest przy kluczach.",
+        sections: [
+          {
+            h2: "Jak to działa",
+            p: [
+              "Wyeksportuj plik GPX ze Stravy, Garmin Connect, Komoot lub dowolnego trackera. Wgraj go do kreatora — serwis sam znajdzie miejsce trasy, dobierze skalę, by cały ślad się zmieścił, i nałoży linię trasy na ulice. Linia trasy przyciąga się do dróg, więc wygląda schludnie nawet przy «zaszumionym» zapisie GPS.",
+            ],
+          },
+          {
+            h2: "Komu się to daruje",
+            p: [
+              "Biegaczom — meta pierwszego maratonu lub ulubiona pętla po parku. Rowerzystom — trasa kilkudniowej wyprawy. Turystom — ślad wędrówki w Karpaty. To prezent, którego nie można kupić gotowego: każdy ma swoją trasę.",
+              "Z tyłu można dodać napis: nazwę wydarzenia, datę, czas mety — «Kyiv Marathon 2026 · 3:58».",
+            ],
+          },
+          {
+            h2: "Cena",
+            p: [
+              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka na Ukrainę i do UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Wgraj swój ślad GPX",
+        ctaHref: "/keychains",
+      },
+      fr: {
+        title: "Porte-clés avec trace GPX : immortalisez votre course, randonnée ou sortie vélo",
+        description:
+          "Téléversez une trace GPX depuis Strava ou Garmin — et obtenez un porte-clés avec la ligne en relief de votre parcours sur la carte du quartier. Souvenir de marathon ou de rando dès ≈3 €.",
+        h1: "Porte-clés avec trace GPX : votre parcours en plastique",
+        intro:
+          "Le premier marathon, une sortie de 100 km à vélo, une montée à la Hoverla — la trace de ces parcours dort dans Strava ou Garmin et personne ne la voit. Un porte-clés GPX transforme la trace en objet physique : la ligne en relief du parcours passe sur la carte du quartier, à même la plaque toujours sur vos clés.",
+        sections: [
+          {
+            h2: "Comment ça marche",
+            p: [
+              "Exportez un fichier GPX depuis Strava, Garmin Connect, Komoot ou n'importe quel traceur. Téléversez-le dans le configurateur — le service localise le parcours, choisit l'échelle pour que toute la trace tienne, et pose la ligne du parcours sur les rues. La ligne s'aligne sur les routes, si bien qu'un enregistrement GPS «bruité» reste net.",
+            ],
+          },
+          {
+            h2: "À qui l'offrir",
+            p: [
+              "Aux coureurs — l'arrivée du premier marathon ou la boucle préférée dans le parc. Aux cyclistes — l'itinéraire d'un raid de plusieurs jours. Aux randonneurs — la trace d'une sortie dans les Carpates. Un cadeau qu'on ne peut pas acheter tout fait : chacun a son propre parcours.",
+              "On peut ajouter un texte au dos : nom de l'événement, date, temps d'arrivée — «Kyiv Marathon 2026 · 3:58».",
+            ],
+          },
+          {
+            h2: "Prix",
+            p: [
+              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison en Ukraine et dans l'UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Téléverser votre trace GPX",
+        ctaHref: "/keychains",
+      },
+      es: {
+        title: "Llavero con ruta GPX: inmortaliza tu carrera, senderismo o ruta en bici",
+        description:
+          "Sube un track GPX de Strava o Garmin — y obtén un llavero con la línea en relieve de tu ruta sobre el mapa del barrio. Recuerdo de maratón o excursión desde ≈3 €.",
+        h1: "Llavero con ruta GPX: tu track en plástico",
+        intro:
+          "El primer maratón, una ruta de 100 km en bici, una subida a la Hoverla — el track de esas rutas está en Strava o Garmin y nadie lo ve. Un llavero GPX convierte el track en un objeto físico: la línea en relieve de la ruta recorre el mapa del barrio en la propia placa que siempre llevas en las llaves.",
+        sections: [
+          {
+            h2: "Cómo funciona",
+            p: [
+              "Exporta un archivo GPX de Strava, Garmin Connect, Komoot o cualquier tracker. Súbelo al configurador — el servicio localiza la ruta, elige la escala para que quepa todo el track y coloca la línea de la ruta sobre las calles. La línea se ajusta a las carreteras, así que hasta un registro GPS «con ruido» queda limpio.",
+            ],
+          },
+          {
+            h2: "A quién regalarlo",
+            p: [
+              "A corredores — la meta del primer maratón o la vuelta favorita por el parque. A ciclistas — la ruta de una travesía de varios días. A excursionistas — el track de una salida a los Cárpatos. Un regalo que no se puede comprar hecho: cada uno tiene su propia ruta.",
+              "Se puede añadir texto al dorso: nombre del evento, fecha, tiempo de meta — «Kyiv Marathon 2026 · 3:58».",
+            ],
+          },
+          {
+            h2: "Precio",
+            p: [
+              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 1–3 días hábiles, envío a Ucrania y la UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Subir tu track GPX",
         ctaHref: "/keychains",
       },
     },
