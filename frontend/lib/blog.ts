@@ -1118,6 +1118,218 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       },
     },
   },
+  {
+    slug: "podarunok-viyskovomu",
+    date: "2026-07-16",
+    content: {
+      uk: {
+        title: "Подарунок військовому: мапа місця, за яке він стоїть",
+        description:
+          "Ідея подарунка військовому — чоловіку, хлопцю, побратиму: 3D-мапа рідного міста чи брелок з домом, який завжди в кишені. Особисте, не банальне, від 120 ₴.",
+        h1: "Подарунок військовому: шматочок дому, який можна тримати в руках",
+        intro:
+          "Браслети виживання й термокружки вже подаровані по три рази. Якщо шукаєте подарунок військовому — чоловіку, синові, побратиму — подумайте не про спорядження, а про те, чого на службі бракує найбільше: дім. 3D-мапа рідного району чи брелок з вулицею, де на нього чекають — маленька фізична річ, яка нагадує, за що все це.",
+        sections: [
+          {
+            h2: "Чому мапа, а не ще один тактичний аксесуар",
+            p: [
+              "Спорядження купують за списком, а подарунок має говорити. Брелок 55×30 мм з рельєфом рідного двору поміщається в кишеню форми й важить кілька грамів. На звороті — напис: ім'я, дата, «чекаємо вдома», координати.",
+              "Для дому теж працює: мапа міста, яке він захищає, на полиці в родини — з написом чи датою. Такий подарунок однаково сильний в обидва боки.",
+            ],
+          },
+          {
+            h2: "Що обирають найчастіше",
+            p: [
+              "Брелок з рідним районом (від 120 ₴) — найпрактичніше: легкий, міцний Eco PLA, витримує щоденне носіння. Мапа рідного міста 8–11 см (від 350 ₴) — на полицю чи в бліндаж. Брелоки-«серця» для пари — половинка з її районом, половинка з його: з'єднуються як пазл.",
+            ],
+          },
+          {
+            h2: "Практичні деталі",
+            p: [
+              "Виготовлення 1–3 робочі дні, Нова Пошта доставляє й на фронтові напрямки — вкажіть відділення, яке працює. Пластик легкий і не дзвенить, гострих країв немає. Якщо не знаєте точну адресу дитинства — досить назви району чи школи, допоможемо знайти ділянку.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити мапу його дому",
+        ctaHref: "/create",
+        outro: "Не впевнені з районом? Напишіть нам — підберемо ділянку разом і покажемо превʼю до замовлення.",
+      },
+      en: {
+        title: "A gift for a soldier: the map of the place they stand for",
+        description:
+          "A gift idea for a serviceman — husband, boyfriend, brother-in-arms: a 3D map of the home city or a keychain with the home street, always in a pocket. From ≈€3.",
+        h1: "A gift for a soldier: a piece of home you can hold",
+        intro:
+          "Survival bracelets and thermal mugs have been gifted three times over. If you're looking for a gift for a serviceman — husband, son, brother-in-arms — think not about gear but about what's scarcest on duty: home. A 3D map of the home district or a keychain with the street where they're awaited — a small physical thing that reminds what it's all for.",
+        sections: [
+          {
+            h2: "Why a map and not another tactical accessory",
+            p: [
+              "Gear is bought from a checklist; a gift should speak. A 55×30 mm keychain with the relief of the home yard fits a uniform pocket and weighs a few grams. On the back — an inscription: a name, a date, «waiting at home», coordinates.",
+              "It works both ways: a map of the city they defend, on the family's shelf at home — with a date or inscription.",
+            ],
+          },
+          {
+            h2: "What people choose most",
+            p: [
+              "A keychain with the home district (from ≈€3) — the most practical: light, sturdy Eco PLA, survives daily carry. A home-city map 8–11 cm (from ≈€8) — for a shelf. Heart-pair keychains — one half with her district, one with his: they connect like a puzzle.",
+            ],
+          },
+          {
+            h2: "Practical details",
+            p: [
+              "Made in 1–3 business days; Nova Poshta delivers to most areas — specify a working branch. The plastic is light, doesn't jingle, no sharp edges. If you don't know the exact childhood address — a district or school name is enough, we'll help find the area.",
+            ],
+          },
+        ],
+        ctaLabel: "Create the map of their home",
+        ctaHref: "/create",
+        outro: "Not sure about the district? Message us — we'll pick the area together and show a preview before you order.",
+      },
+    },
+  },
+  {
+    slug: "podarunok-bihunu",
+    date: "2026-07-16",
+    content: {
+      uk: {
+        title: "Подарунок бігуну: його маршрут, надрукований у пластику",
+        description:
+          "Що подарувати бігуну, в якого вже все є: брелок з GPX-треком першого марафону чи улюбленого кола. Завантажуємо трек зі Strava — друкуємо рельєфом. Від 120 ₴.",
+        h1: "Подарунок бігуну, який неможливо купити готовим",
+        intro:
+          "У бігуна вже є годинник, гелі, пояс і треті кросівки. Але є річ, якої немає в жодному магазині: його власний маршрут. Перший марафон, ранкове коло парком, стометрівка набережною — усе це лежить треками у Strava. Ми перетворюємо трек на фізичну річ: рельєфна лінія маршруту поверх карти району на брелку чи мапі.",
+        sections: [
+          {
+            h2: "Як це виглядає",
+            p: [
+              "Жетон 55×30 мм: вулиці району друкуються тонким рельєфом, а лінія маршруту — виразніше, поверх. На звороті — напис: «Kyiv Half 2026 · 1:47» або просто дата й дистанція. Маршрут прив'язується до доріг, тож навіть «шумний» GPS-запис виглядає акуратно.",
+            ],
+          },
+          {
+            h2: "Приводи, які працюють",
+            p: [
+              "Фініш першого марафону чи півмарафону — класика: цифри часу на звороті перетворюють брелок на медаль, яка завжди з собою. Ювілейний забіг клубу, перша сотка велосипедом, навіть маршрут, яким пара бігала на побаченнях — усе, що записано треком, можна надрукувати.",
+              "Для бігового клубу чи корпоративного забігу робимо серії: однаковий маршрут, різні імена й часи на звороті.",
+            ],
+          },
+          {
+            h2: "Як замовити",
+            p: [
+              "Експортуйте GPX зі Strava, Garmin Connect чи Komoot (у Strava: активність → три крапки → «Експорт GPX»). Завантажте файл у конструктор — сервіс сам знайде місце, підбере масштаб і покаже превʼю. Від 120 ₴, виготовлення 1–3 робочі дні.",
+            ],
+          },
+        ],
+        ctaLabel: "Завантажити GPX-трек",
+        ctaHref: "/keychains",
+        outro: "Даруєте сюрпризом і не маєте доступу до треку? Підійде скріншот маршруту — намалюємо ділянку за ним.",
+      },
+      en: {
+        title: "A gift for a runner: their route, printed in plastic",
+        description:
+          "What to give a runner who has everything: a keychain with the GPX track of their first marathon or favourite loop. Upload from Strava — we print it in relief. From ≈€3.",
+        h1: "A gift for a runner that can't be bought off the shelf",
+        intro:
+          "A runner already owns the watch, the gels, the belt and a third pair of shoes. But there's one thing no store has: their own route. The first marathon, the morning park loop — it all sits as tracks in Strava. We turn a track into a physical object: a relief route line over the district map on a keychain or a full map.",
+        sections: [
+          {
+            h2: "What it looks like",
+            p: [
+              "A 55×30 mm tag: the district's streets print in fine relief, the route line stands out on top. On the back — «Kyiv Half 2026 · 1:47» or just the date and distance. The route snaps to roads, so even noisy GPS looks clean.",
+            ],
+          },
+          {
+            h2: "Occasions that work",
+            p: [
+              "A first marathon or half finish is the classic: the time on the back turns the keychain into a medal that's always with you. A club's anniversary run, a first century ride, even the route a couple used to run on dates — anything recorded as a track can be printed.",
+              "For running clubs and corporate races we make series: same route, different names and times on the back.",
+            ],
+          },
+          {
+            h2: "How to order",
+            p: [
+              "Export a GPX from Strava, Garmin Connect or Komoot (in Strava: activity → three dots → «Export GPX»). Upload it in the builder — the service locates the route, scales the map and shows a preview. From ≈€3, made in 1–3 business days.",
+            ],
+          },
+        ],
+        ctaLabel: "Upload a GPX track",
+        ctaHref: "/keychains",
+        outro: "Gifting as a surprise without access to the track? A route screenshot works — we'll trace the area from it.",
+      },
+    },
+  },
+  {
+    slug: "podarunok-pereselentsyu",
+    date: "2026-07-16",
+    content: {
+      uk: {
+        title: "Подарунок переселенцю: рідне місто, яке завжди поруч",
+        description:
+          "Що подарувати людині, яка виїхала з рідного міста: 3D-мапа рідного району чи брелок з домом. Подарунок переселенцю, друзям за кордоном, рідним. Від 120 ₴, доставка в ЄС.",
+        h1: "Подарунок переселенцю: шматочок рідного міста",
+        intro:
+          "Мільйони людей зараз живуть не там, де виросли. Комусь довелось виїхати від війни, хтось переїхав за роботою чи навчанням — але рідний двір пам'ятають усі. 3D-мапа рідного району — подарунок, який працює сильніше за будь-які слова: ось твоя вулиця, твоя школа, твій парк. Вони на місці. Вони чекають.",
+        sections: [
+          {
+            h2: "Чому це влучає",
+            p: [
+              "Людині далеко від дому не бракує речей — їй бракує місця. Фотографії лишаються в телефоні, а мапа стоїть на полиці нової квартири в Варшаві, Берліні чи Празі й щодня нагадує: дім існує. Це подарунок і на день народження, і «просто так», і на новосілля на новому місці.",
+              "Особливо сильно працює для міст, куди зараз не поїхати: Маріуполь, Донецьк, Луганськ, Херсонщина. OpenStreetMap пам'ятає ці вулиці — і ми можемо їх надрукувати.",
+            ],
+          },
+          {
+            h2: "Формати",
+            p: [
+              "Мапа рідного району 8–15 см (від 350 ₴) — на полицю. Брелок з двором дитинства (від 120 ₴) — щоб дім був у кишені. Магніт (150 ₴) — на холодильник нової кухні. Панно з кількох плиток — коли хочеться повісити на стіну ціле місто.",
+              "На звороті брелока — напис: назва міста, «додому повернемось», координати дому чи ім'я.",
+            ],
+          },
+          {
+            h2: "Доставка за кордон",
+            p: [
+              "Надсилаємо Новою Поштою по Україні та Nova Post / Meest у 15 країн ЄС — Польщу, Німеччину, Чехію та інші. Виготовлення 1–3 робочі дні. Замовити можна з будь-якої країни, оплата карткою онлайн.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити мапу рідного міста",
+        ctaHref: "/create",
+        outro: "Якщо рідне місто зараз окуповане чи зруйноване — мапа друкується за довоєнними даними OpenStreetMap. Таким, яким його пам'ятають.",
+      },
+      en: {
+        title: "A gift for someone far from home: their hometown, always near",
+        description:
+          "What to give a person who left their home city: a 3D map of the home district or a keychain with the home street. For refugees, friends abroad, family. From ≈€3, EU delivery.",
+        h1: "A gift for someone far from home: a piece of their city",
+        intro:
+          "Millions of people now live away from where they grew up — displaced by war, moved for work or study. But everyone remembers their home yard. A 3D map of the home district is a gift that speaks louder than words: here is your street, your school, your park. They're still there. They're waiting.",
+        sections: [
+          {
+            h2: "Why it lands",
+            p: [
+              "A person far from home doesn't lack things — they lack a place. Photos stay in the phone, but a map stands on the shelf of a new flat in Warsaw, Berlin or Prague and reminds daily: home exists. It works for birthdays, housewarmings in a new country, or no occasion at all.",
+              "It's especially powerful for cities one can't visit now: Mariupol, Donetsk, Luhansk. OpenStreetMap remembers those streets — and we can print them.",
+            ],
+          },
+          {
+            h2: "Formats",
+            p: [
+              "A home-district map 8–15 cm (from ≈€8) for a shelf. A childhood-yard keychain (from ≈€3) so home fits in a pocket. A fridge magnet (≈€4) for the new kitchen. A multi-tile panel when you want a whole city on the wall.",
+              "On the keychain's back — an inscription: the city name, coordinates of home, or a name.",
+            ],
+          },
+          {
+            h2: "Delivery abroad",
+            p: [
+              "We ship across Ukraine and via Nova Post / Meest to 15 EU countries — Poland, Germany, Czechia and more. Production 1–3 business days. Order from any country, card payment online.",
+            ],
+          },
+        ],
+        ctaLabel: "Create the map of a home city",
+        ctaHref: "/create",
+        outro: "If the home city is occupied or damaged — the map prints from pre-war OpenStreetMap data. The way it's remembered.",
+      },
+    },
+  },
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(

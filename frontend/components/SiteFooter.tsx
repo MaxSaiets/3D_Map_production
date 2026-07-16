@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "lucide-react";
+import { Box, Instagram, Youtube, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { BUSINESS } from "@/lib/legal";
@@ -54,6 +54,23 @@ export function SiteFooter() {
             <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("privacy")}</Link>
             <Link href="/terms" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("terms")}</Link>
           </div>
+        </div>
+        {/* Соцмережі — видимі лінки для людей + бренд-сигнал для пошуковиків
+            (дзеркалять Organization.sameAs у layout). UTM — щоб бачити зворотний
+            трафік сайт→соцмережа в аналітиці власника платформ. */}
+        <div className="flex items-center justify-center gap-2">
+          <a href="https://www.instagram.com/monadruk/" target="_blank" rel="noopener me" aria-label="Instagram Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <Instagram size={18} />
+          </a>
+          <a href="https://www.youtube.com/@monadruk" target="_blank" rel="noopener me" aria-label="YouTube Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <Youtube size={18} />
+          </a>
+          <a href="https://t.me/monadruk" target="_blank" rel="noopener me" aria-label="Telegram Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <Send size={18} />
+          </a>
         </div>
         {/* Контакти + реквізити продавця — вимога платіжних систем (LiqPay). */}
         <div className="flex flex-col items-center gap-1 border-t border-line-soft pt-5 text-center text-[13px] text-ink-3 md:flex-row md:flex-wrap md:justify-center md:gap-x-4">

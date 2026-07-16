@@ -169,7 +169,13 @@ export default async function LocaleLayout({
             availability: "https://schema.org/InStock",
           },
         ],
-        sameAs: ["https://t.me/monadruk"],
+        // sameAs = «це справжній бізнес із живими профілями» (E-E-A-T сигнал).
+        // Підтверджені живі профілі; TikTok додати, щойно власник підтвердить хендл.
+        sameAs: [
+          "https://t.me/monadruk",
+          "https://www.instagram.com/monadruk/",
+          "https://www.youtube.com/@monadruk",
+        ],
       },
       {
         "@type": "WebSite",
