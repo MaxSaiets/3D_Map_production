@@ -1557,5 +1557,35 @@
     "outro": "Every gift is a 3D map of a real place: buildings, streets, terrain. Printed in eco PLA and shipped across Ukraine, or delivered as a ready 3MF to print yourself.",
     "pricesLink": "See prices",
     "homeCtaLink": "Looking for a gift idea?"
+  },
+  "intro": {
+    "skip": "Skip",
+    "priceFrom": "from {price} UAH · no prepayment",
+    "map": {
+      "eyebrow": "3D map builder",
+      "title": "Here's what you'll get",
+      "lead": "A real print, not a rendering. Pick any place on Earth — we print its relief, streets and buildings.",
+      "alt": "Real 3D-printed Monadruk map",
+      "s1t": "Pick a place",
+      "s1b": "Frame it on the map — any city on Earth",
+      "s2t": "Size and style",
+      "s2b": "See the 3D model before you pay",
+      "s3t": "We print and ship",
+      "s3b": "1–3 working days, Nova Poshta",
+      "cta": "Pick your place"
+    },
+    "keychain": {
+      "eyebrow": "Keychain builder",
+      "title": "Here's what you'll get",
+      "lead": "A keychain with your city's map or a GPX route. Real photos of finished pieces — not renderings.",
+      "alt": "Real 3D-printed Monadruk keychain",
+      "s1t": "Shape and place",
+      "s1b": "Pick a shape and a point on the map",
+      "s2t": "Text and colours",
+      "s2b": "Engrave your own wording",
+      "s3t": "We print and ship",
+      "s3b": "1–3 working days, Nova Poshta",
+      "cta": "Create your keychain"
+    }
   }
 }

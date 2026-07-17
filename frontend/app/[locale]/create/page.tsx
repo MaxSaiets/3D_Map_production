@@ -11,13 +11,14 @@ import { useGenerationStore } from "@/store/generation-store";
 import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { ConstructorIntro, useIntroGate } from "@/components/ConstructorIntro";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
 import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
 import { useTranslations, useLocale } from "next-intl";
 import { SIMPLE_SIZES } from "@/lib/generation";
-import { mapPriceEur } from "@/lib/mapPrices";
+import { mapPriceEur, MAP_SIZE_PRICES_UAH } from "@/lib/mapPrices";
 
 function MapLoading() {
   const tc = useTranslations("create");
@@ -102,6 +103,8 @@ export default function Home() {
   const tc = useTranslations("create");
   const tCity = useTranslations("cities");
   const locale = useLocale();
+  // Вступний блок «що вийде». Стан тут (не в компоненті) — його читає й тур.
+  const { introVisible, dismissIntro } = useIntroGate("intro_create_v1");
   // СІТКА СЕРІЇ — у store (НЕ page-level useState): панель монтується ДВІЧІ
   // (desktop aside + mobile section), локальний стан розсинхронізовувався б між
   // копіями (той самий клас багу, що й simplePanelMode). Сітка тепер валідна і в
@@ -555,7 +558,9 @@ export default function Home() {
     <div className="min-h-[100dvh] bg-transparent">
       {/* UX: тур лише ДО першої генерації — інакше перекривав 3D-результат
           і прогрес. Текст без «панелі зліва» (на мобілці її нема — там таби). */}
-      {!isGenerating && !downloadUrl && (
+      {/* Тур — лише ПІСЛЯ закриття вступного блоку: два онбординги нараз
+          (блок «що вийде» + плаваюча підказка) захаращували перший екран. */}
+      {!isGenerating && !downloadUrl && !introVisible && (
         <OnboardingTour
           storageKey="onb_create_v1"
           steps={[
@@ -611,6 +616,20 @@ export default function Home() {
               сцена карта⇄рендер уже самопояснювана). Раніше тут був ще й
               дубль-ряд табів — теж прибрано. Нижній бар = StickyActionBar. */}
         </header>
+
+        {/* Вступ «ось що вийде» — ДО інструмента. Воронка показувала обвал
+            view→area (71%): людина бачила чужу карту Києва й не розуміла,
+            що отримає. Зникає назавжди після першої взаємодії. */}
+        {!isGenerating && !downloadUrl && (
+          <ConstructorIntro
+            visible={introVisible}
+            onDismiss={dismissIntro}
+            variant="map"
+            photos={["map-1", "panno-1", "map-3", "map-2"]}
+            scrollToId="panel-map"
+            priceFrom={MAP_SIZE_PRICES_UAH[55]}
+          />
+        )}
 
         <div className="mt-3 flex flex-1 flex-col gap-3 lg:min-h-0 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
           <aside id="panel-settings" className="hidden min-h-0 lg:block">

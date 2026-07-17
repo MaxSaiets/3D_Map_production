@@ -20,6 +20,8 @@ import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { ConstructorIntro, useIntroGate } from "@/components/ConstructorIntro";
+import { KEYCHAIN_PRICE_UAH } from "@/lib/mapPrices";
 
 function MapLoading() {
   const t = useTranslations("kcp");
@@ -113,6 +115,8 @@ export default function KeychainsPage() {
   const tKc = useTranslations("kc"); // локалізовані назви шаблонів брелків
   const t = useTranslations("kcp");
   const tCity = useTranslations("cities");
+  // Вступний блок «що вийде». Стан тут (не в компоненті) — його читає й тур.
+  const { introVisible, dismissIntro } = useIntroGate("intro_keychain_v1");
 
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
@@ -223,7 +227,8 @@ export default function KeychainsPage() {
   return (
     <div id="main-content" tabIndex={-1} className="min-h-[100dvh] bg-transparent">
       {/* UX: тур лише до першої генерації — не перекриває прогрес/3D-результат */}
-      {!isGenerating && !downloadUrl && (
+      {/* Тур — лише ПІСЛЯ закриття вступного блоку (див. /create). */}
+      {!isGenerating && !downloadUrl && !introVisible && (
         <OnboardingTour
           storageKey="onb_keychain_v1"
           steps={[
@@ -281,6 +286,19 @@ export default function KeychainsPage() {
             </div>
           </div>
         </header>
+
+        {/* Вступ «ось що вийде» — реальні фото друків до інструмента. Див.
+            ConstructorIntro: обвал воронки був на першому кроці. */}
+        {!isGenerating && !downloadUrl && (
+          <ConstructorIntro
+            visible={introVisible}
+            onDismiss={dismissIntro}
+            variant="keychain"
+            photos={["key-1", "heart-1", "key-3", "key-2"]}
+            scrollToId="kc-map"
+            priceFrom={KEYCHAIN_PRICE_UAH}
+          />
+        )}
 
         {/* Степер «Крок 1/2/3» прибрано (власник: зайвий chrome). Натомість —
             компактний вибір міста (перенесено зі шапки). */}

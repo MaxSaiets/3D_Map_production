@@ -1557,5 +1557,35 @@
     "outro": "Cada regalo es un mapa 3D de un lugar real: edificios, calles, relieve. Impreso en PLA ecológico y enviado por Ucrania, o entregado como un 3MF listo para imprimir tú mismo.",
     "pricesLink": "Ver precios",
     "homeCtaLink": "¿Buscas una idea de regalo?"
+  },
+  "intro": {
+    "skip": "Omitir",
+    "priceFrom": "desde {price} UAH · sin pago por adelantado",
+    "map": {
+      "eyebrow": "Creador de mapas 3D",
+      "title": "Esto es lo que recibirá",
+      "lead": "Una impresión real, no una visualización. Elija cualquier lugar del planeta — imprimimos su relieve, calles y edificios.",
+      "alt": "Mapa 3D real impreso por Monadruk",
+      "s1t": "Elija un lugar",
+      "s1b": "Con un marco en el mapa — cualquier ciudad",
+      "s2t": "Tamaño y estilo",
+      "s2b": "El modelo 3D visible antes de pagar",
+      "s3t": "Imprimimos y enviamos",
+      "s3b": "1–3 días laborables, Nova Poshta",
+      "cta": "Elegir mi lugar"
+    },
+    "keychain": {
+      "eyebrow": "Creador de llaveros",
+      "title": "Esto es lo que recibirá",
+      "lead": "Un llavero con el mapa de su ciudad o una ruta GPX. Fotos reales de piezas terminadas — no renders.",
+      "alt": "Llavero 3D real impreso por Monadruk",
+      "s1t": "Forma y lugar",
+      "s1b": "Elija una forma y un punto en el mapa",
+      "s2t": "Texto y colores",
+      "s2b": "Grabado de su propio texto",
+      "s3t": "Imprimimos y enviamos",
+      "s3b": "1–3 días laborables, Nova Poshta",
+      "cta": "Crear mi llavero"
+    }
   }
 }

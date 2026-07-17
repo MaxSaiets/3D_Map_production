@@ -1557,5 +1557,35 @@
     "outro": "Chaque cadeau est une carte 3D d'un lieu réel : bâtiments, rues, relief. Imprimé en PLA éco et livré en Ukraine, ou remis en 3MF prêt à imprimer vous-même.",
     "pricesLink": "Voir les tarifs",
     "homeCtaLink": "Une idée de cadeau ?"
+  },
+  "intro": {
+    "skip": "Passer",
+    "priceFrom": "à partir de {price} UAH · sans acompte",
+    "map": {
+      "eyebrow": "Créateur de carte 3D",
+      "title": "Voici ce que vous recevrez",
+      "lead": "Une vraie impression, pas une visualisation. Choisissez n'importe quel lieu — nous imprimons son relief, ses rues et ses bâtiments.",
+      "alt": "Véritable carte 3D imprimée par Monadruk",
+      "s1t": "Choisissez un lieu",
+      "s1b": "Un cadre sur la carte — toute ville du monde",
+      "s2t": "Taille et style",
+      "s2b": "Le modèle 3D visible avant l'achat",
+      "s3t": "Nous imprimons et expédions",
+      "s3b": "1–3 jours ouvrés, Nova Poshta",
+      "cta": "Choisir mon lieu"
+    },
+    "keychain": {
+      "eyebrow": "Créateur de porte-clés",
+      "title": "Voici ce que vous recevrez",
+      "lead": "Un porte-clés avec la carte de votre ville ou un tracé GPX. De vraies photos de pièces finies — pas des rendus.",
+      "alt": "Véritable porte-clés 3D imprimé par Monadruk",
+      "s1t": "Forme et lieu",
+      "s1b": "Choisissez une forme et un point sur la carte",
+      "s2t": "Texte et couleurs",
+      "s2b": "Gravure de votre propre texte",
+      "s3t": "Nous imprimons et expédions",
+      "s3b": "1–3 jours ouvrés, Nova Poshta",
+      "cta": "Créer mon porte-clés"
+    }
   }
 }
