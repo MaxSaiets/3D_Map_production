@@ -2800,6 +2800,134 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/keychains",
         outro: "Gifting as a surprise without access to the track? A route screenshot works — we'll trace the area from it.",
       },
+      de: {
+        title: "Ein Geschenk für Läufer: seine Route, in Kunststoff gedruckt",
+        description:
+          "Was man einem Läufer schenkt, der schon alles hat: einen Anhänger mit dem GPX-Track des ersten Marathons oder der Lieblingsrunde. Wir laden den Track aus Strava — und drucken ihn als Relief. Ab ≈3 €.",
+        h1: "Ein Läufer-Geschenk, das man nicht fertig kaufen kann",
+        intro:
+          "Ein Läufer hat schon die Uhr, die Gels, den Gürtel und das dritte Paar Schuhe. Aber es gibt eine Sache, die es in keinem Laden gibt: seine eigene Route. Der erste Marathon, die Morgenrunde durch den Park, die Strecke an der Uferpromenade — all das liegt als Track in Strava. Wir machen aus dem Track ein physisches Ding: eine Reliefline der Route über der Viertelkarte, auf einem Anhänger oder einer Karte.",
+        sections: [
+          {
+            h2: "Wie es aussieht",
+            p: [
+              "Ein Täfelchen 55×30 mm: die Straßen des Viertels werden als feines Relief gedruckt, die Routenlinie deutlicher darüber. Auf der Rückseite eine Gravur: «Kyiv Half 2026 · 1:47» oder einfach Datum und Distanz. Die Route wird an die Straßen angezogen, sodass selbst eine «verrauschte» GPS-Aufzeichnung sauber aussieht.",
+            ],
+          },
+          {
+            h2: "Anlässe, die funktionieren",
+            p: [
+              "Das Ziel des ersten Marathons oder Halbmarathons ist der Klassiker: die Zeit auf der Rückseite macht aus dem Anhänger eine Medaille, die immer dabei ist. Der Jubiläumslauf des Clubs, die erste 100-km-Radtour, sogar die Strecke, die ein Paar bei seinen Dates gelaufen ist — alles, was als Track aufgezeichnet ist, lässt sich drucken.",
+              "Für Laufclubs und Firmenläufe machen wir Serien: gleiche Route, verschiedene Namen und Zeiten auf der Rückseite.",
+            ],
+          },
+          {
+            h2: "So bestellst du",
+            p: [
+              "Exportiere GPX aus Strava, Garmin Connect oder Komoot (in Strava: Aktivität → drei Punkte → «GPX exportieren»). Lade die Datei in den Konfigurator — der Dienst findet den Ort, wählt den Maßstab und zeigt die Vorschau. Ab ≈3 €, Fertigung 1–3 Werktage.",
+            ],
+          },
+        ],
+        ctaLabel: "GPX-Track hochladen",
+        ctaHref: "/keychains",
+        outro: "Du schenkst es als Überraschung und hast keinen Zugang zum Track? Ein Screenshot der Route reicht — wir zeichnen den Bereich danach.",
+      },
+      pl: {
+        title: "Prezent dla biegacza: jego trasa wydrukowana w plastiku",
+        description:
+          "Co podarować biegaczowi, który ma już wszystko: brelok ze śladem GPX pierwszego maratonu lub ulubionej pętli. Wgrywamy ślad ze Stravy — drukujemy reliefem. Od ≈3 €.",
+        h1: "Prezent dla biegacza, którego nie da się kupić gotowego",
+        intro:
+          "Biegacz ma już zegarek, żele, pas i trzecią parę butów. Ale jest rzecz, której nie ma w żadnym sklepie: jego własna trasa. Pierwszy maraton, poranna pętla po parku, odcinek nad rzeką — wszystko to leży w Stravie jako ślady. Zamieniamy ślad w fizyczną rzecz: reliefowa linia trasy na mapie dzielnicy, na breloku lub mapie.",
+        sections: [
+          {
+            h2: "Jak to wygląda",
+            p: [
+              "Zawieszka 55×30 mm: ulice dzielnicy drukowane są delikatnym reliefem, a linia trasy wyraźniej, na wierzchu. Z tyłu napis: «Kyiv Half 2026 · 1:47» albo po prostu data i dystans. Trasa przyciąga się do dróg, więc nawet «zaszumiony» zapis GPS wygląda schludnie.",
+            ],
+          },
+          {
+            h2: "Okazje, które działają",
+            p: [
+              "Meta pierwszego maratonu lub półmaratonu to klasyka: czas z tyłu zamienia brelok w medal, który zawsze jest przy sobie. Jubileuszowy bieg klubu, pierwsza setka na rowerze, nawet trasa, którą para biegała na randkach — wszystko, co zapisane śladem, można wydrukować.",
+              "Dla klubu biegowego lub biegu firmowego robimy serie: ta sama trasa, różne imiona i czasy z tyłu.",
+            ],
+          },
+          {
+            h2: "Jak zamówić",
+            p: [
+              "Wyeksportuj GPX ze Stravy, Garmin Connect lub Komoot (w Stravie: aktywność → trzy kropki → «Eksportuj GPX»). Wgraj plik do kreatora — serwis sam znajdzie miejsce, dobierze skalę i pokaże podgląd. Od ≈3 €, wykonanie 1–3 dni robocze.",
+            ],
+          },
+        ],
+        ctaLabel: "Wgraj ślad GPX",
+        ctaHref: "/keychains",
+        outro: "Darujesz na niespodziankę i nie masz dostępu do śladu? Wystarczy zrzut ekranu trasy — narysujemy obszar na jego podstawie.",
+      },
+      fr: {
+        title: "Un cadeau pour un coureur : son parcours imprimé en plastique",
+        description:
+          "Que offrir à un coureur qui a déjà tout : un porte-clés avec la trace GPX de son premier marathon ou de sa boucle préférée. On importe la trace depuis Strava — on l'imprime en relief. Dès ≈3 €.",
+        h1: "Un cadeau pour un coureur qu'on ne peut pas acheter tout fait",
+        intro:
+          "Un coureur a déjà la montre, les gels, la ceinture et une troisième paire de chaussures. Mais il y a une chose qu'aucun magasin ne vend : son propre parcours. Le premier marathon, la boucle matinale dans le parc, la ligne droite sur les quais — tout cela dort dans Strava sous forme de traces. Nous transformons la trace en objet physique : une ligne en relief du parcours sur la carte du quartier, sur un porte-clés ou une carte.",
+        sections: [
+          {
+            h2: "À quoi ça ressemble",
+            p: [
+              "Une plaque 55×30 mm : les rues du quartier s'impriment en relief fin, la ligne du parcours ressort par-dessus. Au dos, une gravure : «Kyiv Half 2026 · 1:47» ou simplement la date et la distance. Le parcours s'aligne sur les routes, si bien qu'un enregistrement GPS «bruité» reste net.",
+            ],
+          },
+          {
+            h2: "Les occasions qui marchent",
+            p: [
+              "L'arrivée d'un premier marathon ou semi est le classique : le temps au dos transforme le porte-clés en médaille qu'on garde toujours sur soi. La course anniversaire du club, les premiers 100 km à vélo, même le parcours qu'un couple courait à ses rendez-vous — tout ce qui est enregistré en trace peut être imprimé.",
+              "Pour un club de course ou une course d'entreprise, nous faisons des séries : même parcours, noms et temps différents au dos.",
+            ],
+          },
+          {
+            h2: "Comment commander",
+            p: [
+              "Exportez le GPX depuis Strava, Garmin Connect ou Komoot (dans Strava : activité → trois points → «Exporter en GPX»). Téléversez le fichier dans le configurateur — le service trouve le lieu, choisit l'échelle et montre l'aperçu. Dès ≈3 €, fabrication 1–3 jours ouvrés.",
+            ],
+          },
+        ],
+        ctaLabel: "Téléverser une trace GPX",
+        ctaHref: "/keychains",
+        outro: "Vous l'offrez en surprise sans accès à la trace ? Une capture d'écran du parcours suffit — nous en tracerons la zone.",
+      },
+      es: {
+        title: "Un regalo para un corredor: su ruta impresa en plástico",
+        description:
+          "Qué regalar a un corredor que ya lo tiene todo: un llavero con el track GPX de su primer maratón o su vuelta favorita. Subimos el track de Strava — lo imprimimos en relieve. Desde ≈3 €.",
+        h1: "Un regalo para un corredor que no se puede comprar hecho",
+        intro:
+          "Un corredor ya tiene el reloj, los geles, el cinturón y el tercer par de zapatillas. Pero hay una cosa que no está en ninguna tienda: su propia ruta. El primer maratón, la vuelta matinal por el parque, el tramo junto al río — todo eso está en Strava en forma de tracks. Convertimos el track en un objeto físico: una línea en relieve de la ruta sobre el mapa del barrio, en un llavero o un mapa.",
+        sections: [
+          {
+            h2: "Cómo se ve",
+            p: [
+              "Una placa de 55×30 mm: las calles del barrio se imprimen con relieve fino y la línea de la ruta destaca por encima. Al dorso, un grabado: «Kyiv Half 2026 · 1:47» o simplemente la fecha y la distancia. La ruta se ajusta a las carreteras, así que hasta un registro GPS «con ruido» queda limpio.",
+            ],
+          },
+          {
+            h2: "Ocasiones que funcionan",
+            p: [
+              "La meta de un primer maratón o media es el clásico: el tiempo al dorso convierte el llavero en una medalla que siempre llevas encima. La carrera de aniversario del club, los primeros 100 km en bici, incluso la ruta que una pareja corría en sus citas — todo lo registrado como track se puede imprimir.",
+              "Para un club de running o una carrera corporativa hacemos series: la misma ruta, distintos nombres y tiempos al dorso.",
+            ],
+          },
+          {
+            h2: "Cómo pedirlo",
+            p: [
+              "Exporta el GPX desde Strava, Garmin Connect o Komoot (en Strava: actividad → tres puntos → «Exportar GPX»). Sube el archivo al configurador — el servicio localiza el lugar, elige la escala y muestra la vista previa. Desde ≈3 €, fabricación 1–3 días hábiles.",
+            ],
+          },
+        ],
+        ctaLabel: "Subir un track GPX",
+        ctaHref: "/keychains",
+        outro: "¿Lo regalas por sorpresa y no tienes acceso al track? Sirve una captura de la ruta — trazaremos la zona a partir de ella.",
+      },
     },
   },
   {
@@ -2871,6 +2999,138 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Create the map of a home city",
         ctaHref: "/create",
         outro: "If the home city is occupied or damaged — the map prints from pre-war OpenStreetMap data. The way it's remembered.",
+      },
+      de: {
+        title: "Ein Geschenk für Vertriebene: die Heimatstadt, die immer nah ist",
+        description:
+          "Was man jemandem schenkt, der seine Heimatstadt verlassen musste: eine 3D-Karte des Heimatviertels oder ein Anhänger mit dem Zuhause. Für Geflüchtete, Freunde im Ausland, Familie. Ab ≈3 €, EU-Versand.",
+        h1: "Ein Geschenk für Vertriebene: ein Stück der Heimatstadt",
+        intro:
+          "Millionen Menschen leben heute nicht dort, wo sie aufgewachsen sind. Manche mussten vor dem Krieg fliehen, andere sind für Arbeit oder Studium umgezogen — aber an den heimischen Hof erinnern sich alle. Eine 3D-Karte des Heimatviertels ist ein Geschenk, das stärker wirkt als alle Worte: hier ist deine Straße, deine Schule, dein Park. Sie stehen noch. Sie warten.",
+        sections: [
+          {
+            h2: "Warum es trifft",
+            p: [
+              "Wer weit weg von zu Hause ist, dem fehlen keine Dinge — ihm fehlt ein Ort. Fotos bleiben im Handy, aber die Karte steht im Regal der neuen Wohnung in Warschau, Berlin oder Prag und erinnert täglich: das Zuhause existiert. Ein Geschenk zum Geburtstag, zum Einzug am neuen Ort oder einfach so.",
+              "Besonders stark wirkt es für Städte, in die man jetzt nicht fahren kann: Mariupol, Donezk, Luhansk, die Region Cherson. OpenStreetMap erinnert sich an diese Straßen — und wir können sie drucken.",
+            ],
+          },
+          {
+            h2: "Formate",
+            p: [
+              "Karte des Heimatviertels 8–15 cm (ab ≈8 €) — fürs Regal. Anhänger mit dem Hof der Kindheit (ab ≈3 €) — damit das Zuhause in die Tasche passt. Magnet (≈4 €) — an den Kühlschrank der neuen Küche. Ein Panel aus mehreren Kacheln — wenn man eine ganze Stadt an die Wand hängen will.",
+              "Auf der Rückseite des Anhängers eine Gravur: der Stadtname, «wir kehren heim», die Koordinaten des Zuhauses oder ein Name.",
+            ],
+          },
+          {
+            h2: "Versand ins Ausland",
+            p: [
+              "Wir versenden mit Nova Poshta in der Ukraine und mit Nova Post / Meest in 15 EU-Länder — Polen, Deutschland, Tschechien und weitere. Fertigung 1–3 Werktage. Bestellen kann man aus jedem Land, Kartenzahlung online.",
+            ],
+          },
+        ],
+        ctaLabel: "Karte der Heimatstadt erstellen",
+        ctaHref: "/create",
+        outro: "Ist die Heimatstadt derzeit besetzt oder zerstört — die Karte wird aus OpenStreetMap-Daten von vor dem Krieg gedruckt. So, wie man sie in Erinnerung hat.",
+      },
+      pl: {
+        title: "Prezent dla przesiedleńca: rodzinne miasto, które zawsze jest blisko",
+        description:
+          "Co podarować osobie, która wyjechała z rodzinnego miasta: mapa 3D rodzinnej dzielnicy lub brelok z domem. Dla uchodźców, przyjaciół za granicą, bliskich. Od ≈3 €, wysyłka do UE.",
+        h1: "Prezent dla przesiedleńca: kawałek rodzinnego miasta",
+        intro:
+          "Miliony ludzi żyją dziś nie tam, gdzie dorastali. Ktoś musiał wyjechać przed wojną, ktoś przeprowadził się za pracą czy nauką — ale rodzinne podwórko pamiętają wszyscy. Mapa 3D rodzinnej dzielnicy to prezent, który działa mocniej niż jakiekolwiek słowa: oto twoja ulica, twoja szkoła, twój park. Są na miejscu. Czekają.",
+        sections: [
+          {
+            h2: "Dlaczego to trafia",
+            p: [
+              "Osobie daleko od domu nie brakuje rzeczy — brakuje jej miejsca. Zdjęcia zostają w telefonie, a mapa stoi na półce nowego mieszkania w Warszawie, Berlinie czy Pradze i codziennie przypomina: dom istnieje. To prezent i na urodziny, i «tak po prostu», i na parapetówkę w nowym miejscu.",
+              "Szczególnie mocno działa dla miast, do których teraz nie da się pojechać: Mariupol, Donieck, Ługańsk, Chersońszczyzna. OpenStreetMap pamięta te ulice — i możemy je wydrukować.",
+            ],
+          },
+          {
+            h2: "Formaty",
+            p: [
+              "Mapa rodzinnej dzielnicy 8–15 cm (od ≈8 €) — na półkę. Brelok z podwórkiem dzieciństwa (od ≈3 €) — by dom był w kieszeni. Magnes (≈4 €) — na lodówkę nowej kuchni. Panel z kilku kafelków — gdy chce się powiesić na ścianie całe miasto.",
+              "Z tyłu breloka napis: nazwa miasta, «wrócimy do domu», współrzędne domu lub imię.",
+            ],
+          },
+          {
+            h2: "Wysyłka za granicę",
+            p: [
+              "Wysyłamy Nova Poshta po Ukrainie oraz Nova Post / Meest do 15 krajów UE — Polski, Niemiec, Czech i innych. Wykonanie 1–3 dni robocze. Zamówić można z dowolnego kraju, płatność kartą online.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz mapę rodzinnego miasta",
+        ctaHref: "/create",
+        outro: "Jeśli rodzinne miasto jest teraz okupowane lub zniszczone — mapa drukowana jest z przedwojennych danych OpenStreetMap. Takim, jakim się je pamięta.",
+      },
+      fr: {
+        title: "Un cadeau pour un déplacé : sa ville natale, toujours près de lui",
+        description:
+          "Que offrir à une personne qui a quitté sa ville natale : une carte 3D du quartier natal ou un porte-clés avec sa maison. Pour les réfugiés, les amis à l'étranger, la famille. Dès ≈3 €, livraison UE.",
+        h1: "Un cadeau pour un déplacé : un morceau de sa ville natale",
+        intro:
+          "Des millions de personnes vivent aujourd'hui loin de là où elles ont grandi. Certains ont dû fuir la guerre, d'autres ont déménagé pour le travail ou les études — mais tout le monde se souvient de la cour de son enfance. Une carte 3D du quartier natal est un cadeau qui parle plus fort que les mots : voici ta rue, ton école, ton parc. Ils sont là. Ils attendent.",
+        sections: [
+          {
+            h2: "Pourquoi ça touche",
+            p: [
+              "Loin de chez soi, on ne manque pas de choses — on manque d'un lieu. Les photos restent dans le téléphone, mais la carte se dresse sur l'étagère du nouvel appartement à Varsovie, Berlin ou Prague et rappelle chaque jour : la maison existe. Un cadeau pour un anniversaire, une crémaillère dans le nouveau pays, ou sans occasion.",
+              "L'effet est particulièrement fort pour les villes où l'on ne peut plus aller : Marioupol, Donetsk, Louhansk, la région de Kherson. OpenStreetMap se souvient de ces rues — et nous pouvons les imprimer.",
+            ],
+          },
+          {
+            h2: "Formats",
+            p: [
+              "Carte du quartier natal 8–15 cm (dès ≈8 €) — pour l'étagère. Porte-clés avec la cour d'enfance (dès ≈3 €) — pour que la maison tienne dans la poche. Magnet (≈4 €) — sur le frigo de la nouvelle cuisine. Un panneau de plusieurs tuiles — quand on veut accrocher une ville entière au mur.",
+              "Au dos du porte-clés, une gravure : le nom de la ville, «nous rentrerons», les coordonnées de la maison ou un prénom.",
+            ],
+          },
+          {
+            h2: "Livraison à l'étranger",
+            p: [
+              "Nous expédions avec Nova Poshta en Ukraine et via Nova Post / Meest dans 15 pays de l'UE — Pologne, Allemagne, Tchéquie et d'autres. Fabrication 1–3 jours ouvrés. On peut commander depuis n'importe quel pays, paiement par carte en ligne.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer la carte d'une ville natale",
+        ctaHref: "/create",
+        outro: "Si la ville natale est occupée ou détruite — la carte s'imprime à partir des données OpenStreetMap d'avant-guerre. Telle qu'on s'en souvient.",
+      },
+      es: {
+        title: "Un regalo para un desplazado: su ciudad natal, siempre cerca",
+        description:
+          "Qué regalar a alguien que dejó su ciudad natal: un mapa 3D del barrio natal o un llavero con su casa. Para refugiados, amigos en el extranjero, familia. Desde ≈3 €, envío a la UE.",
+        h1: "Un regalo para un desplazado: un trozo de su ciudad natal",
+        intro:
+          "Millones de personas viven hoy lejos de donde crecieron. Algunos tuvieron que huir de la guerra, otros se mudaron por trabajo o estudios — pero todos recuerdan el patio de su casa. Un mapa 3D del barrio natal es un regalo que habla más fuerte que las palabras: aquí está tu calle, tu escuela, tu parque. Siguen ahí. Esperan.",
+        sections: [
+          {
+            h2: "Por qué llega",
+            p: [
+              "A quien está lejos de casa no le faltan cosas — le falta un lugar. Las fotos se quedan en el móvil, pero el mapa está en la estantería del piso nuevo en Varsovia, Berlín o Praga y recuerda a diario: la casa existe. Es un regalo de cumpleaños, de inauguración en el nuevo país, o sin ocasión alguna.",
+              "Funciona con especial fuerza para ciudades a las que ahora no se puede ir: Mariúpol, Donetsk, Lugansk, la región de Jersón. OpenStreetMap recuerda esas calles — y nosotros podemos imprimirlas.",
+            ],
+          },
+          {
+            h2: "Formatos",
+            p: [
+              "Mapa del barrio natal 8–15 cm (desde ≈8 €) — para la estantería. Llavero con el patio de la infancia (desde ≈3 €) — para que la casa quepa en el bolsillo. Imán (≈4 €) — en la nevera de la cocina nueva. Un panel de varios azulejos — cuando se quiere colgar una ciudad entera en la pared.",
+              "Al dorso del llavero, un grabado: el nombre de la ciudad, «volveremos a casa», las coordenadas del hogar o un nombre.",
+            ],
+          },
+          {
+            h2: "Envío al extranjero",
+            p: [
+              "Enviamos con Nova Poshta por Ucrania y con Nova Post / Meest a 15 países de la UE — Polonia, Alemania, Chequia y otros. Fabricación 1–3 días hábiles. Se puede pedir desde cualquier país, pago con tarjeta online.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear el mapa de una ciudad natal",
+        ctaHref: "/create",
+        outro: "Si la ciudad natal está ahora ocupada o destruida — el mapa se imprime con datos de OpenStreetMap de antes de la guerra. Tal como se la recuerda.",
       },
     },
   },
