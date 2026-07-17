@@ -105,9 +105,13 @@ export function ConstructorIntro({
       </h2>
       <p className="mt-1.5 max-w-[56ch] text-[14px] leading-relaxed text-ink-2">{t("lead")}</p>
 
-      {/* Реальні фото друків — головний доказ. Перше вантажимо одразу (LCP), решту ліниво.
+      {/* Реальні фото друків — головний доказ.
           МОБІЛЬНИЙ: лише 2 фото — при 4 блок виростав до 944px (екран 812) і CTA
-          опинявся ЗА межами першого екрана, тобто ламав те, що мав полагодити. */}
+          опинявся ЗА межами першого екрана, тобто ламав те, що мав полагодити.
+          `-sm` = 720px-варіанти: повні файли 1100px важили 616КБ на четвірку, а
+          слот тут ~284px — учетверо зайве. Тепер 288КБ.
+          eager для ВСІХ: фото над згином, і з lazy браузер їх не запитував
+          узагалі — блок показував порожні рамки замість доказу. */}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {photos.map((f, i) => (
           <div
@@ -116,11 +120,13 @@ export function ConstructorIntro({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`/real/${f}.webp`}
+              src={`/real/${f}-sm.webp`}
               alt={t("alt")}
-              width={280}
-              height={280}
-              loading={i === 0 ? "eager" : "lazy"}
+              width={720}
+              height={540}
+              loading="eager"
+              fetchPriority={i === 0 ? "high" : "auto"}
+              decoding="async"
               /* sm+: 4:3 замість квадрата — на ноуті 1280×720 квадратні тайли по
                  300px виштовхували CTA за межі першого екрана. */
               className="aspect-square h-full w-full object-cover sm:aspect-[4/3]"
