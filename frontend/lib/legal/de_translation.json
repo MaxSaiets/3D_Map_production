@@ -82,7 +82,6 @@
                 { "k": "Verkäufer", "v": "{ownerFull}" },
                 { "k": "Steuer-ID", "v": "{taxId}" },
                 { "k": "IBAN", "v": "{iban}" },
-                { "k": "Eingetragene Adresse", "v": "{ownerRegAddress}" },
                 { "k": "Shop", "v": "{storeName}, {storeAddress}" },
                 { "k": "E-Mail", "v": "{email}" },
                 { "k": "Telefon", "v": "{phone}" }
@@ -221,7 +220,6 @@
               "kv": [
                 { "k": "Bezeichnung", "v": "{ownerFull}" },
                 { "k": "Steuer-ID", "v": "{taxId}" },
-                { "k": "Eingetragene Adresse", "v": "{ownerRegAddress}" },
                 { "k": "Geschäftstätigkeit (KVED)", "v": "{ved}" },
                 { "k": "IBAN", "v": "{iban}" }
               ]

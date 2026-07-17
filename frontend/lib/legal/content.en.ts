@@ -49,7 +49,6 @@ export const en: LegalSet = {
           { k: "Seller", v: "{ownerFull}" },
           { k: "Tax ID", v: "{taxId}" },
           { k: "IBAN", v: "{iban}" },
-          { k: "Registered address", v: "{ownerRegAddress}" },
           { k: "Store", v: "{storeName}, {storeAddress}" },
           { k: "Email", v: "{email}" },
           { k: "Phone", v: "{phone}" },
@@ -139,7 +138,6 @@ export const en: LegalSet = {
         { kv: [
           { k: "Name", v: "{ownerFull}" },
           { k: "Tax ID", v: "{taxId}" },
-          { k: "Registered address", v: "{ownerRegAddress}" },
           { k: "Type of activity (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
         ] },

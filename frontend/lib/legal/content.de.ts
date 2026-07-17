@@ -49,7 +49,6 @@ export const de: LegalSet = {
           { k: "Name", v: "{ownerFull}" },
           { k: "Steuernummer (IPN/RNOKPP)", v: "{taxId}" },
           { k: "IBAN", v: "{iban}" },
-          { k: "Registrierungsadresse", v: "{ownerRegAddress}" },
           { k: "Geschäft", v: "{storeName}, {storeAddress}" },
           { k: "Email", v: "{email}" },
           { k: "Telefon", v: "{phone}" },
@@ -139,7 +138,6 @@ export const de: LegalSet = {
         { kv: [
           { k: "Name", v: "{ownerFull}" },
           { k: "Steuernummer (IPN/RNOKPP)", v: "{taxId}" },
-          { k: "Registrierungsadresse", v: "{ownerRegAddress}" },
           { k: "Tätigkeit (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
         ] },

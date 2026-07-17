@@ -4,7 +4,9 @@
  *
  * Токени у тексті (підставляються рендером, НЕ перекладати):
  *   {email} {phone} {iban} {ownerFull} {ownerShort} {taxId} {ved}
- *   {storeName} {storeAddress} {ownerRegAddress} {domain} {site} {updated}
+ *   {storeName} {storeAddress} {domain} {site} {updated}
+ * НЕ додавати домашню/реєстраційну адресу власника — прибрано свідомо (приватність).
+ * Місцезнаходження продавця розкриває {storeAddress} (адреса магазину).
  * Посилання: [route:видимий текст] → <Link href="/route">видимий текст</Link>
  *   (route: offer|refund|delivery|contacts|privacy|terms). Видимий текст ПЕРЕКЛАДАТИ.
  */
@@ -77,7 +79,6 @@ const uk: LegalSet = {
           { k: "Продавець", v: "{ownerFull}" },
           { k: "ІПН / РНОКПП", v: "{taxId}" },
           { k: "IBAN", v: "{iban}" },
-          { k: "Адреса реєстрації", v: "{ownerRegAddress}" },
           { k: "Магазин", v: "{storeName}, {storeAddress}" },
           { k: "Email", v: "{email}" },
           { k: "Телефон", v: "{phone}" },
@@ -167,7 +168,6 @@ const uk: LegalSet = {
         { kv: [
           { k: "Найменування", v: "{ownerFull}" },
           { k: "ІПН / РНОКПП", v: "{taxId}" },
-          { k: "Адреса реєстрації", v: "{ownerRegAddress}" },
           { k: "Вид діяльності (КВЕД)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
         ] },

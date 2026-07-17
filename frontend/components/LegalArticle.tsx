@@ -37,7 +37,7 @@ function renderText(text: string, locale: string): React.ReactNode[] {
         case "ved": return <React.Fragment key={i}>{BUSINESS.ved}</React.Fragment>;
         case "storeName": return <React.Fragment key={i}>{BUSINESS.storeName}</React.Fragment>;
         case "storeAddress": return <React.Fragment key={i}>{BUSINESS.storeAddress}</React.Fragment>;
-        case "ownerRegAddress": return <React.Fragment key={i}>{BUSINESS.ownerRegAddress}</React.Fragment>;
+        // ownerRegAddress навмисно НЕ підтримується — див. lib/legal.ts (приватність).
         case "updated": return <React.Fragment key={i}>{formatUpdated(locale)}</React.Fragment>;
         default: return <React.Fragment key={i}>{part}</React.Fragment>;
       }
