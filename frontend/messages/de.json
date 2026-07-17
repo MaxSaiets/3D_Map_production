@@ -277,7 +277,9 @@
     "gridSelectHintTitle": "So wählen Sie",
     "saveGridHint": "Speichert die gewählten Zonen in Ihrem Konto — später benachbarte ergänzen.",
     "gridRotateLabel": "Drehung",
-    "gridRotateReset": "Drehung zurücksetzen"
+    "gridRotateReset": "Drehung zurücksetzen",
+    "previewOrderCta": "Diesen Druck bestellen",
+    "previewOrderHint": "Modell ist fertig — in 2 Minuten bestellen"
   },
   "showcase": {
     "back": "Startseite",

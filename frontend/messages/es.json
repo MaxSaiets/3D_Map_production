@@ -277,7 +277,9 @@
     "gridSelectHintTitle": "Cómo elegir",
     "saveGridHint": "Guarda las zonas elegidas en tu cuenta — vuelve y añade las contiguas después.",
     "gridRotateLabel": "Rotar",
-    "gridRotateReset": "Restablecer rotación"
+    "gridRotateReset": "Restablecer rotación",
+    "previewOrderCta": "Pedir esta impresión",
+    "previewOrderHint": "El modelo está listo — pide en 2 minutos"
   },
   "showcase": {
     "back": "Inicio",

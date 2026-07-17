@@ -277,7 +277,9 @@
     "gridSelectHintTitle": "Як обрати зони",
     "saveGridHint": "Збереже вибрані зони у вашому кабінеті — повернетесь і докупите сусідні згодом.",
     "gridRotateLabel": "Поворот",
-    "gridRotateReset": "Скинути поворот"
+    "gridRotateReset": "Скинути поворот",
+    "previewOrderCta": "Замовити цей друк",
+    "previewOrderHint": "Модель готова — оформіть за 2 хвилини"
   },
   "showcase": {
     "back": "На головну",

@@ -277,7 +277,9 @@
     "gridSelectHintTitle": "Jak wybrać",
     "saveGridHint": "Zapisuje wybrane strefy na koncie — wróć i dokup sąsiednie później.",
     "gridRotateLabel": "Obrót",
-    "gridRotateReset": "Zresetuj obrót"
+    "gridRotateReset": "Zresetuj obrót",
+    "previewOrderCta": "Zamów ten wydruk",
+    "previewOrderHint": "Model gotowy — zamów w 2 minuty"
   },
   "showcase": {
     "back": "Strona główna",

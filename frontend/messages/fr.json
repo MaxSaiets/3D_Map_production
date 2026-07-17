@@ -277,7 +277,9 @@
     "gridSelectHintTitle": "Comment choisir",
     "saveGridHint": "Enregistre vos zones dans votre compte — revenez ajouter les voisines plus tard.",
     "gridRotateLabel": "Rotation",
-    "gridRotateReset": "Réinitialiser la rotation"
+    "gridRotateReset": "Réinitialiser la rotation",
+    "previewOrderCta": "Commander cette impression",
+    "previewOrderHint": "Le modèle est prêt — commandez en 2 minutes"
   },
   "showcase": {
     "back": "Accueil",

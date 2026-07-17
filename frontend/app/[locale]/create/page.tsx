@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 // посилання з /en/create губили префікс локалі (/keychains замість /en/keychains).
 import { Link } from "@/i18n/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, KeyRound, User, X, Home as HomeIcon } from "lucide-react";
+import { Download, KeyRound, User, X, Home as HomeIcon, ShoppingBag } from "lucide-react";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { useShallow } from "zustand/react/shallow";
@@ -980,6 +980,26 @@ export default function Home() {
                     <Preview3D />
                   </div>
                 </div>
+
+                {/* UX-FIX (воронка generate→order): екран успіху раніше НЕ мав
+                    жодної кнопки замовлення — людина генерувала, качала й ішла
+                    (2/3 не відкривали форму). CTA прямо в картці превʼю, коли
+                    модель готова; відкриває OrderDialog через глобальну подію
+                    (той самий канал, що «Швидкий статус»). */}
+                {downloadUrl && !isGenerating && (
+                  <div className="border-t border-[var(--surface-border)] px-4 py-3 sm:px-5">
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
+                    >
+                      <ShoppingBag className="h-5 w-5" /> {tc("previewOrderCta")}
+                    </button>
+                    <p className="mt-1.5 text-center text-[12px] text-[var(--text-secondary)]">
+                      {tc("previewOrderHint")}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             )}
