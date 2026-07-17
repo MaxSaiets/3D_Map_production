@@ -2376,6 +2376,162 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/create",
         outro: "Not sure which district or size to pick? Message us — we'll help and build a free preview.",
       },
+      de: {
+        title: "3D-Druck auf Bestellung: Karten mit Versand in die Ukraine und die EU",
+        description:
+          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja und 15 EU-Länder. Eco PLA, 1–3 Werktage, ab ≈3 €.",
+        h1: "3D-Druck auf Bestellung mit Versand in die Ukraine und die EU",
+        intro:
+          "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 1–3 Werktagen sowie in 15 EU-Länder.",
+        sections: [
+          {
+            h2: "Was wir drucken",
+            p: [
+              "3D-Stadtkarten (ab ≈6 €): du wählst ein beliebiges Viertel — Straßen, Gebäude mit echten Höhen, Parks und Flüsse werden als 5,5–15-cm-Modell gedruckt. Anhänger mit Karte oder GPX-Route (ab ≈3 €): ein 55×30-mm-Täfelchen mit deinem Viertel und Text. Wandpanels aus mehreren Kacheln. Magnete mit einem Stadtviertel.",
+              "Wir drucken keine fremden STL-Dateien, Bauteile oder Figuren — nur Karten. Dafür machen wir Karten besser als alle anderen: unser Konfigurator baut das Modell in Minuten aus OpenStreetMap-Daten, und du siehst die 3D-Vorschau vor der Zahlung.",
+            ],
+          },
+          {
+            h2: "Wie es für jede Stadt funktioniert",
+            p: [
+              "Der Konfigurator arbeitet mit jedem Punkt der Ukraine und der Welt. Wähle einen Bereich auf der Karte, stelle Größe und Stil ein, klicke «Erstellen» — in 2–4 Minuten ist das Modell fertig.",
+              "Dann zwei Wege: du bestellst den Druck bei uns (Eco PLA, Fertigung 1–3 Werktage, Versand) — oder lädst die 3MF/STL-Datei herunter und druckst auf dem eigenen Gerät. Die Datei öffnet sich ohne Vorbereitung in Bambu Studio und PrusaSlicer.",
+            ],
+          },
+          {
+            h2: "Preise",
+            p: [
+              "Anhänger mit Karte oder GPX — ab ≈3 €. Kühlschrankmagnet — ≈4 €. 3D-Stadtkarte: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Geländerelief +≈1,5 €. Kachel-Panels werden pro Kachel berechnet, live im Konfigurator.",
+            ],
+          },
+          {
+            h2: "Warum kein gewöhnliches Druck-Studio",
+            p: [
+              "Klassische 3D-Druck-Studios nehmen jeden Auftrag an und brauchen eine fertige Datei. Bei uns ist es umgekehrt: keine Datei nötig — der Konfigurator baut das Modell deines Viertels selbst. Das heißt: keine Modellierungsgebühren, ein vorhersehbarer Preis und eine Vorschau vor der Bestellung.",
+            ],
+          },
+        ],
+        ctaLabel: "Dein Modell erstellen",
+        ctaHref: "/create",
+        outro: "Unsicher, welches Viertel oder welche Größe? Schreib uns — wir helfen und bauen eine kostenlose Vorschau.",
+      },
+      pl: {
+        title: "Druk 3D na zamówienie: mapy z wysyłką na Ukrainę i do UE",
+        description:
+          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica i 15 krajów UE. Eco PLA, 1–3 dni robocze, od ≈3 €.",
+        h1: "Druk 3D na zamówienie z wysyłką na Ukrainę i do UE",
+        intro:
+          "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 1–3 dni robocze oraz do 15 krajów UE.",
+        sections: [
+          {
+            h2: "Co drukujemy",
+            p: [
+              "Mapy miast 3D (od ≈6 €): wybierasz dowolną dzielnicę — ulice, budynki o prawdziwych wysokościach, parki i rzeki drukują się jako model 5,5–15 cm. Breloki z mapą lub trasą GPX (od ≈3 €): zawieszka 55×30 mm z Twoją dzielnicą i napisem. Panele ścienne z kilku kafelków. Magnesy z dzielnicą miasta.",
+              "Nie drukujemy cudzych plików STL, części ani figurek — tylko mapy. Za to mapy robimy lepiej niż ktokolwiek: własny kreator buduje model z danych OpenStreetMap w kilka minut, a Ty widzisz podgląd 3D przed płatnością.",
+            ],
+          },
+          {
+            h2: "Jak to działa dla dowolnego miasta",
+            p: [
+              "Kreator działa z dowolnym punktem Ukrainy i świata. Wybierasz obszar na mapie, ustawiasz rozmiar i styl, klikasz «Utwórz» — w 2–4 minuty model jest gotowy.",
+              "Dalej dwie drogi: zamawiasz druk u nas (Eco PLA, wykonanie 1–3 dni robocze, wysyłka) — albo pobierasz plik 3MF/STL i drukujesz na własnej drukarce. Plik otwiera się w Bambu Studio i PrusaSlicer bez żadnego przygotowania.",
+            ],
+          },
+          {
+            h2: "Ceny",
+            p: [
+              "Brelok z mapą lub śladem GPX — od ≈3 €. Magnes na lodówkę — ≈4 €. Mapa miasta 3D: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Rzeźba terenu +≈1,5 €. Panele z kafelków wyceniane za kafelek, liczone na bieżąco w kreatorze.",
+            ],
+          },
+          {
+            h2: "Dlaczego nie zwykłe studio druku",
+            p: [
+              "Klasyczne studia druku 3D przyjmują każde zlecenie i wymagają gotowego pliku. U nas odwrotnie: plik nie jest potrzebny — kreator sam buduje model Twojej dzielnicy. To oznacza zero opłat za modelowanie, przewidywalną cenę i podgląd przed zamówieniem.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz swój model",
+        ctaHref: "/create",
+        outro: "Nie wiesz, jaką dzielnicę czy rozmiar wybrać? Napisz do nas — pomożemy i przygotujemy darmowy podgląd.",
+      },
+      fr: {
+        title: "Impression 3D sur mesure : cartes livrées en Ukraine et dans l'UE",
+        description:
+          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia et 15 pays de l'UE. Eco PLA, 1–3 jours ouvrés, dès ≈3 €.",
+        h1: "Impression 3D sur mesure avec livraison en Ukraine et dans l'UE",
+        intro:
+          "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 1–3 jours ouvrés, ainsi que dans 15 pays de l'UE.",
+        sections: [
+          {
+            h2: "Ce que nous imprimons",
+            p: [
+              "Cartes de ville 3D (dès ≈6 €) : vous choisissez n'importe quel quartier — rues, bâtiments aux hauteurs réelles, parcs et rivières s'impriment en modèle de 5,5–15 cm. Porte-clés avec carte ou trace GPX (dès ≈3 €) : une plaque de 55×30 mm avec votre quartier et un texte. Panneaux muraux en plusieurs tuiles. Magnets avec un quartier de ville.",
+              "Nous n'imprimons pas de fichiers STL tiers, de pièces ou de figurines — uniquement des cartes. En revanche, les cartes, nous les faisons mieux que quiconque : notre configurateur assemble le modèle à partir des données OpenStreetMap en quelques minutes, et vous voyez l'aperçu 3D avant de payer.",
+            ],
+          },
+          {
+            h2: "Comment ça marche pour n'importe quelle ville",
+            p: [
+              "Le configurateur fonctionne avec n'importe quel point d'Ukraine et du monde. Choisissez une zone sur la carte, réglez la taille et le style, cliquez sur «Créer» — le modèle est prêt en 2–4 minutes.",
+              "Ensuite deux voies : vous commandez l'impression chez nous (Eco PLA, fabrication 1–3 jours ouvrés, livraison) — ou vous téléchargez le fichier 3MF/STL et imprimez sur votre propre machine. Le fichier s'ouvre dans Bambu Studio et PrusaSlicer sans aucune préparation.",
+            ],
+          },
+          {
+            h2: "Prix",
+            p: [
+              "Porte-clés avec carte ou GPX — dès ≈3 €. Magnet de frigo — ≈4 €. Carte de ville 3D : S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Relief du terrain +≈1,5 €. Les panneaux en tuiles sont facturés à la tuile, calculés en direct dans le configurateur.",
+            ],
+          },
+          {
+            h2: "Pourquoi pas un studio d'impression classique",
+            p: [
+              "Les studios d'impression 3D classiques acceptent tous les travaux et exigent un fichier prêt. Chez nous, c'est l'inverse : pas besoin de fichier — le configurateur construit lui-même le modèle de votre quartier. Cela signifie zéro frais de modélisation, un prix prévisible et un aperçu avant commande.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer votre modèle",
+        ctaHref: "/create",
+        outro: "Vous hésitez sur le quartier ou la taille ? Écrivez-nous — on vous aide et on prépare un aperçu gratuit.",
+      },
+      es: {
+        title: "Impresión 3D a medida: mapas con envío a Ucrania y la UE",
+        description:
+          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia y 15 países de la UE. Eco PLA, 1–3 días hábiles, desde ≈3 €.",
+        h1: "Impresión 3D a medida con envío a Ucrania y la UE",
+        intro:
+          "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 1–3 días hábiles, además de a 15 países de la UE.",
+        sections: [
+          {
+            h2: "Qué imprimimos",
+            p: [
+              "Mapas de ciudad 3D (desde ≈6 €): eliges cualquier barrio — calles, edificios con alturas reales, parques y ríos se imprimen como modelo de 5,5–15 cm. Llaveros con mapa o ruta GPX (desde ≈3 €): una placa de 55×30 mm con tu barrio y un texto. Paneles de pared de varios azulejos. Imanes con un barrio de la ciudad.",
+              "No imprimimos archivos STL ajenos, piezas ni figuras — solo mapas. Pero los mapas los hacemos mejor que nadie: nuestro configurador construye el modelo a partir de datos de OpenStreetMap en minutos, y ves la vista previa 3D antes de pagar.",
+            ],
+          },
+          {
+            h2: "Cómo funciona para cualquier ciudad",
+            p: [
+              "El configurador funciona con cualquier punto de Ucrania y del mundo. Eliges una zona en el mapa, ajustas tamaño y estilo, pulsas «Crear» — en 2–4 minutos el modelo está listo.",
+              "Después, dos caminos: pides la impresión con nosotros (Eco PLA, fabricación 1–3 días hábiles, envío) — o descargas el archivo 3MF/STL e imprimes en tu propia máquina. El archivo se abre en Bambu Studio y PrusaSlicer sin ninguna preparación.",
+            ],
+          },
+          {
+            h2: "Precios",
+            p: [
+              "Llavero con mapa o GPX — desde ≈3 €. Imán de nevera — ≈4 €. Mapa de ciudad 3D: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Relieve del terreno +≈1,5 €. Los paneles de azulejos se cobran por azulejo, calculado al momento en el configurador.",
+            ],
+          },
+          {
+            h2: "Por qué no un estudio de impresión normal",
+            p: [
+              "Los estudios de impresión 3D clásicos aceptan cualquier encargo y necesitan un archivo listo. Con nosotros es al revés: no hace falta archivo — el configurador construye él mismo el modelo de tu barrio. Eso significa cero costes de modelado, precio predecible y vista previa antes de pedir.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear tu modelo",
+        ctaHref: "/create",
+        outro: "¿No sabes qué barrio o tamaño elegir? Escríbenos — te ayudamos y preparamos una vista previa gratis.",
+      },
     },
   },
   {
@@ -2445,6 +2601,134 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Create the map of their home",
         ctaHref: "/create",
         outro: "Not sure about the district? Message us — we'll pick the area together and show a preview before you order.",
+      },
+      de: {
+        title: "Ein Geschenk für einen Soldaten: die Karte des Ortes, für den er steht",
+        description:
+          "Geschenkidee für einen Militärangehörigen — Mann, Freund, Kamerad: eine 3D-Karte der Heimatstadt oder ein Anhänger mit dem Zuhause, das immer in der Tasche ist. Persönlich, nicht banal, ab ≈3 €.",
+        h1: "Ein Geschenk für einen Soldaten: ein Stück Zuhause zum Anfassen",
+        intro:
+          "Survival-Armbänder und Thermobecher sind schon dreimal verschenkt. Wenn du ein Geschenk für einen Militärangehörigen suchst — Mann, Sohn, Kameraden — denk nicht an Ausrüstung, sondern an das, was im Dienst am meisten fehlt: Zuhause. Eine 3D-Karte des Heimatviertels oder ein Anhänger mit der Straße, in der man auf ihn wartet — ein kleines physisches Ding, das daran erinnert, wofür das alles ist.",
+        sections: [
+          {
+            h2: "Warum eine Karte und nicht noch ein taktisches Accessoire",
+            p: [
+              "Ausrüstung kauft man nach Liste, ein Geschenk soll sprechen. Ein Anhänger 55×30 mm mit dem Relief des heimischen Hofs passt in die Uniformtasche und wiegt ein paar Gramm. Auf der Rückseite eine Gravur: Name, Datum, «wir warten zu Hause», Koordinaten.",
+              "Für zu Hause funktioniert es genauso: eine Karte der Stadt, die er verteidigt, im Regal der Familie — mit Text oder Datum. So ein Geschenk wirkt in beide Richtungen gleich stark.",
+            ],
+          },
+          {
+            h2: "Was am häufigsten gewählt wird",
+            p: [
+              "Ein Anhänger mit dem Heimatviertel (ab ≈3 €) — am praktischsten: leichtes, robustes Eco PLA, hält den täglichen Gebrauch aus. Eine Karte der Heimatstadt 8–11 cm (ab ≈8 €) — fürs Regal. «Herz»-Anhänger für ein Paar — eine Hälfte mit ihrem Viertel, eine mit seinem: sie fügen sich wie ein Puzzle.",
+            ],
+          },
+          {
+            h2: "Praktische Details",
+            p: [
+              "Fertigung 1–3 Werktage; Nova Poshta liefert in die meisten Gebiete — gib eine funktionierende Filiale an. Der Kunststoff ist leicht, klappert nicht, keine scharfen Kanten. Wenn du die genaue Adresse der Kindheit nicht kennst — ein Viertel- oder Schulname reicht, wir helfen beim Finden.",
+            ],
+          },
+        ],
+        ctaLabel: "Die Karte seines Zuhauses erstellen",
+        ctaHref: "/create",
+        outro: "Unsicher beim Viertel? Schreib uns — wir wählen den Bereich gemeinsam und zeigen eine Vorschau vor der Bestellung.",
+      },
+      pl: {
+        title: "Prezent dla żołnierza: mapa miejsca, za które stoi",
+        description:
+          "Pomysł na prezent dla wojskowego — męża, chłopaka, pobratymca: mapa 3D rodzinnego miasta lub brelok z domem, który zawsze jest w kieszeni. Osobisty, nie banalny, od ≈3 €.",
+        h1: "Prezent dla żołnierza: kawałek domu, który można trzymać w rękach",
+        intro:
+          "Bransoletki survivalowe i kubki termiczne zostały już podarowane po trzy razy. Jeśli szukasz prezentu dla wojskowego — męża, syna, pobratymca — pomyśl nie o wyposażeniu, ale o tym, czego na służbie brakuje najbardziej: o domu. Mapa 3D rodzinnej dzielnicy albo brelok z ulicą, przy której na niego czekają — mała fizyczna rzecz, która przypomina, po co to wszystko.",
+        sections: [
+          {
+            h2: "Dlaczego mapa, a nie kolejny taktyczny gadżet",
+            p: [
+              "Wyposażenie kupuje się z listy, a prezent ma mówić. Brelok 55×30 mm z reliefem rodzinnego podwórka mieści się w kieszeni munduru i waży kilka gramów. Z tyłu napis: imię, data, «czekamy w domu», współrzędne.",
+              "Dla domu działa tak samo: mapa miasta, którego broni, na półce rodziny — z napisem lub datą. Taki prezent jest równie mocny w obie strony.",
+            ],
+          },
+          {
+            h2: "Co wybierają najczęściej",
+            p: [
+              "Brelok z rodzinną dzielnicą (od ≈3 €) — najbardziej praktyczny: lekki, wytrzymały Eco PLA, znosi codzienne noszenie. Mapa rodzinnego miasta 8–11 cm (od ≈8 €) — na półkę. Breloki-«serca» dla pary — połówka z jej dzielnicą, połówka z jego: łączą się jak puzzle.",
+            ],
+          },
+          {
+            h2: "Praktyczne szczegóły",
+            p: [
+              "Wykonanie 1–3 dni robocze; Nova Poshta dowozi na większość kierunków — podaj działające oddziału. Plastik jest lekki i nie brzęczy, nie ma ostrych krawędzi. Jeśli nie znasz dokładnego adresu z dzieciństwa — wystarczy nazwa dzielnicy lub szkoły, pomożemy znaleźć obszar.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz mapę jego domu",
+        ctaHref: "/create",
+        outro: "Nie masz pewności co do dzielnicy? Napisz do nas — dobierzemy obszar razem i pokażemy podgląd przed zamówieniem.",
+      },
+      fr: {
+        title: "Un cadeau pour un soldat : la carte du lieu qu'il défend",
+        description:
+          "Idée de cadeau pour un militaire — mari, petit ami, frère d'armes : une carte 3D de sa ville natale ou un porte-clés avec sa maison, toujours dans la poche. Personnel, pas banal, dès ≈3 €.",
+        h1: "Un cadeau pour un soldat : un morceau de chez soi qu'on peut tenir",
+        intro:
+          "Les bracelets de survie et les mugs thermos ont déjà été offerts trois fois. Si vous cherchez un cadeau pour un militaire — mari, fils, frère d'armes — pensez non pas à l'équipement, mais à ce qui manque le plus au service : la maison. Une carte 3D du quartier natal ou un porte-clés avec la rue où on l'attend — une petite chose physique qui rappelle pourquoi tout cela.",
+        sections: [
+          {
+            h2: "Pourquoi une carte et pas un énième accessoire tactique",
+            p: [
+              "L'équipement s'achète sur liste ; un cadeau doit parler. Un porte-clés de 55×30 mm avec le relief de la cour natale tient dans une poche d'uniforme et pèse quelques grammes. Au dos, une gravure : un prénom, une date, «on t'attend à la maison», des coordonnées.",
+              "Pour la maison, ça marche aussi : la carte de la ville qu'il défend, sur l'étagère de la famille — avec un texte ou une date. Un tel cadeau est aussi fort dans les deux sens.",
+            ],
+          },
+          {
+            h2: "Ce qu'on choisit le plus souvent",
+            p: [
+              "Un porte-clés avec le quartier natal (dès ≈3 €) — le plus pratique : Eco PLA léger et solide, supporte le port quotidien. Une carte de la ville natale 8–11 cm (dès ≈8 €) — pour l'étagère. Des porte-clés «cœur» pour un couple — une moitié avec son quartier à elle, l'autre avec le sien : ils s'emboîtent comme un puzzle.",
+            ],
+          },
+          {
+            h2: "Détails pratiques",
+            p: [
+              "Fabrication 1–3 jours ouvrés ; Nova Poshta livre la plupart des directions — indiquez une agence en service. Le plastique est léger et ne cliquette pas, sans arêtes vives. Si vous ne connaissez pas l'adresse exacte de l'enfance — un nom de quartier ou d'école suffit, nous vous aidons à trouver la zone.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer la carte de sa maison",
+        ctaHref: "/create",
+        outro: "Vous hésitez sur le quartier ? Écrivez-nous — on choisit la zone ensemble et on montre un aperçu avant la commande.",
+      },
+      es: {
+        title: "Un regalo para un soldado: el mapa del lugar por el que está de pie",
+        description:
+          "Idea de regalo para un militar — marido, novio, compañero de armas: un mapa 3D de su ciudad natal o un llavero con su casa, siempre en el bolsillo. Personal, no banal, desde ≈3 €.",
+        h1: "Un regalo para un soldado: un trozo de casa que se puede sostener",
+        intro:
+          "Las pulseras de supervivencia y las tazas térmicas ya se han regalado tres veces. Si buscas un regalo para un militar — marido, hijo, compañero de armas — piensa no en el equipo, sino en lo que más falta en el servicio: la casa. Un mapa 3D del barrio natal o un llavero con la calle donde lo esperan — una pequeña cosa física que recuerda para qué es todo esto.",
+        sections: [
+          {
+            h2: "Por qué un mapa y no otro accesorio táctico",
+            p: [
+              "El equipo se compra por lista; un regalo debe hablar. Un llavero de 55×30 mm con el relieve del patio natal cabe en el bolsillo del uniforme y pesa unos gramos. Al dorso, un grabado: un nombre, una fecha, «te esperamos en casa», coordenadas.",
+              "Para la casa funciona igual: el mapa de la ciudad que defiende, en la estantería de la familia — con un texto o una fecha. Un regalo así es igual de fuerte en ambos sentidos.",
+            ],
+          },
+          {
+            h2: "Qué eligen más a menudo",
+            p: [
+              "Un llavero con el barrio natal (desde ≈3 €) — lo más práctico: Eco PLA ligero y resistente, aguanta el uso diario. Un mapa de la ciudad natal de 8–11 cm (desde ≈8 €) — para la estantería. Llaveros «corazón» para una pareja — una mitad con el barrio de ella, otra con el de él: encajan como un puzle.",
+            ],
+          },
+          {
+            h2: "Detalles prácticos",
+            p: [
+              "Fabricación 1–3 días hábiles; Nova Poshta llega a la mayoría de destinos — indica una sucursal operativa. El plástico es ligero y no tintinea, sin bordes afilados. Si no sabes la dirección exacta de la infancia — basta el nombre del barrio o de la escuela, te ayudamos a encontrar la zona.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear el mapa de su casa",
+        ctaHref: "/create",
+        outro: "¿Dudas con el barrio? Escríbenos — elegimos la zona juntos y mostramos una vista previa antes de pedir.",
       },
     },
   },
