@@ -1327,6 +1327,134 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Pick an area and size",
         ctaHref: "/create",
       },
+      de: {
+        title: "S, M, L oder XL: die richtige Größe der 3D-Stadtkarte wählen",
+        description:
+          "Größenvergleich der 3D-Karte: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Welche Größe zu welchem Bereich, Regal und Budget passt.",
+        h1: "Wie man die Größe der 3D-Karte wählt: ein ehrlicher Vergleich",
+        intro:
+          "Die Größe ist die wichtigste Entscheidung beim Bestellen: Sie bestimmt den Preis und wie detailliert das Viertel lesbar bleibt. Kurzfassung: M (8 cm) ist am universellsten; darunter die Nuancen, die man vor der Bestellung kennen sollte.",
+        sections: [
+          {
+            h2: "Vier Größen an Beispielen",
+            p: [
+              "S (5,5 cm, ≈6 €) — ein kompaktes Souvenir: gut für ein dichtes Zentrum mit markanten Quartieren, passt auf den Schreibtisch. Kleine Gassen verschmelzen bei S bereits, also wähle einen kleinen Bereich von 300–500 m.",
+              "M (8 cm, ≈8 €) — die goldene Mitte: ein Bereich von 400–800 m ist vollständig lesbar, das Modell fällt im Regal auf, ohne das halbe Zimmer zu beanspruchen. Die häufigste Wahl als Geschenk.",
+              "L (11 cm, ≈11 €) und XL (15 cm, ≈13 €) — Interieurstücke: Höfe und einzelne Gebäude sind sichtbar, man kann einen breiteren Bereich bis 1–1,5 km nehmen. XL gewinnt besonders mit Relief — Höhenunterschiede auf großer Fläche wirken dramatisch.",
+            ],
+          },
+          {
+            h2: "Die Bereichsregel: kleiner heißt detaillierter",
+            p: [
+              "Die physische Größe teilt sich durch den erfassten Bereich: je größer das Stück Stadt, desto kleiner jedes Gebäude. Ein 500-m-Bereich auf einem 8-cm-Modell zeigt jedes Haus; ein 2-km-Bereich auf demselben Modell macht aus Quartieren Textur. Du willst «das ganze Zentrum» — nimm L/XL; du willst «meinen Hof» — S/M reicht.",
+            ],
+          },
+          {
+            h2: "Relief und Serien",
+            p: [
+              "Das Geländerelief (+≈1,5 €) gibt der Karte echte Höhenunterschiede — Pflicht für Kyiv, Lwiw oder die Karpaten, optional für flache Städte. Und wenn du ein großes Gebiet ohne Detailverlust abdecken willst — bestelle eine Serie aus mehreren Kacheln, die sich zu einem Panel verbinden.",
+            ],
+          },
+        ],
+        ctaLabel: "Bereich und Größe wählen",
+        ctaHref: "/create",
+      },
+      pl: {
+        title: "S, M, L czy XL: jak wybrać rozmiar mapy miasta 3D",
+        description:
+          "Porównanie rozmiarów mapy 3D: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Jaki rozmiar do jakiego obszaru, półki i budżetu.",
+        h1: "Jak wybrać rozmiar mapy 3D: uczciwe porównanie",
+        intro:
+          "Rozmiar to główna decyzja przy zamawianiu mapy: określa i cenę, i to, jak szczegółowo będzie czytelna dzielnica. Krótko: M (8 cm) jest najbardziej uniwersalny; poniżej niuanse, które warto znać przed zamówieniem.",
+        sections: [
+          {
+            h2: "Cztery rozmiary na przykładach",
+            p: [
+              "S (5,5 cm, ≈6 €) — kompaktowa pamiątka: dobra dla gęstego centrum z wyrazistymi kwartałami, stoi na biurku. Małe uliczki przy S już się zlewają, więc wybierz niewielki obszar 300–500 m.",
+              "M (8 cm, ≈8 €) — złoty środek: obszar 400–800 m czyta się w całości, model jest widoczny na półce, ale nie zajmuje pół pokoju. Najczęstszy wybór na prezent.",
+              "L (11 cm, ≈11 €) i XL (15 cm, ≈13 €) — elementy wnętrza: widać podwórka i pojedyncze budynki, można wziąć szerszy obszar do 1–1,5 km. XL szczególnie zyskuje z rzeźbą terenu — różnice wysokości na dużej powierzchni wyglądają dramatycznie.",
+            ],
+          },
+          {
+            h2: "Zasada obszaru: mniejszy znaczy bardziej szczegółowy",
+            p: [
+              "Rozmiar fizyczny dzieli się przez wielkość obszaru: im większy kawałek miasta, tym mniejszy każdy budynek. Obszar 500 m na modelu 8 cm pokazuje każdy dom; obszar 2 km na tym samym modelu zamienia kwartały w teksturę. Chcesz «całe centrum» — bierz L/XL; chcesz «swoje podwórko» — wystarczy S/M.",
+            ],
+          },
+          {
+            h2: "Rzeźba terenu i serie",
+            p: [
+              "Rzeźba terenu (+≈1,5 €) dodaje mapie prawdziwe różnice wysokości — obowiązkowa dla Kijowa, Lwowa czy Karpat, opcjonalna dla płaskich miast. A jeśli chcesz objąć duży teren bez utraty detali — zamów serię kilku kafelków łączących się w jeden panel.",
+            ],
+          },
+        ],
+        ctaLabel: "Wybierz obszar i rozmiar",
+        ctaHref: "/create",
+      },
+      fr: {
+        title: "S, M, L ou XL : comment choisir la taille de votre carte de ville 3D",
+        description:
+          "Comparatif des tailles de carte 3D : S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Quelle taille pour quelle zone, quelle étagère et quel budget.",
+        h1: "Comment choisir la taille d'une carte 3D : un comparatif honnête",
+        intro:
+          "La taille est la décision principale : elle fixe le prix et le niveau de détail qui survit. Version courte : M (8 cm) est la plus universelle ; ci-dessous les nuances à connaître avant de commander.",
+        sections: [
+          {
+            h2: "Quatre tailles en exemples",
+            p: [
+              "S (5,5 cm, ≈6 €) — un souvenir compact : parfait pour un centre dense aux îlots marqués, tient sur un bureau. Les petites ruelles fusionnent déjà en S : choisissez une petite zone de 300–500 m.",
+              "M (8 cm, ≈8 €) — le juste milieu : une zone de 400–800 m se lit entièrement, le modèle se remarque sur une étagère sans envahir la pièce. Le choix le plus fréquent pour un cadeau.",
+              "L (11 cm, ≈11 €) et XL (15 cm, ≈13 €) — des pièces d'intérieur : on voit les cours et les bâtiments individuels, et on peut prendre une zone plus large jusqu'à 1–1,5 km. XL brille surtout avec le relief — les dénivelés sur une grande surface sont spectaculaires.",
+            ],
+          },
+          {
+            h2: "La règle de la zone : plus petit = plus détaillé",
+            p: [
+              "La taille physique se divise par la zone capturée : plus le morceau de ville est grand, plus chaque bâtiment rétrécit. Une zone de 500 m sur un modèle de 8 cm montre chaque maison ; une zone de 2 km sur le même modèle transforme les îlots en texture. Vous voulez «tout le centre» — prenez L/XL ; vous voulez «ma cour» — S/M suffit.",
+            ],
+          },
+          {
+            h2: "Relief et séries",
+            p: [
+              "Le relief du terrain (+≈1,5 €) donne à la carte de vrais dénivelés — indispensable pour Kyiv, Lviv ou les Carpates, facultatif pour les villes plates. Et pour couvrir un grand territoire sans perdre le détail — commandez une série de tuiles qui s'assemblent en un panneau.",
+            ],
+          },
+        ],
+        ctaLabel: "Choisir une zone et une taille",
+        ctaHref: "/create",
+      },
+      es: {
+        title: "S, M, L o XL: cómo elegir el tamaño de tu mapa de ciudad 3D",
+        description:
+          "Comparativa de tamaños del mapa 3D: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Qué tamaño para qué zona, estantería y presupuesto.",
+        h1: "Cómo elegir el tamaño de un mapa 3D: una comparativa honesta",
+        intro:
+          "El tamaño es la decisión principal al pedir un mapa: determina el precio y cuánto detalle del barrio sobrevive. Versión corta: M (8 cm) es el más universal; abajo, los matices que conviene saber antes de pedir.",
+        sections: [
+          {
+            h2: "Cuatro tamaños con ejemplos",
+            p: [
+              "S (5,5 cm, ≈6 €) — un recuerdo compacto: va bien para un centro denso con manzanas marcadas, cabe en el escritorio. Las callejuelas pequeñas ya se funden en S, así que elige una zona pequeña de 300–500 m.",
+              "M (8 cm, ≈8 €) — el punto justo: una zona de 400–800 m se lee entera, el modelo se nota en la estantería sin ocupar media habitación. La elección más común para regalo.",
+              "L (11 cm, ≈11 €) y XL (15 cm, ≈13 €) — piezas de interior: se ven patios y edificios individuales, y puedes tomar una zona más amplia de hasta 1–1,5 km. XL luce especialmente con relieve — los desniveles en gran superficie resultan espectaculares.",
+            ],
+          },
+          {
+            h2: "La regla de la zona: más pequeña, más detalle",
+            p: [
+              "El tamaño físico se divide entre la zona capturada: cuanto mayor el trozo de ciudad, más pequeño cada edificio. Una zona de 500 m en un modelo de 8 cm muestra cada casa; una de 2 km en el mismo modelo convierte las manzanas en textura. ¿Quieres «todo el centro»? — L/XL; ¿quieres «mi patio»? — basta S/M.",
+            ],
+          },
+          {
+            h2: "Relieve y series",
+            p: [
+              "El relieve del terreno (+≈1,5 €) da al mapa desniveles reales — imprescindible para Kyiv, Leópolis o los Cárpatos, opcional para ciudades llanas. Y si quieres abarcar un territorio grande sin perder detalle — pide una serie de azulejos que se unen en un solo panel.",
+            ],
+          },
+        ],
+        ctaLabel: "Elegir zona y tamaño",
+        ctaHref: "/create",
+      },
     },
   },
   {
@@ -1393,6 +1521,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           },
         ],
         ctaLabel: "Create a map with relief",
+        ctaHref: "/create",
+      },
+      de: {
+        title: "Geländerelief auf der 3D-Karte: wann es sich lohnt und wann nicht",
+        description:
+          "Die Option «Geländerelief» (+≈1,5 €) gibt der Karte echte Höhenunterschiede. Für welche Städte Relief Pflicht ist, wo es überflüssig ist und wie es gedruckt wird.",
+        h1: "Geländerelief auf der 3D-Karte: an oder aus",
+        intro:
+          "Relief fügt der Karte die dritte Dimension der Landschaft hinzu: Hügel, Hänge und Täler werden aus echten Satelliten-Höhendaten gedruckt. Für manche Städte ist es der beste Teil des Modells, für andere schlicht unsichtbar. Klären wir, wann es sich lohnt.",
+        sections: [
+          {
+            h2: "Städte, in denen Relief Pflicht ist",
+            p: [
+              "Kyiv: der Unterschied zwischen Dnipro-Niveau und Oberstadt beträgt rund hundert Meter — mit Relief sieht man die Hänge und versteht, warum die Abstiege Abstiege sind. Lwiw mit seinen Hügeln, Kamjanez-Podilskyj mit der Schlucht, die ganzen Karpaten — hier macht das Relief den halben Eindruck.",
+              "Ein Sonderfall sind Berge ohne Stadt: Almen, Kämme, der Ort einer Wanderung. Dafür gibt es den topografischen Anhänger-Modus, in dem das Relief selbst die Geschichte ist.",
+            ],
+          },
+          {
+            h2: "Städte, wo man sparen kann",
+            p: [
+              "Steppen- und Küstenebenen — Cherson, Mykolajiw, der größte Teil von Odessa — variieren um wenige Meter: auf einem 8-cm-Modell sind das Bruchteile eines Millimeters, die hinter den Gebäuden verschwinden. Hier ist es ehrlicher, das Relief auszulassen und die Differenz in eine größere Größe zu stecken.",
+            ],
+          },
+          {
+            h2: "Wie das Relief gedruckt wird",
+            p: [
+              "Die Höhen stammen aus globalen Satellitendaten, werden entrauscht und so skaliert, dass die Unterschiede lesbar bleiben, ohne die Gebäude zu «ertränken». Straßen und Flüsse legen sich sauber über die Hänge — der Fluss fließt im Tal statt in der Luft zu hängen.",
+            ],
+          },
+        ],
+        ctaLabel: "Karte mit Relief erstellen",
+        ctaHref: "/create",
+      },
+      pl: {
+        title: "Rzeźba terenu na mapie 3D: kiedy jest potrzebna, a kiedy nie",
+        description:
+          "Opcja «rzeźba terenu» (+≈1,5 €) dodaje mapie prawdziwe różnice wysokości. Dla których miast rzeźba jest obowiązkowa, gdzie zbędna i jak się drukuje.",
+        h1: "Rzeźba terenu na mapie 3D: włączać czy nie",
+        intro:
+          "Rzeźba dodaje mapie trzeci wymiar krajobrazu: wzgórza, zbocza i doliny drukują się z prawdziwych satelitarnych danych wysokości. Dla jednych miast to najlepsza część modelu, dla innych po prostu niewidoczna. Rozłóżmy na czynniki, kiedy warto.",
+        sections: [
+          {
+            h2: "Miasta, gdzie rzeźba jest obowiązkowa",
+            p: [
+              "Kijów: różnica między poziomem Dniepru a Górnym Miastem to około stu metrów; z rzeźbą widać zbocza i to, dlaczego zejścia są zejściami. Lwów ze swoimi wzgórzami, Kamieniec Podolski z kanionem, całe Karpaty — tu rzeźba robi połowę wrażenia.",
+              "Osobny przypadek to góry bez miasta: połoniny, grzbiety, miejsce wędrówki. Dla nich jest tryb topograficzny breloka, gdzie sama rzeźba jest tematem.",
+            ],
+          },
+          {
+            h2: "Miasta, gdzie można zaoszczędzić",
+            p: [
+              "Stepowe i nadmorskie równiny — Chersoń, Mikołajów, większość Odessy — mają różnice rzędu kilku metrów: na modelu 8 cm to ułamki milimetra, które giną za budynkami. Tu uczciwiej zostawić rzeźbę wyłączoną i wydać różnicę na większy rozmiar.",
+            ],
+          },
+          {
+            h2: "Jak drukuje się rzeźba",
+            p: [
+              "Wysokości pochodzą z globalnych danych satelitarnych, są odszumiane i skalowane tak, by różnice były czytelne, a budynki nie «tonęły». Drogi i rzeki układają się starannie na zboczach — rzeka płynie doliną, a nie wisi w powietrzu.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz mapę z rzeźbą terenu",
+        ctaHref: "/create",
+      },
+      fr: {
+        title: "Relief du terrain sur une carte 3D : quand il faut, quand il ne sert à rien",
+        description:
+          "L'option «relief du terrain» (+≈1,5 €) ajoute de vrais dénivelés à la carte. Pour quelles villes le relief est indispensable, où il est inutile, et comment il s'imprime.",
+        h1: "Relief du terrain sur une carte 3D : activer ou non",
+        intro:
+          "Le relief ajoute la troisième dimension du paysage : collines, pentes et vallées s'impriment à partir de vraies données satellites d'altitude. Pour certaines villes c'est la meilleure partie du modèle ; pour d'autres, c'est tout simplement invisible. Voyons quand ça vaut le coup.",
+        sections: [
+          {
+            h2: "Les villes où le relief est indispensable",
+            p: [
+              "Kyiv : la différence entre le niveau du Dnipro et la ville haute atteint une centaine de mètres ; avec le relief on voit les coteaux et on comprend pourquoi les descentes sont des descentes. Lviv et ses collines, Kamianets-Podilskyi et son canyon, toutes les Carpates — là, le relief fait la moitié de l'effet.",
+              "Cas à part : la montagne sans ville — alpages, crêtes, le lieu d'une randonnée. Pour cela il y a le mode topographique du porte-clés, où le relief lui-même est le sujet.",
+            ],
+          },
+          {
+            h2: "Les villes où l'on peut économiser",
+            p: [
+              "Les plaines steppiques et littorales — Kherson, Mykolaïv, la majeure partie d'Odessa — varient de quelques mètres : sur un modèle de 8 cm, ce sont des fractions de millimètre qui se perdent derrière les bâtiments. Là, il est plus honnête de laisser le relief désactivé et de mettre la différence dans une taille supérieure.",
+            ],
+          },
+          {
+            h2: "Comment le relief s'imprime",
+            p: [
+              "Les altitudes proviennent de données satellites globales, sont débruitées et mises à l'échelle pour que les dénivelés restent lisibles sans «noyer» les bâtiments. Routes et rivières se drapent proprement sur les pentes — la rivière coule dans la vallée au lieu de flotter en l'air.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer une carte avec relief",
+        ctaHref: "/create",
+      },
+      es: {
+        title: "Relieve del terreno en un mapa 3D: cuándo hace falta y cuándo no",
+        description:
+          "La opción «relieve del terreno» (+≈1,5 €) añade desniveles reales al mapa. Para qué ciudades el relieve es imprescindible, dónde sobra y cómo se imprime.",
+        h1: "Relieve del terreno en un mapa 3D: activar o no",
+        intro:
+          "El relieve añade al mapa la tercera dimensión del paisaje: colinas, laderas y valles se imprimen a partir de datos satelitales de elevación reales. Para unas ciudades es la mejor parte del modelo; para otras, simplemente invisible. Veamos cuándo merece la pena.",
+        sections: [
+          {
+            h2: "Ciudades donde el relieve es imprescindible",
+            p: [
+              "Kyiv: el desnivel entre el nivel del Dnipró y la ciudad alta ronda los cien metros; con relieve se ven las laderas y se entiende por qué las cuestas son cuestas. Leópolis con sus colinas, Kamianets-Podilskyi con su cañón, todos los Cárpatos — aquí el relieve hace la mitad de la impresión.",
+              "Caso aparte: montaña sin ciudad — praderas de altura, crestas, el lugar de una excursión. Para eso está el modo topográfico del llavero, donde el propio relieve es el tema.",
+            ],
+          },
+          {
+            h2: "Ciudades donde se puede ahorrar",
+            p: [
+              "Las llanuras esteparias y costeras — Jersón, Mykolaiv, la mayor parte de Odesa — varían unos pocos metros: en un modelo de 8 cm son fracciones de milímetro que se pierden tras los edificios. Aquí es más honesto dejar el relieve apagado y gastar la diferencia en un tamaño mayor.",
+            ],
+          },
+          {
+            h2: "Cómo se imprime el relieve",
+            p: [
+              "Las alturas provienen de datos satelitales globales, se les quita el ruido y se escalan para que los desniveles sean legibles sin «ahogar» los edificios. Carreteras y ríos se posan con precisión sobre las laderas — el río corre por el valle en lugar de flotar en el aire.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear un mapa con relieve",
         ctaHref: "/create",
       },
     },
