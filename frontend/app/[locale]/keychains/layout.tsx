@@ -33,7 +33,7 @@ export default async function KeychainsLayout({
         "@type": "Product",
         name: tm("offerKeychain"),
         description: t("description"),
-        image: `${BASE}/showcase/keychain-5.webp`,
+        image: `${BASE}/real/key-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-KEYCHAIN",
         offers: {

@@ -64,7 +64,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Створити мапу Карпат у конструкторі",
     ctaKeychain: "Топо-брелок з вершиною",
-    photosAlt: "Фото реальної 3D-друкованої рельєфної мапи гір",
+    photosAlt: "Фото реального 3D-друкованого виробу Monadruk — якість друку вулиць і деталей",
   },
   en: {
     title: "3D relief map of the Carpathians — buy a topographic model",
@@ -105,7 +105,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Create a Carpathians map in the builder",
     ctaKeychain: "Topo keychain with a summit",
-    photosAlt: "Photo of a real 3D-printed relief mountain map",
+    photosAlt: "Photo of a real Monadruk 3D print — street and detail print quality",
   },
   de: {
     title: "3D-Reliefkarte der Karpaten — topografisches Modell kaufen",
@@ -146,7 +146,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Karpaten-Karte im Konfigurator erstellen",
     ctaKeychain: "Topo-Anhänger mit Gipfel",
-    photosAlt: "Foto einer echten 3D-gedruckten Relief-Bergkarte",
+    photosAlt: "Foto eines echten Monadruk-3D-Drucks — Druckqualität von Straßen und Details",
   },
   pl: {
     title: "Mapa 3D Karpat z rzeźbą terenu — model topograficzny",
@@ -187,7 +187,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Stwórz mapę Karpat w kreatorze",
     ctaKeychain: "Brelok topo ze szczytem",
-    photosAlt: "Zdjęcie prawdziwej drukowanej mapy gór z rzeźbą terenu",
+    photosAlt: "Zdjęcie prawdziwego wydruku 3D Monadruk — jakość druku ulic i detali",
   },
   fr: {
     title: "Carte 3D en relief des Carpates — modèle topographique",
@@ -228,7 +228,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Créer une carte des Carpates",
     ctaKeychain: "Porte-clés topo avec un sommet",
-    photosAlt: "Photo d'une vraie carte de montagne en relief imprimée en 3D",
+    photosAlt: "Photo d'une vraie impression 3D Monadruk — qualité d'impression des rues et détails",
   },
   es: {
     title: "Mapa 3D en relieve de los Cárpatos — modelo topográfico",
@@ -269,7 +269,7 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     ],
     cta: "Crear un mapa de los Cárpatos",
     ctaKeychain: "Llavero topo con una cumbre",
-    photosAlt: "Foto de un mapa de montaña en relieve impreso en 3D real",
+    photosAlt: "Foto de una impresión 3D real de Monadruk — calidad de impresión de calles y detalles",
   },
 };
 
@@ -311,7 +311,7 @@ export default async function KarpatyPage({ params }: { params: { locale: string
         "@type": "Product",
         name: c.h1,
         description: c.description,
-        image: [`${BASE}/showcase/real-4.webp`, `${BASE}/showcase/real-8.webp`],
+        image: [`${BASE}/real/map-1.webp`, `${BASE}/real/map-3.webp`],
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-RELIEF-KARPATY",
         offers: {
@@ -358,11 +358,11 @@ export default async function KarpatyPage({ params }: { params: { locale: string
       </section>
 
       <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {["real-4", "real-8", "real-3", "real-9"].map((img) => (
+        {["map-1", "map-3", "map-2", "map-4"].map((img) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={img}
-            src={`/showcase/${img}.webp`}
+            src={`/real/${img}.webp`}
             alt={c.photosAlt}
             loading="lazy"
             className="aspect-square w-full rounded-[14px] border border-line-soft object-cover"

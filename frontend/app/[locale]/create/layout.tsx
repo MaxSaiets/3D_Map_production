@@ -33,7 +33,7 @@ export default async function CreateLayout({
         "@type": "Product",
         name: tm("offerMap"),
         description: t("description"),
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-MAP",
         offers: {

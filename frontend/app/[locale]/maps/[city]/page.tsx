@@ -87,7 +87,7 @@ export default async function CityPage({
         "@type": "Product",
         name: t("title", { city: name }),
         description: t("description", { city: name }),
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-MAP-${city.slug}`,
         offers: {

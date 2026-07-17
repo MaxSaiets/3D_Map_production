@@ -501,15 +501,17 @@ function Craft() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {/* eslint-disable @next/next/no-img-element */}
+          {/* Реальні фото друків (не рендери) — «справжній бізнес»-сигнал + чесна
+              картинка того, що приїде клієнту. Джерело: public/real/. */}
           <div className="aspect-[1/1.7] overflow-hidden rounded-[18px] border border-line-soft">
-            <img src="/showcase/keychain-1.webp" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
+            <img src="/real/heart-1.webp" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col gap-4">
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/map-2.webp" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
+              <img src="/real/map-1.webp" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
             </div>
             <div className="aspect-[1.4/1] overflow-hidden rounded-[18px] border border-line-soft">
-              <img src="/showcase/keychain-5.webp" alt={tAlt("keychainMap")} loading="lazy" className="h-full w-full object-cover" />
+              <img src="/real/panno-1.webp" alt={tAlt("district")} loading="lazy" className="h-full w-full object-cover" />
             </div>
           </div>
           {/* eslint-enable @next/next/no-img-element */}
@@ -590,7 +592,7 @@ function FinalCTA() {
         </div>
         <div className="aspect-square overflow-hidden rounded-[24px] border border-[rgba(244,239,228,0.15)] bg-[rgba(244,239,228,0.06)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/showcase/map-1.webp" alt={tAlt("cityMap")} loading="lazy" className="h-full w-full object-cover" />
+          <img src="/real/map-2.webp" alt={tAlt("cityMap")} loading="lazy" className="h-full w-full object-cover" />
         </div>
       </div>
     </section>

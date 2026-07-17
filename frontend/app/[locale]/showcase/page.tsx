@@ -35,7 +35,11 @@ export default function ShowcasePage() {
 
   type Item = { src: string; kind: "key" | "map"; n: number };
   // n → унікальний alt на кожне фото (SEO: 19 зображень мали 2 дубль-alt).
+  // Реальні фото друків ідуть ПЕРШИМИ (це те, що клієнт справді отримає),
+  // рендери конструктора — далі. Джерело: public/real/ (відібрані з фотосесії).
   const ITEMS: Item[] = [
+    ...["key-1", "key-2", "key-3", "key-4", "heart-1", "heart-2"].map((f, i) => ({ src: `/real/${f}.webp`, kind: "key" as const, n: 100 + i })),
+    ...["map-1", "map-2", "map-3", "map-4", "panno-1", "panno-2", "panno-3", "panno-4"].map((f, i) => ({ src: `/real/${f}.webp`, kind: "map" as const, n: 100 + i })),
     ...Array.from({ length: 8 }, (_, i) => ({ src: `/showcase/keychain-${i + 1}.webp`, kind: "key" as const, n: i + 1 })),
     ...Array.from({ length: 11 }, (_, i) => ({ src: `/showcase/map-${i + 1}.webp`, kind: "map" as const, n: i + 1 })),
   ];

@@ -111,7 +111,7 @@ export default async function GiftSlugPage({
         "@type": "Product",
         name: c.h1,
         description: c.description,
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/heart-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-GIFT-${params.slug}`,
         offers: {

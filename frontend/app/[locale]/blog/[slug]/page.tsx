@@ -75,7 +75,7 @@ export default async function BlogArticlePage({
         author: { "@type": "Organization", name: "Monadruk", url: BASE },
         publisher: { "@id": `${BASE}/#org` },
         mainEntityOfPage: localeUrl(locale, path),
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/map-1.webp`,
       },
       {
         "@type": "BreadcrumbList",

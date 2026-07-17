@@ -83,7 +83,7 @@ export default async function BrelokCityPage({
         "@type": "Product",
         name: c.h1,
         description: c.description,
-        image: `${BASE}/showcase/keychain-5.webp`,
+        image: `${BASE}/real/key-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-KEYCHAIN-${city.slug}`,
         offers: {

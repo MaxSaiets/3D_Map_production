@@ -293,7 +293,7 @@ export default async function PannoPage({ params }: { params: { locale: string }
         "@type": "Product",
         name: c.h1,
         description: c.description,
-        image: [`${BASE}/showcase/real-2.webp`, `${BASE}/showcase/real-6.webp`],
+        image: [`${BASE}/real/panno-1.webp`, `${BASE}/real/panno-2.webp`, `${BASE}/real/panno-3.webp`],
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: "MND-PANNO",
         offers: {
@@ -341,11 +341,11 @@ export default async function PannoPage({ params }: { params: { locale: string }
 
       {/* Живі фото реальних друків — E-E-A-T «справжній бізнес», не рендери */}
       <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {["real-2", "real-6", "real-7", "real-10"].map((img) => (
+        {["panno-1", "panno-2", "panno-3", "panno-4"].map((img) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={img}
-            src={`/showcase/${img}.webp`}
+            src={`/real/${img}.webp`}
             alt={c.photosAlt}
             loading="lazy"
             className="aspect-square w-full rounded-[14px] border border-line-soft object-cover"

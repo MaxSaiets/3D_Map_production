@@ -34,7 +34,7 @@ export default async function WorldsLayout({
         applicationCategory: "DesignApplication",
         operatingSystem: "Web",
         url: localeUrl(locale, "/worlds"),
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/map-1.webp`,
         offers: { "@type": "Offer", price: "0", priceCurrency: "UAH" },
       },
       {

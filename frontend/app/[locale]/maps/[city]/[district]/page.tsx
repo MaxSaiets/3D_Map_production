@@ -92,7 +92,7 @@ export default async function DistrictPage({
         "@type": "Product",
         name: c.h1,
         description: c.description,
-        image: `${BASE}/showcase/map-1.webp`,
+        image: `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-DISTRICT-${district.templateId}`,
         offers: {
