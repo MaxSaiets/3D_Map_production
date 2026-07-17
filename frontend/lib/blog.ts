@@ -1389,6 +1389,134 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaLabel: "Order an Eco PLA piece",
         ctaHref: "/create",
       },
+      de: {
+        title: "Eco PLA: was das für ein Kunststoff ist und warum wir damit Karten drucken",
+        description:
+          "PLA ist ein Biokunststoff aus Maisstärke: sicher, geruchlos, hält 0,4-mm-Details. Warum wir 3D-Karten aus Eco PLA drucken und wie er sich zu Hause verhält.",
+        h1: "Eco PLA: das Material, aus dem deine Karte gedruckt ist",
+        intro:
+          "Alle unsere Stücke — Karten, Anhänger, Magnete — werden aus PLA (Polylactid) gedruckt: einem Biokunststoff, der aus pflanzlichen Rohstoffen wie Maisstärke hergestellt wird. Es ist das beliebteste Material im hochwertigen Desktop-3D-Druck, und darum haben wir es gewählt.",
+        sections: [
+          {
+            h2: "Sicher und angenehm",
+            p: [
+              "PLA ist geruchlos, gibt bei Raumtemperatur nichts Schädliches ab und ist sicher für Haushalte mit Kindern und Tieren. Es fühlt sich glatt und warm an, «nicht billig»: die Schichtlinien geben eine charakteristische, angenehme Textur.",
+              "Anders als viele erdölbasierte Kunststoffe ist PLA unter industriellen Kompostierbedingungen biologisch abbaubar. Ökologisch ist es einer der sanftesten Kunststoffe überhaupt.",
+            ],
+          },
+          {
+            h2: "Präzision, die die Straßen hält",
+            p: [
+              "Eine Stadtkarte verlangt feine Details: die Linie einer Gasse ist eine Kunststoffbahn unter einem Millimeter Breite. PLA hat minimalen Schwund beim Abkühlen, deshalb «verläuft» die Geometrie nicht: Straßen bleiben gerade, Gebäudewände senkrecht, und die Steckverbindungen von Serienpanels passen zueinander.",
+            ],
+          },
+          {
+            h2: "Wie es zu Hause lebt: was geht und was zu vermeiden ist",
+            p: [
+              "Auf dem Regal, an der Wand oder am Kühlschrank hält PLA jahrelang unverändert. Die einzige echte Grenze ist Wärme: ab +60 °C beginnt das Material weich zu werden — lass das Stück also im Sommer nicht auf dem Armaturenbrett liegen und stelle es nicht direkt neben Ofen oder Heizkörper.",
+              "Staub geht mit einem trockenen Pinsel oder einem feuchten Tuch ab. Ein Anhänger übersteht den täglichen Gebrauch am Schlüsselbund problemlos — Kratzer sind auf mattem Kunststoff kaum sichtbar.",
+            ],
+          },
+        ],
+        ctaLabel: "Ein Stück aus Eco PLA bestellen",
+        ctaHref: "/create",
+      },
+      pl: {
+        title: "Eco PLA: co to za plastik i dlaczego drukujemy nim mapy",
+        description:
+          "PLA to bioplastik ze skrobi kukurydzianej: bezpieczny, bezwonny, utrzymuje detal 0,4 mm. Dlaczego drukujemy mapy 3D właśnie z Eco PLA i jak zachowuje się w domu.",
+        h1: "Eco PLA: materiał, z którego wydrukowano Twoją mapę",
+        intro:
+          "Wszystkie nasze wyroby — mapy, breloki, magnesy — drukowane są z PLA (polilaktydu): bioplastiku wytwarzanego z surowców roślinnych, takich jak skrobia kukurydziana. To najpopularniejszy materiał w dobrym druku 3D, i oto dlaczego wybraliśmy właśnie jego.",
+        sections: [
+          {
+            h2: "Bezpieczny i przyjemny",
+            p: [
+              "PLA nie ma zapachu, nie wydziela szkodliwych substancji w temperaturze pokojowej i jest bezpieczny dla domu z dziećmi i zwierzętami. W dotyku jest gładki, ciepły, «nie tani»: prążki warstw dają charakterystyczną, przyjemną fakturę.",
+              "W odróżnieniu od wielu plastików ropopochodnych PLA jest biodegradowalny w warunkach kompostowania przemysłowego. Dla środowiska to jeden z najłagodniejszych plastików w ogóle.",
+            ],
+          },
+          {
+            h2: "Precyzja, która utrzymuje ulice",
+            p: [
+              "Mapa miasta wymaga drobnego detalu: linia uliczki to ścieżka plastiku o szerokości poniżej milimetra. PLA ma minimalny skurcz podczas stygnięcia, więc geometria nie «pływa»: ulice pozostają proste, ściany budynków pionowe, a zaczepy paneli seryjnych pasują do siebie.",
+            ],
+          },
+          {
+            h2: "Jak żyje w domu: co można, a czego unikać",
+            p: [
+              "Na półce, ścianie czy lodówce PLA żyje latami bez zmian. Jedyne prawdziwe ograniczenie to ciepło: powyżej +60 °C materiał zaczyna mięknąć, więc nie zostawiaj wyrobu latem na desce rozdzielczej auta i nie stawiaj tuż przy piekarniku czy kaloryferze.",
+              "Kurz usuwa się suchym pędzelkiem lub wilgotną ściereczką. Brelok spokojnie wytrzymuje codzienne noszenie z kluczami — zarysowania na matowym plastiku są prawie niewidoczne.",
+            ],
+          },
+        ],
+        ctaLabel: "Zamów wyrób z Eco PLA",
+        ctaHref: "/create",
+      },
+      fr: {
+        title: "Eco PLA : quel est ce plastique et pourquoi nous imprimons les cartes avec",
+        description:
+          "Le PLA est un bioplastique issu de l'amidon de maïs : sûr, sans odeur, tient le détail de 0,4 mm. Pourquoi nos cartes 3D sont imprimées en Eco PLA et comment il se comporte à la maison.",
+        h1: "Eco PLA : la matière dont votre carte est imprimée",
+        intro:
+          "Toutes nos pièces — cartes, porte-clés, magnets — sont imprimées en PLA (polylactide) : un bioplastique produit à partir de matières végétales comme l'amidon de maïs. C'est le matériau le plus répandu en impression 3D de qualité, et voici pourquoi nous l'avons choisi.",
+        sections: [
+          {
+            h2: "Sûr et agréable",
+            p: [
+              "Le PLA est sans odeur, n'émet rien de nocif à température ambiante et convient à un foyer avec enfants et animaux. Au toucher il est lisse, chaud, «pas cheap» : les stries de couches donnent une texture agréable caractéristique.",
+              "Contrairement à beaucoup de plastiques pétroliers, le PLA est biodégradable en compostage industriel. Pour l'environnement, c'est l'un des plastiques les plus doux qui soient.",
+            ],
+          },
+          {
+            h2: "Une précision qui tient les rues",
+            p: [
+              "Une carte de ville exige du détail fin : la ligne d'une ruelle est un cordon de plastique de moins d'un millimètre de large. Le PLA a un retrait minimal au refroidissement, donc la géométrie ne «flotte» pas : les rues restent droites, les murs verticaux, et les emboîtements des panneaux en série s'ajustent entre eux.",
+            ],
+          },
+          {
+            h2: "Sa vie à la maison : ce qui va et ce qu'il faut éviter",
+            p: [
+              "Sur une étagère, un mur ou un frigo, le PLA vit des années sans changer. La seule vraie limite est la chaleur : au-delà de +60 °C le matériau commence à ramollir — ne laissez donc pas la pièce sur le tableau de bord en été, ni collée à un four ou un radiateur.",
+              "La poussière s'enlève au pinceau sec ou avec un chiffon humide. Un porte-clés supporte sans souci l'usage quotidien avec les clés — les rayures sont à peine visibles sur du plastique mat.",
+            ],
+          },
+        ],
+        ctaLabel: "Commander une pièce en Eco PLA",
+        ctaHref: "/create",
+      },
+      es: {
+        title: "Eco PLA: qué plástico es y por qué imprimimos mapas con él",
+        description:
+          "El PLA es un bioplástico de almidón de maíz: seguro, sin olor, aguanta detalles de 0,4 mm. Por qué imprimimos los mapas 3D en Eco PLA y cómo se comporta en casa.",
+        h1: "Eco PLA: el material con el que está impreso tu mapa",
+        intro:
+          "Todas nuestras piezas — mapas, llaveros, imanes — se imprimen en PLA (poliláctido): un bioplástico producido a partir de materias vegetales como el almidón de maíz. Es el material más popular en la impresión 3D de calidad, y por eso lo elegimos.",
+        sections: [
+          {
+            h2: "Seguro y agradable",
+            p: [
+              "El PLA no tiene olor, no emite sustancias nocivas a temperatura ambiente y es seguro para una casa con niños y mascotas. Al tacto es suave y cálido, «no barato»: las franjas de las capas dan una textura agradable característica.",
+              "A diferencia de muchos plásticos derivados del petróleo, el PLA es biodegradable en compostaje industrial. Para el medio ambiente es uno de los plásticos más benignos que existen.",
+            ],
+          },
+          {
+            h2: "Precisión que sostiene las calles",
+            p: [
+              "Un mapa de ciudad exige detalle fino: la línea de una callejuela es un cordón de plástico de menos de un milímetro de ancho. El PLA tiene una contracción mínima al enfriarse, así que la geometría no «se mueve»: las calles quedan rectas, las paredes verticales y las uniones de los paneles en serie encajan entre sí.",
+            ],
+          },
+          {
+            h2: "Su vida en casa: qué se puede y qué evitar",
+            p: [
+              "En una estantería, pared o nevera el PLA vive años sin cambios. El único límite real es el calor: por encima de +60 °C el material empieza a ablandarse, así que no dejes la pieza en el salpicadero del coche en verano ni pegada al horno o al radiador.",
+              "El polvo se quita con un pincel seco o un paño húmedo. Un llavero aguanta sin problema el uso diario con las llaves — los arañazos apenas se ven en el plástico mate.",
+            ],
+          },
+        ],
+        ctaLabel: "Pedir una pieza en Eco PLA",
+        ctaHref: "/create",
+      },
     },
   },
   {
@@ -1845,6 +1973,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           },
         ],
         ctaLabel: "Create your map",
+        ctaHref: "/create",
+      },
+      de: {
+        title: "Pflege eines 3D-gedruckten Stücks: 5 einfache Regeln",
+        description:
+          "Pflege für eine PLA-3D-Karte, einen Anhänger oder Magneten: wie man Staub entfernt, was zu vermeiden ist (Hitze, Lösungsmittel) und wie es jahrelang wie neu bleibt.",
+        h1: "Pflege eines 3D-gedruckten Stücks",
+        intro:
+          "Eine 3D-gedruckte Karte braucht keine besondere Pflege — PLA ist stabil und lebt jahrelang im Regal. Ein paar einfache Regeln halten sie wie neu, und ein einziges echtes Tabu bewahrt dich vor einem ruinierten Modell.",
+        sections: [
+          {
+            h2: "Das eine Tabu: Hitze",
+            p: [
+              "PLA erweicht ab ~60 °C — leicht erreicht an zwei Orten: dem Armaturenbrett im Sommer und direkt neben Ofen oder Heizkörper. Ein hitzeverformtes Modell lässt sich nicht wiederherstellen. Eine gewöhnliche sonnige Fensterbank ist sicher; direkte Sonne bei Raumtemperatur lässt kräftige Farben über Jahre nur leicht ausbleichen.",
+            ],
+          },
+          {
+            h2: "Reinigung: trocken oder leicht feucht",
+            p: [
+              "Staub geht am besten mit einem weichen trockenen Pinsel ab, der zwischen die Gebäude reicht. Zweimal im Jahr mit einem feuchten Tuch abwischen; vermeide nur Lösungsmittel, Aceton und alkoholhaltige Reiniger — sie greifen die Kunststoffoberfläche an.",
+              "Einen Anhänger kann man einfach mit warmem (nicht heißem) Seifenwasser waschen.",
+            ],
+          },
+          {
+            h2: "Kleine Reparaturen",
+            p: [
+              "Bricht bei einem Sturz ein winziges Element ab, klebt gewöhnlicher Cyanacrylat-Sekundenkleber es perfekt: ein Tropfen, 30 Sekunden andrücken, die Naht ist unsichtbar. Für ein Wandpanel nimm Bilder-Klebeband oder flache Haken — Bohren ist nicht nötig.",
+            ],
+          },
+        ],
+        ctaLabel: "Deine Karte erstellen",
+        ctaHref: "/create",
+      },
+      pl: {
+        title: "Jak dbać o wyrób z druku 3D: 5 prostych zasad",
+        description:
+          "Pielęgnacja mapy 3D, breloka lub magnesu z PLA: jak usuwać kurz, czego unikać (ciepło, rozpuszczalniki), jak zachować wygląd jak nowy przez lata.",
+        h1: "Jak dbać o wyrób z druku 3D",
+        intro:
+          "Wydrukowana mapa 3D nie wymaga specjalnej pielęgnacji — PLA jest stabilny i żyje na półce latami. Kilka prostych zasad utrzyma ją jak nową, a jedno jedyne prawdziwe tabu uchroni przed zniszczonym modelem.",
+        sections: [
+          {
+            h2: "Jedyne tabu: ciepło",
+            p: [
+              "PLA mięknie od ~60 °C — łatwo o to w dwóch miejscach: na desce rozdzielczej auta latem i tuż przy piekarniku czy kaloryferze. Odkształconego przez ciepło modelu nie da się przywrócić. Zwykły słoneczny parapet jest bezpieczny; bezpośrednie słońce w temperaturze pokojowej tylko lekko wypłukuje jaskrawe kolory przez lata.",
+            ],
+          },
+          {
+            h2: "Czyszczenie: na sucho lub ledwo wilgotno",
+            p: [
+              "Kurz najlepiej schodzi miękkim, suchym pędzelkiem, który sięga między budynki. Dwa razy w roku przetrzyj wilgotną ściereczką; unikaj tylko rozpuszczalników, acetonu i środków na alkoholu — trawią powierzchnię plastiku.",
+              "Brelok można po prostu umyć ciepłą (nie gorącą) wodą z mydłem.",
+            ],
+          },
+          {
+            h2: "Drobne naprawy",
+            p: [
+              "Jeśli po upadku odłamie się drobny element — świetnie skleja go zwykły cyjanoakrylowy super klej: kropla, docisnąć na 30 sekund, spoina niewidoczna. Do panelu na ścianie użyj taśmy do obrazów lub płaskich haczyków — wiercenie nie jest potrzebne.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz swoją mapę",
+        ctaHref: "/create",
+      },
+      fr: {
+        title: "Entretenir une pièce imprimée en 3D : 5 règles simples",
+        description:
+          "Entretien d'une carte 3D, d'un porte-clés ou d'un magnet en PLA : comment dépoussiérer, quoi éviter (chaleur, solvants), comment garder l'aspect neuf pendant des années.",
+        h1: "Entretenir une pièce imprimée en 3D",
+        intro:
+          "Une carte imprimée en 3D ne demande aucun entretien particulier — le PLA est stable et vit des années sur une étagère. Quelques règles simples la gardent comme neuve, et un seul vrai tabou vous évite un modèle fichu.",
+        sections: [
+          {
+            h2: "Le seul tabou : la chaleur",
+            p: [
+              "Le PLA ramollit dès ~60 °C — facilement atteint à deux endroits : le tableau de bord en été et le voisinage immédiat d'un four ou d'un radiateur. Un modèle déformé par la chaleur ne se répare pas. Un rebord de fenêtre ensoleillé ordinaire est sans danger ; le soleil direct à température ambiante ne fait que légèrement pâlir les couleurs vives au fil des ans.",
+            ],
+          },
+          {
+            h2: "Nettoyage : à sec ou à peine humide",
+            p: [
+              "La poussière part le mieux avec un pinceau doux et sec qui passe entre les bâtiments. Deux fois par an, essuyez avec un chiffon humide ; évitez seulement les solvants, l'acétone et les nettoyants alcoolisés — ils attaquent la surface du plastique.",
+              "Un porte-clés peut simplement se laver à l'eau tiède (pas chaude) savonneuse.",
+            ],
+          },
+          {
+            h2: "Petites réparations",
+            p: [
+              "Si un petit élément se casse lors d'une chute, une colle cyanoacrylate ordinaire le répare parfaitement : une goutte, presser 30 secondes, la jointure est invisible. Pour un panneau mural, utilisez de l'adhésif pour cadres ou des crochets plats — inutile de percer.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer votre carte",
+        ctaHref: "/create",
+      },
+      es: {
+        title: "Cómo cuidar una pieza impresa en 3D: 5 reglas sencillas",
+        description:
+          "Cuidado de un mapa 3D, llavero o imán de PLA: cómo quitar el polvo, qué evitar (calor, disolventes), cómo mantener el aspecto de nuevo durante años.",
+        h1: "Cómo cuidar una pieza impresa en 3D",
+        intro:
+          "Un mapa impreso en 3D no necesita cuidados especiales — el PLA es estable y vive años en una estantería. Unas pocas reglas sencillas lo mantienen como nuevo, y un único tabú real te salva de un modelo arruinado.",
+        sections: [
+          {
+            h2: "El único tabú: el calor",
+            p: [
+              "El PLA se ablanda a partir de ~60 °C — algo fácil en dos sitios: el salpicadero del coche en verano y justo al lado de un horno o radiador. Un modelo deformado por el calor no se puede restaurar. Un alféizar soleado normal es seguro; el sol directo a temperatura ambiente solo desvanece ligeramente los colores vivos con los años.",
+            ],
+          },
+          {
+            h2: "Limpieza: en seco o apenas húmedo",
+            p: [
+              "El polvo sale mejor con un pincel suave y seco que llegue entre los edificios. Dos veces al año pasa un paño húmedo; evita solo disolventes, acetona y limpiadores con alcohol — atacan la superficie del plástico.",
+              "Un llavero se puede lavar simplemente con agua tibia (no caliente) y jabón.",
+            ],
+          },
+          {
+            h2: "Reparaciones pequeñas",
+            p: [
+              "Si en una caída se desprende un elemento diminuto, un superpegamento de cianoacrilato corriente lo arregla perfectamente: una gota, presionar 30 segundos, la junta queda invisible. Para un panel de pared usa cinta de colgar cuadros o ganchos planos — no hace falta taladrar.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear tu mapa",
         ctaHref: "/create",
       },
     },
