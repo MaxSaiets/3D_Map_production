@@ -411,6 +411,134 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/podarunok",
         outro: "Not sure which area to pick? Message us — we'll help and build a preview.",
       },
+      de: {
+        title: "Was schenkt man jemandem, der alles hat: eine persönliche 3D-Karte",
+        description:
+          "Ein Geschenk, das niemand sonst hat: eine 3D-Karte eines Ortes mit Bedeutung — der Kindheitshof, der Ort des Kennenlernens, die erste gemeinsame Wohnung. Ab ≈6 €.",
+        h1: "Was schenkt man jemandem, der alles hat",
+        intro:
+          "Die schwierigsten Geschenke sind für Menschen, die «alles haben». Was wirkt, ist Bedeutung: eine persönliche 3D-Karte ist ein Stück Stadt, das mit ihrer Geschichte verbunden ist — der Hof der Kindheit, die Straße des ersten Dates, die Wohnung, in die sie gerade eingezogen sind.",
+        sections: [
+          {
+            h2: "Warum eine Karte als Geschenk wirkt",
+            p: [
+              "Sie ist ein Einzelstück — du wählst den genauen Bereich. Menschen erkennen ihr Viertel in einer Sekunde: «das ist ja unser Haus!» — und genau dieser Moment macht das Geschenk unvergesslich.",
+              "Sie passt zu fast jedem Anlass: Jahrestag (der Ort des Kennenlernens), Einzug (das neue Viertel), Geburtstag (die Heimatstadt eines Weggezogenen), Abschluss (das Uni-Viertel), eine scheidende Kollegin (das Büro-Viertel).",
+            ],
+          },
+          {
+            h2: "Formate für jedes Budget",
+            p: [
+              "Karten-Anhänger (ab ≈3 €) — eine kleine Aufmerksamkeit mit eigenem Text auf der Rückseite. Kühlschrankmagnet (≈4 €) — eine tägliche Erinnerung an einen Ort. 3D-Karte fürs Regal (≈6–13 € je nach Größe) — ein echtes Interieurstück, auf Wunsch mit Geländerelief.",
+            ],
+          },
+          {
+            h2: "In 5 Minuten bestellen",
+            p: [
+              "Wähle den Bereich im Konfigurator und eine Größe — das Modell wird automatisch erstellt. Wir drucken aus Eco PLA und versenden in die Ukraine und die EU; auch die Digitaldatei ist erhältlich. Fertigung 1–3 Werktage.",
+            ],
+          },
+        ],
+        ctaLabel: "Ein Karten-Geschenk auswählen",
+        ctaHref: "/podarunok",
+        outro: "Unsicher, welchen Bereich wählen? Schreib uns — wir helfen und bauen eine Vorschau.",
+      },
+      pl: {
+        title: "Co podarować komuś, kto ma wszystko: spersonalizowana mapa 3D",
+        description:
+          "Prezent, którego nie ma nikt inny: mapa 3D miejsca, które coś znaczy — rodzinne podwórko, miejsce poznania, pierwsze wspólne mieszkanie. Od ≈6 €.",
+        h1: "Co podarować komuś, kto ma wszystko",
+        intro:
+          "Najtrudniejsze prezenty są dla osób, które «mają wszystko». Działa znaczenie: spersonalizowana mapa 3D to kawałek miasta związany z ich historią — podwórko z dzieciństwa, ulica pierwszej randki, mieszkanie, do którego właśnie się wprowadzili.",
+        sections: [
+          {
+            h2: "Dlaczego mapa działa jako prezent",
+            p: [
+              "To egzemplarz jedyny w swoim rodzaju — wybierasz dokładny obszar. Ludzie rozpoznają swoją dzielnicę w sekundę: «to nasz dom!» — i właśnie ten moment czyni prezent niezapomnianym.",
+              "Pasuje niemal na każdą okazję: rocznica (miejsce poznania), parapetówka (nowa dzielnica), urodziny (rodzinne miasto osoby, która wyjechała), ukończenie studiów (dzielnica uczelni), odchodzący współpracownik (dzielnica biura).",
+            ],
+          },
+          {
+            h2: "Formaty na każdy budżet",
+            p: [
+              "Brelok-mapa (od ≈3 €) — drobny gest z własnym napisem z tyłu. Magnes na lodówkę (≈4 €) — codzienne przypomnienie o miejscu. Mapa 3D na półkę (≈6–13 € zależnie od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.",
+            ],
+          },
+          {
+            h2: "Zamów w 5 minut",
+            p: [
+              "Wybierz obszar w kreatorze i rozmiar — model powstaje automatycznie. Drukujemy z Eco PLA i wysyłamy na Ukrainę oraz do UE; dostępny jest też plik cyfrowy. Wykonanie 1–3 dni robocze.",
+            ],
+          },
+        ],
+        ctaLabel: "Wybierz prezent-mapę",
+        ctaHref: "/podarunok",
+        outro: "Nie wiesz, jaki obszar wybrać? Napisz do nas — pomożemy i przygotujemy podgląd.",
+      },
+      fr: {
+        title: "Que offrir à quelqu'un qui a tout : une carte 3D personnalisée",
+        description:
+          "Un cadeau que personne d'autre n'a : une carte 3D d'un lieu qui compte — la cour d'enfance, le lieu de la rencontre, le premier logement commun. Dès ≈6 €.",
+        h1: "Que offrir à quelqu'un qui a tout",
+        intro:
+          "Les cadeaux les plus difficiles sont pour ceux qui «ont tout». Ce qui marche, c'est le sens : une carte 3D personnalisée est un morceau de ville lié à leur histoire — la cour d'enfance, la rue d'un premier rendez-vous, le logement où ils viennent d'emménager.",
+        sections: [
+          {
+            h2: "Pourquoi une carte fonctionne en cadeau",
+            p: [
+              "C'est une pièce unique — vous choisissez la zone exacte. Les gens reconnaissent leur quartier en une seconde : «mais c'est notre maison !» — et c'est ce moment qui rend le cadeau mémorable.",
+              "Elle convient à presque toute occasion : anniversaire de rencontre, pendaison de crémaillère (le nouveau quartier), anniversaire (la ville natale d'un proche parti), remise de diplôme (le quartier du campus), un collègue qui part (le quartier du bureau).",
+            ],
+          },
+          {
+            h2: "Des formats pour tous les budgets",
+            p: [
+              "Porte-clés carte (dès ≈3 €) — une petite attention avec un texte au dos. Magnet de frigo (≈4 €) — un rappel quotidien d'un lieu. Carte 3D pour l'étagère (≈6–13 € selon la taille) — une vraie pièce d'intérieur, avec relief du terrain si vous voulez.",
+            ],
+          },
+          {
+            h2: "Commander en 5 minutes",
+            p: [
+              "Choisissez la zone dans le configurateur et une taille — le modèle est assemblé automatiquement. Nous imprimons en Eco PLA et livrons en Ukraine et dans l'UE ; le fichier numérique est aussi disponible. Fabrication 1–3 jours ouvrés.",
+            ],
+          },
+        ],
+        ctaLabel: "Choisir un cadeau-carte",
+        ctaHref: "/podarunok",
+        outro: "Vous hésitez sur la zone ? Écrivez-nous — on vous aide et on prépare un aperçu.",
+      },
+      es: {
+        title: "Qué regalar a quien lo tiene todo: un mapa 3D personalizado",
+        description:
+          "Un regalo que nadie más tiene: un mapa 3D de un lugar que significa algo — el patio de la infancia, el lugar donde os conocisteis, el primer hogar juntos. Desde ≈6 €.",
+        h1: "Qué regalar a quien lo tiene todo",
+        intro:
+          "Los regalos más difíciles son para quienes «lo tienen todo». Lo que funciona es el significado: un mapa 3D personalizado es un trozo de ciudad ligado a su historia — el patio de la infancia, la calle de una primera cita, la casa a la que acaban de mudarse.",
+        sections: [
+          {
+            h2: "Por qué un mapa funciona como regalo",
+            p: [
+              "Es una pieza única — tú eliges la zona exacta. La gente reconoce su barrio en un segundo: «¡esa es nuestra casa!» — y ese momento hace el regalo memorable.",
+              "Encaja en casi cualquier ocasión: aniversario (dónde os conocisteis), inauguración de casa (el nuevo barrio), cumpleaños (la ciudad natal de alguien que se mudó), graduación (el barrio del campus), un compañero que se va (el barrio de la oficina).",
+            ],
+          },
+          {
+            h2: "Formatos para cada presupuesto",
+            p: [
+              "Llavero-mapa (desde ≈3 €) — un pequeño detalle con texto propio al dorso. Imán de nevera (≈4 €) — un recordatorio diario de un lugar. Mapa 3D para la estantería (≈6–13 € según el tamaño) — una auténtica pieza de interior, con relieve del terreno si quieres.",
+            ],
+          },
+          {
+            h2: "Pide en 5 minutos",
+            p: [
+              "Elige la zona en el configurador y un tamaño — el modelo se genera automáticamente. Imprimimos en Eco PLA y enviamos a Ucrania y la UE; también está disponible el archivo digital. Fabricación 1–3 días hábiles.",
+            ],
+          },
+        ],
+        ctaLabel: "Elegir un regalo-mapa",
+        ctaHref: "/podarunok",
+        outro: "¿No sabes qué zona elegir? Escríbenos — te ayudamos y preparamos una vista previa.",
+      },
     },
   },
   {
@@ -861,6 +989,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           },
         ],
         ctaLabel: "Create a 3D map of Kyiv",
+        ctaHref: "/maps/kyiv",
+      },
+      de: {
+        title: "3D-Karte von Kiew: dein Lieblingsviertel im Regal",
+        description:
+          "Podil, Petschersk, Obolon oder Rusaniwka — eine 3D-Karte jedes Kiewer Viertels mit echten Gebäuden und dem Relief der Dnipro-Hänge. Druck ab ≈6 €.",
+        h1: "3D-Karte von Kiew: eine Stadt, die man in der Hand halten kann",
+        intro:
+          "Kiew hat in jedem Viertel Charakter: die Andrijiwskyj-Hänge, das Kanalraster von Rusaniwka, der Modernismus von Obolon, das alte Podil. Eine 3D-Karte macht aus dem Lieblingsviertel ein physisches Modell: Gebäude mit echten Höhen, Straßen, Parks, der Dnipro — und das echte Relief der Kiewer Hügel.",
+        sections: [
+          {
+            h2: "Welche Viertel am besten wirken",
+            p: [
+              "Podil und das Zentrum — dichte historische Quartiere. Petschersk mit der Lawra — Hangrelief plus wiedererkennbare Dominanten. Rusaniwka und Obolon — ein einzigartiges Wassergitter aus Kanälen und Dnipro-Buchten, das in 3D besonders eindrucksvoll aussieht. Ein Bereich von 400–800 m reicht, damit das Viertel auf den ersten Blick erkennbar ist.",
+              "Kiew ist hügelig, deshalb gibt aktiviertes Relief dem Modell echte Höhenunterschiede — vom Dnipro-Niveau bis zur Oberstadt.",
+            ],
+          },
+          {
+            h2: "Größen und Preise",
+            p: [
+              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; Relief +≈1,5 €. Es gibt auch einen Anhänger mit einem Kiewer Viertel (ab ≈3 €) und einen Kühlschrankmagneten (≈4 €).",
+            ],
+          },
+          {
+            h2: "So verschenken es Kiewer",
+            p: [
+              "Die Karte des Hofs, in dem man aufwuchs — für die Eltern. Das Viertel der ersten gemeinsamen Wohnung — zum Jahrestag. Die Lieblingsstrecke am Ufer — als Anhänger mit GPX-Track. Das Modell des Büro-Viertels — fürs Team zur Erinnerung.",
+            ],
+          },
+        ],
+        ctaLabel: "3D-Karte von Kiew erstellen",
+        ctaHref: "/maps/kyiv",
+      },
+      pl: {
+        title: "Mapa 3D Kijowa: ulubiona dzielnica na Twojej półce",
+        description:
+          "Podół, Peczersk, Obołoń czy Rusaniwka — mapa 3D dowolnej dzielnicy Kijowa z prawdziwymi budynkami i rzeźbą dnieprzańskich zboczy. Druk od ≈6 €.",
+        h1: "Mapa 3D Kijowa: miasto, które można wziąć do ręki",
+        intro:
+          "Kijów ma charakter w każdej dzielnicy: zbocza Andrijiwskiego, kanałowa siatka Rusaniwki, modernizm Obołonia, stary Podół. Mapa 3D zamienia ulubioną dzielnicę w fizyczny model: budynki o prawdziwych wysokościach, ulice, parki, Dniepr — i prawdziwa rzeźba kijowskich wzgórz.",
+        sections: [
+          {
+            h2: "Które dzielnice wyglądają najlepiej",
+            p: [
+              "Podół i centrum — gęsta historyczna zabudowa z wyrazistymi kwartałami. Peczersk z Ławrą — rzeźba zboczy plus rozpoznawalne dominanty. Rusaniwka i Obołoń — unikalna wodna siatka kanałów i zatok Dniepru, która w 3D wygląda szczególnie efektownie. Obszar 400–800 m wystarczy, by rozpoznać dzielnicę na pierwszy rzut oka.",
+              "Kijów jest pagórkowaty, więc włączona rzeźba daje modelowi prawdziwe różnice wysokości — od poziomu Dniepru po Górne Miasto.",
+            ],
+          },
+          {
+            h2: "Rozmiary i ceny",
+            p: [
+              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; rzeźba +≈1,5 €. Jest też brelok z dzielnicą Kijowa (od ≈3 €) i magnes na lodówkę (≈4 €).",
+            ],
+          },
+          {
+            h2: "Jak kijowianie to darują",
+            p: [
+              "Mapa podwórka, na którym się dorastało — rodzicom. Dzielnica pierwszego wspólnego mieszkania — na rocznicę. Ulubiona trasa nad brzegiem — brelokiem ze śladem GPX. Model dzielnicy biura — zespołowi na pamiątkę.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz mapę 3D Kijowa",
+        ctaHref: "/maps/kyiv",
+      },
+      fr: {
+        title: "Carte 3D de Kyiv : votre quartier préféré sur l'étagère",
+        description:
+          "Podil, Petchersk, Obolon ou Rusanivka — une carte 3D de n'importe quel quartier de Kyiv avec de vrais bâtiments et le relief des coteaux du Dnipro. Impression dès ≈6 €.",
+        h1: "Carte 3D de Kyiv : une ville qu'on peut tenir en main",
+        intro:
+          "Kyiv a du caractère dans chaque quartier : les coteaux d'Andriivskyi, la trame de canaux de Rusanivka, le modernisme d'Obolon, le vieux Podil. Une carte 3D transforme le quartier préféré en modèle physique : bâtiments aux hauteurs réelles, rues, parcs, le Dnipro — et le vrai relief des collines de Kyiv.",
+        sections: [
+          {
+            h2: "Quels quartiers rendent le mieux",
+            p: [
+              "Podil et le centre — un tissu historique dense aux îlots marqués. Petchersk avec la Laure — relief des coteaux et repères reconnaissables. Rusanivka et Obolon — une trame d'eau unique de canaux et de baies du Dnipro, particulièrement spectaculaire en 3D. Une zone de 400–800 m suffit pour reconnaître le quartier au premier coup d'œil.",
+              "Kyiv est vallonnée : activer le relief donne au modèle de vrais dénivelés — du niveau du Dnipro jusqu'à la ville haute.",
+            ],
+          },
+          {
+            h2: "Tailles et prix",
+            p: [
+              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 € ; relief +≈1,5 €. Il existe aussi un porte-clés avec un quartier de Kyiv (dès ≈3 €) et un magnet de frigo (≈4 €).",
+            ],
+          },
+          {
+            h2: "Comment les Kyiviens l'offrent",
+            p: [
+              "La carte de la cour où l'on a grandi — aux parents. Le quartier du premier appartement commun — pour un anniversaire de couple. Le parcours préféré sur les quais — en porte-clés avec trace GPX. Le modèle du quartier du bureau — à l'équipe, en souvenir.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer une carte 3D de Kyiv",
+        ctaHref: "/maps/kyiv",
+      },
+      es: {
+        title: "Mapa 3D de Kyiv: tu barrio favorito en la estantería",
+        description:
+          "Podil, Pechersk, Obolon o Rusanivka — un mapa 3D de cualquier barrio de Kyiv con edificios reales y el relieve de las laderas del Dnipró. Impresión desde ≈6 €.",
+        h1: "Mapa 3D de Kyiv: una ciudad que puedes sostener en la mano",
+        intro:
+          "Kyiv tiene carácter en cada barrio: las laderas de Andriivskyi, la retícula de canales de Rusanivka, el modernismo de Obolon, el viejo Podil. Un mapa 3D convierte el barrio favorito en un modelo físico: edificios con alturas reales, calles, parques, el Dnipró — y el relieve auténtico de las colinas de Kyiv.",
+        sections: [
+          {
+            h2: "Qué barrios lucen mejor",
+            p: [
+              "Podil y el centro — trama histórica densa con manzanas marcadas. Pechersk con la Lavra — relieve de laderas más hitos reconocibles. Rusanivka y Obolon — una retícula de agua única de canales y bahías del Dnipró que en 3D resulta especialmente vistosa. Una zona de 400–800 m basta para reconocer el barrio a primera vista.",
+              "Kyiv es una ciudad con colinas, así que activar el relieve da al modelo desniveles reales — desde el nivel del Dnipró hasta la ciudad alta.",
+            ],
+          },
+          {
+            h2: "Tamaños y precios",
+            p: [
+              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; relieve +≈1,5 €. También hay llavero con un barrio de Kyiv (desde ≈3 €) e imán de nevera (≈4 €).",
+            ],
+          },
+          {
+            h2: "Cómo lo regalan los kyivitas",
+            p: [
+              "El mapa del patio donde creciste — a los padres. El barrio del primer piso compartido — por un aniversario. La ruta favorita junto al río — como llavero con track GPX. El modelo del barrio de la oficina — al equipo, de recuerdo.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear un mapa 3D de Kyiv",
         ctaHref: "/maps/kyiv",
       },
     },
