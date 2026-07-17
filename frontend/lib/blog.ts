@@ -1187,6 +1187,138 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/create",
         outro: "Building a 3D model of your district is free — you only pay if you order a print.",
       },
+      de: {
+        title: "Was ist 3D-Druck und wie funktioniert er: eine einfache Erklärung",
+        description:
+          "3D-Druck in einfachen Worten: wie ein Drucker Schicht für Schicht ein Objekt aus Kunststoff wachsen lässt, was FDM ist und warum 3D-Stadtkarten genau so gedruckt werden.",
+        h1: "Was ist 3D-Druck: eine Erklärung ohne Fachjargon",
+        intro:
+          "3D-Druck ist eine Art, ein physisches Objekt direkt aus einem digitalen Modell herzustellen: Der Drucker schmilzt einen Kunststofffaden und legt ihn in dünnen Schichten übereinander, bis daraus das fertige Objekt «wächst». Genau so entstehen unsere 3D-Stadtkarten, Anhänger und Magnete.",
+        sections: [
+          {
+            h2: "Wie es funktioniert: Schicht für Schicht",
+            p: [
+              "Die verbreitetste Technologie ist FDM (Schmelzschichtung). Eine Spule Kunststofffaden läuft in den heißen Druckkopf (~200 °C), schmilzt und wird durch eine dünne Düse gepresst — meist 0,4 mm. Der Kopf folgt der berechneten Bahn und zeichnet einen horizontalen Schnitt des Modells; dann senkt sich die Plattform um Bruchteile eines Millimeters und die nächste Schicht entsteht.",
+              "Eine typische Schicht ist 0,2 mm hoch: fünfzig Schichten pro Zentimeter. Deshalb sieht man an den Seiten 3D-gedruckter Dinge feine Streifen — das sind die Schichten, die «Fingerabdrücke» der Technologie.",
+            ],
+          },
+          {
+            h2: "Warum das ideal für Stadtkarten ist",
+            p: [
+              "Eine Stadt ist genau das: eine Menge Höhen — Gebäude verschiedener Geschosszahl, Straßen darunter, Geländehügel. Der 3D-Drucker gibt diese Unterschiede buchstäblich wieder: jedes Gebäude bekommt seine echte Höhe, der Fluss liegt unter der Uferpromenade, Hügel werden mit den Fingern lesbar.",
+              "Jedes Modell ist einzigartig — dem Drucker ist es egal, ob er hundert gleiche oder hundert verschiedene Dinge druckt. Deshalb kostet eine persönliche Karte deines Viertels wie ein Serien-Souvenir und nicht wie ein Einzelguss.",
+            ],
+          },
+          {
+            h2: "Wie lange es dauert und was es kostet",
+            p: [
+              "Ein Anhänger druckt etwa eine Stunde, eine 8-cm-Karte einige Stunden, ein großes Panel bis zu einem Tag. Daher die Fertigungszeit von 1–3 Werktagen. Preise: Anhänger ab ≈3 €, Karte ab ≈6 € — günstiger als die meisten personalisierten Geschenke.",
+            ],
+          },
+        ],
+        ctaLabel: "Den Karten-Konfigurator testen",
+        ctaHref: "/create",
+        outro: "Das Erstellen eines 3D-Modells deines Viertels im Konfigurator ist kostenlos — du zahlst nur, wenn du den Druck bestellst.",
+      },
+      pl: {
+        title: "Czym jest druk 3D i jak działa: proste wyjaśnienie",
+        description:
+          "Druk 3D prostymi słowami: jak drukarka warstwa po warstwie wytwarza przedmiot z plastiku, czym jest FDM i dlaczego mapy miast 3D drukuje się właśnie tak.",
+        h1: "Czym jest druk 3D: proste wyjaśnienie bez żargonu",
+        intro:
+          "Druk 3D to sposób wytworzenia fizycznej rzeczy wprost z modelu cyfrowego: drukarka topi plastikową żyłkę i układa ją cienkimi warstwami, jedna na drugiej, aż z warstw «wyrośnie» gotowy przedmiot. Właśnie tak drukowane są nasze mapy miast 3D, breloki i magnesy.",
+        sections: [
+          {
+            h2: "Jak to działa: warstwa po warstwie",
+            p: [
+              "Najpowszechniejsza technologia to FDM (osadzanie topionego materiału). Szpula plastikowej żyłki wchodzi do gorącej głowicy drukarki (~200 °C), topi się i jest wytłaczana przez cienką dyszę — zwykle 0,4 mm. Głowica porusza się po torze wyliczonym przez program i rysuje jeden poziomy przekrój modelu. Potem platforma opada o ułamek milimetra — i rysowana jest kolejna warstwa.",
+              "Typowa wysokość warstwy to 0,2 mm: w centymetrze wysokości modelu jest pięćdziesiąt warstw. Dlatego na bokach drukowanych rzeczy widać charakterystyczne cienkie prążki — to właśnie warstwy, «odciski palców» technologii.",
+            ],
+          },
+          {
+            h2: "Dlaczego to idealne dla map miast",
+            p: [
+              "Miasto to właśnie zbiór wysokości: budynki o różnej liczbie pięter, drogi na dole, wzgórza terenu. Drukarka 3D odtwarza te różnice dosłownie: każdy budynek dostaje swoją prawdziwą wysokość, rzeka układa się poniżej bulwaru, a wzgórza czyta się palcami.",
+              "Każdy model jest unikalny — drukarce jest obojętne, czy drukuje sto takich samych rzeczy, czy sto różnych. Właśnie dlatego spersonalizowana mapa Twojej dzielnicy kosztuje jak seryjna pamiątka, a nie jak indywidualny odlew.",
+            ],
+          },
+          {
+            h2: "Ile to trwa i ile kosztuje",
+            p: [
+              "Brelok drukuje się około godziny, mapa 8 cm — kilka godzin, duży panel — nawet dobę. Stąd terminy realizacji 1–3 dni robocze. Ceny: brelok od ≈3 €, mapa od ≈6 € — taniej niż większość «imiennych» prezentów.",
+            ],
+          },
+        ],
+        ctaLabel: "Wypróbuj kreator map",
+        ctaHref: "/create",
+        outro: "Stworzenie modelu 3D swojej dzielnicy w kreatorze jest darmowe: płacisz tylko, jeśli zamawiasz druk.",
+      },
+      fr: {
+        title: "Qu'est-ce que l'impression 3D et comment ça marche : une explication simple",
+        description:
+          "L'impression 3D en mots simples : comment une imprimante fait croître un objet couche par couche à partir de plastique, ce qu'est le FDM et pourquoi les cartes de ville 3D s'impriment ainsi.",
+        h1: "Qu'est-ce que l'impression 3D : une explication sans jargon",
+        intro:
+          "L'impression 3D fabrique un objet physique directement à partir d'un modèle numérique : l'imprimante fait fondre un fil plastique et le dépose en couches fines, l'une sur l'autre, jusqu'à ce que l'objet «pousse». C'est exactement ainsi que naissent nos cartes de ville 3D, porte-clés et magnets.",
+        sections: [
+          {
+            h2: "Comment ça marche : couche par couche",
+            p: [
+              "La technologie la plus répandue est le FDM (dépôt de fil fondu). Une bobine de fil plastique entre dans la tête chaude de l'imprimante (~200 °C), fond et est extrudée par une buse fine — généralement 0,4 mm. La tête suit la trajectoire calculée et dessine une tranche horizontale du modèle ; puis le plateau descend d'une fraction de millimètre et la couche suivante est tracée.",
+              "Une couche typique fait 0,2 mm de haut : cinquante couches par centimètre. C'est pourquoi les objets imprimés en 3D montrent de fines stries sur les côtés — ce sont les couches, les «empreintes digitales» de la technologie.",
+            ],
+          },
+          {
+            h2: "Pourquoi c'est parfait pour les cartes de ville",
+            p: [
+              "Une ville, c'est précisément un ensemble de hauteurs : des bâtiments de différents étages, des routes en dessous, des collines de relief. L'imprimante 3D reproduit ces écarts littéralement : chaque bâtiment reçoit sa hauteur réelle, la rivière se place sous les quais, les collines se lisent du bout des doigts.",
+              "Chaque modèle est unique — peu importe à l'imprimante d'imprimer cent objets identiques ou cent différents. C'est pourquoi une carte personnelle de votre quartier coûte comme un souvenir de série, et non comme un moulage sur mesure.",
+            ],
+          },
+          {
+            h2: "Combien de temps et combien ça coûte",
+            p: [
+              "Un porte-clés s'imprime en une heure environ, une carte de 8 cm en quelques heures, un grand panneau jusqu'à une journée. D'où le délai de fabrication de 1–3 jours ouvrés. Prix : porte-clés dès ≈3 €, carte dès ≈6 € — moins cher que la plupart des cadeaux personnalisés.",
+            ],
+          },
+        ],
+        ctaLabel: "Essayer le configurateur de cartes",
+        ctaHref: "/create",
+        outro: "Créer le modèle 3D de votre quartier dans le configurateur est gratuit : vous ne payez que si vous commandez l'impression.",
+      },
+      es: {
+        title: "Qué es la impresión 3D y cómo funciona: una explicación sencilla",
+        description:
+          "La impresión 3D en palabras simples: cómo una impresora hace crecer un objeto capa a capa a partir de plástico, qué es FDM y por qué los mapas de ciudad 3D se imprimen así.",
+        h1: "Qué es la impresión 3D: una explicación sin jerga",
+        intro:
+          "La impresión 3D fabrica un objeto físico directamente a partir de un modelo digital: la impresora funde un filamento de plástico y lo deposita en capas finas, una sobre otra, hasta que el objeto «crece». Así es exactamente como se hacen nuestros mapas de ciudad 3D, llaveros e imanes.",
+        sections: [
+          {
+            h2: "Cómo funciona: capa a capa",
+            p: [
+              "La tecnología más extendida es FDM (modelado por deposición fundida). Una bobina de filamento plástico entra en el cabezal caliente de la impresora (~200 °C), se funde y se extruye por una boquilla fina — normalmente de 0,4 mm. El cabezal sigue la trayectoria calculada y dibuja un corte horizontal del modelo; luego la plataforma baja una fracción de milímetro y se traza la siguiente capa.",
+              "Una capa típica mide 0,2 mm de alto: cincuenta capas por centímetro. Por eso en los laterales de las piezas impresas en 3D se ven finas franjas — son las capas, las «huellas dactilares» de la tecnología.",
+            ],
+          },
+          {
+            h2: "Por qué es perfecto para mapas de ciudad",
+            p: [
+              "Una ciudad es justamente un conjunto de alturas: edificios de distintas plantas, calles abajo, colinas del terreno. La impresora 3D reproduce esos desniveles literalmente: cada edificio recibe su altura real, el río queda por debajo del paseo, las colinas se leen con los dedos.",
+              "Cada modelo es único — a la impresora le da igual imprimir cien piezas iguales o cien distintas. Por eso un mapa personal de tu barrio cuesta como un recuerdo de serie y no como una fundición a medida.",
+            ],
+          },
+          {
+            h2: "Cuánto tarda y cuánto cuesta",
+            p: [
+              "Un llavero se imprime en cerca de una hora, un mapa de 8 cm en unas horas, un panel grande hasta un día. De ahí el plazo de 1–3 días hábiles. Precios: llavero desde ≈3 €, mapa desde ≈6 € — más barato que la mayoría de regalos personalizados.",
+            ],
+          },
+        ],
+        ctaLabel: "Probar el configurador de mapas",
+        ctaHref: "/create",
+        outro: "Crear el modelo 3D de tu barrio en el configurador es gratis: solo pagas si pides la impresión.",
+      },
     },
   },
   {
@@ -1781,6 +1913,130 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           },
         ],
         ctaLabel: "Create a magnet with your district",
+        ctaHref: "/create",
+      },
+      de: {
+        title: "Kühlschrankmagnet mit Stadtkarte: das Souvenir, das es am Kiosk nicht gibt",
+        description:
+          "Karten-Magnet 6 cm (≈4 €): eine 3D-Reliefkarte deines Viertels statt eines Standard-Souvenirs. Deine Stadt, deine Straße, dein Hof — am Kühlschrank.",
+        h1: "Magnet mit Stadtkarte: ein Souvenir über deinen Ort",
+        intro:
+          "Reisemagnete sehen meist gleich aus: ein Turm, ein Wappen, eine Postkarten-Panorama. Ein Karten-Magnet funktioniert anders — er ist eine 3D-Reliefkarte genau des Viertels, das du wählst: nicht «Kyiv allgemein», sondern dein Hof in Obolon oder die Straße deiner Großmutter in Lwiw.",
+        sections: [
+          {
+            h2: "Was es physisch ist",
+            p: [
+              "Ein flaches Täfelchen von etwa 6 cm mit reliefgedruckter Karte: Straßen, Gebäude, Parks, Wasser. Auf der Rückseite eine magnetische Basis, die sicher am Kühlschrank oder jeder Stahlfläche hält. Gedruckt aus Eco-PLA-Bioplastik, Preis ≈4 €.",
+            ],
+          },
+          {
+            h2: "Warum man Karten-Magnete verschenkt",
+            p: [
+              "Es ist das zugänglichste Format der «Erinnerung an einen Ort»: günstig, leicht (lässt sich sogar als Brief ins Ausland schicken) und täglich sichtbar — den Kühlschrank öffnet man öfter, als man aufs Regal schaut. Eine Sammlung mehrerer Magnete verschiedener Viertel ergibt eine eigene kleine Lebenskarte: die Stadt der Kindheit, die Stadt des Studiums, die Stadt, in der die Kinder geboren wurden.",
+              "Für Unternehmen — ein Souvenir mit dem Büro-Viertel, das Gäste wirklich mitnehmen und aufhängen, statt es in der Schublade zu lassen.",
+            ],
+          },
+          {
+            h2: "So bestellst du",
+            p: [
+              "Wähle im Konfigurator den Bereich — genau wie für eine große Karte — und das Format «Magnet». Fertigung 1–3 Werktage, Versand in die Ukraine und die EU.",
+            ],
+          },
+        ],
+        ctaLabel: "Magnet mit deinem Viertel erstellen",
+        ctaHref: "/create",
+      },
+      pl: {
+        title: "Magnes z mapą miasta na lodówkę: pamiątka, której nie ma w kioskach",
+        description:
+          "Magnes-mapa 6 cm (≈4 €): reliefowa mapa 3D wybranej dzielnicy zamiast typowej pamiątki. Twoje miasto, twoja ulica, twoje podwórko — na lodówce.",
+        h1: "Magnes z mapą miasta: pamiątka o Twoim miejscu",
+        intro:
+          "Magnesy z podróży zwykle są takie same: wieża, herb miasta, panorama z pocztówki. Magnes-mapa działa inaczej — to reliefowa mapa 3D konkretnej dzielnicy, którą wybierasz Ty: nie «Kijów w ogóle», tylko Twoje podwórko na Obołoniu albo ulica babci we Lwowie.",
+        sections: [
+          {
+            h2: "Co to jest fizycznie",
+            p: [
+              "Płaska zawieszka około 6 cm z mapą wydrukowaną reliefem: ulice, budynki, parki, woda. Z tyłu magnetyczna podstawa, która pewnie trzyma się lodówki lub dowolnej stalowej powierzchni. Druk z bioplastiku Eco PLA, cena ≈4 €.",
+            ],
+          },
+          {
+            h2: "Po co daruje się magnesy-mapy",
+            p: [
+              "To najbardziej dostępny format «pamięci o miejscu»: niedrogi, lekki (można wysłać listem nawet za granicę) i widoczny codziennie — lodówkę otwiera się częściej, niż patrzy na półkę. Kolekcja kilku magnesów różnych dzielnic składa się we własną małą mapę życia: miasto dzieciństwa, miasto studiów, miasto, w którym urodziły się dzieci.",
+              "Dla biznesu — pamiątka z dzielnicą biura, którą goście naprawdę zabierają i wieszają, zamiast zostawiać w szufladzie.",
+            ],
+          },
+          {
+            h2: "Jak zamówić",
+            p: [
+              "W kreatorze wybierz obszar — tak samo jak dla dużej mapy — i format «magnes». Wykonanie 1–3 dni robocze, wysyłka na Ukrainę lub do krajów UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz magnes ze swoją dzielnicą",
+        ctaHref: "/create",
+      },
+      fr: {
+        title: "Magnet de frigo avec carte de ville : le souvenir qu'aucun kiosque ne vend",
+        description:
+          "Magnet-carte 6 cm (≈4 €) : une carte 3D en relief du quartier de votre choix au lieu d'un souvenir standard. Votre ville, votre rue, votre cour — sur le frigo.",
+        h1: "Magnet avec carte de ville : un souvenir de votre lieu",
+        intro:
+          "Les magnets de voyage se ressemblent tous : une tour, un blason, une panorama de carte postale. Un magnet-carte fonctionne autrement — c'est une carte 3D en relief du quartier précis que vous choisissez : pas «Kyiv en général», mais votre cour à Obolon ou la rue de votre grand-mère à Lviv.",
+        sections: [
+          {
+            h2: "Ce que c'est physiquement",
+            p: [
+              "Une plaque plate d'environ 6 cm avec une carte imprimée en relief : rues, bâtiments, parcs, eau. Au dos, une base magnétique qui tient fermement sur un frigo ou toute surface en acier. Imprimé en Eco PLA, prix ≈4 €.",
+            ],
+          },
+          {
+            h2: "Pourquoi on offre des magnets-cartes",
+            p: [
+              "C'est le format le plus accessible de «mémoire d'un lieu» : peu cher, léger (il part même à l'étranger dans une enveloppe) et vu chaque jour — on ouvre le frigo plus souvent qu'on ne regarde l'étagère. Une collection de plusieurs magnets de quartiers différents compose une petite carte de sa vie : la ville de l'enfance, celle des études, celle où les enfants sont nés.",
+              "Pour une entreprise — un souvenir avec le quartier du bureau que les invités emportent et accrochent vraiment, au lieu de le laisser dans un tiroir.",
+            ],
+          },
+          {
+            h2: "Comment commander",
+            p: [
+              "Dans le configurateur, choisissez la zone — comme pour une grande carte — et le format «magnet». Fabrication 1–3 jours ouvrés, livraison en Ukraine et dans l'UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Créer un magnet avec votre quartier",
+        ctaHref: "/create",
+      },
+      es: {
+        title: "Imán de nevera con mapa de ciudad: el recuerdo que no venden en los quioscos",
+        description:
+          "Imán-mapa de 6 cm (≈4 €): un mapa 3D en relieve del barrio que elijas en lugar de un recuerdo genérico. Tu ciudad, tu calle, tu patio — en la nevera.",
+        h1: "Imán con mapa de ciudad: un recuerdo sobre tu lugar",
+        intro:
+          "Los imanes de viaje suelen ser idénticos: una torre, un escudo, una panorámica de postal. Un imán-mapa funciona distinto — es un mapa 3D en relieve del barrio exacto que eliges tú: no «Kyiv en general», sino tu patio en Obolon o la calle de tu abuela en Leópolis.",
+        sections: [
+          {
+            h2: "Qué es físicamente",
+            p: [
+              "Una placa plana de unos 6 cm con el mapa impreso en relieve: calles, edificios, parques, agua. Al dorso, una base magnética que se sujeta con firmeza a la nevera o a cualquier superficie de acero. Impreso en bioplástico Eco PLA, precio ≈4 €.",
+            ],
+          },
+          {
+            h2: "Por qué se regalan imanes-mapa",
+            p: [
+              "Es el formato más accesible de «memoria de un lugar»: barato, ligero (se envía al extranjero incluso en un sobre) y se ve a diario — la nevera se abre más veces de las que se mira la estantería. Una colección de varios imanes de distintos barrios compone un pequeño mapa de la propia vida: la ciudad de la infancia, la de los estudios, la ciudad donde nacieron los hijos.",
+              "Para empresas — un recuerdo con el barrio de la oficina que los invitados sí se llevan y cuelgan, en vez de dejarlo en un cajón.",
+            ],
+          },
+          {
+            h2: "Cómo pedirlo",
+            p: [
+              "En el configurador elige la zona — igual que para un mapa grande — y el formato «imán». Fabricación 1–3 días hábiles, envío a Ucrania y a la UE.",
+            ],
+          },
+        ],
+        ctaLabel: "Crear un imán con tu barrio",
         ctaHref: "/create",
       },
     },
