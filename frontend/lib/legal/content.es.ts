@@ -4,50 +4,93 @@ export const es: LegalSet = {
   offer: {
     title: "Contrato de oferta pública",
     intro: [
-      "Este documento constituye una propuesta pública oficial (oferta) de {ownerFull} (en adelante, el «Vendedor») para celebrar un contrato de compraventa de productos y de prestación de servicios en las condiciones que se exponen a continuación. Al pagar un pedido en el sitio {domain} (en adelante, el «Sitio»), el Comprador confirma que ha leído íntegramente, ha comprendido y acepta sin reservas las condiciones de este Contrato (aceptación de la oferta conforme a los art. 633, 641 y 642 del Código Civil de Ucrania).",
+      "El presente documento constituye la propuesta pública oficial (oferta) de {ownerFull} (en adelante, el «Vendedor») para celebrar un contrato de compraventa de bienes y prestación de servicios a distancia en las condiciones expuestas a continuación, de conformidad con los artículos 633, 641 y 642 del Código Civil de Ucrania y las Leyes de Ucrania «Sobre el comercio electrónico» y «Sobre la protección de los derechos de los consumidores».",
+      "Al realizar y/o pagar un pedido en el sitio web {domain} (en adelante, el «Sitio»), el Comprador confirma que ha leído íntegramente, comprendido y aceptado sin reservas las condiciones del presente Contrato (aceptación de la oferta). La aceptación de esta oferta equivale a la celebración de un contrato por escrito.",
     ],
     sections: [
-      { h: "1. Definiciones", blocks: [
-        { p: "Vendedor: {ownerShort}, número fiscal {taxId}." },
-        { p: "Comprador: cualquier persona con capacidad jurídica que haya realizado un pedido en el Sitio." },
-        { p: "Producto / Servicio: el modelo 3D digital (archivo 3MF/STL) de un mapa de ciudad o de un llavero-mapa, y/o la fabricación (impresión 3D) de un producto físico de bioplástico Eco PLA por encargo individual del Comprador." },
+      { h: "1. Términos y definiciones", blocks: [
+        { kv: [
+          { k: "Vendedor", v: "{ownerFull}, número fiscal (RNOKPP) {taxId}, contribuyente del impuesto único." },
+          { k: "Comprador", v: "cualquier persona física o jurídica con capacidad legal que haya realizado un pedido en el Sitio y aceptado esta oferta." },
+          { k: "Sitio", v: "la tienda en línea {storeName} en la dirección {domain}, incluido el configurador en línea de modelos 3D." },
+          { k: "Configurador", v: "el servicio de software del Sitio en el que el Comprador elige por sí mismo los parámetros del futuro producto: zona del mapa, forma, tamaño, formato, texto del grabado, etc." },
+          { k: "Producto", v: "un artículo físico (mapa de ciudad impreso en 3D, panel, llavero-mapa, imán, etc.) de bioplástico Eco PLA, fabricado por encargo individual del Comprador." },
+          { k: "Contenido digital", v: "un modelo 3D digital generado (archivo en formato 3MF/STL), apto para la impresión 3D por cuenta propia." },
+          { k: "Pedido", v: "la solicitud del Comprador, realizada a través del Sitio, para adquirir el Producto y/o el Contenido digital." },
+        ] },
       ] },
       { h: "2. Objeto del contrato", blocks: [
-        { p: "El Vendedor se compromete a facilitar al Comprador el modelo 3D digital y/o a fabricar y entregar el producto físico bajo pedido, y el Comprador, a recibirlos y pagarlos conforme a las condiciones de este Contrato." },
-        { p: "Cada producto se fabrica de forma individual según los parámetros (lugar en el mapa, forma, tamaño, texto) que el Comprador elige por sí mismo en el configurador del Sitio, por lo que constituye un producto fabricado por encargo." },
+        { p: "El Vendedor se compromete, por encargo del Comprador, a generar un modelo 3D digital y/o fabricar un artículo físico según los parámetros individuales del Comprador y entregárselo, y el Comprador se compromete a aceptar y pagar el Producto/Contenido digital en las condiciones del presente Contrato." },
+        { p: "Cada artículo se fabrica individualmente según los parámetros (lugar en el mapa, forma, tamaño, texto, colores) que el Comprador elige por sí mismo en el Configurador. En consecuencia, el Producto es un artículo fabricado por encargo individual del Comprador en el sentido de la Ley de Ucrania «Sobre la protección de los derechos de los consumidores»." },
+        { p: "El surtido, las características y los precios orientativos de los Productos figuran en el Sitio. Las fotografías y las vistas previas 3D tienen carácter informativo: el artículo terminado puede presentar ligeras diferencias en el tono del material y la textura de las capas, lo cual es una particularidad natural de la tecnología de impresión 3D y no constituye un defecto del Producto." },
       ] },
-      { h: "3. Tramitación del pedido", blocks: [
-        { p: "El Comprador crea el pedido en el configurador del Sitio e indica sus datos de contacto (nombre, teléfono, modo y dirección de entrega). El pedido se considera aceptado tras su pago o tras la confirmación por parte de un operador." },
-        { p: "El Comprador es responsable de la veracidad de los datos facilitados. El Vendedor no se hace responsable de las consecuencias derivadas de errores en los datos proporcionados por el Comprador." },
+      { h: "3. Procedimiento de realización del pedido", blocks: [
+        { ul: [
+          "El Comprador crea el modelo por sí mismo en el Configurador: elige la ciudad/zona del mapa, la forma, el tamaño, el formato (en relieve/plano, imán) y, si lo desea, el texto del grabado o una ruta GPX.",
+          "Antes de formalizar el pedido, el Comprador ve una vista previa 3D del modelo y el coste final del pedido.",
+          "Para formalizar el pedido, el Comprador indica sus datos de contacto: nombre, teléfono, correo electrónico si es necesario, método de entrega y dirección/sucursal del transportista.",
+          "El pedido se considera aceptado para su ejecución tras su pago en línea o tras la confirmación por parte del operador (según lo acordado).",
+        ] },
+        { p: "El Comprador es el único responsable de la corrección de los parámetros del modelo elegidos (zona del mapa, texto, tamaño) y de la veracidad de los datos de contacto. El Vendedor no se hace responsable de las consecuencias de los errores en los datos facilitados por el Comprador, en particular de la fabricación de un artículo con un texto o una zona del mapa erróneos que el propio Comprador aprobó en el Configurador." },
       ] },
-      { h: "4. Precio y pago", blocks: [
-        { p: "Los precios de los productos y servicios se indican en el Sitio en grivnas (para pedidos dentro de Ucrania) y en euros (para envíos a la UE) y son orientativos hasta la confirmación del pedido. El Comprador ve el importe definitivo en el paso de tramitación." },
-        { p: "El pago se realiza en línea a través del servicio de pago LiqPay (con tarjeta bancaria Visa/Mastercard) o por otro medio acordado. La descarga del archivo digital terminado dentro del límite gratuito es gratuita." },
-        { p: "Más detalles en la página [delivery:«Pago y entrega»]." },
+      { h: "4. Precio y forma de pago", blocks: [
+        { p: "Los precios del Sitio se indican en grivnas (para pedidos dentro de Ucrania) y en euros (orientativos, para envíos a países de la UE). El Comprador ve el coste final del pedido en el paso de formalización, antes del pago. Los gastos de envío no están incluidos en el precio del Producto y se abonan por separado según las tarifas del transportista." },
+        { p: "El pago se realiza en línea a través del servicio de pago LiqPay (JSC CB «PrivatBank»): con tarjeta bancaria Visa/Mastercard y otros métodos disponibles en LiqPay. Los datos de la tarjeta de pago se procesan en el lado del sistema de pago; el Vendedor no los recibe ni los almacena." },
+        { p: "Previo acuerdo con el operador, es posible el pago por otro método convenido. La descarga del Contenido digital terminado dentro del límite gratuito de la cuenta es gratuita." },
+        { p: "El Producto se paga íntegramente antes de su puesta en producción, salvo acuerdo en contrario de las partes. Más detalles en la página [delivery:«Pago y entrega»]." },
       ] },
-      { h: "5. Fabricación y entrega", blocks: [
-        { p: "El archivo digital se facilita en la cuenta o por correo electrónico de inmediato o tras la confirmación del pedido. El producto físico se fabrica y se envía en el plazo indicado en la página «Pago y entrega», mediante los servicios Nova Poshta o Ukrposhta (Ucrania), Nova Post EU o Meest (UE)." },
+      { h: "5. Plazos de fabricación", blocks: [
+        { p: "El Contenido digital se genera automáticamente y se facilita en la cuenta del Comprador o por correo electrónico inmediatamente después de la generación o tras la confirmación del pedido." },
+        { p: "El plazo orientativo de fabricación del artículo físico es de 1 a 3 días laborables desde el pago/confirmación del pedido. En caso de alta carga de trabajo o complejidad técnica del artículo, el plazo puede ampliarse, de lo cual el Vendedor informa al Comprador." },
       ] },
-      { h: "6. Devolución de fondos", blocks: [
-        { p: "Dado que los productos se fabrican por encargo individual y que los archivos digitales tienen carácter de contenido electrónico, las devoluciones se rigen por un documento aparte, [refund:«Devolución y reembolso de fondos»], que forma parte inseparable de este Contrato." },
+      { h: "6. Entrega", blocks: [
+        { p: "La entrega dentro de Ucrania se realiza mediante los servicios «Nova Poshta» (sucursal, taquilla postal) o «Ukrposhta». La entrega a países de la UE, mediante los servicios Nova Post EU o Meest. El plazo orientativo de entrega dentro de Ucrania es de 2 a 4 días laborables tras el envío." },
+        { p: "El coste de la entrega se calcula según las tarifas del transportista y lo abona el Comprador por separado (normalmente al recibir el pedido). La propiedad del Producto y el riesgo de daño fortuito se transfieren al Comprador en el momento de recibir el Producto del transportista." },
+        { p: "Al recibirlo, el Comprador está obligado a inspeccionar el envío para comprobar la integridad del embalaje y del artículo. En caso de daños durante el transporte, deben documentarse mediante un acta del transportista y comunicarse al Vendedor: dicho caso se resuelve mediante una reimpresión gratuita o la devolución del dinero (véase la sección 8)." },
       ] },
-      { h: "7. Derechos de propiedad intelectual", blocks: [
-        { p: "Los datos cartográficos proceden de OpenStreetMap (ODbL); los datos de altitud, de fuentes abiertas. El modelo 3D generado se facilita al Comprador para uso e impresión personales y no comerciales. La ruta GPX cargada por el Comprador son sus propios datos y se procesan exclusivamente para construir el modelo (véase la [privacy:Política de privacidad])." },
+      { h: "7. Calidad y garantía", blocks: [
+        { p: "El Vendedor garantiza la conformidad del artículo con los parámetros aprobados por el Comprador en el Configurador y la debida calidad de impresión. Los artículos físicos cuentan con una garantía de 60 días desde su recepción frente a defectos de impresión y delaminación no imputables al Comprador." },
+        { p: "Las particularidades naturales de la tecnología de impresión FDM (capas de impresión visibles, ligeras diferencias de tono del plástico entre lotes, marcas tecnológicas en la superficie inferior) no constituyen defectos del Producto." },
+        { p: "El Vendedor no responde del resultado de la impresión en el equipo del Comprador cuando este imprime por su cuenta el Contenido digital descargado (la calidad de dicha impresión depende de la impresora, el material y los ajustes del Comprador)." },
       ] },
-      { h: "8. Responsabilidad de las partes", blocks: [
-        { p: "El Vendedor no responde de la calidad de impresión en el equipo del Comprador cuando este imprime por su cuenta el archivo descargado. La responsabilidad total del Vendedor se limita al importe del pedido pagado." },
-        { p: "Las partes quedan exoneradas de responsabilidad por el incumplimiento de sus obligaciones a causa de circunstancias de fuerza mayor." },
+      { h: "8. Devolución del dinero y cambios", blocks: [
+        { p: "Dado que el Producto se fabrica por encargo individual según los parámetros únicos del Comprador, el Producto de calidad adecuada no está sujeto a devolución ni cambio (Ley de Ucrania «Sobre la protección de los derechos de los consumidores»; lista de productos aprobada por la Resolución del Consejo de Ministros de Ucrania n.º 172 de 19.03.1994). El Contenido digital, una vez facilitado el acceso a la descarga, no está sujeto a devolución por tratarse de contenido electrónico cuyo servicio ya ha sido consumido." },
+        { ul: [
+          "Antes de que el pedido entre en producción, el Comprador puede cancelarlo y recibir la devolución íntegra del importe.",
+          "En caso de defecto, daños durante la entrega o falta de conformidad del artículo con los parámetros aprobados, el Vendedor, a elección del Comprador, fabrica y envía gratuitamente un artículo nuevo o devuelve el importe íntegro.",
+          "Si el Contenido digital está técnicamente dañado o no se descarga por causa imputable al Vendedor, el archivo se vuelve a generar gratuitamente o se devuelve el dinero.",
+        ] },
+        { p: "El procedimiento de reclamación y los plazos se describen en el documento [refund:«Devolución y reembolso de fondos»], que forma parte inseparable del presente Contrato. La devolución del dinero se efectúa por el mismo medio por el que se realizó el pago (a la tarjeta a través de LiqPay), en los plazos previstos por las normas del sistema de pago y del banco." },
       ] },
-      { h: "9. Datos personales", blocks: [
-        { p: "Al realizar el pedido, el Comprador da su consentimiento para el tratamiento de sus datos personales con el fin de ejecutar el pedido, conforme a la Ley de Ucrania sobre Protección de Datos Personales y a la [privacy:Política de privacidad]." },
+      { h: "9. Derechos y obligaciones de las partes", blocks: [
+        { p: "El Vendedor está obligado a: fabricar el Producto conforme a los parámetros aprobados por el Comprador; cumplir los plazos declarados; informar al Comprador sobre el estado del pedido; garantizar la confidencialidad de los datos personales del Comprador." },
+        { p: "El Vendedor tiene derecho a: recurrir a terceros para el cumplimiento de sus obligaciones (transportistas, servicios de pago); suspender la ejecución del pedido en caso de impago; negarse a fabricar un artículo cuyo contenido infrinja la legislación de Ucrania (en particular, que contenga simbología prohibida o discurso de odio), con devolución íntegra del importe." },
+        { p: "El Comprador está obligado a: facilitar datos veraces para la ejecución del pedido; pagar el pedido; recoger el Producto del transportista dentro del plazo de almacenamiento del envío." },
+        { p: "El Comprador tiene derecho a: recibir un Producto de calidad adecuada en el plazo declarado; recibir información sobre el estado de su pedido; presentar una reclamación según el procedimiento previsto en el presente Contrato." },
       ] },
-      { h: "10. Resolución de conflictos y vigencia", blocks: [
-        { p: "Los conflictos se resuelven mediante negociación y, de no alcanzarse un acuerdo, conforme a la legislación vigente de Ucrania. El Contrato está en vigor desde el momento de la aceptación y hasta el cumplimiento íntegro de las obligaciones por ambas partes. El Vendedor tiene derecho a modificar las condiciones publicando una nueva versión en esta página." },
+      { h: "10. Derechos de propiedad intelectual", blocks: [
+        { p: "Los datos cartográficos son proporcionados por OpenStreetMap (© OpenStreetMap contributors, licencia ODbL); los datos de elevación proceden de fuentes abiertas. El modelo 3D generado se facilita al Comprador para su uso personal no comercial y su impresión. El uso comercial masivo o la reventa de los modelos requiere un acuerdo escrito aparte con el Vendedor." },
+        { p: "La ruta GPX cargada por el Comprador constituye datos propios del Comprador y se procesa exclusivamente para construir su modelo (véase la [privacy:Política de privacidad]). El Comprador garantiza que el texto de grabado que encarga no infringe derechos de terceros." },
       ] },
-      { h: "11. Datos del Vendedor", blocks: [
+      { h: "11. Datos personales", blocks: [
+        { p: "Al formalizar el pedido, el Comprador da su consentimiento al tratamiento de sus datos personales (nombre, datos de contacto, dirección de entrega) exclusivamente con el fin de ejecutar el presente Contrato, de conformidad con la Ley de Ucrania «Sobre la protección de los datos personales» y la [privacy:Política de privacidad]. Los datos no se ceden a terceros, salvo en los casos necesarios para la ejecución del pedido (transportista, servicio de pago)." },
+      ] },
+      { h: "12. Responsabilidad y fuerza mayor", blocks: [
+        { p: "Por el incumplimiento o cumplimiento indebido de las obligaciones, las partes responden conforme a la legislación vigente de Ucrania. La responsabilidad total del Vendedor por cualquier reclamación se limita al importe del pedido efectivamente pagado por el Comprador." },
+        { p: "Las partes quedan exentas de responsabilidad por el incumplimiento total o parcial de sus obligaciones si este se debe a circunstancias de fuerza mayor: acciones militares, bombardeos, cortes de electricidad, catástrofes naturales, decisiones de las autoridades, fallos de los transportistas, etc. Los plazos de cumplimiento se prorrogan mientras duren dichas circunstancias." },
+      ] },
+      { h: "13. Reclamaciones y resolución de disputas", blocks: [
+        { p: "Las reclamaciones relativas al pedido se aceptan en {email} o por teléfono {phone}, indicando el número de pedido. El Vendedor examina las solicitudes en un plazo de 1 a 3 días laborables. Las disputas se resuelven mediante negociación y, a falta de acuerdo, según el procedimiento establecido por la legislación vigente de Ucrania." },
+      ] },
+      { h: "14. Vigencia y modificación de las condiciones", blocks: [
+        { p: "El Contrato entra en vigor desde el momento de la aceptación de la oferta por el Comprador y permanece vigente hasta el pleno cumplimiento de las obligaciones por las partes. El Vendedor tiene derecho a modificar las condiciones de esta oferta publicando una nueva versión en esta página; la nueva versión se aplica a los pedidos realizados tras su publicación. La versión vigente está permanentemente disponible en {domain}/offer." },
+        { p: "Forman parte inseparable del presente Contrato los documentos: [refund:«Devolución y reembolso de fondos»], [delivery:«Pago y entrega»], [privacy:«Política de privacidad»] y [terms:«Condiciones de uso»]." },
+      ] },
+      { h: "15. Datos del Vendedor", blocks: [
         { kv: [
-          { k: "Nombre", v: "{ownerFull}" },
-          { k: "Número fiscal (IPN/RNOKPP)", v: "{taxId}" },
+          { k: "Vendedor", v: "{ownerFull}" },
+          { k: "Número fiscal (RNOKPP)", v: "{taxId}" },
+          { k: "Tipo de actividad (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
           { k: "Tienda", v: "{storeName}, {storeAddress}" },
           { k: "Email", v: "{email}" },

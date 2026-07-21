@@ -4,53 +4,96 @@ export const pl: LegalSet = {
   offer: {
     title: "Umowa oferty publicznej",
     intro: [
-      "Niniejszy dokument jest oficjalną ofertą publiczną {ownerFull} (dalej — „Sprzedawca”) zawarcia umowy sprzedaży towarów i świadczenia usług na warunkach przedstawionych poniżej. Opłacając zamówienie na stronie {domain} (dalej — „Strona”), Kupujący potwierdza, że w pełni przeczytał, zrozumiał i bezwarunkowo zaakceptował warunki niniejszej Umowy (akceptacja oferty zgodnie z art. 633, 641, 642 Kodeksu cywilnego Ukrainy).",
+      "Niniejszy dokument stanowi oficjalną publiczną propozycję (ofertę) {ownerFull} (zwanego dalej „Sprzedawcą”) zawarcia umowy sprzedaży towarów i świadczenia usług na odległość na warunkach określonych poniżej, zgodnie z art. 633, 641, 642 Kodeksu cywilnego Ukrainy oraz ustawami Ukrainy „O handlu elektronicznym” i „O ochronie praw konsumentów”.",
+      "Składając i/lub opłacając zamówienie w serwisie {domain} (zwanym dalej „Serwisem”), Kupujący potwierdza, że w pełni zapoznał się z warunkami niniejszej Umowy, zrozumiał je i bezwarunkowo zaakceptował (akceptacja oferty). Akceptacja niniejszej oferty jest równoznaczna z zawarciem umowy w formie pisemnej.",
     ],
     sections: [
-      { h: "1. Terminy", blocks: [
-        { p: "Sprzedawca — {ownerShort}, numer podatkowy {taxId}." },
-        { p: "Kupujący — każda osoba zdolna do czynności prawnych, która złożyła zamówienie na Stronie." },
-        { p: "Towar / Usługa — cyfrowy model 3D (plik 3MF/STL) mapy miasta lub breloka-mapy oraz/lub wytworzenie (druk 3D) fizycznego wyrobu z bioplastiku Eco PLA na indywidualne zamówienie Kupującego." },
+      { h: "1. Terminy i definicje", blocks: [
+        { kv: [
+          { k: "Sprzedawca", v: "{ownerFull}, numer podatkowy (RNOKPP) {taxId}, płatnik podatku jednolitego." },
+          { k: "Kupujący", v: "każda posiadająca zdolność do czynności prawnych osoba fizyczna lub prawna, która złożyła zamówienie w Serwisie i zaakceptowała niniejszą ofertę." },
+          { k: "Serwis", v: "sklep internetowy {storeName} pod adresem {domain}, wraz z internetowym konfiguratorem modeli 3D." },
+          { k: "Konfigurator", v: "usługa programowa Serwisu, w której Kupujący samodzielnie wybiera parametry przyszłego wyrobu: fragment mapy, kształt, rozmiar, format, tekst graweru itp." },
+          { k: "Towar", v: "wyrób fizyczny (drukowana w 3D mapa miasta, panel, brelok-mapa, magnes itp.) z biotworzywa Eco PLA, wytwarzany na indywidualne zamówienie Kupującego." },
+          { k: "Treść cyfrowa", v: "wygenerowany cyfrowy model 3D (plik w formacie 3MF/STL), nadający się do samodzielnego druku 3D." },
+          { k: "Zamówienie", v: "złożone za pośrednictwem Serwisu zgłoszenie Kupującego dotyczące nabycia Towaru i/lub Treści cyfrowej." },
+        ] },
       ] },
       { h: "2. Przedmiot umowy", blocks: [
-        { p: "Sprzedawca zobowiązuje się dostarczyć Kupującemu cyfrowy model 3D oraz/lub wytworzyć i przekazać fizyczny wyrób na zamówienie, a Kupujący — odebrać je i opłacić zgodnie z warunkami niniejszej Umowy." },
-        { p: "Każdy wyrób jest wytwarzany indywidualnie według parametrów (miejsce na mapie, kształt, rozmiar, tekst), które Kupujący wybiera samodzielnie w kreatorze na Stronie, czyli jest towarem wytworzonym na zamówienie." },
+        { p: "Sprzedawca zobowiązuje się, na zlecenie Kupującego, wygenerować cyfrowy model 3D i/lub wytworzyć wyrób fizyczny według indywidualnych parametrów Kupującego i przekazać go Kupującemu, a Kupujący zobowiązuje się przyjąć i opłacić Towar/Treść cyfrową na warunkach niniejszej Umowy." },
+        { p: "Każdy wyrób jest wytwarzany indywidualnie według parametrów (miejsce na mapie, kształt, rozmiar, tekst, kolory), które Kupujący samodzielnie wybiera w Konfiguratorze. W związku z tym Towar stanowi produkt wykonany na indywidualne zamówienie Kupującego w rozumieniu ustawy Ukrainy „O ochronie praw konsumentów”." },
+        { p: "Asortyment, właściwości i orientacyjne ceny Towarów podano w Serwisie. Zdjęcia i podglądy 3D mają charakter informacyjny: gotowy wyrób może wykazywać niewielkie różnice w odcieniu materiału i fakturze warstw, co jest naturalną cechą technologii druku 3D i nie stanowi wady Towaru." },
       ] },
-      { h: "3. Składanie zamówienia", blocks: [
-        { p: "Kupujący tworzy zamówienie w kreatorze na Stronie i podaje dane kontaktowe (imię, telefon, sposób i adres dostawy). Zamówienie uznaje się za przyjęte po jego opłaceniu lub potwierdzeniu przez operatora." },
-        { p: "Kupujący odpowiada za prawdziwość podanych danych. Sprzedawca nie ponosi odpowiedzialności za skutki błędów w danych podanych przez Kupującego." },
+      { h: "3. Procedura składania zamówienia", blocks: [
+        { ul: [
+          "Kupujący samodzielnie tworzy model w Konfiguratorze: wybiera miasto/fragment mapy, kształt, rozmiar, format (przestrzenny/płaski, magnes), a w razie potrzeby — tekst graweru lub trasę GPX.",
+          "Przed złożeniem zamówienia Kupujący widzi podgląd 3D modelu oraz ostateczną wartość zamówienia.",
+          "W celu złożenia zamówienia Kupujący podaje dane kontaktowe: imię, telefon, w razie potrzeby e-mail, sposób dostawy oraz adres/oddział przewoźnika.",
+          "Zamówienie uważa się za przyjęte do realizacji po jego opłaceniu online lub po potwierdzeniu przez operatora (zgodnie z ustaleniami).",
+        ] },
+        { p: "Kupujący samodzielnie odpowiada za prawidłowość wybranych parametrów modelu (fragment mapy, tekst, rozmiar) oraz za poprawność danych kontaktowych. Sprzedawca nie ponosi odpowiedzialności za skutki błędów w danych podanych przez Kupującego, w szczególności za wytworzenie wyrobu z błędnym tekstem lub fragmentem mapy, które Kupujący sam zatwierdził w Konfiguratorze." },
       ] },
       { h: "4. Cena i płatność", blocks: [
-        { p: "Ceny towarów i usług podane są na Stronie w hrywnach (dla zamówień na terenie Ukrainy) oraz w euro (dla dostawy do UE) i mają charakter orientacyjny do momentu potwierdzenia zamówienia. Ostateczną cenę Kupujący widzi na etapie składania zamówienia." },
-        { p: "Płatność odbywa się online za pośrednictwem serwisu płatniczego LiqPay (kartą bankową Visa/Mastercard) lub innym uzgodnionym sposobem. Pobranie gotowego pliku cyfrowego w ramach bezpłatnego limitu jest darmowe." },
-        { p: "Szczegóły — na stronie [delivery:„Płatność i dostawa”]." },
+        { p: "Ceny w Serwisie podane są w hrywnach (dla zamówień na terenie Ukrainy) oraz w euro (orientacyjnie, dla dostaw do krajów UE). Ostateczną wartość zamówienia Kupujący widzi na etapie składania zamówienia, przed dokonaniem płatności. Koszt dostawy nie jest wliczony w cenę Towaru i jest opłacany osobno według taryf przewoźnika." },
+        { p: "Płatność odbywa się online za pośrednictwem serwisu płatniczego LiqPay (JSC CB „PrivatBank”): kartą bankową Visa/Mastercard oraz innymi metodami dostępnymi w LiqPay. Dane karty płatniczej są przetwarzane po stronie systemu płatności; Sprzedawca ich nie otrzymuje i nie przechowuje." },
+        { p: "Po uzgodnieniu z operatorem możliwa jest płatność w inny uzgodniony sposób. Pobranie gotowej Treści cyfrowej w ramach bezpłatnego limitu konta jest bezpłatne." },
+        { p: "Towar jest opłacany w całości przed przekazaniem do produkcji, chyba że strony uzgodniły inaczej. Szczegóły — na stronie [delivery:„Płatność i dostawa”]." },
       ] },
-      { h: "5. Wytworzenie i dostawa", blocks: [
-        { p: "Plik cyfrowy jest udostępniany w panelu / na adres e-mail od razu lub po potwierdzeniu zamówienia. Fizyczny wyrób jest wytwarzany i wysyłany w terminie wskazanym na stronie „Płatność i dostawa”, za pośrednictwem firm Nova Poshta lub Ukrposhta (Ukraina), Nova Post EU lub Meest (UE)." },
+      { h: "5. Terminy realizacji", blocks: [
+        { p: "Treść cyfrowa jest generowana automatycznie i udostępniana na koncie Kupującego / e-mailem bezpośrednio po wygenerowaniu lub po potwierdzeniu zamówienia." },
+        { p: "Orientacyjny czas wytworzenia wyrobu fizycznego wynosi 1–3 dni robocze od momentu opłacenia/potwierdzenia zamówienia. W przypadku zwiększonego obciążenia lub technicznej złożoności wyrobu termin może ulec wydłużeniu, o czym Sprzedawca informuje Kupującego." },
       ] },
-      { h: "6. Zwrot środków", blocks: [
-        { p: "Ponieważ towary są wytwarzane na indywidualne zamówienie, a pliki cyfrowe mają charakter treści elektronicznych, zwroty reguluje odrębny dokument — [refund:„Zwrot i wymiana środków”], który jest nieodłączną częścią niniejszej Umowy." },
+      { h: "6. Dostawa", blocks: [
+        { p: "Dostawa na terenie Ukrainy realizowana jest przez firmy „Nova Poshta” (oddział, paczkomat) lub „Ukrposhta”. Dostawa do krajów UE — za pośrednictwem Nova Post EU lub Meest. Orientacyjny czas dostawy na terenie Ukrainy to 2–4 dni robocze od nadania." },
+        { p: "Koszt dostawy jest obliczany według taryf przewoźnika i opłacany przez Kupującego osobno (zazwyczaj przy odbiorze). Prawo własności do Towaru oraz ryzyko przypadkowego uszkodzenia przechodzą na Kupującego z chwilą odbioru Towaru od przewoźnika." },
+        { p: "Przy odbiorze Kupujący jest zobowiązany sprawdzić przesyłkę pod kątem nienaruszalności opakowania i wyrobu. W przypadku uszkodzenia w transporcie należy sporządzić protokół przewoźnika i powiadomić Sprzedawcę — taki przypadek jest rozwiązywany przez bezpłatny ponowny wydruk lub zwrot pieniędzy (zob. rozdział 8)." },
       ] },
-      { h: "7. Prawa własności intelektualnej", blocks: [
-        { p: "Dane kartograficzne pochodzą z OpenStreetMap (ODbL), dane wysokościowe — ze źródeł otwartych. Wygenerowany model 3D jest udostępniany Kupującemu do osobistego, niekomercyjnego użytku i druku. Wgrana przez Kupującego trasa GPX jest jego własnymi danymi i jest przetwarzana wyłącznie w celu zbudowania modelu (zob. [privacy:Politykę prywatności])." },
+      { h: "7. Jakość i gwarancja", blocks: [
+        { p: "Sprzedawca gwarantuje zgodność wyrobu z parametrami zatwierdzonymi przez Kupującego w Konfiguratorze oraz należytą jakość druku. Na wyroby fizyczne udzielana jest 60-dniowa gwarancja od momentu odbioru, obejmująca wady druku i rozwarstwienia powstałe nie z winy Kupującego." },
+        { p: "Naturalne cechy technologii druku FDM (widoczne warstwy druku, niewielkie różnice odcienia tworzywa między partiami, ślady technologiczne na dolnej powierzchni) nie stanowią wad Towaru." },
+        { p: "Sprzedawca nie odpowiada za rezultat druku na sprzęcie Kupującego przy samodzielnym druku pobranej Treści cyfrowej (jakość takiego druku zależy od drukarki, materiału i ustawień Kupującego)." },
       ] },
-      { h: "8. Odpowiedzialność stron", blocks: [
-        { p: "Sprzedawca nie odpowiada za jakość druku na sprzęcie Kupującego przy samodzielnym druku pobranego pliku. Łączna odpowiedzialność Sprzedawcy jest ograniczona do kwoty opłaconego zamówienia." },
-        { p: "Strony są zwolnione z odpowiedzialności za niewykonanie zobowiązań wskutek okoliczności siły wyższej (force majeure)." },
+      { h: "8. Zwrot pieniędzy i wymiana", blocks: [
+        { p: "Ponieważ Towar jest wytwarzany na indywidualne zamówienie według unikalnych parametrów Kupującego, Towar należytej jakości nie podlega zwrotowi ani wymianie (ustawa Ukrainy „O ochronie praw konsumentów”; wykaz towarów zatwierdzony uchwałą Gabinetu Ministrów Ukrainy nr 172 z dnia 19.03.1994 r.). Treść cyfrowa po udostępnieniu do pobrania nie podlega zwrotowi jako treść elektroniczna, której usługa została w pełni wykonana." },
+        { ul: [
+          "Do momentu przekazania zamówienia do produkcji Kupujący może je anulować i otrzymać pełny zwrot pieniędzy.",
+          "W przypadku wady, uszkodzenia podczas dostawy lub niezgodności wyrobu z zatwierdzonymi parametrami — Sprzedawca, według wyboru Kupującego, bezpłatnie wytwarza i wysyła nowy wyrób lub zwraca pełną wartość.",
+          "Jeżeli Treść cyfrowa jest technicznie uszkodzona lub nie daje się pobrać z winy Sprzedawcy — plik jest bezpłatnie generowany ponownie lub pieniądze są zwracane.",
+        ] },
+        { p: "Procedura zgłoszenia i terminy zostały opisane w dokumencie [refund:„Zwrot i wymiana środków”], który stanowi integralną część niniejszej Umowy. Zwrot pieniędzy następuje tą samą metodą, którą dokonano płatności (na kartę za pośrednictwem LiqPay), w terminach przewidzianych regulaminem systemu płatności i banku." },
       ] },
-      { h: "9. Dane osobowe", blocks: [
-        { p: "Składając zamówienie, Kupujący wyraża zgodę na przetwarzanie swoich danych osobowych w celu realizacji zamówienia zgodnie z ustawą Ukrainy o ochronie danych osobowych oraz [privacy:Polityką prywatności]." },
+      { h: "9. Prawa i obowiązki stron", blocks: [
+        { p: "Sprzedawca jest zobowiązany: wytworzyć Towar zgodnie z parametrami zatwierdzonymi przez Kupującego; dotrzymywać deklarowanych terminów; informować Kupującego o statusie zamówienia; zapewnić poufność danych osobowych Kupującego." },
+        { p: "Sprzedawca ma prawo: angażować osoby trzecie do wykonania swoich zobowiązań (przewoźnicy, serwisy płatnicze); wstrzymać realizację zamówienia w przypadku braku zapłaty; odmówić wytworzenia wyrobu, którego treść narusza ustawodawstwo Ukrainy (w szczególności zawiera zakazaną symbolikę lub mowę nienawiści), z pełnym zwrotem pieniędzy." },
+        { p: "Kupujący jest zobowiązany: podać prawdziwe dane niezbędne do realizacji zamówienia; opłacić zamówienie; odebrać Towar od przewoźnika w terminie przechowywania przesyłki." },
+        { p: "Kupujący ma prawo: otrzymać Towar należytej jakości w deklarowanym terminie; otrzymywać informacje o statusie swojego zamówienia; złożyć reklamację w trybie przewidzianym niniejszą Umową." },
       ] },
-      { h: "10. Rozstrzyganie sporów i okres obowiązywania", blocks: [
-        { p: "Spory rozstrzygane są w drodze negocjacji, a w razie nieosiągnięcia porozumienia — zgodnie z obowiązującym prawem Ukrainy. Umowa obowiązuje od chwili akceptacji do pełnego wykonania zobowiązań przez strony. Sprzedawca ma prawo zmieniać warunki, publikując nową wersję na tej stronie." },
+      { h: "10. Prawa własności intelektualnej", blocks: [
+        { p: "Dane kartograficzne pochodzą z OpenStreetMap (© OpenStreetMap contributors, licencja ODbL); dane wysokościowe — ze źródeł otwartych. Wygenerowany model 3D jest udostępniany Kupującemu do osobistego, niekomercyjnego użytku i druku. Masowe komercyjne wykorzystanie lub odsprzedaż modeli wymaga odrębnego pisemnego porozumienia ze Sprzedawcą." },
+        { p: "Przesłana przez Kupującego trasa GPX stanowi własne dane Kupującego i jest przetwarzana wyłącznie w celu zbudowania jego modelu (zob. [privacy:Polityka prywatności]). Kupujący gwarantuje, że zamówiony przez niego tekst graweru nie narusza praw osób trzecich." },
       ] },
-      { h: "11. Dane Sprzedawcy", blocks: [
+      { h: "11. Dane osobowe", blocks: [
+        { p: "Składając zamówienie, Kupujący wyraża zgodę na przetwarzanie swoich danych osobowych (imię, dane kontaktowe, adres dostawy) wyłącznie w celu wykonania niniejszej Umowy, zgodnie z ustawą Ukrainy „O ochronie danych osobowych” oraz [privacy:Polityką prywatności]. Dane nie są przekazywane osobom trzecim, z wyjątkiem przypadków niezbędnych do realizacji zamówienia (przewoźnik, serwis płatniczy)." },
+      ] },
+      { h: "12. Odpowiedzialność i siła wyższa", blocks: [
+        { p: "Za niewykonanie lub nienależyte wykonanie zobowiązań strony ponoszą odpowiedzialność zgodnie z obowiązującym ustawodawstwem Ukrainy. Łączna odpowiedzialność Sprzedawcy z tytułu jakichkolwiek roszczeń jest ograniczona do kwoty zamówienia faktycznie zapłaconej przez Kupującego." },
+        { p: "Strony są zwolnione z odpowiedzialności za całkowite lub częściowe niewykonanie zobowiązań, jeżeli było ono skutkiem okoliczności siły wyższej: działań wojennych, ostrzałów, przerw w dostawie energii elektrycznej, klęsk żywiołowych, decyzji organów władzy, zakłóceń w pracy przewoźników itp. Terminy wykonania zobowiązań ulegają przedłużeniu o czas trwania takich okoliczności." },
+      ] },
+      { h: "13. Reklamacje i rozstrzyganie sporów", blocks: [
+        { p: "Reklamacje dotyczące zamówienia przyjmowane są pod adresem {email} lub telefonicznie pod numerem {phone}, z podaniem numeru zamówienia. Sprzedawca rozpatruje zgłoszenia w ciągu 1–3 dni roboczych. Spory rozstrzygane są w drodze negocjacji, a w przypadku braku porozumienia — w trybie określonym obowiązującym ustawodawstwem Ukrainy." },
+      ] },
+      { h: "14. Okres obowiązywania i zmiana warunków", blocks: [
+        { p: "Umowa wchodzi w życie z chwilą akceptacji oferty przez Kupującego i obowiązuje do pełnego wykonania zobowiązań przez strony. Sprzedawca ma prawo zmieniać warunki niniejszej oferty, publikując nową wersję na tej stronie; nowa wersja ma zastosowanie do zamówień złożonych po jej opublikowaniu. Aktualna wersja jest stale dostępna pod adresem {domain}/offer." },
+        { p: "Integralną częścią niniejszej Umowy są dokumenty: [refund:„Zwrot i wymiana środków”], [delivery:„Płatność i dostawa”], [privacy:„Polityka prywatności”] oraz [terms:„Warunki korzystania”]." },
+      ] },
+      { h: "15. Dane Sprzedawcy", blocks: [
         { kv: [
           { k: "Sprzedawca", v: "{ownerFull}" },
-          { k: "Numer podatkowy (IPN/RNOKPP)", v: "{taxId}" },
+          { k: "Numer podatkowy (RNOKPP)", v: "{taxId}" },
+          { k: "Rodzaj działalności (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
           { k: "Sklep", v: "{storeName}, {storeAddress}" },
-          { k: "Email", v: "{email}" },
+          { k: "E-mail", v: "{email}" },
           { k: "Telefon", v: "{phone}" },
         ] },
       ] },

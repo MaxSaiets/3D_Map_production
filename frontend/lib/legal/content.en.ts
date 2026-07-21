@@ -4,50 +4,93 @@ export const en: LegalSet = {
   offer: {
     title: "Public Offer Agreement",
     intro: [
-      "This document is an official public proposal (offer) by {ownerFull} (hereinafter the \"Seller\") to conclude an agreement for the sale of goods and provision of services on the terms set out below. By paying for an order on the {domain} website (hereinafter the \"Website\"), the Buyer confirms that they have fully read, understood and unconditionally accepted the terms of this Agreement (acceptance of the offer pursuant to Articles 633, 641, 642 of the Civil Code of Ukraine).",
+      "This document is an official public proposal (offer) by {ownerFull} (hereinafter the \"Seller\") to conclude a distance contract for the sale of goods and provision of services on the terms set out below, in accordance with Articles 633, 641 and 642 of the Civil Code of Ukraine and the Laws of Ukraine \"On Electronic Commerce\" and \"On Protection of Consumer Rights\".",
+      "By placing and/or paying for an order on the {domain} website (hereinafter the \"Website\"), the Buyer confirms that they have fully read, understood and unconditionally accepted the terms of this Agreement (acceptance of the offer). Acceptance of this offer is equivalent to concluding a contract in written form.",
     ],
     sections: [
       { h: "1. Definitions", blocks: [
-        { p: "Seller — {ownerShort}, Tax ID {taxId}." },
-        { p: "Buyer — any legally capable person who has placed an order on the Website." },
-        { p: "Goods / Service — a digital 3D model (a 3MF/STL file) of a city map or a map keychain, and/or the manufacture (3D printing) of a physical product from Eco PLA bioplastic made to the Buyer's individual order." },
+        { kv: [
+          { k: "Seller", v: "{ownerFull}, Tax ID (RNOKPP) {taxId}, single tax payer." },
+          { k: "Buyer", v: "any legally capable natural person or legal entity who has placed an order on the Website and accepted this offer." },
+          { k: "Website", v: "the {storeName} online store at {domain}, including the online 3D model builder." },
+          { k: "Builder", v: "the Website's software service in which the Buyer independently selects the parameters of the future product: map area, shape, size, format, engraving text, etc." },
+          { k: "Goods", v: "a physical product (a 3D-printed city map, wall panel, map keychain, magnet, etc.) made of Eco PLA bioplastic, manufactured to the Buyer's individual order." },
+          { k: "Digital content", v: "a generated digital 3D model (a 3MF/STL file) suitable for self-service 3D printing." },
+          { k: "Order", v: "the Buyer's request, placed through the Website, to purchase Goods and/or Digital content." },
+        ] },
       ] },
       { h: "2. Subject of the Agreement", blocks: [
-        { p: "The Seller undertakes to provide the Buyer with a digital 3D model and/or to manufacture and deliver a physical product to order, and the Buyer undertakes to accept and pay for them in accordance with the terms of this Agreement." },
-        { p: "Each product is manufactured individually according to parameters (location on the map, shape, size, text) that the Buyer selects themselves in the Website's designer, and is therefore goods made to order." },
+        { p: "The Seller undertakes, at the Buyer's request, to generate a digital 3D model and/or manufacture a physical product according to the Buyer's individual parameters and transfer it to the Buyer, and the Buyer undertakes to accept and pay for the Goods/Digital content on the terms of this Agreement." },
+        { p: "Each product is manufactured individually according to the parameters (location on the map, shape, size, text, colors) that the Buyer selects independently in the Builder. Accordingly, the Goods are products made to the Buyer's individual order within the meaning of the Law of Ukraine \"On Protection of Consumer Rights\"." },
+        { p: "The range, characteristics and indicative prices of the Goods are listed on the Website. Photographs and 3D previews are for information purposes: the finished product may have minor differences in material shade and layer texture, which is a natural feature of 3D printing technology and does not constitute a defect of the Goods." },
       ] },
       { h: "3. Placing an Order", blocks: [
-        { p: "The Buyer creates an order in the designer on the Website and provides contact details (name, phone, delivery method and address). The order is deemed accepted once it has been paid for or confirmed by an operator." },
-        { p: "The Buyer is responsible for the accuracy of the data provided. The Seller bears no responsibility for the consequences of errors in the data supplied by the Buyer." },
+        { ul: [
+          "The Buyer independently creates the model in the Builder: selects the city/map area, shape, size, format (relief/flat, magnet) and, optionally, engraving text or a GPX route.",
+          "Before checkout, the Buyer sees a 3D preview of the model and the final cost of the order.",
+          "To place the order, the Buyer provides contact details: name, phone, email if needed, delivery method and the carrier's address/branch.",
+          "The order is deemed accepted for fulfillment after it has been paid online or confirmed by an operator (by arrangement).",
+        ] },
+        { p: "The Buyer is solely responsible for the correctness of the selected model parameters (map area, text, size) and the accuracy of the contact details provided. The Seller bears no responsibility for the consequences of errors in the data supplied by the Buyer, including the manufacture of a product with erroneous text or map area that the Buyer themselves approved in the Builder." },
       ] },
       { h: "4. Price and Payment", blocks: [
-        { p: "Prices for goods and services are shown on the Website in hryvnia (for orders within Ukraine) and in euros (for delivery to the EU) and are indicative until the order is confirmed. The Buyer sees the final cost at the checkout step." },
-        { p: "Payment is made online through the LiqPay payment service (by Visa/Mastercard bank card) or by another agreed method. Downloading the finished digital file within the free limit is free of charge." },
-        { p: "Details are available on the [delivery:\"Payment and Delivery\"] page." },
+        { p: "Prices on the Website are shown in hryvnia (for orders within Ukraine) and in euros (indicative, for delivery to EU countries). The Buyer sees the final cost of the order at the checkout step, before payment. Delivery costs are not included in the price of the Goods and are paid separately at the carrier's tariffs." },
+        { p: "Payment is made online via the LiqPay payment service (JSC CB \"PrivatBank\"): by Visa/Mastercard bank card and other methods available in LiqPay. Payment card data is processed on the payment system's side; the Seller does not receive or store it." },
+        { p: "By arrangement with an operator, payment by another agreed method is possible. Downloading finished Digital content within the account's free limit is free of charge." },
+        { p: "The Goods are paid for in full before being sent to production, unless otherwise agreed by the parties. Details are on the [delivery:\"Payment and Delivery\"] page." },
       ] },
-      { h: "5. Manufacture and Delivery", blocks: [
-        { p: "The digital file is provided in your account / by email immediately or after the order is confirmed. The physical product is manufactured and dispatched within the time stated on the \"Payment and Delivery\" page, via Nova Poshta or Ukrposhta (Ukraine), Nova Post EU or Meest (EU)." },
+      { h: "5. Production Time", blocks: [
+        { p: "Digital content is generated automatically and provided in the Buyer's account / by email immediately after generation or after the order is confirmed." },
+        { p: "The estimated production time for a physical product is 1–3 business days from payment/confirmation of the order. In the event of high workload or technical complexity of the product, this time may be extended, of which the Seller notifies the Buyer." },
       ] },
-      { h: "6. Refunds", blocks: [
-        { p: "Since the goods are manufactured to individual order and the digital files are in the nature of electronic content, refunds are governed by a separate document — [refund:\"Refunds and Exchanges\"] — which forms an integral part of this Agreement." },
+      { h: "6. Delivery", blocks: [
+        { p: "Delivery within Ukraine is carried out by Nova Poshta (branch, parcel locker) or Ukrposhta. Delivery to EU countries — by Nova Post EU or Meest. The estimated delivery time within Ukraine is 2–4 business days after dispatch." },
+        { p: "Delivery costs are calculated at the carrier's tariffs and paid by the Buyer separately (usually on receipt). Title to the Goods and the risk of accidental damage pass to the Buyer upon receipt of the Goods from the carrier." },
+        { p: "Upon receipt, the Buyer must inspect the shipment for the integrity of the packaging and the product. In the event of damage in transit, it should be documented in the carrier's damage report and the Seller notified — such cases are resolved by a free reprint or a refund (see Section 8)." },
       ] },
-      { h: "7. Intellectual Property Rights", blocks: [
-        { p: "The cartographic data is provided by OpenStreetMap (ODbL), and the elevation data comes from open sources. The generated 3D model is provided to the Buyer for personal, non-commercial use and printing. A GPX route uploaded by the Buyer is their own data and is processed solely to build the model (see the [privacy:Privacy Policy])." },
+      { h: "7. Quality and Warranty", blocks: [
+        { p: "The Seller guarantees that the product conforms to the parameters approved by the Buyer in the Builder and that the print quality is proper. Physical products carry a 60-day warranty from the moment of receipt covering printing defects and delamination not caused by the Buyer." },
+        { p: "Natural features of FDM printing technology (visible print layers, slight differences in plastic shade between batches, process marks on the bottom surface) are not defects of the Goods." },
+        { p: "The Seller is not responsible for the print result on the Buyer's own equipment when the Buyer prints the downloaded Digital content themselves (the quality of such printing depends on the Buyer's printer, material and settings)." },
       ] },
-      { h: "8. Liability of the Parties", blocks: [
-        { p: "The Seller is not responsible for print quality on the Buyer's own equipment when the Buyer prints the downloaded file themselves. The Seller's aggregate liability is limited to the amount paid for the order." },
-        { p: "The parties are released from liability for failure to perform their obligations as a result of force majeure circumstances." },
+      { h: "8. Refunds and Exchanges", blocks: [
+        { p: "Since the Goods are manufactured to individual order according to the Buyer's unique parameters, Goods of proper quality are not subject to return or exchange (Law of Ukraine \"On Protection of Consumer Rights\"; the list of goods approved by Resolution of the Cabinet of Ministers of Ukraine No. 172 of 19.03.1994). Once access to the download has been provided, Digital content is non-refundable as electronic content the service for which has been consumed." },
+        { ul: [
+          "Before the order is sent to production, the Buyer may cancel it and receive a full refund.",
+          "In the event of a defect, damage in transit or non-conformity of the product with the approved parameters, the Seller, at the Buyer's choice, manufactures and sends a new product free of charge or refunds the full price.",
+          "If the Digital content is technically corrupted or fails to download through the Seller's fault, the file is regenerated free of charge or the money is refunded.",
+        ] },
+        { p: "The procedure and timeframes are described in the [refund:\"Refunds and Exchanges\"] document, which forms an integral part of this Agreement. Refunds are made using the same method by which payment was made (to the card via LiqPay), within the timeframes set by the rules of the payment system and the bank." },
       ] },
-      { h: "9. Personal Data", blocks: [
-        { p: "By placing an order, the Buyer consents to the processing of their personal data for the purpose of fulfilling the order in accordance with Ukraine's Law on the Protection of Personal Data and the [privacy:Privacy Policy]." },
+      { h: "9. Rights and Obligations of the Parties", blocks: [
+        { p: "The Seller shall: manufacture the Goods in accordance with the parameters approved by the Buyer; meet the stated deadlines; keep the Buyer informed of the order status; ensure the confidentiality of the Buyer's personal data." },
+        { p: "The Seller may: engage third parties to perform its obligations (carriers, payment services); suspend fulfillment of an order if it has not been paid for; refuse to manufacture a product whose content violates the laws of Ukraine (in particular, contains prohibited symbols or hate speech), with a full refund." },
+        { p: "The Buyer shall: provide accurate data for fulfilling the order; pay for the order; collect the Goods from the carrier within the shipment storage period." },
+        { p: "The Buyer may: receive Goods of proper quality within the stated time; receive information about the status of their order; file a complaint in the manner provided for by this Agreement." },
       ] },
-      { h: "10. Dispute Resolution and Term", blocks: [
-        { p: "Disputes are resolved through negotiation and, failing agreement, in accordance with the applicable laws of Ukraine. The Agreement is effective from the moment of acceptance until the parties have fully performed their obligations. The Seller has the right to amend the terms by publishing a new version on this page." },
+      { h: "10. Intellectual Property Rights", blocks: [
+        { p: "Cartographic data is provided by OpenStreetMap (© OpenStreetMap contributors, ODbL license); elevation data comes from open sources. The generated 3D model is provided to the Buyer for personal, non-commercial use and printing. Large-scale commercial use or resale of the models requires a separate written arrangement with the Seller." },
+        { p: "A GPX route uploaded by the Buyer is the Buyer's own data and is processed solely to build their model (see the [privacy:Privacy Policy]). The Buyer warrants that the engraving text they order does not infringe the rights of third parties." },
       ] },
-      { h: "11. Seller's Details", blocks: [
+      { h: "11. Personal Data", blocks: [
+        { p: "By placing an order, the Buyer consents to the processing of their personal data (name, contact details, delivery address) solely for the purpose of performing this Agreement, in accordance with the Law of Ukraine \"On Personal Data Protection\" and the [privacy:Privacy Policy]. The data is not shared with third parties except where necessary to fulfill the order (carrier, payment service)." },
+      ] },
+      { h: "12. Liability and Force Majeure", blocks: [
+        { p: "For non-performance or improper performance of obligations, the parties bear liability in accordance with the applicable laws of Ukraine. The Seller's aggregate liability under any claims is limited to the amount actually paid by the Buyer for the order." },
+        { p: "The parties are released from liability for full or partial non-performance of obligations if it resulted from force majeure circumstances: military action, shelling, power outages, natural disasters, decisions of public authorities, carrier disruptions, etc. Deadlines for performance are extended for the duration of such circumstances." },
+      ] },
+      { h: "13. Complaints and Dispute Resolution", blocks: [
+        { p: "Complaints regarding an order are accepted at {email} or by phone {phone}, stating the order number. The Seller reviews requests within 1–3 business days. Disputes are resolved through negotiation and, failing agreement, in the manner established by the applicable laws of Ukraine." },
+      ] },
+      { h: "14. Term and Amendment of the Terms", blocks: [
+        { p: "The Agreement enters into force upon the Buyer's acceptance of the offer and remains in effect until the parties have fully performed their obligations. The Seller may amend the terms of this offer by publishing a new version on this page; the new version applies to orders placed after its publication. The current version is permanently available at {domain}/offer." },
+        { p: "The following documents form integral parts of this Agreement: [refund:\"Refunds and Exchanges\"], [delivery:\"Payment and Delivery\"], [privacy:\"Privacy Policy\"] and [terms:\"Terms of Use\"]." },
+      ] },
+      { h: "15. Seller's Details", blocks: [
         { kv: [
           { k: "Seller", v: "{ownerFull}" },
-          { k: "Tax ID", v: "{taxId}" },
+          { k: "Tax ID (RNOKPP)", v: "{taxId}" },
+          { k: "Type of activity (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },
           { k: "Store", v: "{storeName}, {storeAddress}" },
           { k: "Email", v: "{email}" },
