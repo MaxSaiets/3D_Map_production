@@ -170,10 +170,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     desc: string;
     price: string;
   }> = [
-    { id: "map3d", img: "real-2", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "relief", img: "real-3", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
-    { id: "flat", img: "real-7", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "magnet", img: "real-8", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
+    { id: "map3d", img: "card-map3d", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "relief", img: "card-relief", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
+    { id: "flat", img: "card-flat", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "magnet", img: "card-magnet", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
   ];
 
   const generatingView = s.isGenerating;
@@ -227,7 +227,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <Link href="/keychains" className={cardBtnCls}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/showcase/real-4.webp"
+                  src="/showcase/card-keychain.webp"
                   alt={t("keychainTitle")}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
@@ -243,7 +243,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <Link href="/panno" className={cardBtnCls}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/showcase/real-10.webp"
+                  src="/showcase/card-panno.webp"
                   alt={t("pannoTitle")}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
@@ -257,7 +257,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <button type="button" onClick={onExitGuided} className={cardBtnCls} data-testid="scenario-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/showcase/real-9.webp"
+                  src="/showcase/card-full.webp"
                   alt={t("fullTitle")}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
