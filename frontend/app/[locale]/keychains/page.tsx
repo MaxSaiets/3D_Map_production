@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, User } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
+import { KeychainScenarioFlow } from "@/components/KeychainScenarioFlow";
 import { KeychainSlicerPreview } from "@/components/KeychainLifePreview";
 import {
   DEFAULT_KEYCHAIN_DESIGN,
@@ -117,6 +118,27 @@ export default function KeychainsPage() {
   const tKc = useTranslations("kc"); // локалізовані назви шаблонів брелків
   const t = useTranslations("kcp");
   const tCity = useTranslations("cities");
+  const tScen = useTranslations("kcScenario");
+  // GUIDED-РЕЖИМ (сценарний вхід, дзеркало /create): ДЕФОЛТ УВІМКНЕНО — новий
+  // користувач бачить 4 картки шаблонів + пошук місця замість важкої панелі.
+  // Вимикається карткою «Повний дизайнер» / «Підлаштувати деталі» (localStorage
+  // 3dmap_kc_guided_v1), вмикається кнопкою «← Простий режим». Deep-link
+  // ?template= = намір у повний конструктор → guided авто-вимикається БЕЗ запису.
+  const [guided, setGuidedState] = useState(true);
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("template")) {
+        setGuidedState(false);
+        return;
+      }
+      setGuidedState(localStorage.getItem("3dmap_kc_guided_v1") !== "0");
+    } catch { /* приватний режим → лишаємо guided on */ }
+  }, []);
+  const setGuided = (v: boolean) => {
+    setGuidedState(v);
+    try { localStorage.setItem("3dmap_kc_guided_v1", v ? "1" : "0"); } catch { /* ignore */ }
+  };
   // Вступний блок «що вийде». Стан тут (не в компоненті) — його читає й тур.
   const { introVisible, dismissIntro } = useIntroGate("intro_keychain_v1");
 
@@ -230,7 +252,8 @@ export default function KeychainsPage() {
     <div id="main-content" tabIndex={-1} className="min-h-[100dvh] bg-transparent">
       {/* UX: тур лише до першої генерації — не перекриває прогрес/3D-результат */}
       {/* Тур — лише ПІСЛЯ закриття вступного блоку (див. /create). */}
-      {!isGenerating && !downloadUrl && !introVisible && (
+      {/* GUIDED: тур не потрібен — сценарний флоу сам веде по кроках. */}
+      {!guided && !isGenerating && !downloadUrl && !introVisible && (
         <OnboardingTour
           storageKey="onb_keychain_v1"
           steps={[
@@ -291,7 +314,8 @@ export default function KeychainsPage() {
 
         {/* Вступ «ось що вийде» — реальні фото друків до інструмента. Див.
             ConstructorIntro: обвал воронки був на першому кроці. */}
-        {!isGenerating && !downloadUrl && (
+        {/* GUIDED: вступний блок зайвий — крок 1 сам показує «що вийде» (фото). */}
+        {!guided && !isGenerating && !downloadUrl && (
           <ConstructorIntro
             visible={introVisible}
             onDismiss={dismissIntro}
@@ -303,8 +327,9 @@ export default function KeychainsPage() {
         )}
 
         {/* Степер «Крок 1/2/3» прибрано (власник: зайвий chrome). Натомість —
-            компактний вибір міста (перенесено зі шапки). */}
-        <div className="mt-3 flex items-center gap-2 rounded-[18px] border border-[var(--surface-border)] bg-white/70 px-3 py-2">
+            компактний вибір міста (перенесено зі шапки). GUIDED ховає — там
+            пошук/швидкі міста прямо в панелі сценарію. */}
+        <div className={`${guided ? "hidden" : "flex"} mt-3 items-center gap-2 rounded-[18px] border border-[var(--surface-border)] bg-white/70 px-3 py-2`}>
           <span className="shrink-0 text-[12px] font-semibold text-[var(--text-secondary)]">{t("city")}</span>
           <select
             value={currentCityKey}
@@ -324,8 +349,9 @@ export default function KeychainsPage() {
           </select>
         </div>
 
-        {/* Перший крок — вибір форми брелка. */}
-        <div className="mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
+        {/* Перший крок — вибір форми брелка. GUIDED ховає — форму обирають
+            картки кроку 1 у KeychainScenarioFlow (той самий applyTemplate). */}
+        <div className={`${guided ? "hidden" : "block"} mt-3 rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-3 shadow-[0_18px_54px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4`}>
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {t("pickShape")}
             <span className="ml-auto rounded-full bg-[rgba(46,74,58,0.07)] px-2 py-0.5 text-[10px] normal-case tracking-normal text-[var(--accent-strong)]">
@@ -399,7 +425,57 @@ export default function KeychainsPage() {
             </div>
           </div>
 
+          {/* GUIDED: замість важкої панелі — сценарний флоу (order-1: на мобільному
+              він ПЕРШИЙ) + прихована «машинна» копія KeychainControlPanel, що
+              тримає полінг задачі, квота-гейт завантаження і OrderDialog (портали
+              у body) та слухає події monadruk:kc-guided-* (listenGuidedGenerate).
+              КАРТА, SVG-макет і 3D-превʼю лишаються видимими — guided це шар. */}
+          {guided ? (
+            <aside id="kc-settings" className="order-1 flex min-h-0 flex-col scroll-mt-3 lg:order-1 lg:col-start-1 lg:row-start-1 lg:h-[calc(100dvh-150px)]">
+              <KeychainScenarioFlow
+                onExitGuided={() => setGuided(false)}
+                onApplyTemplate={applyTemplate}
+                label={label}
+                onLabelChange={setLabel}
+                backLabel={backLabel}
+                onBackLabelChange={setBackLabel}
+                placeMarker={placeMarker}
+                onPlaceMarkerChange={setPlaceMarker}
+              />
+              <div className="hidden" aria-hidden="true">
+                <KeychainControlPanel
+                  label={label}
+                  onLabelChange={setLabel}
+                  label2={label2}
+                  onLabel2Change={setLabel2}
+                  backLabel={backLabel}
+                  onBackLabelChange={setBackLabel}
+                  placeMarker={placeMarker}
+                  onPlaceMarkerChange={setPlaceMarker}
+                  design={design}
+                  onDesignChange={setDesign}
+                  cropRotationDeg={cropRotationDeg}
+                  cropPolygon={cropPolygon}
+                  showStickyBar={false}
+                  listenGuidedGenerate
+                />
+              </div>
+            </aside>
+          ) : (
           <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:overflow-y-auto lg:backdrop-blur`}>
+            {/* Назад у сценарний вхід (guided) — маленька кнопка у шапці панелі. */}
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-2.5">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                {tScen("fullModeTitle")}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGuided(true)}
+                className="rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
+              >
+                {tScen("backToGuided")}
+              </button>
+            </div>
             <KeychainControlPanel
               label={label}
               onLabelChange={setLabel}
@@ -415,6 +491,7 @@ export default function KeychainsPage() {
               cropPolygon={cropPolygon}
             />
           </aside>
+          )}
 
           {/* PRODUCT LAYOUT — редактор форми. Перед картою (order-1). */}
           <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:h-[calc(100dvh-150px)]`}>

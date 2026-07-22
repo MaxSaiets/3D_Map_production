@@ -342,6 +342,8 @@ export function KeychainControlPanel({
   onDesignChange,
   cropRotationDeg = 0,
   cropPolygon = null,
+  showStickyBar = true,
+  listenGuidedGenerate = false,
 }: {
   label: string;
   onLabelChange: (value: string) => void;
@@ -363,6 +365,15 @@ export function KeychainControlPanel({
   /** 4 кути обернутого rect'а [[lon, lat], ...]. Backend обрізає OSM точно
    *  по полігону а не bbox — гарантовано показує тільки те що обрав юзер. */
   cropPolygon?: Array<[number, number]> | null;
+  /** StickyActionBar — портал у body: прихована (display:none) guided-копія
+   *  панелі інакше все одно малювала б мобільний бар. false = не монтуємо. */
+  showStickyBar?: boolean;
+  /** GUIDED-РЕЖИМ (/keychains сценарний вхід): прихована «машинна» копія панелі
+   *  слухає window-події `monadruk:kc-guided-generate|download|order` від
+   *  KeychainScenarioFlow і викликає ТІ САМІ handleGenerate/handleDownload/
+   *  orderNow (нуль дубльованої логіки). Проп гарантує, що слухає РІВНО ОДНА
+   *  копія панелі. */
+  listenGuidedGenerate?: boolean;
 }) {
   const t = useTranslations("kc");
   const locale = useLocale();
@@ -1050,6 +1061,25 @@ export function KeychainControlPanel({
     handleGenerate();
     setOrderOpen(true);
   };
+
+  // GUIDED-РЕЖИМ: KeychainScenarioFlow шле window-події → викликаємо ТІ САМІ
+  // хендлери, що й кнопки панелі. Без масиву залежностей — пересубскрайб
+  // щорендера тримає свіжі замикання (той самий патерн, що SimpleControlPanel).
+  useEffect(() => {
+    if (!listenGuidedGenerate) return;
+    const run = () => { void handleGenerate(); };
+    const dl = () => { void handleDownload(); };
+    const order = () => { orderNow(); };
+    window.addEventListener("monadruk:kc-guided-generate", run);
+    window.addEventListener("monadruk:kc-guided-download", dl);
+    window.addEventListener("monadruk:kc-guided-order", order);
+    return () => {
+      window.removeEventListener("monadruk:kc-guided-generate", run);
+      window.removeEventListener("monadruk:kc-guided-download", dl);
+      window.removeEventListener("monadruk:kc-guided-order", order);
+    };
+  });
+
   const currentStatus = isGenerating ? `${progress}% • ${status || t("status.generating")}` : downloadUrl ? t("status.ready3mf") : t("status.ready");
   const activeTaskStatus = activeTaskId ? taskStatuses[activeTaskId] : null;
   const generatedManifest = activeTaskStatus?.keychain_manifest;
@@ -1675,9 +1705,11 @@ export function KeychainControlPanel({
         />
 
         {/* Мобільний sticky-бар: лише головна дія (ціну у барі НЕ показуємо постійно —
-            власник: тільки при замовленні; ціна є на inline-кнопці й у формі). */}
-        <div className="h-20 lg:hidden" aria-hidden="true" />
-        <StickyActionBar
+            власник: тільки при замовленні; ціна є на inline-кнопці й у формі).
+            showStickyBar=false у прихованій guided-копії — бар це портал у body
+            і display:none обгортки його не сховала б. */}
+        {showStickyBar && <div className="h-20 lg:hidden" aria-hidden="true" />}
+        {showStickyBar && <StickyActionBar
           priceLabel={t("sticky.priceLabel")}
           price={null}
           actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
@@ -1707,7 +1739,7 @@ export function KeychainControlPanel({
           // Готово → «Завантажити»; до/під час → «Замовити» (order-now)
           secondaryLabel={downloadUrl ? t("sticky.download") : (selectedArea ? t("btn.order") : undefined)}
           onSecondary={downloadUrl ? handleDownload : (selectedArea ? orderNow : undefined)}
-        />
+        />}
 
         <section {...sectionProps("advanced")}>
           <SectionHeader
