@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Check, Home, KeyRound, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
@@ -76,6 +76,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // Напис на мапі — ОПЦІЙНИЙ (v3, юзер: «текст не по дефолту, а коли включаю»):
   // поле зʼявляється лише після кліку «Додати напис»; вибір сценарію чистить його.
   const [labelOn, setLabelOn] = useState(false);
+
+  // v3.1 (юзер: «не можна пересувати рамку, коли обрання будинку увімкнене»):
+  // режим кліку АВТО-ВИМИКАЄТЬСЯ одразу після вибору будинку — вибір лишається
+  // (друк дивиться на highlightPoints, не на прапор), а рамка знову рухома.
+  // Кнопка «Мій дім» повторним кліком повертає режим (додати ще/змінити).
+  const hlCountRef = useRef(0);
+  useEffect(() => {
+    if (s.mapHighlightBuilding && s.highlightPoints.length > hlCountRef.current) {
+      s.setMapHighlightBuilding(false);
+    }
+    hlCountRef.current = s.highlightPoints.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.highlightPoints.length, s.mapHighlightBuilding]);
 
   // ЖИВА ЦІНА на CTA: ТОЙ САМИЙ quote-механізм, що в SimpleControlPanel /
   // StickyActionBar (fetchQuote з бекенд-прайсу; fallback нижче — mapPrices.ts).
@@ -315,23 +328,21 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                       <button
                         type="button"
                         aria-pressed={s.mapHighlightBuilding}
-                        onClick={() => {
-                          const next = !s.mapHighlightBuilding;
-                          s.setMapHighlightBuilding(next);
-                          if (!next) s.clearHighlights();
-                        }}
+                        onClick={() => s.setMapHighlightBuilding(!s.mapHighlightBuilding)}
                         className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
                           s.mapHighlightBuilding
                             ? "border-[rgba(192,57,43,0.45)] bg-[rgba(192,57,43,0.1)] text-[#8f2a20]"
-                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                            : s.highlightPoints.length > 0
+                              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
                         }`}
                       >
-                        <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : "text-[var(--accent-strong)]"} />
-                        {s.mapHighlightBuilding && s.highlightPoints.length > 0
+                        <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : s.highlightPoints.length > 0 ? "text-[var(--accent-strong)]" : "text-[var(--accent-strong)]"} />
+                        {s.highlightPoints.length > 0
                           ? t("myHomeCount", { n: s.highlightPoints.length })
                           : t("myHome")}
                       </button>
-                      {s.mapHighlightBuilding && s.highlightPoints.length > 0 && (
+                      {s.highlightPoints.length > 0 && (
                         <button
                           type="button"
                           onClick={() => s.clearHighlights()}
@@ -345,7 +356,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
                       <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
                     )}
-                    {!labelOn ? (
+                    {/* Напис підтримує flat_plate-пайплайн: плоска/магніт завжди,
+                        а обʼємна — коли є дім-вставка (вона сама форсує flat). */}
+                    {(scenario === "flat" || scenario === "magnet" || s.highlightPoints.length > 0) && (!labelOn ? (
                       <button
                         type="button"
                         onClick={() => setLabelOn(true)}
@@ -376,7 +389,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                           <X size={14} />
                         </button>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
                 {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}

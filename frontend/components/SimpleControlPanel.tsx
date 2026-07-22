@@ -663,7 +663,11 @@ export function SimpleControlPanel({
     const frame = panelMode === 0 && s.simpleFrame;
     // ВИДІЛЕНА БУДІВЛЯ: окрема червона вставна деталь — будується у flat_plate, тож
     // вимагає плоского режиму (вмикає flatPlate). Сумісна з flatAms/конектор/рамка/магніт.
-    const highlight = panelMode === 0 && s.mapHighlightBuilding;
+    // Семантика «є точки → є підсвітка»: прапор mapHighlightBuilding = лише РЕЖИМ
+    // кліку (guided авто-вимикає його після вибору, щоб рамку знову можна було
+    // рухати) — тому друк орієнтується на самі точки. Повна панель при вимкненні
+    // тумблера чистить точки (clearHighlights) — off там і далі означає off.
+    const highlight = panelMode === 0 && (s.mapHighlightBuilding || s.highlightPoints.length > 0);
     // connector І highlight З рельєфом НЕ форсують flat (паз/виділення ріжуться у
     // рельєф 3D-булеаном); без рельєфу — форсують (пласка база). frame поки flat-only.
     const flatPlate = flatAms || frame || (connector && !reliefMode) || (highlight && !reliefMode);
@@ -720,7 +724,9 @@ export function SimpleControlPanel({
       frameStyle,
       mapHighlightBuilding: highlight,
       highlightPoints: highlight ? s.highlightPoints : [],
-      mapLabel: magnetMode && panelMode === 0 ? mapLabel : "",
+      // Напис підтримує flat_plate-пайплайн (плоска мапа/AMS/магніт/дім-вставка) —
+      // раніше гейт був лише під магнітом, і напис юзера мовчки викидався.
+      mapLabel: (magnetMode || flatPlate) && panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
       previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,
