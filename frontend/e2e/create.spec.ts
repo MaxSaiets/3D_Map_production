@@ -5,18 +5,25 @@ test.describe("Конструктор мап /create", () => {
     // GUIDED-режим (сценарний вхід) увімкнено ЗА ЗАМОВЧУВАННЯМ і ховає повний
     // конструктор — ця сьют тестує саме ПОВНИЙ UI, тож вимикаємо guided до
     // завантаження сторінки (addInitScript діє на всі наступні goto).
-    await page.addInitScript(() => localStorage.setItem("3dmap_guided_v1", "0"));
+    await page.addInitScript(() => {
+      localStorage.setItem("3dmap_guided_v1", "0");
+      // Інтро-оверлей «Ось що ви отримаєте» перекриває степер до першої
+      // взаємодії — сьют тестує сам конструктор, тож гасимо його одразу.
+      localStorage.setItem("intro_create_v1", "1");
+    });
     await page.goto("/uk/create");
     // чернетка з минулих прогонів не має впливати
     await page.evaluate(() => localStorage.removeItem("monadruk:draft:create"));
   });
 
-  test("UX: чесний степер (рамка готова) + ETA генерації + жодних hydration-помилок", async ({ page }) => {
+  test("UX: чесний крок-банер (стан рамки) + ETA генерації + жодних hydration-помилок", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => { if (msg.type() === "error") errors.push(msg.text()); });
     await page.goto("/uk/create");
-    // Степер не бреше «Виділено» — каже що рамка дефолтна і її можна пересунути
-    await expect(page.getByText(/рамка готова — пересунь або генеруй/).first()).toBeVisible();
+    // Старий текст «рамка готова — пересунь або генеруй» замінено КРОК-БАНЕРОМ над
+    // сценою (create.stepNextSize): дефолтна рамка авто-ставиться → банер чесно
+    // каже, що ділянку обрано і веде до наступної дії (розмір → замовлення).
+    await expect(page.getByText(/Ділянку обрано — оберіть розмір/).first()).toBeVisible({ timeout: 20_000 });
     // Чесне очікування: час генерації видно ДО кліку
     await expect(page.getByText(/≈ 1–3 хв/).first()).toBeAttached();
     // StickyActionBar більше не ламає гідрацію (раніше was: server HTML mismatch)
@@ -49,17 +56,20 @@ test.describe("Конструктор мап /create", () => {
     await expect(sticky.first()).toContainText(/₴/);
   });
 
-  test("Ф1b майстер: мобільна навігація уніфікована (єдиний степер, без дубль-табів)", async ({ page }) => {
+  test("Ф1b майстер: мобільна навігація уніфікована (одна сцена, без дубль-табів)", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/uk/create");
     await page.waitForTimeout(1000);
     // Прибрано старий ряд табів «Налаштування» і нижній «Швидкий статус · Дії»
     await expect(page.getByText(/Швидкий статус/)).toHaveCount(0);
-    // Єдина навігація — 3-кроковий степер; клік «Параметри» показує стиль/розмір
-    const steps = page.locator('nav[aria-label] > button');
-    await expect(steps).toHaveCount(3);
-    await steps.nth(1).click();
-    await expect(page.getByText(/Стиль|Розмір/).first()).toBeVisible();
+    // Степер із 3 кнопок свідомо ПРИБРАНО редизайном: навігація = ОДИН перемикач
+    // сцени «Карта / 3D-модель» (рендер заблоковано до генерації) без дублів.
+    await expect(page.locator('[data-testid="stage-map"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid="stage-render"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid="stage-map"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-testid="stage-render"]')).toBeDisabled();
+    // Панель налаштувань (розмір) — у потоці під сценою (без табів): видима
+    await expect(page.locator("#panel-settings-mobile").getByRole("radiogroup", { name: /Розмір/ })).toBeVisible();
   });
 
   test("Order-now: «Замовити» доступне ДО генерації + примітка «модель готується»", async ({ page }) => {
@@ -81,12 +91,19 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByPlaceholder(/Ім.?я та прізвище|Ім/).first()).toBeVisible();
   });
 
-  test("майстер: 3 клікабельні кроки Місце/Параметри/Готово", async ({ page }) => {
-    const steps = page.locator('nav[aria-label] > button');
-    await expect(steps).toHaveCount(3);
-    await expect(steps.nth(0)).toContainText("Місце");
-    await expect(steps.nth(1)).toContainText("Параметри");
-    await expect(steps.nth(2)).toContainText("Готово");
+  test("крок-банер: числовий бейдж і підказка наступної дії (замінив 3-кроковий степер)", async ({ page }) => {
+    // «Майстер із 3 клікабельних кроків» свідомо ПРИБРАНО редизайном — ту саму
+    // цінність (де я і що далі) дає тонкий КРОК-БАНЕР над сценою: бейдж 1/2/3 +
+    // текст наступної дії (create.markOneArea / stepNextSize / stepReadyOrder).
+    const banner = page.locator('div[aria-live="polite"]').first();
+    await expect(banner).toBeVisible();
+    // Дефолтна рамка авто-ставиться після завантаження карти → банер чесно
+    // переходить на крок 2 «Ділянку обрано — оберіть розмір…»
+    await expect(banner).toContainText(/Ділянку обрано — оберіть розмір/, { timeout: 20_000 });
+    await expect(banner.locator("span").first()).toHaveText("2");
+    // Сцена одна: перемикач «Карта / 3D-модель» (рендер до генерації заблоковано)
+    await expect(page.locator('[data-testid="stage-map"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-testid="stage-render"]')).toBeDisabled();
   });
 
   test("REGRESSION: зміна міста в шапці ПЕРЕЛІТАЄ карту (Рома: «карта не переходить»)", async ({ page }) => {
@@ -111,7 +128,9 @@ test.describe("Конструктор мап /create", () => {
   test("шаблон району → зона вибрана → Згенерувати активна", async ({ page }) => {
     await page.getByRole("button", { name: /Поділ/ }).first().click();
     await expect(page.locator("#panel-settings").getByText(/Ділянку вибрано/)).toBeVisible();
-    const genBtn = page.getByRole("button", { name: /Згенерувати модель/ }).first();
+    // «Згенерувати модель» перейменовано: на екрані швидке прев'ю (simple.generatePreview),
+    // друкарську якість генерують при замовленні.
+    const genBtn = page.getByRole("button", { name: /Згенерувати прев/ }).first();
     await expect(genBtn).toBeEnabled();
   });
 
@@ -176,8 +195,10 @@ test.describe("Конструктор мап /create", () => {
     // Перемикання у плоский формат → рельєф ЗНИКАЄ з DOM (під-опція лише «Об'ємна 3D»)
     await page.locator('[data-testid="format-flat"]').first().click();
     await expect(page.locator('[data-testid="relief-toggle"]')).toHaveCount(0);
-    // Пласкі будинки — суб-перемикач плоского режиму (під «Більше опцій»)
-    await page.locator('[data-testid="more-options"]').first().click();
+    // Пласкі будинки — суб-перемикач плоского режиму. «Налаштування» тепер
+    // АВТО-розкриваються, коли активна flat-опція (advancedActive) — повторний
+    // клік по more-options ЗАКРИВ би панель, тож не клікаємо.
+    await expect(page.locator('[data-testid="more-options"]').first()).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator('[data-testid="flat-buildings-toggle"]').first()).toBeVisible();
     // Повернення у 3D через чип формату → рельєф знову доступний і скинутий у false
     await page.locator('[data-testid="format-relief3d"]').first().click();
@@ -196,8 +217,10 @@ test.describe("Конструктор мап /create", () => {
     await expect(hl).toHaveAttribute("aria-pressed", "true");
     // підказка «клікни свої будинки» з'являється
     await expect(page.getByText(/Клікни сво/).first()).toBeVisible();
-    // клік по карті ставить точку → з'являється статус (Обрано: N) + кнопка очищення
-    await page.locator(".leaflet-container").first().click({ position: { x: 200, y: 180 } });
+    // клік по карті ставить точку → з'являється статус (Обрано: N) + кнопка очищення.
+    // ВАЖЛИВО: кліки ПОЗА рамкою друку тепер ігноруються (guard у MapSelector) —
+    // клікаємо в ЦЕНТР карти, де стоїть дефолтна авто-рамка.
+    await page.locator(".leaflet-container").first().click();
     await expect(page.getByText(/Обрано:/).first()).toBeVisible();
     const clear = page.locator('[data-testid="highlight-clear"]').first();
     await expect(clear).toBeVisible();
@@ -223,7 +246,8 @@ test.describe("Конструктор мап /create", () => {
     });
     await page.goto("/uk/create");
     await expect(page.getByText(/Something went wrong|getCenter is not a function/)).toHaveCount(0);
-    await expect(page.locator('nav[aria-label] > button')).toHaveCount(3);
+    // Степер прибрано редизайном → «сторінка жива» тепер підтверджує перемикач сцени
+    await expect(page.locator('[data-testid="stage-map"]')).toBeVisible();
     // зона з чернетки реконструйована як справжній LatLngBounds → панель бачить вибір
     await expect(page.locator("#panel-settings").getByText(/Ділянку вибрано/)).toBeVisible();
     await page.goto("/uk/keychains");
@@ -285,16 +309,20 @@ test.describe("Конструктор мап /create", () => {
     await page.goto("/uk/create");
     await page.waitForTimeout(800);
     await page.getByRole("button", { name: /Замовити друк/ }).first().click();
-    const dialog = page.locator(".fixed.inset-0", { hasText: "Орієнтовна вартість" });
+    // Модалка тепер має role="dialog"; заголовок ціни — «Вартість виробу»
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    // ціна: жива (≈ N ₴) або статичний fallback (від N ₴)
-    await expect(dialog.getByText(/[≈від]+\s*\d+\s*₴/)).toBeVisible();
+    await expect(dialog.getByText("Вартість виробу")).toBeVisible();
+    // ціна: жива (N ₴) або статичний fallback (від N ₴)
+    await expect(dialog.getByText(/\d+\s*₴/).first()).toBeVisible();
 
     // Регіон і служба доставки — це role="radio" (a11y), не button
     await dialog.getByRole("radio", { name: /Європа/ }).click();
     await expect(dialog.getByRole("radio", { name: "Nova Post (EU)" })).toBeVisible();
     await expect(dialog.getByRole("radio", { name: "Meest" })).toBeVisible();
-    const options = dialog.locator("select option");
-    await expect(options).toHaveCount(16); // плейсхолдер + 15 країн
+    // Жорсткий <select> країн замінено на input+datalist (можна ввести будь-яку
+    // країну ЄС) — підказок у датасписку 15
+    await expect(dialog.getByPlaceholder("Країна")).toBeVisible();
+    await expect(dialog.locator("datalist#eu-countries option")).toHaveCount(15);
   });
 });
