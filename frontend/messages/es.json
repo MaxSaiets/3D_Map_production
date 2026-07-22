@@ -1652,6 +1652,9 @@
     "mapLabelPlaceholder": "Texto en el mapa (ciudad, nombre…)",
     "etaNote": "Normalmente 1–2 minutos",
     "readyBadge": "Listo",
-    "changePlace": "Cambiar lugar"
+    "changePlace": "Cambiar lugar",
+    "addLabel": "Añadir texto en el mapa",
+    "updateModel": "Actualizar modelo",
+    "changeSomething": "¿Quiere cambiar algo?"
   }
 }

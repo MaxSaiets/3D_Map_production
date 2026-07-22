@@ -1652,6 +1652,9 @@
     "mapLabelPlaceholder": "Напис на мапі (місто, імʼя…)",
     "etaNote": "Зазвичай 1–2 хвилини",
     "readyBadge": "Готово",
-    "changePlace": "Змінити місце"
+    "changePlace": "Змінити місце",
+    "addLabel": "Додати напис на мапі",
+    "updateModel": "Оновити модель",
+    "changeSomething": "Хочете щось змінити?"
   }
 }

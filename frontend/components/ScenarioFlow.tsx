@@ -73,6 +73,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // started: генерацію запущено САМЕ з guided-флоу (відрізняємо від відновленої
   // з localStorage задачі минулої сесії — для неї success-екран не форсуємо).
   const [started, setStarted] = useState(false);
+  // Напис на мапі — ОПЦІЙНИЙ (v3, юзер: «текст не по дефолту, а коли включаю»):
+  // поле зʼявляється лише після кліку «Додати напис»; вибір сценарію чистить його.
+  const [labelOn, setLabelOn] = useState(false);
 
   // ЖИВА ЦІНА на CTA: ТОЙ САМИЙ quote-механізм, що в SimpleControlPanel /
   // StickyActionBar (fetchQuote з бекенд-прайсу; fallback нижче — mapPrices.ts).
@@ -123,6 +126,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     // ставимо потрібне значення (map3d = без рельєфу, relief = з рельєфом).
     s.setSimpleRelief(id === "relief");
     if (id !== "magnet") s.setModelSizeMm(80);
+    s.setSimpleMapLabel("");
+    setLabelOn(false);
     setScenario(id);
   };
 
@@ -170,7 +175,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
           {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
         </span>
-        {scenario !== null && !generatingView && !successView && (
+        {scenario !== null && !generatingView && (
           <button
             type="button"
             onClick={() => { setScenario(null); setStarted(false); }}
@@ -182,85 +187,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {generatingView ? (
-          /* ── ПРОГРЕС ГЕНЕРАЦІЇ ── */
-          <div className="flex flex-col items-stretch gap-3 py-4">
-            <div className="flex items-center gap-2 text-[15px] font-semibold text-[var(--text-primary)]">
-              <Loader2 size={18} className="animate-spin text-[var(--accent-strong)]" /> {t("generating")}
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(15,23,42,0.08)]">
-              <div
-                className="h-full rounded-full bg-[var(--accent-strong)] transition-all duration-700"
-                style={{ width: `${Math.max(4, Math.min(100, s.progress || 0))}%` }}
-              />
-            </div>
-            <p className="text-[13px] text-[var(--text-secondary)]" aria-live="polite">
-              {s.progress}%{s.status ? ` · ${s.status}` : ""}
-            </p>
-            <p className="text-[12px] text-[var(--text-secondary)]">{t("etaNote")}</p>
-            {/* Рекап (v2): панель під час генерації була порожня — тримаємо контекст
-                замовлення перед очима: що · розмір · ціна. */}
-            {scenario !== null && (
-              <div className="mt-1 rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3 text-[13px] text-[var(--text-primary)]">
-                <span className="font-semibold">{cards.find((c) => c.id === scenario)?.title}</span>
-                {scenario !== "magnet" && (
-                  <span className="text-[var(--text-secondary)]"> · {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.label ?? "M"} {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.cm ?? ""}</span>
-                )}
-                <span className="font-semibold text-[var(--accent-strong)]"> · {disp(ctaPriceUah)}</span>
-              </div>
-            )}
-          </div>
-        ) : successView ? (
-          /* ── ГОТОВО: превʼю показує сцена «3D-модель» праворуч/вище ── */
-          <div className="flex flex-col gap-3 py-2">
-            <div className="flex items-center gap-2 text-[17px] font-semibold text-[var(--text-primary)]">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Check size={15} /></span>
-              {t("readyTitle")}
-            </div>
-            <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">{t("readyHint")}</p>
-            {/* Рекап замовлення (v2): що · розмір · ціна — щоб рішення було легким. */}
-            {scenario !== null && (
-              <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3 text-[13px] text-[var(--text-primary)]">
-                <span className="font-semibold">{cards.find((c) => c.id === scenario)?.title}</span>
-                {scenario !== "magnet" && (
-                  <span className="text-[var(--text-secondary)]"> · {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.label ?? "M"} {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.cm ?? ""}</span>
-                )}
-                <span className="font-semibold text-[var(--accent-strong)]"> · {disp(ctaPriceUah)}</span>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
-            >
-              <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
-            </button>
-            <button
-              type="button"
-              onClick={onExitGuided}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-6 py-3 text-[14px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
-            >
-              <Sliders size={16} /> {t("tuneDetails")}
-            </button>
-            <div className="flex items-center justify-center gap-4">
-              {/* «Змінити місце» — назад на крок 2 зі збереженою зоною/розміром. */}
-              <button
-                type="button"
-                onClick={() => setStarted(false)}
-                className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
-              >
-                {t("changePlace")}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStarted(false); setScenario(null); }}
-                className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
-              >
-                {t("createAnother")}
-              </button>
-            </div>
-          </div>
-        ) : scenario === null ? (
+        {scenario === null ? (
           /* ── КРОК 1: ЩО СТВОРЮЄМО? ── */
           <div>
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step1Title")}</h2>
@@ -316,6 +243,52 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
           /* ── КРОК 2: ДЕ ВАШЕ МІСЦЕ? + розмір і CTA на тому ж екрані ──
               (карта лишається видимою поруч/вище; рамка зони — інтерактивна) */
           <div className="flex flex-col gap-3">
+            {/* ГОТОВО-банер (v3): модель є — головна дія зверху, а ВСІ контролі
+                НИЖЧЕ лишаються живими: міняй місце/дім/напис/розмір і одразу
+                «Оновити модель». Превʼю крутиться на сцені поруч — один екран. */}
+            {successView && (
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2 text-[16px] font-semibold text-[var(--text-primary)]">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Check size={15} /></span>
+                  {t("readyTitle")}
+                </div>
+                <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">{t("readyHint")}</p>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
+                >
+                  <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
+                </button>
+                <div className="flex items-center justify-center gap-4">
+                  <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
+                    {t("tuneDetails")}
+                  </button>
+                  <button type="button" onClick={() => { setStarted(false); setScenario(null); }} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
+                    {t("createAnother")}
+                  </button>
+                </div>
+                <div className="my-0.5 flex items-center gap-2">
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("changeSomething")}</span>
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                </div>
+              </div>
+            )}
+            {/* Генерація (v3): компактний прогрес над контролями — панель жива. */}
+            {generatingView && (
+              <div className="flex flex-col gap-2 rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3">
+                <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--text-primary)]">
+                  <Loader2 size={16} className="animate-spin text-[var(--accent-strong)]" /> {t("generating")}
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[rgba(15,23,42,0.08)]">
+                  <div className="h-full rounded-full bg-[var(--accent-strong)] transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, s.progress || 0))}%` }} />
+                </div>
+                <p className="text-[12px] text-[var(--text-secondary)]" aria-live="polite">
+                  {s.progress}%{s.status ? ` · ${s.status}` : ""} · {t("etaNote")}
+                </p>
+              </div>
+            )}
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
             {/* ПОШУК ПРЯМО В ПАНЕЛІ (v2): раніше поле жило лише на карті, а панель
                 давала довгу інструкцію «йдіть шукайте там» — погляд стрибав. Тепер
@@ -372,17 +345,38 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
                       <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
                     )}
-                    <label className="flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 focus-within:border-[rgba(11,92,87,0.45)]">
-                      <PenLine size={14} className="shrink-0 text-[var(--accent-strong)]" />
-                      <input
-                        value={s.simpleMapLabel}
-                        onChange={(e) => s.setSimpleMapLabel(e.target.value.slice(0, 24))}
-                        maxLength={24}
-                        placeholder={t("mapLabelPlaceholder")}
-                        aria-label={t("mapLabelPlaceholder")}
-                        className="w-full bg-transparent text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
-                      />
-                    </label>
+                    {!labelOn ? (
+                      <button
+                        type="button"
+                        onClick={() => setLabelOn(true)}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] transition hover:border-[rgba(11,92,87,0.35)]"
+                      >
+                        <PenLine size={15} className="text-[var(--accent-strong)]" /> {t("addLabel")}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 focus-within:border-[rgba(11,92,87,0.45)]">
+                          <PenLine size={14} className="shrink-0 text-[var(--accent-strong)]" />
+                          <input
+                            autoFocus
+                            value={s.simpleMapLabel}
+                            onChange={(e) => s.setSimpleMapLabel(e.target.value.slice(0, 24))}
+                            maxLength={24}
+                            placeholder={t("mapLabelPlaceholder")}
+                            aria-label={t("mapLabelPlaceholder")}
+                            className="w-full bg-transparent text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => { s.setSimpleMapLabel(""); setLabelOn(false); }}
+                          aria-label={t("myHomeClear")}
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}
@@ -419,15 +413,16 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {t("genFailed")}
                   </p>
                 )}
+                {!s.isGenerating && (
                 <button
                   type="button"
                   onClick={create}
-                  disabled={s.isGenerating}
                   data-testid="scenario-create"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {t("createModel")} · {disp(ctaPriceUah)}
+                  {successView ? t("updateModel") : t("createModel")} · {disp(ctaPriceUah)}
                 </button>
+                )}
                 {/* Вихід у повний конструктор ПРЯМО з кроку 2 (обіцяно в макеті):
                     стан (зона/формат/розмір) зберігається — юзер продовжує там же. */}
                 <button
