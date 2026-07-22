@@ -96,6 +96,8 @@ export default function KeychainsPage() {
   // label2 (другий рядок — дата/координати) теж піднято сюди, щоб дизайнер показав
   // його у превʼю (інакше гравіювалось без перегляду — WYSIWYG-розрив).
   const [label2, setLabel2] = useState("");
+  // Маркер «особливого місця» (♥/★/●) — піднято сюди, щоб дизайнер малював його одразу.
+  const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
   const [design, setDesign] = useState<KeychainDesignerConfig>(DEFAULT_KEYCHAIN_DESIGN);
   const [sidePreview, setSidePreview] = useState<"slicer" | "model3d">("model3d");
   const [cropRotationDeg, setCropRotationDeg] = useState(0);
@@ -405,6 +407,8 @@ export default function KeychainsPage() {
               onLabel2Change={setLabel2}
               backLabel={backLabel}
               onBackLabelChange={setBackLabel}
+              placeMarker={placeMarker}
+              onPlaceMarkerChange={setPlaceMarker}
               design={design}
               onDesignChange={setDesign}
               cropRotationDeg={cropRotationDeg}
@@ -442,6 +446,7 @@ export default function KeychainsPage() {
                       label={label}
                       label2={label2}
                       backLabel={backLabel}
+                      placeMarker={placeMarker}
                       onChange={setDesign}
                       cropRotationDeg={cropRotationDeg}
                       cropPolygon={cropPolygon}

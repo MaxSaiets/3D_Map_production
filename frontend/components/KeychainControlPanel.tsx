@@ -336,6 +336,8 @@ export function KeychainControlPanel({
   onLabel2Change,
   backLabel,
   onBackLabelChange,
+  placeMarker,
+  onPlaceMarkerChange,
   design,
   onDesignChange,
   cropRotationDeg = 0,
@@ -349,6 +351,9 @@ export function KeychainControlPanel({
   /** Текст звороту брелка — піднято на сторінку, щоб back-превʼю показав його. */
   backLabel: string;
   onBackLabelChange: (value: string) => void;
+  /** Маркер «особливого місця» (♥/★/●) — піднято на сторінку, щоб дизайнер показав його. */
+  placeMarker: "" | "heart" | "star" | "circle";
+  onPlaceMarkerChange: (value: "" | "heart" | "star" | "circle") => void;
   design: KeychainDesignerConfig;
   onDesignChange: (value: KeychainDesignerConfig) => void;
   /** Поворот рамки вибору ділянки на карті (з MapSelector). Додається до
@@ -420,7 +425,8 @@ export function KeychainControlPanel({
   // label2 піднято на сторінку (prop) — щоб дизайнер показав другий рядок у превʼю.
   const setLabel2 = onLabel2Change;
   // backLabel піднято на сторінку (prop) — щоб back-превʼю дизайнера його показав.
-  const [placeMarker, setPlaceMarker] = useState<"" | "heart" | "star" | "circle">("");
+  // placeMarker теж піднято на сторінку (prop) — дизайнер малює ♥/★/● одразу.
+  const setPlaceMarker = onPlaceMarkerChange;
   // Виділення будинку: користувач клікає СВІЙ будинок на карті → окрема ЧЕРВОНА
   // вставна деталь. Прапор + точки живуть у store (mapHighlightBuilding/
   // highlightPoints), бо панель монтується двічі та click-handler карти на них

@@ -964,6 +964,7 @@ export function KeychainDesigner({
   label,
   label2 = "",
   backLabel = "",
+  placeMarker = "",
   onChange,
   mapBounds,
   cropRotationDeg = 0,
@@ -975,6 +976,8 @@ export function KeychainDesigner({
   label2?: string;
   /** Текст на ЗВОРОТІ брелка (engraved). Показуємо у back-превʼю читабельно. */
   backLabel?: string;
+  /** Маркер «особливого місця» (♥/★/●) — показуємо на лиці там, де його ставить бекенд. */
+  placeMarker?: "" | "heart" | "star" | "circle";
   onChange: (value: KeychainDesignerConfig) => void;
   /** Bounds of the selected area on the main map. When provided, KeychainDesigner
    *  shows a real OSM tile preview inside the map area instead of generic stripes. */
@@ -1405,6 +1408,32 @@ export function KeychainDesigner({
                   </>
                 )}
               </g>
+              {/* D3: маркер «особливого місця» (♥/★/●) — рендеримо там, де його
+                  ставить бекенд (центр корпусу), щоб вибір було видно ОДРАЗУ, а не
+                  лише після генерації 3D. Поза map-маскою (маркер не «їсть» band). */}
+              {placeMarker && (
+                <g transform={`translate(${bodyCx} ${bodyCy})`} pointerEvents="none">
+                  {placeMarker === "circle" && <circle r={3} fill="#c0392b" opacity={0.95} />}
+                  {placeMarker === "star" && (
+                    <polygon
+                      points={Array.from({ length: 10 }, (_, i) => {
+                        const r = i % 2 === 0 ? 3 : 1.3;
+                        const a = ((-90 + i * 36) * Math.PI) / 180;
+                        return `${(r * Math.cos(a)).toFixed(2)},${(r * Math.sin(a)).toFixed(2)}`;
+                      }).join(" ")}
+                      fill="#c0392b"
+                      opacity={0.95}
+                    />
+                  )}
+                  {placeMarker === "heart" && (
+                    <path
+                      d="M0,2.6 C-2.4,0.9 -3,-0.3 -3,-1.1 C-3,-2.3 -2.1,-3 -1.2,-3 C-0.5,-3 0,-2.6 0,-2.0 C0,-2.6 0.5,-3 1.2,-3 C2.1,-3 3,-2.3 3,-1.1 C3,-0.3 2.4,0.9 0,2.6 Z"
+                      fill="#c0392b"
+                      opacity={0.95}
+                    />
+                  )}
+                </g>
+              )}
             </g>
           ) : (
             <g pointerEvents="none">

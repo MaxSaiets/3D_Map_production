@@ -4027,8 +4027,11 @@ def run_flat_plate_pipeline(
                     _model_mm_to_world_m(0.25, export_scale_factor)
                 ).buffer(0)
                 try:
+                    # D4: 1.2мм (було 0.3) — інакше біля літер лишались дрібні шматки
+                    # доріг/парків, що «збивають» текст (фото власника: чорні фрагменти
+                    # впритул до KYIV). 1.2мм = чиста зона читабельності.
                     _carve_hull = text_letter_poly.convex_hull.buffer(
-                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                        _model_mm_to_world_m(1.2, export_scale_factor), join_style=1
                     ).buffer(0)
                 except Exception:
                     _carve_hull = _carve_letters
@@ -4130,8 +4133,9 @@ def run_flat_plate_pipeline(
                         max_height=max((_b2[3] - _b2[1]) * 0.92, 1e-6),
                     )
                 if text2_letter_poly is not None and not getattr(text2_letter_poly, "is_empty", True):
+                    # D4: той самий 1.2мм зазор, що й для основного рядка.
                     _carve_hull2 = text2_letter_poly.convex_hull.buffer(
-                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
+                        _model_mm_to_world_m(1.2, export_scale_factor), join_style=1
                     ).buffer(0)
                     for _mname2 in ("road_mask", "parks_mask", "water_mask"):
                         try:
@@ -4172,6 +4176,62 @@ def run_flat_plate_pipeline(
                 print(f"[KEYCHAIN] Label band map-clear failed: {exc}")
         else:
             label_clear_band = None
+
+    # D2: МАРКЕР «особливого місця» (♥/★/●) — вирізаємо його слід (+0.25мм зазор)
+    # із пласких шарів ЗАЗДАЛЕГІДЬ, щоб маркер сидів у чистому пазі, а не перетинався
+    # обʼємами з дорогами/парками (перекриття різних філаментів слайсер «збиває»).
+    # Полігон рахуємо ТІЄЮ Ж формулою, що будує сам меш маркера нижче (центроїд body,
+    # той самий розмір/форма) → ідеальний збіг паза і вставки. Будинки під маркером
+    # вирізаються далі — у спільному carve-блоці будівель.
+    marker_carve_poly = None
+    if keychain_mode and keychain_layout is not None:
+        _mk0 = str(getattr(request, "keychain_place_marker", "") or "").lower().strip()
+        if _mk0 and _mk0 not in ("none", "off"):
+            try:
+                _mk_shape0 = {"dot": "circle", "pin": "circle", "round": "circle"}.get(_mk0, _mk0)
+                if _mk_shape0 not in ("heart", "star", "circle"):
+                    _mk_shape0 = "heart"
+                _mk_size0 = float(getattr(request, "keychain_place_marker_size_mm", 6.0) or 6.0)
+                _mk_half0 = _model_mm_to_world_m(_mk_size0 / 2.0, export_scale_factor)
+                _bc0 = keychain_layout["body"].centroid
+                _mk_poly0 = _keychain_body_shape(
+                    _bc0.x - _mk_half0, _bc0.y - _mk_half0, _bc0.x + _mk_half0, _bc0.y + _mk_half0,
+                    radius_m=_mk_half0 * 0.3, shape=_mk_shape0,
+                )
+                if _mk_poly0 is not None and not _mk_poly0.is_empty:
+                    marker_carve_poly = _mk_poly0.buffer(
+                        _model_mm_to_world_m(0.25, export_scale_factor)
+                    ).buffer(0)
+                    if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                        road_mask = _subtract_geometry(road_mask, marker_carve_poly)
+                    if parks_mask is not None and not getattr(parks_mask, "is_empty", True):
+                        parks_mask = _subtract_geometry(parks_mask, marker_carve_poly)
+                    if water_mask is not None and not getattr(water_mask, "is_empty", True):
+                        water_mask = _subtract_geometry(water_mask, marker_carve_poly)
+                    print(f"[KEYCHAIN] Marker pocket carved from flat layers ({_mk_shape0})")
+            except Exception as _mkc_exc:
+                print(f"[KEYCHAIN] marker pocket carve failed (non-fatal): {_mkc_exc}")
+
+    # D4: АНТИ-ПИЛ — після вирізів (текст/маркер) на пласких шарах лишаються
+    # мікро-фрагменти (<0.8мм²), які на друці стають «пилом» і збивають текст.
+    if keychain_mode:
+        try:
+            _sliver_min_area = (_model_mm_to_world_m(1.0, export_scale_factor) ** 2) * 0.8
+            def _drop_slivers(_g):
+                if _g is None or getattr(_g, "is_empty", True):
+                    return _g
+                _parts = list(getattr(_g, "geoms", [_g]))
+                _kept = [p for p in _parts if getattr(p, "area", 0.0) >= _sliver_min_area]
+                if not _kept:
+                    return None
+                if len(_kept) == len(_parts):
+                    return _g
+                return unary_union(_kept).buffer(0)
+            road_mask = _drop_slivers(road_mask)
+            parks_mask = _drop_slivers(parks_mask)
+            water_mask = _drop_slivers(water_mask)
+        except Exception as _sl_exc:
+            print(f"[KEYCHAIN] sliver cleanup failed (non-fatal): {_sl_exc}")
 
     # ПРЕМІУМ-РАМКА (компас + масштабна лінійка + координати): рахуємо ДО побудови
     # шарів, щоб вирізати її silhouette з road/parks/water (як map_label) — текст/
@@ -4417,22 +4477,33 @@ def run_flat_plate_pipeline(
         # ВИРІЗАЄМО ФОРМУ ЛІТЕР з footprint-ів будівель → текст не лежить ЗВЕРХУ
         # будівлі, а сидить у вирізаному слід-у (юзер: «будівлі вирізались під
         # текст, бо зараз текст просто наклада[ється]»).
-        if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True) and gdf_buildings_local is not None:
+        _has_text_carve = text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True)
+        _has_marker_carve = marker_carve_poly is not None and not getattr(marker_carve_poly, "is_empty", True)
+        if (_has_text_carve or _has_marker_carve) and gdf_buildings_local is not None:
             try:
                 # C3: зазор навколо тексту 1.2мм (був 0.3мм) — будинки заввишки до
                 # ~3.2мм більше не тиснуться до нижчого напису (~1.8мм). Вирізаємо
                 # convex hull КОЖНОГО рядка (не спільний — щоб не чистити мапу між
                 # рядками), включно з 2-м рядком, який раніше з будинків не вирізався.
+                # D2: + слід МАРКЕРА (♥/★/●) — будинки під ним теж вирізаються, щоб
+                # маркер сидів у чистому пазі (гейт працює і без тексту).
                 try:
-                    _carve_polys = [text_letter_poly]
-                    if text2_letter_poly is not None and not getattr(text2_letter_poly, "is_empty", True):
-                        _carve_polys.append(text2_letter_poly)
-                    carve_b = unary_union([
-                        _p.convex_hull.buffer(_model_mm_to_world_m(1.2, export_scale_factor), join_style=1)
-                        for _p in _carve_polys
-                    ]).buffer(0)
+                    _carve_parts = []
+                    if _has_text_carve:
+                        _polys = [text_letter_poly]
+                        if text2_letter_poly is not None and not getattr(text2_letter_poly, "is_empty", True):
+                            _polys.append(text2_letter_poly)
+                        _carve_parts.extend(
+                            _p.convex_hull.buffer(_model_mm_to_world_m(1.2, export_scale_factor), join_style=1)
+                            for _p in _polys
+                        )
+                    if _has_marker_carve:
+                        _carve_parts.append(marker_carve_poly)
+                    carve_b = unary_union(_carve_parts).buffer(0)
                 except Exception:
-                    carve_b = text_letter_poly.buffer(_model_mm_to_world_m(1.0, export_scale_factor)).buffer(0)
+                    carve_b = (text_letter_poly if _has_text_carve else marker_carve_poly).buffer(
+                        _model_mm_to_world_m(1.0, export_scale_factor)
+                    ).buffer(0)
                 kept_geoms = []
                 for _, _row in gdf_buildings_local.iterrows():
                     _g = _row.geometry
