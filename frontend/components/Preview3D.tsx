@@ -1691,6 +1691,11 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
       >
         <Canvas
           style={{ width: '100%', height: '100%', display: 'block' }}
+          // preserveDrawingBuffer: без нього WebGL очищає буфер після компонування,
+          // і toDataURL (знімок прев'ю для замовлення / мініатюра в кабінеті) виходить
+          // ПОРОЖНІМ — «прев'ю 2» приходило оператору білим кадром. З ним знімок читає
+          // фактично відрендерену сцену.
+          gl={{ preserveDrawingBuffer: true }}
           // Surface a hard WebGL context-creation failure (no GPU / driver) to the
           // error boundary instead of leaving an invisible/broken canvas.
           onCreated={({ gl }) => {
