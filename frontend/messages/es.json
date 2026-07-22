@@ -1083,7 +1083,8 @@
       "backEmpty": "El texto del reverso aparece aquí",
       "front": "Anverso",
       "back": "Reverso",
-      "pickArea": "Elige un área en el mapa"
+      "pickArea": "Elige un área en el mapa",
+      "hasBackText": "Texto en el reverso"
     },
     "tpl": {
       "classicWide": {

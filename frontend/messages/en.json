@@ -1083,7 +1083,8 @@
       "backEmpty": "Back text appears here",
       "front": "Front",
       "back": "Back",
-      "pickArea": "Pick an area on the map"
+      "pickArea": "Pick an area on the map",
+      "hasBackText": "Text on the back"
     },
     "tpl": {
       "classicWide": {

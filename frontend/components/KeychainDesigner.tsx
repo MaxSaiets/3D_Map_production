@@ -1148,11 +1148,27 @@ export function KeychainDesigner({
           type="button"
           onClick={() => setPreviewSide("back")}
           aria-pressed={previewSide === "back"}
-          className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+          className={`relative min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
         >
           {t("designer.back")}
+          {/* Крапка-індикатор: на звороті є текст — щоб користувач помітив вкладку. */}
+          {backLabel.trim() && (
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[#5eead4]" aria-hidden />
+          )}
         </button>
       </div>
+      {/* Помітна підказка на ЛИЦІ, що на звороті є гравіювання (клік → показати зворот).
+          Раніше користувачі не помічали, що там взагалі є текст. */}
+      {previewSide === "front" && backLabel.trim() && (
+        <button
+          type="button"
+          onClick={() => setPreviewSide("back")}
+          className="absolute left-3 top-12 z-20 inline-flex max-w-[70%] items-center gap-1.5 rounded-full border border-[#5eead4]/40 bg-black/40 px-3 py-1.5 text-[11px] font-semibold text-[#5eead4] backdrop-blur hover:bg-black/55"
+        >
+          <span aria-hidden>✍</span>
+          <span className="truncate">{t("designer.hasBackText")}: «{backLabel.trim()}»</span>
+        </button>
+      )}
       <svg
         ref={svgRef}
         data-testid="keychain-designer-svg"

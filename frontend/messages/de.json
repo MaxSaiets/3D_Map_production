@@ -1083,7 +1083,8 @@
       "backEmpty": "Rückseitentext erscheint hier",
       "front": "Vorderseite",
       "back": "Rückseite",
-      "pickArea": "Wähle einen Bereich auf der Karte"
+      "pickArea": "Wähle einen Bereich auf der Karte",
+      "hasBackText": "Text auf der Rückseite"
     },
     "tpl": {
       "classicWide": {

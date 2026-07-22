@@ -1083,7 +1083,8 @@
       "backEmpty": "Tekst z tyłu pojawi się tutaj",
       "front": "Awers",
       "back": "Rewers",
-      "pickArea": "Wybierz obszar na mapie"
+      "pickArea": "Wybierz obszar na mapie",
+      "hasBackText": "Tekst z tyłu"
     },
     "tpl": {
       "classicWide": {

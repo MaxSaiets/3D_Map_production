@@ -1083,7 +1083,8 @@
       "backEmpty": "Le texte du dos apparaît ici",
       "front": "Recto",
       "back": "Verso",
-      "pickArea": "Choisissez une zone sur la carte"
+      "pickArea": "Choisissez une zone sur la carte",
+      "hasBackText": "Texte au dos"
     },
     "tpl": {
       "classicWide": {
