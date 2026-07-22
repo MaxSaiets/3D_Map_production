@@ -400,7 +400,10 @@
     "trustNoPrepayDesc": "paiement après confirmation",
     "trustOperator": "Un opérateur confirmera les détails avant l’impression",
     "trustSecure": "Vos données sont sécurisées et utilisées uniquement pour la commande",
-    "submitReassure": "En cliquant, vous ne payez rien — vous envoyez juste une demande"
+    "submitReassure": "En cliquant, vous ne payez rien — vous envoyez juste une demande",
+    "loginPrompt": "Connectez-vous pour enregistrer votre modèle et suivre votre commande.",
+    "loginCta": "Se connecter",
+    "savedToAccount": "La commande sera enregistrée dans {email}"
   },
   "contact": {
     "errPhone": "Indique un numéro de téléphone",
@@ -675,6 +678,7 @@
     "standard": "Standard",
     "limitNotice": "Vous avez utilisé vos 5 téléchargements gratuits. Appuyez sur « Nous contacter » ci-dessous — et nous conviendrons de l'impression/du paiement.",
     "myOrders": "Mes commandes",
+    "orderStatusPending": "En attente de paiement",
     "orderStatusNew": "Acceptée",
     "orderStatusPaid": "Payée",
     "orderStatusPrinted": "Imprimée",

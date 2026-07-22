@@ -28,11 +28,11 @@ function prettyClicks(rows?: [string, number][]): [string, number][] {
 }
 
 // Статуси замовлення (серверні значення) → ключі account-неймспейсу (вже перекладені).
-const ORDER_STATUSES = ["new", "paid", "printed", "shipped", "done"] as const;
+const ORDER_STATUSES = ["pending_payment", "new", "paid", "printed", "shipped", "done"] as const;
 type OrderStatus = (typeof ORDER_STATUSES)[number];
 const ORDER_STATUS_KEYS: Record<OrderStatus, string> = {
-  new: "orderStatusNew", paid: "orderStatusPaid", printed: "orderStatusPrinted",
-  shipped: "orderStatusShipped", done: "orderStatusDone",
+  pending_payment: "orderStatusPending", new: "orderStatusNew", paid: "orderStatusPaid",
+  printed: "orderStatusPrinted", shipped: "orderStatusShipped", done: "orderStatusDone",
 };
 
 export default function AdminPage() {

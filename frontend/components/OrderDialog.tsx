@@ -69,7 +69,7 @@ export function OrderDialog({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   // payment: { provider?: "liqpay", action_url?, data?, signature?, url?, label? }
   const [payment, setPayment] = useState<any>(null);
-  const { getIdToken } = useAuth();
+  const { getIdToken, user, signIn } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -296,6 +296,25 @@ export function OrderDialog({
             </div>
 
             <div className="space-y-3">
+              {/* Мʼяка пропозиція входу: зберегти модель у кабінеті + бачити статус
+                  замовлення. НЕ блокує — гостьове замовлення далі працює. */}
+              {user ? (
+                <div className="flex items-center gap-2 rounded-2xl border border-[rgba(47,74,60,0.18)] bg-[rgba(47,74,60,0.06)] px-3 py-2 text-[12px] leading-4 text-[var(--text-primary)]">
+                  <CheckCircle2 size={15} className="shrink-0 text-[var(--accent-strong)]" />
+                  <span>{t("savedToAccount", { email: user.email || "" })}</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[rgba(142,107,61,0.28)] bg-[rgba(142,107,61,0.08)] px-3 py-2 text-[12px] leading-4 text-[var(--text-primary)]">
+                  <span className="min-w-0 flex-1">{t("loginPrompt")}</span>
+                  <button
+                    type="button"
+                    onClick={() => { try { signIn(); } catch { /* ignore */ } }}
+                    className="shrink-0 rounded-full bg-[var(--accent-strong)] px-3 py-1.5 text-[12px] font-bold text-white hover:opacity-90"
+                  >
+                    {t("loginCta")}
+                  </button>
+                </div>
+              )}
               {modelPending && (
                 <div className="flex items-center gap-2 rounded-2xl border border-[rgba(11,92,87,0.2)] bg-[rgba(15,118,110,0.07)] px-3 py-2 text-[12px] leading-4 text-[var(--text-primary)]">
                   <span aria-hidden>🛠</span>

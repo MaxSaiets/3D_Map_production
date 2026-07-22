@@ -400,7 +400,10 @@
     "trustNoPrepayDesc": "Zahlung nach Bestellbestätigung",
     "trustOperator": "Ein Operator klärt die Details vor dem Druck",
     "trustSecure": "Ihre Daten sind sicher und nur für die Bestellung",
-    "submitReassure": "Mit dem Klick zahlen Sie noch nichts — nur eine Anfrage"
+    "submitReassure": "Mit dem Klick zahlen Sie noch nichts — nur eine Anfrage",
+    "loginPrompt": "Melden Sie sich an, um Ihr Modell zu speichern und die Bestellung zu verfolgen.",
+    "loginCta": "Anmelden",
+    "savedToAccount": "Bestellung wird in {email} gespeichert"
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -675,6 +678,7 @@
     "standard": "Standard",
     "limitNotice": "Sie haben alle 5 kostenlosen Downloads aufgebraucht. Tippen Sie unten auf „Kontakt“ — und wir vereinbaren Druck/Zahlung.",
     "myOrders": "Meine Bestellungen",
+    "orderStatusPending": "Zahlung ausstehend",
     "orderStatusNew": "Angenommen",
     "orderStatusPaid": "Bezahlt",
     "orderStatusPrinted": "Gedruckt",

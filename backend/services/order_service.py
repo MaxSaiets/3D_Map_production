@@ -237,10 +237,22 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     output_file = payload.get("output_file")
     screenshots: List[str] = payload.get("screenshots") or []
 
+    # Стартовий статус: якщо доступна онлайн-оплата (LiqPay/payment_url) — замовлення
+    # ще НЕ підтверджене (pending_payment), доки не прийде успішна оплата (mark_order_paid
+    # перемкне на paid). Так покинуті на кроці оплати замовлення не виглядають як
+    # підтверджені й не засмічують дошку. Ручна оплата/без LiqPay → одразу "new".
+    _online_pay = bool(payload.get("payment_url"))
+    if not _online_pay:
+        try:
+            from services.liqpay import is_configured as _liqpay_on
+            _online_pay = _liqpay_on()
+        except Exception:  # noqa: BLE001
+            _online_pay = False
+    _start_status = "pending_payment" if _online_pay else "new"
     record = {
         "order_number": order_number,
         "created_at": now.isoformat(),
-        "status": "new",
+        "status": _start_status,
         **{k: payload.get(k) for k in (
             "name", "phone", "product_type", "task_id",
             "delivery_method", "delivery_country", "delivery_city", "delivery_branch",
@@ -284,15 +296,7 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     if payload.get("user_email"):
         lines.append(f"👥 Акаунт: {payload['user_email']}")
     lines.append("")
-    # Онлайн-оплата активна, якщо налаштовано LiqPay (динамічний checkout) АБО заданий
-    # статичний payment_url з конфігу. Інакше — оплата узгоджується вручну.
-    _online_pay = bool(payload.get("payment_url"))
-    if not _online_pay:
-        try:
-            from services.liqpay import is_configured as _liqpay_on
-            _online_pay = _liqpay_on()
-        except Exception:  # noqa: BLE001
-            _online_pay = False
+    # _online_pay уже обчислено вище (при виборі стартового статусу замовлення).
     if _online_pay:
         lines.append("💳 Клієнт оплачує онлайн (LiqPay · Visa/Mastercard). "
                      "Підтвердження оплати прийде окремим повідомленням «💰 ОПЛАЧЕНО» — "
@@ -337,7 +341,9 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {"order_number": order_number, "telegram": True}
 
 
-ORDER_STATUSES = ("new", "paid", "printed", "shipped", "done")
+# pending_payment = замовлення створене, але онлайн-оплата ще не підтверджена
+# (клієнт на кроці LiqPay або покинув оплату). Успішна оплата → paid.
+ORDER_STATUSES = ("pending_payment", "new", "paid", "printed", "shipped", "done")
 
 
 def set_order_status(order_number: str, status: str) -> bool:

@@ -40,8 +40,8 @@ interface AccOrder {
 }
 
 const ORDER_STATUS_KEYS: Record<string, string> = {
-  new: "orderStatusNew", paid: "orderStatusPaid", printed: "orderStatusPrinted",
-  shipped: "orderStatusShipped", done: "orderStatusDone",
+  pending_payment: "orderStatusPending", new: "orderStatusNew", paid: "orderStatusPaid",
+  printed: "orderStatusPrinted", shipped: "orderStatusShipped", done: "orderStatusDone",
 };
 
 export default function AccountPage() {
