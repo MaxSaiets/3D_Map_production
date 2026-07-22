@@ -126,6 +126,7 @@ export function SimpleControlPanel({
   onAdvanced,
   showStickyBar = true,
   onSeriesGenerated,
+  listenGuidedGenerate = false,
 }: {
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
@@ -140,6 +141,12 @@ export function SimpleControlPanel({
   // Продовження панно: після генерації серії-сітки віддаємо клітини з task_id
   // батьку (/create) → авто-збереження сітки (золоті куплені клітини).
   onSeriesGenerated?: (cells: Array<{ row: number; col: number; task_id?: string; zone_id?: string }>) => void;
+  // GUIDED-РЕЖИМ (/create сценарний вхід): прихована «машинна» копія панелі
+  // слухає window-подію `monadruk:guided-generate` від ScenarioFlow і запускає
+  // ТУ САМУ handleGenerate, що й кнопка «Створити прев'ю» (нуль дубльованої
+  // логіки запиту). Проп гарантує, що слухає РІВНО ОДНА копія — інакше при
+  // подвійному монтуванні (desktop+mobile) подія стартувала б ДВІ генерації.
+  listenGuidedGenerate?: boolean;
 }) {
   const t = useTranslations("simple");
   const locale = useLocale();
@@ -871,6 +878,16 @@ export function SimpleControlPanel({
       setGenerating(false);
     }
   };
+
+  // GUIDED-РЕЖИМ: ScenarioFlow шле `monadruk:guided-generate` → викликаємо ту
+  // САМУ handleGenerate (прев'ю), що й кнопка «Створити прев'ю». Без масиву
+  // залежностей — пересубскрайб щорендера тримає свіже замикання handleGenerate.
+  useEffect(() => {
+    if (!listenGuidedGenerate) return;
+    const run = () => { handleGenerate(); };
+    window.addEventListener("monadruk:guided-generate", run);
+    return () => window.removeEventListener("monadruk:guided-generate", run);
+  });
 
   // ЗАМОВИТИ ОДРАЗУ: користувач не мусить чекати 1-3 хв перед замовленням.
   // Клік стартує генерацію у фоні (set taskGroupId) і ВІДРАЗУ відкриває форму.

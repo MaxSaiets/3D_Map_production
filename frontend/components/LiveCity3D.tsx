@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useGenerationStore } from "@/store/generation-store";
 
 type Bounds = { north: number; south: number; east: number; west: number };
 
@@ -312,6 +313,19 @@ function stitchArcs(arcs: Pts[]): Pts[] {
   return rings;
 }
 
+/** Ray-cast point-in-polygon у lon/lat — для підсвітки обраного будинку («мій дім»)
+ *  у живому превʼю: точки кліків зберігаються як [lon,lat], контури OSM теж. */
+function pointInLonLatPolygon(pt: [number, number], poly: Array<[number, number]>): boolean {
+  const [x, y] = pt;
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 function polygonArea(pts: Pts): number {
   let a = 0;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -462,14 +476,23 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
   }, [bounds.north, bounds.south, bounds.east, bounds.west, cropKey, cropRotationDeg, design.mapXMm, design.mapYMm, design.mapWidthMm, design.mapHeightMm]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
+  // C2: обраний будинок («мій дім», червона вставка) — точки кліків зі стору;
+  // позначаємо відповідні контури в превʼю, щоб вибір було ВИДНО одразу.
+  const hlEnabled = useGenerationStore((s) => s.mapHighlightBuilding);
+  const hlPoints = useGenerationStore((s) => s.highlightPoints);
+
   // Фільтр + конвертація — тільки те що буде друкуватися
   const printable = useMemo(() => {
     if (!data) return { buildings: [], roads: [], water: [], parks: [], plazas: [], fountains: [], trees: [], bridges: [] };
     const { lonLatToMm, mmPerM } = project;
     // Buildings: пропускаємо ті де min-розмір < MIN_PRINT_MM
     const buildings = data.buildings
-      .map((b) => b.points.map(([lon, lat]) => lonLatToMm(lon, lat)))
-      .filter((pts) => {
+      .map((b) => ({
+        pts: b.points.map(([lon, lat]) => lonLatToMm(lon, lat)),
+        // hl: хоч одна точка кліку всередині ОРИГІНАЛЬНОГО lon/lat-контуру
+        hl: hlEnabled && hlPoints.length > 0 && hlPoints.some((p) => pointInLonLatPolygon(p, b.points)),
+      }))
+      .filter(({ pts }) => {
         if (pts.length < 3) return false;
         const area = polygonArea(pts);
         // М'якший поріг — показуємо все що ≥ 0.5×0.5mm (видимий блок).
@@ -511,7 +534,7 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
         rMm: Math.max(0.6, t.radiusM * mmPerM),
       }));
     return { buildings, roads, water, parks, plazas, bridges, fountains, trees };
-  }, [data, project]);
+  }, [data, project, hlEnabled, hlPoints]);
 
   return { printable, loading, error, hasData: !!data };
 }
@@ -550,8 +573,14 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
           strokeLinejoin="round"
         />
       ))}
-      {printable.buildings.map((pts, i) => (
-        <path key={`b-${i}`} d={pointsToPath(pts)} fill="#cfc1a3" stroke="#a89a7d" strokeWidth={0.15} />
+      {printable.buildings.map((b, i) => (
+        <path
+          key={`b-${i}`}
+          d={pointsToPath(b.pts)}
+          fill={b.hl ? "#c0392b" : "#cfc1a3"}
+          stroke={b.hl ? "#8f2a20" : "#a89a7d"}
+          strokeWidth={b.hl ? 0.25 : 0.15}
+        />
       ))}
     </>
   );

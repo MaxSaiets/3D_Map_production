@@ -13,6 +13,7 @@ import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ConstructorIntro, useIntroGate } from "@/components/ConstructorIntro";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
+import { ScenarioFlow } from "@/components/ScenarioFlow";
 import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
 import { saveGrid, getGrid } from "@/lib/grids";
@@ -125,6 +126,27 @@ export default function Home() {
   useEffect(() => { setPendingRot(gridRotationDeg); }, [gridRotationDeg]);
   const [currentCityKey, setCurrentCityKey] = useState("Kyiv");
   const [proMode, setProMode] = useState(false);
+  // GUIDED-РЕЖИМ (сценарний вхід): ДЕФОЛТ УВІМКНЕНО для всіх — новий користувач
+  // бачить 3 кроки замість ~43 контролів. Вимикається «Повний конструктор» /
+  // «Підлаштувати деталі» (localStorage), вмикається кнопкою «← Простий режим».
+  // Deep-link параметри (?template/?city/?grid/?capture) = намір у повний
+  // конструктор → guided авто-вимикається (БЕЗ запису в localStorage).
+  const tSc = useTranslations("scenario");
+  const [guided, setGuidedState] = useState(true);
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("template") || p.get("city") || p.get("grid") || p.get("capture")) {
+        setGuidedState(false);
+        return;
+      }
+      setGuidedState(localStorage.getItem("3dmap_guided_v1") !== "0");
+    } catch { /* приватний режим → лишаємо guided on */ }
+  }, []);
+  const setGuided = (v: boolean) => {
+    setGuidedState(v);
+    try { localStorage.setItem("3dmap_guided_v1", v ? "1" : "0"); } catch { /* ignore */ }
+  };
   useEffect(() => {
     try {
       const pro = localStorage.getItem("3dmap_pro_mode") === "1";
@@ -560,7 +582,8 @@ export default function Home() {
           і прогрес. Текст без «панелі зліва» (на мобілці її нема — там таби). */}
       {/* Тур — лише ПІСЛЯ закриття вступного блоку: два онбординги нараз
           (блок «що вийде» + плаваюча підказка) захаращували перший екран. */}
-      {!isGenerating && !downloadUrl && !introVisible && (
+      {/* GUIDED: тур не потрібен — сценарний флоу сам веде по кроках. */}
+      {!guided && !isGenerating && !downloadUrl && !introVisible && (
         <OnboardingTour
           storageKey="onb_create_v1"
           steps={[
@@ -620,7 +643,8 @@ export default function Home() {
         {/* Вступ «ось що вийде» — ДО інструмента. Воронка показувала обвал
             view→area (71%): людина бачила чужу карту Києва й не розуміла,
             що отримає. Зникає назавжди після першої взаємодії. */}
-        {!isGenerating && !downloadUrl && (
+        {/* GUIDED: вступний блок теж зайвий — крок 1 сам показує «що вийде». */}
+        {!guided && !isGenerating && !downloadUrl && (
           <ConstructorIntro
             visible={introVisible}
             onDismiss={dismissIntro}
@@ -632,17 +656,50 @@ export default function Home() {
         )}
 
         <div className="mt-3 flex flex-1 flex-col gap-3 lg:min-h-0 lg:grid lg:grid-cols-[380px,minmax(0,1fr)]">
-          <aside id="panel-settings" className="hidden min-h-0 lg:block">
+          {/* GUIDED: aside стає видимим і на мобільному (order-2 = ПІД картою),
+              всередині — ScenarioFlow (монтується РІВНО РАЗ — локальний step-стан
+              не розсинхронізовується, на відміну від панелей ×2) + прихована
+              «машинна» копія SimpleControlPanel: тримає полінг статусу задачі,
+              OrderDialog (слухач monadruk:open-order → портал у body) і запуск
+              генерації по події monadruk:guided-generate. Візуально — нуль
+              контролів (display:none). */}
+          <aside id="panel-settings" className={guided ? "order-2 min-h-0 lg:order-none lg:block" : "hidden min-h-0 lg:block"}>
+            {guided ? (
+              <>
+                <ScenarioFlow onExitGuided={() => setGuided(false)} />
+                <div className="hidden" aria-hidden="true">
+                  <SimpleControlPanel
+                    availableCities={CITIES}
+                    selectedCityKey={currentCityKey}
+                    onCityChange={handleCityChange}
+                    cityLabel={tCity}
+                    showStickyBar={false}
+                    listenGuidedGenerate
+                    onSeriesGenerated={handleSeriesGenerated}
+                  />
+                </div>
+              </>
+            ) : (
             <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   {proMode ? tc("expertMode") : tc("quickCreate")}
                 </span>
+                <div className="flex items-center gap-1.5">
+                  {/* Назад у сценарний вхід (guided) — маленька кнопка в шапці панелі. */}
+                  <button
+                    type="button"
+                    onClick={() => setGuided(true)}
+                    className="rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
+                  >
+                    {tSc("backToGuided")}
+                  </button>
                 <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
                   <button type="button" onClick={() => toggleProMode(false)}
                     className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modeSimple")}</button>
                   <button type="button" onClick={() => toggleProMode(true)}
                     className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modePro")}</button>
+                </div>
                 </div>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
@@ -676,6 +733,7 @@ export default function Home() {
                 )}
               </div>
             </div>
+            )}
           </aside>
 
           {/* map2model-стиль: ОДНА велика сцена на всю ширину — карта АБО 3D-рендер,
@@ -720,7 +778,7 @@ export default function Home() {
                 але НІДЕ не рендерився — новий користувач не бачив «що робити далі».
                 Тонкий рядок над сценою: поточний крок + наступна дія. Видно на
                 мобільному І десктопі; ховається лише під час генерації (там прогрес). */}
-            {!isGenerating && (
+            {!isGenerating && !guided && (
               <div className="order-0 flex shrink-0 items-center gap-2 rounded-full border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.07)] px-3.5 py-1.5" aria-live="polite">
                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[11px] font-bold text-white">
                   {downloadUrl ? "3" : (hasMapSelection || zoneCount > 0) ? "2" : "1"}
@@ -748,8 +806,9 @@ export default function Home() {
                     форма клітинок + збереження — лише у режимі сітки. */}
 
                 {/* ВИБІР ФОРМИ ФІГУРИ — лишається У ПОТОЦІ над картою ЛИШЕ для
-                    одиночної ділянки (single-режим не чіпаємо). */}
-                {!showHexGrid && (
+                    одиночної ділянки (single-режим не чіпаємо). GUIDED ховає
+                    (сценарний вхід = мінімум контролів; форма = у повному UI). */}
+                {!showHexGrid && !guided && (
                   <div role="radiogroup" aria-label={tc("shapeFieldLabel")} className="mx-4 mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0">
                     <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{tc("shapeFieldLabel")}</span>
                     {FIGURE_SHAPES.map((sh) => (
@@ -833,6 +892,9 @@ export default function Home() {
                       (скарга «елементи перекривають»). У single-zone опускаємо панель
                       нижче кластера повороту (lg:top-[80px], бо кластер ~46px + різні
                       positioned-ancestors); у серії повороту немає → лишаємо top-2. */}
+                  {/* GUIDED ховає плаваючу картку керування (Ділянка/Серія + сітка) —
+                      сценарний вхід працює лише з одиночною зоною. */}
+                  {!guided && (
                   <div className={`relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)] ${showHexGrid ? "lg:top-2" : "lg:top-[80px]"}`}>
                     {/* Сегмент-контрол: дві пігулки в один ряд (доступно в ОБОХ режимах). */}
                     <div className="flex items-center gap-1" role="tablist" aria-label={tc("selectionModeAria")}>
@@ -932,6 +994,7 @@ export default function Home() {
                       </>
                     )}
                   </div>
+                  )}
 
                   {/* gridNotice — плаваючий тост ВНИЗУ по центру карти (не штовхає мапу). */}
                   {gridNotice && (
@@ -1005,17 +1068,30 @@ export default function Home() {
             )}
             </div>{/* /sticky stage wrapper */}
 
+            {/* GUIDED: мобільна копія панелей НЕ рендериться (ScenarioFlow уже
+                стоїть під картою через aside order-2; «машинна» копія — в aside). */}
+            {!guided && (
             <div id="panel-settings-mobile" className={settingsPanelClasses}>
               <div className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
                 <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                     {proMode ? tc("expertMode") : tc("quickCreate")}
                   </span>
+                  <div className="flex items-center gap-1.5">
+                    {/* Назад у сценарний вхід (guided). */}
+                    <button
+                      type="button"
+                      onClick={() => setGuided(true)}
+                      className="rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
+                    >
+                      {tSc("backToGuided")}
+                    </button>
                   <div className="flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 p-0.5 text-xs">
                     <button type="button" onClick={() => toggleProMode(false)}
                       className={`rounded-full px-3 py-1 font-semibold transition ${!proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modeSimple")}</button>
                     <button type="button" onClick={() => toggleProMode(true)}
                       className={`rounded-full px-3 py-1 font-semibold transition ${proMode ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>{tc("modePro")}</button>
+                  </div>
                   </div>
                 </div>
                 {proMode ? (
@@ -1045,6 +1121,7 @@ export default function Home() {
                 )}
               </div>
             </div>
+            )}
           </section>
         </div>
       </div>

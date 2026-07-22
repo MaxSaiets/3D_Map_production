@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Конструктор мап /create", () => {
   test.beforeEach(async ({ page }) => {
+    // GUIDED-режим (сценарний вхід) увімкнено ЗА ЗАМОВЧУВАННЯМ і ховає повний
+    // конструктор — ця сьют тестує саме ПОВНИЙ UI, тож вимикаємо guided до
+    // завантаження сторінки (addInitScript діє на всі наступні goto).
+    await page.addInitScript(() => localStorage.setItem("3dmap_guided_v1", "0"));
     await page.goto("/uk/create");
     // чернетка з минулих прогонів не має впливати
     await page.evaluate(() => localStorage.removeItem("monadruk:draft:create"));
