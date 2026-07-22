@@ -1643,6 +1643,15 @@
     "createAnother": "Створити ще одну",
     "backToGuided": "← Простий режим",
     "sizeTitle": "Оберіть розмір",
-    "advancedSettings": "Розширені налаштування"
+    "advancedSettings": "Розширені налаштування",
+    "personalizeTitle": "Зробіть її особливою",
+    "myHome": "Мій дім на мапі",
+    "myHomeCount": "Мій дім: {n} обрано",
+    "myHomeClear": "Прибрати виділення",
+    "myHomeHintClick": "Клікніть свій будинок на карті — він стане окремою червоною вставкою",
+    "mapLabelPlaceholder": "Напис на мапі (місто, імʼя…)",
+    "etaNote": "Зазвичай 1–2 хвилини",
+    "readyBadge": "Готово",
+    "changePlace": "Змінити місце"
   }
 }

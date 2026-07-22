@@ -1643,6 +1643,15 @@
     "createAnother": "Crear otro",
     "backToGuided": "← Modo simple",
     "sizeTitle": "Elija el tamaño",
-    "advancedSettings": "Ajustes avanzados"
+    "advancedSettings": "Ajustes avanzados",
+    "personalizeTitle": "Hágalo personal",
+    "myHome": "Mi casa en el mapa",
+    "myHomeCount": "Mi casa: {n} seleccionado",
+    "myHomeClear": "Quitar selección",
+    "myHomeHintClick": "Haga clic en su edificio en el mapa — se convierte en un inserto rojo aparte",
+    "mapLabelPlaceholder": "Texto en el mapa (ciudad, nombre…)",
+    "etaNote": "Normalmente 1–2 minutos",
+    "readyBadge": "Listo",
+    "changePlace": "Cambiar lugar"
   }
 }

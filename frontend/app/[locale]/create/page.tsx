@@ -1049,7 +1049,10 @@ export default function Home() {
                     (2/3 не відкривали форму). CTA прямо в картці превʼю, коли
                     модель готова; відкриває OrderDialog через глобальну подію
                     (той самий канал, що «Швидкий статус»). */}
-                {downloadUrl && !isGenerating && (
+                {/* У guided НЕ показуємо (v2): панель ScenarioFlow уже має бронзову
+                    «Замовити друк · ціна» + рекап — два однакові CTA на екрані
+                    виглядали як баг. У повному режимі CTA лишається (воронка). */}
+                {downloadUrl && !isGenerating && !guided && (
                   <div className="border-t border-[var(--surface-border)] px-4 py-3 sm:px-5">
                     <button
                       type="button"

@@ -1643,6 +1643,15 @@
     "createAnother": "En créer un autre",
     "backToGuided": "← Mode simple",
     "sizeTitle": "Choisissez la taille",
-    "advancedSettings": "Paramètres avancés"
+    "advancedSettings": "Paramètres avancés",
+    "personalizeTitle": "Rendez-la personnelle",
+    "myHome": "Ma maison sur la carte",
+    "myHomeCount": "Ma maison : {n} sélectionné",
+    "myHomeClear": "Effacer la sélection",
+    "myHomeHintClick": "Cliquez votre bâtiment sur la carte — il devient un insert rouge séparé",
+    "mapLabelPlaceholder": "Texte sur la carte (ville, prénom…)",
+    "etaNote": "Généralement 1–2 minutes",
+    "readyBadge": "Prêt",
+    "changePlace": "Changer de lieu"
   }
 }

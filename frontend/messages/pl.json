@@ -1643,6 +1643,15 @@
     "createAnother": "Utwórz kolejny",
     "backToGuided": "← Tryb prosty",
     "sizeTitle": "Wybierz rozmiar",
-    "advancedSettings": "Ustawienia zaawansowane"
+    "advancedSettings": "Ustawienia zaawansowane",
+    "personalizeTitle": "Spersonalizuj ją",
+    "myHome": "Mój dom na mapie",
+    "myHomeCount": "Mój dom: {n} wybrano",
+    "myHomeClear": "Wyczyść wybór",
+    "myHomeHintClick": "Kliknij swój budynek na mapie — stanie się osobną czerwoną wstawką",
+    "mapLabelPlaceholder": "Napis na mapie (miasto, imię…)",
+    "etaNote": "Zwykle 1–2 minuty",
+    "readyBadge": "Gotowe",
+    "changePlace": "Zmień miejsce"
   }
 }

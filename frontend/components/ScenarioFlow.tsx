@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, KeyRound, Loader2, MapPin, ShoppingBag, Sliders } from "lucide-react";
+import { ArrowLeft, Check, Home, KeyRound, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
+import { MapSearchBox } from "@/components/MapSearchBox";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link — інакше лінк на
 // /keychains з /en/create губив би префікс локалі.
 import { Link } from "@/i18n/navigation";
@@ -59,6 +60,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     setSimpleRelief: st.setSimpleRelief,
     setPreviewMode: st.setPreviewMode,
     setShowHexGrid: st.setShowHexGrid,
+    // Персоналізація (юзер: «немає легких доступів до вказати будинок, текст»):
+    mapHighlightBuilding: st.mapHighlightBuilding,
+    highlightPoints: st.highlightPoints,
+    setMapHighlightBuilding: st.setMapHighlightBuilding,
+    clearHighlights: st.clearHighlights,
+    simpleMapLabel: st.simpleMapLabel,
+    setSimpleMapLabel: st.setSimpleMapLabel,
   })));
 
   const [scenario, setScenario] = useState<ScenarioId | null>(null);
@@ -160,7 +168,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       {/* Шапка: степ-індикатор + назад до сценаріїв */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          {t("stepOf", { step: displayStep })}
+          {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
         </span>
         {scenario !== null && !generatingView && !successView && (
           <button
@@ -189,6 +197,18 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
             <p className="text-[13px] text-[var(--text-secondary)]" aria-live="polite">
               {s.progress}%{s.status ? ` · ${s.status}` : ""}
             </p>
+            <p className="text-[12px] text-[var(--text-secondary)]">{t("etaNote")}</p>
+            {/* Рекап (v2): панель під час генерації була порожня — тримаємо контекст
+                замовлення перед очима: що · розмір · ціна. */}
+            {scenario !== null && (
+              <div className="mt-1 rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3 text-[13px] text-[var(--text-primary)]">
+                <span className="font-semibold">{cards.find((c) => c.id === scenario)?.title}</span>
+                {scenario !== "magnet" && (
+                  <span className="text-[var(--text-secondary)]"> · {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.label ?? "M"} {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.cm ?? ""}</span>
+                )}
+                <span className="font-semibold text-[var(--accent-strong)]"> · {disp(ctaPriceUah)}</span>
+              </div>
+            )}
           </div>
         ) : successView ? (
           /* ── ГОТОВО: превʼю показує сцена «3D-модель» праворуч/вище ── */
@@ -198,12 +218,22 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               {t("readyTitle")}
             </div>
             <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">{t("readyHint")}</p>
+            {/* Рекап замовлення (v2): що · розмір · ціна — щоб рішення було легким. */}
+            {scenario !== null && (
+              <div className="rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3 text-[13px] text-[var(--text-primary)]">
+                <span className="font-semibold">{cards.find((c) => c.id === scenario)?.title}</span>
+                {scenario !== "magnet" && (
+                  <span className="text-[var(--text-secondary)]"> · {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.label ?? "M"} {SIMPLE_SIZES.find((z) => z.mm === s.modelSizeMm)?.cm ?? ""}</span>
+                )}
+                <span className="font-semibold text-[var(--accent-strong)]"> · {disp(ctaPriceUah)}</span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
             >
-              <ShoppingBag size={18} /> {t("orderPrint")}
+              <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
             </button>
             <button
               type="button"
@@ -212,13 +242,23 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
             >
               <Sliders size={16} /> {t("tuneDetails")}
             </button>
-            <button
-              type="button"
-              onClick={() => { setStarted(false); setScenario(null); }}
-              className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
-            >
-              {t("createAnother")}
-            </button>
+            <div className="flex items-center justify-center gap-4">
+              {/* «Змінити місце» — назад на крок 2 зі збереженою зоною/розміром. */}
+              <button
+                type="button"
+                onClick={() => setStarted(false)}
+                className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
+              >
+                {t("changePlace")}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStarted(false); setScenario(null); }}
+                className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
+              >
+                {t("createAnother")}
+              </button>
+            </div>
           </div>
         ) : scenario === null ? (
           /* ── КРОК 1: ЩО СТВОРЮЄМО? ── */
@@ -277,7 +317,12 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               (карта лишається видимою поруч/вище; рамка зони — інтерактивна) */
           <div className="flex flex-col gap-3">
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
-            <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">{t("step2Hint")}</p>
+            {/* ПОШУК ПРЯМО В ПАНЕЛІ (v2): раніше поле жило лише на карті, а панель
+                давала довгу інструкцію «йдіть шукайте там» — погляд стрибав. Тепер
+                друкуєш адресу тут; та сама подія monadruk:map-goto → автозона. */}
+            <div className="rounded-full border border-[var(--surface-border)] bg-white/80 px-1.5 py-0.5 focus-within:border-[rgba(11,92,87,0.45)]">
+              <MapSearchBox variant="panel" />
+            </div>
             {!s.selectedArea ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-medium text-[var(--text-secondary)]">
                 <MapPin size={15} className="animate-pulse text-[var(--accent-strong)]" /> {t("waitingPlace")}
@@ -286,6 +331,59 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <>
                 <div className="inline-flex items-center gap-2 self-start rounded-full border border-[rgba(11,92,87,0.35)] bg-[rgba(15,118,110,0.1)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)]">
                   <Check size={15} className="text-[var(--accent-strong)]" /> {t("placeChosen")}
+                </div>
+                {/* ПЕРСОНАЛІЗАЦІЯ (v2, юзер: «немає легких доступів»): мій дім +
+                    напис — емоційне ядро продукту, тепер на видноті. Обидва
+                    контроли пишуть у ті САМІ поля стору, що й повний конструктор. */}
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("personalizeTitle")}</p>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        aria-pressed={s.mapHighlightBuilding}
+                        onClick={() => {
+                          const next = !s.mapHighlightBuilding;
+                          s.setMapHighlightBuilding(next);
+                          if (!next) s.clearHighlights();
+                        }}
+                        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
+                          s.mapHighlightBuilding
+                            ? "border-[rgba(192,57,43,0.45)] bg-[rgba(192,57,43,0.1)] text-[#8f2a20]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                        }`}
+                      >
+                        <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : "text-[var(--accent-strong)]"} />
+                        {s.mapHighlightBuilding && s.highlightPoints.length > 0
+                          ? t("myHomeCount", { n: s.highlightPoints.length })
+                          : t("myHome")}
+                      </button>
+                      {s.mapHighlightBuilding && s.highlightPoints.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => s.clearHighlights()}
+                          aria-label={t("myHomeClear")}
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                    {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
+                      <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
+                    )}
+                    <label className="flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 focus-within:border-[rgba(11,92,87,0.45)]">
+                      <PenLine size={14} className="shrink-0 text-[var(--accent-strong)]" />
+                      <input
+                        value={s.simpleMapLabel}
+                        onChange={(e) => s.setSimpleMapLabel(e.target.value.slice(0, 24))}
+                        maxLength={24}
+                        placeholder={t("mapLabelPlaceholder")}
+                        aria-label={t("mapLabelPlaceholder")}
+                        className="w-full bg-transparent text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+                      />
+                    </label>
+                  </div>
                 </div>
                 {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}
                 {scenario === "magnet" ? (
