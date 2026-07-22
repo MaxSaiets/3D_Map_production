@@ -1589,5 +1589,21 @@
       "s3b": "1–3 días laborables, Nova Poshta",
       "cta": "Crear mi llavero"
     }
+  },
+  "orderSuccess": {
+    "checkingTitle": "Confirmando su pago…",
+    "checkingBody": "Espere unos segundos mientras confirmamos su pago.",
+    "paidTitle": "¡Gracias! Pago recibido",
+    "paidBody": "Su pedido está pagado y enviado a producción. Lo imprimiremos y lo enviaremos con el transportista.",
+    "pendingTitle": "Pedido recibido",
+    "pendingBody": "Si acaba de pagar, el estado se actualizará en unos minutos. Si el pago no se completó, nos pondremos en contacto con usted para confirmarlo.",
+    "orderLabel": "Pedido",
+    "step1": "Producción — 1–3 días hábiles",
+    "step2": "Envío mediante Nova Poshta con número de seguimiento",
+    "step3": "Consulte el estado de su pedido en su cuenta",
+    "toAccount": "Mi cuenta",
+    "makeAnother": "Crear otro",
+    "toHome": "Inicio",
+    "support": "¿Tiene preguntas? Contáctenos — los datos están al pie de la página."
   }
 }
