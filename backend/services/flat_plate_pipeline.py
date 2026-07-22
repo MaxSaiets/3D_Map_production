@@ -4150,7 +4150,11 @@ def run_flat_plate_pipeline(
             except Exception as exc:
                 print(f"[KEYCHAIN] label2 polygon failed (non-fatal): {exc}")
                 text2_letter_poly = None
-            text_letter_poly = None
+            # C3-БАГ (виправлено): раніше тут стояло `text_letter_poly = None`, що на
+            # ДВОРЯДКОВИХ брелках (осн.напис + 2-й рядок) вимикало виріз будинків
+            # під основним написом (гейт `text_letter_poly is not None` нижче) — і текст
+            # «тонув» серед вищих будинків. Полігон лишаємо валідним (потрібен і для
+            # precomputed-мешу написа, і для вирізу будинків/шарів під ним).
 
     label_clear_band = None
     if keychain_mode and keychain_layout is not None and bool(getattr(request, "keychain_label_clear_band", False)):
@@ -4415,13 +4419,20 @@ def run_flat_plate_pipeline(
         # текст, бо зараз текст просто наклада[ється]»).
         if text_letter_poly is not None and not getattr(text_letter_poly, "is_empty", True) and gdf_buildings_local is not None:
             try:
-                # Вирізаємо convex hull (щоб не було залишків між буквами)
+                # C3: зазор навколо тексту 1.2мм (був 0.3мм) — будинки заввишки до
+                # ~3.2мм більше не тиснуться до нижчого напису (~1.8мм). Вирізаємо
+                # convex hull КОЖНОГО рядка (не спільний — щоб не чистити мапу між
+                # рядками), включно з 2-м рядком, який раніше з будинків не вирізався.
                 try:
-                    carve_b = text_letter_poly.convex_hull.buffer(
-                        _model_mm_to_world_m(0.3, export_scale_factor), join_style=1
-                    ).buffer(0)
+                    _carve_polys = [text_letter_poly]
+                    if text2_letter_poly is not None and not getattr(text2_letter_poly, "is_empty", True):
+                        _carve_polys.append(text2_letter_poly)
+                    carve_b = unary_union([
+                        _p.convex_hull.buffer(_model_mm_to_world_m(1.2, export_scale_factor), join_style=1)
+                        for _p in _carve_polys
+                    ]).buffer(0)
                 except Exception:
-                    carve_b = text_letter_poly.buffer(_model_mm_to_world_m(0.25, export_scale_factor)).buffer(0)
+                    carve_b = text_letter_poly.buffer(_model_mm_to_world_m(1.0, export_scale_factor)).buffer(0)
                 kept_geoms = []
                 for _, _row in gdf_buildings_local.iterrows():
                     _g = _row.geometry
