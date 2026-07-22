@@ -15,8 +15,11 @@ import re
 from typing import Any, Dict, Optional, Tuple
 
 CHECKOUT_URL = "https://www.liqpay.ua/api/3/checkout"
+REQUEST_URL = "https://www.liqpay.ua/api/request"
 # LiqPay приймає лише ці валюти
 _ALLOWED_CCY = {"UAH", "USD", "EUR"}
+# Статуси LiqPay, що означають успішно отримані кошти.
+PAID_STATUSES = {"success", "sandbox", "wait_accept", "subscribed"}
 
 
 def _keys() -> Tuple[Optional[str], Optional[str]]:
@@ -87,6 +90,32 @@ def build_checkout(
         "data": data,
         "signature": _signature(data, priv),
     }
+
+
+def query_status(order_id: str, timeout: float = 12.0) -> Optional[Dict[str, Any]]:
+    """Серверна перевірка статусу платежу через LiqPay API (action=status).
+    Надійніше за асинхронний server-callback (який може не дійти/затриматись):
+    ми самі питаємо LiqPay «чи оплачено замовлення order_id». Повертає decoded
+    payload LiqPay (містить 'status', 'amount', 'currency', 'order_id', ...) або None."""
+    pub, priv = _keys()
+    if not pub or not priv or not order_id:
+        return None
+    params = {"public_key": pub, "version": "3", "action": "status", "order_id": str(order_id)}
+    data = base64.b64encode(json.dumps(params, ensure_ascii=False).encode("utf-8")).decode("ascii")
+    sig = _signature(data, priv)
+    try:
+        import urllib.parse
+        import urllib.request
+        body = urllib.parse.urlencode({"data": data, "signature": sig}).encode("ascii")
+        req = urllib.request.Request(REQUEST_URL, data=body, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def is_paid_status(status: Optional[str]) -> bool:
+    return bool(status) and str(status).lower() in PAID_STATUSES
 
 
 def verify_callback(data_b64: str, signature: str) -> Optional[Dict[str, Any]]:

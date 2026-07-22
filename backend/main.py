@@ -1382,7 +1382,7 @@ async def create_order_endpoint(
                     amount=amount, currency=currency,
                     description=f"Monadruk #{result.get('order_number')} · {order.product_type}",
                     order_id=str(result.get("order_number") or order.task_id or ""),
-                    result_url=f"{site}/account",
+                    result_url=f"{site}/order-success?order={result.get('order_number') or ''}",
                     server_url=f"{site}/api/liqpay/callback",
                 )
                 if checkout:
@@ -1416,6 +1416,30 @@ async def liqpay_callback(data: str = Form(default=""), signature: str = Form(de
         except Exception as exc:  # noqa: BLE001
             print(f"[liqpay] mark_paid error: {exc}")
     return {"ok": True}
+
+
+@app.get("/api/liqpay/status/{order_id}")
+async def liqpay_status(order_id: str):
+    """Серверна перевірка статусу оплати замовлення через LiqPay API. Використовує
+    сторінка-подяка (/order-success) одразу після повернення з LiqPay — надійніше за
+    асинхронний server-callback, який може не дійти. При успіху сам ставить «paid»
+    (mark_order_paid ідемпотентний: повторний виклик просто перезапише статус)."""
+    from services.liqpay import query_status, is_paid_status, is_configured
+    if not is_configured():
+        return {"configured": False, "paid": False, "status": None}
+    info = query_status(order_id)
+    if info is None:
+        return {"configured": True, "paid": False, "status": "unknown"}
+    status = str(info.get("status") or "")
+    paid = is_paid_status(status)
+    if paid:
+        try:
+            from services.order_service import mark_order_paid
+            mark_order_paid(str(order_id), info)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[liqpay] status mark_paid error: {exc}")
+    return {"configured": True, "paid": paid, "status": status,
+            "amount": info.get("amount"), "currency": info.get("currency")}
 
 
 @app.get("/api/account/orders")

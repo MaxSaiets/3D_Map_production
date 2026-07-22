@@ -284,8 +284,19 @@ def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     if payload.get("user_email"):
         lines.append(f"👥 Акаунт: {payload['user_email']}")
     lines.append("")
-    if payload.get("payment_url"):
-        lines.append("💳 Клієнту показано кнопку «Оплатити зараз» — перевір надходження перед друком.")
+    # Онлайн-оплата активна, якщо налаштовано LiqPay (динамічний checkout) АБО заданий
+    # статичний payment_url з конфігу. Інакше — оплата узгоджується вручну.
+    _online_pay = bool(payload.get("payment_url"))
+    if not _online_pay:
+        try:
+            from services.liqpay import is_configured as _liqpay_on
+            _online_pay = _liqpay_on()
+        except Exception:  # noqa: BLE001
+            _online_pay = False
+    if _online_pay:
+        lines.append("💳 Клієнт оплачує онлайн (LiqPay · Visa/Mastercard). "
+                     "Підтвердження оплати прийде окремим повідомленням «💰 ОПЛАЧЕНО» — "
+                     "друкуй після нього (або звір надходження в кабінеті LiqPay).")
     else:
         lines.append("⚠️ Оплата — узгодити з клієнтом (онлайн-оплата ще не підключена).")
     _tg_post("sendMessage", chat_id=_chat(), parse_mode="HTML", text="\n".join(lines))
@@ -381,6 +392,30 @@ def set_order_status(order_number: str, status: str) -> bool:
     return True
 
 
+def _order_already_paid(order_id: str) -> bool:
+    """True, якщо замовлення вже має статус paid АБО зафіксовану успішну оплату —
+    щоб повторні перевірки статусу не дублювали подій/нотифікацій."""
+    if not ORDERS_LOG.exists():
+        return False
+    try:
+        for line in ORDERS_LOG.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except Exception:  # noqa: BLE001
+                continue
+            if str(rec.get("order_number")) != str(order_id):
+                continue
+            if rec.get("type") == "payment" and rec.get("paid"):
+                return True
+            if rec.get("type") != "payment" and rec.get("status") == "paid":
+                return True
+    except Exception:  # noqa: BLE001
+        return False
+    return False
+
+
 def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
     """LiqPay-callback підтвердив оплату → лог-подія у журнал + нотифікація оператора
     в Telegram (щоб бачив, що замовлення вже оплачене і можна друкувати/відправляти)."""
@@ -390,6 +425,11 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
     ccy = info.get("currency") or ""
     paid = status in ("success", "sandbox")
     pay_id = info.get("payment_id") or info.get("transaction_id") or ""
+    # ІДЕМПОТЕНТНІСТЬ: сторінка-подяка опитує статус при кожному завантаженні; без
+    # цього кожен опит дублював би payment-подію в лозі та слав повторний Telegram.
+    # Якщо замовлення ВЖЕ позначене paid — виходимо тихо (жодних дублів/спаму).
+    if paid and _order_already_paid(str(order_id)):
+        return
     try:
         ORDERS_LOG.parent.mkdir(parents=True, exist_ok=True)
         with ORDERS_LOG.open("a", encoding="utf-8") as f:
