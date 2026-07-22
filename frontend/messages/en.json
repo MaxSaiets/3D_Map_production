@@ -1302,7 +1302,7 @@
     "preview3dTitle": "3D preview of the finished keychain",
     "layers": "Layers",
     "emptyTitle": "The 3D model will appear after you create it",
-    "emptyBody": "Press “Create 3MF” — and a real 3D preview with all the layers will appear here.",
+    "emptyBody": "Create your keychain — and a real 3D preview with all the layers will appear here.",
     "generatingPct": "Generating: {progress}%",
     "tour": {
       "step1Title": "Choose a city and district",

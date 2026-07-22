@@ -1302,7 +1302,7 @@
     "preview3dTitle": "3D-Vorschau des fertigen Schlüsselanhängers",
     "layers": "Schichten",
     "emptyTitle": "Das 3D-Modell erscheint nach der Erstellung",
-    "emptyBody": "Drücke „3MF erstellen“ — und hier erscheint eine echte 3D-Vorschau mit allen Schichten.",
+    "emptyBody": "Erstelle deinen Anhänger — und hier erscheint eine echte 3D-Vorschau mit allen Schichten.",
     "generatingPct": "Generierung: {progress}%",
     "tour": {
       "step1Title": "Stadt und Bezirk wählen",

@@ -22,10 +22,14 @@ const QUICK_CITIES: Array<{ uk: string; en: string; text: string; lat: number; l
   { uk: "Харків", en: "Kharkiv", text: "KHARKIV", lat: 49.9935, lon: 36.2304 },
 ];
 
-/** Картки кроку 1: найпопулярніші шаблони з KEYCHAIN_TEMPLATES + фото друків. */
-const CARD_DEFS: Array<{ tplId: string; img: string; titleKey: string; descKey: string }> = [
+/** Картки кроку 1: найпопулярніші шаблони з KEYCHAIN_TEMPLATES + фото друків.
+ *  autoLabel:false — шаблони, де смуга напису у вузькій частині форми
+ *  (половинка серця): авто-LVIV там зрізається до крихти (перевірено на
+ *  реальній генерації — Text 0.8мм³ проти 17мм³ у серця). Для них напис
+ *  лишаємо порожнім/ручним — користувач бачить розміщення в живому макеті. */
+const CARD_DEFS: Array<{ tplId: string; img: string; titleKey: string; descKey: string; autoLabel?: boolean }> = [
   { tplId: "heart-46", img: "card-kc-heart", titleKey: "cardHeartTitle", descKey: "cardHeartDesc" },
-  { tplId: "heart-pair-left", img: "card-kc-heartpair", titleKey: "cardHeartPairTitle", descKey: "cardHeartPairDesc" },
+  { tplId: "heart-pair-left", img: "card-kc-heartpair", titleKey: "cardHeartPairTitle", descKey: "cardHeartPairDesc", autoLabel: false },
   { tplId: "token-55", img: "card-kc-token", titleKey: "cardTokenTitle", descKey: "cardTokenDesc" },
   { tplId: "classic-wide", img: "card-kc-rect", titleKey: "cardRectTitle", descKey: "cardRectDesc" },
 ];
@@ -103,12 +107,19 @@ export function KeychainScenarioFlow({
   }, []);
   const priceUah = quote?.price ?? KEYCHAIN_PRICE_UAH;
 
+  // Чи дозволений авто-напис для поточного шаблону (див. CARD_DEFS.autoLabel).
+  const autoLabelRef = useRef(true);
   // Вибір картки = застосувати шаблон тим САМИМ кодом, що повна панель
   // (page.applyTemplate), значення — з KEYCHAIN_TEMPLATES.
   const pick = (id: string) => {
     const tpl = KEYCHAIN_TEMPLATES.find((k) => k.id === id);
     if (!tpl) return;
     onApplyTemplate(tpl.design);
+    const def = CARD_DEFS.find((c) => c.tplId === id);
+    autoLabelRef.current = def?.autoLabel !== false;
+    // Для шаблонів без авто-напису чистимо дефолтний KYIV — інакше він
+    // мовчки гравіюється у вузькій частині форми (зрізаний до уламка).
+    if (!autoLabelRef.current && !labelManualRef.current) onLabelChange("");
     setTplId(id);
   };
 
@@ -254,8 +265,9 @@ export function KeychainScenarioFlow({
                     window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
                       detail: { lat: c.lat, lon: c.lon, label: locale === "uk" ? c.uk : c.en },
                     }));
-                    // Напис слідує за містом, поки користувач не ввів свій.
-                    if (!labelManualRef.current) onLabelChange(c.text);
+                    // Напис слідує за містом, поки користувач не ввів свій
+                    // (і шаблон дозволяє авто-напис — не половинка серця).
+                    if (!labelManualRef.current && autoLabelRef.current) onLabelChange(c.text);
                   }}
                   className="rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
                 >

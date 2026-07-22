@@ -1302,7 +1302,7 @@
     "preview3dTitle": "Podgląd 3D gotowego breloka",
     "layers": "Warstwy",
     "emptyTitle": "Model 3D pojawi się po utworzeniu",
-    "emptyBody": "Naciśnij „Utwórz 3MF” — i tutaj pojawi się prawdziwy podgląd 3D ze wszystkimi warstwami.",
+    "emptyBody": "Utwórz brelok — i tutaj pojawi się prawdziwy podgląd 3D ze wszystkimi warstwami.",
     "generatingPct": "Generowanie: {progress}%",
     "tour": {
       "step1Title": "Wybierz miasto i dzielnicę",

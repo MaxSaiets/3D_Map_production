@@ -663,7 +663,10 @@ export default function Home() {
               OrderDialog (слухач monadruk:open-order → портал у body) і запуск
               генерації по події monadruk:guided-generate. Візуально — нуль
               контролів (display:none). */}
-          <aside id="panel-settings" className={guided ? "order-2 min-h-0 lg:order-none lg:block" : "hidden min-h-0 lg:block"}>
+          {/* GUIDED на мобільному: панель ПЕРШОЮ (order-none = порядок DOM).
+              Раніше order-2 ховав картки «Що створюємо?» під велику карту —
+              перший екран телефона був картою без жодної інструкції. */}
+          <aside id="panel-settings" className={guided ? "min-h-0 lg:block" : "hidden min-h-0 lg:block"}>
             {guided ? (
               <>
                 <ScenarioFlow onExitGuided={() => setGuided(false)} />

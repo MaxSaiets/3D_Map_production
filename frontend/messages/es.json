@@ -1302,7 +1302,7 @@
     "preview3dTitle": "Vista 3D del llavero terminado",
     "layers": "Capas",
     "emptyTitle": "El modelo 3D aparecerá tras crearlo",
-    "emptyBody": "Pulsa «Crear 3MF» — y aquí aparecerá una vista 3D real con todas las capas.",
+    "emptyBody": "Crea tu llavero — y aquí aparecerá una vista 3D real con todas las capas.",
     "generatingPct": "Generando: {progress}%",
     "tour": {
       "step1Title": "Elige una ciudad y un distrito",

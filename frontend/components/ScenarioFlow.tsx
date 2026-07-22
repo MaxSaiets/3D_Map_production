@@ -18,8 +18,11 @@ import {
   mapPriceEur,
 } from "@/lib/mapPrices";
 
-/** Авто-зона навколо точки пошуку: ~800×800 м — «good detail» для мапи 8 см. */
-const GUIDED_ZONE_M = 800;
+/** Зона ПІД РОЗМІР плитки: ~7.5 м/мм — «добра деталізація» і гарантовано в
+ *  безпечних межах (isSafe = ≤10 м/мм у MapSelector). Фіксована 800×800
+ *  для S (55 мм) давала 14.5 м/мм → червоне «Ділянка завелика. Зменши рамку»
+ *  прямо в guided-автозоні. Тепер зона їде за розміром: S≈410, M≈600, L≈825. */
+const zoneForSizeM = (sizeMm: number) => Math.round(sizeMm * 7);
 
 /** Швидкі міста: 1 тап замість друкування адреси. Та сама подія, що й пошук. */
 const QUICK_CITIES: Array<{ uk: string; en: string; lat: number; lon: number }> = [
@@ -116,8 +119,12 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // KeychainCropOverlay у MapSelector на це ВЖЕ переносить зону, але зберігає її
   // поточний розмір. Робимо так само, як pickTemplate у SimpleControlPanel
   // (клік по готовому району): повторний диспатч тієї ж події з ЯВНИМ widthM —
-  // handler ставить зону рівно ~800×800 м навколо точки. Guard: події, що вже
-  // несуть widthM або centerOnly (гео-при-вході), ігноруємо — інакше цикл.
+  // handler ставить зону ПІД ОБРАНИЙ РОЗМІР навколо точки (zoneForSizeM).
+  // Guard: події, що вже несуть widthM або centerOnly, ігноруємо — інакше цикл.
+  const sizeMmRef = useRef(80);
+  useEffect(() => {
+    sizeMmRef.current = scenario === "magnet" ? 60 : s.modelSizeMm;
+  }, [scenario, s.modelSizeMm]);
   useEffect(() => {
     const onGoto = (e: Event) => {
       const d = (e as CustomEvent).detail as
@@ -129,7 +136,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       // Затримка — даємо overlay спершу відпрацювати оригінальну подію (переліт).
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
-          detail: { lat: d.lat, lon: d.lon, widthM: GUIDED_ZONE_M },
+          detail: { lat: d.lat, lon: d.lon, widthM: zoneForSizeM(sizeMmRef.current) },
         }));
       }, 120);
     };
@@ -473,7 +480,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                           type="button"
                           role="radio"
                           aria-checked={s.modelSizeMm === z.mm}
-                          onClick={() => s.setModelSizeMm(z.mm)}
+                          onClick={() => {
+                            s.setModelSizeMm(z.mm);
+                            // Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо
+                            // поточного центру з масштабом під нову плитку —
+                            // інакше S зі старою 800м-зоною ловила червоне
+                            // «завелика», а XL марнувала деталізацію.
+                            const c = s.selectedArea?.getCenter?.();
+                            if (c) {
+                              window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
+                                detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(z.mm) },
+                              }));
+                            }
+                          }}
                           className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-2 py-2 transition ${
                             s.modelSizeMm === z.mm
                               ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"

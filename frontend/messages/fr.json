@@ -1302,7 +1302,7 @@
     "preview3dTitle": "Aperçu 3D du porte-clés terminé",
     "layers": "Couches",
     "emptyTitle": "Le modèle 3D apparaîtra après sa création",
-    "emptyBody": "Appuyez sur « Créer 3MF » — et un véritable aperçu 3D avec toutes les couches apparaîtra ici.",
+    "emptyBody": "Créez votre porte-clés — et un véritable aperçu 3D avec toutes les couches apparaîtra ici.",
     "generatingPct": "Génération : {progress}%",
     "tour": {
       "step1Title": "Choisissez une ville et un quartier",
