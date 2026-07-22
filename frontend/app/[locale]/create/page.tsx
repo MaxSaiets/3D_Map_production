@@ -1019,6 +1019,10 @@ export default function Home() {
                     </h2>
                   </div>
 
+                  {/* У guided СТАН-картку ховаємо поза генерацією: вона дублює панель
+                      і на свіжому заході показує «Файл готовий» від відновленої задачі.
+                      Під час генерації лишається — тут живе «Скасувати». */}
+                  {(!guided || isGenerating) && (
                   <div className="rounded-[18px] border border-[var(--surface-border)] bg-white/80 px-3 py-2 text-right">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                       {tc("statusHeading")}
@@ -1036,6 +1040,7 @@ export default function Home() {
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
 
                 <div className="min-h-[420px] flex-1 p-2 sm:p-3 lg:min-h-0">

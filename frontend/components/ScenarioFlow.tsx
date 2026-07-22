@@ -21,6 +21,14 @@ import {
 /** Авто-зона навколо точки пошуку: ~800×800 м — «good detail» для мапи 8 см. */
 const GUIDED_ZONE_M = 800;
 
+/** Швидкі міста: 1 тап замість друкування адреси. Та сама подія, що й пошук. */
+const QUICK_CITIES: Array<{ uk: string; en: string; lat: number; lon: number }> = [
+  { uk: "Київ", en: "Kyiv", lat: 50.4501, lon: 30.5234 },
+  { uk: "Львів", en: "Lviv", lat: 49.8419, lon: 24.0315 },
+  { uk: "Одеса", en: "Odesa", lat: 46.4825, lon: 30.7233 },
+  { uk: "Харків", en: "Kharkiv", lat: 49.9935, lon: 36.2304 },
+];
+
 /** Сценарії, що лишаються всередині guided-флоу (брелок = лінк, повний = вихід). */
 type ScenarioId = "map3d" | "relief" | "flat" | "magnet";
 
@@ -332,6 +340,20 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 друкуєш адресу тут; та сама подія monadruk:map-goto → автозона. */}
             <div className="rounded-full border border-[var(--surface-border)] bg-white/80 px-1.5 py-0.5 focus-within:border-[rgba(11,92,87,0.45)]">
               <MapSearchBox variant="panel" />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_CITIES.map((c) => (
+                <button
+                  key={c.en}
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
+                    detail: { lat: c.lat, lon: c.lon, label: locale === "uk" ? c.uk : c.en },
+                  }))}
+                  className="rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
+                >
+                  {locale === "uk" ? c.uk : c.en}
+                </button>
+              ))}
             </div>
             {!s.selectedArea ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-medium text-[var(--text-secondary)]">
