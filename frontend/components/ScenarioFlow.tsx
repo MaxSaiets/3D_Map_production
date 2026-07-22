@@ -170,10 +170,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     desc: string;
     price: string;
   }> = [
-    { id: "map3d", img: "real-1", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "relief", img: "real-2", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
-    { id: "flat", img: "real-8", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "magnet", img: "real-7", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
+    { id: "map3d", img: "real-2", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "relief", img: "real-3", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
+    { id: "flat", img: "real-7", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "magnet", img: "real-8", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
   ];
 
   const generatingView = s.isGenerating;
@@ -227,7 +227,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <Link href="/keychains" className={cardBtnCls}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/showcase/real-6.webp"
+                  src="/showcase/real-4.webp"
                   alt={t("keychainTitle")}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
@@ -236,6 +236,21 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <span className="inline-flex items-center gap-1 text-[13px] font-semibold leading-tight text-[var(--text-primary)]"><KeyRound size={12} /> {t("keychainTitle")}</span>
                   <span className="text-[12px] font-semibold text-[var(--accent-strong)]">{t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}</span>
                   <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t("keychainDesc")}</span>
+                </span>
+              </Link>
+              {/* Панно з плиток — окремий флоу (сітка плиток у повному конструкторі);
+                  ведемо на лендінг /panno з поясненням і CTA. */}
+              <Link href="/panno" className={cardBtnCls}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/showcase/real-10.webp"
+                  alt={t("pannoTitle")}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                />
+                <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
+                  <span className="text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{t("pannoTitle")}</span>
+                  <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t("pannoDesc")}</span>
                 </span>
               </Link>
               {/* Повний конструктор — вихід із guided (усе як раніше). */}
@@ -275,7 +290,14 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
                 </button>
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new Event("monadruk:guided-download"))}
+                    className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
+                  >
+                    {t("downloadFree")}
+                  </button>
                   <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
                     {t("tuneDetails")}
                   </button>

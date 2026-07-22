@@ -892,7 +892,12 @@ export function SimpleControlPanel({
     if (!listenGuidedGenerate) return;
     const run = () => { handleGenerate(); };
     window.addEventListener("monadruk:guided-generate", run);
-    return () => window.removeEventListener("monadruk:guided-generate", run);
+    const dl = () => { void doGatedDownload(); };
+    window.addEventListener("monadruk:guided-download", dl);
+    return () => {
+      window.removeEventListener("monadruk:guided-generate", run);
+      window.removeEventListener("monadruk:guided-download", dl);
+    };
   });
 
   // ЗАМОВИТИ ОДРАЗУ: користувач не мусить чекати 1-3 хв перед замовленням.

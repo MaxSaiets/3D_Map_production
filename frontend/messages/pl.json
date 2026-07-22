@@ -1657,6 +1657,9 @@
     "updateModel": "Zaktualizuj model",
     "changeSomething": "Chcesz coś zmienić?",
     "connectors": "Łączniki serii",
-    "connectorsHint": "Wpusty na krawędziach — później dołączysz sąsiednie kafelki w jedną dużą mapę"
+    "connectorsHint": "Wpusty na krawędziach — później dołączysz sąsiednie kafelki w jedną dużą mapę",
+    "pannoTitle": "Panel na ścianę",
+    "pannoDesc": "Duża mapa z kafelków — ozdoba domu lub biura",
+    "downloadFree": "Pobierz 3MF (bezpłatnie)"
   }
 }

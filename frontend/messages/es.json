@@ -1657,6 +1657,9 @@
     "updateModel": "Actualizar modelo",
     "changeSomething": "¿Quiere cambiar algo?",
     "connectors": "Conectores de serie",
-    "connectorsHint": "Ranuras en los bordes para unir después las piezas vecinas en un mapa grande"
+    "connectorsHint": "Ranuras en los bordes para unir después las piezas vecinas en un mapa grande",
+    "pannoTitle": "Panel de pared",
+    "pannoDesc": "Un gran mapa de piezas — decoración para casa u oficina",
+    "downloadFree": "Descargar 3MF (gratis)"
   }
 }

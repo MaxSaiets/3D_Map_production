@@ -1657,6 +1657,9 @@
     "updateModel": "Modell aktualisieren",
     "changeSomething": "Möchten Sie etwas ändern?",
     "connectors": "Serien-Verbinder",
-    "connectorsHint": "Randnuten, um später Nachbarkacheln zu einer großen Karte zu verbinden"
+    "connectorsHint": "Randnuten, um später Nachbarkacheln zu einer großen Karte zu verbinden",
+    "pannoTitle": "Wandpaneel",
+    "pannoDesc": "Große Karte aus Kacheln — ein Blickfang für Zuhause oder Büro",
+    "downloadFree": "3MF herunterladen (kostenlos)"
   }
 }

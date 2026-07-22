@@ -1657,6 +1657,9 @@
     "updateModel": "Update model",
     "changeSomething": "Want to change something?",
     "connectors": "Series connectors",
-    "connectorsHint": "Edge slots so you can attach neighbouring tiles into one big map later"
+    "connectorsHint": "Edge slots so you can attach neighbouring tiles into one big map later",
+    "pannoTitle": "Wall panel",
+    "pannoDesc": "A large tiled map — a statement piece for home or office",
+    "downloadFree": "Download 3MF (free)"
   }
 }
