@@ -1655,6 +1655,8 @@
     "changePlace": "Change place",
     "addLabel": "Add text on the map",
     "updateModel": "Update model",
-    "changeSomething": "Want to change something?"
+    "changeSomething": "Want to change something?",
+    "connectors": "Series connectors",
+    "connectorsHint": "Edge slots so you can attach neighbouring tiles into one big map later"
   }
 }

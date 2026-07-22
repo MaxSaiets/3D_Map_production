@@ -1655,6 +1655,8 @@
     "changePlace": "Ort ändern",
     "addLabel": "Text auf der Karte hinzufügen",
     "updateModel": "Modell aktualisieren",
-    "changeSomething": "Möchten Sie etwas ändern?"
+    "changeSomething": "Möchten Sie etwas ändern?",
+    "connectors": "Serien-Verbinder",
+    "connectorsHint": "Randnuten, um später Nachbarkacheln zu einer großen Karte zu verbinden"
   }
 }

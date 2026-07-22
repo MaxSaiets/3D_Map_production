@@ -1655,6 +1655,8 @@
     "changePlace": "Changer de lieu",
     "addLabel": "Ajouter un texte sur la carte",
     "updateModel": "Mettre à jour le modèle",
-    "changeSomething": "Envie de changer quelque chose ?"
+    "changeSomething": "Envie de changer quelque chose ?",
+    "connectors": "Connecteurs de série",
+    "connectorsHint": "Encoches sur les bords pour assembler plus tard les tuiles voisines en une grande carte"
   }
 }

@@ -67,6 +67,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     clearHighlights: st.clearHighlights,
     simpleMapLabel: st.simpleMapLabel,
     setSimpleMapLabel: st.setSimpleMapLabel,
+    simpleConnector: st.simpleConnector,
+    setSimpleConnector: st.setSimpleConnector,
   })));
 
   const [scenario, setScenario] = useState<ScenarioId | null>(null);
@@ -390,6 +392,26 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                         </button>
                       </div>
                     ))}
+                    {/* Зʼєднувачі (юзер: «немає щоб включити зʼєднувачі»): пази по
+                        краях плитки — потім можна доклеїти сусідні. Магніт малий —
+                        не показуємо. Той самий store-прапор, що в повній панелі. */}
+                    {scenario !== "magnet" && (
+                      <button
+                        type="button"
+                        aria-pressed={s.simpleConnector}
+                        onClick={() => s.setSimpleConnector(!s.simpleConnector)}
+                        className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
+                          s.simpleConnector
+                            ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                        }`}
+                      >
+                        <span aria-hidden>{s.simpleConnector ? "✓" : ""}</span> {t("connectors")}
+                      </button>
+                    )}
+                    {scenario !== "magnet" && s.simpleConnector && (
+                      <p className="text-[12px] leading-snug text-[var(--text-secondary)]">{t("connectorsHint")}</p>
+                    )}
                   </div>
                 </div>
                 {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}

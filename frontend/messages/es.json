@@ -1655,6 +1655,8 @@
     "changePlace": "Cambiar lugar",
     "addLabel": "Añadir texto en el mapa",
     "updateModel": "Actualizar modelo",
-    "changeSomething": "¿Quiere cambiar algo?"
+    "changeSomething": "¿Quiere cambiar algo?",
+    "connectors": "Conectores de serie",
+    "connectorsHint": "Ranuras en los bordes para unir después las piezas vecinas en un mapa grande"
   }
 }

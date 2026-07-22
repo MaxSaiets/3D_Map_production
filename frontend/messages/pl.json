@@ -1655,6 +1655,8 @@
     "changePlace": "Zmień miejsce",
     "addLabel": "Dodaj napis na mapie",
     "updateModel": "Zaktualizuj model",
-    "changeSomething": "Chcesz coś zmienić?"
+    "changeSomething": "Chcesz coś zmienić?",
+    "connectors": "Łączniki serii",
+    "connectorsHint": "Wpusty na krawędziach — później dołączysz sąsiednie kafelki w jedną dużą mapę"
   }
 }
