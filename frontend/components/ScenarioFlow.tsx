@@ -147,6 +147,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // Вибір сценарію = пресет формату у store (той самий шлях, що сегмент-контрол
   // «Формат» у SimpleControlPanel) + одразу крок 2. M (80 мм) — передвибраний.
   const pick = (id: ScenarioId) => {
+    // Guided-воронка: яку картку обирають (adмінка порівнює зі звичайним funnel).
+    import("@/lib/analytics").then((m) => m.track("guided_pick", { product: "map", scenario: id })).catch(() => {});
     s.setShowHexGrid(false);
     try { localStorage.setItem("3dmap_hex_grid", "0"); } catch { /* ignore */ }
     s.setPreviewMode(true);
@@ -163,6 +165,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
 
   const create = () => {
     if (!s.selectedArea || s.isGenerating) return;
+    import("@/lib/analytics")
+      .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm }))
+      .catch(() => {});
     setStarted(true);
     window.dispatchEvent(new Event("monadruk:guided-generate"));
   };

@@ -1134,7 +1134,9 @@ export function KeychainDesigner({
   };
 
   return (
-    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[22px] bg-[#050a18] p-2 sm:min-h-[340px] sm:p-3">
+    // pt-14: верхня смуга зарезервована під хінт-пігулку і перемикач Лице/Зворот —
+    // інакше вони налазили на верхню мм-лінійку макета (SVG малює її при top).
+    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[22px] bg-[#050a18] p-2 pt-14 sm:min-h-[340px] sm:p-3 sm:pt-14">
       <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[11px] font-semibold text-white/75 backdrop-blur">
         {previewSide === "front" ? t("designer.hintFront") : t("designer.hintBack")}
       </div>

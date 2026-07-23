@@ -114,6 +114,8 @@ export function KeychainScenarioFlow({
   const pick = (id: string) => {
     const tpl = KEYCHAIN_TEMPLATES.find((k) => k.id === id);
     if (!tpl) return;
+    // Guided-воронка: яку картку-шаблон обирають.
+    import("@/lib/analytics").then((m) => m.track("guided_pick", { product: "keychain", scenario: id })).catch(() => {});
     onApplyTemplate(tpl.design);
     const def = CARD_DEFS.find((c) => c.tplId === id);
     autoLabelRef.current = def?.autoLabel !== false;
@@ -125,6 +127,9 @@ export function KeychainScenarioFlow({
 
   const create = () => {
     if (!s.selectedArea || s.isGenerating) return;
+    import("@/lib/analytics")
+      .then((m) => m.track("guided_generate", { product: "keychain", scenario: tplId }))
+      .catch(() => {});
     setStarted(true);
     window.dispatchEvent(new Event("monadruk:kc-guided-generate"));
   };

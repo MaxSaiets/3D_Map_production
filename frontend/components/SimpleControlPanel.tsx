@@ -774,7 +774,7 @@ export function SimpleControlPanel({
       if (!s.selectedZones?.length) { setError(t("errSelectZone")); return; }
       setError(null);
       setGenerating(true);
-      import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map" } }); m.trackFunnel("generate"); }).catch(() => {});
+      import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map", guided: Boolean(listenGuidedGenerate) } }); m.trackFunnel("generate", { guided: Boolean(listenGuidedGenerate) }); }).catch(() => {});
       try {
         // Bbox обраного міста для стабільного глобального центру сітки (як у Профі);
         // якщо немає — бек сам порахує bbox із геометрії клітин (fallback).
@@ -814,7 +814,9 @@ export function SimpleControlPanel({
     setError(null);
     setGenerating(true);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
-    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map" } }); m.trackFunnel("generate"); }).catch(() => {});
+    // guided-прапор: машинна копія (listenGuidedGenerate) = запуск із guided-флоу —
+    // адмінка розрізняє конверсію нового спрощеного шляху vs повного конструктора.
+    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "map", guided: Boolean(listenGuidedGenerate) } }); m.trackFunnel("generate", { guided: Boolean(listenGuidedGenerate) }); }).catch(() => {});
     try {
       const req = buildSingleMapReq(opts?.forPrint ?? false);
       const { api } = await import("@/lib/api");

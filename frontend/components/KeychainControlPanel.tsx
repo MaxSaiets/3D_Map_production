@@ -873,7 +873,8 @@ export function KeychainControlPanel({
     setGenerating(true);
     setShowAllZones(false);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
-    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "keychain" } }); m.trackFunnel("generate"); }).catch(() => {});
+    // guided-прапор: машинна копія (listenGuidedGenerate) = запуск із guided-флоу.
+    import("@/lib/analytics").then((m) => { m.trackConversion("generate", { props: { product: "keychain", guided: Boolean(listenGuidedGenerate) } }); m.trackFunnel("generate", { guided: Boolean(listenGuidedGenerate) }); }).catch(() => {});
 
     try {
       // КРИТИЧНО: коли рамка повернута (cropPolygon, cropRotationDeg !== 0),
