@@ -442,9 +442,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
                       <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
                     )}
-                    {/* Напис підтримує flat_plate-пайплайн: плоска/магніт завжди,
-                        а обʼємна — коли є дім-вставка (вона сама форсує flat). */}
-                    {(scenario === "flat" || scenario === "magnet" || s.highlightPoints.length > 0) && (!labelOn ? (
+                    {/* Напис тепер підтримують ОБИДВА пайплайни (бекенд 2026-07-23:
+                        піднятий напис на передній смузі обʼємної/рельєфної мапи),
+                        тож чіп доступний для всіх сценаріїв. */}
+                    {(!labelOn ? (
                       <button
                         type="button"
                         onClick={() => setLabelOn(true)}

@@ -724,9 +724,11 @@ export function SimpleControlPanel({
       frameStyle,
       mapHighlightBuilding: highlight,
       highlightPoints: highlight ? s.highlightPoints : [],
-      // Напис підтримує flat_plate-пайплайн (плоска мапа/AMS/магніт/дім-вставка) —
-      // раніше гейт був лише під магнітом, і напис юзера мовчки викидався.
-      mapLabel: (magnetMode || flatPlate) && panelMode === 0 ? mapLabel : "",
+      // Напис підтримують ОБИДВА пайплайни: flat_plate (плоска/AMS/магніт/дім-
+      // вставка) і — з 2026-07-23 — повний обʼємний/рельєфний (піднятий напис на
+      // передній смузі, будинки під ним вирізаються). Раніше гейт викидав напис
+      // для обʼємних мап мовчки.
+      mapLabel: panelMode === 0 ? mapLabel : "",
       gpxTrack,
       previewIncludeBase: s.previewIncludeBase, previewIncludeRoads: layerRoads,
       previewIncludeBuildings: layerBuildings, previewIncludeWater: layerWater,

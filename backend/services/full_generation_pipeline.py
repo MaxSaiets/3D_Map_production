@@ -2030,6 +2030,118 @@ def run_full_generation_pipeline(
         except Exception as _wexc:
             print(f"[WARN] water re-drape failed: {_wexc}")
 
+    # ── НАПИС МІСТА на обʼємній/рельєф-мапі (map_label) ──────────────────────
+    # Раніше повний пайплайн ІГНОРУВАВ request.map_label (працював лише flat).
+    # Тут переюзаємо ТІ САМІ text-хелпери, що й плоскі вироби: піднятий рельєф-
+    # напис 0.8мм на ПЕРЕДНІЙ смузі верху бази; висота тексту сідає на поверхню
+    # терену в тій смузі (семпл max-Z), а будинки під написом вирізаються (як
+    # convex-hull carve у flat) — щоб читалось чисто. АДИТИВНО: коли map_label
+    # порожній — БУДЬ-ЯКА гілка нижче не виконується, геометрія байт-в-байт як
+    # раніше (golden недоторканий: його кейси мають terrain off / порожній label).
+    map_label_part = None
+    _lbl_raw = str(getattr(request, "map_label", "") or "").strip()
+    _sf_lbl = float(getattr(zone, "scale_factor", 0.0) or 0.0)
+    if _lbl_raw and terrain_mesh is not None and _sf_lbl > 0 and getattr(zone, "zone_polygon_local", None) is not None:
+        try:
+            import numpy as _lnp
+            from shapely.geometry import box as _lbox, Point as _lPoint
+            from shapely import affinity as _laff
+            from services.flat_plate_pipeline import (
+                _normalize_label_text as _norm_lbl,
+                _compute_text_letter_polygon as _calc_letter_poly,
+                build_keychain_label_mesh as _build_label_mesh,
+                _model_mm_to_world_m as _mm2m,
+                LAYER_COLORS as _LBL_COLORS,
+                MIN_KEYCHAIN_TEXT_STROKE_MM as _LBL_MIN_STROKE_MM,
+            )
+            if _norm_lbl(_lbl_raw):
+                # Рамка-вирівнювання (як у connector): у СЕРІЇ terrain центрований,
+                # а zone_polygon_local — глобальний (зсув). Для одиночних ≈0.
+                _tb = terrain_mesh.bounds
+                _tcx = (float(_tb[0][0]) + float(_tb[1][0])) / 2.0
+                _tcy = (float(_tb[0][1]) + float(_tb[1][1])) / 2.0
+                _zpoly = zone.zone_polygon_local
+                _zbb = _zpoly.bounds
+                _zcx = (float(_zbb[0]) + float(_zbb[2])) / 2.0
+                _zcy = (float(_zbb[1]) + float(_zbb[3])) / 2.0
+                _ox, _oy = _tcx - _zcx, _tcy - _zcy
+                if abs(_ox) > 0.5 or abs(_oy) > 0.5:
+                    _zpoly = _laff.translate(_zpoly, xoff=_ox, yoff=_oy)
+                _zbb = _zpoly.bounds
+                _zw = _zbb[2] - _zbb[0]; _zh = _zbb[3] - _zbb[1]
+                _txt_h_m = _mm2m(float(getattr(request, "map_label_text_height_mm", 5.0) or 5.0), _sf_lbl)
+                # Передня смуга: інсет 6% з боків, 4% від низу; висота смуги.
+                _mx = _zw * 0.06; _my = _zh * 0.04
+                _band_h = float(min(_txt_h_m * 1.7, _zh * 0.22))
+                _band = _lbox(_zbb[0] + _mx, _zbb[1] + _my, _zbb[2] - _mx, _zbb[1] + _my + _band_h)
+                _letter_poly = _calc_letter_poly(
+                    text=_lbl_raw,
+                    body_geometry=_zpoly,
+                    label_band_geometry=_band,
+                    text_height_m=_txt_h_m,
+                    angle_deg=0.0,
+                    min_stroke_m=_mm2m(_LBL_MIN_STROKE_MM, _sf_lbl),
+                    max_width=(_zbb[2] - _zbb[0]) - 2 * _mx,
+                    max_height=_band_h,
+                )
+                if _letter_poly is not None and not _letter_poly.is_empty:
+                    # Z напису = поверхня терену В МЕЖАХ ЛІТЕР (не всієї смуги),
+                    # перцентиль-90 — сідає на поверхню без буріння, але одиночний
+                    # шпиль рельєфу не піднімає весь напис у повітря. Fallback —
+                    # топ смуги, потім топ терену.
+                    _tv = _lnp.asarray(terrain_mesh.vertices)
+                    _lb = _letter_poly.bounds  # тісний bbox літер
+                    _inL = (
+                        (_tv[:, 0] >= _lb[0]) & (_tv[:, 0] <= _lb[2]) &
+                        (_tv[:, 1] >= _lb[1]) & (_tv[:, 1] <= _lb[3])
+                    )
+                    _inB = (
+                        (_tv[:, 0] >= _band.bounds[0]) & (_tv[:, 0] <= _band.bounds[2]) &
+                        (_tv[:, 1] >= _band.bounds[1]) & (_tv[:, 1] <= _band.bounds[3])
+                    )
+                    if bool(_inL.any()):
+                        _base_top = float(_lnp.percentile(_tv[_inL, 2], 90))
+                    elif bool(_inB.any()):
+                        _base_top = float(_lnp.percentile(_tv[_inB, 2], 90))
+                    else:
+                        _base_top = float(_tb[1][2])
+                    map_label_part = _build_label_mesh(
+                        _lbl_raw,
+                        body_geometry=_zpoly,
+                        label_band_geometry=_band,
+                        bottom_z_m=_base_top,
+                        thickness_m=_mm2m(0.8, _sf_lbl),
+                        text_height_m=_txt_h_m,
+                        color=_LBL_COLORS["text"],
+                        min_stroke_m=_mm2m(_LBL_MIN_STROKE_MM, _sf_lbl),
+                        precomputed_polygon=_letter_poly,
+                    )
+                    if map_label_part is not None:
+                        # Будинки під написом прибираємо ЛИШЕ коли меш напису реально
+                        # збудовано (інакше могли б зникнути будинки без жодного тексту).
+                        _carve = _letter_poly.convex_hull.buffer(_mm2m(0.4, _sf_lbl))
+                        _kept = []
+                        _dropped = 0
+                        for _bm in (building_meshes or []):
+                            try:
+                                _bc = _bm.bounds
+                                _bcx = (float(_bc[0][0]) + float(_bc[1][0])) / 2.0
+                                _bcy = (float(_bc[0][1]) + float(_bc[1][1])) / 2.0
+                                if _carve.contains(_lPoint(_bcx, _bcy)):
+                                    _dropped += 1
+                                    continue
+                            except Exception:
+                                pass
+                            _kept.append(_bm)
+                        if _dropped:
+                            building_meshes = _kept
+                            print(f"[MAP LABEL] carved {_dropped} building(s) from under text band")
+                        print(f"[MAP LABEL] raised city label '{_norm_lbl(_lbl_raw)}' "
+                              f"on relief/3D map at z={_base_top:.2f}m")
+        except Exception as _lbl_exc:
+            print(f"[WARN] map_label on relief failed (non-fatal): {_lbl_exc}")
+            map_label_part = None
+
     task.update_status("processing", 85, "Експорт 3MF-файлу...")
     stage_start = time.perf_counter()
     # СЕРІЯ ЗОН: коли задано глобальний elevation_ref (серія з generate-zones) —
@@ -2056,6 +2168,7 @@ def run_full_generation_pipeline(
             + ([("Connector", connector_key_mesh)] if connector_key_mesh is not None else [])
             + ([("Highlight", highlight_part)] if highlight_part is not None else [])
             + ([("Landmark", landmark_part)] if landmark_part is not None else [])
+            + ([("MapLabel", map_label_part)] if map_label_part is not None else [])
         ) or None,
         reference_xy_m=zone.reference_xy_m,
         file_basename=file_basename,
