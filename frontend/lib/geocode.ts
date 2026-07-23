@@ -12,12 +12,15 @@ export interface GeoResult {
   full: string;       // повна адреса (display_name)
 }
 
-export async function geocodeSearch(query: string, signal?: AbortSignal): Promise<GeoResult[]> {
+export async function geocodeSearch(query: string, signal?: AbortSignal, lang = "uk"): Promise<GeoResult[]> {
   const q = query.trim();
   if (q.length < 3) return [];
   try {
+    // accept-language = мова інтерфейсу: діаспора в /en /de /es /fr /pl бачить
+    // підказки СВОЄЮ мовою (раніше жорстко «uk» → «Париж, Франція» англомовному).
     const url =
-      "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=uk&q=" +
+      "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=" +
+      encodeURIComponent(lang) + "&q=" +
       encodeURIComponent(q);
     const r = await fetch(url, { signal, headers: { Accept: "application/json" } });
     if (!r.ok) return [];
@@ -40,10 +43,11 @@ export async function geocodeSearch(query: string, signal?: AbortSignal): Promis
 }
 
 /** Зворотний геокод для кнопки «📍 Я тут» — назва місця за координатами. */
-export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+export async function reverseGeocode(lat: number, lon: number, lang = "uk"): Promise<string | null> {
   try {
     const url =
-      "https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=uk&lat=" +
+      "https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=" +
+      encodeURIComponent(lang) + "&lat=" +
       lat + "&lon=" + lon;
     const r = await fetch(url, { headers: { Accept: "application/json" } });
     if (!r.ok) return null;

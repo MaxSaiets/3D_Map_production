@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Search, Loader2, LocateFixed, X } from "lucide-react";
 import { geocodeSearch, reverseGeocode, type GeoResult } from "@/lib/geocode";
 
@@ -16,6 +16,7 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
   // без absolute і без темного оверлей-стилю карти.
   const isPanel = variant === "panel";
   const t = useTranslations("search");
+  const locale = useLocale();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       setBusy(true);
-      const res = await geocodeSearch(value, ctrl.signal);
+      const res = await geocodeSearch(value, ctrl.signal, locale);
       setBusy(false);
       setResults(res);
       setOpen(res.length > 0);
@@ -65,7 +66,7 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        const name = await reverseGeocode(latitude, longitude);
+        const name = await reverseGeocode(latitude, longitude, locale);
         setGeoBusy(false);
         goto(latitude, longitude, name || t("myPlace"));
       },
