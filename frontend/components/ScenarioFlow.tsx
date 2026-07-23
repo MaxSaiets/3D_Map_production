@@ -125,6 +125,34 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   useEffect(() => {
     sizeMmRef.current = scenario === "magnet" ? 60 : s.modelSizeMm;
   }, [scenario, s.modelSizeMm]);
+
+  // ЧЕСНИЙ «Місце обрано»: дефолтна київська рамка ставиться сама при вході,
+  // тож selectedArea != null ≠ «користувач обрав місце». Без цього гейта юзер,
+  // який набрав адресу але НЕ клікнув підказку (або пошук схибив), бачив
+  // зелений бейдж і активну CTA — і мовчки генерував Київ замість свого міста
+  // (відтворено наскрізним тестом «San Francisco» → модель Києва).
+  // Вибором вважаємо: подію пошуку/чіпа (map-goto з lat/lon) АБО ручний зсув
+  // рамки (зміна selectedArea ПІСЛЯ вже наявної — перший авто-сет не рахується).
+  const [placePicked, setPlacePicked] = useState(false);
+  const prevAreaRef = useRef<typeof s.selectedArea>(null);
+  useEffect(() => {
+    const prev = prevAreaRef.current;
+    prevAreaRef.current = s.selectedArea;
+    if (prev && s.selectedArea && s.selectedArea !== prev) setPlacePicked(true);
+  }, [s.selectedArea]);
+  useEffect(() => {
+    const onPick = (e: Event) => {
+      const d = (e as CustomEvent).detail as
+        | { lat?: number; lon?: number; widthM?: number; centerOnly?: boolean }
+        | undefined;
+      // Лише користувацькі події (пошук/чіп): наші власні ре-диспатчі несуть widthM.
+      if (!d || d.centerOnly || typeof d.widthM === "number") return;
+      if (!Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
+      setPlacePicked(true);
+    };
+    window.addEventListener("monadruk:map-goto", onPick as EventListener);
+    return () => window.removeEventListener("monadruk:map-goto", onPick as EventListener);
+  }, []);
   useEffect(() => {
     const onGoto = (e: Event) => {
       const d = (e as CustomEvent).detail as
@@ -164,7 +192,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   };
 
   const create = () => {
-    if (!s.selectedArea || s.isGenerating) return;
+    if (!s.selectedArea || !placePicked || s.isGenerating) return;
     import("@/lib/analytics")
       .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm }))
       .catch(() => {});
@@ -367,7 +395,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </button>
               ))}
             </div>
-            {!s.selectedArea ? (
+            {!placePicked ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-medium text-[var(--text-secondary)]">
                 <MapPin size={15} className="animate-pulse text-[var(--accent-strong)]" /> {t("waitingPlace")}
               </div>
@@ -491,7 +519,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                             // поточного центру з масштабом під нову плитку —
                             // інакше S зі старою 800м-зоною ловила червоне
                             // «завелика», а XL марнувала деталізацію.
-                            const c = s.selectedArea?.getCenter?.();
+                            // Лише коли місце вже ОБРАНЕ: інакше ресайзили б
+                            // дефолтну київську рамку, якої юзер не торкався.
+                            const c = placePicked ? s.selectedArea?.getCenter?.() : null;
                             if (c) {
                               window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
                                 detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(z.mm) },
@@ -520,6 +550,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <button
                   type="button"
                   onClick={create}
+                  disabled={!placePicked}
+                  title={!placePicked ? t("waitingPlace") : undefined}
                   data-testid="scenario-create"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >

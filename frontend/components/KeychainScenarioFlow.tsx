@@ -109,6 +109,37 @@ export function KeychainScenarioFlow({
 
   // Чи дозволений авто-напис для поточного шаблону (див. CARD_DEFS.autoLabel).
   const autoLabelRef = useRef(true);
+
+  // ЧЕСНИЙ «Місце обрано»: дефолтна рамка (Київ) ставиться сама, тож
+  // selectedArea != null ≠ вибір користувача. Без гейта: набрав адресу, не
+  // клікнув підказку → зелений бейдж + активна CTA → мовчки брелок Києва.
+  // Вибір = подія пошуку/чіпа (map-goto) АБО ручний зсув рамки (зміна
+  // selectedArea після вже наявної; перший авто-сет не рахується).
+  const [placePicked, setPlacePicked] = useState(false);
+  const prevAreaRef = useRef<typeof s.selectedArea>(null);
+  useEffect(() => {
+    const prev = prevAreaRef.current;
+    prevAreaRef.current = s.selectedArea;
+    if (prev && s.selectedArea && s.selectedArea !== prev) setPlacePicked(true);
+  }, [s.selectedArea]);
+  useEffect(() => {
+    const onPick = (e: Event) => {
+      const d = (e as CustomEvent).detail as
+        | { lat?: number; lon?: number; centerOnly?: boolean }
+        | undefined;
+      if (!d || d.centerOnly) return;
+      if (!Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
+      setPlacePicked(true);
+      // ПОШУК нового місця робить старий авто-напис (KYIV…) брехнею —
+      // чистимо його, якщо користувач не вводив свій. Чіпи міст не постраждають:
+      // їх onClick ставить правильний текст СИНХРОННО після цього ж dispatch
+      // (Париж більше не гравіюється як «KYIV» — відтворено наскрізним тестом).
+      if (!labelManualRef.current) onLabelChange("");
+    };
+    window.addEventListener("monadruk:map-goto", onPick as EventListener);
+    return () => window.removeEventListener("monadruk:map-goto", onPick as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Вибір картки = застосувати шаблон тим САМИМ кодом, що повна панель
   // (page.applyTemplate), значення — з KEYCHAIN_TEMPLATES.
   const pick = (id: string) => {
@@ -126,7 +157,7 @@ export function KeychainScenarioFlow({
   };
 
   const create = () => {
-    if (!s.selectedArea || s.isGenerating) return;
+    if (!s.selectedArea || !placePicked || s.isGenerating) return;
     import("@/lib/analytics")
       .then((m) => m.track("guided_generate", { product: "keychain", scenario: tplId }))
       .catch(() => {});
@@ -280,7 +311,7 @@ export function KeychainScenarioFlow({
                 </button>
               ))}
             </div>
-            {!s.selectedArea ? (
+            {!placePicked ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-medium text-[var(--text-secondary)]">
                 <MapPin size={15} className="animate-pulse text-[var(--accent-strong)]" /> {t("waitingPlace")}
               </div>
@@ -368,6 +399,8 @@ export function KeychainScenarioFlow({
                   <button
                     type="button"
                     onClick={create}
+                    disabled={!placePicked}
+                    title={!placePicked ? t("waitingPlace") : undefined}
                     data-testid="kc-scenario-create"
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                   >

@@ -212,10 +212,20 @@ def fetch_extras(
             if green is not None and not getattr(green, "empty", True):
                 green = green[green.geometry.notna()]
                 green = green[green.geom_type.isin(["Polygon", "MultiPolygon"])]
-            if green is None:
-                green = gpd.GeoDataFrame(geometry=[], crs=target_crs or "EPSG:4326")
-            print(f"[LOCAL OSM DB] parks/green from DuckDB: {len(green)} polygons", flush=True)
-            return green
+            if green is not None and not getattr(green, "empty", True):
+                print(f"[LOCAL OSM DB] parks/green from DuckDB: {len(green)} polygons", flush=True)
+                return green
+            # ПОРОЖНЬО. Розрізняємо «в зоні справді нема зелені» від «bbox ПОЗА
+            # ПОКРИТТЯМ БД» (ukraine.duckdb — лише Україна): якщо БД не має в цій
+            # зоні і БУДІВЕЛЬ — ми за кордоном → падаємо у Overpass/PBF-шлях
+            # нижче. Без цього ВСІ неукраїнські моделі виходили без зелені
+            # (Manhattan/Paris: parks=0 назавжди), хоча buildings/roads/water
+            # мають свій Overpass-фолбек у data_loader і були повні.
+            _bld = _db_gdf("buildings", north, south, east, west, target_crs=None)
+            if _bld is not None and not getattr(_bld, "empty", True):
+                print("[LOCAL OSM DB] parks/green from DuckDB: 0 polygons (зона в покритті БД — зелені справді нема)", flush=True)
+                return green if green is not None else gpd.GeoDataFrame(geometry=[], crs=target_crs or "EPSG:4326")
+            print("[LOCAL OSM DB] parks порожні і buildings=0 → bbox поза покриттям БД; fallback на Overpass/PBF", flush=True)
     except Exception as _e:
         print(f"[WARN] DuckDB parks недоступні ({_e}); fallback на Overpass/PBF")
 
