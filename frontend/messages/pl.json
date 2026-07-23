@@ -1373,6 +1373,7 @@
     "emptyTitle": "Tutaj pojawi się Twój model 3D",
     "emptyBody": "Zaznacz obszar na mapie i kliknij „Generuj”.",
     "batchLoadError": "Nie udało się załadować podglądu partii",
+    "previewLoading": "Wczytywanie podglądu 3D…",
     "modelLoadError": "Nie udało się załadować modelu",
     "tools": {
       "fullscreen": "Pełny ekran",

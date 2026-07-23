@@ -1373,6 +1373,7 @@
     "emptyTitle": "Votre modèle 3D apparaîtra ici",
     "emptyBody": "Sélectionnez une zone sur la carte et cliquez sur « Générer ».",
     "batchLoadError": "Échec du chargement de l'aperçu du lot",
+    "previewLoading": "Chargement de l’aperçu 3D…",
     "modelLoadError": "Échec du chargement du modèle",
     "tools": {
       "fullscreen": "Plein écran",

@@ -1373,6 +1373,7 @@
     "emptyTitle": "Aquí aparecerá tu modelo 3D",
     "emptyBody": "Selecciona un área en el mapa y pulsa «Generar».",
     "batchLoadError": "Error al cargar la vista previa del lote",
+    "previewLoading": "Cargando vista 3D…",
     "modelLoadError": "Error al cargar el modelo",
     "tools": {
       "fullscreen": "Pantalla completa",

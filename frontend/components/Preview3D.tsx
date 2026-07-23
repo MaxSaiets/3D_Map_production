@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Html } from "@react-three/drei";
 import { Component, Suspense, useEffect, useMemo, useState, useRef } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { useTranslations } from "next-intl";
@@ -432,31 +432,35 @@ async function downloadPreviewBlobWithRetry(
 }
 
 async function loadPreviewModelForTask(taskId: string): Promise<THREE.Group> {
-  let glbError: unknown = null;
-  try {
-    const blobGlb = await downloadPreviewBlobWithRetry(taskId, "glb");
-    try {
-      return await loadGLB(blobGlb);
-    } catch (error) {
-      glbError = error;
-      const type = String(blobGlb.type || "").toLowerCase();
-      if (type.includes("3mf")) {
-        return await load3MF(blobGlb);
-      }
-      throw error;
+  // ЧЕРГУЄМО формати glb→3mf у КОЖНОМУ раунді замість «5 GLB-ретраїв, потім
+  // 3MF»: flat-пайплайн (брелки/магніти/плоскі мапи) GLB не генерує ВЗАГАЛІ,
+  // тож стара схема тримала користувача ~10–15с на чорному екрані, поки
+  // марні GLB-спроби вигорали. Тепер flat-превʼю вантажиться з другої спроби
+  // (~1–2с), а для обʼємних мап GLB так само перший — нічого не змінилось.
+  // Раунди з бек-офом лишаються: файл може ще дописуватись у мить success.
+  const errors: string[] = [];
+  for (let round = 0; round < 3; round++) {
+    if (round > 0) {
+      // 0.8s, 1.6s — грейс, поки файл закінчує писатись (та сама сума, що була).
+      await new Promise((r) => setTimeout(r, 800 * round));
     }
-  } catch (error) {
-    glbError = error;
+    for (const format of ["glb", "3mf"] as const) {
+      try {
+        const blob = await downloadPreviewBlobWithRetry(taskId, format, 1);
+        try {
+          return format === "glb" ? await loadGLB(blob) : await load3MF(blob);
+        } catch (parseError) {
+          // Бек інколи віддає 3MF-контент на glb-запит — пробуємо як 3MF.
+          const type = String(blob.type || "").toLowerCase();
+          if (format === "glb" && type.includes("3mf")) return await load3MF(blob);
+          throw parseError;
+        }
+      } catch (e) {
+        errors.push(`${format} (раунд ${round + 1}): ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
   }
-
-  try {
-    const blob3mf = await downloadPreviewBlobWithRetry(taskId, "3mf");
-    return await load3MF(blob3mf);
-  } catch (error3mf: any) {
-    const glbMessage = glbError instanceof Error ? glbError.message : String(glbError || "");
-    const mfMessage = error3mf instanceof Error ? error3mf.message : String(error3mf || "");
-    throw new Error(`Не вдалося завантажити preview після кількох спроб: GLB (${glbMessage}); 3MF (${mfMessage})`);
-  }
+  throw new Error(`Не вдалося завантажити preview після кількох спроб: ${errors.slice(-2).join("; ")}`);
 }
 
 // Компонент для автоматичного позиціювання камери
@@ -1222,6 +1226,16 @@ function ModelLoader({ rotateMode, onError }: { rotateMode: RotateMode; onError?
       <>
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={0.8} />
+        {/* Видимий стан завантаження превʼю: раніше тут була просто чорна
+            сцена на час фетчу glb/3mf — читалось як «превʼю зламане». */}
+        {loading && !error && (
+          <Html center zIndexRange={[5, 0]}>
+            <div className="pointer-events-none flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-black/45 px-4 py-2 text-[13px] font-semibold text-white/85 backdrop-blur">
+              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white/90" />
+              {t("previewLoading")}
+            </div>
+          </Html>
+        )}
       </>
     );
   }

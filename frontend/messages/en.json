@@ -1373,6 +1373,7 @@
     "emptyTitle": "Your 3D model will appear here",
     "emptyBody": "Select an area on the map and press “Generate”.",
     "batchLoadError": "Failed to load batch preview",
+    "previewLoading": "Loading 3D preview…",
     "modelLoadError": "Failed to load model",
     "tools": {
       "fullscreen": "Fullscreen",

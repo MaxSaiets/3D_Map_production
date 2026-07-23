@@ -1373,6 +1373,7 @@
     "emptyTitle": "Hier erscheint Ihr 3D-Modell",
     "emptyBody": "Wählen Sie einen Bereich auf der Karte und klicken Sie „Generieren“.",
     "batchLoadError": "Batch-Vorschau konnte nicht geladen werden",
+    "previewLoading": "3D-Vorschau wird geladen…",
     "modelLoadError": "Modell konnte nicht geladen werden",
     "tools": {
       "fullscreen": "Vollbild",
