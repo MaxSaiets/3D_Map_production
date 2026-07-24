@@ -4224,8 +4224,11 @@ def run_flat_plate_pipeline(
                     radius_m=_mk_half0 * 0.3, shape=_mk_shape0,
                 )
                 if _mk_poly0 is not None and not _mk_poly0.is_empty:
+                    # Зазор навколо маркера 1.2мм (був 0.25): маркер сідає у ЧИСТУ
+                    # зону без будинків/доріг довкола (юзер: «чому не вирізається
+                    # під позначку як для будинку»). Той самий припуск, що під текст.
                     marker_carve_poly = _mk_poly0.buffer(
-                        _model_mm_to_world_m(0.25, export_scale_factor)
+                        _model_mm_to_world_m(1.2, export_scale_factor)
                     ).buffer(0)
                     if road_mask is not None and not getattr(road_mask, "is_empty", True):
                         road_mask = _subtract_geometry(road_mask, marker_carve_poly)

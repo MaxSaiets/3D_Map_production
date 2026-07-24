@@ -186,11 +186,12 @@ export const KEYCHAIN_TEMPLATES: KeychainTemplate[] = [
       cornerRadiusMm: 15,
       baseShape: "token",
       loopStyle: "round",
-      // Петля по центру зверху і ВТОПЛЕНА в тіло (юзер: «посередину»).
+      // Петля по центру ВЕРХНЬОГО КРАЮ, що ПРОТИКАЄ край (як кільце брелка,
+      // а не отвір посеред обличчя — юзер: «дирка не зверху а по центру»).
       loopXMm: 27.5,
-      loopYMm: 5.0,
-      loopOuterMm: 2.8,
-      loopInnerMm: 1.5,
+      loopYMm: 0.0,
+      loopOuterMm: 3.4,
+      loopInnerMm: 1.7,
       mapXMm: 0,
       mapYMm: 0,
       mapWidthMm: 55,
