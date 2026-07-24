@@ -943,8 +943,13 @@ export function KeychainControlPanel({
         // Виділення будинку: лише поза топо-режимом (там немає карти). Шлемо прапор
         // + обрані точки [[lon,lat],...] зі store (дзеркало того, як мапи шлють
         // highlight_points). Без точок бек робить центроїд-фолбек (golden-safe).
-        keychain_highlight_building: highlightBuilding && !topoMode,
-        ...((highlightBuilding && !topoMode && highlightPoints.length > 0)
+        // ⭐КРИТ: гейт на ТОЧКИ (не на mapHighlightBuilding-прапор!) — прапор
+        // це лише режим КЛІКУ і АВТО-ВИМИКАЄТЬСЯ після вибору будинку (guided
+        // авто-вихід). Раніше вибраний будинок був на 2D-карті, але в друк ішов
+        // highlight_building=false → будинок зникав у 3D (юзер: «будинок не
+        // робиться»). Тепер: обрано будинок (points>0) АБО активний режим кліку.
+        keychain_highlight_building: (mapHighlightBuilding || highlightPoints.length > 0) && !topoMode,
+        ...(((mapHighlightBuilding || highlightPoints.length > 0) && !topoMode && highlightPoints.length > 0)
           ? { highlight_points: highlightPoints }
           : {}),
         keychain_base_shape: design.baseShape,
