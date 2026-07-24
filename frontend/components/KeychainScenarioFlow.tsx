@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
+import { ArrowLeft, Check, Home, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
@@ -84,7 +84,24 @@ export function KeychainScenarioFlow({
     progress: st.progress,
     status: st.status,
     downloadUrl: st.downloadUrl,
+    // Виділення будинку «мій дім» — той самий store, що на /create; машинна
+    // копія KeychainControlPanel читає його і шле keychain_highlight_building.
+    mapHighlightBuilding: st.mapHighlightBuilding,
+    highlightPoints: st.highlightPoints,
+    setMapHighlightBuilding: st.setMapHighlightBuilding,
+    clearHighlights: st.clearHighlights,
   })));
+
+  // Режим кліку АВТО-ВИМИКАЄТЬСЯ одразу після вибору будинку (як на /create):
+  // вибір лишається (друк дивиться на highlightPoints), а рамка знову рухома.
+  const hlCountRef = useRef(0);
+  useEffect(() => {
+    if (s.mapHighlightBuilding && s.highlightPoints.length > hlCountRef.current) {
+      s.setMapHighlightBuilding(false);
+    }
+    hlCountRef.current = s.highlightPoints.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.highlightPoints.length, s.mapHighlightBuilding]);
 
   const [tplId, setTplId] = useState<string | null>(null);
   // Чи редагував користувач напис ВЛАСНОРУЧ: якщо ні — чіп міста оновлює його
@@ -355,6 +372,41 @@ export function KeychainScenarioFlow({
                         </button>
                       ))}
                     </div>
+                    {/* «МІЙ ДІМ» — виділити свій будинок ОКРЕМОЮ деталлю (юзер:
+                        «де вибір будинку»). Той самий store-механізм, що на
+                        /create: тумблер вмикає режим кліку по карті, після кліку
+                        режим сам вимикається, вибір лишається. Машинна копія
+                        KeychainControlPanel читає store → keychain_highlight_building. */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        aria-pressed={s.mapHighlightBuilding}
+                        onClick={() => s.setMapHighlightBuilding(!s.mapHighlightBuilding)}
+                        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
+                          s.mapHighlightBuilding
+                            ? "border-[rgba(192,57,43,0.45)] bg-[rgba(192,57,43,0.1)] text-[#8f2a20]"
+                            : s.highlightPoints.length > 0
+                              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                        }`}
+                      >
+                        <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : "text-[var(--accent-strong)]"} />
+                        {s.highlightPoints.length > 0 ? t("myHomeCount", { n: s.highlightPoints.length }) : t("myHome")}
+                      </button>
+                      {s.highlightPoints.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => s.clearHighlights()}
+                          aria-label={t("myHomeClear")}
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                    {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
+                      <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
+                    )}
                     {/* Напис на звороті — опційний чіп (гравіювання на дні). */}
                     {!backOn && !backLabel ? (
                       <button

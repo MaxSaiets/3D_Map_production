@@ -1702,6 +1702,10 @@
     "changeSomething": "Möchten Sie etwas ändern?",
     "backToGuided": "← Einfacher Modus",
     "advancedSettings": "Voller Designer (alle Einstellungen)",
-    "fullModeTitle": "Voller Designer"
+    "fullModeTitle": "Voller Designer",
+    "myHome": "Mein Zuhause auf der Karte",
+    "myHomeCount": "Mein Zuhause: {n} ausgewählt",
+    "myHomeClear": "Auswahl aufheben",
+    "myHomeHintClick": "Klicken Sie Ihr Gebäude auf der Karte an — es wird ein separater roter Einsatz"
   }
 }

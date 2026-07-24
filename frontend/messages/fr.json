@@ -1702,6 +1702,10 @@
     "changeSomething": "Envie de changer quelque chose ?",
     "backToGuided": "← Mode simple",
     "advancedSettings": "Créateur complet (tous les réglages)",
-    "fullModeTitle": "Créateur complet"
+    "fullModeTitle": "Créateur complet",
+    "myHome": "Ma maison sur la carte",
+    "myHomeCount": "Ma maison : {n} sélectionné",
+    "myHomeClear": "Effacer la sélection",
+    "myHomeHintClick": "Cliquez votre bâtiment sur la carte — il devient un insert rouge séparé"
   }
 }

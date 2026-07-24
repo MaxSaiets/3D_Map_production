@@ -1702,6 +1702,10 @@
     "changeSomething": "Want to change something?",
     "backToGuided": "← Simple mode",
     "advancedSettings": "Full designer (all settings)",
-    "fullModeTitle": "Full designer"
+    "fullModeTitle": "Full designer",
+    "myHome": "My home on the map",
+    "myHomeCount": "My home: {n} selected",
+    "myHomeClear": "Clear selection",
+    "myHomeHintClick": "Click your building on the map — it becomes a separate red insert"
   }
 }

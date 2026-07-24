@@ -1702,6 +1702,10 @@
     "changeSomething": "¿Quieres cambiar algo?",
     "backToGuided": "← Modo sencillo",
     "advancedSettings": "Diseñador completo (todos los ajustes)",
-    "fullModeTitle": "Diseñador completo"
+    "fullModeTitle": "Diseñador completo",
+    "myHome": "Mi casa en el mapa",
+    "myHomeCount": "Mi casa: {n} seleccionado",
+    "myHomeClear": "Quitar selección",
+    "myHomeHintClick": "Haga clic en su edificio en el mapa — se convierte en un inserto rojo aparte"
   }
 }

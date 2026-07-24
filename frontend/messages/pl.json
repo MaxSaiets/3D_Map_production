@@ -1702,6 +1702,10 @@
     "changeSomething": "Chcesz coś zmienić?",
     "backToGuided": "← Tryb prosty",
     "advancedSettings": "Pełny kreator (wszystkie ustawienia)",
-    "fullModeTitle": "Pełny kreator"
+    "fullModeTitle": "Pełny kreator",
+    "myHome": "Mój dom na mapie",
+    "myHomeCount": "Mój dom: {n} wybrano",
+    "myHomeClear": "Wyczyść wybór",
+    "myHomeHintClick": "Kliknij swój budynek na mapie — stanie się osobną czerwoną wstawką"
   }
 }
