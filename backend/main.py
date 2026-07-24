@@ -884,6 +884,10 @@ class GenerationRequest(BaseModel):
     # (= точка, яку шукав користувач). Окремий теракотовий шар. "" = вимкнено.
     keychain_place_marker: str = Field(default="", max_length=12)
     keychain_place_marker_size_mm: float = Field(default=6.0, ge=3.0, le=14.0)
+    # Позиція маркера у body-мм від лівого-верхнього кута (дизайнер перетягує).
+    # None → центр корпусу (стара поведінка). Кишеня маркера ставиться сюди.
+    keychain_place_marker_x_mm: Optional[float] = Field(default=None, ge=0.0, le=180.0)
+    keychain_place_marker_y_mm: Optional[float] = Field(default=None, ge=0.0, le=140.0)
     # ПІДСВІТКА БУДИНКУ: будинок у ЦЕНТРІ карти виноситься ОКРЕМОЮ деталлю іншого
     # кольору (друкується окремо/іншим філаментом, приклеюється/вставляється на місце).
     # v1 = окрема золота деталь "Highlight" (будинок прибрано з шару buildings → пляма

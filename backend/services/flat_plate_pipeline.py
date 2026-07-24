@@ -4183,6 +4183,31 @@ def run_flat_plate_pipeline(
     # Полігон рахуємо ТІЄЮ Ж формулою, що будує сам меш маркера нижче (центроїд body,
     # той самий розмір/форма) → ідеальний збіг паза і вставки. Будинки під маркером
     # вирізаються далі — у спільному carve-блоці будівель.
+    # Позиція маркера: дизайнер шле body-мм від лівого-верхнього кута (як карта).
+    # Конвертуємо у world-точку тим САМИМ правилом, що й розкладка карти
+    # (x = minx + мм·scale; Y-фліп: y = maxy − мм·scale). None → центр корпусу.
+    def _marker_center_world():
+        _cx_mm = getattr(request, "keychain_place_marker_x_mm", None)
+        _cy_mm = getattr(request, "keychain_place_marker_y_mm", None)
+        if _cx_mm is None or _cy_mm is None:
+            return keychain_layout["body"].centroid
+        try:
+            _bb = keychain_layout["body"].bounds  # (minx, miny, maxx, maxy) world-m
+            _sc = float(keychain_layout.get("layout_scale_m_per_mm", 0.0) or 0.0)
+            if _sc <= 0:
+                return keychain_layout["body"].centroid
+            from shapely.geometry import Point as _MkPoint
+            _px = _bb[0] + float(_cx_mm) * _sc
+            _py = _bb[3] - float(_cy_mm) * _sc  # Y-фліп: дизайнер зверху, модель знизу
+            # Тримаємо в межах тіла (перетягли за край → притягуємо всередину).
+            _pt = _MkPoint(_px, _py)
+            if not keychain_layout["body"].contains(_pt):
+                from shapely.ops import nearest_points as _mk_np
+                _pt, _ = _mk_np(keychain_layout["body"], _pt)
+            return _pt
+        except Exception:
+            return keychain_layout["body"].centroid
+
     marker_carve_poly = None
     if keychain_mode and keychain_layout is not None:
         _mk0 = str(getattr(request, "keychain_place_marker", "") or "").lower().strip()
@@ -4193,7 +4218,7 @@ def run_flat_plate_pipeline(
                     _mk_shape0 = "heart"
                 _mk_size0 = float(getattr(request, "keychain_place_marker_size_mm", 6.0) or 6.0)
                 _mk_half0 = _model_mm_to_world_m(_mk_size0 / 2.0, export_scale_factor)
-                _bc0 = keychain_layout["body"].centroid
+                _bc0 = _marker_center_world()
                 _mk_poly0 = _keychain_body_shape(
                     _bc0.x - _mk_half0, _bc0.y - _mk_half0, _bc0.x + _mk_half0, _bc0.y + _mk_half0,
                     radius_m=_mk_half0 * 0.3, shape=_mk_shape0,
@@ -4926,7 +4951,7 @@ def run_flat_plate_pipeline(
                 _mk_shape = "heart"
             _mk_size = float(getattr(request, "keychain_place_marker_size_mm", 6.0) or 6.0)
             _mk_half = _model_mm_to_world_m(_mk_size / 2.0, export_scale_factor)
-            _bodyc = keychain_layout["body"].centroid
+            _bodyc = _marker_center_world()
             _mk_poly = _keychain_body_shape(
                 _bodyc.x - _mk_half, _bodyc.y - _mk_half, _bodyc.x + _mk_half, _bodyc.y + _mk_half,
                 radius_m=_mk_half * 0.3, shape=_mk_shape,

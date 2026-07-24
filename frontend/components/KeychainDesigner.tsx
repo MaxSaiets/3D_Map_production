@@ -47,6 +47,11 @@ export type KeychainDesignerConfig = {
   labelClearBand?: boolean;
   rimWidthMm: number;
   rimHeightMm: number;
+  // Позиція маркера «моє місце» (♥/★/●) у body-мм від ЛІВОГО-ВЕРХНЬОГО кута.
+  // undefined = центр корпусу (стара поведінка). Перетягується по карті — бекенд
+  // ставить кишеню маркера в ТУ САМУ точку (keychain_place_marker_x/y_mm).
+  markerXMm?: number;
+  markerYMm?: number;
 };
 
 export type KeychainTemplate = {
@@ -61,7 +66,7 @@ export type KeychainTemplate = {
   design: KeychainDesignerConfig;
 };
 
-type DragTarget = "body" | "map-move" | "map-resize" | "loop" | "label" | "label-rotate";
+type DragTarget = "body" | "map-move" | "map-resize" | "loop" | "label" | "label-rotate" | "marker";
 type DragSession = {
   target: DragTarget;
   start: { x: number; y: number };
@@ -1063,6 +1068,13 @@ export function KeychainDesigner({
       next.labelYMm = clamp(session.initial.labelYMm + localDy, 4, next.bodyHeightMm - 4);
       next.labelXMm = snapTo(next.labelXMm, next.bodyWidthMm / 2);
       next.labelYMm = snapTo(next.labelYMm, next.bodyHeightMm - next.labelBandMm / 2);
+    } else if (session.target === "marker") {
+      // Маркер тримаємо В МЕЖАХ КАРТИ (він позначає місце НА мапі). Старт —
+      // від поточної позиції (або центру, якщо ще не рухали).
+      const startX = session.initial.markerXMm ?? (session.initial.mapXMm + session.initial.mapWidthMm / 2);
+      const startY = session.initial.markerYMm ?? (session.initial.mapYMm + session.initial.mapHeightMm / 2);
+      next.markerXMm = clamp(startX + localDx, next.mapXMm, next.mapXMm + next.mapWidthMm);
+      next.markerYMm = clamp(startY + localDy, next.mapYMm, next.mapYMm + next.mapHeightMm);
     } else if (session.target === "label-rotate") {
       // Кут між початковою позицією pointer та центром label, плюс
       // кут між поточною позицією pointer та центром label — різниця = поворот.
@@ -1410,32 +1422,6 @@ export function KeychainDesigner({
                   </>
                 )}
               </g>
-              {/* D3: маркер «особливого місця» (♥/★/●) — рендеримо там, де його
-                  ставить бекенд (центр корпусу), щоб вибір було видно ОДРАЗУ, а не
-                  лише після генерації 3D. Поза map-маскою (маркер не «їсть» band). */}
-              {placeMarker && (
-                <g transform={`translate(${bodyCx} ${bodyCy})`} pointerEvents="none">
-                  {placeMarker === "circle" && <circle r={3} fill="#c0392b" opacity={0.95} />}
-                  {placeMarker === "star" && (
-                    <polygon
-                      points={Array.from({ length: 10 }, (_, i) => {
-                        const r = i % 2 === 0 ? 3 : 1.3;
-                        const a = ((-90 + i * 36) * Math.PI) / 180;
-                        return `${(r * Math.cos(a)).toFixed(2)},${(r * Math.sin(a)).toFixed(2)}`;
-                      }).join(" ")}
-                      fill="#c0392b"
-                      opacity={0.95}
-                    />
-                  )}
-                  {placeMarker === "heart" && (
-                    <path
-                      d="M0,2.6 C-2.4,0.9 -3,-0.3 -3,-1.1 C-3,-2.3 -2.1,-3 -1.2,-3 C-0.5,-3 0,-2.6 0,-2.0 C0,-2.6 0.5,-3 1.2,-3 C2.1,-3 3,-2.3 3,-1.1 C3,-0.3 2.4,0.9 0,2.6 Z"
-                      fill="#c0392b"
-                      opacity={0.95}
-                    />
-                  )}
-                </g>
-              )}
             </g>
           ) : (
             <g pointerEvents="none">
@@ -1485,6 +1471,67 @@ export function KeychainDesigner({
             className="cursor-move"
             onPointerDown={(event) => beginDrag(event, "map-move")}
           />
+
+          {/* Маркер «моє місце» (♥/★/●) — ПЕРЕТЯГУВАНИЙ по карті. Рендериться
+              ПІСЛЯ map-move-hit (вище в DOM), інакше той прямокутник перехоплював
+              pointer по всій карті й маркер не тягнувся (юзер: «чому не можна
+              перетянути позначку місця»). Позиція markerXMm/YMm → бекенд ставить
+              кишеню в ТУ САМУ точку. Коло-хіт r=5 для зручного тапу на телефоні. */}
+          {placeMarker && previewSide === "front" && (
+            <g
+              transform={`translate(${value.markerXMm ?? (value.mapXMm + value.mapWidthMm / 2)} ${value.markerYMm ?? (value.mapYMm + value.mapHeightMm / 2)})`}
+              onPointerDown={(event) => beginDrag(event, "marker")}
+              className="cursor-grab"
+              style={{ touchAction: "none" }}
+              data-testid="marker-hit"
+            >
+              <circle r={5} fill="transparent" />
+              {placeMarker === "circle" && <circle r={3} fill="#c0392b" opacity={0.95} />}
+              {placeMarker === "star" && (
+                <polygon
+                  points={Array.from({ length: 10 }, (_, i) => {
+                    const r = i % 2 === 0 ? 3 : 1.3;
+                    const a = ((-90 + i * 36) * Math.PI) / 180;
+                    return `${(r * Math.cos(a)).toFixed(2)},${(r * Math.sin(a)).toFixed(2)}`;
+                  }).join(" ")}
+                  fill="#c0392b"
+                  opacity={0.95}
+                />
+              )}
+              {placeMarker === "heart" && (
+                <path
+                  d="M0,2.6 C-2.4,0.9 -3,-0.3 -3,-1.1 C-3,-2.3 -2.1,-3 -1.2,-3 C-0.5,-3 0,-2.6 0,-2.0 C0,-2.6 0.5,-3 1.2,-3 C2.1,-3 3,-2.3 3,-1.1 C3,-0.3 2.4,0.9 0,2.6 Z"
+                  fill="#c0392b"
+                  opacity={0.95}
+                />
+              )}
+            </g>
+          )}
+
+          {/* WYSIWYG-виріз під написом (юзер: «чому текст одразу не обрізається
+              як він буде виглядати в житті»): бекенд ЧИСТИТЬ смугу під літерами
+              (базовий колір плити) і піднімає літери. Малюємо таку саму очищену
+              плашку кольору бази ПІД текстом — превʼю показує готовий вигляд, а
+              не темні літери поверх доріг. Розмір — за довжиною напису. */}
+          {previewSide === "front" && (label || "").trim() ? (() => {
+            const _fs = Math.max(value.labelTextHeightMm / 0.7, 2.6);
+            const _len = Math.max((label || "TEXT").trim().length, 1);
+            const _spc = value.labelFontStyle === "wide" ? 0.72 : value.labelFontStyle === "condensed" ? 0.5 : 0.62;
+            const _w = Math.min(_len * _fs * _spc + _fs * 0.6, value.mapWidthMm);
+            const _h = _fs * 1.25;
+            return (
+              <rect
+                x={value.labelXMm - _w / 2}
+                y={value.labelYMm - _h / 2}
+                width={_w}
+                height={_h}
+                rx={Math.min(1.6, _h / 3)}
+                fill="#e8e1cc"
+                transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
+                pointerEvents="none"
+              />
+            );
+          })() : null}
 
           <text
             data-testid="label-move-hit"

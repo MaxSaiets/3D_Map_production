@@ -936,6 +936,10 @@ export function KeychainControlPanel({
         keychain_back_label: backLabel,
         keychain_place_marker: placeMarker,
         keychain_place_marker_size_mm: 6,
+        // Позиція маркера у body-мм від лівого-верхнього кута (дизайнер малює й
+        // перетягує; дефолт — центр карти). Бекенд ставить кишеню в ТУ САМУ точку.
+        keychain_place_marker_x_mm: design.markerXMm ?? (design.mapXMm + design.mapWidthMm / 2),
+        keychain_place_marker_y_mm: design.markerYMm ?? (design.mapYMm + design.mapHeightMm / 2),
         // Виділення будинку: лише поза топо-режимом (там немає карти). Шлемо прапор
         // + обрані точки [[lon,lat],...] зі store (дзеркало того, як мапи шлють
         // highlight_points). Без точок бек робить центроїд-фолбек (golden-safe).
