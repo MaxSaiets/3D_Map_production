@@ -14,7 +14,9 @@ $ErrorActionPreference = "Stop"
 $LOCAL  = "H:\3dMAP_WORK_2.0"
 $DEPLOY = "C:\Temp\3dmap_deploy"
 $SERVER = "root@209.38.210.197"
-$SSH    = @("-o", "StrictHostKeyChecking=no", $SERVER)
+# ServerAlive: довгий npm/next build (4-6 хв) без keepalive рвав ssh-сесію →
+# білд не виконувався, а гейт мовчки пропускав (спіймано 2026-07-29).
+$SSH    = @("-o", "StrictHostKeyChecking=no", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=60", $SERVER)
 
 function Write-Step($msg) { Write-Host "`n>>> $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)   { Write-Host "    OK $msg" -ForegroundColor Green }
@@ -144,21 +146,34 @@ if ($frontendTouched -and -not $SkipBuild) {
     # `next start` is live corrupts .next (missing .next/server/app/*/page.js ->
     # "ENOENT page.js" / "o is not a function" / unstyled 500s). Stop -> rm ->
     # build -> (started after the BUILD_ID gate below).
-    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f 'next-server' 2>/dev/null; pkill -9 -f 'next start' 2>/dev/null; sleep 2; cd /opt/3dmap/frontend && npm install --no-audit --no-fund > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
+    # ПАСТКА (2026-07-29): pkill -f 'next-server' МАТЧИВ САМ bash -c нашої
+    # ssh-команди (її cmdline містить патерн) → SIGKILL шелу → конект рвався,
+    # білд НЕ виконувався, а старий BUILD_ID проходив гейт → «мовчазний OK» зі
+    # старим кодом на проді. Тому [n]ext-… (regex не матчить власний рядок).
+    $preBuildId = (& ssh @SSH "cat /opt/3dmap/frontend/.next/BUILD_ID 2>/dev/null" 2>&1 | Out-String).Trim()
+    $buildOut = & ssh @SSH "pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f '[n]ext-server' 2>/dev/null; pkill -9 -f '[n]ext start' 2>/dev/null; sleep 2; cd /opt/3dmap/frontend && npm install --no-audit --no-fund > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
     Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
     $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
     # Авто-відновлення: пошкоджений node_modules (бракує next/dist/... модулів)
     # валить білд на etапі type-check. `npm install` цього не лікує — потрібен
     # повний `npm ci`. Робимо один раз і перебілдимо.
-    if (($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") -and
+    if (($buildOut -notmatch "EXIT=0" -or $buildId -notmatch "OK") -and
         ($buildOut -match "Cannot find module|MODULE_NOT_FOUND|require stack")) {
         Write-Host "    Corrupted node_modules detected — npm ci + rebuild..." -ForegroundColor Yellow
         $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && npm ci > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
         Write-Host ($buildOut | Out-String).Trim() -ForegroundColor DarkGray
         $buildId = (& ssh @SSH "test -f /opt/3dmap/frontend/.next/BUILD_ID && echo OK || echo MISSING" 2>&1 | Out-String).Trim()
     }
-    if ($buildOut -match "EXIT=[^0]" -or $buildId -notmatch "OK") {
-        Write-Err "Build FAILED (.next/BUILD_ID=$buildId) — frontend left stopped. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
+    # ПОЗИТИВНИЙ гейт: вимагаємо «EXIT=0» У виводі (обірваний ssh не має EXIT=
+    # взагалі — старий гейт «-match EXIT=[^0]» це пропускав) + НОВИЙ BUILD_ID
+    # (старий існуючий файл теж проходив просту перевірку на існування).
+    $postBuildId = (& ssh @SSH "cat /opt/3dmap/frontend/.next/BUILD_ID 2>/dev/null" 2>&1 | Out-String).Trim()
+    if ($buildOut -notmatch "EXIT=0" -or $buildId -notmatch "OK") {
+        Write-Err "Build FAILED (.next/BUILD_ID=$buildId, EXIT marker: $($buildOut -match 'EXIT=0')) — frontend left stopped. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
+        exit 1
+    }
+    if ($preBuildId -and $postBuildId -eq $preBuildId) {
+        Write-Err "Build did NOT run: BUILD_ID unchanged ($postBuildId) — stale build would ship silently. Check ssh session survival."
         exit 1
     }
     # Build OK -> bring the frontend back up onto the fresh .next, then WARM UP:
@@ -221,7 +236,7 @@ if ($frontendTouched) {
         Write-Host "    Stale/partial build — clean rebuild (with npm ci fallback)..." -ForegroundColor Yellow
         # Clean rebuild; if the build dies on a corrupted node_modules
         # (MODULE_NOT_FOUND / 'No such file'), restore with npm ci and rebuild.
-        $rb = & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f "next-server" 2>/dev/null; pkill -9 -f "next start" 2>/dev/null; sleep 2; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_rebuild.log 2>&1; ec=$?; if [ $ec -ne 0 ] && grep -qiE "Cannot find module|No such file|MODULE_NOT_FOUND|ENOTEMPTY" /tmp/3dmap_rebuild.log; then echo "recovery rebuild..."; npm ci >> /tmp/3dmap_rebuild.log 2>&1; rm -rf .next; node_modules/next/dist/bin/next build >> /tmp/3dmap_rebuild.log 2>&1; ec=$?; fi; echo EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1
+        $rb = & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; pkill -9 -f "[n]ext-server" 2>/dev/null; pkill -9 -f "[n]ext start" 2>/dev/null; sleep 2; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_rebuild.log 2>&1; ec=$?; if [ $ec -ne 0 ] && grep -qiE "Cannot find module|No such file|MODULE_NOT_FOUND|ENOTEMPTY" /tmp/3dmap_rebuild.log; then echo "recovery rebuild..."; npm ci >> /tmp/3dmap_rebuild.log 2>&1; rm -rf .next; node_modules/next/dist/bin/next build >> /tmp/3dmap_rebuild.log 2>&1; ec=$?; fi; echo EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/keychains); [ "$c" = "200" ] && break; sleep 1; done; echo warmup=$c' 2>&1
         Write-Host ($rb | Out-String).Trim() -ForegroundColor DarkGray
         $check2 = (& ssh @SSH $intCmd 2>&1 | Out-String).Trim()
         Write-Host "    $check2" -ForegroundColor DarkGray
