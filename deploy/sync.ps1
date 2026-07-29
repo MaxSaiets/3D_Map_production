@@ -123,8 +123,17 @@ if (-not $deployStatus) {
 
 # ── 5. Pull on server
 Write-Step "Server: git pull"
-$pullOut = & ssh @SSH "cd /opt/3dmap && git stash 2>/dev/null; git pull origin main" 2>&1
+# ВАЖЛИВО (2026-07-29): сервер живе на РОБОЧІЙ гілці власника (hotfix/…), а не
+# на main. `git pull origin main` там мовчки нічого не робить, якщо merge падає
+# з конфліктом — деплой рапортує OK, а код НЕ приїжджає (спіймано двічі за день).
+# Тому: мерджимо явно й ПЕРЕВІРЯЄМО, що більше не відстаємо від origin/main.
+$pullOut = & ssh @SSH "cd /opt/3dmap && git stash 2>/dev/null; git fetch origin -q; git merge origin/main --no-edit 2>&1 | tail -5; echo BEHIND=`$(git rev-list --count HEAD..origin/main)" 2>&1
 Write-Host ($pullOut | Out-String).Trim() -ForegroundColor DarkGray
+if ($pullOut -match "BEHIND=(\d+)" -and [int]$Matches[1] -gt 0) {
+    Write-Err "Server is still $($Matches[1]) commit(s) behind origin/main — merge conflict?"
+    Write-Host "  Fix on server: ssh $SERVER 'cd /opt/3dmap && git status'" -ForegroundColor Yellow
+    exit 1
+}
 Write-Ok "Server synced"
 
 # ── 6. Frontend rebuild (only if frontend files changed)
@@ -262,6 +271,20 @@ if (-not $allOk) {
     & ssh @SSH 'cd /opt/3dmap/frontend && pm2 stop 3dmap-frontend >/dev/null 2>&1; rm -rf .next node_modules/.cache; node_modules/next/dist/bin/next build > /tmp/3dmap_heal.log 2>&1; ec=$?; if [ $ec -ne 0 ]; then npm ci >> /tmp/3dmap_heal.log 2>&1; node_modules/next/dist/bin/next build >> /tmp/3dmap_heal.log 2>&1; ec=$?; fi; echo HEAL_EXIT=$ec; pm2 start 3dmap-frontend >/dev/null 2>&1; pm2 save >/dev/null 2>&1; for i in $(seq 1 30); do c=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/); [ "$c" = "200" ] && break; sleep 1; done' 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
     Write-Step "Re-verifying endpoints after heal"
     $allOk = Test-Endpoints
+}
+
+# ── 8c. IndexNow: пінг Bing/Yandex/Seznam новими URL (Google НЕ підтримує —
+# для нього працюють лише sitemap + внутрішні лінки). Не блокує деплой.
+if ($allOk) {
+    Write-Step "IndexNow ping (Bing/Yandex)"
+    # Запускаємо З СЕРВЕРА, а не з локальної машини: api.indexnow.org звідси
+    # відповідає ConnectTimeout (мережеві обмеження), а з хостингу — доступний.
+    try {
+        & ssh @SSH "cd /opt/3dmap/frontend && node scripts/indexnow-submit.mjs 2>&1 | tail -3" 2>&1 |
+            ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+    } catch {
+        Write-Host "    IndexNow skipped: $_" -ForegroundColor DarkGray
+    }
 }
 
 # ── 9. Final PM2 status
