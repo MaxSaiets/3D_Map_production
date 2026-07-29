@@ -1,4 +1,5 @@
 import { CITIES } from "@/lib/templates";
+import { WORLD_CITIES, WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
 import type { AppLocale } from "@/i18n/routing";
 
 /**
@@ -70,3 +71,28 @@ export const CITY_PAGES: CityPage[] = CITIES.map((c) => {
 export const CITY_PAGE_BY_SLUG: Record<string, CityPage> = Object.fromEntries(
   CITY_PAGES.map((c) => [c.slug, c]),
 );
+
+/**
+ * SEO-РОЗШИРЕННЯ НА ЄС: міста Європи отримують сторінки ЛИШЕ у /maps.
+ * Свідомо НЕ додаємо їх у /brelok і /podarunok — інакше один крок роздув би
+ * сайт на ~150 URL, а в GSC і так 238 сторінок чекають сканування
+ * (краул-бюджет молодого домену обмежений). Спершу — індексація цих 72.
+ */
+export const WORLD_CITY_PAGES: CityPage[] = WORLD_CITIES.map((c) => ({
+  slug: c.slug,
+  key: c.key,
+  center: c.center,
+  names: c.names,
+}));
+
+/** Усі міста, що мають сторінку /maps/[slug] (UA + Європа). */
+export const MAP_CITY_PAGES: CityPage[] = [...CITY_PAGES, ...WORLD_CITY_PAGES];
+
+export const MAP_CITY_PAGE_BY_SLUG: Record<string, CityPage> = Object.fromEntries(
+  MAP_CITY_PAGES.map((c) => [c.slug, c]),
+);
+
+/** true — місто поза Україною (нема районів-шаблонів і брелок-сторінки). */
+export function isWorldCity(slug: string): boolean {
+  return Boolean(WORLD_CITY_BY_SLUG[slug]);
+}

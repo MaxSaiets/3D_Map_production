@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
-import { CITY_PAGES } from "@/lib/cityPages";
+import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES } from "@/lib/cityLanding";
 
@@ -8,6 +8,8 @@ const BASE = "https://monadruk.com";
 // Дата контенту хвилі city×product/occasion сторінок (2026-07-13) — окремо від
 // STATIC_LASTMOD, щоб не сигналити «змінилось усе» для старих сторінок.
 const WAVE2_LASTMOD = new Date("2026-07-13");
+// Хвиля 4: міста Європи (нові сторінки під de/pl/fr/es).
+const WAVE4_LASTMOD = new Date("2026-07-29");
 const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date }[] = [
   { path: "", changeFrequency: "weekly", priority: 1.0 },
   { path: "/create", changeFrequency: "monthly", priority: 0.9 },
@@ -36,6 +38,15 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
     changeFrequency: "monthly" as const,
     priority: 0.7,
     lastmod: WAVE2_LASTMOD,
+  })),
+  // Хвиля 4 (2026-07-29): міста ЄВРОПИ — контент під de/pl/fr/es-аудиторію.
+  // Свіжий lastmod = сигнал «нове», priority 0.75 > українських, бо ці сторінки
+  // ще не в індексі й ми хочемо, щоб краулер узяв їх першими.
+  ...WORLD_CITY_PAGES.map((c) => ({
+    path: `/maps/${c.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+    lastmod: WAVE4_LASTMOD,
   })),
   // Хвиля 3 (2026-07-13): райони міст — найточніший рівень запиту
   ...DISTRICT_PAGES.map((d) => ({

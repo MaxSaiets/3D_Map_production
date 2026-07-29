@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { pageMetadata, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { CITY_PAGES } from "@/lib/cityPages";
+import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 
 const MAPS_FAQ: Record<"uk" | "en", { q: string; a: string }[]> = {
   uk: [
@@ -73,6 +73,30 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
       <h2 className="mt-12 text-[20px] font-semibold">{t("h2cities")}</h2>
       <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {CITY_PAGES.map((c) => (
+          <li key={c.slug}>
+            <Link
+              href={`/maps/${c.slug}`}
+              className="block rounded-[18px] border border-line-soft bg-white/70 px-4 py-3.5 text-[15px] font-semibold text-ink transition hover:border-[var(--accent)]"
+            >
+              {c.names[locale]}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      {/* SEO-РОЗШИРЕННЯ НА ЄС: міста Європи. Для de/pl/fr/es-аудиторії це
+          єдиний контент про ЇХНІ міста — раніше всі локалі бачили лише
+          українські. Конструктор і так працює для всього світу. */}
+      <h2 className="mt-12 text-[20px] font-semibold">
+        {isUA ? "Міста Європи" : "European cities"}
+      </h2>
+      <p className="mt-2 max-w-[640px] text-[14.5px] leading-relaxed text-ink-2">
+        {isUA
+          ? "Конструктор працює для будь-якої точки планети. Ось популярні європейські міста з готовими налаштуваннями."
+          : "The builder works for any point on the planet. Here are popular European cities with ready settings."}
+      </p>
+      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {WORLD_CITY_PAGES.map((c) => (
           <li key={c.slug}>
             <Link
               href={`/maps/${c.slug}`}

@@ -4,8 +4,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
+import { MAP_CITY_PAGES as CITY_PAGES, MAP_CITY_PAGE_BY_SLUG as CITY_PAGE_BY_SLUG, isWorldCity } from "@/lib/cityPages";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
+import { WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
+import { cityProse, cityDerivedFacts } from "@/lib/cityProse";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
@@ -75,7 +77,9 @@ export default async function CityPage({
   const name = city.names[locale];
 
   // Унікальні факти + локалізація: числа через Intl, власні назви uk/latin.
-  const facts = cityFacts(city.slug);
+  // Для міст Європи факти живуть у WORLD_CITIES (той самий контракт CityFacts).
+  const facts = cityFacts(city.slug) ?? WORLD_CITY_BY_SLUG[city.slug]?.facts ?? null;
+  const isWorld = isWorldCity(city.slug);
   const nf = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale);
   const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
   const faq = cityFaq(contentLocale(locale), name, "podarunok");
@@ -166,10 +170,15 @@ export default async function CityPage({
       <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t("p2", { city: name })}</p>
       {/* Унікальна prose-фраза на основі фактів (анти-doorway): дужкова конструкція
           уникає відмінкових/родових узгоджень з власними назвами у 6 мовах. */}
+      {/* УНІКАЛЬНИЙ ОПИС: замість однієї спільної фрази (яка й давала 78%
+          дублювання між містами) — 6 структур × обчислювані інсайти
+          (щільність, вік, площа) з реальних даних. Див. lib/cityProse.ts. */}
       {facts && (
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          {t("factsProse", { river: pn(facts.river), landmark: pn(facts.landmark) })}
-        </p>
+        <div className="mt-3 flex flex-col gap-3">
+          {cityProse({ slug: city.slug, name, facts, locale }).map((para, idx) => (
+            <p key={idx} className="text-[15px] leading-relaxed text-ink-2">{para}</p>
+          ))}
+        </div>
       )}
 
       {/* Унікальні факти про місто (анти-doorway): кожна сторінка отримує
@@ -186,6 +195,16 @@ export default async function CityPage({
               [t("fRiver"), pn(facts.river)],
               [t("fOblast"), pn(facts.oblast)],
               [t("fLandmark"), pn(facts.landmark)],
+              // Обчислювані показники: унікальні для кожного міста числа,
+              // яких немає в жодного іншого (анти-дедуплікація).
+              [
+                locale === "uk" ? "Щільність" : "Density",
+                `${nf.format(cityDerivedFacts(facts).density)} ${locale === "uk" ? "осіб/км²" : "people/km²"}`,
+              ],
+              [
+                locale === "uk" ? "Вік міста" : "City age",
+                `${nf.format(cityDerivedFacts(facts).age)} ${locale === "uk" ? "років" : "years"}`,
+              ],
             ].map(([label, value]) => (
               <div key={label} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
                 <dt className="text-ink-3">{label}</dt>
@@ -204,7 +223,7 @@ export default async function CityPage({
           {t("ctaMap", { city: name })}
         </Link>
         <Link
-          href={`/keychains?city=${city.key}`}
+          href={isWorld ? "/keychains" : `/keychains?city=${city.key}`}
           className="inline-flex min-h-[48px] items-center justify-center rounded-[22px] border border-line-soft bg-white/80 px-6 py-3 text-sm font-semibold text-ink transition hover:border-[var(--accent)]"
         >
           {t("ctaKeychain", { city: name })}
@@ -286,11 +305,13 @@ export default async function CityPage({
       {/* Крос-лінки на brelok/podarunok сторінки цього ж міста (кластер міста,
           хвиля 2 programmatic SEO). Тексти bilingual-inline (контент цих сторінок
           uk/en з lib/cityLanding — той самий принцип, без нових i18n-ключів). */}
+      {/* Гард: для міст Європи сторінок /brelok і /podarunok НЕМА (свідомо, щоб
+          не роздувати краул-бюджет) → ведемо на хаби, а не в 404. */}
       <section className="mt-12 flex flex-col gap-2 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
-        <Link href={`/brelok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+        <Link href={isWorld ? "/brelok" : `/brelok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
           {locale === "uk" ? `Брелок з картою міста — ${name}` : `City map keychain — ${name}`} →
         </Link>
-        <Link href={`/podarunok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+        <Link href={isWorld ? "/podarunok" : `/podarunok/${city.slug}`} className="text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
           {locale === "uk" ? `Подарунок з міста — ${name}` : `A gift from ${name}`} →
         </Link>
       </section>

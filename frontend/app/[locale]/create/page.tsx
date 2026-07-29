@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, KeyRound, User, X, Home as HomeIcon, ShoppingBag } from "lucide-react";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
+import { WORLD_CITIES } from "@/lib/worldCities";
 import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
@@ -97,6 +98,21 @@ const CITIES: Record<
   Chernivtsi:     { bounds: { north: 48.33, south: 48.26, east: 25.99, west: 25.90 }, center: [48.2921, 25.9310] },
   Kherson:        { bounds: { north: 46.67, south: 46.61, east: 32.67, west: 32.57 }, center: [46.6354, 32.6169] },
   Kropyvnytskyi:  { bounds: { north: 48.54, south: 48.47, east: 32.30, west: 32.20 }, center: [48.5132, 32.2597] },
+  // Європа (29.07.2026): пресети генеруються з lib/worldCities.ts, щоб глибокі
+  // лінки з SEO-сторінок /maps/{berlin|paris|…} відкривали конструктор У ТОМУ
+  // місті, а не в Києві. Одне джерело — жодного дрейфу між SEO і конструктором.
+  ...Object.fromEntries(
+    WORLD_CITIES.map((c) => [
+      c.key,
+      {
+        bounds: {
+          north: c.center[0] + 0.045, south: c.center[0] - 0.045,
+          east: c.center[1] + 0.07, west: c.center[1] - 0.07,
+        },
+        center: c.center,
+      },
+    ]),
+  ),
 };
 
 
