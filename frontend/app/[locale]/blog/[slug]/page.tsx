@@ -5,7 +5,14 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta } from "@/lib/blog";
-import { CITY_PAGES } from "@/lib/cityPages";
+import { MAP_CITY_PAGES, MAP_CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
+
+// Тематичні міста для гео-таргетованих статей (ЄС-хвиля): чипи ведуть на
+// релевантні /maps/{місто}, а не на ротаційний зріз. Решта статей — ротація.
+const PREFERRED_CITY_LINKS: Record<string, string[]> = {
+  "3d-karte-deutsche-staedte": ["berlin", "munich", "hamburg", "cologne", "vienna", "zurich"],
+  "mapa-3d-polskich-miast": ["warsaw", "krakow", "wroclaw", "gdansk", "poznan", "lodz"],
+};
 
 /**
  * Сторінка статті блогу: Article JSON-LD + breadcrumbs + внутрішні лінки
@@ -125,8 +132,8 @@ export default async function BlogArticlePage({
       ) : null}
 
       {/* Перелінковка блог → міста (SEO_PLAN етап 1): кожна стаття лінкує СВОЇ
-          4 міста — ротація за індексом статті, щоб 15×4 лінків рівномірно
-          розійшлись по всіх 23 /maps/{місто} і Google діставав їх з контенту,
+          6 міст — ротація за індексом статті по ВСІХ /maps (23 УА + 64 ЄС), щоб
+          лінки рівномірно розійшлись і Google діставав сторінки міст з контенту,
           а не лише з sitemap. Детермінований вибір → стабільний SSG-вивід. */}
       <section className="mt-12">
         <h2 className="text-[18px] font-semibold text-ink">
@@ -134,9 +141,13 @@ export default async function BlogArticlePage({
         </h2>
         <ul className="mt-4 flex flex-wrap gap-2">
           {(() => {
+            const preferred = PREFERRED_CITY_LINKS[article.slug]
+              ?.map((s) => MAP_CITY_PAGE_BY_SLUG[s])
+              .filter(Boolean);
+            if (preferred?.length) return preferred;
             const idx = Math.max(0, BLOG_ARTICLES.findIndex((a) => a.slug === article.slug));
-            const start = (idx * 4) % CITY_PAGES.length;
-            return [0, 1, 2, 3].map((k) => CITY_PAGES[(start + k) % CITY_PAGES.length]);
+            const start = (idx * 6) % MAP_CITY_PAGES.length;
+            return [0, 1, 2, 3, 4, 5].map((k) => MAP_CITY_PAGES[(start + k) % MAP_CITY_PAGES.length]);
           })().map((c) => (
             <li key={c.slug}>
               <Link

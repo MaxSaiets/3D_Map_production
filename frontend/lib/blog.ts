@@ -3134,6 +3134,219 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       },
     },
   },
+  // ── Хвиля ЄС-контенту (2026-07-29): статті під de/pl-запити, лінкують нові
+  // сторінки /maps/{berlin|warsaw|...}. de/pl — ПОВНІ переклади (не en-фолбек),
+  // бо це цільова аудиторія статей.
+  {
+    slug: "3d-karte-deutsche-staedte",
+    date: "2026-07-29",
+    content: {
+      uk: {
+        title: "3D-мапа німецького міста: Берлін, Мюнхен, Гамбург — подарунок для тих, хто далеко",
+        description:
+          "3D-мапи міст Німеччини, Австрії та Швейцарії: Берлін, Мюнхен, Гамбург, Відень, Цюрих. Обери район у конструкторі — друк з Eco PLA і доставка по ЄС, або файл для власного друку.",
+        h1: "3D-мапа німецького міста: від Берліна до Цюриха",
+        intro:
+          "Мільйони людей називають домом одразу два міста: те, де народились, і те, куди переїхали. 3D-мапа німецького міста — спосіб тримати друге поруч: тривимірна модель району Берліна, Мюнхена чи Гамбурга з реальними вулицями, будинками й парками за даними OpenStreetMap.",
+        sections: [
+          {
+            h2: "Які міста вже в конструкторі",
+            p: [
+              "Берлін, Мюнхен, Гамбург, Кельн, Франкфурт, Штутгарт, Дюссельдорф, Лейпциг, Дрезден, Нюрнберг — а також Відень, Зальцбург, Цюрих і Женева. Для кожного міста є готова сторінка з прикладами, але конструктор працює для будь-якої точки світу: достатньо знайти місто на карті й пересунути рамку.",
+              "Найкраще виглядають райони зі змішаною забудовою: Кройцберг із каналом, мюнхенський Альтштадт із Ізаром, гамбурзька Шпайхерштадт із каналами. Вода й парки друкуються окремими кольорами, тому річка чи озеро одразу «підсвічує» модель.",
+            ],
+          },
+          {
+            h2: "Як це працює",
+            p: [
+              "Відкрий конструктор, знайди місто, пересунь рамку на потрібний район — жива 3D-модель збереться за дві хвилини. Далі два шляхи: замовити друк з екологічного Eco PLA з доставкою Nova Post або Meest у 15 країн ЄС, або завантажити файл 3MF/STL і надрукувати самостійно на Bambu Lab чи Prusa.",
+              "Розміри — від магніта 6 см до панно на стіну. Ціна моделі для власного друку — від кількох євро, готовий друк — від ≈6 €.",
+            ],
+          },
+          {
+            h2: "Кому це дарують",
+            p: [
+              "Українцям у Німеччині — мапу рідного міста поруч із мапою нового. Німецьким друзям — їхній район, де вони виросли. Парам на відстані — два брелоки-пазли з двома містами, що зʼєднуються. На новосілля — район нової квартири з підписаними координатами.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити мапу свого міста",
+        ctaHref: "/create",
+        outro: "Конструктор працює українською, німецькою та англійською — однаково просто зробити мапу Берліна і мапу Києва.",
+      },
+      en: {
+        title: "3D map of a German city: Berlin, Munich, Hamburg — a gift for those far away",
+        description:
+          "3D city maps of Germany, Austria and Switzerland: Berlin, Munich, Hamburg, Vienna, Zurich. Pick a district in the builder — Eco PLA print shipped across the EU, or a file to print yourself.",
+        h1: "3D map of a German city: from Berlin to Zurich",
+        intro:
+          "Millions of people call two cities home: the one they were born in and the one they moved to. A 3D map of a German city keeps the second one close — a three-dimensional model of a Berlin, Munich or Hamburg district with real streets, buildings and parks from OpenStreetMap data.",
+        sections: [
+          {
+            h2: "Cities already in the builder",
+            p: [
+              "Berlin, Munich, Hamburg, Cologne, Frankfurt, Stuttgart, Düsseldorf, Leipzig, Dresden, Nuremberg — plus Vienna, Salzburg, Zurich and Geneva. Each has a ready page with examples, but the builder works for any point on Earth: find the city on the map and move the frame.",
+              "Mixed districts look best: Kreuzberg with its canal, Munich's Altstadt with the Isar, Hamburg's Speicherstadt with its waterways. Water and parks print in separate colours, so a river or lake instantly lifts the model.",
+            ],
+          },
+          {
+            h2: "How it works",
+            p: [
+              "Open the builder, find the city, move the frame over the district — a live 3D model assembles in two minutes. Then two paths: order an Eco PLA print shipped via Nova Post or Meest to 15 EU countries, or download the 3MF/STL and print it yourself on a Bambu Lab or Prusa.",
+              "Sizes range from a 6 cm fridge magnet to a wall panel. A file for self-printing costs a few euros; a finished print starts at ≈€6.",
+            ],
+          },
+          {
+            h2: "Who gets one as a gift",
+            p: [
+              "Ukrainians in Germany — a map of their hometown next to a map of the new one. German friends — the district they grew up in. Long-distance couples — two puzzle keychains with two cities that click together. A housewarming — the new neighbourhood with engraved coordinates.",
+            ],
+          },
+        ],
+        ctaLabel: "Create a map of your city",
+        ctaHref: "/create",
+        outro: "The builder works in English, German and Ukrainian — a map of Berlin is as easy as a map of Kyiv.",
+      },
+      de: {
+        title: "3D-Karte deiner Stadt: Berlin, München, Hamburg — ein Geschenk mit Bedeutung",
+        description:
+          "3D-Stadtkarten für Deutschland, Österreich und die Schweiz: Berlin, München, Hamburg, Wien, Zürich. Viertel im Konfigurator wählen — Eco-PLA-Druck mit EU-Versand oder Datei zum Selbstdrucken.",
+        h1: "3D-Karte deiner Stadt: von Berlin bis Zürich",
+        intro:
+          "Viele Menschen haben zwei Städte, die sie Zuhause nennen: die, in der sie aufgewachsen sind, und die, in die sie gezogen sind. Eine 3D-Stadtkarte holt die zweite näher — ein dreidimensionales Modell eines Viertels von Berlin, München oder Hamburg mit echten Straßen, Gebäuden und Parks aus OpenStreetMap-Daten.",
+        sections: [
+          {
+            h2: "Diese Städte sind schon im Konfigurator",
+            p: [
+              "Berlin, München, Hamburg, Köln, Frankfurt, Stuttgart, Düsseldorf, Leipzig, Dresden, Nürnberg — dazu Wien, Salzburg, Zürich und Genf. Für jede Stadt gibt es eine eigene Seite mit Beispielen, aber der Konfigurator funktioniert für jeden Punkt der Welt: Stadt suchen, Rahmen verschieben, fertig.",
+              "Am besten wirken gemischte Viertel: Kreuzberg mit dem Landwehrkanal, die Münchner Altstadt mit der Isar, die Hamburger Speicherstadt mit ihren Fleeten. Wasser und Parks werden in eigenen Farben gedruckt — ein Fluss oder See macht das Modell sofort lebendig.",
+            ],
+          },
+          {
+            h2: "So funktioniert es",
+            p: [
+              "Konfigurator öffnen, Stadt suchen, den Rahmen über das Viertel ziehen — in zwei Minuten entsteht ein lebendiges 3D-Modell. Danach zwei Wege: den Druck aus umweltfreundlichem Eco PLA bestellen (Versand mit Nova Post oder Meest in 15 EU-Länder) oder die 3MF/STL-Datei laden und selbst auf einem Bambu Lab oder Prusa drucken.",
+              "Größen vom 6-cm-Kühlschrankmagneten bis zum Wandpaneel. Eine Datei zum Selbstdrucken kostet wenige Euro, ein fertiger Druck beginnt bei ≈6 €.",
+            ],
+          },
+          {
+            h2: "Wem man so etwas schenkt",
+            p: [
+              "Zum Einzug — das Viertel der neuen Wohnung mit gravierten Koordinaten. Für Eltern — die Straße, in der man aufgewachsen ist. Für Paare auf Distanz — zwei Puzzle-Anhänger mit zwei Städten, die ineinandergreifen. Für Freunde aus der Ukraine — die Heimatstadt neben der neuen Stadt.",
+            ],
+          },
+        ],
+        ctaLabel: "Karte deiner Stadt erstellen",
+        ctaHref: "/create",
+        outro: "Der Konfigurator funktioniert auf Deutsch, Englisch und Ukrainisch — eine Karte von Berlin ist so einfach wie eine Karte von Kyjiw.",
+      },
+    },
+  },
+  {
+    slug: "mapa-3d-polskich-miast",
+    date: "2026-07-29",
+    content: {
+      uk: {
+        title: "3D-мапа польського міста: Варшава, Краків, Вроцлав — подарунок для діаспори",
+        description:
+          "3D-мапи міст Польщі: Варшава, Краків, Вроцлав, Гданськ, Познань. Обери район у конструкторі — друк з Eco PLA і доставка по ЄС, або файл для власного друку.",
+        h1: "3D-мапа польського міста: Варшава, Краків, Вроцлав",
+        intro:
+          "У Польщі сьогодні живе понад мільйон українців — і для багатьох польське місто стало другим домом. 3D-мапа Варшави, Кракова чи Вроцлава — тривимірна модель району з реальними вулицями, кам'яницями й парками за даними OpenStreetMap: подарунок, що поєднує обидва доми.",
+        sections: [
+          {
+            h2: "Які міста вже в конструкторі",
+            p: [
+              "Варшава, Краків, Вроцлав, Гданськ, Познань, Лодзь, Люблін і Щецин мають готові сторінки з прикладами. А сам конструктор працює для будь-якої точки — від Ужгорода до Гдині: знайди місто, пересунь рамку на район.",
+              "Красиво виходять райони біля води: Старе Място Кракова з Віслою, гданська Мотлава з журавом, вроцлавські острови на Одрі. Вода, парки й дороги друкуються окремими кольорами.",
+            ],
+          },
+          {
+            h2: "Як це працює",
+            p: [
+              "Обери район у конструкторі — жива 3D-модель за дві хвилини. Далі: замовити друк з Eco PLA з доставкою Nova Post у Польщу та ще 14 країн ЄС, або завантажити 3MF/STL для власного друку.",
+              "Від магніта 6 см до настінного панно. Файл — кілька євро, готовий друк — від ≈6 €. Оплата карткою онлайн.",
+            ],
+          },
+          {
+            h2: "Ідеї подарунків",
+            p: [
+              "Мапа рідного українського міста — для тих, хто в Польщі. Мапа Варшави чи Кракова — полякам-друзям і колегам. Пара брелоків-пазлів Київ+Варшава — для родин на дві країни. Магніт із районом нової квартири — на новосілля.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити мапу свого міста",
+        ctaHref: "/create",
+        outro: "Конструктор працює українською і польською — мапа Кракова робиться так само просто, як мапа Львова.",
+      },
+      en: {
+        title: "3D map of a Polish city: Warsaw, Kraków, Wrocław — a gift across two homes",
+        description:
+          "3D city maps of Poland: Warsaw, Kraków, Wrocław, Gdańsk, Poznań. Pick a district in the builder — Eco PLA print shipped across the EU, or a file to print yourself.",
+        h1: "3D map of a Polish city: Warsaw, Kraków, Wrocław",
+        intro:
+          "Over a million Ukrainians live in Poland today, and for many a Polish city has become a second home. A 3D map of Warsaw, Kraków or Wrocław is a three-dimensional model of a district with real streets, townhouses and parks from OpenStreetMap data — a gift that connects both homes.",
+        sections: [
+          {
+            h2: "Cities already in the builder",
+            p: [
+              "Warsaw, Kraków, Wrocław, Gdańsk, Poznań, Łódź, Lublin and Szczecin have ready pages with examples. The builder itself works for any point — find the city, move the frame over the district.",
+              "Districts by the water come out beautifully: Kraków's Old Town with the Vistula, Gdańsk's Motława with the crane, Wrocław's islands on the Oder. Water, parks and roads print in separate colours.",
+            ],
+          },
+          {
+            h2: "How it works",
+            p: [
+              "Pick a district in the builder — a live 3D model in two minutes. Then order an Eco PLA print shipped via Nova Post to Poland and 14 more EU countries, or download the 3MF/STL to print yourself.",
+              "From a 6 cm magnet to a wall panel. A file costs a few euros; a finished print starts at ≈€6. Card payment online.",
+            ],
+          },
+          {
+            h2: "Gift ideas",
+            p: [
+              "A map of a Ukrainian hometown — for those living in Poland. A map of Warsaw or Kraków — for Polish friends and colleagues. A pair of puzzle keychains Kyiv+Warsaw — for families split between two countries. A magnet with the new neighbourhood — for a housewarming.",
+            ],
+          },
+        ],
+        ctaLabel: "Create a map of your city",
+        ctaHref: "/create",
+        outro: "The builder works in Polish, English and Ukrainian — a map of Kraków is as easy as a map of Lviv.",
+      },
+      pl: {
+        title: "Mapa 3D polskiego miasta: Warszawa, Kraków, Wrocław — prezent z historią",
+        description:
+          "Mapy 3D miast Polski: Warszawa, Kraków, Wrocław, Gdańsk, Poznań. Wybierz dzielnicę w kreatorze — druk z Eco PLA z wysyłką po UE albo plik do własnego druku.",
+        h1: "Mapa 3D polskiego miasta: Warszawa, Kraków, Wrocław",
+        intro:
+          "Mapa 3D miasta to trójwymiarowy model dzielnicy z prawdziwymi ulicami, kamienicami i parkami z danych OpenStreetMap. Można ją wydrukować i postawić na półce, powiesić na ścianie albo podarować komuś, dla kogo to miasto znaczy więcej niż punkt na mapie.",
+        sections: [
+          {
+            h2: "Te miasta są już w kreatorze",
+            p: [
+              "Warszawa, Kraków, Wrocław, Gdańsk, Poznań, Łódź, Lublin i Szczecin mają gotowe strony z przykładami. Sam kreator działa jednak dla dowolnego punktu na świecie: wystarczy znaleźć miasto i przesunąć ramkę na wybraną dzielnicę.",
+              "Najlepiej wyglądają dzielnice nad wodą: krakowskie Stare Miasto z Wisłą, gdańska Motława z żurawiem, wrocławskie wyspy na Odrze. Woda, parki i drogi drukowane są osobnymi kolorami, więc rzeka od razu ożywia model.",
+            ],
+          },
+          {
+            h2: "Jak to działa",
+            p: [
+              "Otwórz kreator, znajdź miasto, przesuń ramkę na dzielnicę — żywy model 3D powstaje w dwie minuty. Potem dwie drogi: zamów druk z ekologicznego Eco PLA z wysyłką Nova Post do Polski, albo pobierz plik 3MF/STL i wydrukuj samodzielnie na Bambu Lab czy Prusie.",
+              "Rozmiary od magnesu 6 cm na lodówkę po panel na ścianę. Plik do własnego druku kosztuje kilka euro, gotowy wydruk — od ≈6 €. Płatność kartą online.",
+            ],
+          },
+          {
+            h2: "Pomysły na prezent",
+            p: [
+              "Na parapetówkę — dzielnica nowego mieszkania z wygrawerowanymi współrzędnymi. Dla rodziców — ulica, na której się dorastało. Dla par na odległość — dwa breloki-puzzle z dwoma miastami, które łączą się ze sobą. Dla przyjaciół z Ukrainy — rodzinne miasto obok nowego.",
+            ],
+          },
+        ],
+        ctaLabel: "Stwórz mapę swojego miasta",
+        ctaHref: "/create",
+        outro: "Kreator działa po polsku, angielsku i ukraińsku — mapa Krakowa powstaje tak samo łatwo jak mapa Lwowa.",
+      },
+    },
+  },
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(
