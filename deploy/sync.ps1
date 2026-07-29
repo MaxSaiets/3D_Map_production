@@ -157,7 +157,10 @@ if ($frontendTouched -and -not $SkipBuild) {
     # Авто-відновлення: пошкоджений node_modules (бракує next/dist/... модулів)
     # валить білд на etапі type-check. `npm install` цього не лікує — потрібен
     # повний `npm ci`. Робимо один раз і перебілдимо.
-    if (($buildOut -notmatch "EXIT=0" -or $buildId -notmatch "OK") -and
+    # ПАСТКА PS: $buildOut — МАСИВ рядків; `-notmatch` на масиві повертає рядки-
+    # що-НЕ-матчать (майже завжди непорожньо = truthy) → хибний FAIL. Тому
+    # завжди `-not (масив -match ...)`.
+    if ((-not ($buildOut -match "EXIT=0") -or $buildId -notmatch "OK") -and
         ($buildOut -match "Cannot find module|MODULE_NOT_FOUND|require stack")) {
         Write-Host "    Corrupted node_modules detected — npm ci + rebuild..." -ForegroundColor Yellow
         $buildOut = & ssh @SSH "cd /opt/3dmap/frontend && npm ci > /tmp/3dmap_npm.log 2>&1; echo NPM=`$?; rm -rf .next node_modules/.cache && node_modules/next/dist/bin/next build > /tmp/3dmap_build.log 2>&1; echo EXIT=`$?; tail -6 /tmp/3dmap_build.log" 2>&1
@@ -168,7 +171,7 @@ if ($frontendTouched -and -not $SkipBuild) {
     # взагалі — старий гейт «-match EXIT=[^0]» це пропускав) + НОВИЙ BUILD_ID
     # (старий існуючий файл теж проходив просту перевірку на існування).
     $postBuildId = (& ssh @SSH "cat /opt/3dmap/frontend/.next/BUILD_ID 2>/dev/null" 2>&1 | Out-String).Trim()
-    if ($buildOut -notmatch "EXIT=0" -or $buildId -notmatch "OK") {
+    if (-not ($buildOut -match "EXIT=0") -or $buildId -notmatch "OK") {
         Write-Err "Build FAILED (.next/BUILD_ID=$buildId, EXIT marker: $($buildOut -match 'EXIT=0')) — frontend left stopped. Full log: ssh $SERVER 'cat /tmp/3dmap_build.log'"
         exit 1
     }
