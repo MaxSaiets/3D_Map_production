@@ -618,12 +618,9 @@ def build_cdt_grooved_terrain(
             # інакше slab-плита вилазить за межі доріг (відкриті ребра / не-герметично).
             if inlays_d is not None and len(Ff):
                 try:
-                    from shapely.prepared import prep as _prep
-                    _pin = _prep(inlays_d)
+                    import shapely as _shp
                     _cen = Vf2[Ff].mean(axis=1)
-                    _keep = np.fromiter(
-                        (_pin.contains(Point(float(x), float(y))) for x, y in _cen[:, :2]),
-                        dtype=bool, count=len(Ff))
+                    _keep = _shp.contains_xy(inlays_d, _cen[:, 0], _cen[:, 1])
                     if _keep.any():
                         Ff = Ff[_keep]
                 except Exception:  # noqa: BLE001

@@ -84,6 +84,17 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
         ))}
       </ul>
 
+      {/* SEO-FIX: перехресний лінк на кластер брелків. Раніше хаб /brelok не мав
+          жодного входу з головних сторінок → 24 сторінки /brelok/{місто} висіли
+          в GSC як «Виявлено — наразі не проіндексовано». */}
+      <p className="mt-6 text-[15px] leading-relaxed text-ink-2">
+        {isUA ? "Потрібен не панно на стіну, а щось кишенькове? " : "Looking for something pocket-sized instead of a wall piece? "}
+        <Link href="/brelok" className="font-semibold text-ink underline underline-offset-2 hover:text-[var(--accent-strong)]">
+          {isUA ? "Брелки з мапою по містах" : "City map keychains"}
+        </Link>
+        {isUA ? " — той самий район, але на ключах." : " — the same district, but on your keys."}
+      </p>
+
       <section className="mt-14 max-w-[680px]">
         <h2 className="text-[20px] font-semibold">{isUA ? "Часті запитання" : "FAQ"}</h2>
         <dl className="mt-4 flex flex-col gap-4">

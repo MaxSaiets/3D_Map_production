@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from collections import OrderedDict
 from pathlib import Path
 from typing import Optional
 
@@ -27,6 +28,74 @@ _QUERY_CACHE: dict[str, dict] = {}
 _QUERY_CACHE_MAX = 100
 _CONN_LOCK = threading.Lock()
 _CONN = None
+
+# ── Спільний padded-region кеш для get_gdf/get_roads_graph (серія/сітка) ───────
+# Одна зона ≈1.1км; батч серії/сітки запитує БАГАТО СУСІДНІХ зон поспіль, кожна
+# з яких раніше йшла у DuckDB+WKT-парс заново, хоча дані здебільшого перекриваються.
+# GEN_CAPACITY=1 → генерація строго послідовна, тож in-process кеш «останніх кількох
+# ПОШИРЕНИХ (padded) регіонів + їх точні minlon/maxlon/minlat/maxlat» безпечний:
+# запит, що ПОВНІСТЮ входить у вже закешований регіон, фільтрується в пам'яті (той
+# самий предикат, що й SQL WHERE) замість нового round-trip до DuckDB.
+# Перевірено на реальних даних (test_osm_cell_cache.py): identical/nested/adjacent/
+# far-away/edge-straddling bbox + симуляція 4x4 сітки — 15/16 тайлів = cache hit,
+# результат SET-ідентичний прямому запиту в усіх випадках.
+_CELL_PAD_DEG = 0.02  # ~1.5-2.2км залежно від широти — покриває кілька сусідніх тайлів
+_CELL_CACHE: "OrderedDict[str, dict]" = OrderedDict()
+_CELL_CACHE_MAX = 8
+
+
+def _find_cell_containing(table: str, select_cols: str, north: float, south: float, east: float, west: float):
+    """Returns the cache KEY of the most-recently-used cached padded region whose
+    bounds fully contain the requested bbox (and matches table+columns), or None."""
+    for key in reversed(list(_CELL_CACHE.keys())):
+        entry = _CELL_CACHE[key]
+        if entry["table"] != table or entry["select_cols"] != select_cols:
+            continue
+        cn, cs, ce, cw = entry["bounds"]
+        if cn >= north and cs <= south and ce >= east and cw <= west:
+            return key
+    return None
+
+
+def _fetch_rows_cached(conn, table: str, select_cols: str, north: float, south: float, east: float, west: float):
+    """Рядки (кортежі за select_cols, БЕЗ bbox-колонок) для точного запитаного bbox —
+    або нарізані в пам'яті з закешованого поширеного (padded) регіону, або свіжо
+    запитані (і закешовані) з DuckDB з відступом навколо запиту."""
+    # BYPASS-тумблер (діагностика прод-vs-локал): OSM_CELL_CACHE=0 → прямий SQL-запит
+    # ТОЧНОГО bbox, без кешу/padding — поведінка як у vanilla-завантажувача (для перевірки,
+    # чи кеш спричиняє розбіжність геометрії з продом).
+    if os.getenv("OSM_CELL_CACHE", "1").strip() not in ("1", "true", "yes", "on"):
+        bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
+        with _CONN_LOCK:
+            return conn.execute(
+                f"SELECT {select_cols} FROM {table} WHERE {bbox_filter}",
+                (east, west, north, south),
+            ).fetchall()
+    with _CONN_LOCK:
+        key = _find_cell_containing(table, select_cols, north, south, east, west)
+        if key is None:
+            pad = _CELL_PAD_DEG
+            pn, ps, pe, pw = north + pad, south - pad, east + pad, west - pad
+            bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
+            params = (pe, pw, pn, ps)
+            all_rows = conn.execute(
+                f"SELECT {select_cols}, minlon, maxlon, minlat, maxlat FROM {table} WHERE {bbox_filter}",
+                params,
+            ).fetchall()
+            key = f"{table}#{select_cols}#{pn:.6f}#{ps:.6f}#{pe:.6f}#{pw:.6f}"
+            _CELL_CACHE[key] = {"table": table, "select_cols": select_cols, "bounds": (pn, ps, pe, pw), "rows": all_rows}
+        _CELL_CACHE.move_to_end(key)
+        while len(_CELL_CACHE) > _CELL_CACHE_MAX:
+            _CELL_CACHE.popitem(last=False)
+        cell = _CELL_CACHE[key]
+    # Той самий предикат, що й SQL WHERE bbox_filter: minlon<=east AND maxlon>=west
+    # AND minlat<=north AND maxlat>=south. bbox-колонки — ОСТАННІ 4 поля кожного рядка.
+    out = []
+    for r in cell["rows"]:
+        minlon, maxlon, minlat, maxlat = r[-4], r[-3], r[-2], r[-1]
+        if minlon <= east and maxlon >= west and minlat <= north and maxlat >= south:
+            out.append(r[:-4])
+    return out
 # Кеш колонок таблиці buildings (схема НЕ змінюється в межах процесу). Раніше КОЖЕН
 # запит будівель робив `PRAGMA table_info('buildings')` ПОЗА _CONN_LOCK → на спільному
 # read-only конекті це гонилось з ін. потоком і час від часу псувало результат запиту
@@ -58,6 +127,10 @@ def db_path() -> Optional[Path]:
 
 def is_available() -> bool:
     """True якщо duckdb встановлено І файл БД існує."""
+    # ДІАГНОСТИКА прод-vs-локал: DISABLE_LOCAL_OSM=1 → вимикає DuckDB-джерело, тож
+    # data_loader падає на Overpass-фолбек (як на проді, якщо там нема local_osm_db).
+    if os.getenv("DISABLE_LOCAL_OSM", "").strip() in ("1", "true", "yes", "on"):
+        return False
     if duckdb is None:
         return False
     return db_path() is not None
@@ -123,27 +196,25 @@ def get_gdf(
     }
     if table not in cols_map:
         return None
-    bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
-    params = (east, west, north, south)
-    with _CONN_LOCK:
-        rows = conn.execute(
-            f"SELECT {cols_map[table]} FROM {table} WHERE {bbox_filter}",
-            params,
-        ).fetchall()
+    rows = _fetch_rows_cached(conn, table, cols_map[table], north, south, east, west)
     if not rows:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
     cols = cols_map[table].split(", ")
     wkt_idx = cols.index("wkt")
+    # Векторизований парсинг WKT (одним C-викликом замість per-row Python-циклу).
+    # on_invalid="ignore" відтворює стару поведінку try/except: continue — невалідний
+    # рядок повертає None і відкидається разом з рештою колонок того ж рядка.
+    from shapely import from_wkt as _from_wkt
+    parsed = _from_wkt([r[wkt_idx] for r in rows], on_invalid="ignore")
     data = {c: [] for c in cols if c != "wkt"}
     geoms = []
-    for r in rows:
-        try:
-            geoms.append(shapely_wkt.loads(r[wkt_idx]))
-            for i, c in enumerate(cols):
-                if c != "wkt":
-                    data[c].append(r[i])
-        except Exception:
+    for r, g in zip(rows, parsed):
+        if g is None:
             continue
+        geoms.append(g)
+        for i, c in enumerate(cols):
+            if c != "wkt":
+                data[c].append(r[i])
     gdf = gpd.GeoDataFrame(data, geometry=geoms, crs="EPSG:4326")
     if target_crs is not None:
         try:
@@ -176,13 +247,10 @@ def get_roads_graph(north: float, south: float, east: float, west: float, target
     if conn is None:
         return None
 
-    bbox_filter = "minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?"
-    params = (east, west, north, south)
-    with _CONN_LOCK:
-        rows = conn.execute(
-            f"SELECT id, highway, bridge, wkt FROM roads WHERE {bbox_filter}",
-            params,
-        ).fetchall()
+    # ЗБІГ КОЛОНОК зі get_gdf("roads",...) НАВМИСНИЙ — дозволяє обом ділити ОДИН
+    # закешований padded-регіон (див. _fetch_rows_cached). Якщо колонки колись
+    # розійдуться, тримати select_cols тут і в cols_map["roads"] однаковими.
+    rows = _fetch_rows_cached(conn, "roads", "id, highway, bridge, wkt", north, south, east, west)
 
     if not rows:
         return None
@@ -197,10 +265,13 @@ def get_roads_graph(north: float, south: float, east: float, west: float, target
     edges_data = []  # list of (u, v, key, attrs)
     edge_key_counter = {}  # (u,v) -> next key
 
-    for road_id, highway, bridge, wkt in rows:
-        try:
-            line = shapely_wkt.loads(wkt)
-        except Exception:
+    # Векторизований парсинг WKT (один C-виклик замість per-row shapely_wkt.loads).
+    # on_invalid="ignore" відтворює стару поведінку try/except: continue.
+    from shapely import from_wkt as _from_wkt
+    parsed_lines = _from_wkt([r[3] for r in rows], on_invalid="ignore")
+
+    for (road_id, highway, bridge, wkt), line in zip(rows, parsed_lines):
+        if line is None:
             continue
         coords = list(line.coords)
         if len(coords) < 2:
