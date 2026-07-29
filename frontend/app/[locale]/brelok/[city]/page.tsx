@@ -253,11 +253,16 @@ export default async function BrelokCityPage({
         </Link>
       </section>
 
-      {/* Читати далі: 2 статті блогу — контент↔продукт перелінковка. */}
+      {/* Читати далі: 2 статті блогу — РОТАЦІЯ за індексом міста зі зсувом +1,
+          щоб brelok-сторінка міста лінкувала ІНШІ статті, ніж /maps того ж міста
+          (разом місто-кластер покриває 4 різні статті; вибір детермінований). */}
       <section className="mt-10">
         <h2 className="text-[18px] font-semibold text-ink">{t("readMore")}</h2>
         <ul className="mt-3 flex flex-col gap-2">
-          {BLOG_ARTICLES.slice(0, 2).map((a) => (
+          {(() => {
+            const ci = Math.max(0, CITY_PAGES.findIndex((x) => x.slug === city.slug));
+            return [0, 1].map((k) => BLOG_ARTICLES[(ci * 2 + k + 7) % BLOG_ARTICLES.length]);
+          })().map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
                 {blogContent(a, locale).h1} →

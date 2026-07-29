@@ -82,9 +82,9 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-1 border-t border-line-soft pt-5 text-center text-[13px] text-ink-3 md:flex-row md:flex-wrap md:justify-center md:gap-x-4">
           <span>{t("entity")}</span>
           <span className="hidden md:inline">·</span>
-          <a className="hover:text-ink" href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
+          <a className="inline-flex min-h-[44px] items-center hover:text-ink" href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
           <span className="hidden md:inline">·</span>
-          <a className="hover:text-ink" href={`tel:${BUSINESS.phone}`}>{BUSINESS.phoneDisplay}</a>
+          <a className="inline-flex min-h-[44px] items-center hover:text-ink" href={`tel:${BUSINESS.phone}`}>{BUSINESS.phoneDisplay}</a>
           <span className="hidden md:inline">·</span>
           <span>{t("addressLine")}</span>
         </div>

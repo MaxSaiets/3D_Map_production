@@ -5,6 +5,7 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta } from "@/lib/blog";
+import { CITY_PAGES } from "@/lib/cityPages";
 
 /**
  * Сторінка статті блогу: Article JSON-LD + breadcrumbs + внутрішні лінки
@@ -122,6 +123,32 @@ export default async function BlogArticlePage({
           <p className="text-[14.5px] leading-relaxed text-ink-2">{c.outro}</p>
         </section>
       ) : null}
+
+      {/* Перелінковка блог → міста (SEO_PLAN етап 1): кожна стаття лінкує СВОЇ
+          4 міста — ротація за індексом статті, щоб 15×4 лінків рівномірно
+          розійшлись по всіх 23 /maps/{місто} і Google діставав їх з контенту,
+          а не лише з sitemap. Детермінований вибір → стабільний SSG-вивід. */}
+      <section className="mt-12">
+        <h2 className="text-[18px] font-semibold text-ink">
+          {locale === "uk" ? "3D-мапи міст" : "3D city maps"}
+        </h2>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {(() => {
+            const idx = Math.max(0, BLOG_ARTICLES.findIndex((a) => a.slug === article.slug));
+            const start = (idx * 4) % CITY_PAGES.length;
+            return [0, 1, 2, 3].map((k) => CITY_PAGES[(start + k) % CITY_PAGES.length]);
+          })().map((c) => (
+            <li key={c.slug}>
+              <Link
+                href={`/maps/${c.slug}`}
+                className="inline-block rounded-full border border-line-soft bg-white/70 px-4 py-2 text-[13.5px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink"
+              >
+                {c.names[locale]}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Інші статті — внутрішня перелінковка */}
       <section className="mt-12">

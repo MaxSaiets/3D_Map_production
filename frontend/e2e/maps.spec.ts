@@ -1,10 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Programmatic SEO: сторінки міст /maps", () => {
-  test("/maps: індекс із 23 містами", async ({ page }) => {
+  test("/maps: індекс з усіма містами (23 УА + міста Європи)", async ({ page }) => {
     await page.goto("/uk/maps");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("3D-мапи міст");
-    await expect(page.locator("main ul li a")).toHaveCount(23);
+    // Хвиля 4 (2026-07-29) додала міста Європи — точна кількість плаває з
+    // розширенням списку, тому фіксуємо нижню межу, а не exact count.
+    const count = await page.locator("main ul li a").count();
+    expect(count).toBeGreaterThanOrEqual(23);
   });
 
   test("/maps/lviv: h1, тексти, CTA, Product+Breadcrumb LD, інші міста", async ({ page }) => {

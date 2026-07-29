@@ -288,11 +288,16 @@ export default async function CityPage({
         </dl>
       </section>
 
-      {/* Читати далі: 2 статті блогу. */}
+      {/* Читати далі: 2 статті блогу — РОТАЦІЯ за індексом міста (раніше всі 23
+          міста лінкували ті самі 2 статті → 13 статей без внутрішніх лінків;
+          тепер лінк-еквіті розходиться по всьому блогу, вибір детермінований). */}
       <section className="mt-10">
         <h2 className="text-[18px] font-semibold text-ink">{locale === "uk" ? "Читати далі" : "Read more"}</h2>
         <ul className="mt-3 flex flex-col gap-2">
-          {BLOG_ARTICLES.slice(4, 6).map((a) => (
+          {(() => {
+            const ci = Math.max(0, CITY_PAGES.findIndex((c) => c.slug === city.slug));
+            return [0, 1].map((k) => BLOG_ARTICLES[(ci * 2 + k) % BLOG_ARTICLES.length]);
+          })().map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
                 {blogContent(a, locale).h1} →

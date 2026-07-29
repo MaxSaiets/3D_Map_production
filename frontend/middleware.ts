@@ -1,9 +1,22 @@
 import createMiddleware from "next-intl/middleware";
+import type { NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
+
+const intl = createMiddleware(routing);
 
 // Auto-detects locale from the cookie (NEXT_LOCALE) then Accept-Language header,
 // and rewrites/redirects accordingly. Default locale (uk) stays unprefixed.
-export default createMiddleware(routing);
+export default function middleware(req: NextRequest) {
+  // 410 Gone для вкладених opengraph-image/twitter-image: Next file-convention
+  // колись генерував OG-роут для КОЖНОГО сегмента (/pl/maps/kyiv/opengraph-image),
+  // під next-intl вони 307→404 і висіли в GSC як «Не знайдено 404». 410 каже
+  // Google «зникло назавжди» — викидає з черги швидше за 404. Корінь
+  // /opengraph-image (робочі соц-картки) сюди не потрапляє — виключений matcher-ом.
+  if (/\/(opengraph-image|twitter-image)$/.test(req.nextUrl.pathname)) {
+    return new Response(null, { status: 410 });
+  }
+  return intl(req);
+}
 
 export const config = {
   // Skip API, Next internals, root metadata routes, and any path with a file
