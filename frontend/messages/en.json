@@ -576,10 +576,10 @@
     "ctaKeychain": "Map keychain"
   },
   "cityPages": {
-    "title": "3D map of {city} — buy a print or download the file",
-    "description": "Buy a 3D map of {city} made to order: pick a district, tune the model — we print it in Eco PLA and ship EU-wide, or download the 3MF/STL to print yourself. From ≈€6; map keychain from ≈€3.",
+    "title": "3D map of {city} — from €6, ready in 2 min",
+    "description": "3D map of {city}: pick a district in the builder — a live model with streets, buildings and rivers in 2 minutes. Eco PLA print from ≈€6 shipped EU-wide, or download the 3MF/STL to print yourself. Keychain from ≈€3.",
     "h1": "3D map of {city}",
-    "p1": "Turn {city} into a tactile three-dimensional model: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
+    "p1": "A 3D map of {city} is a tactile three-dimensional model of a district: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
     "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine and to the EU. A perfect gift for anyone who loves their city.",
     "ctaMap": "Create a 3D map of {city}",
     "ctaKeychain": "{city} map keychain",

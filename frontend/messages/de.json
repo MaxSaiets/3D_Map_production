@@ -576,10 +576,10 @@
     "ctaKeychain": "Karten-Anhänger"
   },
   "cityPages": {
-    "title": "3D-Karte von {city} kaufen — Druck oder Datei",
-    "description": "3D-Karte von {city} auf Bestellung kaufen: Viertel wählen, Modell anpassen — wir drucken in Eco PLA und liefern EU-weit, oder lade die 3MF/STL-Datei zum Selbstdrucken. Ab ≈6 €; Karten-Anhänger ab ≈3 €.",
+    "title": "3D-Karte von {city} — ab 6 €, in 2 Min. fertig",
+    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten entsteht ein Modell mit Straßen, Gebäuden und Flüssen. Eco-PLA-Druck ab ≈6 € mit EU-Versand, oder 3MF/STL-Datei zum Selbstdrucken laden. Anhänger ab ≈3 €.",
     "h1": "3D-Karte von {city}",
-    "p1": "Verwandle {city} in ein taktiles dreidimensionales Modell: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
+    "p1": "Die 3D-Karte von {city} ist ein taktiles dreidimensionales Modell eines Viertels: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
     "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern in die Ukraine und in die EU. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",
     "ctaMap": "3D-Karte von {city} erstellen",
     "ctaKeychain": "{city}-Karten-Schlüsselanhänger",

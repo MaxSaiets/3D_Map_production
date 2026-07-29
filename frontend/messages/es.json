@@ -576,10 +576,10 @@
     "ctaKeychain": "Llavero-mapa"
   },
   "cityPages": {
-    "title": "Mapa 3D de {city} — comprar impresión o archivo",
-    "description": "Compra un mapa 3D de {city} a medida: elige un barrio, ajusta el modelo — lo imprimimos en Eco PLA y enviamos a la UE, o descarga el archivo 3MF/STL. Desde ≈6 €; llavero con mapa desde ≈3 €.",
+    "title": "Mapa 3D de {city} — desde 6 €, listo en 2 min",
+    "description": "Mapa 3D de {city}: elige un barrio en el configurador — un modelo con calles, edificios y ríos en 2 minutos. Impresión en Eco PLA desde ≈6 € con envío a la UE, o descarga el archivo 3MF/STL para imprimirlo tú mismo. Llavero desde ≈3 €.",
     "h1": "Mapa 3D de {city}",
-    "p1": "Convierte {city} en un modelo tridimensional táctil: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
+    "p1": "El mapa 3D de {city} es un modelo tridimensional táctil de un barrio: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
     "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un regalo perfecto para quien ama su ciudad.",
     "ctaMap": "Crear el mapa 3D de {city}",
     "ctaKeychain": "Llavero con el mapa de {city}",

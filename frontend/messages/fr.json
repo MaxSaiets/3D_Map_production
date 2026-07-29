@@ -576,10 +576,10 @@
     "ctaKeychain": "Porte-clés carte"
   },
   "cityPages": {
-    "title": "Carte 3D de {city} — acheter l'impression ou le fichier",
-    "description": "Achetez une carte 3D de {city} sur mesure : choisissez un quartier, ajustez le modèle — nous l'imprimons en Eco PLA et livrons dans l'UE, ou téléchargez le fichier 3MF/STL. Dès ≈6 € ; porte-clés carte dès ≈3 €.",
+    "title": "Carte 3D de {city} — dès 6 €, prête en 2 min",
+    "description": "Carte 3D de {city} : choisissez un quartier dans le configurateur — un modèle avec rues, bâtiments et rivières en 2 minutes. Impression Eco PLA dès ≈6 € livrée dans l'UE, ou fichier 3MF/STL à télécharger. Porte-clés dès ≈3 €.",
     "h1": "Carte 3D de {city}",
-    "p1": "Transformez {city} en modèle tridimensionnel tactile : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
+    "p1": "La carte 3D de {city} est un modèle tridimensionnel tactile d'un quartier : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
     "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine et dans l'UE. Un cadeau parfait pour qui aime sa ville.",
     "ctaMap": "Créer la carte 3D de {city}",
     "ctaKeychain": "Porte-clés carte de {city}",

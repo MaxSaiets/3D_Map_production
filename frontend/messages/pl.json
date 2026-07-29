@@ -576,10 +576,10 @@
     "ctaKeychain": "Brelok-mapa"
   },
   "cityPages": {
-    "title": "Mapa 3D miasta {city} — kup wydruk lub plik",
-    "description": "Kup mapę 3D miasta {city} na zamówienie: wybierz dzielnicę, dostosuj model — wydrukujemy z Eco PLA i wyślemy do UE, albo pobierz plik 3MF/STL do własnego druku. Od ≈6 €; brelok z mapą od ≈3 €.",
+    "title": "Mapa 3D miasta {city} — od 6 €, gotowa w 2 min",
+    "description": "Mapa 3D miasta {city}: wybierz dzielnicę w kreatorze — w 2 minuty powstaje model z ulicami, budynkami i rzekami. Druk z Eco PLA od ≈6 € z wysyłką do UE, albo plik 3MF/STL do własnego druku. Brelok od ≈3 €.",
     "h1": "Mapa 3D miasta {city}",
-    "p1": "Zamień {city} w dotykowy trójwymiarowy model: ulice, budynki z prawdziwymi wysokościami, parki i rzeki z danych OpenStreetMap. Wybierz dowolną dzielnicę miasta {city} w kreatorze — model będzie gotowy w kilka minut jako 3MF lub STL dla Bambu Studio czy PrusaSlicer.",
+    "p1": "Mapa 3D miasta {city} to dotykowy trójwymiarowy model dzielnicy: ulice, budynki z prawdziwymi wysokościami, parki i rzeki z danych OpenStreetMap. Wybierz dowolną dzielnicę miasta {city} w kreatorze — model będzie gotowy w kilka minut jako 3MF lub STL dla Bambu Studio czy PrusaSlicer.",
     "p2": "Nie masz drukarki 3D? Wydrukujemy mapę lub brelok z mapą miasta {city} z ekologicznego Eco PLA i wyślemy po Ukrainie i do UE. Idealny prezent dla każdego, kto kocha swoje miasto.",
     "ctaMap": "Stwórz mapę 3D miasta {city}",
     "ctaKeychain": "Brelok z mapą miasta {city}",
