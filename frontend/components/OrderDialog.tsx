@@ -43,7 +43,7 @@ export function OrderDialog({
   open: boolean;
   onClose: () => void;
   taskId: string | null;
-  productType: "map" | "keychain";
+  productType: "map" | "keychain" | "floorplan";
   summary: OrderSummary;
   /** Жива орієнтовна ціна з /api/quote; без неї — статичний i18n-fallback. */
   priceText?: string;
@@ -51,6 +51,13 @@ export function OrderDialog({
   modelPending?: boolean;
 }) {
   const t = useTranslations("order");
+
+  // Три продукти × три місця виводу ціни/назви — тернарники розповзались і вже
+  // давали різні підписи в різних кутках форми. Один хелпер на кожне.
+  const productLabel = productType === "keychain" ? t("prodKeychain")
+    : productType === "floorplan" ? t("prodFloorplan") : t("prodMap");
+  const fallbackPrice = productType === "keychain" ? t("estPriceKeychain")
+    : productType === "floorplan" ? t("estPriceFloorplan") : t("estPriceMap");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -184,7 +191,7 @@ export function OrderDialog({
           delivery_country: region === "ua" ? "Україна" : euCountry,
           delivery_city: city,
           delivery_branch: branch, delivery_address: address, comment,
-          est_price: priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap")),
+          est_price: priceText || fallbackPrice,
           summary, screenshots,
         }),
       });
@@ -253,7 +260,7 @@ export function OrderDialog({
               {t("acceptedText")}
             </p>
             {payment && (() => {
-              const payLabel = `${t("payNow")} · ${priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}`;
+              const payLabel = `${t("payNow")} · ${priceText || fallbackPrice}`;
               const btnCls = "mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90";
               if (payment.provider === "liqpay" && payment.data && payment.signature) {
                 // Форма-POST на LiqPay checkout (стандартна кнопка LiqPay), у новій вкладці.
@@ -289,7 +296,7 @@ export function OrderDialog({
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Package size={18} /></span>
                 <div>
                   <h3 id="order-dialog-title" className="font-serif text-xl text-[var(--text-primary)]">{t("title")}</h3>
-                  <p className="text-[11px] text-[var(--text-secondary)]">{productType === "keychain" ? t("prodKeychain") : t("prodMap")}{summary.size ? ` · ${summary.size}` : ""}</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">{productLabel}{summary.size ? ` · ${summary.size}` : ""}</p>
                 </div>
               </div>
               <button onClick={onClose} aria-label={t("aria.close")} className="rounded-lg p-1 text-[var(--text-secondary)] hover:bg-black/5"><X size={20} /></button>
@@ -439,7 +446,7 @@ export function OrderDialog({
                 {error && <div id="order-error" role="alert" className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[12px] font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
-                  <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || (productType === "keychain" ? t("estPriceKeychain") : t("estPriceMap"))}</b>
+                  <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || fallbackPrice}</b>
                 </div>
                 <button onClick={submit} disabled={sending}
                   className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-strong)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_32px_rgba(11,92,87,0.24)] transition hover:bg-[var(--accent)] disabled:opacity-60">

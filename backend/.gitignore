@@ -57,3 +57,7 @@ cache/
 # FIREBASE
 serviceAccountKey.json
 serviceAccountKey
+# Ваги нейромережі планів — 55 МБ, у git не їдуть. На сервер копіюються
+# окремо (scp у backend/models/). Без файлу сервіс /maket автоматично
+# працює класичним CV — це робочий стан, а не помилка.
+models/*.onnx

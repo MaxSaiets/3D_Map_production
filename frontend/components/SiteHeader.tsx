@@ -80,6 +80,7 @@ export function SiteHeader() {
           <Link href="/prices" className="hover:text-ink">{pricesLabel}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
           <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
+          <Link href="/maket" className="hover:text-ink">{t("maket")}</Link>
         </nav>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           <div className="hidden sm:block"><LanguageSwitcher /></div>
@@ -135,6 +136,7 @@ export function SiteHeader() {
               { href: "/prices", label: pricesLabel },
               { href: "/keychains", label: t("keychains") },
               { href: "/worlds", label: t("worlds") },
+              { href: "/maket", label: t("maket") },
               { href: "/account", label: configured && user ? t("account") : t("login") },
             ].map((it) => (
               <li key={it.href}>

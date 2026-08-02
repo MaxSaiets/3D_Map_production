@@ -1,0 +1,9 @@
+# Тренувальні артефакти — не в репозиторій.
+# Чекпоінти ~55 МБ кожен; у прод їде лише експортований ONNX
+# (backend/models/floorplan_seg.onnx), і той окремо, а не через git.
+_checkpoints/
+_preview/
+_preview3d/
+*.pt
+*.pth
+_datasets/

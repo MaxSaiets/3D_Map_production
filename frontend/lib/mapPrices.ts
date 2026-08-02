@@ -29,6 +29,24 @@ export const MAP_MAGNET_PRICE_UAH = 150;
 /** Брелок-мапа (3D-друк) — базова ціна. UAH. Дзеркало pricing.json keychain.base. */
 export const KEYCHAIN_PRICE_UAH = 120;
 
+/** Макет квартири з плану — ціна за ФІЗИЧНИМ розміром виробу (мм → UAH).
+ *  Дзеркало backend/pricing.json → floorplan.sizes_mm. Покупець обирає
+ *  сантиметри, а не архітектурний масштаб — так само роблять Etsy-продавці. */
+export const FLOORPLAN_SIZE_PRICES_UAH = {
+  100: 590,
+  150: 890,
+  200: 1290,
+  250: 1790,
+} as const;
+
+export type FloorplanSizeMm = keyof typeof FLOORPLAN_SIZE_PRICES_UAH;
+
+export function floorplanPriceUah(sizeMm: number): number {
+  const sizes = Object.keys(FLOORPLAN_SIZE_PRICES_UAH).map(Number);
+  const nearest = sizes.reduce((a, b) => (Math.abs(b - sizeMm) < Math.abs(a - sizeMm) ? b : a));
+  return FLOORPLAN_SIZE_PRICES_UAH[nearest as FloorplanSizeMm];
+}
+
 /** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
 export const MAP_RELIEF_ADDON_UAH = 60;
 

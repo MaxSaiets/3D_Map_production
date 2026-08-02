@@ -950,6 +950,14 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     sym = p.get("currency_symbol", "₴")
     if product == "keychain":
         price = int(p.get("keychain", {}).get("base", 120))
+    elif product == "floorplan":
+        fp = p.get("floorplan", {}) or {}
+        fp_sizes = {float(k): int(v) for k, v in (fp.get("sizes_mm", {}) or {}).items()}
+        if size_mm and fp_sizes:
+            nearest = min(fp_sizes.keys(), key=lambda k: abs(k - float(size_mm)))
+            price = fp_sizes[nearest]
+        else:
+            price = int(fp.get("from", 590))
     else:
         sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 250}).items()}
         if size_mm:
@@ -994,6 +1002,23 @@ def _compute_authoritative_amount(
 
     if (product_type or "map") == "keychain":
         amount = float((pricing.get("keychain", {}) or {}).get("base", 120))
+        return round(amount, 2), currency
+
+    if (product_type or "map") == "floorplan":
+        # Ціна за фізичним розміром макета. Розмір беремо з ЗАДАЧІ, а не з
+        # клієнта: est_price у запиті підробити тривіально (див. докстрінг).
+        fp_cfg = pricing.get("floorplan", {}) or {}
+        fp_sizes = {float(k): int(v) for k, v in (fp_cfg.get("sizes_mm", {}) or {}).items()}
+        fp_size = None
+        if req is not None:
+            try:
+                fp_size = float(getattr(req, "model_size_mm", None) or 0.0) or None
+            except Exception:  # noqa: BLE001
+                fp_size = None
+        if fp_size is None or not fp_sizes:
+            amount = float(fp_cfg.get("from", 590) or 590)
+        else:
+            amount = float(_nearest_map_price(fp_sizes, fp_size) or fp_cfg.get("from", 590))
         return round(amount, 2), currency
 
     # ── map / magnet ────────────────────────────────────────────────────────
@@ -1282,8 +1307,11 @@ async def create_order_endpoint(
     if not (order.phone or "").strip():
         raise HTTPException(status_code=422, detail="Вкажіть номер телефону для звʼязку")
     _ptype = (order.product_type or "map").strip().lower()
-    if _ptype not in ("map", "keychain"):
-        raise HTTPException(status_code=422, detail="Невідомий тип виробу (очікується «map» або «keychain»).")
+    if _ptype not in ("map", "keychain", "floorplan"):
+        raise HTTPException(
+            status_code=422,
+            detail="Невідомий тип виробу (очікується «map», «keychain» або «floorplan»).",
+        )
     # СЕРВЕР-САЙД валідація доставки (дзеркало OrderDialog.tsx) — щоб обхід форми
     # через прямий API не створював недоставних замовлень (без міста/відділення).
     _dm = (order.delivery_method or "").strip().lower()
@@ -2424,6 +2452,9 @@ async def get_status(task_id: str):
         "print_quality": getattr(task, "print_quality", None),
         "download_url_stl": to_static_url(output_files.get("stl")),
         "download_url_3mf": to_static_url(output_files.get("3mf")),
+        # GLB потрібен сторінці макета квартири для 3D-превʼю у браузері.
+        # Додано окремим ключем (а не заміною) — старі клієнти його просто ігнорують.
+        "download_url_glb": to_static_url(output_files.get("glb")),
         "keychain_manifest": getattr(task, "keychain_manifest", None),
         "preview_3mf": to_static_url(output_files.get("preview_3mf")),  # РћСЃРЅРѕРІРЅРµ РїСЂРµРІ'СЋ РІ 3MF
         "preview_parts": {
@@ -4100,6 +4131,205 @@ def generate_model_task(
         # IMPORTANT: don't re-raise from background task, otherwise Starlette logs it as ASGI error
         # and it can interrupt other tasks. The failure is already recorded in task state.
         return
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  МАКЕТ КВАРТИРИ: план приміщення → друкована 3D-модель
+#  Логіка живе у services/floorplan/*, тут — лише HTTP-обгортка.
+# ═══════════════════════════════════════════════════════════════════════════
+class FloorplanAnalyzeRequest(BaseModel):
+    """Аплоад іде base64-рядком у JSON, а не multipart: у цьому бекенді немає
+    жодного UploadFile, а Caddy проксіює лише /api/* з лімітом тіла 50 МБ."""
+
+    image: str = Field(..., min_length=64, max_length=34_000_000)
+    filename: Optional[str] = Field(default=None, max_length=255)
+    reference_px: Optional[float] = Field(default=None, ge=1.0, le=100000.0)
+    reference_m: Optional[float] = Field(default=None, gt=0.05, le=200.0)
+    use_ocr: bool = True
+
+
+class FloorplanBuildRequest(BaseModel):
+    plan: Dict[str, Any]
+    m_per_px: float = Field(..., gt=1e-6, le=10.0)
+    model_size_mm: float = Field(default=150.0, ge=40.0, le=250.0)
+    wall_height_mode: str = Field(default="maquette")     # maquette | true_scale
+    wall_height_mm: Optional[float] = Field(default=None, ge=3.0, le=120.0)
+    wall_height_m: Optional[float] = Field(default=None, ge=1.5, le=6.0)
+    base_plate: bool = True
+    base_thickness_mm: float = Field(default=2.0, ge=1.0, le=8.0)
+    min_wall_mm: float = Field(default=1.2, ge=0.8, le=4.0)
+    cut_doors: bool = True
+    cut_windows: bool = True
+    title: Optional[str] = Field(default=None, max_length=80)
+
+
+@app.post("/api/floorplan/analyze")
+async def floorplan_analyze(
+    request: FloorplanAnalyzeRequest,
+    _rl: None = Depends(rate_limit("floorplan_analyze", [(6, 60.0), (40, 3600.0)])),
+):
+    """Зображення/PDF плану → векторні стіни + гіпотези масштабу + превʼю.
+
+    Синхронний, але виконується у пулі потоків: аналіз забирає 1-4 с CPU, і в
+    корутині він би заблокував увесь event-loop разом із генерацією мап."""
+    from starlette.concurrency import run_in_threadpool
+
+    from services.floorplan.pipeline import FloorplanError, analyze, decode_data_url
+
+    try:
+        data = decode_data_url(request.image)
+    except FloorplanError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    try:
+        result = await run_in_threadpool(
+            analyze, data,
+            reference_px=request.reference_px, reference_m=request.reference_m,
+            use_ocr=bool(request.use_ocr),
+        )
+    except FloorplanError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001
+        print(f"[FLOORPLAN] analyze failed: {exc}", flush=True)
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Не вдалось проаналізувати план.")
+
+    payload = result.to_dict()
+    print(f"[FLOORPLAN] analyze ok: detector={payload['detector']} "
+          f"walls={len(payload['plan']['walls'])} scale={payload['scale']['source']} "
+          f"timings={payload['timings_ms']}", flush=True)
+    return payload
+
+
+def floorplan_build_task(task_id: str, request: "FloorplanBuildRequest") -> None:
+    """Фонова побудова макета. Проходить через gen_queue разом із мапами:
+    на 4 ГБ VPS дві важкі задачі одночасно = OOM і «сервер зайнятий»."""
+    task = tasks.get(task_id)
+    if task is None:
+        return
+    from services import gen_queue
+    from services.floorplan.builder import BuildOptions
+    from services.floorplan.pipeline import FloorplanError, build, export_outputs
+
+    weight = gen_queue.LIGHT_WEIGHT
+    waited = gen_queue.acquire(weight)
+    if waited > 1.0:
+        print(f"[FLOORPLAN] {task_id} waited {waited:.1f}s in queue", flush=True)
+    try:
+        task.update_status("processing", 8, "Готую геометрію...")
+        options = BuildOptions(
+            model_size_mm=float(request.model_size_mm),
+            wall_height_mode=("true_scale" if request.wall_height_mode == "true_scale"
+                              else "maquette"),
+            wall_height_mm=request.wall_height_mm,
+            base_plate=bool(request.base_plate),
+            base_thickness_mm=float(request.base_thickness_mm),
+            min_wall_mm=float(request.min_wall_mm),
+            cut_doors=bool(request.cut_doors),
+            cut_windows=bool(request.cut_windows),
+        )
+        plan_dict = dict(request.plan or {})
+        if request.wall_height_m:
+            plan_dict["wall_height_m"] = float(request.wall_height_m)
+
+        result = build(plan_dict, float(request.m_per_px), options,
+                       progress=lambda pct, msg: task.update_status("processing", pct, msg))
+        if task.cancelled:
+            return
+
+        task.update_status("processing", 96, "Зберігаю файли...")
+        basename = f"floorplan_{task_id[:8]}"
+        outputs = export_outputs(result, str(OUTPUT_DIR), basename)
+        for fmt, path in outputs.items():
+            task.set_output(fmt, path)
+        task.complete(outputs.get("3mf") or next(iter(outputs.values())))
+        stats = result.stats
+        task.message = (
+            f"Макет готовий · {stats['model_size_mm'][0]:.0f}×{stats['model_size_mm'][1]:.0f}"
+            f"×{stats['model_size_mm'][2]:.0f} мм · 1:{stats['scale_denominator']:.0f}"
+        )
+        task.print_quality = {
+            "status": "warning" if result.warnings else "ok",
+            "warnings": result.warnings,
+            "report": None,
+            "stats": stats,
+        }
+        print(f"[FLOORPLAN] {task_id} done: {stats}", flush=True)
+    except FloorplanError as exc:
+        task.fail(str(exc))
+    except Exception as exc:  # noqa: BLE001
+        import traceback
+        traceback.print_exc()
+        task.fail(f"Не вдалось побудувати макет: {exc}")
+    finally:
+        gen_queue.release(weight)
+
+
+@app.post("/api/floorplan/generate", response_model=GenerationResponse)
+async def floorplan_generate(
+    request: FloorplanBuildRequest,
+    background_tasks: BackgroundTasks,
+    _rl: None = Depends(rate_limit("floorplan_generate", [(6, 60.0), (40, 3600.0)])),
+):
+    """Підтверджений користувачем план → задача генерації.
+
+    Статус читається тим самим /api/status/{task_id}, файли — /api/download —
+    щоб фронтенд перевикористав наявні превʼю, квоту й замовлення."""
+    walls = (request.plan or {}).get("walls") or []
+    if not walls:
+        raise HTTPException(status_code=422, detail="У плані немає жодної стіни.")
+    if len(walls) > 1200:
+        raise HTTPException(status_code=422, detail="Забагато стін у плані (максимум 1200).")
+
+    task_id = str(uuid.uuid4())
+    # SimpleNamespace, а не dict: _compute_authoritative_amount читає параметри
+    # задачі через getattr — саме з них рахується сума до сплати, і клієнтському
+    # est_price там не вірять.
+    from types import SimpleNamespace
+
+    tasks[task_id] = GenerationTask(
+        task_id=task_id,
+        request=SimpleNamespace(
+            floorplan=True,
+            model_size_mm=float(request.model_size_mm),
+            wall_height_mode=request.wall_height_mode,
+        ),
+    )
+    background_tasks.add_task(floorplan_build_task, task_id, request)
+    print(f"[FLOORPLAN] created task {task_id}: {len(walls)} walls, "
+          f"{request.model_size_mm:.0f}mm", flush=True)
+    return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
+
+
+@app.get("/api/floorplan/capabilities")
+async def floorplan_capabilities():
+    """Що вміє сервіс на цьому сервері — фронтенд підлаштовує підказки."""
+    try:
+        from services.floorplan import detect_nn
+        nn_ready = detect_nn.is_available()
+    except Exception:
+        nn_ready = False
+    try:
+        from services.floorplan.scale import run_ocr  # noqa: F401
+        import importlib.util
+        ocr_ready = (importlib.util.find_spec("rapidocr") is not None
+                     or importlib.util.find_spec("rapidocr_onnxruntime") is not None)
+    except Exception:
+        ocr_ready = False
+    pdf_ready = False
+    try:
+        import importlib.util
+        pdf_ready = importlib.util.find_spec("pypdfium2") is not None
+    except Exception:
+        pdf_ready = False
+    return {
+        "neural_detector": nn_ready,
+        "ocr_scale": ocr_ready,
+        "pdf": pdf_ready,
+        "max_upload_mb": 25,
+        "sizes_mm": [100, 150, 200, 250],
+    }
 
 
 if __name__ == "__main__":

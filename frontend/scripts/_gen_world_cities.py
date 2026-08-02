@@ -137,3 +137,26 @@ for (slug, key, lat, lon, loc, names, pop, py, founded, fm, area, river, region,
 out = HEAD + "\n".join(rows) + "\n" + TAIL
 io.open("lib/worldCities.ts", "w", encoding="utf-8").write(out)
 print("cities:", len(C))
+
+# ── Назви міст у messages/*.json ─────────────────────────────────────────────
+# ЧОМУ ТУТ. Конструктор домішує ці міста у свої пресети й малює назву через
+# tCity(key) з неймспейсу "cities". Без цих ключів next-intl підставляє САМ
+# КЛЮЧ — німець, що прийшов із /maps/berlin, бачив у конструкторі «World_Berlin»
+# замість «Berlin», а збірка сипала 384 помилки MISSING_MESSAGE. Генеруємо
+# разом із самим файлом міст, інакше наступна регенерація знову їх розсинхронить.
+import collections
+import json
+import os
+
+LOCALES = ("uk", "en", "de", "pl", "fr", "es")
+for idx, loc in enumerate(LOCALES):
+    path = os.path.join("messages", f"{loc}.json")
+    with io.open(path, encoding="utf-8") as fh:
+        data = json.load(fh, object_pairs_hook=collections.OrderedDict)
+    section = data.setdefault("cities", collections.OrderedDict())
+    for (slug, key, lat, lon, home, names, *_rest) in C:
+        world_key = "World_" + (key.capitalize() if key.islower() else key)
+        section[world_key] = names[idx]
+    with io.open(path, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+print("назви міст записано у messages:", ", ".join(LOCALES))
