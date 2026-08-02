@@ -281,6 +281,62 @@ def test_base_follows_apartment_outline_despite_gaps():
     assert 0.55 < ratio < 0.95, f"підошва {ratio:.2f} габариту — форму квартири втрачено"
 
 
+def test_area_labels_are_not_read_as_lengths():
+    """«12,1» на плані — це ПЛОЩА кімнати в м², а не 12.1 метра.
+
+    Читання площ як довжин роздувало масштаб: квартира виходила 25×25 м, і
+    фізичний запобіжник її відхиляв. На 99 реальних планах наскрізний успіх
+    падав із 87 до 60."""
+    from services.floorplan.scale import _parse_dimension
+
+    for text in ("3500", "3 500", "4 680", "2 750", "1 720"):
+        assert _parse_dimension(text) is not None, f"розмір «{text}» не прочитано"
+    assert _parse_dimension("3,50") == pytest.approx(3.5)      # метри, два знаки
+    for text in ("12,1", "16,4", "5,6", "45,9"):
+        assert _parse_dimension(text) is None, f"площу «{text}» прийнято за довжину"
+
+
+def test_ocr_scale_uses_label_position():
+    """Розмір зіставляється з тим, ПІД ЧИМ він підписаний.
+
+    Без цього голосування збиралось навколо хибного кластера: стін мало,
+    відстаней між ними багато, і числа охоче лягали на повні прольоти —
+    квартира 7.5 м виходила 3.7 м, причому «7 з 11 розмірів збіглись»."""
+    from services.floorplan.scale import from_ocr
+
+    # Квартира 800×400 px: перегородка посередині ділить її на 2 кімнати по 4 м.
+    t = 20.0
+    walls = [
+        Wall(x1=0.0, y1=0.0, x2=800.0, y2=0.0, thickness_m=t),
+        Wall(x1=800.0, y1=0.0, x2=800.0, y2=400.0, thickness_m=t),
+        Wall(x1=800.0, y1=400.0, x2=0.0, y2=400.0, thickness_m=t),
+        Wall(x1=0.0, y1=400.0, x2=0.0, y2=0.0, thickness_m=t),
+        Wall(x1=400.0, y1=0.0, x2=400.0, y2=400.0, thickness_m=t),
+    ]
+    plan = PlanVector(walls=walls, image_size_px=(800, 400))
+
+    def label(text, value, cx, cy, horizontal=True):
+        half_w, half_h = (30.0, 8.0) if horizontal else (8.0, 30.0)
+        box = [[cx - half_w, cy - half_h], [cx + half_w, cy - half_h],
+               [cx + half_w, cy + half_h], [cx - half_w, cy + half_h]]
+        return {"text": text, "box": box, "score": 0.99, "value_m": value}
+
+    # Обидві кімнати підписані «3 800» (у світлі: 400 px − 20 px = 380 px).
+    items = [
+        label("3 800", 3.8, 200.0, -20.0),
+        label("3 800", 3.8, 600.0, -20.0),
+        label("3 800", 3.8, -20.0, 200.0, horizontal=False),
+        label("7 800", 7.8, 400.0, 430.0),          # габарит по низу
+    ]
+    candidate = from_ocr(items, plan)
+    assert candidate is not None, "масштаб за розмірами не визначився"
+    # істина: 3.8 м на 380 px = 0.01 м/px
+    assert candidate.m_per_px == pytest.approx(0.01, rel=0.05), (
+        f"масштаб {candidate.m_per_px:.5f} замість 0.01 — "
+        "розмір зіставлено не з тим прольотом"
+    )
+
+
 def test_parallel_duplicates_are_merged():
     """Роздвоєний скелет широкої стіни не має давати ДВІ стіни в редакторі."""
     from services.floorplan.vectorize import _merge_parallel_duplicates

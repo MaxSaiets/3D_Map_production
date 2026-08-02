@@ -256,8 +256,16 @@ def _parse_dimension(text: str) -> Optional[float]:
 
     Конвенції, які реально трапляються:
         «2 800», «2800»  → міліметри (ДСТУ; пробіл як роздільник тисяч)
-        «2,80», «2.80»   → метри
+        «2,80», «2.80»   → метри (ДВІ цифри після коми)
+        «12,1»           → ПЛОЩА КІМНАТИ в м², а НЕ довжина
         «280»            → сантиметри (рідко) — трактуємо як мм, це безпечніше
+
+    ⚠️ ОДНА ЦИФРА ПІСЛЯ КОМИ = ПЛОЩА. На планах з оголошень нерухомості й у БТІ
+    підписують площі кімнат («12,1», «16,4»). Раніше вони читались як 12.1 метра
+    завдовжки: масштаб роздувався, квартира виходила 25×25 м = 600 м², і її
+    відхиляв фізичний запобіжник. Заміряно на 99 реальних планах — наскрізний
+    успіх падав із 87 до 60. Довжини в метрах креслярі пишуть із ДВОМА знаками
+    («3,50»), тож розрізнити можна надійно.
     """
     raw = text.strip().replace(" ", " ")
     if not _NUM_RE.match(raw):
@@ -268,6 +276,9 @@ def _parse_dimension(text: str) -> Optional[float]:
             value = float(compact.replace(",", "."))
         except ValueError:
             return None
+        tail = compact.split(",")[-1] if "," in compact else compact.split(".")[-1]
+        if len(tail) == 1:
+            return None                    # площа кімнати, а не довжина
         # 2.80 → метри; 2800.0 → міліметри
         return value if 0.4 <= value <= 40.0 else (value / 1000.0 if 400 <= value <= 40000 else None)
     if not compact.isdigit():
@@ -302,7 +313,10 @@ def run_ocr(rgb: np.ndarray) -> List[Dict[str, Any]]:
     if raw is not None:                      # rapidocr >= 2.x повертає обʼєкт
         texts = list(getattr(result, "txts", []) or [])
         scores = list(getattr(result, "scores", []) or [])
-        for i, box in enumerate(raw or []):
+        # `raw or []` тут ЛАМАЄТЬСЯ: у rapidocr 3.x boxes — numpy-масив, і `or`
+        # питає його істинність → ValueError «truth value is ambiguous». Через
+        # це OCR мовчки падав у except і сервіс завжди вважав, що його немає.
+        for i, box in enumerate(list(raw)):
             text = str(texts[i]) if i < len(texts) else ""
             score = float(scores[i]) if i < len(scores) else 0.0
             out.append({"text": text, "box": np.asarray(box).tolist(), "score": score})
@@ -345,6 +359,68 @@ def scale_note_from_ocr(ocr_items: Sequence[Dict[str, Any]]) -> Optional[float]:
     return None
 
 
+def _candidate_spans(plan_px: PlanVector
+                     ) -> Dict[str, List[Tuple[float, float, float]]]:
+    """Пари стін по кожній осі: {"x": [(ліва, права, У_СВІТЛІ)], "y": [...]}.
+
+    На відміну від `_candidate_distances_px` тут зберігаються САМІ КООРДИНАТИ —
+    вони потрібні, щоб зіставити розмір із тим місцем, де він підписаний.
+
+    Третє число — відстань У СВІТЛІ, тобто між ГРАНЯМИ стін, а не між осями.
+    Саме її пишуть у розмірних ланцюжках житлових планів. Без цієї поправки
+    масштаб виходив систематично на ~8% замалим: на кімнаті 3.5 м дві половинки
+    стін по 0.15 м — це рівно ті 8%."""
+    xs: List[Tuple[float, float]] = []
+    ys: List[Tuple[float, float]] = []
+    for wall in plan_px.walls:
+        dx, dy = wall.x2 - wall.x1, wall.y2 - wall.y1
+        if abs(dx) >= abs(dy):
+            ys.append(((wall.y1 + wall.y2) / 2.0, wall.thickness_m))
+        else:
+            xs.append(((wall.x1 + wall.x2) / 2.0, wall.thickness_m))
+    # Габарит сюди НЕ додаємо: bounds() дає межі СМУГ стін (вісь ± пів-товщини),
+    # тобто ті самі зовнішні стіни, але зсунуті й із нульовою товщиною. Пари з
+    # ними давали «у світлі», що насправді дорівнює відстані між ОСЯМИ, — і
+    # масштаб виходив на 5% меншим. Осі зовнішніх стін уже є у списку.
+    out: Dict[str, List[Tuple[float, float, float]]] = {"x": [], "y": []}
+    for axis, raw in (("x", xs), ("y", ys)):
+        # одна координата може прийти від кількох стін — беремо найтовщу
+        merged: Dict[float, float] = {}
+        for coord, thickness in raw:
+            key = round(coord, 1)
+            merged[key] = max(merged.get(key, 0.0), float(thickness))
+        values = sorted(merged.items())
+        for i in range(len(values)):
+            for j in range(i + 1, len(values)):
+                (a, ta), (b, tb) = values[i], values[j]
+                clear = (b - a) - (ta + tb) / 2.0
+                if clear > 4.0:
+                    out[axis].append((a, b, clear))
+    return out
+
+
+def _text_axis_center(item: Dict[str, Any], to_plan: float
+                      ) -> Optional[Tuple[str, float]]:
+    """Напис розміру → (вісь, координата центру) у пікселях ПЛАНУ.
+
+    Горизонтальний напис стоїть на горизонтальному розмірному ланцюжку й міряє
+    відстань по X; повернутий на 90° — по Y. Це та сама конвенція ДСТУ ГОСТ
+    2.307, за якою креслять усі плани, і вона надійніша за будь-яку евристику."""
+    box = item.get("box")
+    if box is None:
+        return None
+    arr = np.asarray(box, dtype=float)
+    if arr.ndim != 2 or arr.shape[0] < 3:
+        return None
+    w = float(arr[:, 0].max() - arr[:, 0].min())
+    h = float(arr[:, 1].max() - arr[:, 1].min())
+    if max(w, h) < 4.0:
+        return None
+    if w >= h:
+        return "x", float(arr[:, 0].mean()) * to_plan
+    return "y", float(arr[:, 1].mean()) * to_plan
+
+
 def _candidate_distances_px(plan_px: PlanVector) -> List[float]:
     """Реальні відстані на плані, до яких можуть належати розмірні числа:
     між паралельними стінами + загальні габарити."""
@@ -369,14 +445,24 @@ def _candidate_distances_px(plan_px: PlanVector) -> List[float]:
     return [d for d in out if d > 4.0]
 
 
-def from_ocr(ocr_items: Sequence[Dict[str, Any]], plan_px: PlanVector
-             ) -> Optional[ScaleCandidate]:
+def from_ocr(ocr_items: Sequence[Dict[str, Any]], plan_px: PlanVector,
+             ocr_to_plan: float = 1.0) -> Optional[ScaleCandidate]:
     """Голосування: який масштаб робить найбільше розмірних чисел правдою?
 
     Ми НЕ намагаємось розібрати розмірні лінії зі стрілками й виносками — це
-    крихко. Замість цього: кожна пара (число V, відстань між стінами D) дає
-    гіпотезу масштабу V/D; правильний масштаб набирає найбільше голосів, бо
-    підходить одразу багатьом числам. Це, по суті, RANSAC по одному параметру."""
+    крихко. Замість цього кожна пара (число V, відстань між стінами D) дає
+    гіпотезу масштабу V/D; правильний масштаб набирає найбільше голосів. Це,
+    по суті, RANSAC по одному параметру.
+
+    ⚠️ ПОЗИЦІЯ НАПИСУ ОБОВ'ЯЗКОВА. Спершу зіставлялися ВСІ числа з УСІМА
+    відстанями. На планах власника це давало стабільний і стабільно ХИБНИЙ
+    консенсус: стін мало, пар відстаней багато, і великі числа охоче лягали на
+    повні прольоти — квартира 7.5×7.5 м виходила 3.7×3.7 при «7 з 11 розмірів
+    збіглись». Розмір підписують ПОСЕРЕДИНІ того, що він міряє, тож число
+    зіставляємо лише з тими парами стін, між якими воно стоїть.
+
+    `ocr_to_plan` — перевідник координат: OCR працює на повному аркуші, а план
+    живе у зменшеній робочій копії."""
     values = [it["value_m"] for it in ocr_items if it.get("value_m")]
     if len(values) < 3 or not plan_px.walls:
         return None
@@ -389,34 +475,89 @@ def from_ocr(ocr_items: Sequence[Dict[str, Any]], plan_px: PlanVector
     lo = MIN_PLAN_SPAN_M / span_px
     hi = MAX_PLAN_SPAN_M / span_px
 
-    hypotheses: List[float] = []
-    for v in values:
-        for d in distances:
-            s = v / d
-            if lo <= s <= hi:
-                hypotheses.append(s)
-    if len(hypotheses) < 5:
+    # ФІЗИЧНЕ ОБМЕЖЕННЯ, без якого голосування збиралось навколо ПОМИЛКОВОГО
+    # кластера. Розмір, написаний на кресленні, міряє щось УСЕРЕДИНІ цього
+    # креслення — отже план не може бути меншим за найбільше прочитане число.
+    # Заміряно на планах власника: без цієї перевірки квартира 7.5×7.5 м
+    # виходила 3.7×3.7 м, і при цьому «7 з 11 розмірів збіглись» — консенсус
+    # був стабільний і стабільно хибний, бо стін мало, а відстаней між ними
+    # багато, і великі числа охоче лягали на повні прольоти.
+    #   • нижня межа: найбільший розмір ≤ проліт плану × 1.25 (запас на те, що
+    #     габаритний розмір міряє по ЗОВНІШНІХ гранях, а bounds() — по осях
+    #     стін, плюс частина зовнішньої стіни могла не розпізнатись);
+    #   • верхня: план не буває вчетверо більшим за свій найбільший розмір —
+    #     хоч одна кімната чи габарит завжди підписані.
+    max_value = max(values)
+    lo = max(lo, max_value / (1.25 * span_px))
+    hi = min(hi, 4.0 * max_value / span_px)
+    if lo >= hi:
         return None
 
-    # Голосування в лог-просторі: 2% допуску — типова похибка позиції стіни.
-    logs = np.log(np.array(hypotheses))
+    # ── 1. Позиційне зіставлення: число ↔ те, що стоїть під ним ──────────────
+    # Гіпотези зберігаємо РАЗОМ із номером числа, яке їх породило: голосувати
+    # треба різними числами, а не кількістю гіпотез (див. нижче).
+    spans = _candidate_spans(plan_px)
+    hypotheses: List[Tuple[float, int]] = []
+    positional = 0
+    for idx, item in enumerate(ocr_items):
+        v = item.get("value_m")
+        if not v:
+            continue
+        geom = _text_axis_center(item, ocr_to_plan)
+        if geom is None:
+            continue
+        axis, center = geom
+        for a, b, clear in spans[axis]:
+            mid = (a + b) / 2.0
+            # напис мусить стояти приблизно посередині виміряного відрізка
+            if abs(center - mid) > 0.35 * (b - a):
+                continue
+            s = v / clear                      # розмір у світлі, не між осями
+            if lo <= s <= hi:
+                hypotheses.append((s, idx))
+                positional += 1
+
+    # ── 2. Запасний шлях: якщо написи не лягли (повернутий аркуш, хитрий
+    #      макет) — старе зіставлення «всі з усіма» під фізичним обмеженням.
+    # Поріг рахує РІЗНІ числа, а не гіпотези: три незалежні розміри, що зійшлись
+    # на одному масштабі, — це вже консенсус. За порогом «менше 5 гіпотез»
+    # запасний шлях вмикався навіть тоді, коли позиційне зіставлення дало
+    # ідеальну відповідь, і додавав відстані між ОСЯМИ — масштаб зсувався на 5%.
+    positional_values = len({i for _, i in hypotheses})
+    if positional_values < 3:
+        for vi, v in enumerate(values):
+            for d in distances:
+                s = v / d
+                if lo <= s <= hi:
+                    hypotheses.append((s, 10_000 + vi))
+    # Мінімум — три гіпотези, бо нижче й так вимагається підтримка від трьох
+    # РІЗНИХ чисел. Поріг «5 гіпотез» відкидав ідеальні позиційні збіги, де
+    # кожне число дало рівно одну гіпотезу.
+    if len(hypotheses) < 3:
+        return None
+
+    # ГОЛОСУЮТЬ РІЗНІ ЧИСЛА, А НЕ ГІПОТЕЗИ. Одне число дає стільки гіпотез,
+    # скільки пар стін під нього підійшло, тож підрахунок «скільки гіпотез у
+    # кластері» вигравав тим, у кого пар більше, а не тим, кого підтвердило
+    # більше незалежних розмірів. На плані власника через це перемагав кластер
+    # від ОДНОГО числа: квартира 7.6 м виходила 4.5 м, хоча 7 із 8 розмірів
+    # чесно вказували на правильний масштаб.
+    logs = np.log(np.array([s for s, _ in hypotheses]))
+    owners = np.array([i for _, i in hypotheses])
     tolerance = math.log(1.025)
-    best_center, best_count = None, 0
-    for center in logs:
-        count = int(np.sum(np.abs(logs - center) <= tolerance))
-        if count > best_count:
-            best_count, best_center = count, center
-    if best_center is None or best_count < 4:
+    best_center, best_support, best_count = None, 0, 0
+    for k, center in enumerate(logs):
+        inlier = np.abs(logs - center) <= tolerance
+        support = int(np.unique(owners[inlier]).size)
+        count = int(inlier.sum())
+        if support > best_support or (support == best_support and count > best_count):
+            best_support, best_count, best_center = support, count, center
+    if best_center is None or best_support < 3:
         return None
     inliers = logs[np.abs(logs - best_center) <= tolerance]
     m_per_px = float(np.exp(np.median(inliers)))
 
-    # Скільки РІЗНИХ чисел підтримали переможця — це і є справжня надійність.
-    supporting = 0
-    for v in set(round(x, 4) for x in values):
-        if any(abs(math.log(v / d) - best_center) <= tolerance
-               for d in distances if v / d > 0):
-            supporting += 1
+    supporting = best_support
     unique_values = max(1, len(set(round(x, 4) for x in values)))
     ratio = supporting / unique_values
     confidence = float(np.clip(0.25 + 0.6 * ratio, 0.25, 0.85))
@@ -451,7 +592,17 @@ def resolve_scale(plan_px: PlanVector, *, rgb: Optional[np.ndarray] = None,
             pdf_candidate = from_pdf_note(pdf_page_pts, image_px, note)
             if pdf_candidate:
                 candidates.append(pdf_candidate)
-        ocr_candidate = from_ocr(ocr_items, plan_px)
+        # OCR читає ПОВНИЙ аркуш, а план живе у зменшеній робочій копії —
+        # без цього перевідника позиції написів не збігаються з геометрією.
+        ocr_to_plan = 1.0
+        try:
+            plan_w = float(plan_px.image_size_px[0] or 0.0)
+            rgb_w = float(rgb.shape[1] or 0.0)
+            if plan_w > 0 and rgb_w > 0:
+                ocr_to_plan = plan_w / rgb_w
+        except Exception:  # noqa: BLE001
+            ocr_to_plan = 1.0
+        ocr_candidate = from_ocr(ocr_items, plan_px, ocr_to_plan)
         if ocr_candidate:
             candidates.append(ocr_candidate)
 
