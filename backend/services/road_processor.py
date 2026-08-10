@@ -1246,6 +1246,7 @@ def build_railway_polygons(
     *,
     scale_factor: Optional[float] = None,
     min_width_m: Optional[float] = None,
+    clip_geom=None,
 ) -> Optional[object]:
     """Колії ОКРЕМОЮ геометрією — драбина (нитка + шпали) у світових метрах.
 
@@ -1298,14 +1299,35 @@ def build_railway_polygons(
         except Exception:
             width_m = 1.3
 
-    ladders = []
+    # Обрізаємо КОЖНУ лінію до зони ДО побудови драбини. З DuckDB приходять
+    # цілі ways по кілька кілометрів, а в кадр потрапляє метрів двісті — без
+    # обрізки ми будували сотні шпал за межами виробу (flat_plate 3.9с -> 12.3с).
+    clipped_lines = []
     for geom in rails.geometry.values:
         if geom is None or getattr(geom, "is_empty", True):
             continue
+        if clip_geom is not None:
+            try:
+                geom = geom.intersection(clip_geom)
+            except Exception:
+                pass
+            if geom is None or getattr(geom, "is_empty", True):
+                continue
+        # intersection може дати MultiLineString — розкладаємо на частини
+        parts = list(getattr(geom, "geoms", [])) or [geom]
+        for part in parts:
+            if part is None or part.is_empty or part.geom_type != "LineString":
+                continue
+            if part.length <= 0:
+                continue
+            clipped_lines.append(part)
+
+    ladders = []
+    for line in clipped_lines:
         try:
-            line = densify_geometry(geom, max_segment_length=15.0)
+            line = densify_geometry(line, max_segment_length=15.0)
         except Exception:
-            line = geom
+            pass
         ladder = build_railway_ladder(line, width_m / 2.0)
         if ladder is not None and not ladder.is_empty:
             ladders.append(ladder)

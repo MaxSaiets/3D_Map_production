@@ -395,6 +395,7 @@ def prepare_road_geometry(
                     local_edges_subset,
                     scale_factor=scale_factor,
                     min_width_m=min_road_width_for_build,
+                    clip_geom=zone_polygon_local,
                 )
                 if rails_geom_local is not None and zone_polygon_local is not None:
                     rails_geom_local = rails_geom_local.intersection(zone_polygon_local).buffer(0)
