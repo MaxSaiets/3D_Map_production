@@ -1549,9 +1549,13 @@ export function KeychainDesigner({
             y={value.labelYMm}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill="#141414"
-            stroke="rgba(20,20,20,0.18)"
-            strokeWidth={Math.max(value.labelStrokeMm * 0.06, 0.03)}
+            /* Порожній напис — це ПЛЕЙСХОЛДЕР-підказка, у моделі тексту не буде
+               взагалі. Раніше він малювався таким самим суцільним чорним, як
+               справжній, і виглядало ніби «під текстом не вирізається», хоча
+               бекенд вирізає літери + оболонку 1.2мм із доріг/парків/води. */
+            fill={label ? PRINT_COLORS.text : "rgba(25,25,25,0.30)"}
+            stroke={label ? PRINT_COLORS.base : "none"}
+            strokeWidth={label ? 1.0 : 0}
             paintOrder="stroke"
             fontSize={Math.max(value.labelTextHeightMm / 0.7, 2.6)}
             fontWeight={700}
@@ -1571,7 +1575,12 @@ export function KeychainDesigner({
               y={value.labelYMm + Math.max(value.labelTextHeightMm, 2.4) * 0.85 + 1.4}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#141414"
+              /* Той самий «виріз» halo, що й для основного напису: бекенд
+                 карвить літери другого рядка з тих самих шарів (text2_letter_poly). */
+              fill={PRINT_COLORS.text}
+              stroke={PRINT_COLORS.base}
+              strokeWidth={0.7}
+              paintOrder="stroke"
               fontSize={Math.max(2.4 / 0.7, 2.0)}
               fontWeight={700}
               fontFamily={value.labelFontStyle === "wide" ? "Arial Black, Impact, sans-serif" : value.labelFontStyle === "condensed" ? "Arial Narrow, Bahnschrift, sans-serif" : "monospace"}

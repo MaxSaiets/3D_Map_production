@@ -717,7 +717,7 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
           d={pointsToPath(b.pts)}
           fill={b.hl ? PRINT_COLORS.highlight : PRINT_COLORS.buildings}
           stroke={b.hl ? "#8f2a20" : PRINT_COLORS.buildingEdge}
-          strokeWidth={b.hl ? 0.25 : 0.15}
+          strokeWidth={b.hl ? 0.25 : 0.22}
         />
       ))}
     </>
