@@ -10,6 +10,7 @@ import warnings
 from typing import Tuple, Optional
 import os
 import hashlib
+import json
 import math
 import time
 from pathlib import Path
@@ -26,6 +27,55 @@ _CACHE_VERSION = "v3"  # Версія кешу (збільшити при змі
 # Скільки максимум чекаємо на колії з Overpass. Осmnx за замовчуванням дає 180с —
 # на тротлінгу це вішало генерацію на хвилини заради необовʼязкового шару.
 RAILWAY_FETCH_TIMEOUT_S = int(os.getenv("RAILWAY_FETCH_TIMEOUT_S", "8"))
+
+# «Тут колій немає» — кеш НЕГАТИВНИХ відповідей по грубій сітці ~1км.
+# Без нього кожна ділянка без залізниці (типовий центр міста) платила ~4с за
+# порожню відповідь Overpass, і платила знову на кожен зсув рамки, бо ключ
+# кешу графа залежить від точного bbox. Залізнична мережа міняється роками,
+# тож TTL великий.
+_RAIL_TILE_DEG = 0.01
+_RAIL_TILE_TTL_S = 30 * 24 * 3600
+_RAIL_TILE_CACHE_PATH = Path("cache/osm/rail_empty_tiles.json")
+
+
+def _rail_tiles_for_bbox(north: float, south: float, east: float, west: float):
+    lat0 = int(math.floor(float(south) / _RAIL_TILE_DEG))
+    lat1 = int(math.floor(float(north) / _RAIL_TILE_DEG))
+    lon0 = int(math.floor(float(west) / _RAIL_TILE_DEG))
+    lon1 = int(math.floor(float(east) / _RAIL_TILE_DEG))
+    return [f"{la}:{lo}" for la in range(lat0, lat1 + 1) for lo in range(lon0, lon1 + 1)]
+
+
+def _load_rail_empty_tiles() -> dict:
+    try:
+        if _RAIL_TILE_CACHE_PATH.exists():
+            with open(_RAIL_TILE_CACHE_PATH, "r", encoding="utf-8") as fh:
+                return json.load(fh) or {}
+    except Exception:
+        pass
+    return {}
+
+
+def _mark_rail_tiles_empty(tiles, empty: bool) -> None:
+    """Позначає плитки як порожні/непорожні. Непорожні ВИДАЛЯЄМО з кешу —
+    щоб раптова поява колій у OSM не була заблокована старим негативом."""
+    try:
+        data = _load_rail_empty_tiles()
+        now = time.time()
+        changed = False
+        for key in tiles:
+            if empty:
+                data[key] = now
+                changed = True
+            elif key in data:
+                del data[key]
+                changed = True
+        if changed:
+            _RAIL_TILE_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(_RAIL_TILE_CACHE_PATH, "w", encoding="utf-8") as fh:
+                json.dump(data, fh)
+    except Exception as exc:
+        print(f"[RAILWAY] tile cache write skipped: {exc}", flush=True)
 # v3: у графі доріг зʼявились ребра highway='railway' — старий кеш без колій
 #     інакше жив би вічно і залізниця не показалась би на вже згенерованих зонах.
 _OVERPASS_ENDPOINTS_DEFAULT = (
@@ -833,6 +883,18 @@ def fetch_city_data(
                     return G
         except Exception:
             pass
+        # Уся ділянка вже відома як «без колій»? Тоді в мережу не йдемо взагалі.
+        _tiles = _rail_tiles_for_bbox(padded_north, padded_south, padded_east, padded_west)
+        try:
+            _known = _load_rail_empty_tiles()
+            _now = time.time()
+            if _tiles and all(
+                (_now - float(_known.get(t, 0))) < _RAIL_TILE_TTL_S for t in _tiles
+            ):
+                return G
+        except Exception:
+            pass
+
         # ЖОРСТКИЙ ТАЙМАУТ. Дефолт osmnx — requests_timeout=180с: коли Overpass
         # тротлить (а він тротлить), генерація вішалась на ХВИЛИНИ через шар,
         # без якого цілком можна жити. Колії — приємний бонус, а не привід
@@ -868,6 +930,7 @@ def fetch_city_data(
                 pass
 
         if gdf_rail is None or getattr(gdf_rail, "empty", True):
+            _mark_rail_tiles_empty(_tiles, True)
             return G
 
         # Підземка (метро, тунелі) на поверхні не існує — друкувати її чорною
@@ -882,7 +945,10 @@ def fetch_city_data(
         except Exception as exc:
             print(f"[RAILWAY] tunnel filter skipped: {exc}", flush=True)
         if gdf_rail is None or getattr(gdf_rail, "empty", True):
+            # Були лише тунелі/метро — для наземної мапи це те саме, що порожньо.
+            _mark_rail_tiles_empty(_tiles, True)
             return G
+        _mark_rail_tiles_empty(_tiles, False)
 
         # Overpass віддає EPSG:4326; граф може бути вже спроектований.
         try:
