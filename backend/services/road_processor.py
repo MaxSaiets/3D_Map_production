@@ -1158,6 +1158,11 @@ def densify_geometry(geom, max_segment_length=10.0):
 # Не менше ~0.5, інакше нитка зникає на великих виробах (там немає keychain-boost).
 RAILWAY_MIN_WIDTH_FACTOR = float(os.getenv("RAILWAY_MIN_WIDTH_FACTOR", "0.55"))
 
+# ЦІЛЬОВА друкована товщина нитки колії у МОДЕЛЬНИХ мм — фіксована, не залежить
+# від площі ділянки. Дорога на брелку виходить ~1.2мм, тож 0.6 = рівно «в два
+# тонше» (фідбек Роми 2026-08-10). Нижче 0.5 сопло 0.4мм вже не тримає лінію.
+RAILWAY_TARGET_MM = float(os.getenv("RAILWAY_TARGET_MM", "0.6"))
+
 
 def build_railway_ladder(line, half_width_m: float, max_sleepers: int = 400):
     """Залізниця = тонка нитка + ШПАЛИ ПОПЕРЕК (фідбек Роми 2026-08-10).
@@ -1189,12 +1194,13 @@ def build_railway_ladder(line, half_width_m: float, max_sleepers: int = 400):
     #   товщина шпали = ширина нитки,
     #   крок = 5× ширини нитки (рідше — читається як пунктир, частіше — зливається).
     width = half_width_m * 2.0
-    # Шпала не довша за реальну (~2.6м): у сортувальному парку колії йдуть за
-    # 4.8м одна від одної, і задовгі поперечки зчепили б увесь парк у пляму —
-    # рівно та скарга, з якої все почалось.
-    sleeper_half_len = width * 1.25
-    sleeper_half_thick = half_width_m * 0.5
-    spacing = width * 5.0
+    # Шпала виступає рівно на пів-ширини нитки з кожного боку (сумарно 2× нитки).
+    # Довші зчепили б сусідні колії сортувального парку (вони за ~4.8м) у ту саму
+    # суцільну пляму, з якої все почалось.
+    sleeper_half_len = width * 1.0
+    # Товщина шпали = товщина нитки: тонше сопло 0.4мм просто не витягне.
+    sleeper_half_thick = half_width_m
+    spacing = width * 4.0
     if spacing <= 0:
         return rail
     # Захист від тисяч поперечок на довгій магістралі (пам'ять і час union).
@@ -1230,6 +1236,86 @@ def build_railway_ladder(line, half_width_m: float, max_sleepers: int = 400):
         return unary_union(parts)
     except Exception:
         return rail
+
+
+def build_railway_polygons(
+    G_roads,
+    *,
+    scale_factor: Optional[float] = None,
+    min_width_m: Optional[float] = None,
+) -> Optional[object]:
+    """Колії ОКРЕМОЮ геометрією — драбина (нитка + шпали) у світових метрах.
+
+    Навіщо окремо від build_road_polygons: у keychain-режимі flat_plate роздуває
+    ВЕСЬ road_mask на min_feature*0.6 і потім робить морфологічне ВІДКРИТТЯ —
+    буст робив колію такою ж товстою, як вулиця, а відкриття зрізало шпали як
+    «шипи». Тому залізницю ведемо власним шаром: своя фіксована товщина, без
+    бусту і з мʼякшим фільтром (див. flat_plate_pipeline).
+
+    Повертає union драбин або None, якщо колій у графі немає.
+    """
+    if G_roads is None:
+        return None
+    try:
+        if isinstance(G_roads, gpd.GeoDataFrame):
+            gdf_edges = G_roads
+        else:
+            if not hasattr(G_roads, "edges") or len(G_roads.edges) == 0:
+                return None
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                gdf_edges = ox.graph_to_gdfs(G_roads, nodes=False)
+    except Exception as exc:
+        print(f"[RAILWAY] edges extraction failed: {exc}")
+        return None
+
+    if gdf_edges is None or "highway" not in getattr(gdf_edges, "columns", []):
+        return None
+    try:
+        mask = gdf_edges["highway"].apply(
+            lambda h: normalize_drivable_highway_tag(h) == "railway"
+        )
+        rails = gdf_edges[mask]
+    except Exception as exc:
+        print(f"[RAILWAY] mask failed: {exc}")
+        return None
+    if rails is None or rails.empty:
+        return None
+
+    # Фіксована модельна товщина; якщо scale невідомий — падаємо на min_width.
+    width_m = None
+    try:
+        if scale_factor:
+            width_m = float(model_mm_to_world_m(RAILWAY_TARGET_MM, scale_factor))
+    except Exception:
+        width_m = None
+    if not width_m or width_m <= 0:
+        try:
+            width_m = float(min_width_m) * RAILWAY_MIN_WIDTH_FACTOR if min_width_m else 1.3
+        except Exception:
+            width_m = 1.3
+
+    ladders = []
+    for geom in rails.geometry.values:
+        if geom is None or getattr(geom, "is_empty", True):
+            continue
+        try:
+            line = densify_geometry(geom, max_segment_length=15.0)
+        except Exception:
+            line = geom
+        ladder = build_railway_ladder(line, width_m / 2.0)
+        if ladder is not None and not ladder.is_empty:
+            ladders.append(ladder)
+    if not ladders:
+        return None
+    try:
+        merged = unary_union(ladders)
+        print(f"[RAILWAY] окремий шар: {len(ladders)} колій, нитка "
+              f"{width_m*1000:.0f}мм світових ({RAILWAY_TARGET_MM}мм на моделі)")
+        return merged
+    except Exception as exc:
+        print(f"[RAILWAY] union failed: {exc}")
+        return None
 
 
 def build_road_polygons(

@@ -31,6 +31,9 @@ type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service
  *  Ширина = колія 1435мм + шпали ≈ 2.6м. */
 const RAIL_TAGS = ["rail", "light_rail", "narrow_gauge", "tram", "subway", "funicular"];
 const RAIL_WIDTH_M = 2.6;
+/** Друкована товщина нитки колії, мм — синхрон з backend RAILWAY_TARGET_MM.
+ *  Вдвічі тонше за дорогу (фідбек Роми 2026-08-10): колія читається за шпалами. */
+const RAIL_PRINT_MM = 0.6;
 
 /** Підземні колії (метро, тунелі) на поверхні НЕ існують — друкувати їх чорною
  *  лінією означає намалювати те, чого на місцевості не видно. */
@@ -570,7 +573,9 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
     const roads = data.roads
       .map((r) => ({
         path: polylineToPath(r.points.map(([lon, lat]) => lonLatToMm(lon, lat))),
-        widthMm: Math.max(MIN_PRINT_MM, r.widthM * mmPerM),
+        // Колія має ФІКСОВАНУ друковану товщину (не масштабується з площею),
+        // щоб превʼю збігалось із бекендом (RAILWAY_TARGET_MM).
+        widthMm: r.kind === "rail" ? RAIL_PRINT_MM : Math.max(MIN_PRINT_MM, r.widthM * mmPerM),
         kind: r.kind,
       }))
       .filter((r) => r.widthMm >= MIN_PRINT_MM * 0.8);  // дороги тонші 0.5mm дропаємо
@@ -621,7 +626,7 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
       {printable.water.map((pts, i) => (
         <path key={`w-${i}`} d={pointsToPath(pts)} fill={PRINT_COLORS.water} />
       ))}
-      {printable.roads.map((r, i) => (
+      {printable.roads.filter((r) => r.kind !== "rail").map((r, i) => (
         <path
           key={`r-${i}`}
           d={r.path}
@@ -631,6 +636,30 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+      ))}
+      {/* Залізниця = нитка + ШПАЛИ ПОПЕРЕК. Поперечки малюються другим
+          проходом: товстіший штрих із dash-патерном по тій самій лінії дає
+          рівно класичну «драбину» (короткі бруски впоперек колії). Так само
+          вона виглядає і на друку — див. build_railway_ladder у бекенді. */}
+      {printable.roads.filter((r) => r.kind === "rail").map((r, i) => (
+        <g key={`rail-${i}`}>
+          <path
+            d={r.path}
+            stroke={PRINT_COLORS.roads}
+            strokeWidth={r.widthMm}
+            fill="none"
+            strokeLinecap="butt"
+            strokeLinejoin="round"
+          />
+          <path
+            d={r.path}
+            stroke={PRINT_COLORS.roads}
+            strokeWidth={r.widthMm * 2}
+            strokeDasharray={`${r.widthMm} ${r.widthMm * 4}`}
+            fill="none"
+            strokeLinecap="butt"
+          />
+        </g>
       ))}
       {printable.bridges.map((br, i) => (
         <path

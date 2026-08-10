@@ -3683,6 +3683,7 @@ def run_flat_plate_pipeline(
         except Exception:
             raw_water_source = None
         raw_road_source_unmerged = None
+        rails_source_local = None
         try:
             road_geometry = getattr(canonical_2d_stage, "road_geometry", None)
             if road_geometry is not None:
@@ -3694,6 +3695,7 @@ def run_flat_plate_pipeline(
                 # Keychain використовує саме їх, щоб дороги залишались окремими
                 # стрічками як у live-превʼю (юзер прибрав логіку обʼєднання).
                 raw_road_source_unmerged = getattr(road_geometry, "merged_roads_geom_local_raw", None)
+                rails_source_local = getattr(road_geometry, "rails_geom_local", None)
         except Exception:
             raw_road_source = None
         try:
@@ -3836,6 +3838,25 @@ def run_flat_plate_pipeline(
         # вулиці гарантовано пройшли фільтр і були видимі. Магістралі при
         # цьому розширяться непомітно (вони вже широкі), а маленькі вулиці
         # «потовщаться» до мінімально друкованих.
+        # ЗАЛІЗНИЦЯ — окремий шар. Виймаємо її з road_mask ДО бусту: інакше
+        # (а) буст робив колію такою ж товстою, як вулиця («в два тонше» не
+        # працювало), (б) морфологічне відкриття нижче зрізало шпали як «шипи».
+        # Той самий чорний філамент — просто інша обробка; повертаємо в маску
+        # після санітайзу.
+        rails_mask = None
+        if rails_source_local is not None and not getattr(rails_source_local, "is_empty", True):
+            try:
+                rails_mask = _clip_geometry(_xform(rails_source_local), content_area)
+                if rails_mask is not None and not getattr(rails_mask, "is_empty", True):
+                    if road_mask is not None and not getattr(road_mask, "is_empty", True):
+                        road_mask = _subtract_geometry(road_mask, rails_mask)
+                    print("[RAILWAY] окремий шар: виведено з-під road boost і opening")
+                else:
+                    rails_mask = None
+            except Exception as exc:
+                print(f"[RAILWAY] separate mask failed (non-fatal): {exc}")
+                rails_mask = None
+
         if keychain_mode and road_mask is not None and not getattr(road_mask, "is_empty", True):
             try:
                 # Повернуто до 0.6 (юзер: "до цього все було ідеально")
@@ -3879,6 +3900,25 @@ def run_flat_plate_pipeline(
             min_area_m2=min_area_m2,
             label="roads",
         )
+        # Колія — власний, мʼякший фільтр: повний min_feature робить opening
+        # радіусом ~пів-метра моделі, а це рівно висота шпали → поперечки зникали.
+        if rails_mask is not None and not getattr(rails_mask, "is_empty", True):
+            try:
+                rails_clean = _sanitize_layer_mask(
+                    rails_mask,
+                    min_feature_m=float(min_feature_m) * 0.35,
+                    min_area_m2=float(min_area_m2) * 0.2,
+                    label="rails",
+                )
+                if rails_clean is not None and not getattr(rails_clean, "is_empty", True):
+                    road_mask = (
+                        rails_clean
+                        if road_mask is None or getattr(road_mask, "is_empty", True)
+                        else unary_union([road_mask, rails_clean]).buffer(0)
+                    )
+                    print("[RAILWAY] шпали збережено, колію повернуто в чорний шар")
+            except Exception as exc:
+                print(f"[RAILWAY] rails sanitize failed (non-fatal): {exc}")
         # Roads - building footprint → дорога не лізе під будинок.
         if building_mask is not None and not getattr(building_mask, "is_empty", True) and road_mask is not None and not getattr(road_mask, "is_empty", True):
             try:

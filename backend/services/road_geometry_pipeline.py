@@ -13,6 +13,7 @@ from shapely.ops import transform as transform_geometry, unary_union
 from services.detail_layer_utils import MICRO_REGION_THRESHOLD_MM, model_mm_to_world_m
 from services.road_processor import (
     build_road_polygons,
+    build_railway_polygons,
     normalize_drivable_highway_tag,
     normalize_road_mask_for_print,
 )
@@ -50,6 +51,10 @@ class RoadGeometryPreparationResult:
     merged_roads_geom_local: Optional[BaseGeometry]
     merged_roads_geom_local_raw: Optional[BaseGeometry]
     semantic_centerlines_local: Optional[BaseGeometry] = None
+    # Залізниця ОКРЕМО (драбина: нитка + шпали) у локальних метрах. Потрібна,
+    # щоб flat_plate не роздував її разом з дорогами і не зрізав шпали
+    # морфологічним відкриттям — див. build_railway_polygons.
+    rails_geom_local: Optional[BaseGeometry] = None
 
 
 def _build_local_road_edges_subset(
@@ -286,6 +291,7 @@ def prepare_road_geometry(
     merged_roads_geom = None
     merged_roads_geom_local = None
     merged_roads_geom_local_raw = None
+    rails_geom_local = None
     semantic_centerlines_local = None
     min_road_width_for_build = None
     effective_min_width_mm = max(
@@ -382,6 +388,19 @@ def prepare_road_geometry(
                     pass
 
             merged_roads_geom_local_raw = merged_roads_geom_local
+
+            # Залізниця окремою драбиною з тієї ж підмножини ребер.
+            try:
+                rails_geom_local = build_railway_polygons(
+                    local_edges_subset,
+                    scale_factor=scale_factor,
+                    min_width_m=min_road_width_for_build,
+                )
+                if rails_geom_local is not None and zone_polygon_local is not None:
+                    rails_geom_local = rails_geom_local.intersection(zone_polygon_local).buffer(0)
+            except Exception as _rexc:
+                print(f"[RAILWAY] separate layer skipped: {_rexc}")
+                rails_geom_local = None
 
             # ── Printable gap-fill ─────────────────────────────────────────
             # Close sub-printable gaps between road polygons NOW, on the raw
@@ -575,4 +594,5 @@ def prepare_road_geometry(
         merged_roads_geom_local=merged_roads_geom_local,
         merged_roads_geom_local_raw=merged_roads_geom_local_raw,
         semantic_centerlines_local=semantic_centerlines_local,
+        rails_geom_local=rails_geom_local,
     )
