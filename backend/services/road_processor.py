@@ -1225,7 +1225,10 @@ def build_railway_ladder(line, half_width_m: float, max_sleepers: int = 400):
                     (p1.x - nx * sleeper_half_len, p1.y - ny * sleeper_half_len),
                     (p1.x + nx * sleeper_half_len, p1.y + ny * sleeper_half_len),
                 ])
-                parts.append(bar.buffer(sleeper_half_thick, cap_style=2, join_style=1, resolution=4))
+                # join_style=2 (mitre): шпала — прямий відрізок, круглі стики
+                # дають десятки зайвих вершин на КОЖНУ поперечку. На щільному
+                # сортувальному парку це були десятки тисяч зайвих граней.
+                parts.append(bar.buffer(sleeper_half_thick, cap_style=2, join_style=2, resolution=1))
         except Exception:
             pass
         distance += spacing
