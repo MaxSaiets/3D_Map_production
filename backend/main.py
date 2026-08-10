@@ -3121,7 +3121,13 @@ async def osm_rails_endpoint(
     for url in endpoints:
         try:
             async with httpx.AsyncClient(timeout=25.0) as client:
-                resp = await client.post(url, content=query.encode("utf-8"))
+                # Content-Type ОБОВʼЯЗКОВИЙ: без нього overpass-api.de віддає
+                # 406 Not Acceptable (спіймано на проді — виглядало як тротлінг).
+                resp = await client.post(
+                    url,
+                    content=query.encode("utf-8"),
+                    headers={"Content-Type": "text/plain; charset=utf-8"},
+                )
             if resp.status_code != 200:
                 print(f"[RAILS API] {url} -> {resp.status_code}, пробуємо наступний", flush=True)
                 continue
