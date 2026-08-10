@@ -1349,6 +1349,7 @@ def build_road_polygons(
     min_width_m: Optional[float] = None,
     extra_buffer_m: float = 0.0,  # Р”РѕРґР°С‚РєРѕРІРёР№ Р±СѓС„РµСЂ Р· РєРѕР¶РЅРѕРіРѕ Р±РѕРєСѓ РґРѕСЂРѕРіРё (РґР»СЏ СЃС‚РІРѕСЂРµРЅРЅСЏ "СѓР·Р±С–С‡С‡СЏ" РїСЂРё РІРёСЂС–Р·Р°РЅРЅС– Р· РїР°СЂРєС–РІ)
     scale_factor: Optional[float] = None,
+    exclude_railway: bool = False,
 ) -> Optional[object]:
     """
     Builds merged road polygons (2D) from a roads graph/edges gdf.
@@ -1382,6 +1383,14 @@ def build_road_polygons(
         if gdf_edges.empty:
             return None
         gdf_edges["_normalized_highway"] = gdf_edges["highway"].apply(normalize_drivable_highway_tag)
+        if exclude_railway:
+            # Колія веде власний шар (build_railway_polygons) — тут вона зайва.
+            # Інакше flat_plate віднімав драбину з такої ж смуги в road_mask і
+            # лишав рвані слівери: 52 272 грані замість ~13 000.
+            _no_rail = gdf_edges["_normalized_highway"].astype(str).ne("railway")
+            gdf_edges = gdf_edges[_no_rail].copy()
+            if gdf_edges.empty:
+                return None
 
     width_map = {
         "motorway": 4.8,

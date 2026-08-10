@@ -345,11 +345,28 @@ def prepare_road_geometry(
             except Exception:
                 semantic_centerlines_local = None
 
+            # Залізниця — ПЕРШОЮ, бо від її наявності залежить, чи виключати
+            # колії з road-маски (інакше та сама смуга будується двічі).
+            try:
+                rails_geom_local = build_railway_polygons(
+                    local_edges_subset,
+                    scale_factor=scale_factor,
+                    min_width_m=min_road_width_for_build,
+                    clip_geom=zone_polygon_local,
+                )
+                if rails_geom_local is not None and zone_polygon_local is not None:
+                    rails_geom_local = rails_geom_local.intersection(zone_polygon_local).buffer(0)
+            except Exception as _rexc:
+                print(f"[RAILWAY] separate layer skipped: {_rexc}")
+                rails_geom_local = None
+
+            _rails_ok = rails_geom_local is not None and not getattr(rails_geom_local, "is_empty", True)
             merged_roads_geom_local = build_road_polygons(
                 local_edges_subset,
                 width_multiplier=float(road_width_multiplier_effective),
                 min_width_m=min_road_width_for_build,
                 scale_factor=scale_factor,
+                exclude_railway=_rails_ok,
             )
             if merged_roads_geom_local is not None and not getattr(merged_roads_geom_local, "is_empty", True):
                 if zone_polygon_local is not None:
@@ -388,20 +405,6 @@ def prepare_road_geometry(
                     pass
 
             merged_roads_geom_local_raw = merged_roads_geom_local
-
-            # Залізниця окремою драбиною з тієї ж підмножини ребер.
-            try:
-                rails_geom_local = build_railway_polygons(
-                    local_edges_subset,
-                    scale_factor=scale_factor,
-                    min_width_m=min_road_width_for_build,
-                    clip_geom=zone_polygon_local,
-                )
-                if rails_geom_local is not None and zone_polygon_local is not None:
-                    rails_geom_local = rails_geom_local.intersection(zone_polygon_local).buffer(0)
-            except Exception as _rexc:
-                print(f"[RAILWAY] separate layer skipped: {_rexc}")
-                rails_geom_local = None
 
             # ── Printable gap-fill ─────────────────────────────────────────
             # Close sub-printable gaps between road polygons NOW, on the raw
