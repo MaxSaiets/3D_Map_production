@@ -191,6 +191,9 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
       fountains: [] as any[],
       trees: [] as any[],
       bridges: [] as any[],
+      // Позначка «дані з нашої БД». Колії там уже є по всій Україні, тож
+      // порожній список = колій справді немає, і бігати в Overpass не треба.
+      __fromLocalDb: true,
     } as any;
   } catch (e: any) {
     if (e.name === "AbortError") throw e;
@@ -500,7 +503,7 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
           // разом з рештою мапи не можна — превʼю має зʼявитись одразу, а
           // залізниця домалюватись, щойно приїде. Локальна DuckDB колій поки
           // не має (до ребілду), тому й потрібен цей добір.
-          if (!d.roads.some((r: RoadRec) => r.kind === "rail")) {
+          if (!(d as any).__fromLocalDb && !d.roads.some((r: RoadRec) => r.kind === "rail")) {
             fetchRailsOnly(fetchBounds, ctrl.signal)
               .then((rails) => {
                 if (ctrl.signal.aborted || rails.length === 0) return;
