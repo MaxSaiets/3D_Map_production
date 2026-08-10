@@ -1413,19 +1413,27 @@ def build_road_polygons(
         highway = row.get("_normalized_highway") or normalize_drivable_highway_tag(row.get('highway'))
         if not highway:
             return 3.0
+        if highway == "railway":
+            # Нитка колії має ТУ САМУ фіксовану товщину, що й у окремому шарі
+            # (build_railway_polygons). Тоді те, що flat_plate виймає з
+            # road_mask, точно збігається з тим, що повертає зі шпалами —
+            # без «товстого хвоста» під драбиною.
+            rail_w = None
+            try:
+                if scale_factor:
+                    rail_w = float(model_mm_to_world_m(RAILWAY_TARGET_MM, scale_factor))
+            except Exception:
+                rail_w = None
+            if not rail_w or rail_w <= 0:
+                rail_w = float(min_width_m) * RAILWAY_MIN_WIDTH_FACTOR if min_width_m else 1.3
+            return (rail_w / 2.0) + float(extra_buffer_m)
+
         width = _resolve_osm_road_width_m(row, width_map.get(highway, 3.0))
         width = width * width_multiplier
         # Ensure minimum printable width (in world meters)
         try:
             if min_width_m is not None:
-                floor_m = float(min_width_m)
-                if highway == "railway":
-                    # Колія читається за ШПАЛАМИ, а не за товщиною нитки, тож
-                    # їй дозволено бути тоншою за звичайну дорогу — інакше
-                    # min-width клемп підтягував її назад до ширини вулиці і
-                    # «в два тонше» не працювало (фідбек Роми 2026-08-10).
-                    floor_m *= RAILWAY_MIN_WIDTH_FACTOR
-                width = max(float(width), floor_m)
+                width = max(float(width), float(min_width_m))
         except Exception:
             pass
         return (width / 2.0) + float(extra_buffer_m)
@@ -1440,40 +1448,14 @@ def build_road_polygons(
         # Calculate buffer widths
         widths = gdf_edges.apply(get_width, axis=1)
 
-        # Залізниця — не суцільна смуга, а нитка зі шпалами. Оригінальні лінії
-        # треба зберегти ДО буферизації, інакше драбину нема з чого будувати.
-        rail_lines = None
-        try:
-            if "_normalized_highway" in gdf_edges.columns:
-                rail_mask = gdf_edges["_normalized_highway"].astype(str).eq("railway")
-                if bool(rail_mask.any()):
-                    rail_lines = gdf_edges.loc[rail_mask, "geometry"].tolist()
-        except Exception as exc:
-            print(f"[RAILWAY] ladder pre-pass skipped: {exc}")
-            rail_mask = None
-
+        # Залізниця тут — ПРОСТИЙ тонкий буфер, без шпал. Драбину будує окремо
+        # build_railway_polygons (зі своєю обрізкою до зони), а flat_plate
+        # виймає нитку з road_mask і повертає вже зі шпалами. Раніше драбина
+        # будувалась ДВІЧІ, причому тут — по цілих багатокілометрових ways з
+        # DuckDB, без обрізки: 82 624 грані і +9с на генерацію.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             gdf_edges["geometry"] = gdf_edges.geometry.buffer(widths, cap_style=2, join_style=1, resolution=4)
-
-        if rail_lines:
-            try:
-                rail_radii = widths.loc[rail_mask].tolist()
-                ladders = []
-                for line, radius in zip(rail_lines, rail_radii):
-                    ladder = build_railway_ladder(line, float(radius))
-                    ladders.append(ladder)
-                replaced = 0
-                positions = [i for i, flag in enumerate(rail_mask.tolist()) if flag]
-                for pos, ladder in zip(positions, ladders):
-                    if ladder is not None and not ladder.is_empty:
-                        gdf_edges.iloc[pos, gdf_edges.columns.get_loc("geometry")] = ladder
-                        replaced += 1
-                if replaced:
-                    print(f"[RAILWAY] {replaced} колій зі шпалами (нитка + поперечки)")
-            except Exception as exc:
-                # Не критично: без драбини колія лишиться суцільною смугою.
-                print(f"[RAILWAY] ladder build failed (non-fatal): {exc}")
     else:
         # Fallback if no highway tag
         gdf_edges = gdf_edges.copy()
