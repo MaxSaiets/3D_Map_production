@@ -3120,7 +3120,9 @@ async def osm_rails_endpoint(
     ok = False
     for url in endpoints:
         try:
-            async with httpx.AsyncClient(timeout=25.0) as client:
+            # 12с на дзеркало: overpass-api.de регулярно висить, і 25с чекання
+            # перед спробою другого дзеркала — це вже помітна затримка превʼю.
+            async with httpx.AsyncClient(timeout=12.0) as client:
                 # Content-Type ОБОВʼЯЗКОВИЙ: без нього overpass-api.de віддає
                 # 406 Not Acceptable (спіймано на проді — виглядало як тротлінг).
                 resp = await client.post(
