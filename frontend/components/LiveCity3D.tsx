@@ -152,18 +152,9 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
     if (buildings.length === 0 && roads.length === 0) {
       return null;
     }
-    // Локальна DuckDB віддає колії лише після ребілду з новим build_osm_db.py.
-    // Поки їх там немає — добираємо окремим дешевим Overpass-запитом, інакше
-    // превʼю показувало б порожній вокзал, а модель (де бекенд робить те саме)
-    // — з коліями. Best-effort: не вийшло — просто лишаємось без залізниці.
-    if (!roads.some((r) => r.kind === "rail")) {
-      try {
-        const rails = await fetchRailsOnly(b, abortSignal);
-        roads.push(...rails);
-      } catch (e: any) {
-        if (e?.name === "AbortError") throw e;
-      }
-    }
+    // Колії тут НЕ добираємо: Overpass відповідає 5-9с, і очікування на нього
+    // затримувало ВЕСЬ превʼю (мапа зʼявлялась через ~9с, а шпали виглядали як
+    // «їх немає»). Догружаємо їх другим етапом у useEffect нижче.
     // CityData type вимагає plazas, fountains, trees, bridges — заповнюємо порожніми
     // (вони не друкуються у моделі і прибрані з рендеру у Sprint 3.5)
     return {
@@ -476,6 +467,23 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
           }
           OSM_CACHE.set(key, d);
           setData(d);
+
+          // ДРУГИЙ ЕТАП: колії. Overpass відповідає 5-9с, тож чекати на нього
+          // разом з рештою мапи не можна — превʼю має зʼявитись одразу, а
+          // залізниця домалюватись, щойно приїде. Локальна DuckDB колій поки
+          // не має (до ребілду), тому й потрібен цей добір.
+          if (!d.roads.some((r: RoadRec) => r.kind === "rail")) {
+            fetchRailsOnly(fetchBounds, ctrl.signal)
+              .then((rails) => {
+                if (ctrl.signal.aborted || rails.length === 0) return;
+                const merged = { ...d, roads: [...d.roads, ...rails] };
+                OSM_CACHE.set(key, merged);
+                setData(merged);
+              })
+              .catch(() => {
+                /* колії — бонус, без них превʼю лишається валідним */
+              });
+          }
         }
       } catch (e: any) {
         if (e.name !== "AbortError") setError(e.message || "Overpass");
