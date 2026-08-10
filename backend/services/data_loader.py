@@ -23,6 +23,9 @@ warnings.filterwarnings('ignore', category=DeprecationWarning, module='pandas')
 # Налаштування кешування
 _CACHE_DIR = Path(os.getenv("OSM_DATA_CACHE_DIR") or "cache/osm/overpass_cache")
 _CACHE_VERSION = "v3"  # Версія кешу (збільшити при зміні формату)
+# Скільки максимум чекаємо на колії з Overpass. Осmnx за замовчуванням дає 180с —
+# на тротлінгу це вішало генерацію на хвилини заради необовʼязкового шару.
+RAILWAY_FETCH_TIMEOUT_S = int(os.getenv("RAILWAY_FETCH_TIMEOUT_S", "8"))
 # v3: у графі доріг зʼявились ребра highway='railway' — старий кеш без колій
 #     інакше жив би вічно і залізниця не показалась би на вже згенерованих зонах.
 _OVERPASS_ENDPOINTS_DEFAULT = (
@@ -830,26 +833,39 @@ def fetch_city_data(
                     return G
         except Exception:
             pass
+        # ЖОРСТКИЙ ТАЙМАУТ. Дефолт osmnx — requests_timeout=180с: коли Overpass
+        # тротлить (а він тротлить), генерація вішалась на ХВИЛИНИ через шар,
+        # без якого цілком можна жити. Колії — приємний бонус, а не привід
+        # тримати користувача. Значення повертаємо назад у finally, щоб не
+        # зіпсувати таймаут іншим шарам.
+        _rail_tags = {"railway": ["rail", "light_rail", "narrow_gauge",
+                                  "tram", "subway", "funicular"]}
+        _prev_timeout = getattr(ox.settings, "requests_timeout", None)
         try:
+            try:
+                ox.settings.requests_timeout = RAILWAY_FETCH_TIMEOUT_S
+            except Exception:
+                pass
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", DeprecationWarning)
                 try:
-                    gdf_rail = ox.features_from_bbox(
-                        bbox=padded_bbox,
-                        tags={"railway": ["rail", "light_rail", "narrow_gauge",
-                                          "tram", "subway", "funicular"]},
-                    )
+                    gdf_rail = ox.features_from_bbox(bbox=padded_bbox, tags=_rail_tags)
                 except TypeError:
                     gdf_rail = ox.features_from_bbox(
                         padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3],
-                        tags={"railway": ["rail", "light_rail", "narrow_gauge",
-                                          "tram", "subway", "funicular"]},
+                        tags=_rail_tags,
                     )
         except InsufficientResponseError:
             return G
         except Exception as exc:
             print(f"[RAILWAY] fetch skipped (non-fatal): {exc}", flush=True)
             return G
+        finally:
+            try:
+                if _prev_timeout is not None:
+                    ox.settings.requests_timeout = _prev_timeout
+            except Exception:
+                pass
 
         if gdf_rail is None or getattr(gdf_rail, "empty", True):
             return G
