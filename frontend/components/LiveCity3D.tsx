@@ -70,8 +70,36 @@ const OSM_CACHE_MAX = 20;
 const bboxKey = (b: Bounds) =>
   `${b.south.toFixed(5)},${b.west.toFixed(5)},${b.north.toFixed(5)},${b.east.toFixed(5)}`;
 
-/** Тільки колії — окремий маленький Overpass-запит (доповнення до локальної БД). */
+/** Тільки колії. СПЕРШУ через наш бекенд (спільний кеш на всіх користувачів),
+ *  бо публічний Overpass із браузера регулярно віддає 429/504 — на ділянці
+ *  вокзалу Ужгорода прилітало саме 504, і залізниця «зникала». Прямий Overpass
+ *  лишається запасним варіантом (напр. якщо бекенд недоступний). */
 async function fetchRailsOnly(b: Bounds, abortSignal?: AbortSignal): Promise<RoadRec[]> {
+  try {
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "") + "/api/osm/rails";
+    const res = await fetch(
+      `${apiUrl}?north=${b.north}&south=${b.south}&east=${b.east}&west=${b.west}`,
+      { signal: abortSignal },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.source !== "unavailable" && Array.isArray(data?.rails)) {
+        const out: RoadRec[] = [];
+        for (const r of data.rails) {
+          const m = String(r.wkt || "").match(/\(([^()]+)\)/);
+          if (!m) continue;
+          const points = m[1]
+            .split(",")
+            .map((p: string) => p.trim().split(/\s+/).map(Number) as [number, number])
+            .filter((c: [number, number]) => isFinite(c[0]) && isFinite(c[1]));
+          if (points.length >= 2) out.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+        }
+        return out;
+      }
+    }
+  } catch (e: any) {
+    if (e?.name === "AbortError") throw e;
+  }
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
   // ["tunnel"!~"."] — відсікає підземку ще на боці Overpass (менше трафіку).
   const q = `[out:json][timeout:10];way["railway"~"^(${RAIL_TAGS.join("|")})$"]["tunnel"!~"."](${bbox});out geom;`;

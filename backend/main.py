@@ -3069,6 +3069,88 @@ async def set_global_center_endpoint(
         raise HTTPException(status_code=400, detail=f"Помилка встановлення глобального центру: {str(e)}")
 
 
+@app.get("/api/osm/rails")
+async def osm_rails_endpoint(
+    north: float, south: float, east: float, west: float
+):
+    """Колії для превʼю — через НАШ бекенд, а не з браузера напряму в Overpass.
+
+    Навіщо: публічний Overpass регулярно віддає 429/504 (перевірено — на
+    ділянці вокзалу Ужгорода прилітало 504), і кожен браузер довбав його
+    самостійно. Тут — СПІЛЬНИЙ дисковий кеш на всіх користувачів: одна
+    вдала відповідь обслуговує всіх, а тротлінг перестає бути видимим.
+
+    Повертає {"rails": [{"wkt": "LINESTRING(...)"}], "source": "cache|overpass|empty"}.
+    Ніколи не кидає 5xx: без колій превʼю лишається валідним.
+    """
+    import hashlib as _hashlib
+    import json as _json
+    from pathlib import Path as _Path
+
+    try:
+        if not (-90 <= south <= north <= 90) or not (-180 <= west <= east <= 180):
+            raise HTTPException(status_code=400, detail="Invalid bbox")
+        if (north - south) > 0.5 or (east - west) > 0.5:
+            raise HTTPException(status_code=400, detail="bbox too large")
+    except HTTPException:
+        raise
+
+    key = _hashlib.md5(
+        f"{north:.5f}|{south:.5f}|{east:.5f}|{west:.5f}".encode()
+    ).hexdigest()
+    cache_dir = _Path("cache/osm/rails")
+    cache_file = cache_dir / f"{key}.json"
+    try:
+        if cache_file.exists():
+            with open(cache_file, "r", encoding="utf-8") as fh:
+                return {**_json.load(fh), "source": "cache"}
+    except Exception:
+        pass
+
+    query = (
+        f'[out:json][timeout:20];'
+        f'way["railway"~"^(rail|light_rail|narrow_gauge|tram|subway|funicular)$"]'
+        f'["tunnel"!~"."]({south},{west},{north},{east});out geom;'
+    )
+    endpoints = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+    ]
+    rails: list[dict] = []
+    ok = False
+    for url in endpoints:
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                resp = await client.post(url, content=query.encode("utf-8"))
+            if resp.status_code != 200:
+                print(f"[RAILS API] {url} -> {resp.status_code}, пробуємо наступний", flush=True)
+                continue
+            payload = resp.json()
+        except Exception as exc:
+            print(f"[RAILS API] {url} failed: {exc}", flush=True)
+            continue
+        for el in payload.get("elements", []):
+            geom = el.get("geometry") or []
+            if el.get("type") != "way" or len(geom) < 2:
+                continue
+            coords = ", ".join(f"{p['lon']:.7f} {p['lat']:.7f}" for p in geom)
+            rails.append({"wkt": f"LINESTRING({coords})"})
+        ok = True
+        break
+
+    if not ok:
+        # Не кешуємо невдачу — щоб після відпускання тротлінгу дані зʼявились.
+        return {"rails": [], "source": "unavailable"}
+
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        with open(cache_file, "w", encoding="utf-8") as fh:
+            _json.dump({"rails": rails}, fh)
+    except Exception as exc:
+        print(f"[RAILS API] cache write skipped: {exc}", flush=True)
+    return {"rails": rails, "source": "overpass"}
+
+
 @app.get("/api/osm/extract")
 async def osm_extract_endpoint(
     north: float, south: float, east: float, west: float
