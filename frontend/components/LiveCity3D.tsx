@@ -31,6 +31,15 @@ type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service
  *  Ширина = колія 1435мм + шпали ≈ 2.6м. */
 const RAIL_TAGS = ["rail", "light_rail", "narrow_gauge", "tram", "subway", "funicular"];
 const RAIL_WIDTH_M = 2.6;
+
+/** Підземні колії (метро, тунелі) на поверхні НЕ існують — друкувати їх чорною
+ *  лінією означає намалювати те, чого на місцевості не видно. */
+function isUndergroundRail(tags: any): boolean {
+  const tunnel = String(tags?.tunnel ?? "").trim();
+  if (tunnel && tunnel !== "no") return true;
+  const layer = Number(tags?.layer);
+  return Number.isFinite(layer) && layer < 0;
+}
 type FountainRec = { lon: number; lat: number; radiusM: number };
 type CityData = {
   buildings: BuildingRec[];
@@ -61,7 +70,8 @@ const bboxKey = (b: Bounds) =>
 /** Тільки колії — окремий маленький Overpass-запит (доповнення до локальної БД). */
 async function fetchRailsOnly(b: Bounds, abortSignal?: AbortSignal): Promise<RoadRec[]> {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
-  const q = `[out:json][timeout:10];way["railway"~"^(${RAIL_TAGS.join("|")})$"](${bbox});out geom;`;
+  // ["tunnel"!~"."] — відсікає підземку ще на боці Overpass (менше трафіку).
+  const q = `[out:json][timeout:10];way["railway"~"^(${RAIL_TAGS.join("|")})$"]["tunnel"!~"."](${bbox});out geom;`;
   for (const url of OVERPASS_URLS) {
     try {
       const res = await fetch(url, {
@@ -76,7 +86,9 @@ async function fetchRailsOnly(b: Bounds, abortSignal?: AbortSignal): Promise<Roa
       for (const el of data.elements || []) {
         if (el.type !== "way" || !el.geometry) continue;
         const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
-        if (points.length >= 2) rails.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+        if (points.length >= 2 && !isUndergroundRail(el.tags)) {
+          rails.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+        }
       }
       return rails;
     } catch (e: any) {
@@ -232,7 +244,9 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
         } else if (RAIL_TAGS.includes(String(tags.railway))) {
           // Залізниця — окремий клас OSM (не highway), тому раніше не потрапляла
           // ні в превʼю, ні в модель. Друкується тим самим чорним, що й дороги.
-          roads.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+          if (!isUndergroundRail(tags)) {
+            roads.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+          }
         } else if (tags.highway) {
           // ТІЛЬКИ дороги що реально друкуються — без footway/path/cycleway.
           // Ці тонкі стежки в 0.4mm соплі неможливо надрукувати, у backend їх

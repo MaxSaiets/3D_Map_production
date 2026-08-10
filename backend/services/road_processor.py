@@ -1153,6 +1153,85 @@ def densify_geometry(geom, max_segment_length=10.0):
         
     return geom
 
+# Наскільки колії дозволено бути тоншими за мінімальну друковану ширину дороги.
+# Не 1.0, бо залізниця розпізнається за поперечками, а не за товщиною нитки.
+# Не менше ~0.5, інакше нитка зникає на великих виробах (там немає keychain-boost).
+RAILWAY_MIN_WIDTH_FACTOR = float(os.getenv("RAILWAY_MIN_WIDTH_FACTOR", "0.55"))
+
+
+def build_railway_ladder(line, half_width_m: float, max_sleepers: int = 400):
+    """Залізниця = тонка нитка + ШПАЛИ ПОПЕРЕК (фідбек Роми 2026-08-10).
+
+    Без поперечок колія на друку — просто ще одна чорна лінія, неможливо
+    відрізнити від дороги. Класичне картографічне позначення (нитка + засічки)
+    читається однозначно і на 55мм жетоні.
+
+    Усе рахується від half_width_m (уже врахований min printable width), тож
+    драбина автоматично лишається пропорційною на будь-якому розмірі виробу.
+    Повертає полігон/мультиполігон або None, якщо щось пішло не так — колер
+    тоді просто малює звичайний буфер, як для дороги.
+    """
+    if line is None or line.is_empty:
+        return None
+    try:
+        rail = line.buffer(half_width_m, cap_style=2, join_style=1, resolution=4)
+    except Exception:
+        return None
+    try:
+        length = float(line.length)
+    except Exception:
+        return rail
+    if length <= 0 or half_width_m <= 0:
+        return rail
+
+    # Геометрія засічок — у частках від ширини нитки:
+    #   довжина шпали = 3× ширини нитки (виступає з обох боків),
+    #   товщина шпали = ширина нитки,
+    #   крок = 5× ширини нитки (рідше — читається як пунктир, частіше — зливається).
+    width = half_width_m * 2.0
+    # Шпала не довша за реальну (~2.6м): у сортувальному парку колії йдуть за
+    # 4.8м одна від одної, і задовгі поперечки зчепили б увесь парк у пляму —
+    # рівно та скарга, з якої все почалось.
+    sleeper_half_len = width * 1.25
+    sleeper_half_thick = half_width_m * 0.5
+    spacing = width * 5.0
+    if spacing <= 0:
+        return rail
+    # Захист від тисяч поперечок на довгій магістралі (пам'ять і час union).
+    if length / spacing > max_sleepers:
+        spacing = length / float(max_sleepers)
+
+    parts = [rail]
+    distance = spacing * 0.5
+    step_probe = min(spacing * 0.25, 0.5)
+    while distance < length:
+        try:
+            p1 = line.interpolate(distance)
+            p2 = line.interpolate(min(distance + step_probe, length))
+            dx = p2.x - p1.x
+            dy = p2.y - p1.y
+            norm = float(np.hypot(dx, dy))
+            if norm > 1e-9:
+                # Нормаль до дотичної = напрямок шпали
+                nx = -dy / norm
+                ny = dx / norm
+                bar = LineString([
+                    (p1.x - nx * sleeper_half_len, p1.y - ny * sleeper_half_len),
+                    (p1.x + nx * sleeper_half_len, p1.y + ny * sleeper_half_len),
+                ])
+                parts.append(bar.buffer(sleeper_half_thick, cap_style=2, join_style=1, resolution=4))
+        except Exception:
+            pass
+        distance += spacing
+
+    if len(parts) == 1:
+        return rail
+    try:
+        return unary_union(parts)
+    except Exception:
+        return rail
+
+
 def build_road_polygons(
     G_roads,
     width_multiplier: float = 1.0,
@@ -1213,10 +1292,10 @@ def build_road_polygons(
         "cycleway": 1.0,
         "pedestrian": 0.95,
         "steps": 0.8,
-        # Колія 1435мм + шпали ≈ 2.6м. У сортувальних парках колії йдуть
-        # пучком — на малих виробах вони зіллються у суцільну чорну пляму,
-        # це нормально і відповідає тому, що друкується.
-        "railway": 2.6,
+        # Сама рейкова нитка, БЕЗ шпал (шпали додаються окремими поперечками —
+        # див. build_railway_ladder). Фідбек Роми 2026-08-10: «паза в два тонше»
+        # — на сортувальних парках колії пучком зливались у суцільну чорну пляму.
+        "railway": 1.3,
     }
 
     def get_width(row):
@@ -1228,7 +1307,14 @@ def build_road_polygons(
         # Ensure minimum printable width (in world meters)
         try:
             if min_width_m is not None:
-                width = max(float(width), float(min_width_m))
+                floor_m = float(min_width_m)
+                if highway == "railway":
+                    # Колія читається за ШПАЛАМИ, а не за товщиною нитки, тож
+                    # їй дозволено бути тоншою за звичайну дорогу — інакше
+                    # min-width клемп підтягував її назад до ширини вулиці і
+                    # «в два тонше» не працювало (фідбек Роми 2026-08-10).
+                    floor_m *= RAILWAY_MIN_WIDTH_FACTOR
+                width = max(float(width), floor_m)
         except Exception:
             pass
         return (width / 2.0) + float(extra_buffer_m)
@@ -1242,10 +1328,41 @@ def build_road_polygons(
         
         # Calculate buffer widths
         widths = gdf_edges.apply(get_width, axis=1)
-        
+
+        # Залізниця — не суцільна смуга, а нитка зі шпалами. Оригінальні лінії
+        # треба зберегти ДО буферизації, інакше драбину нема з чого будувати.
+        rail_lines = None
+        try:
+            if "_normalized_highway" in gdf_edges.columns:
+                rail_mask = gdf_edges["_normalized_highway"].astype(str).eq("railway")
+                if bool(rail_mask.any()):
+                    rail_lines = gdf_edges.loc[rail_mask, "geometry"].tolist()
+        except Exception as exc:
+            print(f"[RAILWAY] ladder pre-pass skipped: {exc}")
+            rail_mask = None
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             gdf_edges["geometry"] = gdf_edges.geometry.buffer(widths, cap_style=2, join_style=1, resolution=4)
+
+        if rail_lines:
+            try:
+                rail_radii = widths.loc[rail_mask].tolist()
+                ladders = []
+                for line, radius in zip(rail_lines, rail_radii):
+                    ladder = build_railway_ladder(line, float(radius))
+                    ladders.append(ladder)
+                replaced = 0
+                positions = [i for i, flag in enumerate(rail_mask.tolist()) if flag]
+                for pos, ladder in zip(positions, ladders):
+                    if ladder is not None and not ladder.is_empty:
+                        gdf_edges.iloc[pos, gdf_edges.columns.get_loc("geometry")] = ladder
+                        replaced += 1
+                if replaced:
+                    print(f"[RAILWAY] {replaced} колій зі шпалами (нитка + поперечки)")
+            except Exception as exc:
+                # Не критично: без драбини колія лишиться суцільною смугою.
+                print(f"[RAILWAY] ladder build failed (non-fatal): {exc}")
     else:
         # Fallback if no highway tag
         gdf_edges = gdf_edges.copy()

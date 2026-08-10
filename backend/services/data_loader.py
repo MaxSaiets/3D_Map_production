@@ -854,6 +854,20 @@ def fetch_city_data(
         if gdf_rail is None or getattr(gdf_rail, "empty", True):
             return G
 
+        # Підземка (метро, тунелі) на поверхні не існує — друкувати її чорною
+        # лінією означає намалювати те, чого на місцевості не видно.
+        try:
+            if "tunnel" in gdf_rail.columns:
+                _t = gdf_rail["tunnel"].astype(str).str.strip().str.lower()
+                gdf_rail = gdf_rail[_t.isin(["", "no", "nan", "none"])]
+            if "layer" in gdf_rail.columns:
+                _l = pd.to_numeric(gdf_rail["layer"], errors="coerce")
+                gdf_rail = gdf_rail[_l.isna() | (_l >= 0)]
+        except Exception as exc:
+            print(f"[RAILWAY] tunnel filter skipped: {exc}", flush=True)
+        if gdf_rail is None or getattr(gdf_rail, "empty", True):
+            return G
+
         # Overpass віддає EPSG:4326; граф може бути вже спроектований.
         try:
             graph_crs = G.graph.get("crs")

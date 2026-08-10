@@ -167,7 +167,14 @@ class FastHandler(osmium.SimpleHandler):
             return
         has_highway = "highway" in tags
         has_bridge = "bridge" in tags
-        has_railway = tags.get("railway") in RAILWAY_TAGS
+        # Підземка (метро/тунелі) на поверхні не існує — у друковану мапу не йде.
+        _tunnel = (tags.get("tunnel") or "").strip().lower()
+        _layer = tags.get("layer")
+        try:
+            _underground = (_tunnel not in ("", "no")) or (float(_layer) < 0 if _layer else False)
+        except (TypeError, ValueError):
+            _underground = _tunnel not in ("", "no")
+        has_railway = tags.get("railway") in RAILWAY_TAGS and not _underground
         # Building/water/park НЕ обробляємо тут — лише area()
         if not (has_highway or has_bridge or has_railway):
             return
