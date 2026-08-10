@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { PRINT_COLORS, PREVIEW_VOID } from "@/lib/printPalette";
 
 // Three.js + Overpass fetch — lazy load to avoid SSR + keep designer bundle light
 // SVG-LAYER (нативні шляхи у батьківському SVG). НЕ foreignObject — інакше на
@@ -776,9 +777,9 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
   if (value.loopStyle === "slot") {
     return (
       <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
-        <rect x={value.loopXMm - outer * 1.28} y={value.loopYMm - outer * 0.72} width={outer * 2.56} height={outer * 1.44} rx={outer * 0.72} fill="#a6926b" />
-        <rect x={value.loopXMm - inner * 1.25} y={value.loopYMm - inner * 0.58} width={inner * 2.5} height={inner * 1.16} rx={inner * 0.58} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
-        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill="#a6926b" />
+        <rect x={value.loopXMm - outer * 1.28} y={value.loopYMm - outer * 0.72} width={outer * 2.56} height={outer * 1.44} rx={outer * 0.72} fill={PRINT_COLORS.base} />
+        <rect x={value.loopXMm - inner * 1.25} y={value.loopYMm - inner * 0.58} width={inner * 2.5} height={inner * 1.16} rx={inner * 0.58} fill={PREVIEW_VOID} stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
+        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill={PRINT_COLORS.base} />
       </g>
     );
   }
@@ -786,8 +787,8 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
   if (value.loopStyle === "teardrop") {
     return (
       <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
-        <path d={`M ${value.loopXMm} ${value.loopYMm - outer} C ${value.loopXMm + outer} ${value.loopYMm - outer}, ${value.loopXMm + outer} ${value.loopYMm + outer * 0.45}, ${value.loopXMm} ${value.loopYMm + outer + tabHeight * 0.35} C ${value.loopXMm - outer} ${value.loopYMm + outer * 0.45}, ${value.loopXMm - outer} ${value.loopYMm - outer}, ${value.loopXMm} ${value.loopYMm - outer} Z`} fill="#a6926b" />
-        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
+        <path d={`M ${value.loopXMm} ${value.loopYMm - outer} C ${value.loopXMm + outer} ${value.loopYMm - outer}, ${value.loopXMm + outer} ${value.loopYMm + outer * 0.45}, ${value.loopXMm} ${value.loopYMm + outer + tabHeight * 0.35} C ${value.loopXMm - outer} ${value.loopYMm + outer * 0.45}, ${value.loopXMm - outer} ${value.loopYMm - outer}, ${value.loopXMm} ${value.loopYMm - outer} Z`} fill={PRINT_COLORS.base} />
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill={PREVIEW_VOID} stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
       </g>
     );
   }
@@ -795,9 +796,9 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
   if (value.loopStyle === "side-tab") {
     return (
       <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
-        <rect x={value.loopXMm - outer} y={value.loopYMm - outer * 0.78} width={outer * 2} height={outer * 1.56} rx={outer * 0.45} fill="#a6926b" />
-        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
-        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill="#a6926b" />
+        <rect x={value.loopXMm - outer} y={value.loopYMm - outer * 0.78} width={outer * 2} height={outer * 1.56} rx={outer * 0.45} fill={PRINT_COLORS.base} />
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill={PREVIEW_VOID} stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
+        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill={PRINT_COLORS.base} />
       </g>
     );
   }
@@ -806,11 +807,11 @@ function LoopPreview({ value }: { value: KeychainDesignerConfig }) {
   return (
     <>
       {/* Місток-ущелина (серце): заповнює V між лобами → петля не «булавка» */}
-      {gusset && <path d={gusset} fill="#a6926b" />}
+      {gusset && <path d={gusset} fill={PRINT_COLORS.base} />}
       <g transform={`rotate(${value.loopAngleDeg} ${value.loopXMm} ${value.loopYMm})`}>
-        <circle cx={value.loopXMm} cy={value.loopYMm} r={outer} fill="#a6926b" />
-        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill="#a6926b" />
-        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill="#050a18" stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={outer} fill={PRINT_COLORS.base} />
+        <rect x={value.loopXMm - tabWidth / 2} y={value.loopYMm} width={tabWidth} height={tabHeight} rx={tabWidth / 2} fill={PRINT_COLORS.base} />
+        <circle cx={value.loopXMm} cy={value.loopYMm} r={inner} fill={PREVIEW_VOID} stroke="rgba(255,255,255,0.35)" strokeWidth={0.25} />
       </g>
     </>
   );
@@ -837,7 +838,7 @@ function TokenHolePreview({ value }: { value: KeychainDesignerConfig }) {
         cx={value.loopXMm}
         cy={value.loopYMm}
         r={inner}
-        fill="#050a18"
+        fill={PREVIEW_VOID}
         stroke="rgba(248,250,252,0.42)"
         strokeWidth={0.22}
       />
@@ -875,37 +876,38 @@ export function TemplateMiniature({ design, label, active }: { design: KeychainD
         {/* Карту обрізаємо по РЕАЛЬНОМУ контуру тіла (форма), а не по rect —
             інакше серце/пазл/будиночок показували мапу прямокутником. */}
         <clipPath id={clipId}>
-          <path d={bodyPath(design)} />
+          <path d={innerBodyPath(design)} />
         </clipPath>
       </defs>
       <g transform={`rotate(${design.layoutRotationDeg || 0} ${bodyCx} ${bodyCy})`}>
         <LoopPreview value={design} />
-        <path d={bodyPath(design)} fill="#a6926b" stroke={active ? "#5eead4" : "rgba(255,255,255,0.35)"} strokeWidth={active ? 0.75 : 0.35} />
-        <TokenHolePreview value={design} />
+        <path d={bodyPath(design)} fill={PRINT_COLORS.base} stroke={active ? "#5eead4" : "rgba(255,255,255,0.35)"} strokeWidth={active ? 0.75 : 0.35} />
         {design.rimWidthMm > 0 && (
           <path
-            d={bodyPath(design)}
-            fill="none"
-            stroke="rgba(68,55,32,0.34)"
-            strokeWidth={Math.min(design.rimWidthMm * 1.6, 5)}
+            d={`${bodyPath(design)} ${innerBodyPath(design)}`}
+            fillRule="evenodd"
+            fill={PRINT_COLORS.rim}
           />
         )}
+        {/* Отвір — ПІСЛЯ ободка: у виробі він наскрізний, тож рамка його не
+            перекриває, навіть коли отвір лягає на край. */}
+        <TokenHolePreview value={design} />
         <g clipPath={`url(#${clipId})`} transform={`rotate(${design.mapRotationDeg || 0} ${mapCx} ${mapCy})`}>
-          <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#b7ab8e" />
-          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.18} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.34} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
-          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.56} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.66} ${design.mapYMm + design.mapHeightMm + 4}`} stroke="#101010" strokeWidth={1.1} />
-          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.76} ${design.mapYMm + 3} C ${design.mapXMm + design.mapWidthMm * 0.9} ${design.mapYMm + design.mapHeightMm * 0.45}, ${design.mapXMm + design.mapWidthMm * 0.62} ${design.mapYMm + design.mapHeightMm * 0.62}, ${design.mapXMm + design.mapWidthMm * 0.8} ${design.mapYMm + design.mapHeightMm - 2}`} fill="none" stroke="#6fa1c8" strokeWidth={1.5} />
-          <rect x={design.mapXMm + design.mapWidthMm * 0.48} y={design.mapYMm + design.mapHeightMm * 0.28} width={design.mapWidthMm * 0.12} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
-          <rect x={design.mapXMm + design.mapWidthMm * 0.22} y={design.mapYMm + design.mapHeightMm * 0.52} width={design.mapWidthMm * 0.14} height={design.mapHeightMm * 0.1} fill="#d8d8d8" />
-          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.69} ${design.mapYMm + design.mapHeightMm * 0.5} l 4 1 l -1 4 l -5 1 z`} fill="#3f8a4d" />
+          <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill={PRINT_COLORS.base} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.18} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.34} ${design.mapYMm + design.mapHeightMm + 4}`} stroke={PRINT_COLORS.roads} strokeWidth={1.1} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.56} ${design.mapYMm - 3} L ${design.mapXMm + design.mapWidthMm * 0.66} ${design.mapYMm + design.mapHeightMm + 4}`} stroke={PRINT_COLORS.roads} strokeWidth={1.1} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.76} ${design.mapYMm + 3} C ${design.mapXMm + design.mapWidthMm * 0.9} ${design.mapYMm + design.mapHeightMm * 0.45}, ${design.mapXMm + design.mapWidthMm * 0.62} ${design.mapYMm + design.mapHeightMm * 0.62}, ${design.mapXMm + design.mapWidthMm * 0.8} ${design.mapYMm + design.mapHeightMm - 2}`} fill="none" stroke={PRINT_COLORS.water} strokeWidth={1.5} />
+          <rect x={design.mapXMm + design.mapWidthMm * 0.48} y={design.mapYMm + design.mapHeightMm * 0.28} width={design.mapWidthMm * 0.12} height={design.mapHeightMm * 0.1} fill={PRINT_COLORS.buildings} stroke={PRINT_COLORS.buildingEdge} strokeWidth={0.3} />
+          <rect x={design.mapXMm + design.mapWidthMm * 0.22} y={design.mapYMm + design.mapHeightMm * 0.52} width={design.mapWidthMm * 0.14} height={design.mapHeightMm * 0.1} fill={PRINT_COLORS.buildings} stroke={PRINT_COLORS.buildingEdge} strokeWidth={0.3} />
+          <path d={`M ${design.mapXMm + design.mapWidthMm * 0.69} ${design.mapYMm + design.mapHeightMm * 0.5} l 4 1 l -1 4 l -5 1 z`} fill={PRINT_COLORS.parks} />
         </g>
         <text
           x={design.labelXMm}
           y={design.labelYMm}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#f1f5f9"
-          stroke="rgba(248,250,252,0.45)"
+          fill={PRINT_COLORS.text}
+          stroke="rgba(25,25,25,0.25)"
           strokeWidth={Math.max(design.labelStrokeMm * 0.08, 0.04)}
           paintOrder="stroke"
           fontSize={Math.max(design.labelTextHeightMm / 0.7, 2.5)}
@@ -1301,11 +1303,26 @@ export function KeychainDesigner({
           )}
           <path
             d={bodyPath(value)}
-            fill="#a6926b"
+            fill={PRINT_COLORS.base}
             stroke="rgba(255,255,255,0.42)"
             strokeWidth={0.35}
             mask={value.baseShape === "token" ? "url(#tokenBodyMask)" : undefined}
           />
+          {value.rimWidthMm > 0 && (
+            /* Ободок = РЕАЛЬНЕ чорне кільце (тіло мінус внутрішній контур), а не
+               штрих по центру контуру. Раніше малювався напівпрозорим коричневим
+               штрихом — на бежевому корпусі його просто не було видно, хоча у 3MF
+               він завжди друкувався чорним (backend LAYER_COLORS["rim"]).
+               Малюємо ОДРАЗУ за тілом: далі поверх лягають отвори вушка (наскрізні
+               у виробі) і карта, обрізана по внутрішньому контуру. */
+            <path
+              d={`${bodyPath(value)} ${innerBodyPath(value)}`}
+              fillRule="evenodd"
+              fill={PRINT_COLORS.rim}
+              mask={value.baseShape === "token" ? "url(#tokenBodyMask)" : undefined}
+              pointerEvents="none"
+            />
+          )}
           <TokenHolePreview value={value} />
           {/* Отвір вушка малюємо ПОВЕРХ тіла, щоб він був видимий навіть коли
               петля перекриває корпус (інакше body перекривав дірку і її «не
@@ -1319,7 +1336,7 @@ export function KeychainDesigner({
                   width={value.loopInnerMm * 2.5}
                   height={value.loopInnerMm * 1.16}
                   rx={value.loopInnerMm * 0.58}
-                  fill="#050a18"
+                  fill={PREVIEW_VOID}
                   stroke="rgba(255,255,255,0.4)"
                   strokeWidth={0.25}
                 />
@@ -1328,21 +1345,12 @@ export function KeychainDesigner({
                   cx={value.loopXMm}
                   cy={value.loopYMm}
                   r={value.loopInnerMm}
-                  fill="#050a18"
+                  fill={PREVIEW_VOID}
                   stroke="rgba(255,255,255,0.4)"
                   strokeWidth={0.25}
                 />
               )}
             </g>
-          )}
-          {value.rimWidthMm > 0 && (
-            <path
-              d={bodyPath(value)}
-              fill="none"
-              stroke="rgba(68,55,32,0.32)"
-              strokeWidth={Math.min(value.rimWidthMm * 1.6, 5)}
-              pointerEvents="none"
-            />
           )}
           {value.labelClearBand ? (
             <rect
@@ -1351,8 +1359,8 @@ export function KeychainDesigner({
               width={value.labelWidthMm}
               height={value.labelBandMm}
               rx={Math.min(2, value.labelBandMm / 2)}
-              fill={previewSide === "back" ? "rgba(5,10,24,0.16)" : "rgba(255,255,255,0.04)"}
-              stroke={previewSide === "back" ? "rgba(94,234,212,0.38)" : "rgba(255,255,255,0.28)"}
+              fill={previewSide === "back" ? "rgba(5,10,24,0.16)" : "rgba(20,20,20,0.05)"}
+              stroke={previewSide === "back" ? "rgba(94,234,212,0.38)" : "rgba(20,20,20,0.34)"}
               strokeDasharray="1.4 1.2"
               strokeWidth={0.28}
               transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
@@ -1370,7 +1378,7 @@ export function KeychainDesigner({
                 opacity={0.98}
                 transform={`rotate(${(value.mapRotationDeg || 0) % 360} ${mapCx} ${mapCy})`}
               >
-                <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill="#e8e1cc" />
+                <rect x={value.mapXMm} y={value.mapYMm} width={value.mapWidthMm} height={value.mapHeightMm} fill={PRINT_COLORS.base} />
                 {mapBounds ? (
                   /* Реальний перегляд OSM (buildings/roads/water/parks) обраної
                      ділянки як НАТИВНІ SVG-шляхи у спільній мм-системі координат.
@@ -1450,7 +1458,7 @@ export function KeychainDesigner({
                   y={bodyCy}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fill="rgba(248,250,252,0.34)"
+                  fill="rgba(25,25,25,0.42)"
                   fontSize={2.1}
                   fontWeight={700}
                 >
@@ -1528,7 +1536,7 @@ export function KeychainDesigner({
                 width={_w}
                 height={_h}
                 rx={Math.min(1.6, _h / 3)}
-                fill="#e8e1cc"
+                fill={PRINT_COLORS.base}
                 transform={`rotate(${value.labelAngleDeg} ${value.labelXMm} ${value.labelYMm})`}
                 pointerEvents="none"
               />
@@ -1586,7 +1594,7 @@ export function KeychainDesigner({
               <g onPointerDown={(event) => beginDrag(event, "label-rotate")} className="cursor-grab" data-testid="label-rotate-hit">
                 <line x1={value.labelXMm} y1={value.labelYMm} x2={hx} y2={hy} stroke="rgba(94,234,212,0.55)" strokeWidth={0.35} strokeDasharray="0.8 0.6" />
                 <circle cx={hx} cy={hy} r={2.4} fill="#5eead4" stroke="#050a18" strokeWidth={0.35} />
-                <text x={hx} y={hy + 0.7} textAnchor="middle" fontSize={2.6} fill="#050a18" fontWeight={900} pointerEvents="none">↻</text>
+                <text x={hx} y={hy + 0.7} textAnchor="middle" fontSize={2.6} fill={PREVIEW_VOID} fontWeight={900} pointerEvents="none">↻</text>
               </g>
             );
           })()}

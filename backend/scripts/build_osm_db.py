@@ -26,6 +26,13 @@ import pandas as pd
 HIGHWAY_TAGS = frozenset({"motorway", "trunk", "primary", "secondary", "tertiary",
                 "residential", "unclassified", "service", "pedestrian",
                 "footway", "path", "cycleway"})
+# Залізниця — окремий OSM-клас (railway=*, не highway=*), тому донедавна не
+# потрапляла в базу взагалі: вокзали й сортувальні станції виходили порожньою
+# основою. Кладемо колії в ту саму таблицю roads під псевдо-класом
+# highway='railway' — друкуються тим самим чорним філаментом, що й дороги.
+RAILWAY_TAGS = frozenset({"rail", "light_rail", "narrow_gauge", "tram",
+                          "subway", "funicular"})
+RAILWAY_PSEUDO_HIGHWAY = "railway"
 WATERWAY_TAGS = frozenset({"riverbank", "dock", "canal"})
 LANDUSE_WATER = frozenset({"reservoir", "basin"})
 LEISURE_PARK = frozenset({"park", "garden", "nature_reserve", "pitch", "playground", "golf_course"})
@@ -160,8 +167,9 @@ class FastHandler(osmium.SimpleHandler):
             return
         has_highway = "highway" in tags
         has_bridge = "bridge" in tags
+        has_railway = tags.get("railway") in RAILWAY_TAGS
         # Building/water/park НЕ обробляємо тут — лише area()
-        if not (has_highway or has_bridge):
+        if not (has_highway or has_bridge or has_railway):
             return
 
         # Координати з locations index
@@ -203,6 +211,14 @@ class FastHandler(osmium.SimpleHandler):
             if hw in HIGHWAY_TAGS:
                 br = tags.get("bridge") or "no"
                 self.roads.append((wid, hw, br, wkt_line, minlon, minlat, maxlon, maxlat))
+
+        # Залізниця — у ту саму таблицю roads під псевдо-класом 'railway'.
+        # Гілка окрема від has_highway: у OSM колія рідко несе highway-тег, а
+        # коли несе (переїзд) — обидві геометрії потрібні.
+        if has_railway:
+            br = tags.get("bridge") or "no"
+            self.roads.append((wid, RAILWAY_PSEUDO_HIGHWAY, br, wkt_line,
+                               minlon, minlat, maxlon, maxlat))
 
         # Building/water/parks обробляються в area() — підтримує multipolygon relations
 

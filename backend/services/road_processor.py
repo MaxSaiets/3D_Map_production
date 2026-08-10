@@ -54,6 +54,11 @@ PRINTABLE_HIGHWAY_PRIORITY = [
     "footway",
     "path",
     "steps",
+    # Залізниця. У БД лежить у таблиці roads під псевдо-класом highway='railway'
+    # (див. scripts/build_osm_db.py) — інакше вокзали й станції виходили голою
+    # основою. Наприкінці списку: якщо way має і дорогу, і колію (переїзд),
+    # виграє дорога.
+    "railway",
 ]
 
 # Canonical road masks should be driven only by vehicular / street network,
@@ -76,6 +81,9 @@ DRIVABLE_HIGHWAY_PRIORITY = [
     "living_street",
     "service",
     "pedestrian",
+    # Колія — не «вулиця», але на друкованій мапі це така сама чорна лінія і
+    # має різатись у канонічну маску разом із дорогами.
+    "railway",
 ]
 
 
@@ -1205,6 +1213,10 @@ def build_road_polygons(
         "cycleway": 1.0,
         "pedestrian": 0.95,
         "steps": 0.8,
+        # Колія 1435мм + шпали ≈ 2.6м. У сортувальних парках колії йдуть
+        # пучком — на малих виробах вони зіллються у суцільну чорну пляму,
+        # це нормально і відповідає тому, що друкується.
+        "railway": 2.6,
     }
 
     def get_width(row):

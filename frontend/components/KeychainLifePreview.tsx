@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import type { KeychainDesignerConfig } from "@/components/KeychainDesigner";
 import { shapePath } from "@/components/KeychainDesigner";
+import { PRINT_COLORS } from "@/lib/printPalette";
 
 export function KeychainLifePreview({
   design,
@@ -38,6 +39,18 @@ export function KeychainLifePreview({
     height: plateHeight,
     radius: design.cornerRadiusMm * mmToPx,
   });
+  // Внутрішній контур = тіло мінус ободок. Разом із bodyShapeD дає кільце
+  // (fillRule=evenodd) — саме так ободок і друкується: чорна рамка по краю.
+  const rimInsetPx = Math.max(design.rimWidthMm, 0) * mmToPx;
+  const innerShapeD = rimInsetPx > 0
+    ? shapePath(design, {
+        x: rimInsetPx,
+        y: rimInsetPx,
+        width: Math.max(plateWidth - rimInsetPx * 2, 1),
+        height: Math.max(plateHeight - rimInsetPx * 2, 1),
+        radius: Math.max(design.cornerRadiusMm * mmToPx - rimInsetPx, 0),
+      })
+    : null;
 
   const sceneTilt = aspect >= 1 ? -13 : -10;
   const plateSceneX = aspect >= 1 ? 84 : 132;
@@ -96,15 +109,9 @@ export function KeychainLifePreview({
         >
           <rect x="8" y={plateHeight - 3} width={Math.max(plateWidth - 16, 1)} height="14" rx="7" fill="url(#plateSide)" opacity="0.75" />
           {/* Тіло = реальний контур обраної форми (shapePath), не прямокутник. */}
-          <path d={bodyShapeD} fill="#a6926b" stroke="#d8ccb1" strokeWidth="2" />
-          {design.rimWidthMm > 0 ? (
-            <path
-              d={bodyShapeD}
-              fill="none"
-              stroke="#6d5c3f"
-              strokeOpacity="0.45"
-              strokeWidth={Math.max(2, design.rimWidthMm * 1.2)}
-            />
+          <path d={bodyShapeD} fill={PRINT_COLORS.base} stroke="#d5d5d5" strokeWidth="2" />
+          {innerShapeD ? (
+            <path d={`${bodyShapeD} ${innerShapeD}`} fillRule="evenodd" fill={PRINT_COLORS.rim} />
           ) : null}
           {design.baseShape === "token" ? (
             <g transform={`translate(${loopLeft} ${loopTop})`}>
@@ -115,25 +122,25 @@ export function KeychainLifePreview({
             </g>
           ) : (
             <g transform={`translate(${loopLeft} ${loopTop}) rotate(${design.loopAngleDeg || 0})`}>
-              <circle r={loopOuter} fill="#a6926b" stroke="#d8ccb1" strokeWidth="2" />
+              <circle r={loopOuter} fill={PRINT_COLORS.base} stroke="#d5d5d5" strokeWidth="2" />
               <circle r={loopInner} fill="#101725" stroke="#f8fafc" strokeOpacity="0.4" strokeWidth="1" />
             </g>
           )}
           <g clipPath="url(#lifeMapClip)" transform={`rotate(${design.mapRotationDeg || 0} ${mapLeft + mapWidth / 2} ${mapTop + mapHeight / 2})`}>
-            <rect x={mapLeft} y={mapTop} width={mapWidth} height={mapHeight} fill="#b7ab8e" />
+            <rect x={mapLeft} y={mapTop} width={mapWidth} height={mapHeight} fill={PRINT_COLORS.base} />
             {Array.from({ length: 9 }).map((_, index) => (
               <path
                 key={`life-road-${index}`}
                 d={`M ${mapLeft + index * (mapWidth / 8)} ${mapTop - 10} L ${mapLeft + 8 + index * (mapWidth / 9)} ${mapTop + mapHeight + 12}`}
-                stroke="#101010"
+                stroke={PRINT_COLORS.roads}
                 strokeWidth="3"
                 strokeLinecap="round"
               />
             ))}
-            <path d={`M ${mapLeft + mapWidth * 0.62} ${mapTop} C ${mapLeft + mapWidth * 0.82} ${mapTop + mapHeight * 0.24}, ${mapLeft + mapWidth * 0.45} ${mapTop + mapHeight * 0.64}, ${mapLeft + mapWidth * 0.8} ${mapTop + mapHeight}`} fill="none" stroke="#74a9d8" strokeWidth="6" />
-            <rect x={mapLeft + mapWidth * 0.18} y={mapTop + mapHeight * 0.2} width={mapWidth * 0.16} height={mapHeight * 0.12} fill="#d7d7d2" />
-            <rect x={mapLeft + mapWidth * 0.52} y={mapTop + mapHeight * 0.56} width={mapWidth * 0.18} height={mapHeight * 0.12} fill="#d7d7d2" />
-            <path d={`M ${mapLeft + mapWidth * 0.72} ${mapTop + mapHeight * 0.45} l 18 4 l -6 16 l -20 1 z`} fill="#32884f" />
+            <path d={`M ${mapLeft + mapWidth * 0.62} ${mapTop} C ${mapLeft + mapWidth * 0.82} ${mapTop + mapHeight * 0.24}, ${mapLeft + mapWidth * 0.45} ${mapTop + mapHeight * 0.64}, ${mapLeft + mapWidth * 0.8} ${mapTop + mapHeight}`} fill="none" stroke={PRINT_COLORS.water} strokeWidth="6" />
+            <rect x={mapLeft + mapWidth * 0.18} y={mapTop + mapHeight * 0.2} width={mapWidth * 0.16} height={mapHeight * 0.12} fill={PRINT_COLORS.buildings} stroke={PRINT_COLORS.buildingEdge} />
+            <rect x={mapLeft + mapWidth * 0.52} y={mapTop + mapHeight * 0.56} width={mapWidth * 0.18} height={mapHeight * 0.12} fill={PRINT_COLORS.buildings} stroke={PRINT_COLORS.buildingEdge} />
+            <path d={`M ${mapLeft + mapWidth * 0.72} ${mapTop + mapHeight * 0.45} l 18 4 l -6 16 l -20 1 z`} fill={PRINT_COLORS.parks} />
           </g>
           <text
             x={labelLeft}
@@ -168,14 +175,15 @@ export function KeychainSlicerPreview({
   label: string;
 }) {
   const t = useTranslations("lifeprev");
+  // Кольори = реальні філаменти (див. lib/printPalette + backend LAYER_COLORS).
   const layers = [
-    { name: "Base", color: "#a6926b", height: "2.0 mm", width: "100%" },
-    { name: "Rim", color: "#ffffff", height: `${design.rimHeightMm.toFixed(2)} mm`, width: "96%" },
-    { name: "Water", color: "#6fa8dc", height: "0.28 mm", width: "54%" },
-    { name: "Parks", color: "#2f8b4b", height: "0.34 mm", width: "62%" },
-    { name: "Roads", color: "#111111", height: "0.44 mm", width: "82%" },
-    { name: "Buildings", color: "#d8d8d8", height: "0.8-2.2 mm", width: "68%" },
-    { name: "Text", color: "#f8fafc", height: `${design.labelTextHeightMm.toFixed(1)} mm`, width: `${Math.max(36, Math.min(94, (label.length || 8) * 5))}%` },
+    { name: "Base", color: PRINT_COLORS.base, height: "2.0 mm", width: "100%" },
+    { name: "Rim", color: PRINT_COLORS.rim, height: `${design.rimHeightMm.toFixed(2)} mm`, width: "96%" },
+    { name: "Water", color: PRINT_COLORS.water, height: "0.28 mm", width: "54%" },
+    { name: "Parks", color: PRINT_COLORS.parks, height: "0.34 mm", width: "62%" },
+    { name: "Roads", color: PRINT_COLORS.roads, height: "0.44 mm", width: "82%" },
+    { name: "Buildings", color: PRINT_COLORS.buildings, height: "0.8-2.2 mm", width: "68%" },
+    { name: "Text", color: PRINT_COLORS.text, height: `${design.labelTextHeightMm.toFixed(1)} mm`, width: `${Math.max(36, Math.min(94, (label.length || 8) * 5))}%` },
   ];
 
   return (

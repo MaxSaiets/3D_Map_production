@@ -22,7 +22,9 @@ warnings.filterwarnings('ignore', category=DeprecationWarning, module='pandas')
 
 # Налаштування кешування
 _CACHE_DIR = Path(os.getenv("OSM_DATA_CACHE_DIR") or "cache/osm/overpass_cache")
-_CACHE_VERSION = "v2"  # Версія кешу (збільшити при зміні формату)
+_CACHE_VERSION = "v3"  # Версія кешу (збільшити при зміні формату)
+# v3: у графі доріг зʼявились ребра highway='railway' — старий кеш без колій
+#     інакше жив би вічно і залізниця не показалась би на вже згенерованих зонах.
 _OVERPASS_ENDPOINTS_DEFAULT = (
     "https://overpass-api.de/api",
     "https://overpass.private.coffee/api",
@@ -800,6 +802,88 @@ def fetch_city_data(
             return gpd.GeoDataFrame()
         return gpd.GeoDataFrame()
 
+    def _add_railways_to_graph(G):
+        """Домішує залізничні колії у граф доріг як ребра highway='railway'.
+
+        Навіщо: ані osmnx (`network_type='all'` тягне ЛИШЕ highway=*), ані
+        локальна DuckDB (до ребілду з новим build_osm_db.py) залізниці не дають —
+        railway=* це окремий OSM-клас. Через це вокзали й сортувальні станції
+        приходили голою основою. Далі road_processor малює колії тією ж чорною
+        маскою, що й дороги.
+
+        Викликається ПІСЛЯ того, як граф зібрано (і, можливо, спроектовано) —
+        геометрію колій переводимо у CRS графа.
+
+        Best-effort: будь-яка помилка (таймаут Overpass, порожня відповідь) не
+        має валити генерацію — просто лишаємось без колій, як раніше.
+        Вимикач: RAILWAY_FROM_OVERPASS=0.
+        """
+        if G is None or not hasattr(G, "edges"):
+            return G
+        if os.getenv("RAILWAY_FROM_OVERPASS", "1").strip() in ("0", "false", "False"):
+            return G
+        # Якщо колії вже прийшли з БД (ребілд ukraine.duckdb уже зроблено) —
+        # у Overpass не ходимо.
+        try:
+            for _, _, _d in G.edges(data=True):
+                if str(_d.get("highway") or "").lower() == "railway":
+                    return G
+        except Exception:
+            pass
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                try:
+                    gdf_rail = ox.features_from_bbox(
+                        bbox=padded_bbox,
+                        tags={"railway": ["rail", "light_rail", "narrow_gauge",
+                                          "tram", "subway", "funicular"]},
+                    )
+                except TypeError:
+                    gdf_rail = ox.features_from_bbox(
+                        padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3],
+                        tags={"railway": ["rail", "light_rail", "narrow_gauge",
+                                          "tram", "subway", "funicular"]},
+                    )
+        except InsufficientResponseError:
+            return G
+        except Exception as exc:
+            print(f"[RAILWAY] fetch skipped (non-fatal): {exc}", flush=True)
+            return G
+
+        if gdf_rail is None or getattr(gdf_rail, "empty", True):
+            return G
+
+        # Overpass віддає EPSG:4326; граф може бути вже спроектований.
+        try:
+            graph_crs = G.graph.get("crs")
+            if graph_crs is not None:
+                gdf_rail = gdf_rail.to_crs(graph_crs)
+        except Exception as exc:
+            print(f"[RAILWAY] reprojection failed, skipping: {exc}", flush=True)
+            return G
+
+        added = 0
+        # Відʼємні id — щоб гарантовано не зіткнутись з OSM node id.
+        next_node_id = -1
+        for geom in gdf_rail.geometry:
+            if geom is None or geom.is_empty or geom.geom_type != "LineString":
+                continue
+            coords = list(geom.coords)
+            if len(coords) < 2:
+                continue
+            u = next_node_id
+            next_node_id -= 1
+            v = next_node_id
+            next_node_id -= 1
+            G.add_node(u, x=coords[0][0], y=coords[0][1])
+            G.add_node(v, x=coords[-1][0], y=coords[-1][1])
+            G.add_edge(u, v, geometry=geom, highway="railway", oneway=False)
+            added += 1
+        if added:
+            print(f"[RAILWAY] +{added} колій домішано у граф доріг", flush=True)
+        return G
+
     def _fetch_roads():
         print("Завантаження дорожньої мережі...")
         try:
@@ -947,6 +1031,12 @@ def fetch_city_data(
             gdf_water = future_water.result()
             G_roads = future_roads.result()
             gdf_bridges = future_bridges.result()
+
+    # Залізниця — ЄДИНОЮ точкою для обох гілок (локальна DuckDB і Overpass).
+    # Поки ukraine.duckdb не перебудовано з підтримкою railway, це єдиний спосіб
+    # побачити колії на українських мапах; після ребілду хелпер сам себе вимкне
+    # (побачить highway='railway' серед ребер і не піде в мережу).
+    G_roads = _add_railways_to_graph(G_roads)
 
     # Append bridges as GDF attribute on gdf_buildings (back-compatible: existing
     # callers still get the 3-tuple, but bridges accessible via gdf_buildings.attrs)

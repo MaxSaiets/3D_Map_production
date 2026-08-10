@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
+import { PRINT_COLORS } from "@/lib/printPalette";
 
 type Bounds = { north: number; south: number; east: number; west: number };
 
@@ -24,7 +25,12 @@ type DesignShape = {
 
 type Pts = Array<[number, number]>;
 type BuildingRec = { points: Pts; levels: number };
-type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service" };
+type RoadRec = { points: Pts; widthM: number; kind: "major" | "minor" | "service" | "rail" };
+
+/** Колії, які друкуємо як лінії (той самий чорний філамент, що й дороги).
+ *  Ширина = колія 1435мм + шпали ≈ 2.6м. */
+const RAIL_TAGS = ["rail", "light_rail", "narrow_gauge", "tram", "subway", "funicular"];
+const RAIL_WIDTH_M = 2.6;
 type FountainRec = { lon: number; lat: number; radiusM: number };
 type CityData = {
   buildings: BuildingRec[];
@@ -51,6 +57,34 @@ const OSM_CACHE = new Map<string, any>();
 const OSM_CACHE_MAX = 20;
 const bboxKey = (b: Bounds) =>
   `${b.south.toFixed(5)},${b.west.toFixed(5)},${b.north.toFixed(5)},${b.east.toFixed(5)}`;
+
+/** Тільки колії — окремий маленький Overpass-запит (доповнення до локальної БД). */
+async function fetchRailsOnly(b: Bounds, abortSignal?: AbortSignal): Promise<RoadRec[]> {
+  const bbox = `${b.south},${b.west},${b.north},${b.east}`;
+  const q = `[out:json][timeout:10];way["railway"~"^(${RAIL_TAGS.join("|")})$"](${bbox});out geom;`;
+  for (const url of OVERPASS_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        body: q,
+        headers: { "Content-Type": "text/plain" },
+        signal: abortSignal,
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const rails: RoadRec[] = [];
+      for (const el of data.elements || []) {
+        if (el.type !== "way" || !el.geometry) continue;
+        const points: Pts = el.geometry.map((g: any) => [g.lon, g.lat]);
+        if (points.length >= 2) rails.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
+      }
+      return rails;
+    } catch (e: any) {
+      if (e?.name === "AbortError") throw e;
+    }
+  }
+  return [];
+}
 
 async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<CityData | null> {
   // SPRINT 1: спершу пробуємо локальну DuckDB (50-200ms). Fallback на Overpass.
@@ -81,13 +115,16 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
     const roadWidths: Record<string, number> = {
       motorway: 14, trunk: 12, primary: 10, secondary: 8, tertiary: 7,
       residential: 5, unclassified: 5, service: 3.5, pedestrian: 4,
+      // Залізниця приходить із таблиці roads як highway='railway' (build_osm_db)
+      railway: RAIL_WIDTH_M,
     };
     const roads: RoadRec[] = (data.roads || []).map((r: any) => {
       if (!roadWidths[r.highway]) return null;
       const pts = parseWkt(r.wkt);
       if (!pts) return null;
       const kind: RoadRec["kind"] =
-        ["motorway","trunk","primary","secondary"].includes(r.highway) ? "major"
+        r.highway === "railway" ? "rail"
+        : ["motorway","trunk","primary","secondary"].includes(r.highway) ? "major"
         : ["residential","tertiary","unclassified"].includes(r.highway) ? "minor" : "service";
       return { points: pts, widthM: roadWidths[r.highway], kind };
     }).filter(Boolean);
@@ -99,6 +136,18 @@ async function fetchFromLocalDB(b: Bounds, abortSignal?: AbortSignal): Promise<C
     // miss so the caller falls back to the worldwide Overpass query.
     if (buildings.length === 0 && roads.length === 0) {
       return null;
+    }
+    // Локальна DuckDB віддає колії лише після ребілду з новим build_osm_db.py.
+    // Поки їх там немає — добираємо окремим дешевим Overpass-запитом, інакше
+    // превʼю показувало б порожній вокзал, а модель (де бекенд робить те саме)
+    // — з коліями. Best-effort: не вийшло — просто лишаємось без залізниці.
+    if (!roads.some((r) => r.kind === "rail")) {
+      try {
+        const rails = await fetchRailsOnly(b, abortSignal);
+        roads.push(...rails);
+      } catch (e: any) {
+        if (e?.name === "AbortError") throw e;
+      }
     }
     // CityData type вимагає plazas, fountains, trees, bridges — заповнюємо порожніми
     // (вони не друкуються у моделі і прибрані з рендеру у Sprint 3.5)
@@ -128,7 +177,7 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
   // - roads ТІЛЬКИ значимої ширини (без footway/path/cycleway — вони відсіються
   //   фільтром min_feature 0.5mm у backend, тож показувати їх у превʼю — обман)
   // - bridges (з road network)
-  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["natural"~"^(water|wood)$"](${bbox});way["waterway"~"^(riverbank|dock)$"](${bbox});way["leisure"~"^(park|garden|nature_reserve)$"](${bbox});way["landuse"~"^(forest|grass|cemetery)$"](${bbox});way["bridge"="yes"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["landuse"="forest"](${bbox}););out geom;`;
+  const q = `[out:json][timeout:12];(way["building"](${bbox});way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified|service|pedestrian)$"](${bbox});way["railway"~"^(rail|light_rail|narrow_gauge|tram|subway|funicular)$"](${bbox});way["natural"~"^(water|wood)$"](${bbox});way["waterway"~"^(riverbank|dock)$"](${bbox});way["leisure"~"^(park|garden|nature_reserve)$"](${bbox});way["landuse"~"^(forest|grass|cemetery)$"](${bbox});way["bridge"="yes"](${bbox});relation["natural"="water"](${bbox});relation["leisure"="park"](${bbox});relation["landuse"="forest"](${bbox}););out geom;`;
   let lastErr: any = null;
   for (const url of OVERPASS_URLS) {
     try {
@@ -180,6 +229,10 @@ async function fetchOSMForBounds(b: Bounds, abortSignal?: AbortSignal): Promise<
           };
           const w = widths[String(tags.highway)] || 8;
           bridges.push({ points, widthM: w });
+        } else if (RAIL_TAGS.includes(String(tags.railway))) {
+          // Залізниця — окремий клас OSM (не highway), тому раніше не потрапляла
+          // ні в превʼю, ні в модель. Друкується тим самим чорним, що й дороги.
+          roads.push({ points, widthM: RAIL_WIDTH_M, kind: "rail" });
         } else if (tags.highway) {
           // ТІЛЬКИ дороги що реально друкуються — без footway/path/cycleway.
           // Ці тонкі стежки в 0.4mm соплі неможливо надрукувати, у backend їх
@@ -545,17 +598,20 @@ function useCityPrintable({ bounds, design, cropRotationDeg = 0, cropPolygon = n
 function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityPrintable>["printable"] }) {
   return (
     <>
+      {/* Кольори = РЕАЛЬНІ філаменти друку (PRINT_COLORS), не «мапна» палітра:
+          дороги/залізниця чорні одним пластиком, будинки — тим самим білим, що
+          й основа, тож у превʼю їх видно лише за тонким контуром. */}
       {printable.parks.map((pts, i) => (
-        <path key={`p-${i}`} d={pointsToPath(pts)} fill="#88b06e" />
+        <path key={`p-${i}`} d={pointsToPath(pts)} fill={PRINT_COLORS.parks} />
       ))}
       {printable.water.map((pts, i) => (
-        <path key={`w-${i}`} d={pointsToPath(pts)} fill="#5a91c4" />
+        <path key={`w-${i}`} d={pointsToPath(pts)} fill={PRINT_COLORS.water} />
       ))}
       {printable.roads.map((r, i) => (
         <path
           key={`r-${i}`}
           d={r.path}
-          stroke={r.kind === "major" ? "#1a1a1a" : r.kind === "minor" ? "#3a3a3a" : "#5a5a5a"}
+          stroke={PRINT_COLORS.roads}
           strokeWidth={r.widthMm}
           fill="none"
           strokeLinecap="round"
@@ -566,7 +622,7 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
         <path
           key={`br-${i}`}
           d={br.path}
-          stroke="#2a2a2a"
+          stroke={PRINT_COLORS.roads}
           strokeWidth={br.widthMm}
           fill="none"
           strokeLinecap="butt"
@@ -577,8 +633,8 @@ function CityFeaturePaths({ printable }: { printable: ReturnType<typeof useCityP
         <path
           key={`b-${i}`}
           d={pointsToPath(b.pts)}
-          fill={b.hl ? "#c0392b" : "#cfc1a3"}
-          stroke={b.hl ? "#8f2a20" : "#a89a7d"}
+          fill={b.hl ? PRINT_COLORS.highlight : PRINT_COLORS.buildings}
+          stroke={b.hl ? "#8f2a20" : PRINT_COLORS.buildingEdge}
           strokeWidth={b.hl ? 0.25 : 0.15}
         />
       ))}
@@ -632,14 +688,14 @@ export function LiveCity3D(props: LiveCityProps) {
   const vb = `${design.mapXMm} ${design.mapYMm} ${design.mapWidthMm} ${design.mapHeightMm}`;
   const clipId = useMemo(() => `liveCityClip-${Math.random().toString(36).slice(2, 8)}`, []);
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#e0d4b5]">
+    <div className="relative h-full w-full overflow-hidden bg-[#f2f2f2]">
       <svg viewBox={vb} preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
         <defs>
           <clipPath id={clipId}>
             <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} />
           </clipPath>
         </defs>
-        <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill="#e0d4b5" />
+        <rect x={design.mapXMm} y={design.mapYMm} width={design.mapWidthMm} height={design.mapHeightMm} fill={PRINT_COLORS.base} />
         <g clipPath={`url(#${clipId})`}>
           <CityFeaturePaths printable={printable} />
         </g>
