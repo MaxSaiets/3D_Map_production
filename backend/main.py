@@ -3085,6 +3085,7 @@ async def osm_rails_endpoint(
     """
     import hashlib as _hashlib
     import json as _json
+    import math
     from pathlib import Path as _Path
 
     try:
@@ -3095,8 +3096,17 @@ async def osm_rails_endpoint(
     except HTTPException:
         raise
 
+    # Ключ — bbox, ОКРУГЛЕНИЙ НАЗОВНІ до сітки ~500м, і тягнемо ми теж
+    # округлений (більший) прямокутник. Інакше кожен зсув рамки на метр —
+    # новий ключ і знову 12с очікування, хоча колії ті самі. Зайві колії за
+    # межами рамки нешкідливі: превʼю все одно обрізає їх по слоту.
+    _G = 0.005
+    g_south = math.floor(south / _G) * _G
+    g_west = math.floor(west / _G) * _G
+    g_north = math.ceil(north / _G) * _G
+    g_east = math.ceil(east / _G) * _G
     key = _hashlib.md5(
-        f"{north:.5f}|{south:.5f}|{east:.5f}|{west:.5f}".encode()
+        f"{g_north:.4f}|{g_south:.4f}|{g_east:.4f}|{g_west:.4f}".encode()
     ).hexdigest()
     cache_dir = _Path("cache/osm/rails")
     cache_file = cache_dir / f"{key}.json"
@@ -3110,7 +3120,7 @@ async def osm_rails_endpoint(
     query = (
         f'[out:json][timeout:20];'
         f'way["railway"~"^(rail|light_rail|narrow_gauge|tram|subway|funicular)$"]'
-        f'["tunnel"!~"."]({south},{west},{north},{east});out geom;'
+        f'["tunnel"!~"."]({g_south},{g_west},{g_north},{g_east});out geom;'
     )
     endpoints = [
         "https://overpass-api.de/api/interpreter",
