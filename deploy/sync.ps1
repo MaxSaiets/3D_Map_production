@@ -13,7 +13,10 @@ param(
 $ErrorActionPreference = "Stop"
 $LOCAL  = "H:\3dMAP_WORK_2.0"
 $DEPLOY = "C:\Temp\3dmap_deploy"
-$SERVER = "root@209.38.210.197"
+# З 02.09.2026 прод = VM на власному ПК (Cloudflare Tunnel). "monadruk-deploy" —
+# аліас у ~/.ssh/config (root@ssh.monadruk.com через `cloudflared access ssh`),
+# потребує C:\Users\sayet\cloudflared\cloudflared.exe. Старий VPS 209.38.210.197 знищено.
+$SERVER = "monadruk-deploy"
 # ServerAlive: довгий npm/next build (4-6 хв) без keepalive рвав ssh-сесію →
 # білд не виконувався, а гейт мовчки пропускав (спіймано 2026-07-29).
 $SSH    = @("-o", "StrictHostKeyChecking=no", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=60", $SERVER)
@@ -129,14 +132,33 @@ Write-Step "Server: git pull"
 # на main. `git pull origin main` там мовчки нічого не робить, якщо merge падає
 # з конфліктом — деплой рапортує OK, а код НЕ приїжджає (спіймано двічі за день).
 # Тому: мерджимо явно й ПЕРЕВІРЯЄМО, що більше не відстаємо від origin/main.
-$pullOut = & ssh @SSH "cd /opt/3dmap && git stash 2>/dev/null; git fetch origin -q; git merge origin/main --no-edit 2>&1 | tail -5; echo BEHIND=`$(git rev-list --count HEAD..origin/main)" 2>&1
+# 2026-09-02: BEHIND=0 виявився ХИБНИМ гейтом. `git fetch` на сервері почав падати
+# ("could not read Username for https://github.com" — зникли креденшели), і тоді
+# BEHIND рахувався проти СТАРОГО локального ref origin/main → 0 → деплой рапортував
+# OK і перебілдовував СТАРИЙ код (спіймано на ux #8: коміт узагалі не доїхав).
+# Тепер гейт перевіряє (а) код виходу fetch і (б) що САМЕ ЦЕЙ запушений коміт
+# є предком серверного HEAD.
+$pushedSha = (git -C $DEPLOY rev-parse HEAD 2>$null | Out-String).Trim()
+$pullOut = & ssh @SSH "cd /opt/3dmap && git stash 2>/dev/null; git fetch origin > /tmp/3dmap_fetch.log 2>&1; FEC=`$?; tail -3 /tmp/3dmap_fetch.log; echo FETCH_EC=`$FEC; git merge origin/main --no-edit 2>&1 | tail -5; echo HAS_SHA=`$(git merge-base --is-ancestor $pushedSha HEAD 2>/dev/null && echo 1 || echo 0); echo BEHIND=`$(git rev-list --count HEAD..origin/main)" 2>&1
 Write-Host ($pullOut | Out-String).Trim() -ForegroundColor DarkGray
+if ($pullOut -match "FETCH_EC=(\d+)" -and [int]$Matches[1] -ne 0) {
+    Write-Err "git fetch FAILED on the server — new code did NOT arrive (deploy aborted)"
+    Write-Host "  Cause: GitHub credentials missing on the VM (private repo)." -ForegroundColor Yellow
+    Write-Host "  Fix: ssh $SERVER 'cd /opt/3dmap && git remote set-url origin git@github.com:MaxSaiets/3D_Map_production.git'" -ForegroundColor Yellow
+    Write-Host "       + add a deploy key, OR restore /root/.git-credentials with a GitHub token." -ForegroundColor Yellow
+    exit 1
+}
+if ($pushedSha -and $pullOut -match "HAS_SHA=(\d+)" -and [int]$Matches[1] -ne 1) {
+    Write-Err "Server HEAD does NOT contain the pushed commit $pushedSha — stale code would ship"
+    Write-Host "  Check: ssh $SERVER 'cd /opt/3dmap && git log --oneline -3 && git fetch origin'" -ForegroundColor Yellow
+    exit 1
+}
 if ($pullOut -match "BEHIND=(\d+)" -and [int]$Matches[1] -gt 0) {
     Write-Err "Server is still $($Matches[1]) commit(s) behind origin/main — merge conflict?"
     Write-Host "  Fix on server: ssh $SERVER 'cd /opt/3dmap && git status'" -ForegroundColor Yellow
     exit 1
 }
-Write-Ok "Server synced"
+Write-Ok "Server synced (commit $pushedSha present)"
 
 # ── 6. Frontend rebuild (only if frontend files changed)
 $frontendTouched = $allChanges | Where-Object { $_ -match "^frontend/" }
@@ -264,7 +286,8 @@ $endpoints = @(
     # 500 на SSR-роутах, тоді як клієнтський 7c-guard цього не бачить; 2026-06-11)
     @{ Name = "Frontend sitemap.xml"; Url = "http://127.0.0.1:3000/sitemap.xml" },
     @{ Name = "Frontend /de/maps/kyiv (SSR locale)"; Url = "http://127.0.0.1:3000/de/maps/kyiv" },
-    @{ Name = "Public (nginx)";   Url = "http://209.38.210.197/" }
+    # Публічний шлях: Cloudflare → tunnel → Caddy :8080 → next/uvicorn (з самої VM)
+    @{ Name = "Public (Cloudflare tunnel)"; Url = "https://monadruk.com/api/health" }
 )
 function Test-Endpoints {
     $ok = $true
@@ -310,7 +333,7 @@ Write-Step "PM2 status"
 & ssh @SSH "pm2 status" 2>&1 | Select-String "name|3dmap-" | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
 
 if ($allOk) {
-    Write-Host "`n✓ DEPLOY OK — http://209.38.210.197" -ForegroundColor Green
+    Write-Host "`n✓ DEPLOY OK — https://monadruk.com (VM via Cloudflare Tunnel)" -ForegroundColor Green
     exit 0
 } else {
     Write-Host "`n✗ DEPLOY HAD ISSUES — check logs above" -ForegroundColor Red
