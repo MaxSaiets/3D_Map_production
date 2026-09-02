@@ -174,7 +174,9 @@ export default function SiteAnalytics() {
       {ready && consent === null && (
         // F-17/F-12b: банер більше НЕ перекриває CTA — на mobile компактна смужка
         // ЗВЕРХУ, на desktop маленька картка ліворуч унизу (праворуч живуть CTA/ціна/чат).
-        <div className="fixed inset-x-2 top-2 z-[50] rounded-2xl border border-line bg-paper/95 p-3 shadow-lift backdrop-blur sm:inset-x-auto sm:bottom-3 sm:left-4 sm:top-auto sm:max-w-[360px]">
+        // top-[72px] на мобільному: банер стоїть ПІД шапкою, тож логотип/меню
+        // лишаються клікабельними до вибору (раніше банер їх накривав).
+        <div className="fixed inset-x-2 top-[72px] z-[50] rounded-2xl border border-line bg-paper/95 p-3 shadow-lift backdrop-blur sm:inset-x-auto sm:bottom-3 sm:left-4 sm:top-auto sm:max-w-[360px]">
           <p className="text-[12px] leading-snug text-ink-2">
             {t("text")}{" "}
             <Link href="/privacy" className="font-semibold text-forest underline">{t("more")}</Link>

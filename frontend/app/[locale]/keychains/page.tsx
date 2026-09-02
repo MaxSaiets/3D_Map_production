@@ -267,11 +267,13 @@ export default function KeychainsPage() {
         <header className="rounded-[24px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-4 py-3 shadow-[0_12px_40px_rgba(31,41,55,0.07)] backdrop-blur lg:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
+              {/* T-4.1: на телефоні eyebrow+заголовок ховаємо візуально (лишаються в DOM) —
+                  шапка стає одним рядом, контроли видно одразу. */}
+              <p className="sr-only text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)] sm:not-sr-only">
                 {t("eyebrow")}
               </p>
               <div>
-                <h1 className="font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-2xl">
+                <h1 className="sr-only font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:not-sr-only sm:text-2xl">
                   {t("title")}
                 </h1>
                 <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] xl:block xl:text-[15px]">

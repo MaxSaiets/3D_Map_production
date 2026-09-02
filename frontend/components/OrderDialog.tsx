@@ -150,7 +150,17 @@ export function OrderDialog({
     errorField === field ? ({ "aria-invalid": true, "aria-describedby": "order-error" } as const) : {};
 
   const submit = async () => {
-    const fail = (field: string, msg: string) => { setErrorField(field); setError(msg); };
+    const fail = (field: string, msg: string) => {
+      setErrorField(field);
+      setError(msg);
+      // Курсор одразу в проблемне поле — інакше помилка в sticky-футері, а поле
+      // десь вище у скролі (на телефоні його взагалі не видно).
+      try {
+        const el = document.getElementById(`order-${field}`) as HTMLInputElement | null;
+        el?.focus();
+        el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      } catch { /* ignore */ }
+    };
     if (!name.trim()) { fail("name", t("errName")); return; }
     if (!phone.trim()) { fail("phone", t("errPhone")); return; }
     // Базова перевірка телефону: лишаємо тільки цифри, очікуємо ≥10 (UA +380 = 12).
@@ -339,16 +349,16 @@ export function OrderDialog({
               <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("contactsHeading")}</p>
               <label className="block">
                 <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phName")}</span>
-                <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} {...errAttrs("name")} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+                <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} id="order-name" {...errAttrs("name")} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
               </label>
               <label className="block">
                 <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phPhone")}</span>
-                <input className={fieldCls} placeholder="+380 93 000 00 00" {...errAttrs("phone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" />
+                <input className={fieldCls} placeholder="+380 93 000 00 00" id="order-phone" {...errAttrs("phone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" />
               </label>
               {/* Email необовʼязковий — для підтвердження замовлення на пошту. */}
               <label className="block">
                 <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phEmail")}</span>
-                <input className={fieldCls} placeholder="name@example.com" {...errAttrs("email")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
+                <input className={fieldCls} placeholder="name@example.com" id="order-email" {...errAttrs("email")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
               </label>
 
               <div className="space-y-1.5">
@@ -383,9 +393,9 @@ export function OrderDialog({
                   <NovaPoshtaPicker city={city} branch={branch} setCity={setCity} setBranch={setBranch} inputCls={fieldCls} />
                 ) : (
                 <>
-                  <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} {...errAttrs("city")} value={city} onChange={(e) => setCity(e.target.value)} />
-                  <input className={fieldCls} placeholder={t("phUkr")} aria-label={t("phUkr")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
-                  <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} id="order-city" {...errAttrs("city")} value={city} onChange={(e) => setCity(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phUkr")} aria-label={t("phUkr")} id="order-branch" {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} id="order-address" {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
                 </>
                 )
               )}

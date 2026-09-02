@@ -627,7 +627,10 @@ export default function Home() {
               <HomeIcon size={15} /> <span className="hidden sm:inline">{tc("backHome")}</span>
             </Link>
             <span className="hidden h-5 w-px bg-[var(--surface-border)] sm:block" />
-            <h1 className="font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:text-lg">
+            {/* T-4.1 (F-29): на телефоні заголовок ховаємо ВІЗУАЛЬНО (лишається в DOM
+                для SEO/скрінрідера) — інакше шапка переносилась у 2 ряди ≈220 px і
+                зʼїдала екран до першого контролу. */}
+            <h1 className="sr-only font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:not-sr-only sm:text-lg">
               {tc("title")}
             </h1>
 
@@ -920,11 +923,11 @@ export default function Home() {
                   {!guided && (
                   <div className={`relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)] ${showHexGrid ? "lg:top-2" : "lg:top-[80px]"}`}>
                     {/* Сегмент-контрол: дві пігулки в один ряд (доступно в ОБОХ режимах). */}
-                    <div className="flex items-center gap-1" role="tablist" aria-label={tc("selectionModeAria")}>
+                    <div className="flex items-center gap-1" role="radiogroup" aria-label={tc("selectionModeAria")}>
                       <button
                         type="button"
-                        role="tab"
-                        aria-selected={!showHexGrid}
+                        role="radio"
+                        aria-checked={!showHexGrid}
                         onClick={() => { setShowHexGridPersist(false); }}
                         className={`flex min-h-[44px] flex-1 items-center justify-center rounded-full border px-2 py-2 text-center text-[13px] font-semibold transition ${
                           !showHexGrid
@@ -936,8 +939,8 @@ export default function Home() {
                       </button>
                       <button
                         type="button"
-                        role="tab"
-                        aria-selected={showHexGrid}
+                        role="radio"
+                        aria-checked={showHexGrid}
                         onClick={() => { setShowHexGridPersist(true); }}
                         className={`flex min-h-[44px] flex-1 items-center justify-center rounded-full border px-2 py-2 text-center text-[13px] font-semibold transition ${
                           showHexGrid
