@@ -144,8 +144,8 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect
       .poll(async () => {
         const d = await page
-          .locator("#keychainMapClip")
-          .evaluate((el) => el.closest("svg")?.querySelector('path[fill="#a6926b"]')?.getAttribute("d") || "");
+          .locator('[data-testid="keychain-body-path"]')
+          .evaluate((el) => el.getAttribute("d") || "");
         const xs = (d.match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 0);
         return Math.max(...xs, 0);
       }, { timeout: 10_000 })
@@ -155,8 +155,8 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect
       .poll(async () => {
         const d = await page
-          .locator("#keychainMapClip")
-          .evaluate((el) => el.closest("svg")?.querySelector('path[fill="#a6926b"]')?.getAttribute("d") || "");
+          .locator('[data-testid="keychain-body-path"]')
+          .evaluate((el) => el.getAttribute("d") || "");
         const xs = (d.match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 0);
         return xs.length ? Math.max(...xs) : 999;
       }, { timeout: 10_000 })

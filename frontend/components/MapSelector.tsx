@@ -1156,6 +1156,13 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
   // нічого не робить. position:fixed inset:0 працює СКРІЗЬ. ResizeObserver
   // (InvalidateOnResize) сам перерахує розмір Leaflet.
   const [expanded, setExpanded] = useState(false);
+  // T-3.6: підказка «як рухати рамку» — це вітання, а не постійний елемент.
+  // Показуємо 7 с після появи карти, далі ховаємо (менше шуму біля моделі).
+  const [cropHelpVisible, setCropHelpVisible] = useState(true);
+  useEffect(() => {
+    const id = window.setTimeout(() => setCropHelpVisible(false), 7000);
+    return () => window.clearTimeout(id);
+  }, []);
   useEffect(() => {
     if (!expanded) return;
     const prev = document.body.style.overflow;
@@ -1270,7 +1277,7 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
           className="pointer-events-none absolute inset-x-3 bottom-3 grid gap-2 sm:inset-x-auto sm:right-3 sm:w-[280px]"
           style={{ zIndex: 10_000 }}
         >
-          <div className="hidden rounded-[18px] border border-white/45 bg-[#050a18]/86 px-3 py-2 text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur sm:block">
+          <div className={`rounded-[18px] border border-white/45 bg-[#050a18]/86 px-3 py-2 text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] backdrop-blur transition-opacity duration-500 ${cropHelpVisible ? "hidden sm:block" : "hidden"}`}>
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{t("printArea")}</div>
             <div className="mt-1 text-xs font-semibold">
               {t("cropHelp")}

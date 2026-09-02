@@ -1302,6 +1302,9 @@ export function KeychainDesigner({
             </defs>
           )}
           <path
+            /* data-testid: стабільний якір для e2e (раніше тест шукав тіло за
+               застарілим fill="#a6926b" — колір давно змінився на PRINT_COLORS.base). */
+            data-testid="keychain-body-path"
             d={bodyPath(value)}
             fill={PRINT_COLORS.base}
             stroke="rgba(255,255,255,0.42)"
