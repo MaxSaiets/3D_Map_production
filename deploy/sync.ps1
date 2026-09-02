@@ -140,8 +140,12 @@ Write-Step "Server: git pull"
 # є предком серверного HEAD.
 $pushedSha = (git -C $DEPLOY rev-parse HEAD 2>$null | Out-String).Trim()
 $pullOut = & ssh @SSH "cd /opt/3dmap && git stash 2>/dev/null; git fetch origin > /tmp/3dmap_fetch.log 2>&1; FEC=`$?; tail -3 /tmp/3dmap_fetch.log; echo FETCH_EC=`$FEC; git merge origin/main --no-edit 2>&1 | tail -5; echo HAS_SHA=`$(git merge-base --is-ancestor $pushedSha HEAD 2>/dev/null && echo 1 || echo 0); echo BEHIND=`$(git rev-list --count HEAD..origin/main)" 2>&1
-Write-Host ($pullOut | Out-String).Trim() -ForegroundColor DarkGray
-if ($pullOut -match "FETCH_EC=(\d+)" -and [int]$Matches[1] -ne 0) {
+# ПАСТКА PowerShell: `-match` на МАСИВІ рядків (вивід ssh) повертає елементи й НЕ
+# заповнює $Matches → гейти читали застарілі значення (хибний FAIL на ux #9 при
+# HAS_SHA=1; а старий BEHIND-гейт через це ніколи не спрацьовував). Regex — по рядку.
+$pullText = ($pullOut | Out-String)
+Write-Host $pullText.Trim() -ForegroundColor DarkGray
+if ($pullText -match "FETCH_EC=(\d+)" -and [int]$Matches[1] -ne 0) {
     # FALLBACK (узгоджено з власником 2026-09-03): VM не дістає GitHub (приватне репо без
     # креденшелів) → передаємо коміти git-bundle'ом через ssh. bridge має push-доступ,
     # VM — ні; bundle робить деплой незалежним від креденшелів на сервері.
@@ -153,16 +157,17 @@ if ($pullOut -match "FETCH_EC=(\d+)" -and [int]$Matches[1] -ne 0) {
     & scp -o StrictHostKeyChecking=no $bundle "${SERVER}:/tmp/mnd-main.bundle" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Err "scp bundle failed"; exit 1 }
     $pullOut = & ssh @SSH "cd /opt/3dmap && git fetch /tmp/mnd-main.bundle main:refs/remotes/origin/main 2>&1 | tail -2; rm -f /tmp/mnd-main.bundle; git merge origin/main --no-edit 2>&1 | tail -5; echo HAS_SHA=`$(git merge-base --is-ancestor $pushedSha HEAD 2>/dev/null && echo 1 || echo 0); echo BEHIND=`$(git rev-list --count HEAD..origin/main)" 2>&1
-    Write-Host ($pullOut | Out-String).Trim() -ForegroundColor DarkGray
+    $pullText = ($pullOut | Out-String)
+    Write-Host $pullText.Trim() -ForegroundColor DarkGray
     Remove-Item -LiteralPath $bundle -Force -ErrorAction SilentlyContinue
     Write-Host "    NOTE: restore GitHub access on the VM (deploy key or token) to avoid the ~100 MB bundle each deploy." -ForegroundColor Yellow
 }
-if ($pushedSha -and $pullOut -match "HAS_SHA=(\d+)" -and [int]$Matches[1] -ne 1) {
+if ($pushedSha -and $pullText -match "HAS_SHA=(\d+)" -and [int]$Matches[1] -ne 1) {
     Write-Err "Server HEAD does NOT contain the pushed commit $pushedSha — stale code would ship"
     Write-Host "  Check: ssh $SERVER 'cd /opt/3dmap && git log --oneline -3 && git fetch origin'" -ForegroundColor Yellow
     exit 1
 }
-if ($pullOut -match "BEHIND=(\d+)" -and [int]$Matches[1] -gt 0) {
+if ($pullText -match "BEHIND=(\d+)" -and [int]$Matches[1] -gt 0) {
     Write-Err "Server is still $($Matches[1]) commit(s) behind origin/main — merge conflict?"
     Write-Host "  Fix on server: ssh $SERVER 'cd /opt/3dmap && git status'" -ForegroundColor Yellow
     exit 1
