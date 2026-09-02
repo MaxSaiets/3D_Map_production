@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  ArrowRight, ArrowUpRight, Layers3, Leaf, Ruler,
-  Sparkles, KeyRound, Download, Star, Truck,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, Boxes, Download, KeyRound, Layers3, LayoutGrid, Leaf, Ruler, Sparkles, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 
@@ -315,7 +312,41 @@ function PathSelector() {
           icon={<KeyRound size={22} />}
         />
       </div>
+      {/* Власник: «не зрозуміло, які взагалі можливості». Два великі шляхи лишаються
+          головними, а решта продуктів — видимим рядком одразу під ними (раніше про
+          них можна було дізнатись лише випадково з футера). */}
+      <MoreCapabilities />
     </section>
+  );
+}
+
+function MoreCapabilities() {
+  const t = useTranslations("scenario");
+  const items = [
+    { href: "/panno", icon: <LayoutGrid size={15} />, title: t("pannoTitle"), desc: t("pannoDesc") },
+    { href: "/maket", icon: <Ruler size={15} />, title: t("maketTitle"), desc: t("maketDesc") },
+    { href: "/worlds", icon: <Sparkles size={15} />, title: t("worldsTitle"), desc: t("worldsDesc") },
+    { href: "/showcase", icon: <Boxes size={15} />, title: t("showcaseTitle"), desc: t("showcaseDesc") },
+  ];
+  return (
+    <div className="mt-8" data-testid="home-more-capabilities">
+      <div className="eyebrow mb-3">{t("moreTitle")}</div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map((it) => (
+          <Link
+            key={it.href}
+            href={it.href}
+            className="flex items-start gap-2.5 rounded-[18px] border border-line bg-paper px-4 py-3 transition hover:-translate-y-0.5 hover:border-forest/40"
+          >
+            <span className="mt-0.5 shrink-0 text-forest">{it.icon}</span>
+            <span className="min-w-0">
+              <span className="block text-[14px] font-semibold leading-tight text-ink">{it.title}</span>
+              <span className="block text-[12px] leading-snug text-ink-3">{it.desc}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
