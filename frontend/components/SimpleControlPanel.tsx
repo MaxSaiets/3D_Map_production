@@ -437,7 +437,8 @@ export function SimpleControlPanel({
         // Не запускаємо дорогу 3MF-генерацію (1-3 хв), якщо юзер не залогінений або
         // вичерпав ліміт — перевіряємо ПЕРЕД генерацією, щоб не змусити чекати намарно.
         const token = await getIdToken().catch(() => null);
-        if (!token) { openLogin(); setDlBusy(false); return; }
+        // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
+        if (!token) { openLogin(() => { void doGatedDownload(); }); setDlBusy(false); return; }
         if (quota && !quota.isAdmin && quota.remaining <= 0) {
           window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: t("limitMsg") } }));
           setDlBusy(false); return;
@@ -452,7 +453,7 @@ export function SimpleControlPanel({
       const res = await gatedDownload({
         taskId: dlTaskId, downloadUrl: dlUrl,
         meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
-        getIdToken, openLogin,
+        getIdToken, openLogin: () => openLogin(() => { void doGatedDownload(); }),
         onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
           detail: { message: t("limitMsg") },
         })),

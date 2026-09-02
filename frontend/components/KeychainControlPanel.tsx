@@ -1029,7 +1029,8 @@ export function KeychainControlPanel({
       downloadUrl: taskStatuses[activeTaskId || ""]?.download_url_3mf || downloadUrl,
       meta: { title: label, product_type: "keychain" },
       preview,
-      getIdToken, openLogin,
+      // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
+      getIdToken, openLogin: () => openLogin(() => { void handleDownload(); }),
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
         detail: { message: t("error.limitContact") },
       })),

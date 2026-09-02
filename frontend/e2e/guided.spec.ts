@@ -17,16 +17,23 @@ test.describe("Guided /create (простий режим)", () => {
     });
   });
 
-  test("крок 1: 4 продуктові картки + рядок «Ще:» (брелок/панно/повний)", async ({ page }) => {
+  test("крок 1: 4 картки-продукти + видимий список «Що ще ми вміємо»", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow).toBeVisible();
     await expect(flow.getByText("Що створюємо?")).toBeVisible();
-    // Рівно 4 картки-продукти з фото (брелок/панно/повний — лінки, не картки)
+    // Рівно 4 картки-продукти з фото (решта можливостей — список нижче)
     await expect(flow.locator("img")).toHaveCount(4);
-    await expect(flow.getByText("Ще:")).toBeVisible();
+    // Власник: «не зрозуміло, які взагалі можливості» → список має бути ВИДИМИЙ
+    // і перелічувати всі інші продукти, а не ховатись у трьох дрібних лінках.
+    await expect(flow.getByText("Що ще ми вміємо")).toBeVisible();
+    const more = flow.getByTestId("scenario-more");
+    await expect(more).toBeVisible();
+    await expect(more.locator("> *")).toHaveCount(6);
+    for (const label of ["Брелок з моїм місцем", "Панно на стіну", "Макет квартири з плану", "3D-світ за описом", "Готові моделі"]) {
+      await expect(more.getByText(label, { exact: false })).toBeVisible();
+    }
     await expect(flow.getByTestId("scenario-full")).toBeVisible();
-    await expect(flow.getByRole("link", { name: /Брелок з моїм місцем/ })).toBeVisible();
   });
 
   test("крок 2: чіп міста → «Місце обрано», CTA безкоштовне, ціна рядком, плитки з порівнянням", async ({ page }) => {
@@ -47,6 +54,8 @@ test.describe("Guided /create (простий режим)", () => {
     // F-31: плитки розміру з побутовим порівнянням і ділянкою
     await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("як банківська картка");
     await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("≈560 м");
+    // Орієнтир «як це працює» — щоб було зрозуміло, що робить рамка на карті
+    await expect(flow.getByText(/рамка на карті = що надрукуємо/)).toBeVisible();
   });
 
   test("deep-link ?city=Lviv лишає простий режим і одразу ставить місце", async ({ page }) => {

@@ -15,7 +15,12 @@ interface AuthContextValue {
   loading: boolean;
   configured: boolean;
   signIn: () => void;        // opens the modal
-  openLogin: () => void;
+  /**
+   * Відкриває вікно входу. `after` — дія, яку ПРОДОВЖИТИ одразу після успішного
+   * входу (напр. завантаження файлу). Без цього користувач тиснув «Завантажити»,
+   * логінився — і нічого не відбувалось: доводилось здогадатись натиснути ще раз.
+   */
+  openLogin: (after?: () => void) => void;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   getIdToken: () => Promise<string | null>;
@@ -28,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(configured);
   const [open, setOpen] = useState(false);
+  // Відкладена дія (див. openLogin) — виконується один раз, коли зʼявився user.
+  const pendingAfterLoginRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!configured) { setLoading(false); return; }
@@ -39,10 +46,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; unsub?.(); };
   }, [configured]);
 
+  // Успішний вхід → закриваємо модалку і продовжуємо перервану дію.
+  useEffect(() => {
+    if (!user) return;
+    setOpen(false);
+    const after = pendingAfterLoginRef.current;
+    pendingAfterLoginRef.current = null;
+    if (after) {
+      // Даємо React домалювати новий стан, а Firebase — видати свіжий токен.
+      window.setTimeout(() => { try { after(); } catch { /* ignore */ } }, 120);
+    }
+  }, [user]);
+
   const value = useMemo<AuthContextValue>(() => ({
     user, loading, configured,
     signIn: () => setOpen(true),
-    openLogin: () => setOpen(true),
+    openLogin: (after?: () => void) => { pendingAfterLoginRef.current = after ?? null; setOpen(true); },
     signOut: async () => { await signOutUser(); },
     signInWithGoogle: async () => { await signInWithGoogle(); },
     getIdToken,
@@ -61,7 +80,7 @@ export function useAuth() {
   if (!value) {
     return {
       user: null, loading: false, configured: false,
-      signIn: () => {}, openLogin: () => {},
+      signIn: () => {}, openLogin: (_after?: () => void) => {},
       signOut: async () => {}, signInWithGoogle: async () => {},
       getIdToken: async () => null,
     } as AuthContextValue;

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Home, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
+import { ArrowLeft, Check, Download, Home, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
@@ -274,14 +274,22 @@ export function KeychainScenarioFlow({
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(priceUah)}
                 </button>
                 <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
+                {/* Завантаження — рівноправна кнопка, а не дрібний лінк (див. ScenarioFlow). */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("waySelf")}</span>
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                </div>
+                <button
+                  type="button"
+                  data-testid="kc-guided-download"
+                  onClick={() => window.dispatchEvent(new Event("monadruk:kc-guided-download"))}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white px-6 py-3 text-[14.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)] hover:bg-[rgba(15,118,110,0.06)]"
+                >
+                  <Download size={17} /> {t("downloadCta")}
+                </button>
+                <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new Event("monadruk:kc-guided-download"))}
-                    className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
-                  >
-                    {t("downloadFree")}
-                  </button>
                   <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
                     {t("tuneDetails")}
                   </button>
@@ -311,6 +319,10 @@ export function KeychainScenarioFlow({
               </div>
             )}
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
+            {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}
+            {!successView && !generatingView && (
+              <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("howItWorks")}</p>
+            )}
             {/* Пошук ПРЯМО в панелі: та сама подія monadruk:map-goto, яку слухає
                 KeychainCropOverlay (зона переноситься, розмір лишається за шаблоном). */}
             <div className="rounded-full border border-[var(--surface-border)] bg-white/80 px-1.5 py-0.5 focus-within:border-[rgba(11,92,87,0.45)]">

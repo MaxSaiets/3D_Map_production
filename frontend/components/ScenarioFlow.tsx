@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Home, KeyRound, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
+import { ArrowLeft, Boxes, Check, Download, Home, KeyRound, LayoutGrid, Loader2, MapPin, PenLine, Ruler, ShoppingBag, Sliders, Sparkles, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link — інакше лінк на
 // /keychains з /en/create губив би префікс локалі.
@@ -310,19 +310,44 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </button>
               ))}
             </div>
-            {/* T-3.4 (F-20): крок 1 = лише 4 продукти, які створюємо ТУТ. Брелок і панно —
-                інші сторінки, повний конструктор — інший UI: тихий рядок лінків, не картки. */}
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-semibold text-[var(--text-secondary)]">
-              <span className="text-[11px] uppercase tracking-[0.16em]">{t("moreLabel")}</span>
-              <Link href="/keychains" className="inline-flex items-center gap-1 underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
-                <KeyRound size={12} /> {t("keychainTitle")} · {t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}
-              </Link>
-              <Link href="/panno" className="underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
-                {t("pannoTitle")}
-              </Link>
-              <button type="button" onClick={onExitGuided} data-testid="scenario-full" className="inline-flex items-center gap-1 underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
-                <Sliders size={12} /> {t("fullTitle")}
-              </button>
+            {/* Власник: «не зрозуміло, які взагалі є можливості». Крок 1 показує 4
+                головні продукти картками, а ВСЕ інше, що вміє сайт — видимим
+                списком із поясненням (раніше це були 3 дрібні лінки в рядок). */}
+            <div className="mt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
+              <div className="mt-2 grid gap-1.5" data-testid="scenario-more">
+                {[
+                  { key: "kc", href: "/keychains", icon: <KeyRound size={14} />, title: `${t("keychainTitle")} · ${t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}`, desc: t("keychainDesc") },
+                  { key: "panno", href: "/panno", icon: <LayoutGrid size={14} />, title: t("pannoTitle"), desc: t("pannoDesc") },
+                  { key: "maket", href: "/maket", icon: <Ruler size={14} />, title: t("maketTitle"), desc: t("maketDesc") },
+                  { key: "worlds", href: "/worlds", icon: <Sparkles size={14} />, title: t("worldsTitle"), desc: t("worldsDesc") },
+                  { key: "showcase", href: "/showcase", icon: <Boxes size={14} />, title: t("showcaseTitle"), desc: t("showcaseDesc") },
+                ].map((it) => (
+                  <Link
+                    key={it.key}
+                    href={it.href}
+                    className="flex items-start gap-2.5 rounded-[14px] border border-[var(--surface-border)] bg-white/70 px-3 py-2 transition hover:border-[rgba(11,92,87,0.4)] hover:bg-white"
+                  >
+                    <span className="mt-0.5 shrink-0 text-[var(--accent-strong)]">{it.icon}</span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{it.title}</span>
+                      <span className="block text-[11.5px] leading-snug text-[var(--text-secondary)]">{it.desc}</span>
+                    </span>
+                  </Link>
+                ))}
+                <button
+                  type="button"
+                  onClick={onExitGuided}
+                  data-testid="scenario-full"
+                  className="flex items-start gap-2.5 rounded-[14px] border border-[var(--surface-border)] bg-white/70 px-3 py-2 text-left transition hover:border-[rgba(11,92,87,0.4)] hover:bg-white"
+                >
+                  <span className="mt-0.5 shrink-0 text-[var(--accent-strong)]"><Sliders size={14} /></span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{t("fullTitle")}</span>
+                    <span className="block text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("fullDescLong")}</span>
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -353,14 +378,24 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
                 </button>
                 <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
+                {/* «Не зрозуміло, як качати» (власник): завантаження було дрібним
+                    текстовим лінком під бронзовою кнопкою. Тепер — рівноправна
+                    кнопка з підписом, ЩО це і що потрібен вхід. */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("waySelf")}</span>
+                  <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                </div>
+                <button
+                  type="button"
+                  data-testid="guided-download"
+                  onClick={() => window.dispatchEvent(new Event("monadruk:guided-download"))}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white px-6 py-3 text-[14.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)] hover:bg-[rgba(15,118,110,0.06)]"
+                >
+                  <Download size={17} /> {t("downloadCta")}
+                </button>
+                <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new Event("monadruk:guided-download"))}
-                    className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline"
-                  >
-                    {t("downloadFree")}
-                  </button>
                   <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
                     {t("tuneDetails")}
                   </button>
@@ -390,6 +425,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               </div>
             )}
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
+            {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}
+            {!successView && !generatingView && (
+              <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("howItWorks")}</p>
+            )}
             {/* ПОШУК ПРЯМО В ПАНЕЛІ (v2): раніше поле жило лише на карті, а панель
                 давала довгу інструкцію «йдіть шукайте там» — погляд стрибав. Тепер
                 друкуєш адресу тут; та сама подія monadruk:map-goto → автозона. */}
