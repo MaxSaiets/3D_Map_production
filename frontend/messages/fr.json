@@ -37,7 +37,7 @@
       "title2": "en 3D.",
       "desc": "Choisis un quartier qui compte pour toi — ou n'importe quel point de la Terre. Nous le transformons en carte architecturale tactile avec les hauteurs réelles des bâtiments, parcs et rivières. Télécharge un fichier 3D prêt et imprime.",
       "ctaCreate": "Créer ta carte",
-      "ctaKeychain": "Porte-clés carte",
+      "ctaKeychain": "Créer un porte-clés",
       "stat1n": "Toute ville",
       "stat1l": "dans le monde",
       "stat2n": "3MF · STL",
@@ -50,7 +50,7 @@
       "viewerKeychain": "Porte-clés carte de ville",
       "viewerMap": "Quartier en 3D",
       "dragHint": "Modèles 3D en direct — fais glisser pour tourner",
-      "try": "Essayer",
+      "try": "Créer une carte",
       "badgeEco": "Eco PLA",
       "badgeReady": "3MF prêt"
     },
@@ -62,7 +62,7 @@
       "eyebrow2": "Voie 2 · Accessoire",
       "title2": "Porte-clés carte",
       "desc2": "Une miniature de ton quartier sur tes clés. Une plaque 55×30, classique ou carrée — avec ton texte.",
-      "cta2": "Ouvrir l'atelier porte-clés"
+      "cta2": "Créer un porte-clés"
     },
     "how": {
       "eyebrow": "Processus",
@@ -76,7 +76,7 @@
       "s3d": "Le serveur construit un modèle 3D précis à partir des données OpenStreetMap et des altitudes.",
       "s4t": "Télécharge",
       "s4d": "Un 3MF prêt pour Bambu Studio / PrusaSlicer. Imprime chez toi.",
-      "cta": "Commencer"
+      "cta": "Créer une carte"
     },
     "templates": {
       "eyebrow": "Modèles prêts",
@@ -144,7 +144,7 @@
       "title": "Crée la carte d'un lieu qui compte plus qu'un point sur une carte.",
       "desc": "2 étapes, 1–2 minutes — et ton aperçu 3D est prêt. Ensuite : commande l'impression ou télécharge le fichier.",
       "create": "Créer une carte",
-      "keychain": "Porte-clés"
+      "keychain": "Créer un porte-clés"
     },
     "footer": {
       "create": "Créer une carte",
@@ -390,6 +390,11 @@
     "errAddressEu": "Indiquez l’adresse complète",
     "errUkrAddress": "Pour Ukrposhta, indiquez la rue et le numéro",
     "retry": "Réessayer",
+    "next1": "Nous confirmons la commande par messagerie ou téléphone",
+    "next2": "Impression et envoi sous 2–4 jours ouvrés",
+    "next3": "Nous envoyons le numéro de suivi",
+    "copyNo": "Copier le numéro",
+    "copied": "Copié",
     "contactsHeading": "Contact",
     "deliveryHeading": "Livraison",
     "uaOnly": "Pour l’instant, livraison uniquement en Ukraine. À l’étranger ? Téléchargez le fichier et imprimez-le dans un studio d’impression 3D local.",
@@ -1703,10 +1708,14 @@
     "fullTitle": "Constructeur complet",
     "fullDesc": "Tous les réglages : séries, GPX, styles, formes",
     "moreLabel": "Plus :",
+    "sizeCmpS": "½ carte bancaire",
+    "sizeCmpM": "comme une carte bancaire",
+    "sizeCmpL": "comme une paume",
+    "sizeCmpXL": "comme une feuille A5",
     "back": "Retour",
     "step2Hint": "Trouvez une ville ou une adresse dans la recherche de la carte et cliquez : la zone se place automatiquement",
     "placeChosen": "Lieu choisi",
-    "waitingPlace": "En attente du choix d'un lieu sur la carte…",
+    "waitingPlace": "Cherchez une adresse, touchez une ville ci-dessus ou déplacez le cadre sur la carte",
     "magnetFixedNote": "Le magnet a une taille fixe de 6 cm — {price}",
     "createModel": "Créer le modèle",
     "generating": "Génération du modèle…",
@@ -1758,7 +1767,7 @@
     "cardRectDesc": "Porte-clés vertical 35×55 mm avec la carte de votre quartier",
     "cardFullTitle": "Créateur complet",
     "cardFullDesc": "Toutes les formes, réglages, trace GPX, relief topo",
-    "waitingPlace": "En attente du choix d'un lieu sur la carte…",
+    "waitingPlace": "Cherchez une adresse, touchez une ville ci-dessus ou déplacez le cadre sur la carte",
     "placeChosen": "Lieu choisi",
     "personalizeTitle": "Rendez-le personnel",
     "labelPlaceholder": "Texte sur le porte-clés (ville, prénom…)",

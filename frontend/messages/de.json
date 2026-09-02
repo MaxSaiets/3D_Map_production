@@ -37,7 +37,7 @@
       "title2": "in 3D.",
       "desc": "Wähle ein Viertel, das dir etwas bedeutet — oder jeden Punkt der Erde. Wir verwandeln es in eine taktile Architekturkarte mit echten Gebäude-, Park- und Flusshöhen. Lade eine fertige 3D-Datei herunter und drucke.",
       "ctaCreate": "Karte erstellen",
-      "ctaKeychain": "Karten-Anhänger",
+      "ctaKeychain": "Anhänger erstellen",
       "stat1n": "Jede Stadt",
       "stat1l": "weltweit",
       "stat2n": "3MF · STL",
@@ -50,7 +50,7 @@
       "viewerKeychain": "Schlüsselanhänger mit Stadtkarte",
       "viewerMap": "3D-Stadtviertel",
       "dragHint": "Live-3D-Modelle — zum Drehen ziehen",
-      "try": "Ausprobieren",
+      "try": "Karte erstellen",
       "badgeEco": "Eco PLA",
       "badgeReady": "Fertige 3MF"
     },
@@ -62,7 +62,7 @@
       "eyebrow2": "Weg 2 · Accessoire",
       "title2": "Karten-Anhänger",
       "desc2": "Eine Miniatur deines Viertels am Schlüssel. Ein 55×30-Plättchen, klassisch oder quadratisch — mit deinem Text.",
-      "cta2": "Anhänger-Werkstatt öffnen"
+      "cta2": "Anhänger erstellen"
     },
     "how": {
       "eyebrow": "Ablauf",
@@ -76,7 +76,7 @@
       "s3d": "Der Server baut ein präzises 3D-Modell aus OpenStreetMap-Daten und Höhen.",
       "s4t": "Herunterladen",
       "s4d": "Fertige 3MF für Bambu Studio / PrusaSlicer. Drucke zuhause.",
-      "cta": "Loslegen"
+      "cta": "Karte erstellen"
     },
     "templates": {
       "eyebrow": "Fertige Vorlagen",
@@ -144,7 +144,7 @@
       "title": "Erstelle eine Karte von einem Ort, der mehr bedeutet als ein Punkt.",
       "desc": "2 Schritte, 1–2 Minuten — und deine 3D-Vorschau ist fertig. Danach: Druck bestellen oder Datei laden.",
       "create": "Karte erstellen",
-      "keychain": "Anhänger"
+      "keychain": "Anhänger erstellen"
     },
     "footer": {
       "create": "Karte erstellen",
@@ -390,6 +390,11 @@
     "errAddressEu": "Vollständige Lieferadresse angeben",
     "errUkrAddress": "Für Ukrposhta auch Straße und Haus angeben",
     "retry": "Erneut versuchen",
+    "next1": "Wir bestätigen die Bestellung per Messenger oder Anruf",
+    "next2": "Druck und Versand in 2–4 Werktagen",
+    "next3": "Wir senden die Sendungsnummer",
+    "copyNo": "Nummer kopieren",
+    "copied": "Kopiert",
     "contactsHeading": "Kontakt",
     "deliveryHeading": "Lieferung",
     "uaOnly": "Versand derzeit nur innerhalb der Ukraine. Im Ausland? Laden Sie die Datei herunter und drucken Sie sie in einem lokalen 3D-Druckstudio.",
@@ -1703,10 +1708,14 @@
     "fullTitle": "Voller Konfigurator",
     "fullDesc": "Alle Einstellungen: Serien, GPX, Stile, Formen",
     "moreLabel": "Mehr:",
+    "sizeCmpS": "½ Bankkarte",
+    "sizeCmpM": "wie eine Bankkarte",
+    "sizeCmpL": "wie eine Handfläche",
+    "sizeCmpXL": "wie ein A5-Blatt",
     "back": "Zurück",
     "step2Hint": "Finden Sie eine Stadt oder Adresse über die Kartensuche und klicken Sie darauf — die Zone wird automatisch gesetzt",
     "placeChosen": "Ort ausgewählt",
-    "waitingPlace": "Warten auf die Ortswahl auf der Karte…",
+    "waitingPlace": "Adresse suchen, oben eine Stadt antippen oder den Rahmen auf der Karte ziehen",
     "magnetFixedNote": "Der Magnet hat eine feste Größe von 6 cm — {price}",
     "createModel": "Modell erstellen",
     "generating": "Modell wird generiert…",
@@ -1758,7 +1767,7 @@
     "cardRectDesc": "Vertikaler 35×55-mm-Anhänger mit Ihrer Viertelkarte",
     "cardFullTitle": "Voller Designer",
     "cardFullDesc": "Alle Formen, Regler, GPX-Track, Topo-Relief",
-    "waitingPlace": "Warten auf die Ortswahl auf der Karte…",
+    "waitingPlace": "Adresse suchen, oben eine Stadt antippen oder den Rahmen auf der Karte ziehen",
     "placeChosen": "Ort ausgewählt",
     "personalizeTitle": "Machen Sie ihn persönlich",
     "labelPlaceholder": "Text auf dem Anhänger (Stadt, Name…)",

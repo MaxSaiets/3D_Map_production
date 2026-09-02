@@ -55,8 +55,10 @@ function Model({ url, mirror = true, lieFlat = false, onReady }: { url: string; 
 /** Auto-rotating 3D viewer for a baked GLB. Mounts the WebGL canvas only when
  *  scrolled near the viewport (saves battery/CPU on mobile & speeds first paint). */
 export default function Model3DViewer({
-  url, height = 360, allowZoom = false, autoRotate = true, label, onActivate, flat,
-}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void; flat?: boolean }) {
+  url, height = 360, allowZoom = false, autoRotate = true, label, onActivate, flat, poster,
+}: { url: string; height?: number; allowZoom?: boolean; autoRotate?: boolean; label?: string; onActivate?: () => void; flat?: boolean;
+  /** T-4.2 (F-12a): реальне фото продукту до завантаження GLB — перший екран показує товар, не спінер. */
+  poster?: string }) {
   const t = useTranslations("viewer3d");
   const ref = useRef<HTMLDivElement | null>(null);
   const down = useRef<{ x: number; y: number } | null>(null);
@@ -152,7 +154,12 @@ export default function Model3DViewer({
       ) : null}
       {!ready && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-black/[0.05] via-transparent to-black/[0.07]" />
+          {poster ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={poster} alt="" aria-hidden className="absolute inset-0 h-full w-full rounded-[inherit] object-cover" fetchPriority="high" />
+          ) : (
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-black/[0.05] via-transparent to-black/[0.07]" />
+          )}
           <span className="relative inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-ink-3 shadow-sm">
             <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity=".25" />

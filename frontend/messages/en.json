@@ -37,7 +37,7 @@
       "title2": "in 3D.",
       "desc": "Pick a district that means something to you — or any point on Earth. We turn it into a tactile architectural map with real building, park and river heights. Download a ready 3D file and print.",
       "ctaCreate": "Create your map",
-      "ctaKeychain": "Map keychain",
+      "ctaKeychain": "Make a keychain",
       "stat1n": "Any city",
       "stat1l": "worldwide",
       "stat2n": "3MF · STL",
@@ -50,7 +50,7 @@
       "viewerKeychain": "City map keychain",
       "viewerMap": "3D city district",
       "dragHint": "Live 3D models — drag to rotate",
-      "try": "Try it",
+      "try": "Create a map",
       "badgeEco": "Eco PLA",
       "badgeReady": "Ready 3MF"
     },
@@ -62,7 +62,7 @@
       "eyebrow2": "Path 2 · Accessory",
       "title2": "Map keychain",
       "desc2": "A miniature of your district on your keys. A 55×30 tag, classic or square — with your text.",
-      "cta2": "Open the keychain studio"
+      "cta2": "Make a keychain"
     },
     "how": {
       "eyebrow": "Process",
@@ -76,7 +76,7 @@
       "s3d": "Our server builds a precise 3D model from OpenStreetMap data and elevations.",
       "s4t": "Download",
       "s4d": "A ready 3MF for Bambu Studio / PrusaSlicer. Print at home.",
-      "cta": "Get started"
+      "cta": "Create a map"
     },
     "templates": {
       "eyebrow": "Ready templates",
@@ -144,7 +144,7 @@
       "title": "Make a map of a place that means more than a dot on a map.",
       "desc": "2 steps, 1–2 minutes — and your 3D preview is ready. Then order a print or download the file.",
       "create": "Create a map",
-      "keychain": "Keychain"
+      "keychain": "Make a keychain"
     },
     "footer": {
       "create": "Create a map",
@@ -390,6 +390,11 @@
     "errAddressEu": "Enter the full delivery address",
     "errUkrAddress": "For Ukrposhta, also enter street and house",
     "retry": "Retry",
+    "next1": "We confirm the order by messenger or phone",
+    "next2": "Printed and shipped in 2–4 business days",
+    "next3": "We send the tracking number",
+    "copyNo": "Copy number",
+    "copied": "Copied",
     "contactsHeading": "Contacts",
     "deliveryHeading": "Delivery",
     "uaOnly": "We currently ship within Ukraine only. Abroad? Download the file and print it at a local 3D-print studio.",
@@ -1703,10 +1708,14 @@
     "fullTitle": "Full builder",
     "fullDesc": "All settings: series, GPX, styles, shapes",
     "moreLabel": "More:",
+    "sizeCmpS": "½ of a bank card",
+    "sizeCmpM": "like a bank card",
+    "sizeCmpL": "like a palm",
+    "sizeCmpXL": "like an A5 sheet",
     "back": "Back",
     "step2Hint": "Find a city or address in the map search and click it — the zone is set automatically",
     "placeChosen": "Place selected",
-    "waitingPlace": "Waiting for you to pick a place on the map…",
+    "waitingPlace": "Find an address, tap a city above or drag the frame on the map",
     "magnetFixedNote": "The magnet has a fixed size of 6 cm — {price}",
     "createModel": "Create model",
     "generating": "Generating your model…",
@@ -1758,7 +1767,7 @@
     "cardRectDesc": "Vertical 35×55 mm keychain with your district map",
     "cardFullTitle": "Full designer",
     "cardFullDesc": "All shapes, sliders, GPX track, topo relief",
-    "waitingPlace": "Waiting for you to pick a place on the map…",
+    "waitingPlace": "Find an address, tap a city above or drag the frame on the map",
     "placeChosen": "Place selected",
     "personalizeTitle": "Make it personal",
     "labelPlaceholder": "Text on the keychain (city, name…)",

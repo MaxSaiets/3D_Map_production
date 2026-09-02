@@ -58,6 +58,7 @@ export function OrderDialog({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nova");
+  const [copied, setCopied] = useState(false);
   const [city, setCity] = useState("");
   const [branch, setBranch] = useState("");
   const [address, setAddress] = useState("");
@@ -247,6 +248,24 @@ export function OrderDialog({
               {t("orderNo")} <b className="text-[var(--text-primary)]">#{orderNumber}</b>.<br />
               {t("acceptedText")}
             </p>
+            {/* T-2.4: детермінований екран успіху — «що далі» + скопіювати номер. */}
+            <button
+              type="button"
+              onClick={() => {
+                try { navigator.clipboard?.writeText(String(orderNumber)); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
+              }}
+              className="mt-2 rounded-full border border-[var(--surface-border)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            >
+              {copied ? `✓ ${t("copied")}` : t("copyNo")}
+            </button>
+            <ol className="mx-auto mt-4 max-w-[320px] space-y-1.5 text-left text-[12.5px] leading-5 text-[var(--text-secondary)]">
+              {(["next1", "next2", "next3"] as const).map((k, i) => (
+                <li key={k} className="flex gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgba(46,74,58,0.1)] text-[11px] font-bold text-[var(--accent-strong)]">{i + 1}</span>
+                  <span>{t(k)}</span>
+                </li>
+              ))}
+            </ol>
             {payment && (() => {
               const payLabel = `${t("payNow")} · ${priceText || fallbackPrice}`;
               const btnCls = "mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-5 py-3 text-[15px] font-extrabold text-white shadow-[0_16px_34px_rgba(142,107,61,0.32)] transition hover:opacity-90";

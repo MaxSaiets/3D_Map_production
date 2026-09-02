@@ -37,7 +37,7 @@
       "title2": "en 3D.",
       "desc": "Elige un distrito que signifique algo para ti — o cualquier punto de la Tierra. Lo convertimos en un mapa arquitectónico táctil con alturas reales de edificios, parques y ríos. Descarga un archivo 3D listo e imprime.",
       "ctaCreate": "Crear tu mapa",
-      "ctaKeychain": "Llavero con mapa",
+      "ctaKeychain": "Crear llavero",
       "stat1n": "Cualquier ciudad",
       "stat1l": "en todo el mundo",
       "stat2n": "3MF · STL",
@@ -50,7 +50,7 @@
       "viewerKeychain": "Llavero con mapa de ciudad",
       "viewerMap": "Distrito en 3D",
       "dragHint": "Modelos 3D en vivo — arrastra para girar",
-      "try": "Probar",
+      "try": "Crear mapa",
       "badgeEco": "Eco PLA",
       "badgeReady": "3MF listo"
     },
@@ -62,7 +62,7 @@
       "eyebrow2": "Vía 2 · Accesorio",
       "title2": "Llavero con mapa",
       "desc2": "Una miniatura de tu distrito en tus llaves. Una placa 55×30, clásica o cuadrada — con tu texto.",
-      "cta2": "Abrir el taller de llaveros"
+      "cta2": "Crear llavero"
     },
     "how": {
       "eyebrow": "Proceso",
@@ -76,7 +76,7 @@
       "s3d": "El servidor crea un modelo 3D preciso con datos de OpenStreetMap y elevaciones.",
       "s4t": "Descarga",
       "s4d": "Un 3MF listo para Bambu Studio / PrusaSlicer. Imprime en casa.",
-      "cta": "Empezar"
+      "cta": "Crear mapa"
     },
     "templates": {
       "eyebrow": "Plantillas listas",
@@ -143,8 +143,8 @@
       "eyebrow": "¿Listo para empezar?",
       "title": "Crea el mapa de un lugar que significa más que un punto en el mapa.",
       "desc": "2 pasos, 1–2 minutos — y tu vista previa 3D está lista. Luego: pide la impresión o descarga el archivo.",
-      "create": "Crear un mapa",
-      "keychain": "Llavero"
+      "create": "Crear mapa",
+      "keychain": "Crear llavero"
     },
     "footer": {
       "create": "Crear un mapa",
@@ -390,6 +390,11 @@
     "errAddressEu": "Indica la dirección completa",
     "errUkrAddress": "Para Ukrposhta indica calle y número",
     "retry": "Reintentar",
+    "next1": "Confirmamos el pedido por mensajería o llamada",
+    "next2": "Impreso y enviado en 2–4 días hábiles",
+    "next3": "Te enviamos el número de seguimiento",
+    "copyNo": "Copiar número",
+    "copied": "Copiado",
     "contactsHeading": "Contacto",
     "deliveryHeading": "Entrega",
     "uaOnly": "Por ahora solo enviamos dentro de Ucrania. ¿Estás en el extranjero? Descarga el archivo e imprímelo en un estudio de impresión 3D local.",
@@ -1703,10 +1708,14 @@
     "fullTitle": "Constructor completo",
     "fullDesc": "Todos los ajustes: series, GPX, estilos, formas",
     "moreLabel": "Más:",
+    "sizeCmpS": "½ tarjeta bancaria",
+    "sizeCmpM": "como una tarjeta bancaria",
+    "sizeCmpL": "como una palma",
+    "sizeCmpXL": "como una hoja A5",
     "back": "Atrás",
     "step2Hint": "Busque una ciudad o dirección en el buscador del mapa y haga clic: la zona se establecerá automáticamente",
     "placeChosen": "Lugar seleccionado",
-    "waitingPlace": "Esperando a que elija un lugar en el mapa…",
+    "waitingPlace": "Busca una dirección, toca una ciudad arriba o arrastra el marco en el mapa",
     "magnetFixedNote": "El imán tiene un tamaño fijo de 6 cm — {price}",
     "createModel": "Crear modelo",
     "generating": "Generando el modelo…",
@@ -1758,7 +1767,7 @@
     "cardRectDesc": "Llavero vertical de 35×55 mm con el mapa de tu barrio",
     "cardFullTitle": "Diseñador completo",
     "cardFullDesc": "Todas las formas, controles, track GPX, relieve topográfico",
-    "waitingPlace": "Esperando a que elijas un lugar en el mapa…",
+    "waitingPlace": "Busca una dirección, toca una ciudad arriba o arrastra el marco en el mapa",
     "placeChosen": "Lugar elegido",
     "personalizeTitle": "Hazlo personal",
     "labelPlaceholder": "Texto en el llavero (ciudad, nombre…)",

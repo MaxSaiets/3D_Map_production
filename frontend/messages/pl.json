@@ -37,7 +37,7 @@
       "title2": "w 3D.",
       "desc": "Wybierz dzielnicę, która coś dla Ciebie znaczy — lub dowolny punkt na Ziemi. Zamienimy go w dotykową mapę architektoniczną z realnymi wysokościami budynków, parków i rzek. Pobierz gotowy plik 3D i drukuj.",
       "ctaCreate": "Stwórz swoją mapę",
-      "ctaKeychain": "Brelok z mapą",
+      "ctaKeychain": "Stwórz brelok",
       "stat1n": "Dowolne miasto",
       "stat1l": "na całym świecie",
       "stat2n": "3MF · STL",
@@ -50,7 +50,7 @@
       "viewerKeychain": "Brelok z mapą miasta",
       "viewerMap": "Dzielnica 3D",
       "dragHint": "Modele 3D na żywo — przeciągnij, aby obrócić",
-      "try": "Wypróbuj",
+      "try": "Stwórz mapę",
       "badgeEco": "Eco PLA",
       "badgeReady": "Gotowy 3MF"
     },
@@ -62,7 +62,7 @@
       "eyebrow2": "Ścieżka 2 · Akcesorium",
       "title2": "Brelok z mapą",
       "desc2": "Miniatura Twojej dzielnicy przy kluczach. Blaszka 55×30, klasyczna lub kwadratowa — z Twoim napisem.",
-      "cta2": "Otwórz pracownię breloków"
+      "cta2": "Stwórz brelok"
     },
     "how": {
       "eyebrow": "Proces",
@@ -76,7 +76,7 @@
       "s3d": "Serwer buduje dokładny model 3D z danych OpenStreetMap i wysokości.",
       "s4t": "Pobierz",
       "s4d": "Gotowy 3MF do Bambu Studio / PrusaSlicer. Drukuj w domu.",
-      "cta": "Zacznij"
+      "cta": "Stwórz mapę"
     },
     "templates": {
       "eyebrow": "Gotowe szablony",
@@ -144,7 +144,7 @@
       "title": "Stwórz mapę miejsca, które znaczy więcej niż punkt na mapie.",
       "desc": "2 kroki, 1–2 minuty — i masz podgląd 3D. Potem: zamów druk albo pobierz plik.",
       "create": "Stwórz mapę",
-      "keychain": "Brelok"
+      "keychain": "Stwórz brelok"
     },
     "footer": {
       "create": "Stwórz mapę",
@@ -390,6 +390,11 @@
     "errAddressEu": "Podaj pełny adres dostawy",
     "errUkrAddress": "Dla Ukrposhta podaj też ulicę i numer",
     "retry": "Spróbuj ponownie",
+    "next1": "Potwierdzimy zamówienie przez komunikator lub telefon",
+    "next2": "Druk i wysyłka w 2–4 dni robocze",
+    "next3": "Wyślemy numer przesyłki",
+    "copyNo": "Kopiuj numer",
+    "copied": "Skopiowano",
     "contactsHeading": "Kontakt",
     "deliveryHeading": "Dostawa",
     "uaOnly": "Obecnie wysyłamy tylko na terenie Ukrainy. Za granicą? Pobierz plik i wydrukuj go w lokalnym studiu druku 3D.",
@@ -1703,10 +1708,14 @@
     "fullTitle": "Pełny konfigurator",
     "fullDesc": "Wszystkie ustawienia: serie, GPX, style, kształty",
     "moreLabel": "Więcej:",
+    "sizeCmpS": "½ karty bankowej",
+    "sizeCmpM": "jak karta bankowa",
+    "sizeCmpL": "jak dłoń",
+    "sizeCmpXL": "jak kartka A5",
     "back": "Wstecz",
     "step2Hint": "Znajdź miasto lub adres w wyszukiwarce na mapie i kliknij — strefa ustawi się automatycznie",
     "placeChosen": "Miejsce wybrane",
-    "waitingPlace": "Oczekiwanie na wybór miejsca na mapie…",
+    "waitingPlace": "Znajdź adres, dotknij miasta powyżej lub przeciągnij ramkę na mapie",
     "magnetFixedNote": "Magnes ma stały rozmiar 6 cm — {price}",
     "createModel": "Utwórz model",
     "generating": "Generowanie modelu…",
@@ -1758,7 +1767,7 @@
     "cardRectDesc": "Pionowy brelok 35×55 mm z mapą Twojej dzielnicy",
     "cardFullTitle": "Pełny kreator",
     "cardFullDesc": "Wszystkie kształty, suwaki, trasa GPX, relief topo",
-    "waitingPlace": "Czekamy na wybór miejsca na mapie…",
+    "waitingPlace": "Znajdź adres, dotknij miasta powyżej lub przeciągnij ramkę na mapie",
     "placeChosen": "Miejsce wybrane",
     "personalizeTitle": "Uczyń go osobistym",
     "labelPlaceholder": "Napis na breloku (miasto, imię…)",
