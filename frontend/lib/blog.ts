@@ -7,6 +7,7 @@
 // сторінки, що можуть ранжуватись самі і лінкують у конструктор/каталог.
 // ──────────────────────────────────────────────────────────────────────────
 import type { AppLocale } from "@/i18n/routing";
+import { GIFT_ARTICLES_2026 } from "@/lib/blogGifts";
 
 export type BlogSection = { h2?: string; p: string[] };
 export type BlogArticleContent = {
@@ -3347,6 +3348,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       },
     },
   },
+  // Статті під подарункові запити (2026-09-03) — окремий файл, щоб не роздувати цей.
+  ...GIFT_ARTICLES_2026,
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(

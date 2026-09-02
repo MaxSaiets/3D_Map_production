@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
+import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Boxes, Check, Download, Home, KeyRound, LayoutGrid, Loader2, MapPin, PenLine, Ruler, ShoppingBag, Sliders, Sparkles, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
@@ -56,6 +57,7 @@ type ScenarioId = "map3d" | "relief" | "flat" | "magnet";
  */
 export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const t = useTranslations("scenario");
+  const dlQuota = useDownloadQuota();
   const locale = useLocale();
   // Діаспора (не-uk) бачить € за тим самим позиційним курсом, що й решта сайту.
   const isEu = locale !== "uk";
@@ -395,6 +397,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <Download size={17} /> {t("downloadCta")}
                 </button>
                 <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
+                {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
+                {dlQuota && !dlQuota.isAdmin && (
+                  <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
+                )}
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                   <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
                     {t("tuneDetails")}

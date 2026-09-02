@@ -1037,6 +1037,7 @@ export function KeychainControlPanel({
     });
     if (res.status === "error") setError(t("error.downloadFailed"));
     if (res.status === "ok") {
+        window.dispatchEvent(new Event("monadruk:quota-changed"));
       if (res.quota && typeof res.quota.remaining === "number") {
         setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
       } else {
