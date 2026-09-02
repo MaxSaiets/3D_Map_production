@@ -182,11 +182,13 @@ export default function HomePage() {
       <main id="main-content" tabIndex={-1}>
         <Hero />
         <PathSelector />
+        {/* T-4.8: реальні фото друків одразу після вибору шляху — довіра до
+            того, як прокрутити 3 екрани (особливо на телефоні). */}
+        <RealPrints />
         <ShowcaseSection />
         <HowItWorks />
         <TemplatesGallery />
         <Craft />
-        <RealPrints />
         <Testimonials />
         <Faq />
         <SeoTextBlock />

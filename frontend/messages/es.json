@@ -1735,7 +1735,7 @@
     "myHomeClear": "Quitar selección",
     "myHomeHintClick": "Haga clic en su edificio en el mapa — se convierte en un inserto rojo aparte",
     "mapLabelPlaceholder": "Texto en el mapa (ciudad, nombre…)",
-    "etaNote": "Normalmente 1–2 minutos",
+    "etaNote": "Normalmente 1–2 minutos. No hace falta esperar — el modelo queda guardado en esta página",
     "readyBadge": "Listo",
     "changePlace": "Cambiar lugar",
     "addLabel": "Añadir texto en el mapa",

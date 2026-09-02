@@ -1735,7 +1735,7 @@
     "myHomeClear": "Clear selection",
     "myHomeHintClick": "Click your building on the map — it becomes a separate red insert",
     "mapLabelPlaceholder": "Text on the map (city, name…)",
-    "etaNote": "Usually 1–2 minutes",
+    "etaNote": "Usually 1–2 minutes. No need to wait — the model stays saved on this page",
     "readyBadge": "Done",
     "changePlace": "Change place",
     "addLabel": "Add text on the map",
