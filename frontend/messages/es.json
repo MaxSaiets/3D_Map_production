@@ -1,8 +1,17 @@
 {
+  "start": {
+    "title": "Mapa 3D de tu ciudad",
+    "line": "Elige un barrio en el mapa — imprimimos mapa 3D, llavero o imán",
+    "price": "desde 120 ₴ · impresión 2–4 días · Ucrania",
+    "cta1": "Crear el mapa de mi barrio",
+    "cta2": "Crear un llavero con mapa",
+    "cta3": "Ver precios",
+    "photos": "Impresiones reales"
+  },
   "meta": {
     "skipToContent": "Saltar al contenido",
-    "homeTitle": "Monadruk — mapas 3D de tu ciudad para imprimir",
-    "homeDescription": "Mapa 3D de tu ciudad: elige un distrito, ajusta el modelo y descarga el archivo para imprimir. Mapas táctiles reales. Impresión y llaveros por encargo.",
+    "homeTitle": "Mapa 3D de tu ciudad a medida — un regalo con tu barrio | Monadruk",
+    "homeDescription": "Elige un barrio en el mapa — imprimimos un mapa 3D, llavero o imán. Cualquier ciudad del mundo, vista previa 3D gratis en 1–2 minutos.",
     "ogTitle": "Monadruk — mapas 3D de tu ciudad",
     "ogDescription": "Convierte cualquier lugar de la Tierra en un mapa 3D táctil listo para imprimir.",
     "keywords": "mapa 3d de ciudad, impresión 3d mapa ciudad, plano de ciudad 3d, llavero mapa de ciudad, llavero personalizado mapa, mapa stl, mapa 3mf, mapa topográfico 3d, llavero relieve, imán nevera mapa ciudad, regalo mapa personalizado, regalo de aniversario, mapa táctil, Bambu Studio, PrusaSlicer",
@@ -30,6 +39,16 @@
     "maket": "Maqueta"
   },
   "home": {
+    "occasions": {
+      "title": "¿Buscas un regalo?",
+      "sub": "Un mapa de un lugar que importa — para una ocasión concreta",
+      "richnytsia": "Aniversario",
+      "birthday": "Cumpleaños",
+      "housewarming": "Inauguración de casa",
+      "couple": "Para una pareja",
+      "corporate": "Corporativo",
+      "all": "Todas las ocasiones"
+    },
     "hero": {
       "eyebrow": "Mapas 3D premium · Imprime en casa o por encargo",
       "title1": "Tu ciudad.",

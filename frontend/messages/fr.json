@@ -1,8 +1,17 @@
 {
+  "start": {
+    "title": "Carte 3D de votre ville",
+    "line": "Choisissez un quartier — nous imprimons carte 3D, porte-clés ou magnet",
+    "price": "dès 120 ₴ · impression 2–4 jours · Ukraine",
+    "cta1": "Créer la carte de mon quartier",
+    "cta2": "Créer un porte-clés carte",
+    "cta3": "Voir les prix",
+    "photos": "Impressions réelles"
+  },
   "meta": {
     "skipToContent": "Aller au contenu",
-    "homeTitle": "Monadruk — cartes 3D de ta ville à imprimer",
-    "homeDescription": "Carte 3D de ta ville : choisis un quartier, règle le modèle et télécharge le fichier à imprimer. Cartes tactiles réelles. Impression et porte-clés.",
+    "homeTitle": "Carte 3D de votre ville sur mesure — un cadeau avec votre quartier | Monadruk",
+    "homeDescription": "Choisissez un quartier sur la carte — nous imprimons une carte 3D, un porte-clés ou un magnet. N’importe quelle ville, aperçu 3D gratuit en 1–2 minutes.",
     "ogTitle": "Monadruk — cartes 3D de ta ville",
     "ogDescription": "Transforme n'importe quel lieu de la Terre en carte 3D tactile prête à imprimer.",
     "keywords": "carte de ville 3D, impression 3D carte de ville, plan de ville 3D, porte-clés carte de ville, porte-clés personnalisé carte, carte STL, carte 3MF, carte topographique 3D, porte-clés relief, magnet frigo carte de ville, cadeau carte personnalisé, cadeau anniversaire couple, carte tactile, Bambu Studio, PrusaSlicer",
@@ -30,6 +39,16 @@
     "maket": "Maquette"
   },
   "home": {
+    "occasions": {
+      "title": "Vous cherchez un cadeau ?",
+      "sub": "La carte d’un lieu qui compte — pour une occasion précise",
+      "richnytsia": "Anniversaire de couple",
+      "birthday": "Anniversaire",
+      "housewarming": "Pendaison de crémaillère",
+      "couple": "Pour un couple",
+      "corporate": "Cadeau d’entreprise",
+      "all": "Toutes les occasions"
+    },
     "hero": {
       "eyebrow": "Cartes 3D premium · Imprime chez toi ou commande",
       "title1": "Ta ville.",

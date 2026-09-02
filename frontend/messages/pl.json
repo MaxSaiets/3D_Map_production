@@ -1,8 +1,17 @@
 {
+  "start": {
+    "title": "Mapa 3D Twojego miasta",
+    "line": "Wybierz dzielnicę na mapie — wydrukujemy mapę 3D, brelok lub magnes",
+    "price": "od 120 ₴ · druk 2–4 dni · Ukraina",
+    "cta1": "Stwórz mapę mojej dzielnicy",
+    "cta2": "Zrób brelok z mapą",
+    "cta3": "Zobacz ceny",
+    "photos": "Prawdziwe wydruki"
+  },
   "meta": {
     "skipToContent": "Przejdź do treści",
-    "homeTitle": "Monadruk — mapy 3D Twojego miasta do druku",
-    "homeDescription": "Mapa 3D twojego miasta: wybierz dzielnicę, dostosuj model i pobierz plik do druku. Dotykowe mapy z realnymi wysokościami. Druk i breloki na zamówienie.",
+    "homeTitle": "Mapa 3D Twojego miasta na zamówienie — prezent z Twoją dzielnicą | Monadruk",
+    "homeDescription": "Wybierz dzielnicę na mapie — wydrukujemy mapę 3D, brelok lub magnes. Dowolne miasto świata, bezpłatny podgląd 3D w 1–2 minuty.",
     "ogTitle": "Monadruk — mapy 3D Twojego miasta",
     "ogDescription": "Zamień dowolne miejsce na Ziemi w dotykową mapę 3D gotową do druku.",
     "keywords": "mapa miasta 3d, wydruk 3d mapy miasta, mapa miasta do druku 3d, brelok z mapą miasta, personalizowany brelok mapa, mapa stl, mapa 3mf, mapa topograficzna 3d, brelok z rzeźbą terenu, magnes na lodówkę mapa miasta, prezent z mapą, prezent na rocznicę, mapa dotykowa, Bambu Studio, PrusaSlicer",
@@ -30,6 +39,16 @@
     "maket": "Makieta"
   },
   "home": {
+    "occasions": {
+      "title": "Szukasz prezentu?",
+      "sub": "Mapa miejsca, które ma znaczenie — na konkretną okazję",
+      "richnytsia": "Na rocznicę",
+      "birthday": "Na urodziny",
+      "housewarming": "Na parapetówkę",
+      "couple": "Dla pary",
+      "corporate": "Firmowy",
+      "all": "Wszystkie okazje"
+    },
     "hero": {
       "eyebrow": "Premium mapy 3D · Druk w domu lub na zamówienie",
       "title1": "Twoje miasto.",

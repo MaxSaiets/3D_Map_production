@@ -1,8 +1,17 @@
 {
+  "start": {
+    "title": "3D-Karte deiner Stadt",
+    "line": "Viertel auf der Karte wählen — wir drucken 3D-Karte, Anhänger oder Magnet",
+    "price": "ab 120 ₴ · Druck 2–4 Tage · Ukraine",
+    "cta1": "Karte meines Viertels erstellen",
+    "cta2": "Karten-Anhänger erstellen",
+    "cta3": "Preise ansehen",
+    "photos": "Echte Drucke"
+  },
   "meta": {
     "skipToContent": "Zum Inhalt springen",
-    "homeTitle": "Monadruk — 3D-Karten deiner Stadt zum Drucken",
-    "homeDescription": "3D-Karte deiner Stadt: Viertel wählen, Modell anpassen und druckfertige Datei laden. Taktile Karten mit echten Höhen. Druck & Anhänger auf Bestellung.",
+    "homeTitle": "3D-Stadtkarte nach Maß — ein Geschenk mit deinem Viertel | Monadruk",
+    "homeDescription": "Viertel auf der Karte wählen — wir drucken eine 3D-Karte, einen Anhänger oder Magneten. Jede Stadt der Welt, kostenlose 3D-Vorschau in 1–2 Minuten.",
     "ogTitle": "Monadruk — 3D-Karten deiner Stadt",
     "ogDescription": "Verwandle jeden Ort der Erde in eine taktile 3D-Karte zum Drucken.",
     "keywords": "3D Stadtkarte, Stadtplan 3D Druck, Stadtkarte drucken, Schlüsselanhänger Stadtkarte, personalisierter Schlüsselanhänger Karte, STL Stadtplan, 3MF Karte, topografische Karte 3D, Reliefkarte Druck, Kühlschrankmagnet Stadtkarte, personalisiertes Geschenk Karte, Jahrestagsgeschenk Karte, taktile Karte, Bambu Studio, PrusaSlicer",
@@ -30,6 +39,16 @@
     "maket": "Grundriss"
   },
   "home": {
+    "occasions": {
+      "title": "Suchst du ein Geschenk?",
+      "sub": "Eine Karte eines bedeutsamen Ortes — für einen konkreten Anlass",
+      "richnytsia": "Zum Jahrestag",
+      "birthday": "Zum Geburtstag",
+      "housewarming": "Zum Einzug",
+      "couple": "Für ein Paar",
+      "corporate": "Firmengeschenk",
+      "all": "Alle Anlässe"
+    },
     "hero": {
       "eyebrow": "Premium 3D-Karten · Zuhause drucken oder bestellen",
       "title1": "Deine Stadt.",

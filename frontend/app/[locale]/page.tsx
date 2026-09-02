@@ -316,7 +316,46 @@ function PathSelector() {
           головними, а решта продуктів — видимим рядком одразу під ними (раніше про
           них можна було дізнатись лише випадково з футера). */}
       <MoreCapabilities />
+      <GiftOccasions />
     </section>
+  );
+}
+
+/* Власник: «дуже мало людей знаходять сайт». Люди НЕ шукають «купити 3D-мапу»
+   (памʼять keyword-research), вони шукають «подарунок на річницю / новосілля /
+   для пари». Сторінки під ці наміри вже є (/podarunok/<привід>), але з головної
+   на них не вело жодне посилання — тепер ведуть чіпи одразу під вибором шляху. */
+function GiftOccasions() {
+  const t = useTranslations("home.occasions");
+  const items = [
+    { slug: "na-richnytsyu", label: t("richnytsia") },
+    { slug: "na-den-narodzhennya", label: t("birthday") },
+    { slug: "na-novosillya", label: t("housewarming") },
+    { slug: "dlya-pary", label: t("couple") },
+    { slug: "korporatyvnyi-podarunok", label: t("corporate") },
+  ];
+  return (
+    <div className="mt-8" data-testid="home-gift-occasions">
+      <div className="eyebrow mb-1">{t("title")}</div>
+      <p className="mb-3 text-[14px] text-ink-2">{t("sub")}</p>
+      <div className="flex flex-wrap gap-2.5">
+        {items.map((it) => (
+          <Link
+            key={it.slug}
+            href={`/podarunok/${it.slug}`}
+            className="inline-flex min-h-[44px] items-center rounded-full border border-line-soft bg-paper/70 px-4 py-2 text-[14px] font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+          >
+            🎁 {it.label}
+          </Link>
+        ))}
+        <Link
+          href="/podarunok"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 py-2 text-[14px] font-semibold text-forest underline-offset-2 hover:underline"
+        >
+          {t("all")} <ArrowRight size={14} />
+        </Link>
+      </div>
+    </div>
   );
 }
 

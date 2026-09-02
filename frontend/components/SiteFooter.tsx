@@ -101,7 +101,8 @@ export function SiteFooter() {
 /* Routes that render their own chrome (full-screen builders) or already include
    <SiteFooter /> themselves (the landing "/"). The global footer is suppressed
    on these so we never double up or break the builder layout. */
-const NO_GLOBAL_FOOTER = new Set<string>(["/", "/create", "/keychains"]);
+// /start — посадкова link-in-bio: миттєва і без 19-лінкового футера (3 дії + фото).
+const NO_GLOBAL_FOOTER = new Set<string>(["/", "/create", "/keychains", "/start"]);
 function isBuilderPath(pathname: string): boolean {
   // /capture and /capture/[id] are full-screen capture flows.
   return pathname === "/capture" || pathname.startsWith("/capture/");

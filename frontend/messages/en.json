@@ -1,8 +1,17 @@
 {
+  "start": {
+    "title": "A 3D map of your city",
+    "line": "Pick a district on the map — we print a 3D map, keychain or magnet and ship it",
+    "price": "from 120 ₴ · print 2–4 days · Ukraine",
+    "cta1": "Create a map of my area",
+    "cta2": "Make a map keychain",
+    "cta3": "See prices",
+    "photos": "Real prints"
+  },
   "meta": {
     "skipToContent": "Skip to content",
-    "homeTitle": "Monadruk — 3D maps of your city for printing",
-    "homeDescription": "3D map of your city: pick a district, tune the model and download a print-ready file. Tactile maps with real building heights. Custom prints & keychains.",
+    "homeTitle": "Custom 3D city map — a gift with your own neighbourhood | Monadruk",
+    "homeDescription": "Pick a district on the map — we print a 3D map, keychain or magnet and ship it. Any city on Earth, free 3D preview in 1–2 minutes.",
     "ogTitle": "Monadruk — 3D maps of your city",
     "ogDescription": "Turn any place on Earth into a tactile 3D map ready to print.",
     "keywords": "3d printed city map, city map 3d print, custom city map, map keychain, personalized map keychain, 3d city map model, stl city map, 3mf map, topographic map 3d print, terrain relief keychain, city map fridge magnet, map wall art, personalized map gift, anniversary map gift, tactile map, Bambu Studio, PrusaSlicer",
@@ -30,6 +39,16 @@
     "maket": "Floor plan"
   },
   "home": {
+    "occasions": {
+      "title": "Looking for a gift?",
+      "sub": "A map of a place that matters — for a specific occasion",
+      "richnytsia": "Anniversary",
+      "birthday": "Birthday",
+      "housewarming": "Housewarming",
+      "couple": "For a couple",
+      "corporate": "Corporate",
+      "all": "All occasions"
+    },
     "hero": {
       "eyebrow": "Premium 3D maps · Print at home or order",
       "title1": "Your city.",
