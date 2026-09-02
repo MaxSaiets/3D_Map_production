@@ -408,17 +408,22 @@ export function OrderDialog({
 
               {/* Сигнали довіри — знижують відмову на останньому кроці воронки:
                   замовлення без передоплати, оператор підтверджує, дані захищені. */}
-              <ul className="grid gap-1.5 rounded-2xl border border-[rgba(11,92,87,0.16)] bg-[rgba(15,118,110,0.05)] px-3 py-2.5 text-[12px] leading-5 text-[var(--text-secondary)]">
-                <li className="flex items-center gap-2"><ShieldCheck size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustGuarantee")}</b> — {t("trustGuaranteeDesc")}</span></li>
-                <li className="flex items-center gap-2"><Wallet size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustNoPrepay")}</b> — {t("trustNoPrepayDesc")}</span></li>
-                <li className="flex items-center gap-2"><PhoneCall size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustOperator")}</span></li>
-                <li className="flex items-center gap-2"><Lock size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustSecure")}</span></li>
-              </ul>
-
-              <p className="flex items-center justify-center gap-1.5 text-center text-[12px] leading-5 text-[var(--text-secondary)]">
-                <ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" />
-                {t("submitReassure")}
-              </p>
+              {/* T-2.2 (F-14): довгі trust-блоки згорнуто — між полями і CTA менше прокрутки;
+                  один рядок-резюме лишається видимим. */}
+              <details className="group rounded-2xl border border-[rgba(11,92,87,0.16)] bg-[rgba(15,118,110,0.05)] px-3 py-2 text-[12px] leading-5 text-[var(--text-secondary)]">
+                <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-[var(--text-primary)]">
+                  <ShieldCheck size={13} className="shrink-0 text-[var(--accent-strong)]" />
+                  <span className="flex-1">{t("trustMore")}</span>
+                  <span aria-hidden className="text-[var(--text-secondary)] transition group-open:rotate-180">⌄</span>
+                </summary>
+                <ul className="mt-2 grid gap-1.5">
+                  <li className="flex items-center gap-2"><ShieldCheck size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustGuarantee")}</b> — {t("trustGuaranteeDesc")}</span></li>
+                  <li className="flex items-center gap-2"><Wallet size={13} className="shrink-0 text-[var(--accent-strong)]" /><span><b className="text-[var(--text-primary)]">{t("trustNoPrepay")}</b> — {t("trustNoPrepayDesc")}</span></li>
+                  <li className="flex items-center gap-2"><PhoneCall size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustOperator")}</span></li>
+                  <li className="flex items-center gap-2"><Lock size={13} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("trustSecure")}</span></li>
+                  <li className="flex items-center gap-2"><ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("submitReassure")}</span></li>
+                </ul>
+              </details>
 
               {/* Sticky-футер: ЦІНА + CTA завжди на видноті — не треба скролити крізь
                   усю форму до кнопки. Лишається приклеєним до низу скрол-панелі. */}

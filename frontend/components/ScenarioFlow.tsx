@@ -381,7 +381,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--text-primary)]">
                   <Loader2 size={16} className="animate-spin text-[var(--accent-strong)]" /> {t("generating")}
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[rgba(15,23,42,0.08)]">
+                <div className="h-2 overflow-hidden rounded-full bg-[rgba(15,23,42,0.08)]" role="progressbar" aria-label={t("generating")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.max(0, Math.min(100, s.progress || 0))}>
                   <div className="h-full rounded-full bg-[var(--accent-strong)] transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, s.progress || 0))}%` }} />
                 </div>
                 <p className="text-[12px] text-[var(--text-secondary)]" aria-live="polite">

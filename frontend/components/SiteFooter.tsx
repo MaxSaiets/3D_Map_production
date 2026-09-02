@@ -13,6 +13,8 @@ const SHOWCASE_LABEL: Record<string, string> = { uk: "Галерея", en: "Gall
 const WORLDS_LABEL: Record<string, string> = { uk: "3D-світи", en: "3D Worlds", de: "3D-Welten", es: "Mundos 3D", fr: "Mondes 3D", pl: "Światy 3D" };
 const PANNO_LABEL: Record<string, string> = { uk: "Карта на стіну", en: "Wall map", de: "Wandkarte", es: "Mapa de pared", fr: "Carte murale", pl: "Mapa na ścianę" };
 const KARPATY_LABEL: Record<string, string> = { uk: "Мапа Карпат", en: "Carpathians map", de: "Karpaten-Karte", es: "Mapa de los Cárpatos", fr: "Carte des Carpates", pl: "Mapa Karpat" };
+// T-6.8 (F-26): /corporate був сиротою (лише sitemap) — даємо вхід із футера.
+const CORPORATE_LABEL: Record<string, string> = { uk: "Для бізнесу", en: "For business", de: "Für Unternehmen", es: "Para empresas", fr: "Pour les entreprises", pl: "Dla firm" };
 // SEO-FIX: хаб /brelok був СИРОТОЮ — на нього не вело жодне посилання з
 // головної чи /maps, тому 24 сторінки /brelok/{місто} висіли в GSC як
 // «Виявлено — наразі не проіндексовано» (Google не витрачав краул-бюджет).
@@ -49,6 +51,7 @@ export function SiteFooter() {
             <Link href="/podarunok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("gift")}</Link>
             <Link href="/panno" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pannoLabel}</Link>
             <Link href="/karpaty" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{karpatyLabel}</Link>
+            <Link href="/corporate" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{CORPORATE_LABEL[locale] ?? CORPORATE_LABEL.uk}</Link>
             <Link href="/maket" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maket")}</Link>
             <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{blogLabel}</Link>
             <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{showcaseLabel}</Link>

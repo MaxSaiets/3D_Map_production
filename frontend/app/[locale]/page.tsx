@@ -543,9 +543,8 @@ function Testimonials() {
         <div className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((t, i) => (
             <article key={i} className="card card-paper flex w-[300px] shrink-0 snap-start flex-col p-7">
-              <div className="mb-4 flex gap-1">
-                {[...Array(5)].map((_, k) => <Star key={k} size={14} className="text-bronze" fill="currentColor" />)}
-              </div>
+              {/* T-4.4 (F-12e): фіксований ряд «5 зірок» прибрано — це не рейтинг з
+                  джерела, а декорація (ризик GSC merchant-listing spam). */}
               <p className="mb-6 flex-1 font-serif text-[18px] leading-snug">«{t.q}»</p>
               <div className="flex items-center justify-between border-t border-line-soft pt-5">
                 <div className="text-[14px] font-semibold">{t.a}</div>
