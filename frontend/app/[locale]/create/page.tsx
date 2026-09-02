@@ -152,7 +152,11 @@ export default function Home() {
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search);
-      if (p.get("template") || p.get("city") || p.get("grid") || p.get("capture")) {
+      // T-3.1 (F-07): ?city / ?template з SEO-сторінок і галереї шаблонів більше НЕ
+      // вмикають повний конструктор — ScenarioFlow сам стартує з кроку 2 і ставить
+      // рамку на місті/районі. Повний режим лишається для ?grid (збережена сітка)
+      // і ?capture (службовий рендер).
+      if (p.get("grid") || p.get("capture")) {
         setGuidedState(false);
         return;
       }
@@ -609,7 +613,7 @@ export default function Home() {
           ]}
         />
       )}
-      <div id="main-content" tabIndex={-1} className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-24 pt-3 sm:px-4 lg:px-6 lg:pb-6">
+      <div id="main-content" tabIndex={-1} className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-[var(--sticky-h,0px)] pt-3 sm:px-4 lg:px-6 lg:pb-6">
         <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Back to home (prominent, always visible). Суцільний білий +
@@ -1144,6 +1148,7 @@ export default function Home() {
                     cityLabel={tCity}
                     onAdvanced={() => toggleProMode(true)}
                     onSeriesGenerated={handleSeriesGenerated}
+                    primary={false}
                   />
                 )}
               </div>

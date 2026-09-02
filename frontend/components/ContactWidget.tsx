@@ -115,7 +115,7 @@ export function ContactWidget() {
         type="button"
         aria-label={t("title")}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-[150px] right-3 z-[40] flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(46,74,58,0.4)] transition hover:scale-105 sm:bottom-5 sm:right-4 sm:h-14 sm:w-14"
+        className="fixed bottom-[calc(var(--sticky-h,0px)+150px)] right-3 z-[40] flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_14px_34px_rgba(46,74,58,0.4)] transition hover:scale-105 sm:bottom-5 sm:right-4 sm:h-14 sm:w-14"
         style={{ background: "var(--forest, #2E4A3A)" }}
       >
         {open ? <X size={20} /> : <MessageCircle size={20} />}

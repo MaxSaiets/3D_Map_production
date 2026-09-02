@@ -57,42 +57,42 @@ export function cityFaq(cl: ContentLocale, name: string, kind: "brelok" | "podar
       { q: "Скільки триває виготовлення?", a: `Виготовлення ${b ? "брелока" : "мапи чи брелока"} з районом міста (${name}) займає 1–3 робочі дні, після чого модель передається у доставку.` },
       { q: `Яку ділянку в місті (${name}) краще обрати?`, a: "Найкраще виглядають ділянки зі змішаною забудовою: трохи вулиць, парк або вода — так район впізнається з першого погляду. Занадто велика ділянка робить деталі дрібними." },
       { q: "Чи можна додати напис на звороті?", a: "Так, на звороті брелока чи мапи можна додати власний текст — ім'я, дату, координати чи назву міста. Опція доступна в конструкторі перед оформленням замовлення." },
-      { q: `Як відбувається доставка у ${name}?`, a: "Доставка Новою Поштою по всій Україні (відділення чи поштомат) або Nova Post / Meest у 15 країн ЄС. Вартість доставки оплачується окремо за тарифом перевізника." },
+      { q: `Як відбувається доставка у ${name}?`, a: "Доставка Новою Поштою по всій Україні (відділення чи поштомат). Вартість доставки оплачується окремо за тарифом перевізника." },
       { q: "Як оплатити замовлення?", a: "Оплата карткою Visa/Mastercard онлайн через LiqPay або накладеним платежем при отриманні — на вибір при оформленні." },
     ],
     en: () => [
       { q: "How long does production take?", a: `Making a ${b ? "keychain" : "map or keychain"} with a ${name} district takes 1–3 business days, then the model goes to shipping.` },
       { q: `Which area of ${name} should I pick?`, a: "Mixed areas look best: some streets, a park or water — the district stays recognizable at first glance. A too-large area makes details too small." },
       { q: "Can I add text on the back?", a: "Yes — the back of a keychain or map can carry your own text: a name, a date, coordinates or a city name. The option is available in the builder before checkout." },
-      { q: `How is delivery to ${name} handled?`, a: "Delivery by Nova Poshta across Ukraine, or Nova Post / Meest to 15 EU countries. Shipping cost is charged separately at the carrier's rate." },
+      { q: `How is delivery to ${name} handled?`, a: "Delivery by Nova Poshta across Ukraine. Shipping cost is charged separately at the carrier's rate." },
       { q: "How do I pay for an order?", a: "Card payment online (Visa/Mastercard via LiqPay) or cash on delivery — your choice at checkout." },
     ],
     de: () => [
       { q: "Wie lange dauert die Herstellung?", a: `Die Herstellung ${b ? "eines Anhängers" : "einer Karte oder eines Anhängers"} mit einem Viertel von ${name} dauert 1–3 Werktage, danach geht das Modell in den Versand.` },
       { q: `Welchen Bereich von ${name} soll ich wählen?`, a: "Gemischte Bereiche wirken am besten: ein paar Straßen, ein Park oder Wasser — so bleibt das Viertel auf den ersten Blick erkennbar. Ein zu großer Bereich macht die Details zu klein." },
       { q: "Kann ich Text auf die Rückseite setzen?", a: "Ja — auf die Rückseite eines Anhängers oder einer Karte kommt dein eigener Text: ein Name, ein Datum, Koordinaten oder ein Stadtname. Die Option gibt es im Konfigurator vor dem Checkout." },
-      { q: `Wie läuft der Versand nach ${name}?`, a: "Versand per Nova Poshta in der Ukraine oder per Nova Post / Meest in 15 EU-Länder. Die Versandkosten werden separat zum Tarif des Anbieters berechnet." },
+      { q: `Wie läuft der Versand nach ${name}?`, a: "Versand per Nova Poshta in der Ukraine. Die Versandkosten werden separat zum Tarif des Anbieters berechnet." },
       { q: "Wie bezahle ich eine Bestellung?", a: "Kartenzahlung online (Visa/Mastercard über LiqPay) oder Nachnahme — deine Wahl beim Checkout." },
     ],
     pl: () => [
       { q: "Ile trwa wykonanie?", a: `Wykonanie ${b ? "breloka" : "mapy lub breloka"} z dzielnicą miasta ${name} zajmuje 1–3 dni robocze, po czym model trafia do wysyłki.` },
       { q: `Który obszar miasta ${name} wybrać?`, a: "Najlepiej wyglądają obszary o mieszanej zabudowie: trochę ulic, park lub woda — dzielnica pozostaje rozpoznawalna od pierwszego spojrzenia. Zbyt duży obszar sprawia, że detale są za małe." },
       { q: "Czy można dodać napis z tyłu?", a: "Tak — z tyłu breloka lub mapy można dodać własny tekst: imię, datę, współrzędne lub nazwę miasta. Opcja dostępna w kreatorze przed zamówieniem." },
-      { q: `Jak wygląda dostawa do miasta ${name}?`, a: "Dostawa Nova Poshta na Ukrainie lub Nova Post / Meest do 15 krajów UE. Koszt dostawy naliczany osobno według taryfy przewoźnika." },
+      { q: `Jak wygląda dostawa do miasta ${name}?`, a: "Dostawa Nova Poshta na Ukrainie. Koszt dostawy naliczany osobno według taryfy przewoźnika." },
       { q: "Jak zapłacić za zamówienie?", a: "Płatność kartą online (Visa/Mastercard przez LiqPay) lub za pobraniem — do wyboru przy zamówieniu." },
     ],
     fr: () => [
       { q: "Combien de temps prend la fabrication ?", a: `La fabrication ${b ? "d'un porte-clés" : "d'une carte ou d'un porte-clés"} avec un quartier de ${name} prend 1 à 3 jours ouvrés, puis le modèle part en livraison.` },
       { q: `Quel quartier de ${name} choisir ?`, a: "Les zones variées rendent le mieux : quelques rues, un parc ou de l'eau — le quartier reste reconnaissable au premier coup d'œil. Une zone trop grande rend les détails trop petits." },
       { q: "Puis-je ajouter du texte au dos ?", a: "Oui — le dos d'un porte-clés ou d'une carte peut porter votre texte : un nom, une date, des coordonnées ou un nom de ville. L'option est dans le configurateur avant la commande." },
-      { q: `Comment se passe la livraison vers ${name} ?`, a: "Livraison par Nova Poshta en Ukraine, ou Nova Post / Meest vers 15 pays de l'UE. Les frais de port sont facturés séparément au tarif du transporteur." },
+      { q: `Comment se passe la livraison vers ${name} ?`, a: "Livraison par Nova Poshta en Ukraine. Les frais de port sont facturés séparément au tarif du transporteur." },
       { q: "Comment payer une commande ?", a: "Paiement par carte en ligne (Visa/Mastercard via LiqPay) ou à la livraison — au choix lors de la commande." },
     ],
     es: () => [
       { q: "¿Cuánto tarda la fabricación?", a: `Fabricar ${b ? "un llavero" : "un mapa o un llavero"} con un distrito de ${name} tarda 1–3 días hábiles, luego el modelo pasa al envío.` },
       { q: `¿Qué zona de ${name} conviene elegir?`, a: "Las zonas mixtas quedan mejor: algunas calles, un parque o agua — el distrito sigue siendo reconocible a primera vista. Una zona demasiado grande hace los detalles muy pequeños." },
       { q: "¿Puedo añadir texto en el reverso?", a: "Sí — el reverso de un llavero o mapa puede llevar tu propio texto: un nombre, una fecha, coordenadas o el nombre de una ciudad. La opción está en el configurador antes de finalizar." },
-      { q: `¿Cómo es el envío a ${name}?`, a: "Envío por Nova Poshta en Ucrania, o Nova Post / Meest a 15 países de la UE. El coste de envío se cobra aparte según la tarifa del transportista." },
+      { q: `¿Cómo es el envío a ${name}?`, a: "Envío por Nova Poshta en Ucrania. El coste de envío se cobra aparte según la tarifa del transportista." },
       { q: "¿Cómo pago un pedido?", a: "Pago con tarjeta en línea (Visa/Mastercard vía LiqPay) o contra reembolso — a tu elección al finalizar." },
     ],
   };
@@ -154,7 +154,7 @@ export function brelokCityCopy(
   const builders: Partial<Record<AppLocale, () => CityLandingCopy>> = {
     uk: () => ({
       title: `Брелок з картою міста — ${name} | 3D-друк від 120 ₴`,
-      description: `Брелок-мапа 55×30 мм з районом міста (${name}): вулиці й парки рельєфом, власний напис на звороті. 3D-друк з Eco PLA від 120 ₴, доставка по Україні та ЄС.`,
+      description: `Брелок-мапа 55×30 мм з районом міста (${name}): вулиці й парки рельєфом, власний напис на звороті. 3D-друк з Eco PLA від 120 ₴, доставка по Україні.`,
       h1: `Брелок з картою міста — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -173,7 +173,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Матеріал, якість і терміни", p: [
           "Друкуємо з біопластику Eco PLA: легкий, приємний на дотик, витримує щоденне носіння з ключами. Лінії вулиць друкуються з роздільністю 0,4 мм — навіть провулки лишаються читабельними.",
-          "Виготовлення 1–3 робочі дні. Доставка Новою Поштою по Україні або Nova Post / Meest у країни ЄС. Оплата карткою онлайн або при отриманні.",
+          "Виготовлення 1–3 робочі дні. Доставка Новою Поштою по Україні. Оплата карткою онлайн або при отриманні.",
         ] },
         { h2: "Кому дарують такий брелок", p: [
           `Тим, хто переїхав і сумує за домом. Парі — два брелоки-серця з районами двох людей, що з'єднуються як пазл. Бігунам — з треком улюбленого маршруту. Колезі, що змінює місто, — з районом офісу. Брелок з картою міста (${name}) — недорогий подарунок, якого точно ні в кого немає.`,
@@ -201,7 +201,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Material, quality and lead time", p: [
           "Printed in Eco PLA bioplastic: light, pleasant to touch, fine for daily use with keys. Street lines print at 0.4 mm resolution, so even small lanes stay readable.",
-          "Production 1–3 business days. Delivery by Nova Poshta across Ukraine or Nova Post / Meest to the EU. Card payment online or on delivery.",
+          "Production 1–3 business days. Delivery by Nova Poshta across Ukraine. Card payment online or on delivery.",
         ] },
         { h2: "Who gets one as a gift", p: [
           `People who moved away and miss home. Couples — two heart keychains with each person's district that connect like a puzzle. Runners — with a favorite route's track. A colleague changing cities — with the office block. A ${name} map keychain is an inexpensive gift no one else has.`,
@@ -228,7 +228,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Material, Qualität und Lieferzeit", p: [
           "Gedruckt aus Eco-PLA-Bioplastik: leicht, angenehm griffig, für den täglichen Gebrauch am Schlüssel geeignet. Straßenlinien drucken mit 0,4 mm Auflösung, sodass selbst kleine Gassen lesbar bleiben.",
-          "Herstellung 1–3 Werktage. Versand per Nova Poshta in der Ukraine oder Nova Post / Meest in die EU. Kartenzahlung online oder bei Lieferung.",
+          "Herstellung 1–3 Werktage. Versand per Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
         ] },
         { h2: "Wem man so einen Anhänger schenkt", p: [
           `Menschen, die weggezogen sind und Heimweh haben. Paaren — zwei Herz-Anhänger mit den Vierteln beider, die wie ein Puzzle zusammenpassen. Läufern — mit dem Track der Lieblingsstrecke. Ein Anhänger mit einer Karte von ${name} ist ein günstiges Geschenk, das sonst niemand hat.`,
@@ -255,7 +255,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Materiał, jakość i terminy", p: [
           "Drukujemy z bioplastiku Eco PLA: lekki, przyjemny w dotyku, znosi codzienne noszenie przy kluczach. Linie ulic drukują się w rozdzielczości 0,4 mm — nawet zaułki pozostają czytelne.",
-          "Wykonanie 1–3 dni robocze. Dostawa Nova Poshta na Ukrainie lub Nova Post / Meest do UE. Płatność kartą online lub przy odbiorze.",
+          "Wykonanie 1–3 dni robocze. Dostawa Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
         ] },
         { h2: "Komu daruje się taki brelok", p: [
           `Tym, którzy się przeprowadzili i tęsknią za domem. Parom — dwa breloki-serca z dzielnicami dwóch osób, które łączą się jak puzzle. Biegaczom — ze śladem ulubionej trasy. Brelok z mapą miasta ${name} to niedrogi prezent, którego nikt inny nie ma.`,
@@ -282,7 +282,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Matériau, qualité et délai", p: [
           "Imprimé en bioplastique Eco PLA : léger, agréable au toucher, adapté à un usage quotidien avec les clés. Les lignes de rues s'impriment à 0,4 mm, si bien que même les ruelles restent lisibles.",
-          "Fabrication 1 à 3 jours ouvrés. Livraison par Nova Poshta en Ukraine ou Nova Post / Meest vers l'UE. Paiement par carte en ligne ou à la livraison.",
+          "Fabrication 1 à 3 jours ouvrés. Livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
         ] },
         { h2: "À qui offrir un tel porte-clés", p: [
           `À ceux qui ont déménagé et ont le mal du pays. Aux couples — deux porte-clés cœur avec les quartiers de chacun qui s'emboîtent comme un puzzle. Aux coureurs — avec la trace d'un parcours favori. Un porte-clés avec une carte de ${name} est un cadeau abordable que personne d'autre n'a.`,
@@ -309,7 +309,7 @@ export function brelokCityCopy(
         ] },
         { h2: "Material, calidad y plazos", p: [
           "Impreso en bioplástico Eco PLA: ligero, agradable al tacto, apto para el uso diario con las llaves. Las líneas de calles se imprimen a 0,4 mm, así que incluso los callejones siguen siendo legibles.",
-          "Fabricación 1–3 días hábiles. Envío por Nova Poshta en Ucrania o Nova Post / Meest a la UE. Pago con tarjeta en línea o contra reembolso.",
+          "Fabricación 1–3 días hábiles. Envío por Nova Poshta en Ucrania. Pago con tarjeta en línea o contra reembolso.",
         ] },
         { h2: "A quién se le regala este llavero", p: [
           `A quienes se mudaron y añoran su hogar. A las parejas — dos llaveros corazón con los distritos de cada uno que encajan como un rompecabezas. A los corredores — con la traza de su ruta favorita. Un llavero con un mapa de ${name} es un regalo económico que nadie más tiene.`,
@@ -382,7 +382,7 @@ export function giftCityCopy(
           `Map keychain (from ≈€3) — a small token with text on the back. Fridge magnet — a daily reminder of ${name}. Shelf 3D map (≈€6–13 depending on size) — a real interior piece, with terrain relief if you like.`,
         ] },
         { h2: "Order in 5 minutes", p: [
-          "Pick the area in the builder — the model is assembled automatically in 2–4 minutes. We print in Eco PLA and ship across Ukraine and to the EU; a digital file for self-printing is also available. Production takes 1–3 business days.",
+          "Pick the area in the builder — the model is assembled automatically in 2–4 minutes. We print in Eco PLA and ship across Ukraine; a digital file for self-printing is also available. Production takes 1–3 business days.",
         ] },
       ],
     }),
@@ -434,7 +434,7 @@ export function giftCityCopy(
           `Brelok-mapa (od ≈3 €) — niedrogi drobiazg z napisem z tyłu. Magnes na lodówkę — codzienne przypomnienie o mieście ${name}. Mapa 3D na półkę (≈6–13 € w zależności od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.`,
         ] },
         { h2: "Jak zamówić w 5 minut", p: [
-          "Wybierz obszar w kreatorze — model powstanie automatycznie w 2–4 minuty. Drukujemy z Eco PLA i wysyłamy na Ukrainę oraz do UE; dostępny jest też plik cyfrowy do własnego druku. Wykonanie trwa 1–3 dni robocze.",
+          "Wybierz obszar w kreatorze — model powstanie automatycznie w 2–4 minuty. Drukujemy z Eco PLA i wysyłamy na Ukrainę; dostępny jest też plik cyfrowy do własnego druku. Wykonanie trwa 1–3 dni robocze.",
         ] },
       ],
     }),
@@ -460,7 +460,7 @@ export function giftCityCopy(
           `Porte-clés carte (dès ≈3 €) — une petite attention avec du texte au dos. Magnet de frigo — un rappel quotidien de ${name}. Carte 3D d'étagère (≈6–13 € selon la taille) — une vraie pièce déco, avec relief du terrain si vous le souhaitez.`,
         ] },
         { h2: "Commander en 5 minutes", p: [
-          "Choisissez la zone dans le configurateur — le modèle est assemblé automatiquement en 2 à 4 minutes. Nous imprimons en Eco PLA et expédions en Ukraine et dans l'UE ; un fichier numérique pour l'impression maison est aussi disponible. Fabrication en 1 à 3 jours ouvrés.",
+          "Choisissez la zone dans le configurateur — le modèle est assemblé automatiquement en 2 à 4 minutes. Nous imprimons en Eco PLA et expédions en Ukraine ; un fichier numérique pour l'impression maison est aussi disponible. Fabrication en 1 à 3 jours ouvrés.",
         ] },
       ],
     }),
@@ -486,7 +486,7 @@ export function giftCityCopy(
           `Llavero mapa (desde ≈3 €) — un detalle económico con texto al reverso. Imán de nevera — un recordatorio diario de ${name}. Mapa 3D de estante (≈6–13 € según el tamaño) — una pieza de interior de verdad, con relieve del terreno si quieres.`,
         ] },
         { h2: "Pide en 5 minutos", p: [
-          "Elige la zona en el configurador — el modelo se arma automáticamente en 2–4 minutos. Imprimimos en Eco PLA y enviamos a Ucrania y la UE; también hay un archivo digital para imprimir tú mismo. Fabricación en 1–3 días hábiles.",
+          "Elige la zona en el configurador — el modelo se arma automáticamente en 2–4 minutos. Imprimimos en Eco PLA y enviamos dentro de Ucrania; también hay un archivo digital para imprimir tú mismo. Fabricación en 1–3 días hábiles.",
         ] },
       ],
     }),
@@ -580,7 +580,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Бюджет і терміни",
             p: [
-              "Брелок-мапа — від 120 ₴, магніт — 150 ₴, 3D-мапа на полицю — від 250 до 550 ₴ залежно від розміру. Виготовлення 1–3 робочі дні, доставка Новою Поштою по Україні та у країни ЄС.",
+              "Брелок-мапа — від 120 ₴, магніт — 150 ₴, 3D-мапа на полицю — від 250 до 550 ₴ залежно від розміру. Виготовлення 1–3 робочі дні, доставка Новою Поштою по Україні.",
             ],
           },
         ],
@@ -603,7 +603,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Budget and lead time",
             p: [
-              "Map keychain from ≈€3, magnet, shelf 3D map ≈€6–13 depending on size. Production 1–3 business days, delivery to Ukraine and the EU.",
+              "Map keychain from ≈€3, magnet, shelf 3D map ≈€6–13 depending on size. Production 1–3 business days, delivery across Ukraine.",
             ],
           },
         ],
@@ -682,7 +682,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
             h2: "Як це замовити",
             p: [
               "У конструкторі брелоків оберіть шаблон «серце-пара», потім першу ділянку і другу ділянку. На звороті кожної половинки можна додати напис — ім'я, дату, координати.",
-              "Виготовлення 1–3 робочі дні, разом — від 240 ₴ за пару. Доставка Новою Поштою або у країни ЄС.",
+              "Виготовлення 1–3 робочі дні, разом — від 240 ₴ за пару. Доставка Новою Поштою.",
             ],
           },
         ],
@@ -701,7 +701,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
             h2: "How to order",
             p: [
               "In the keychain builder pick the «heart pair» template, then the first area and the second area. Each half takes a custom text on the back — a name, a date, coordinates.",
-              "Production 1–3 business days, from ≈€6 per pair. Delivery to Ukraine and the EU.",
+              "Production 1–3 business days, from ≈€6 per pair. Delivery across Ukraine.",
             ],
           },
         ],

@@ -136,16 +136,14 @@ export default async function LocaleLayout({
         // Координати магазину (Хмельницький, вул. Завадського, 38) — для
         // локального пошуку/Maps rich-results.
         geo: { "@type": "GeoCoordinates", latitude: 49.4229, longitude: 26.9871 },
-        areaServed: [
-          { "@type": "Country", name: "Ukraine" },
-          { "@type": "AdministrativeArea", name: "European Union" },
-        ],
+        // Лише Україна (рішення власника 2026-09-02): файли доступні всім, друк і доставка — UA.
+        areaServed: [{ "@type": "Country", name: "Ukraine" }],
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer support",
           email: BUSINESS.email,
           telephone: BUSINESS.phone,
-          areaServed: ["UA", "EU"],
+          areaServed: ["UA"],
           availableLanguage: ["uk", "en", "pl", "de"],
         },
         // Каталог пропозицій магазину — окремий продукт-офер на кожен товар.

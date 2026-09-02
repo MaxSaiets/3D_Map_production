@@ -70,6 +70,22 @@ export default function Model3DViewer({
   const isMap = flat ?? /\/map-/.test(url);
   const camPos: [number, number, number] = isMap ? [0, 2.5, 2.1] : [0, 0.6, 2.4];
 
+  // F-02: OrbitControls ставить canvas touch-action:none → свайп над галереєю на
+  // телефоні не прокручував сторінку. Дозволяємо вертикальний скрол (pan-y):
+  // горизонтальний драг і далі обертає модель.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const apply = () => {
+      const c = el.querySelector("canvas");
+      if (c) c.style.setProperty("touch-action", "pan-y", "important");
+    };
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [mounted]);
+
   useEffect(() => {
     if (mounted || typeof IntersectionObserver === "undefined") { setMounted(true); return; }
     const el = ref.current;
@@ -86,7 +102,7 @@ export default function Model3DViewer({
     <div
       ref={ref}
       style={{ height, width: "100%", cursor: onActivate ? "pointer" : undefined }}
-      className="relative touch-none"
+      className="relative touch-pan-y"
       role={onActivate ? "button" : "img"}
       tabIndex={onActivate ? 0 : undefined}
       aria-label={label ? t("modelLabeled", { label }) : t("model")}

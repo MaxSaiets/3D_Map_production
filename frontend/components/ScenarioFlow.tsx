@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Check, Home, KeyRound, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
@@ -11,6 +12,8 @@ import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
 import { SIMPLE_SIZES } from "@/lib/generation";
 import { fetchQuote, type Quote } from "@/lib/pricing";
+import { CITIES, MAP_TEMPLATES } from "@/lib/templates";
+import { WORLD_CITIES } from "@/lib/worldCities";
 import {
   KEYCHAIN_PRICE_UAH,
   MAP_MAGNET_PRICE_UAH,
@@ -191,11 +194,41 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     setScenario(id);
   };
 
+  // T-3.1 (F-07): deep-link ?template=<id> або ?city=<key> (SEO-сторінки /maps,
+  // галерея шаблонів на головній) — стартуємо одразу з кроку 2 і ставимо рамку
+  // на район/центр міста. Подія map-goto БЕЗ widthM = «користувацька»: слухач
+  // вище позначає «Місце обрано» і ре-диспатчить зону під обраний розмір.
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const tplId = p.get("template");
+      const cityKey = p.get("city");
+      if (!tplId && !cityKey) return;
+      let center: [number, number] | undefined;
+      let label = "";
+      const tpl = tplId ? MAP_TEMPLATES.find((x) => x.id === tplId) : undefined;
+      if (tpl) { center = tpl.center; label = tpl.district; }
+      else if (cityKey) {
+        const c = CITIES.find((x) => x.key === cityKey) || WORLD_CITIES.find((x) => x.key === cityKey);
+        if (c) { center = c.center; label = ("label" in c ? c.label : c.names?.uk) || ""; }
+      }
+      if (!center) return;
+      pick(tpl && tpl.style === "relief" ? "relief" : "map3d");
+      if (tpl?.sizeMm) s.setModelSizeMm(tpl.sizeMm);
+      const [lat, lon] = center;
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label } }));
+      }, 400);
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const create = () => {
     if (!s.selectedArea || !placePicked || s.isGenerating) return;
     import("@/lib/analytics")
       .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm }))
       .catch(() => {});
+    setRan(false);
     setStarted(true);
     window.dispatchEvent(new Event("monadruk:guided-generate"));
   };
@@ -224,9 +257,14 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     { id: "magnet", img: "card-magnet", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
   ];
 
+  // F-10: «не вдалося» показуємо лише якщо генерація СПРАВДІ стартувала (isGenerating
+  // побував true) і завершилась без файлу. Без цього в асинхронному проміжку між кліком
+  // і isGenerating=true червона помилка блимала при кожному успішному кліку.
+  const [ran, setRan] = useState(false);
+  useEffect(() => { if (s.isGenerating) setRan(true); }, [s.isGenerating]);
   const generatingView = s.isGenerating;
   const successView = started && !s.isGenerating && !!s.downloadUrl;
-  const failedNote = started && !s.isGenerating && !s.downloadUrl;
+  const failedNote = started && ran && !s.isGenerating && !s.downloadUrl;
   const displayStep = generatingView || successView || scenario !== null ? 2 : 1;
 
   const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
@@ -271,49 +309,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   </span>
                 </button>
               ))}
-              {/* Брелок — ОКРЕМИЙ конструктор: просто лінк, нічого не пресетимо. */}
-              <Link href="/keychains" className={cardBtnCls}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/showcase/card-keychain.webp"
-                  alt={t("keychainTitle")}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                />
-                <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
-                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold leading-tight text-[var(--text-primary)]"><KeyRound size={12} /> {t("keychainTitle")}</span>
-                  <span className="text-[12px] font-semibold text-[var(--accent-strong)]">{t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}</span>
-                  <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t("keychainDesc")}</span>
-                </span>
+            </div>
+            {/* T-3.4 (F-20): крок 1 = лише 4 продукти, які створюємо ТУТ. Брелок і панно —
+                інші сторінки, повний конструктор — інший UI: тихий рядок лінків, не картки. */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-semibold text-[var(--text-secondary)]">
+              <span className="text-[11px] uppercase tracking-[0.16em]">{t("moreLabel")}</span>
+              <Link href="/keychains" className="inline-flex items-center gap-1 underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
+                <KeyRound size={12} /> {t("keychainTitle")} · {t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}
               </Link>
-              {/* Панно з плиток — окремий флоу (сітка плиток у повному конструкторі);
-                  ведемо на лендінг /panno з поясненням і CTA. */}
-              <Link href="/panno" className={cardBtnCls}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/showcase/card-panno.webp"
-                  alt={t("pannoTitle")}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                />
-                <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
-                  <span className="text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{t("pannoTitle")}</span>
-                  <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t("pannoDesc")}</span>
-                </span>
+              <Link href="/panno" className="underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
+                {t("pannoTitle")}
               </Link>
-              {/* Повний конструктор — вихід із guided (усе як раніше). */}
-              <button type="button" onClick={onExitGuided} className={cardBtnCls} data-testid="scenario-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/showcase/card-full.webp"
-                  alt={t("fullTitle")}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                />
-                <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
-                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold leading-tight text-[var(--text-primary)]"><Sliders size={12} /> {t("fullTitle")}</span>
-                  <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t("fullDesc")}</span>
-                </span>
+              <button type="button" onClick={onExitGuided} data-testid="scenario-full" className="inline-flex items-center gap-1 underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
+                <Sliders size={12} /> {t("fullTitle")}
               </button>
             </div>
           </div>
@@ -330,7 +338,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Check size={15} /></span>
                   {t("readyTitle")}
                 </div>
-                <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">{t("readyHint")}</p>
+                {/* Рекап: що саме готове (сценарій · розмір) + підказка. */}
+                <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">
+                  <b className="text-[var(--text-primary)]">
+                    {scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${fallbackSize.label} · ${fallbackSize.cm}`}
+                  </b>
+                  {" — "}{t("readyHint")}
+                </p>
                 <button
                   type="button"
                   onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
@@ -338,6 +352,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
                 </button>
+                <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                   <button
                     type="button"
@@ -548,16 +563,24 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   </p>
                 )}
                 {!s.isGenerating && (
+                <>
+                {/* F-08: превʼю безкоштовне — ціна не на кнопці дії, а рядком під нею. */}
                 <button
                   type="button"
                   onClick={create}
                   disabled={!placePicked}
                   title={!placePicked ? t("waitingPlace") : undefined}
                   data-testid="scenario-create"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${successView ? "bg-[var(--accent-strong)] shadow-[0_8px_24px_rgba(11,92,87,0.3)]" : "bg-[var(--bronze,#8E6B3D)] shadow-[0_8px_24px_rgba(142,107,61,0.35)]"}`}
                 >
-                  {successView ? t("updateModel") : t("createModel")} · {disp(ctaPriceUah)}
+                  {successView ? t("updateModel") : t("previewCta")}
                 </button>
+                {!successView && (
+                  <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--text-secondary)]">
+                    {t("printFromLine", { price: disp(ctaPriceUah) })}
+                  </p>
+                )}
+                </>
                 )}
                 {/* Вихід у повний конструктор ПРЯМО з кроку 2 (обіцяно в макеті):
                     стан (зона/формат/розмір) зберігається — юзер продовжує там же. */}
@@ -573,6 +596,22 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
           </div>
         )}
       </div>
+      {/* F-04: на мобільному ціна + головна дія стану завжди внизу екрана (портал). */}
+      <GuidedStickyBar
+        visible={displayStep === 2}
+        label={scenario === "magnet" ? t("magnetTitle") : `${fallbackSize.label} · ${fallbackSize.cm}`}
+        price={disp(ctaPriceUah)}
+        busy={generatingView}
+        tone={successView ? "bronze" : "primary"}
+        disabled={!generatingView && !successView && !placePicked}
+        cta={generatingView
+          ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
+          : successView ? t("orderPrint") : t("previewCtaShort")}
+        onCta={() => {
+          if (successView) window.dispatchEvent(new Event("monadruk:open-order"));
+          else create();
+        }}
+      />
     </div>
   );
 }

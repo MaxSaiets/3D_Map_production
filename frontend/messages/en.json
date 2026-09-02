@@ -57,7 +57,7 @@
     "path": {
       "eyebrow1": "Path 1 · Your own geometry",
       "title1": "Create your map",
-      "desc1": "Find any place on Earth, outline the area, choose a style and size. 5 steps — about 3 minutes.",
+      "desc1": "Find any place on Earth — the frame sets itself. 2 steps, 1–2 minutes — and your 3D preview is ready.",
       "cta1": "Launch the builder",
       "eyebrow2": "Path 2 · Accessory",
       "title2": "Map keychain",
@@ -134,15 +134,15 @@
       "a6": "Yes — on a 55×30 mm map keychain you can add a city name or custom text printed in relief over the district map.",
       "q7": "Can I get a keychain with mountain relief instead of streets?",
       "a7": "Yes — that's the topo keychain. Switch on the “Terrain relief” mode in the builder and the token is printed with the real elevation relief of the place from satellite height data: the Alps, the Carpathians, fjords or a coastline. Peaks and valleys are readable with your fingers.",
-      "q8": "Do you ship keychains and maps across Europe?",
-      "a8": "Yes. We print and ship within Ukraine (Nova Poshta, Ukrposhta) and to 15 EU countries via Nova Post EU and Meest: Poland, Germany, Czechia, Spain, Italy, France and more.",
+      "q8": "Do you ship abroad?",
+      "a8": "Right now we print and ship within Ukraine only (Nova Poshta, Ukrposhta). Abroad? Download the ready 3MF/STL file and print it at a local 3D-print studio.",
       "q9": "What is a city-map fridge magnet?",
       "a9": "A flat 3D-printed magnet of about 60 mm with the map of your neighbourhood: streets, parks and rivers in relief, with a pocket for a neodymium magnet on the back. A budget-friendly personal souvenir of a memorable place."
     },
     "cta": {
       "eyebrow": "Ready to start?",
       "title": "Make a map of a place that means more than a dot on a map.",
-      "desc": "5 steps, about 3 minutes — and you download a print-ready 3D file.",
+      "desc": "2 steps, 1–2 minutes — and your 3D preview is ready. Then order a print or download the file.",
       "create": "Create a map",
       "keychain": "Keychain"
     },
@@ -166,7 +166,7 @@
     "seo": {
       "title": "3D city maps and personalised keychains — what we make",
       "p1": "Monadruk turns any place on Earth into a printable 3D model: a 3D map of a city district with real building heights, parks and rivers from OpenStreetMap data, a city map keychain with your own text, a topographic keychain with real mountain relief from satellite elevation data, or a city-map fridge magnet. The 3MF and STL files open straight in Bambu Studio and PrusaSlicer, ready to print at home.",
-      "p2": "No 3D printer? We print for you in eco-friendly Eco PLA and ship across Ukraine and the EU. A 3D map of London, Berlin, Kyiv or New York, the relief of the Alps or Hoverla, a personalised anniversary keychain — pick a spot on the map and the model is ready in minutes."
+      "p2": "No 3D printer? We print for you in eco-friendly Eco PLA and ship across Ukraine. A 3D map of London, Berlin, Kyiv or New York, the relief of the Alps or Hoverla, a personalised anniversary keychain — pick a spot on the map and the model is ready in minutes."
     },
     "alt": {
       "keychainMap": "City map keychain",
@@ -183,7 +183,7 @@
   },
   "keychainsMeta": {
     "title": "City map keychain — engraved with your text, from ≈€3",
-    "description": "A 55×30 mm map keychain made to order: your district's streets in relief, custom engraved text on the back — a name, date or coordinates. 3D-printed from ≈€3, shipped to Ukraine & EU.",
+    "description": "A 55×30 mm map keychain made to order: your district's streets in relief, custom engraved text on the back — a name, date or coordinates. 3D-printed from ≈€3, shipped across Ukraine.",
     "keywords": "city map keychain, map keychain, custom 3d keychain, keychain with name, engraved keychain, topographic keychain, mountain relief keychain, heart map keychain, house keychain, gift for him, gift for her, anniversary gift, couple keychain"
   },
   "showcaseMeta": {
@@ -389,8 +389,11 @@
     "errBranchEu": "Enter the Nova Post branch №",
     "errAddressEu": "Enter the full delivery address",
     "errUkrAddress": "For Ukrposhta, also enter street and house",
+    "retry": "Retry",
+    "contactsHeading": "Contacts",
     "deliveryHeading": "Delivery",
-    "deliveryHint": "We ship across Ukraine and the EU. The operator confirms method and cost.",
+    "uaOnly": "We currently ship within Ukraine only. Abroad? Download the file and print it at a local 3D-print studio.",
+    "deliveryHint": "We ship across Ukraine. The operator confirms method and cost.",
     "costNova": "Nova Poshta — from 70 ₴ by carrier tariff, pay on delivery",
     "costUkr": "Ukrposhta — from 45 ₴ by tariff, pay on delivery",
     "costEu": "Nova Post / Meest — from €8 by carrier tariff",
@@ -563,7 +566,7 @@
     "trustEco": "Eco PLA",
     "trustReprint": "60-day guarantee",
     "trustNoPrepay": "No prepayment",
-    "trustShip": "Ships Ukraine + EU",
+    "trustShip": "Ships across Ukraine",
     "seriesConnectorsSquareHint": "Connector locks work only with the square grid.",
     "seriesTab": "▦ Series of zones (grid)"
   },
@@ -581,10 +584,10 @@
   },
   "cityPages": {
     "title": "3D map of {city} — from €6, ready in 2 min",
-    "description": "3D map of {city}: pick a district in the builder — a live model with streets, buildings and rivers in 2 minutes. Eco PLA print from ≈€6 shipped EU-wide, or download the 3MF/STL to print yourself. Keychain from ≈€3.",
+    "description": "3D map of {city}: pick a district in the builder — a live model with streets, buildings and rivers in 2 minutes. Eco PLA print from ≈€6 shipped across Ukraine, or download the 3MF/STL to print yourself. Keychain from ≈€3.",
     "h1": "3D map of {city}",
     "p1": "A 3D map of {city} is a tactile three-dimensional model of a district: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
-    "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine and to the EU. A perfect gift for anyone who loves their city.",
+    "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine. A perfect gift for anyone who loves their city.",
     "ctaMap": "Create a 3D map of {city}",
     "ctaKeychain": "{city} map keychain",
     "others": "Other cities",
@@ -618,7 +621,7 @@
   },
   "deliveryMeta": {
     "title": "Payment & Delivery — Monadruk",
-    "description": "Prices, LiqPay payment, delivery via Nova Poshta, Ukrposhta and to the EU — Monadruk."
+    "description": "Prices, LiqPay payment, delivery via Nova Poshta and Ukrposhta across Ukraine — Monadruk."
   },
   "contactsMeta": {
     "title": "Contacts & Details — Monadruk",
@@ -1438,6 +1441,8 @@
   },
   "preview": {
     "generating": "Generating model...",
+    "tapRotate": "Tap to rotate the model",
+    "tapDone": "Done",
     "emptyTitle": "Your 3D model will appear here",
     "emptyBody": "Select an area on the map and press “Generate”.",
     "batchLoadError": "Failed to load batch preview",
@@ -1697,6 +1702,7 @@
     "keychainDesc": "The map of your home always on your keys",
     "fullTitle": "Full builder",
     "fullDesc": "All settings: series, GPX, styles, shapes",
+    "moreLabel": "More:",
     "back": "Back",
     "step2Hint": "Find a city or address in the map search and click it — the zone is set automatically",
     "placeChosen": "Place selected",
@@ -1712,7 +1718,7 @@
     "createAnother": "Create another one",
     "backToGuided": "← Simple mode",
     "sizeTitle": "Choose a size",
-    "advancedSettings": "Advanced settings",
+    "advancedSettings": "More settings",
     "personalizeTitle": "Make it personal",
     "myHome": "My home on the map",
     "myHomeCount": "My home: {n} selected",
@@ -1723,13 +1729,17 @@
     "readyBadge": "Done",
     "changePlace": "Change place",
     "addLabel": "Add text on the map",
-    "updateModel": "Update model",
+    "updateModel": "Update preview",
     "changeSomething": "Want to change something?",
-    "connectors": "Series connectors",
+    "connectors": "Slot to join a neighbouring tile (series)",
     "connectorsHint": "Edge slots so you can attach neighbouring tiles into one big map later",
     "pannoTitle": "Wall panel",
     "pannoDesc": "A large tiled map — a statement piece for home or office",
-    "downloadFree": "Download 3MF (free)"
+    "downloadFree": "File for your own printer (3MF) · free, Google sign-in required",
+    "previewCta": "Show 3D preview · free",
+    "previewCtaShort": "3D preview · free",
+    "printFromLine": "Print {price} · Nova Poshta delivery across Ukraine",
+    "readyDelivery": "Print & dispatch in 2–4 business days · Nova Poshta or Ukrposhta · pay after confirmation"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -1757,14 +1767,18 @@
     "backLabelPlaceholder": "Back text (date, names…)",
     "clearField": "Clear",
     "createKeychain": "Create keychain",
-    "updateKeychain": "Update keychain",
+    "updateKeychain": "Update preview",
     "generating": "Generating your keychain…",
     "etaNote": "Usually about a minute",
     "genFailed": "Failed to generate the keychain. Try again or open the full designer.",
     "readyTitle": "Keychain is ready!",
     "readyHint": "Spin the 3D preview on the stage below. If you like it — order the print.",
     "orderPrint": "Order print",
-    "downloadFree": "Download 3MF (free)",
+    "downloadFree": "File for your own printer (3MF) · free, Google sign-in required",
+    "previewCta": "Show keychain in 3D · free",
+    "previewCtaShort": "3D preview · free",
+    "printFromLine": "Print {price} · Nova Poshta delivery across Ukraine",
+    "readyDelivery": "Print & dispatch in 2–4 business days · Nova Poshta or Ukrposhta · pay after confirmation",
     "tuneDetails": "Fine-tune details",
     "createAnother": "Create another one",
     "changeSomething": "Want to change something?",

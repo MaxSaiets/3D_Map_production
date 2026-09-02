@@ -57,7 +57,7 @@
     "path": {
       "eyebrow1": "Vía 1 · Tu propia geometría",
       "title1": "Crear tu mapa",
-      "desc1": "Encuentra cualquier lugar de la Tierra, delimita la zona, elige estilo y tamaño. 5 pasos — unos 3 minutos.",
+      "desc1": "Encuentra cualquier lugar de la Tierra — el marco se coloca solo. 2 pasos, 1–2 minutos — y la vista previa 3D está lista.",
       "cta1": "Abrir el configurador",
       "eyebrow2": "Vía 2 · Accesorio",
       "title2": "Llavero con mapa",
@@ -134,15 +134,15 @@
       "a6": "Sí — en un llavero con mapa de 55×30 mm puedes añadir el nombre de una ciudad o un texto personalizado impreso en relieve sobre el mapa del distrito.",
       "q7": "¿Se puede hacer un llavero con relieve de montañas en vez del mapa de calles?",
       "a7": "Sí — es el llavero topo. Activa el modo «Relieve del terreno» en el configurador y la ficha se imprime con el relieve real del lugar a partir de datos satelitales de altura: Alpes, Pirineos, Cárpatos, fiordos o costa. Las cumbres y valles se sienten con los dedos.",
-      "q8": "¿Enviáis llaveros y mapas por Europa?",
-      "a8": "Sí. Imprimimos y enviamos dentro de Ucrania y a 15 países de la UE a través de Nova Post EU y Meest: España, Alemania, Polonia, Italia, Francia y más.",
+      "q8": "¿Enviáis al extranjero?",
+      "a8": "Por ahora imprimimos y enviamos solo dentro de Ucrania (Nova Poshta, Ukrposhta). ¿Estás en el extranjero? Descarga el archivo 3MF/STL listo e imprímelo en un estudio de impresión 3D local.",
       "q9": "¿Qué es un imán de nevera con mapa de ciudad?",
       "a9": "Un imán plano impreso en 3D de unos 60 mm con el mapa de tu barrio: calles, parques y ríos en relieve, con un hueco trasero para un imán de neodimio. Un recuerdo personal y económico de un lugar especial."
     },
     "cta": {
       "eyebrow": "¿Listo para empezar?",
       "title": "Crea el mapa de un lugar que significa más que un punto en el mapa.",
-      "desc": "5 pasos, unos 3 minutos — y descargas un archivo 3D listo para imprimir.",
+      "desc": "2 pasos, 1–2 minutos — y tu vista previa 3D está lista. Luego: pide la impresión o descarga el archivo.",
       "create": "Crear un mapa",
       "keychain": "Llavero"
     },
@@ -166,7 +166,7 @@
     "seo": {
       "title": "Mapas 3D de ciudades y llaveros personalizados — qué hacemos",
       "p1": "Monadruk convierte cualquier lugar de la Tierra en un modelo 3D imprimible: un mapa 3D de un barrio con alturas reales de edificios, parques y ríos a partir de datos de OpenStreetMap, un llavero con el mapa de tu ciudad y tu propio texto, un llavero topográfico con el relieve real de las montañas a partir de datos satelitales de altura, o un imán de nevera con mapa. Los archivos 3MF y STL se abren directamente en Bambu Studio y PrusaSlicer.",
-      "p2": "¿No tienes impresora 3D? Imprimimos por ti en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un mapa 3D de Madrid, Barcelona, Kyiv o Nueva York, el relieve de los Alpes, un llavero personalizado para un aniversario — elige un lugar en el mapa y el modelo está listo en minutos."
+      "p2": "¿No tienes impresora 3D? Imprimimos por ti en Eco PLA ecológico y enviamos dentro de Ucrania. Un mapa 3D de Madrid, Barcelona, Kyiv o Nueva York, el relieve de los Alpes, un llavero personalizado para un aniversario — elige un lugar en el mapa y el modelo está listo en minutos."
     },
     "alt": {
       "keychainMap": "Llavero con mapa de la ciudad",
@@ -183,7 +183,7 @@
   },
   "keychainsMeta": {
     "title": "Llavero con mapa de ciudad — grabado con tu texto, desde ≈3 €",
-    "description": "Llavero-mapa 55×30 mm a medida: las calles de tu barrio en relieve, texto grabado al dorso — nombre, fecha, coordenadas. Impresión 3D desde ≈3 €, envío a la UE.",
+    "description": "Llavero-mapa 55×30 mm a medida: las calles de tu barrio en relieve, texto grabado al dorso — nombre, fecha, coordenadas. Impresión 3D desde ≈3 €, envío dentro de Ucrania.",
     "keywords": "llavero mapa de ciudad, llavero mapa, llavero 3d personalizado, llavero con nombre, llavero grabado, llavero topográfico, llavero relieve montaña, llavero corazón mapa, llavero casa, regalo para él, regalo para ella, regalo de aniversario, llavero pareja"
   },
   "showcaseMeta": {
@@ -389,8 +389,11 @@
     "errBranchEu": "Indica el № de sucursal Nova Post",
     "errAddressEu": "Indica la dirección completa",
     "errUkrAddress": "Para Ukrposhta indica calle y número",
+    "retry": "Reintentar",
+    "contactsHeading": "Contacto",
     "deliveryHeading": "Entrega",
-    "deliveryHint": "Enviamos a toda Ucrania y la UE. El operador confirma método y coste.",
+    "uaOnly": "Por ahora solo enviamos dentro de Ucrania. ¿Estás en el extranjero? Descarga el archivo e imprímelo en un estudio de impresión 3D local.",
+    "deliveryHint": "Enviamos a toda Ucrania. El operador confirma método y coste.",
     "costNova": "Nova Poshta — desde 70 ₴ según tarifa, pago al recibir",
     "costUkr": "Ukrposhta — desde 45 ₴ según tarifa, pago al recibir",
     "costEu": "Nova Post / Meest — desde 8 € según tarifa del transportista",
@@ -563,7 +566,7 @@
     "trustEco": "Eco PLA",
     "trustReprint": "Garantía 60 días",
     "trustNoPrepay": "Sin pago previo",
-    "trustShip": "Envío Ucrania + UE",
+    "trustShip": "Envío en toda Ucrania",
     "seriesConnectorsSquareHint": "Los conectores funcionan solo con la cuadrícula cuadrada.",
     "seriesTab": "▦ Serie de zonas (cuadrícula)"
   },
@@ -581,10 +584,10 @@
   },
   "cityPages": {
     "title": "Mapa 3D de {city} — desde 6 €, listo en 2 min",
-    "description": "Mapa 3D de {city}: elige un barrio en el configurador — un modelo con calles, edificios y ríos en 2 minutos. Impresión en Eco PLA desde ≈6 € con envío a la UE, o descarga el archivo 3MF/STL para imprimirlo tú mismo. Llavero desde ≈3 €.",
+    "description": "Mapa 3D de {city}: elige un barrio en el configurador — un modelo con calles, edificios y ríos en 2 minutos. Impresión en Eco PLA desde ≈6 € con envío dentro de Ucrania, o descarga el archivo 3MF/STL para imprimirlo tú mismo. Llavero desde ≈3 €.",
     "h1": "Mapa 3D de {city}",
     "p1": "El mapa 3D de {city} es un modelo tridimensional táctil de un barrio: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
-    "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos a Ucrania y a la UE. Un regalo perfecto para quien ama su ciudad.",
+    "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos dentro de Ucrania. Un regalo perfecto para quien ama su ciudad.",
     "ctaMap": "Crear el mapa 3D de {city}",
     "ctaKeychain": "Llavero con el mapa de {city}",
     "others": "Otras ciudades",
@@ -618,7 +621,7 @@
   },
   "deliveryMeta": {
     "title": "Pago y envío — Monadruk",
-    "description": "Precios, pago con LiqPay, envío con Nova Poshta, Ukrposhta y a la UE — Monadruk."
+    "description": "Precios, pago con LiqPay, envío con Nova Poshta y Ukrposhta en Ucrania — Monadruk."
   },
   "contactsMeta": {
     "title": "Contactos y datos — Monadruk",
@@ -1438,6 +1441,8 @@
   },
   "preview": {
     "generating": "Generando modelo...",
+    "tapRotate": "Toca para girar el modelo",
+    "tapDone": "Listo",
     "emptyTitle": "Aquí aparecerá tu modelo 3D",
     "emptyBody": "Selecciona un área en el mapa y pulsa «Generar».",
     "batchLoadError": "Error al cargar la vista previa del lote",
@@ -1697,6 +1702,7 @@
     "keychainDesc": "El mapa de su hogar siempre en sus llaves",
     "fullTitle": "Constructor completo",
     "fullDesc": "Todos los ajustes: series, GPX, estilos, formas",
+    "moreLabel": "Más:",
     "back": "Atrás",
     "step2Hint": "Busque una ciudad o dirección en el buscador del mapa y haga clic: la zona se establecerá automáticamente",
     "placeChosen": "Lugar seleccionado",
@@ -1712,7 +1718,7 @@
     "createAnother": "Crear otro",
     "backToGuided": "← Modo simple",
     "sizeTitle": "Elija el tamaño",
-    "advancedSettings": "Ajustes avanzados",
+    "advancedSettings": "Más ajustes",
     "personalizeTitle": "Hágalo personal",
     "myHome": "Mi casa en el mapa",
     "myHomeCount": "Mi casa: {n} seleccionado",
@@ -1723,13 +1729,17 @@
     "readyBadge": "Listo",
     "changePlace": "Cambiar lugar",
     "addLabel": "Añadir texto en el mapa",
-    "updateModel": "Actualizar modelo",
+    "updateModel": "Actualizar vista previa",
     "changeSomething": "¿Quiere cambiar algo?",
-    "connectors": "Conectores de serie",
+    "connectors": "Ranura para unir la pieza vecina (serie)",
     "connectorsHint": "Ranuras en los bordes para unir después las piezas vecinas en un mapa grande",
     "pannoTitle": "Panel de pared",
     "pannoDesc": "Un gran mapa de piezas — decoración para casa u oficina",
-    "downloadFree": "Descargar 3MF (gratis)"
+    "downloadFree": "Archivo para tu impresora (3MF) · gratis, requiere iniciar sesión con Google",
+    "previewCta": "Ver vista previa 3D · gratis",
+    "previewCtaShort": "Vista 3D · gratis",
+    "printFromLine": "Impresión {price} · envío con Nova Poshta por Ucrania",
+    "readyDelivery": "Impresión y envío en 2–4 días hábiles · Nova Poshta o Ukrposhta · pago tras la confirmación"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",
@@ -1757,14 +1767,18 @@
     "backLabelPlaceholder": "Texto del reverso (fecha, nombres…)",
     "clearField": "Borrar",
     "createKeychain": "Crear llavero",
-    "updateKeychain": "Actualizar llavero",
+    "updateKeychain": "Actualizar vista previa",
     "generating": "Generando tu llavero…",
     "etaNote": "Suele tardar alrededor de un minuto",
     "genFailed": "No se pudo generar el llavero. Inténtalo de nuevo o abre el diseñador completo.",
     "readyTitle": "¡El llavero está listo!",
     "readyHint": "Gira la vista previa 3D abajo. Si te gusta — pide la impresión.",
     "orderPrint": "Pedir impresión",
-    "downloadFree": "Descargar 3MF (gratis)",
+    "downloadFree": "Archivo para tu impresora (3MF) · gratis, requiere iniciar sesión con Google",
+    "previewCta": "Ver el llavero en 3D · gratis",
+    "previewCtaShort": "Vista 3D · gratis",
+    "printFromLine": "Impresión {price} · envío con Nova Poshta por Ucrania",
+    "readyDelivery": "Impresión y envío en 2–4 días hábiles · Nova Poshta o Ukrposhta · pago tras la confirmación",
     "tuneDetails": "Ajustar detalles",
     "createAnother": "Crear otro",
     "changeSomething": "¿Quieres cambiar algo?",

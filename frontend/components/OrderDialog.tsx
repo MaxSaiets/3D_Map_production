@@ -7,18 +7,14 @@ import { useTranslations } from "next-intl";
 import { capturePreviewImages } from "@/lib/capturePreview";
 import { useAuth } from "@/components/AuthProvider";
 import { NovaPoshtaPicker } from "@/components/NovaPoshtaPicker";
-import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH, mapPriceEur } from "@/lib/mapPrices";
+import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-type Delivery = "nova" | "ukr" | "pickup" | "novapost_eu" | "meest";
-type Region = "ua" | "eu";
-
-/** Рідні назви — впізнавані і для місцевих, і для українців за кордоном; не потребують перекладу. */
-const EU_COUNTRIES = [
-  "Polska", "Deutschland", "Česko", "Slovensko", "Österreich", "Italia", "España",
-  "France", "Nederland", "België", "Lietuva", "Latvija", "Eesti", "Portugal", "România",
-];
+// Рішення власника 2026-09-02: замовлення ЛИШЕ по Україні. Регіон «ЄС», Nova Post (EU)
+// та Meest прибрано з форми повністю (повернення ЄС — окрема задача з прайсом ×10,
+// див. plans/02 T-B.3). Завантаження файлу для самодруку лишається доступним усім.
+type Delivery = "nova" | "ukr" | "pickup";
 
 export interface OrderSummary {
   city?: string;
@@ -61,8 +57,6 @@ export function OrderDialog({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [region, setRegion] = useState<Region>("ua");
-  const [euCountry, setEuCountry] = useState("");
   const [delivery, setDelivery] = useState<Delivery>("nova");
   const [city, setCity] = useState("");
   const [branch, setBranch] = useState("");
@@ -161,12 +155,7 @@ export function OrderDialog({
     // Базова перевірка телефону: лишаємо тільки цифри, очікуємо ≥10 (UA +380 = 12).
     if (phone.replace(/\D/g, "").length < 10) { fail("phone", t("errPhoneFormat")); return; }
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { fail("email", t("errEmail")); return; }
-    if (region === "eu") {
-      if (!euCountry) { fail("euCountry", t("errEuCountry")); return; }
-      if (!city.trim()) { fail("city", t("errCity")); return; }
-      if (delivery === "novapost_eu" && !branch.trim()) { fail("branch", t("errBranchEu")); return; }
-      if (delivery === "meest" && !address.trim()) { fail("address", t("errAddressEu")); return; }
-    } else if (delivery !== "pickup") {
+    if (delivery !== "pickup") {
       if (!city.trim()) { fail("city", t("errCity")); return; }
       if (!branch.trim()) { fail("branch", delivery === "nova" ? t("errNova") : t("errUkr")); return; }
       // Укрпошта потребує і місто+індекс, і вулицю/будинок (інакше недоставне).
@@ -188,7 +177,7 @@ export function OrderDialog({
         body: JSON.stringify({
           name, phone, email, product_type: productType, task_id: taskId,
           delivery_method: delivery,
-          delivery_country: region === "ua" ? "Україна" : euCountry,
+          delivery_country: "Україна",
           delivery_city: city,
           delivery_branch: branch, delivery_address: address, comment,
           est_price: priceText || fallbackPrice,
@@ -203,18 +192,17 @@ export function OrderDialog({
       try {
         const { trackConversion, trackFunnel } = await import("@/lib/analytics");
         trackFunnel("order_submit"); // останній крок воронки — замовлення надіслане
-        // Валюту беремо з ТОГО САМОГО рядка, що й число (priceText), а не з region —
-        // інакше EUR-замовлення слало б UAH-суму як EUR (×10 інфляція конверсії).
+        // Валюту беремо з ТОГО САМОГО рядка, що й число (priceText) — на не-uk локалях
+        // ціна показується в €, хоча доставка лише по Україні.
         const raw = String(priceText || "");
         let value = raw ? Number(raw.replace(/[^\d]/g, "")) || undefined : undefined;
         let currency = raw.includes("€") ? "EUR" : "UAH";
         // Фолбек: якщо quote ще не завантажився (priceText порожній), конверсія без
-        // value марна для Smart Bidding. Беремо мінімальну ціну продукту у валюті
-        // регіону, щоб КОЖНА конверсія несла суму. (KEYCHAIN 120 / MAP S=250 ₴.)
+        // value марна для Smart Bidding. Беремо мінімальну ціну продукту в ₴,
+        // щоб КОЖНА конверсія несла суму. (KEYCHAIN 120 / MAP S=250 ₴.)
         if (value === undefined) {
-          const floorUah = productType === "keychain" ? KEYCHAIN_PRICE_UAH : MAP_SIZE_PRICES_UAH[55];
-          if (region === "eu") { value = mapPriceEur(floorUah); currency = "EUR"; }
-          else { value = floorUah; currency = "UAH"; }
+          value = productType === "keychain" ? KEYCHAIN_PRICE_UAH : MAP_SIZE_PRICES_UAH[55];
+          currency = "UAH";
         }
         trackConversion("order", {
           value,
@@ -328,28 +316,29 @@ export function OrderDialog({
                   <span>{t("modelPending")}</span>
                 </div>
               )}
-              <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} aria-label={t("phName")} {...errAttrs("name")} value={name} onChange={(e) => setName(e.target.value)} />
-              <input className={fieldCls} placeholder={t("phPhone")} aria-label={t("phPhone")} {...errAttrs("phone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+              {/* F-14: видимі лейбли над полями (placeholder зникає при наборі). */}
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("contactsHeading")}</p>
+              <label className="block">
+                <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phName")}</span>
+                <input ref={firstInputRef} className={fieldCls} placeholder={t("phName")} {...errAttrs("name")} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+              </label>
+              <label className="block">
+                <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phPhone")}</span>
+                <input className={fieldCls} placeholder="+380 93 000 00 00" {...errAttrs("phone")} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" />
+              </label>
               {/* Email необовʼязковий — для підтвердження замовлення на пошту. */}
-              <input className={fieldCls} placeholder={t("phEmail")} aria-label={t("phEmail")} {...errAttrs("email")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
+              <label className="block">
+                <span className="mb-1 block px-1 text-[12px] font-semibold text-[var(--text-primary)]">{t("phEmail")}</span>
+                <input className={fieldCls} placeholder="name@example.com" {...errAttrs("email")} value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" type="email" autoComplete="email" />
+              </label>
 
               <div className="space-y-1.5">
                 <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{t("deliveryHeading")}</p>
-                <div role="radiogroup" aria-label={t("aria.region")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                  {([["ua", t("regionUa")], ["eu", t("regionEu")]] as [Region, string][]).map(([k, lbl]) => (
-                    <button key={k} type="button" role="radio" aria-checked={region === k}
-                      onClick={() => { setRegion(k); setDelivery(k === "ua" ? "nova" : "novapost_eu"); }}
-                      className={`flex-1 min-h-11 rounded-xl px-2 py-2 text-sm font-semibold transition ${region === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-
+                {/* Лише Україна (рішення власника 2026-09-02) — чесно кажемо це одразу,
+                    щоб відвідувач з-за кордону не заповнював форму даремно. */}
+                <p className="px-1 text-[11px] leading-4 text-[var(--text-secondary)]">{t("uaOnly")}</p>
                 <div role="radiogroup" aria-label={t("aria.method")} className="flex items-center gap-2 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-1 text-xs">
-                  {(region === "ua"
-                    ? ([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][])
-                    : ([["novapost_eu", "Nova Post (EU)"], ["meest", "Meest"]] as [Delivery, string][])
-                  ).map(([k, lbl]) => (
+                  {([["nova", t("nova")], ["ukr", t("ukr")]] as [Delivery, string][]).map(([k, lbl]) => (
                     <button key={k} type="button" role="radio" aria-checked={delivery === k} onClick={() => setDelivery(k)}
                       className={`flex-1 min-h-11 rounded-xl px-2 py-2 text-sm font-semibold transition ${delivery === k ? "bg-[var(--accent-strong)] text-white" : "text-[var(--text-secondary)]"}`}>
                       {lbl}
@@ -364,48 +353,20 @@ export function OrderDialog({
                     ? t("costPickup")
                     : delivery === "nova"
                       ? t("costNova")
-                      : delivery === "ukr"
-                        ? t("costUkr")
-                        : t("costEu")}
+                      : t("costUkr")}
                 </p>
               </div>
 
-              {region === "eu" && (
-                // Датасписок замість жорсткого <select>: українець за кордоном у країні
-                // поза списком (UK, Ireland, Sverige, Schweiz…) раніше не міг завершити
-                // замовлення — тепер можна ОБРАТИ підказку АБО ввести будь-яку країну.
-                <>
-                  <input
-                    list="eu-countries" className={fieldCls} aria-label={t("phCountry")}
-                    placeholder={t("phCountry")} {...errAttrs("euCountry")}
-                    value={euCountry} onChange={(e) => setEuCountry(e.target.value)}
-                  />
-                  <datalist id="eu-countries">
-                    {EU_COUNTRIES.map((c) => <option key={c} value={c} />)}
-                  </datalist>
-                </>
-              )}
-
               {delivery !== "pickup" && (
-                region === "ua" && delivery === "nova" ? (
+                delivery === "nova" ? (
                   // Нова Пошта: пошук міста + відділення через API (фолбек на ручне
                   // введення, якщо ключ NOVA_POSHTA_API_KEY не налаштовано на сервері).
                   <NovaPoshtaPicker city={city} branch={branch} setCity={setCity} setBranch={setBranch} inputCls={fieldCls} />
                 ) : (
                 <>
                   <input className={fieldCls} placeholder={t("phCity")} aria-label={t("phCity")} {...errAttrs("city")} value={city} onChange={(e) => setCity(e.target.value)} />
-                  {region === "ua" ? (
-                    <>
-                      <input className={fieldCls} placeholder={delivery === "nova" ? t("phNova") : t("phUkr")} aria-label={delivery === "nova" ? t("phNova") : t("phUkr")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
-                      {delivery === "ukr" && (
-                        <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
-                      )}
-                    </>
-                  ) : delivery === "novapost_eu" ? (
-                    <input className={fieldCls} placeholder={t("phBranchEu")} aria-label={t("phBranchEu")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
-                  ) : (
-                    <input className={fieldCls} placeholder={t("phAddressEu")} aria-label={t("phAddressEu")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
-                  )}
+                  <input className={fieldCls} placeholder={t("phUkr")} aria-label={t("phUkr")} {...errAttrs("branch")} value={branch} onChange={(e) => setBranch(e.target.value)} />
+                  <input className={fieldCls} placeholder={t("phAddress")} aria-label={t("phAddress")} {...errAttrs("address")} value={address} onChange={(e) => setAddress(e.target.value)} />
                 </>
                 )
               )}
@@ -443,7 +404,17 @@ export function OrderDialog({
               {/* Sticky-футер: ЦІНА + CTA завжди на видноті — не треба скролити крізь
                   усю форму до кнопки. Лишається приклеєним до низу скрол-панелі. */}
               <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-[var(--surface-border)] bg-[var(--surface-panel,#fff)] px-5 pb-4 pt-3">
-                {error && <div id="order-error" role="alert" className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+                {error && (
+                  <div id="order-error" role="alert" className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    <span>{error}</span>
+                    {/* F-14: мережева помилка — кнопка «Повторити» з тим самим payload. */}
+                    {error === t("sendFail") && (
+                      <button type="button" onClick={submit} className="shrink-0 rounded-full border border-red-300 bg-white px-3 py-1 text-[12px] font-semibold text-red-700">
+                        {t("retry")}
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[12px] font-semibold text-[var(--text-secondary)]">{t("estPriceLabel")}</span>
                   <b className="text-[17px] font-extrabold text-[var(--text-primary)]">{priceText || fallbackPrice}</b>

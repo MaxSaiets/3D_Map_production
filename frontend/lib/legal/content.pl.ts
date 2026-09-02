@@ -34,7 +34,7 @@ export const pl: LegalSet = {
         { p: "Kupujący samodzielnie odpowiada za prawidłowość wybranych parametrów modelu (fragment mapy, tekst, rozmiar) oraz za poprawność danych kontaktowych. Sprzedawca nie ponosi odpowiedzialności za skutki błędów w danych podanych przez Kupującego, w szczególności za wytworzenie wyrobu z błędnym tekstem lub fragmentem mapy, które Kupujący sam zatwierdził w Konfiguratorze." },
       ] },
       { h: "4. Cena i płatność", blocks: [
-        { p: "Ceny w Serwisie podane są w hrywnach (dla zamówień na terenie Ukrainy) oraz w euro (orientacyjnie, dla dostaw do krajów UE). Ostateczną wartość zamówienia Kupujący widzi na etapie składania zamówienia, przed dokonaniem płatności. Koszt dostawy nie jest wliczony w cenę Towaru i jest opłacany osobno według taryf przewoźnika." },
+        { p: "Ceny w Serwisie podane są w hrywnach (dla zamówień na terenie Ukrainy) oraz w euro (orientacyjnie). Ostateczną wartość zamówienia Kupujący widzi na etapie składania zamówienia, przed dokonaniem płatności. Koszt dostawy nie jest wliczony w cenę Towaru i jest opłacany osobno według taryf przewoźnika." },
         { p: "Płatność odbywa się online za pośrednictwem serwisu płatniczego LiqPay (JSC CB „PrivatBank”): kartą bankową Visa/Mastercard oraz innymi metodami dostępnymi w LiqPay. Dane karty płatniczej są przetwarzane po stronie systemu płatności; Sprzedawca ich nie otrzymuje i nie przechowuje." },
         { p: "Po uzgodnieniu z operatorem możliwa jest płatność w inny uzgodniony sposób. Pobranie gotowej Treści cyfrowej w ramach bezpłatnego limitu konta jest bezpłatne." },
         { p: "Towar jest opłacany w całości przed przekazaniem do produkcji, chyba że strony uzgodniły inaczej. Szczegóły — na stronie [delivery:„Płatność i dostawa”]." },
@@ -44,7 +44,7 @@ export const pl: LegalSet = {
         { p: "Orientacyjny czas wytworzenia wyrobu fizycznego wynosi 1–3 dni robocze od momentu opłacenia/potwierdzenia zamówienia. W przypadku zwiększonego obciążenia lub technicznej złożoności wyrobu termin może ulec wydłużeniu, o czym Sprzedawca informuje Kupującego." },
       ] },
       { h: "6. Dostawa", blocks: [
-        { p: "Dostawa na terenie Ukrainy realizowana jest przez firmy „Nova Poshta” (oddział, paczkomat) lub „Ukrposhta”. Dostawa do krajów UE — za pośrednictwem Nova Post EU lub Meest. Orientacyjny czas dostawy na terenie Ukrainy to 2–4 dni robocze od nadania." },
+        { p: "Dostawa na terenie Ukrainy realizowana jest przez firmy „Nova Poshta” (oddział, paczkomat) lub „Ukrposhta”. Orientacyjny czas dostawy na terenie Ukrainy to 2–4 dni robocze od nadania." },
         { p: "Koszt dostawy jest obliczany według taryf przewoźnika i opłacany przez Kupującego osobno (zazwyczaj przy odbiorze). Prawo własności do Towaru oraz ryzyko przypadkowego uszkodzenia przechodzą na Kupującego z chwilą odbioru Towaru od przewoźnika." },
         { p: "Przy odbiorze Kupujący jest zobowiązany sprawdzić przesyłkę pod kątem nienaruszalności opakowania i wyrobu. W przypadku uszkodzenia w transporcie należy sporządzić protokół przewoźnika i powiadomić Sprzedawcę — taki przypadek jest rozwiązywany przez bezpłatny ponowny wydruk lub zwrot pieniędzy (zob. rozdział 8)." },
       ] },
@@ -147,8 +147,6 @@ export const pl: LegalSet = {
       { h: "Dostawa", blocks: [
         { p: "Ukraina:" },
         { ul: ["Nova Poshta — oddział lub paczkomat.", "Ukrposhta — oddział."] },
-        { p: "Unia Europejska (15 krajów):" },
-        { ul: ["Nova Post EU.", "Meest."] },
         { p: "Koszt dostawy jest obliczany według taryf przewoźnika i opłacany osobno (zazwyczaj przy odbiorze). Orientacyjny czas dostawy na terenie Ukrainy — 2–4 dni robocze po wysłaniu." },
       ] },
       { h: "Zwrot", blocks: [

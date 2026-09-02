@@ -34,7 +34,7 @@ export const fr: LegalSet = {
         { p: "L'Acheteur est seul responsable de l'exactitude des paramètres du modèle choisis (zone de la carte, texte, taille) et de la véracité de ses coordonnées. Le Vendeur décline toute responsabilité quant aux conséquences des erreurs dans les données fournies par l'Acheteur, notamment la fabrication d'un article avec un texte ou une zone de carte erronés que l'Acheteur a lui-même validés dans le Configurateur." },
       ] },
       { h: "4. Prix et modalités de paiement", blocks: [
-        { p: "Les prix sur le Site sont indiqués en hryvnias (pour les commandes en Ukraine) et en euros (à titre indicatif, pour la livraison vers les pays de l'UE). L'Acheteur voit le coût définitif de la commande à l'étape de finalisation, avant le paiement. Les frais de livraison ne sont pas inclus dans le prix du Produit et sont payés séparément selon les tarifs du transporteur." },
+        { p: "Les prix sur le Site sont indiqués en hryvnias (pour les commandes en Ukraine) et en euros (à titre indicatif). L'Acheteur voit le coût définitif de la commande à l'étape de finalisation, avant le paiement. Les frais de livraison ne sont pas inclus dans le prix du Produit et sont payés séparément selon les tarifs du transporteur." },
         { p: "Le paiement s'effectue en ligne via le service de paiement LiqPay (JSC CB « PrivatBank ») : par carte bancaire Visa/Mastercard et par d'autres moyens disponibles dans LiqPay. Les données de la carte de paiement sont traitées du côté du système de paiement ; le Vendeur ne les reçoit pas et ne les conserve pas." },
         { p: "Sur accord avec l'opérateur, un autre mode de paiement convenu est possible. Le téléchargement du Contenu numérique fini dans la limite gratuite du compte est gratuit." },
         { p: "Le Produit est payé intégralement avant sa mise en production, sauf accord contraire des parties. Détails sur la page [delivery:« Paiement et livraison »]." },
@@ -44,7 +44,7 @@ export const fr: LegalSet = {
         { p: "Le délai indicatif de fabrication d'un article physique est de 1 à 3 jours ouvrables à compter du paiement/de la confirmation de la commande. En cas de forte charge de travail ou de complexité technique de l'article, le délai peut être prolongé, ce dont le Vendeur informe l'Acheteur." },
       ] },
       { h: "6. Livraison", blocks: [
-        { p: "La livraison en Ukraine est assurée par les services « Nova Poshta » (agence, consigne automatique) ou « Ukrposhta ». La livraison vers les pays de l'UE — par Nova Post EU ou Meest. Le délai indicatif de livraison en Ukraine est de 2 à 4 jours ouvrables après l'expédition." },
+        { p: "La livraison en Ukraine est assurée par les services « Nova Poshta » (agence, consigne automatique) ou « Ukrposhta ». Le délai indicatif de livraison en Ukraine est de 2 à 4 jours ouvrables après l'expédition." },
         { p: "Les frais de livraison sont calculés selon les tarifs du transporteur et payés séparément par l'Acheteur (généralement à la réception). Le droit de propriété sur le Produit et le risque de détérioration fortuite sont transférés à l'Acheteur au moment de la réception du Produit auprès du transporteur." },
         { p: "À la réception, l'Acheteur est tenu d'inspecter l'envoi afin de vérifier l'intégrité de l'emballage et de l'article. En cas de dommage pendant le transport, il convient de le faire constater par un procès-verbal du transporteur et d'en informer le Vendeur — un tel cas est résolu par une réimpression gratuite ou un remboursement (voir la section 8)." },
       ] },
@@ -147,8 +147,6 @@ export const fr: LegalSet = {
       { h: "Livraison", blocks: [
         { p: "Ukraine :" },
         { ul: ["Nova Poshta — point relais ou casier automatique.", "Ukrposhta — bureau de poste."] },
-        { p: "Union européenne (15 pays) :" },
-        { ul: ["Nova Post EU.", "Meest."] },
         { p: "Les frais de livraison sont calculés selon les tarifs du transporteur et payés séparément (généralement à la réception). Délai de livraison indicatif en Ukraine — 2–4 jours ouvrés après l'expédition." },
       ] },
       { h: "Retours", blocks: [

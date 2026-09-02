@@ -132,7 +132,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Крок 4. Друк: удома або на замовлення",
             p: [
               "Є принтер? Завантажте готовий файл 3MF або STL — він одразу відкривається в Bambu Studio чи PrusaSlicer, без додаткової обробки. Кольори шарів уже розставлені.",
-              "Немає принтера? Замовте друк: ми надрукуємо мапу з екологічного біопластику Eco PLA і надішлемо Новою Поштою по Україні або в країни ЄС. Оплата карткою онлайн або при отриманні.",
+              "Немає принтера? Замовте друк: ми надрукуємо мапу з екологічного біопластику Eco PLA і надішлемо Новою Поштою по Україні. Оплата карткою онлайн або при отриманні.",
             ],
           },
         ],
@@ -173,7 +173,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Step 4. Print at home or order",
             p: [
               "Have a printer? Download the ready 3MF or STL file — it opens directly in Bambu Studio or PrusaSlicer with layer colors pre-assigned.",
-              "No printer? Order a print: we print in eco-friendly Eco PLA and ship across Ukraine and to 15 EU countries.",
+              "No printer? Order a print: we print in eco-friendly Eco PLA and ship across Ukraine.",
             ],
           },
         ],
@@ -213,7 +213,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Schritt 4. Zu Hause drucken oder bestellen",
             p: [
               "Hast du einen Drucker? Lade die fertige 3MF- oder STL-Datei herunter — sie öffnet sich direkt in Bambu Studio oder PrusaSlicer, mit vorbelegten Schichtfarben.",
-              "Kein Drucker? Bestelle den Druck: Wir drucken aus umweltfreundlichem Eco PLA und versenden in die Ukraine und in 15 EU-Länder. Kartenzahlung online oder bei Lieferung.",
+              "Kein Drucker? Bestelle den Druck: Wir drucken aus umweltfreundlichem Eco PLA und versenden in die Ukraine. Kartenzahlung online oder bei Lieferung.",
             ],
           },
         ],
@@ -253,7 +253,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Krok 4. Wydrukuj w domu lub zamów",
             p: [
               "Masz drukarkę? Pobierz gotowy plik 3MF lub STL — otwiera się bezpośrednio w Bambu Studio lub PrusaSlicer, z przypisanymi kolorami warstw.",
-              "Nie masz drukarki? Zamów druk: drukujemy z ekologicznego Eco PLA i wysyłamy na Ukrainę oraz do 15 krajów UE. Płatność kartą online lub przy odbiorze.",
+              "Nie masz drukarki? Zamów druk: drukujemy z ekologicznego Eco PLA i wysyłamy na Ukrainę. Płatność kartą online lub przy odbiorze.",
             ],
           },
         ],
@@ -293,7 +293,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Étape 4. Imprimez chez vous ou commandez",
             p: [
               "Vous avez une imprimante ? Téléchargez le fichier 3MF ou STL prêt — il s'ouvre directement dans Bambu Studio ou PrusaSlicer, avec les couleurs de couche déjà attribuées.",
-              "Pas d'imprimante ? Commandez l'impression : nous imprimons en Eco PLA écologique et livrons en Ukraine et dans 15 pays de l'UE. Paiement par carte en ligne ou à la livraison.",
+              "Pas d'imprimante ? Commandez l'impression : nous imprimons en Eco PLA écologique et livrons en Ukraine. Paiement par carte en ligne ou à la livraison.",
             ],
           },
         ],
@@ -333,7 +333,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Paso 4. Imprime en casa o pídelo",
             p: [
               "¿Tienes impresora? Descarga el archivo 3MF o STL listo — se abre directamente en Bambu Studio o PrusaSlicer, con los colores de capa ya asignados.",
-              "¿Sin impresora? Pide la impresión: imprimimos en Eco PLA ecológico y enviamos a Ucrania y a 15 países de la UE. Pago con tarjeta online o contra entrega.",
+              "¿Sin impresora? Pide la impresión: imprimimos en Eco PLA ecológico y enviamos a Ucrania. Pago con tarjeta online o contra entrega.",
             ],
           },
         ],
@@ -403,7 +403,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Order in 5 minutes",
             p: [
-              "Pick the area in the builder, choose a size — the model is assembled automatically. We print in Eco PLA and ship to Ukraine and the EU; you can also get the digital file. Production takes 1–3 business days.",
+              "Pick the area in the builder, choose a size — the model is assembled automatically. We print in Eco PLA and ship to Ukraine; you can also get the digital file. Production takes 1–3 business days.",
             ],
           },
         ],
@@ -435,7 +435,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "In 5 Minuten bestellen",
             p: [
-              "Wähle den Bereich im Konfigurator und eine Größe — das Modell wird automatisch erstellt. Wir drucken aus Eco PLA und versenden in die Ukraine und die EU; auch die Digitaldatei ist erhältlich. Fertigung 1–3 Werktage.",
+              "Wähle den Bereich im Konfigurator und eine Größe — das Modell wird automatisch erstellt. Wir drucken aus Eco PLA und versenden in die Ukraine; auch die Digitaldatei ist erhältlich. Fertigung 1–3 Werktage.",
             ],
           },
         ],
@@ -467,7 +467,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Zamów w 5 minut",
             p: [
-              "Wybierz obszar w kreatorze i rozmiar — model powstaje automatycznie. Drukujemy z Eco PLA i wysyłamy na Ukrainę oraz do UE; dostępny jest też plik cyfrowy. Wykonanie 1–3 dni robocze.",
+              "Wybierz obszar w kreatorze i rozmiar — model powstaje automatycznie. Drukujemy z Eco PLA i wysyłamy na Ukrainę; dostępny jest też plik cyfrowy. Wykonanie 1–3 dni robocze.",
             ],
           },
         ],
@@ -499,7 +499,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Commander en 5 minutes",
             p: [
-              "Choisissez la zone dans le configurateur et une taille — le modèle est assemblé automatiquement. Nous imprimons en Eco PLA et livrons en Ukraine et dans l'UE ; le fichier numérique est aussi disponible. Fabrication 1–3 jours ouvrés.",
+              "Choisissez la zone dans le configurateur et une taille — le modèle est assemblé automatiquement. Nous imprimons en Eco PLA et livrons en Ukraine ; le fichier numérique est aussi disponible. Fabrication 1–3 jours ouvrés.",
             ],
           },
         ],
@@ -531,7 +531,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Pide en 5 minutos",
             p: [
-              "Elige la zona en el configurador y un tamaño — el modelo se genera automáticamente. Imprimimos en Eco PLA y enviamos a Ucrania y la UE; también está disponible el archivo digital. Fabricación 1–3 días hábiles.",
+              "Elige la zona en el configurador y un tamaño — el modelo se genera automáticamente. Imprimimos en Eco PLA y enviamos a Ucrania; también está disponible el archivo digital. Fabricación 1–3 días hábiles.",
             ],
           },
         ],
@@ -548,7 +548,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Брелок з картою міста: персональний аксесуар від 120 ₴",
         description:
-          "Брелок-мапа 55×30 мм: вулиці й парки вашого району рельєфом, власний напис на звороті. 3D-друк на замовлення від 120 ₴, доставка по Україні та ЄС.",
+          "Брелок-мапа 55×30 мм: вулиці й парки вашого району рельєфом, власний напис на звороті. 3D-друк на замовлення від 120 ₴, доставка по Україні.",
         h1: "Брелок з картою міста — маленька мапа, що завжди з тобою",
         intro:
           "Брелок-мапа — це жетон 55×30 мм, на якому рельєфом надруковано карту обраного району: вулиці, парки, річки. На звороті — власний напис: назва міста, дата, ім'я чи координати. Це найдоступніший спосіб носити з собою місце, яке щось означає.",
@@ -569,7 +569,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна і терміни",
             p: [
-              "Брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка Новою Пошта по Україні або Nova Post/Meest у 15 країн ЄС. Оплата карткою онлайн (LiqPay) або при отриманні.",
+              "Брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка Новою Пошта по Україні. Оплата карткою онлайн (LiqPay) або при отриманні.",
             ],
           },
         ],
@@ -579,7 +579,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "City map keychain: a personal accessory from €3",
         description:
-          "55×30 mm map keychain: your neighborhood's streets and parks in relief, custom text on the back. 3D-printed to order, shipping to Ukraine & EU.",
+          "55×30 mm map keychain: your neighborhood's streets and parks in relief, custom text on the back. 3D-printed to order, shipping across Ukraine.",
         h1: "A city map keychain — a little map that's always with you",
         intro:
           "The map keychain is a 55×30 mm tag with your chosen district printed in relief: streets, parks, rivers. On the back — your text: a city name, a date, a name or coordinates. The most affordable way to carry a place that matters.",
@@ -600,7 +600,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price and lead time",
             p: [
-              "Map keychain — from 120 ₴ (≈€3). Production 1–3 business days, delivery across Ukraine and to 15 EU countries. Card payment online or on delivery.",
+              "Map keychain — from 120 ₴ (≈€3). Production 1–3 business days, delivery across Ukraine. Card payment online or on delivery.",
             ],
           },
         ],
@@ -610,7 +610,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Schlüsselanhänger mit Stadtkarte: persönliches Accessoire ab ≈3 €",
         description:
-          "Karten-Anhänger 55×30 mm: Straßen und Parks deines Viertels als Relief, eigener Text auf der Rückseite. 3D-Druck auf Bestellung ab ≈3 €, Versand Ukraine & EU.",
+          "Karten-Anhänger 55×30 mm: Straßen und Parks deines Viertels als Relief, eigener Text auf der Rückseite. 3D-Druck auf Bestellung ab ≈3 €, Versand in der Ukraine.",
         h1: "Schlüsselanhänger mit Stadtkarte — eine kleine Karte, die immer dabei ist",
         intro:
           "Der Karten-Anhänger ist ein 55×30-mm-Täfelchen, auf dem das gewählte Viertel als Relief gedruckt ist: Straßen, Parks, Flüsse. Auf der Rückseite dein Text: Stadtname, Datum, Name oder Koordinaten. Die günstigste Art, einen Ort bei sich zu tragen, der etwas bedeutet.",
@@ -631,7 +631,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis und Lieferzeit",
             p: [
-              "Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand mit Nova Poshta in der Ukraine oder Nova Post/Meest in 15 EU-Länder. Kartenzahlung online oder bei Lieferung.",
+              "Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand mit Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
             ],
           },
         ],
@@ -641,7 +641,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Brelok z mapą miasta: osobiste akcesorium od ≈3 €",
         description:
-          "Brelok-mapa 55×30 mm: ulice i parki Twojej dzielnicy w reliefie, własny napis z tyłu. Druk 3D na zamówienie od ≈3 €, wysyłka Ukraina i UE.",
+          "Brelok-mapa 55×30 mm: ulice i parki Twojej dzielnicy w reliefie, własny napis z tyłu. Druk 3D na zamówienie od ≈3 €, wysyłka Ukraina.",
         h1: "Brelok z mapą miasta — mała mapa, która zawsze jest przy Tobie",
         intro:
           "Brelok-mapa to zawieszka 55×30 mm, na której wybraną dzielnicę wydrukowano reliefem: ulice, parki, rzeki. Z tyłu Twój napis: nazwa miasta, data, imię lub współrzędne. Najtańszy sposób, by nosić przy sobie miejsce, które coś znaczy.",
@@ -662,7 +662,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena i termin",
             p: [
-              "Brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka Nova Poshta na Ukrainie lub Nova Post/Meest do 15 krajów UE. Płatność kartą online lub przy odbiorze.",
+              "Brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
             ],
           },
         ],
@@ -672,7 +672,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Porte-clés avec carte de ville : accessoire personnel dès ≈3 €",
         description:
-          "Porte-clés carte 55×30 mm : les rues et parcs de votre quartier en relief, texte personnel au dos. Impression 3D sur mesure dès ≈3 €, livraison Ukraine et UE.",
+          "Porte-clés carte 55×30 mm : les rues et parcs de votre quartier en relief, texte personnel au dos. Impression 3D sur mesure dès ≈3 €, livraison en Ukraine.",
         h1: "Porte-clés avec carte de ville — une petite carte toujours avec vous",
         intro:
           "Le porte-clés carte est une plaque de 55×30 mm sur laquelle le quartier choisi est imprimé en relief : rues, parcs, rivières. Au dos, votre texte : nom de ville, date, prénom ou coordonnées. La façon la plus abordable de porter sur soi un lieu qui compte.",
@@ -693,7 +693,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix et délai",
             p: [
-              "Porte-clés carte — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison par Nova Poshta en Ukraine ou Nova Post/Meest dans 15 pays de l'UE. Paiement par carte en ligne ou à la livraison.",
+              "Porte-clés carte — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
             ],
           },
         ],
@@ -703,7 +703,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Llavero con mapa de ciudad: accesorio personal desde ≈3 €",
         description:
-          "Llavero-mapa 55×30 mm: las calles y parques de tu barrio en relieve, texto personal al dorso. Impresión 3D a medida desde ≈3 €, envío Ucrania y UE.",
+          "Llavero-mapa 55×30 mm: las calles y parques de tu barrio en relieve, texto personal al dorso. Impresión 3D a medida desde ≈3 €, envío en Ucrania.",
         h1: "Llavero con mapa de ciudad — un pequeño mapa que siempre te acompaña",
         intro:
           "El llavero-mapa es una placa de 55×30 mm en la que el barrio elegido está impreso en relieve: calles, parques, ríos. Al dorso, tu texto: nombre de la ciudad, fecha, nombre o coordenadas. La forma más asequible de llevar contigo un lugar que significa algo.",
@@ -724,7 +724,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio y plazo",
             p: [
-              "Llavero-mapa — desde ≈3 €. Fabricación 1–3 días hábiles, envío con Nova Poshta en Ucrania o Nova Post/Meest a 15 países de la UE. Pago con tarjeta online o contra entrega.",
+              "Llavero-mapa — desde ≈3 €. Fabricación 1–3 días hábiles, envío con Nova Poshta en Ucrania. Pago con tarjeta online o contra entrega.",
             ],
           },
         ],
@@ -761,7 +761,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна",
             p: [
-              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка по Україні та ЄС.",
+              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка по Україні.",
             ],
           },
         ],
@@ -792,7 +792,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price",
             p: [
-              "A GPX keychain costs the same as a regular map keychain — from 120 ₴ (≈€3). Production 1–3 business days, shipping to Ukraine and the EU.",
+              "A GPX keychain costs the same as a regular map keychain — from 120 ₴ (≈€3). Production 1–3 business days, shipping to Ukraine.",
             ],
           },
         ],
@@ -823,7 +823,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis",
             p: [
-              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand in die Ukraine und die EU.",
+              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand in die Ukraine.",
             ],
           },
         ],
@@ -854,7 +854,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena",
             p: [
-              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka na Ukrainę i do UE.",
+              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka na Ukrainę.",
             ],
           },
         ],
@@ -885,7 +885,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix",
             p: [
-              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison en Ukraine et dans l'UE.",
+              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison en Ukraine.",
             ],
           },
         ],
@@ -916,7 +916,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio",
             p: [
-              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 1–3 días hábiles, envío a Ucrania y la UE.",
+              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 1–3 días hábiles, envío a Ucrania.",
             ],
           },
         ],
@@ -2129,7 +2129,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як замовити",
             p: [
-              "У конструкторі оберіть ділянку — так само, як для великої мапи, — і формат «магніт». Виготовлення 1–3 робочі дні, доставка Новою Поштою по Україні або у країни ЄС.",
+              "У конструкторі оберіть ділянку — так само, як для великої мапи, — і формат «магніт». Виготовлення 1–3 робочі дні, доставка Новою Поштою по Україні.",
             ],
           },
         ],
@@ -2160,7 +2160,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How to order",
             p: [
-              "Pick the area in the builder — same as for a big map — and choose the magnet format. Production 1–3 business days, delivery to Ukraine and the EU.",
+              "Pick the area in the builder — same as for a big map — and choose the magnet format. Production 1–3 business days, delivery to Ukraine.",
             ],
           },
         ],
@@ -2191,7 +2191,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "So bestellst du",
             p: [
-              "Wähle im Konfigurator den Bereich — genau wie für eine große Karte — und das Format «Magnet». Fertigung 1–3 Werktage, Versand in die Ukraine und die EU.",
+              "Wähle im Konfigurator den Bereich — genau wie für eine große Karte — und das Format «Magnet». Fertigung 1–3 Werktage, Versand in die Ukraine.",
             ],
           },
         ],
@@ -2222,7 +2222,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Jak zamówić",
             p: [
-              "W kreatorze wybierz obszar — tak samo jak dla dużej mapy — i format «magnes». Wykonanie 1–3 dni robocze, wysyłka na Ukrainę lub do krajów UE.",
+              "W kreatorze wybierz obszar — tak samo jak dla dużej mapy — i format «magnes». Wykonanie 1–3 dni robocze, wysyłka na Ukrainę.",
             ],
           },
         ],
@@ -2253,7 +2253,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Comment commander",
             p: [
-              "Dans le configurateur, choisissez la zone — comme pour une grande carte — et le format «magnet». Fabrication 1–3 jours ouvrés, livraison en Ukraine et dans l'UE.",
+              "Dans le configurateur, choisissez la zone — comme pour une grande carte — et le format «magnet». Fabrication 1–3 jours ouvrés, livraison en Ukraine.",
             ],
           },
         ],
@@ -2284,7 +2284,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cómo pedirlo",
             p: [
-              "En el configurador elige la zona — igual que para un mapa grande — y el formato «imán». Fabricación 1–3 días hábiles, envío a Ucrania y a la UE.",
+              "En el configurador elige la zona — igual que para un mapa grande — y el formato «imán». Fabricación 1–3 días hábiles, envío a Ucrania.",
             ],
           },
         ],
@@ -2338,12 +2338,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           "Не впевнені, який район обрати чи який розмір підійде? Напишіть нам — підкажемо й зберемо превʼю безкоштовно.",
       },
       en: {
-        title: "Custom 3D printing of maps — shipping across Ukraine & EU",
+        title: "Custom 3D printing of maps — shipping across Ukraine",
         description:
-          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia and the EU. Eco PLA, 1–3 business days, from ≈€3.",
-        h1: "Custom 3D printing of maps with delivery across Ukraine and the EU",
+          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia. Eco PLA, 1–3 business days, from ≈€3.",
+        h1: "Custom 3D printing of maps with delivery across Ukraine",
         intro:
-          "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 1–3 business days, plus 15 EU countries — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
+          "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 1–3 business days — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
         sections: [
           {
             h2: "What we print",
@@ -2377,12 +2377,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         outro: "Not sure which district or size to pick? Message us — we'll help and build a free preview.",
       },
       de: {
-        title: "3D-Druck auf Bestellung: Karten mit Versand in die Ukraine und die EU",
+        title: "3D-Druck auf Bestellung: Karten mit Versand in die Ukraine",
         description:
-          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja und 15 EU-Länder. Eco PLA, 1–3 Werktage, ab ≈3 €.",
-        h1: "3D-Druck auf Bestellung mit Versand in die Ukraine und die EU",
+          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja. Eco PLA, 1–3 Werktage, ab ≈3 €.",
+        h1: "3D-Druck auf Bestellung mit Versand in die Ukraine",
         intro:
-          "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 1–3 Werktagen sowie in 15 EU-Länder.",
+          "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 1–3 Werktagen.",
         sections: [
           {
             h2: "Was wir drucken",
@@ -2416,12 +2416,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         outro: "Unsicher, welches Viertel oder welche Größe? Schreib uns — wir helfen und bauen eine kostenlose Vorschau.",
       },
       pl: {
-        title: "Druk 3D na zamówienie: mapy z wysyłką na Ukrainę i do UE",
+        title: "Druk 3D na zamówienie: mapy z wysyłką na Ukrainę",
         description:
-          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica i 15 krajów UE. Eco PLA, 1–3 dni robocze, od ≈3 €.",
-        h1: "Druk 3D na zamówienie z wysyłką na Ukrainę i do UE",
+          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica. Eco PLA, 1–3 dni robocze, od ≈3 €.",
+        h1: "Druk 3D na zamówienie z wysyłką na Ukrainę",
         intro:
-          "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 1–3 dni robocze oraz do 15 krajów UE.",
+          "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 1–3 dni robocze.",
         sections: [
           {
             h2: "Co drukujemy",
@@ -2455,12 +2455,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         outro: "Nie wiesz, jaką dzielnicę czy rozmiar wybrać? Napisz do nas — pomożemy i przygotujemy darmowy podgląd.",
       },
       fr: {
-        title: "Impression 3D sur mesure : cartes livrées en Ukraine et dans l'UE",
+        title: "Impression 3D sur mesure : cartes livrées en Ukraine",
         description:
-          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia et 15 pays de l'UE. Eco PLA, 1–3 jours ouvrés, dès ≈3 €.",
-        h1: "Impression 3D sur mesure avec livraison en Ukraine et dans l'UE",
+          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia. Eco PLA, 1–3 jours ouvrés, dès ≈3 €.",
+        h1: "Impression 3D sur mesure avec livraison en Ukraine",
         intro:
-          "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 1–3 jours ouvrés, ainsi que dans 15 pays de l'UE.",
+          "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 1–3 jours ouvrés.",
         sections: [
           {
             h2: "Ce que nous imprimons",
@@ -2494,12 +2494,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         outro: "Vous hésitez sur le quartier ou la taille ? Écrivez-nous — on vous aide et on prépare un aperçu gratuit.",
       },
       es: {
-        title: "Impresión 3D a medida: mapas con envío a Ucrania y la UE",
+        title: "Impresión 3D a medida: mapas con envío a Ucrania",
         description:
-          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia y 15 países de la UE. Eco PLA, 1–3 días hábiles, desde ≈3 €.",
-        h1: "Impresión 3D a medida con envío a Ucrania y la UE",
+          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia. Eco PLA, 1–3 días hábiles, desde ≈3 €.",
+        h1: "Impresión 3D a medida con envío a Ucrania",
         intro:
-          "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 1–3 días hábiles, además de a 15 países de la UE.",
+          "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 1–3 días hábiles.",
         sections: [
           {
             h2: "Qué imprimimos",
@@ -2937,7 +2937,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Подарунок переселенцю: рідне місто, яке завжди поруч",
         description:
-          "Що подарувати людині, яка виїхала з рідного міста: 3D-мапа рідного району чи брелок з домом. Подарунок переселенцю, друзям за кордоном, рідним. Від 120 ₴, доставка в ЄС.",
+          "Що подарувати людині, яка виїхала з рідного міста: 3D-мапа рідного району чи брелок з домом. Подарунок переселенцю, друзям за кордоном, рідним. Від 120 ₴, доставка по Україні.",
         h1: "Подарунок переселенцю: шматочок рідного міста",
         intro:
           "Мільйони людей зараз живуть не там, де виросли. Комусь довелось виїхати від війни, хтось переїхав за роботою чи навчанням — але рідний двір пам'ятають усі. 3D-мапа рідного району — подарунок, який працює сильніше за будь-які слова: ось твоя вулиця, твоя школа, твій парк. Вони на місці. Вони чекають.",
@@ -2959,7 +2959,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Доставка за кордон",
             p: [
-              "Надсилаємо Новою Поштою по Україні та Nova Post / Meest у 15 країн ЄС — Польщу, Німеччину, Чехію та інші. Виготовлення 1–3 робочі дні. Замовити можна з будь-якої країни, оплата карткою онлайн.",
+              "Надсилаємо Новою Поштою по Україні. Виготовлення 1–3 робочі дні. Замовити можна з будь-якої країни, оплата карткою онлайн.",
             ],
           },
         ],
@@ -2970,7 +2970,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "A gift for someone far from home: their hometown, always near",
         description:
-          "What to give a person who left their home city: a 3D map of the home district or a keychain with the home street. For refugees, friends abroad, family. From ≈€3, EU delivery.",
+          "What to give a person who left their home city: a 3D map of the home district or a keychain with the home street. For refugees, friends abroad, family. From ≈€3, delivery across Ukraine.",
         h1: "A gift for someone far from home: a piece of their city",
         intro:
           "Millions of people now live away from where they grew up — displaced by war, moved for work or study. But everyone remembers their home yard. A 3D map of the home district is a gift that speaks louder than words: here is your street, your school, your park. They're still there. They're waiting.",
@@ -2992,7 +2992,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Delivery abroad",
             p: [
-              "We ship across Ukraine and via Nova Post / Meest to 15 EU countries — Poland, Germany, Czechia and more. Production 1–3 business days. Order from any country, card payment online.",
+              "We ship across Ukraine. Production 1–3 business days. card payment online.",
             ],
           },
         ],
@@ -3003,7 +3003,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Ein Geschenk für Vertriebene: die Heimatstadt, die immer nah ist",
         description:
-          "Was man jemandem schenkt, der seine Heimatstadt verlassen musste: eine 3D-Karte des Heimatviertels oder ein Anhänger mit dem Zuhause. Für Geflüchtete, Freunde im Ausland, Familie. Ab ≈3 €, EU-Versand.",
+          "Was man jemandem schenkt, der seine Heimatstadt verlassen musste: eine 3D-Karte des Heimatviertels oder ein Anhänger mit dem Zuhause. Für Geflüchtete, Freunde im Ausland, Familie. Ab ≈3 €, Versand innerhalb der Ukraine.",
         h1: "Ein Geschenk für Vertriebene: ein Stück der Heimatstadt",
         intro:
           "Millionen Menschen leben heute nicht dort, wo sie aufgewachsen sind. Manche mussten vor dem Krieg fliehen, andere sind für Arbeit oder Studium umgezogen — aber an den heimischen Hof erinnern sich alle. Eine 3D-Karte des Heimatviertels ist ein Geschenk, das stärker wirkt als alle Worte: hier ist deine Straße, deine Schule, dein Park. Sie stehen noch. Sie warten.",
@@ -3025,7 +3025,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Versand ins Ausland",
             p: [
-              "Wir versenden mit Nova Poshta in der Ukraine und mit Nova Post / Meest in 15 EU-Länder — Polen, Deutschland, Tschechien und weitere. Fertigung 1–3 Werktage. Bestellen kann man aus jedem Land, Kartenzahlung online.",
+              "Wir versenden mit Nova Poshta in der Ukraine. Fertigung 1–3 Werktage. Kartenzahlung online.",
             ],
           },
         ],
@@ -3036,7 +3036,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Prezent dla przesiedleńca: rodzinne miasto, które zawsze jest blisko",
         description:
-          "Co podarować osobie, która wyjechała z rodzinnego miasta: mapa 3D rodzinnej dzielnicy lub brelok z domem. Dla uchodźców, przyjaciół za granicą, bliskich. Od ≈3 €, wysyłka do UE.",
+          "Co podarować osobie, która wyjechała z rodzinnego miasta: mapa 3D rodzinnej dzielnicy lub brelok z domem. Dla uchodźców, przyjaciół za granicą, bliskich. Od ≈3 €, wysyłka po Ukrainie.",
         h1: "Prezent dla przesiedleńca: kawałek rodzinnego miasta",
         intro:
           "Miliony ludzi żyją dziś nie tam, gdzie dorastali. Ktoś musiał wyjechać przed wojną, ktoś przeprowadził się za pracą czy nauką — ale rodzinne podwórko pamiętają wszyscy. Mapa 3D rodzinnej dzielnicy to prezent, który działa mocniej niż jakiekolwiek słowa: oto twoja ulica, twoja szkoła, twój park. Są na miejscu. Czekają.",
@@ -3058,7 +3058,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Wysyłka za granicę",
             p: [
-              "Wysyłamy Nova Poshta po Ukrainie oraz Nova Post / Meest do 15 krajów UE — Polski, Niemiec, Czech i innych. Wykonanie 1–3 dni robocze. Zamówić można z dowolnego kraju, płatność kartą online.",
+              "Wysyłamy Nova Poshta po Ukrainie. Wykonanie 1–3 dni robocze. płatność kartą online.",
             ],
           },
         ],
@@ -3069,7 +3069,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Un cadeau pour un déplacé : sa ville natale, toujours près de lui",
         description:
-          "Que offrir à une personne qui a quitté sa ville natale : une carte 3D du quartier natal ou un porte-clés avec sa maison. Pour les réfugiés, les amis à l'étranger, la famille. Dès ≈3 €, livraison UE.",
+          "Que offrir à une personne qui a quitté sa ville natale : une carte 3D du quartier natal ou un porte-clés avec sa maison. Pour les réfugiés, les amis à l'étranger, la famille. Dès ≈3 €, livraison en Ukraine.",
         h1: "Un cadeau pour un déplacé : un morceau de sa ville natale",
         intro:
           "Des millions de personnes vivent aujourd'hui loin de là où elles ont grandi. Certains ont dû fuir la guerre, d'autres ont déménagé pour le travail ou les études — mais tout le monde se souvient de la cour de son enfance. Une carte 3D du quartier natal est un cadeau qui parle plus fort que les mots : voici ta rue, ton école, ton parc. Ils sont là. Ils attendent.",
@@ -3091,7 +3091,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Livraison à l'étranger",
             p: [
-              "Nous expédions avec Nova Poshta en Ukraine et via Nova Post / Meest dans 15 pays de l'UE — Pologne, Allemagne, Tchéquie et d'autres. Fabrication 1–3 jours ouvrés. On peut commander depuis n'importe quel pays, paiement par carte en ligne.",
+              "Nous expédions avec Nova Poshta en Ukraine. Fabrication 1–3 jours ouvrés. paiement par carte en ligne.",
             ],
           },
         ],
@@ -3102,7 +3102,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Un regalo para un desplazado: su ciudad natal, siempre cerca",
         description:
-          "Qué regalar a alguien que dejó su ciudad natal: un mapa 3D del barrio natal o un llavero con su casa. Para refugiados, amigos en el extranjero, familia. Desde ≈3 €, envío a la UE.",
+          "Qué regalar a alguien que dejó su ciudad natal: un mapa 3D del barrio natal o un llavero con su casa. Para refugiados, amigos en el extranjero, familia. Desde ≈3 €, envío dentro de Ucrania.",
         h1: "Un regalo para un desplazado: un trozo de su ciudad natal",
         intro:
           "Millones de personas viven hoy lejos de donde crecieron. Algunos tuvieron que huir de la guerra, otros se mudaron por trabajo o estudios — pero todos recuerdan el patio de su casa. Un mapa 3D del barrio natal es un regalo que habla más fuerte que las palabras: aquí está tu calle, tu escuela, tu parque. Siguen ahí. Esperan.",
@@ -3124,7 +3124,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Envío al extranjero",
             p: [
-              "Enviamos con Nova Poshta por Ucrania y con Nova Post / Meest a 15 países de la UE — Polonia, Alemania, Chequia y otros. Fabricación 1–3 días hábiles. Se puede pedir desde cualquier país, pago con tarjeta online.",
+              "Enviamos con Nova Poshta por Ucrania. Fabricación 1–3 días hábiles. pago con tarjeta online.",
             ],
           },
         ],
@@ -3144,7 +3144,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "3D-мапа німецького міста: Берлін, Мюнхен, Гамбург — подарунок для тих, хто далеко",
         description:
-          "3D-мапи міст Німеччини, Австрії та Швейцарії: Берлін, Мюнхен, Гамбург, Відень, Цюрих. Обери район у конструкторі — друк з Eco PLA і доставка по ЄС, або файл для власного друку.",
+          "3D-мапи міст Німеччини, Австрії та Швейцарії: Берлін, Мюнхен, Гамбург, Відень, Цюрих. Обери район у конструкторі — файл для власного друку або друк з Eco PLA з доставкою по Україні для власного друку.",
         h1: "3D-мапа німецького міста: від Берліна до Цюриха",
         intro:
           "Мільйони людей називають домом одразу два міста: те, де народились, і те, куди переїхали. 3D-мапа німецького міста — спосіб тримати друге поруч: тривимірна модель району Берліна, Мюнхена чи Гамбурга з реальними вулицями, будинками й парками за даними OpenStreetMap.",
@@ -3159,7 +3159,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як це працює",
             p: [
-              "Відкрий конструктор, знайди місто, пересунь рамку на потрібний район — жива 3D-модель збереться за дві хвилини. Далі два шляхи: замовити друк з екологічного Eco PLA з доставкою Nova Post або Meest у 15 країн ЄС, або завантажити файл 3MF/STL і надрукувати самостійно на Bambu Lab чи Prusa.",
+              "Відкрий конструктор, знайди місто, пересунь рамку на потрібний район — жива 3D-модель збереться за дві хвилини. Далі два шляхи: замовити друк з екологічного Eco PLA з доставкою по Україні, або завантажити файл 3MF/STL і надрукувати самостійно на Bambu Lab чи Prusa.",
               "Розміри — від магніта 6 см до панно на стіну. Ціна моделі для власного друку — від кількох євро, готовий друк — від ≈6 €.",
             ],
           },
@@ -3177,7 +3177,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "3D map of a German city: Berlin, Munich, Hamburg — a gift for those far away",
         description:
-          "3D city maps of Germany, Austria and Switzerland: Berlin, Munich, Hamburg, Vienna, Zurich. Pick a district in the builder — Eco PLA print shipped across the EU, or a file to print yourself.",
+          "3D city maps of Germany, Austria and Switzerland: Berlin, Munich, Hamburg, Vienna, Zurich. Pick a district in the builder — a file to print yourself, or an Eco PLA print shipped within Ukraine to print yourself.",
         h1: "3D map of a German city: from Berlin to Zurich",
         intro:
           "Millions of people call two cities home: the one they were born in and the one they moved to. A 3D map of a German city keeps the second one close — a three-dimensional model of a Berlin, Munich or Hamburg district with real streets, buildings and parks from OpenStreetMap data.",
@@ -3192,7 +3192,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How it works",
             p: [
-              "Open the builder, find the city, move the frame over the district — a live 3D model assembles in two minutes. Then two paths: order an Eco PLA print shipped via Nova Post or Meest to 15 EU countries, or download the 3MF/STL and print it yourself on a Bambu Lab or Prusa.",
+              "Open the builder, find the city, move the frame over the district — a live 3D model assembles in two minutes. Then two paths: order an Eco PLA print shipped by Nova Poshta across Ukraine, or download the 3MF/STL and print it yourself on a Bambu Lab or Prusa.",
               "Sizes range from a 6 cm fridge magnet to a wall panel. A file for self-printing costs a few euros; a finished print starts at ≈€6.",
             ],
           },
@@ -3210,7 +3210,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "3D-Karte deiner Stadt: Berlin, München, Hamburg — ein Geschenk mit Bedeutung",
         description:
-          "3D-Stadtkarten für Deutschland, Österreich und die Schweiz: Berlin, München, Hamburg, Wien, Zürich. Viertel im Konfigurator wählen — Eco-PLA-Druck mit EU-Versand oder Datei zum Selbstdrucken.",
+          "3D-Stadtkarten für Deutschland, Österreich und die Schweiz: Berlin, München, Hamburg, Wien, Zürich. Viertel im Konfigurator wählen — Datei zum Selbstdrucken oder Eco-PLA-Druck mit Versand in der Ukraine — Datei zum Selbstdrucken.",
         h1: "3D-Karte deiner Stadt: von Berlin bis Zürich",
         intro:
           "Viele Menschen haben zwei Städte, die sie Zuhause nennen: die, in der sie aufgewachsen sind, und die, in die sie gezogen sind. Eine 3D-Stadtkarte holt die zweite näher — ein dreidimensionales Modell eines Viertels von Berlin, München oder Hamburg mit echten Straßen, Gebäuden und Parks aus OpenStreetMap-Daten.",
@@ -3225,7 +3225,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "So funktioniert es",
             p: [
-              "Konfigurator öffnen, Stadt suchen, den Rahmen über das Viertel ziehen — in zwei Minuten entsteht ein lebendiges 3D-Modell. Danach zwei Wege: den Druck aus umweltfreundlichem Eco PLA bestellen (Versand mit Nova Post oder Meest in 15 EU-Länder) oder die 3MF/STL-Datei laden und selbst auf einem Bambu Lab oder Prusa drucken.",
+              "Konfigurator öffnen, Stadt suchen, den Rahmen über das Viertel ziehen — in zwei Minuten entsteht ein lebendiges 3D-Modell. Danach zwei Wege: den Druck aus umweltfreundlichem Eco PLA bestellen (Versand innerhalb der Ukraine) oder die 3MF/STL-Datei laden und selbst auf einem Bambu Lab oder Prusa drucken.",
               "Größen vom 6-cm-Kühlschrankmagneten bis zum Wandpaneel. Eine Datei zum Selbstdrucken kostet wenige Euro, ein fertiger Druck beginnt bei ≈6 €.",
             ],
           },
@@ -3249,7 +3249,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "3D-мапа польського міста: Варшава, Краків, Вроцлав — подарунок для діаспори",
         description:
-          "3D-мапи міст Польщі: Варшава, Краків, Вроцлав, Гданськ, Познань. Обери район у конструкторі — друк з Eco PLA і доставка по ЄС, або файл для власного друку.",
+          "3D-мапи міст Польщі: Варшава, Краків, Вроцлав, Гданськ, Познань. Обери район у конструкторі — файл для власного друку або друк з Eco PLA з доставкою по Україні для власного друку.",
         h1: "3D-мапа польського міста: Варшава, Краків, Вроцлав",
         intro:
           "У Польщі сьогодні живе понад мільйон українців — і для багатьох польське місто стало другим домом. 3D-мапа Варшави, Кракова чи Вроцлава — тривимірна модель району з реальними вулицями, кам'яницями й парками за даними OpenStreetMap: подарунок, що поєднує обидва доми.",
@@ -3264,7 +3264,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як це працює",
             p: [
-              "Обери район у конструкторі — жива 3D-модель за дві хвилини. Далі: замовити друк з Eco PLA з доставкою Nova Post у Польщу та ще 14 країн ЄС, або завантажити 3MF/STL для власного друку.",
+              "Обери район у конструкторі — жива 3D-модель за дві хвилини. Далі: замовити друк з Eco PLA з доставкою по Україні, або завантажити 3MF/STL для власного друку.",
               "Від магніта 6 см до настінного панно. Файл — кілька євро, готовий друк — від ≈6 €. Оплата карткою онлайн.",
             ],
           },
@@ -3282,7 +3282,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "3D map of a Polish city: Warsaw, Kraków, Wrocław — a gift across two homes",
         description:
-          "3D city maps of Poland: Warsaw, Kraków, Wrocław, Gdańsk, Poznań. Pick a district in the builder — Eco PLA print shipped across the EU, or a file to print yourself.",
+          "3D city maps of Poland: Warsaw, Kraków, Wrocław, Gdańsk, Poznań. Pick a district in the builder — a file to print yourself, or an Eco PLA print shipped within Ukraine to print yourself.",
         h1: "3D map of a Polish city: Warsaw, Kraków, Wrocław",
         intro:
           "Over a million Ukrainians live in Poland today, and for many a Polish city has become a second home. A 3D map of Warsaw, Kraków or Wrocław is a three-dimensional model of a district with real streets, townhouses and parks from OpenStreetMap data — a gift that connects both homes.",
@@ -3297,7 +3297,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How it works",
             p: [
-              "Pick a district in the builder — a live 3D model in two minutes. Then order an Eco PLA print shipped via Nova Post to Poland and 14 more EU countries, or download the 3MF/STL to print yourself.",
+              "Pick a district in the builder — a live 3D model in two minutes. Then order an Eco PLA print shipped within Ukraine, or download the 3MF/STL to print yourself.",
               "From a 6 cm magnet to a wall panel. A file costs a few euros; a finished print starts at ≈€6. Card payment online.",
             ],
           },
@@ -3315,7 +3315,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Mapa 3D polskiego miasta: Warszawa, Kraków, Wrocław — prezent z historią",
         description:
-          "Mapy 3D miast Polski: Warszawa, Kraków, Wrocław, Gdańsk, Poznań. Wybierz dzielnicę w kreatorze — druk z Eco PLA z wysyłką po UE albo plik do własnego druku.",
+          "Mapy 3D miast Polski: Warszawa, Kraków, Wrocław, Gdańsk, Poznań. Wybierz dzielnicę w kreatorze — plik do własnego druku albo druk z Eco PLA z wysyłką na Ukrainę do własnego druku.",
         h1: "Mapa 3D polskiego miasta: Warszawa, Kraków, Wrocław",
         intro:
           "Mapa 3D miasta to trójwymiarowy model dzielnicy z prawdziwymi ulicami, kamienicami i parkami z danych OpenStreetMap. Można ją wydrukować i postawić na półce, powiesić na ścianie albo podarować komuś, dla kogo to miasto znaczy więcej niż punkt na mapie.",

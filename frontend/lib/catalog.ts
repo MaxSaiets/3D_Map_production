@@ -93,7 +93,7 @@ const uk: Catalog = {
   notesTitle: "Умови",
   notes: [
     "Усі ціни — у гривнях (₴), за один виріб.",
-    "Доставка — окремо, за тарифом перевізника (Нова Пошта / Укрпошта; ЄС — Nova Post / Meest).",
+    "Доставка — окремо, за тарифом перевізника (Нова Пошта / Укрпошта).",
     "Оплата — карткою Visa / Mastercard онлайн (LiqPay) або при отриманні (накладений платіж).",
     "Вироби виготовляються на індивідуальне замовлення; терміни — 1–3 робочі дні + доставка.",
   ],
@@ -104,7 +104,7 @@ const uk: Catalog = {
   ctaLabel: "Створити свою мапу",
   faqTitle: "Часті запитання",
   faq: [
-    { q: "Скільки триває виготовлення?", a: "1–3 робочі дні на друк, потім доставка Новою Поштою по Україні або Nova Post/Meest у 15 країн ЄС." },
+    { q: "Скільки триває виготовлення?", a: "1–3 робочі дні на друк, потім доставка Новою Поштою по Україні." },
     { q: "Чи є знижки для великих замовлень?", a: "Так — для тиражів від 5 однакових виробів (наприклад, корпоративні брелоки) вартість узгоджується окремо, напишіть нам." },
     { q: "Що входить у ціну?", a: "Ціна — за готовий надрукований виріб з Eco PLA. Доставка та рельєф місцевості (+60 ₴) оплачуються окремо." },
     { q: "Чи можна оплатити при отриманні?", a: "Так, крім оплати карткою онлайн через LiqPay доступний накладений платіж при отриманні." },
@@ -151,7 +151,7 @@ const en: Catalog = {
   notesTitle: "Terms",
   notes: [
     "All prices are in Ukrainian hryvnia (₴), per item.",
-    "Delivery is charged separately at the carrier's tariff (Nova Poshta / Ukrposhta; EU — Nova Post / Meest).",
+    "Delivery is charged separately at the carrier's tariff (Nova Poshta / Ukrposhta).",
     "Payment by Visa / Mastercard online (LiqPay) or cash on delivery.",
     "Items are made to order; lead time 1–3 business days plus shipping.",
   ],
@@ -162,7 +162,7 @@ const en: Catalog = {
   ctaLabel: "Create your map",
   faqTitle: "FAQ",
   faq: [
-    { q: "How long does production take?", a: "1–3 business days to print, then delivery across Ukraine or via Nova Post/Meest to 15 EU countries." },
+    { q: "How long does production take?", a: "1–3 business days to print, then delivery across Ukraine." },
     { q: "Are there discounts for bulk orders?", a: "Yes — for runs of 5+ identical items (e.g. corporate keychains) pricing is agreed individually, just message us." },
     { q: "What's included in the price?", a: "The price covers the finished item printed in Eco PLA. Delivery and terrain relief (+≈€1.5) are charged separately." },
     { q: "Can I pay on delivery?", a: "Yes, besides online card payment via LiqPay, cash on delivery is available." },
@@ -209,7 +209,7 @@ const de: Catalog = {
   notesTitle: "Bedingungen",
   notes: [
     "Alle Preise sind in ukrainischen Hrywnja (₴), pro Stück.",
-    "Der Versand wird separat zum Tarif des Zustellers berechnet (Nova Poshta / Ukrposhta; EU — Nova Post / Meest).",
+    "Der Versand wird separat zum Tarif des Zustellers berechnet (Nova Poshta / Ukrposhta).",
     "Zahlung per Visa / Mastercard online (LiqPay) oder per Nachnahme.",
     "Die Artikel werden auf Bestellung gefertigt; Bearbeitungszeit 1–3 Werktage zzgl. Versand.",
   ],
@@ -220,7 +220,7 @@ const de: Catalog = {
   ctaLabel: "Eigene Karte erstellen",
   faqTitle: "Häufige Fragen",
   faq: [
-    { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druckzeit, danach Versand innerhalb der Ukraine oder per Nova Post/Meest in die EU." },
+    { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druckzeit, danach Versand innerhalb der Ukraine." },
     { q: "Gibt es Rabatte für größere Bestellungen?", a: "Ja — bei 5 oder mehr identischen Stücken (z. B. Firmen-Schlüsselanhänger) wird der Preis individuell vereinbart." },
     { q: "Was ist im Preis enthalten?", a: "Der Preis gilt für das fertige Eco-PLA-Produkt. Versand und Geländerelief (+≈1,5 €) werden separat berechnet." },
     { q: "Kann ich bei Lieferung bezahlen?", a: "Ja, neben Online-Zahlung per LiqPay ist auch Nachnahme möglich." },
@@ -267,7 +267,7 @@ const es: Catalog = {
   notesTitle: "Condiciones",
   notes: [
     "Todos los precios están en grivnas ucranianas (₴), por unidad.",
-    "El envío se cobra aparte según la tarifa del transportista (Nova Poshta / Ukrposhta; UE — Nova Post / Meest).",
+    "El envío se cobra aparte según la tarifa del transportista (Nova Poshta / Ukrposhta).",
     "Pago con Visa / Mastercard en línea (LiqPay) o contra reembolso.",
     "Los artículos se fabrican por encargo; plazo 1–3 días hábiles más envío.",
   ],
@@ -278,7 +278,7 @@ const es: Catalog = {
   ctaLabel: "Crea tu mapa",
   faqTitle: "Preguntas frecuentes",
   faq: [
-    { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío por Ucrania o vía Nova Post/Meest a la UE." },
+    { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío por Ucrania." },
     { q: "¿Hay descuentos para pedidos grandes?", a: "Sí — para tandas de 5 o más piezas idénticas (por ejemplo, llaveros corporativos) el precio se acuerda por separado." },
     { q: "¿Qué incluye el precio?", a: "El precio corresponde al producto terminado en Eco PLA. El envío y el relieve del terreno (+≈1,5 €) se cobran aparte." },
     { q: "¿Puedo pagar contra entrega?", a: "Sí, además del pago con tarjeta online vía LiqPay, está disponible el pago contra reembolso." },
@@ -325,7 +325,7 @@ const fr: Catalog = {
   notesTitle: "Conditions",
   notes: [
     "Tous les prix sont en hryvnia ukrainienne (₴), par article.",
-    "La livraison est facturée séparément au tarif du transporteur (Nova Poshta / Ukrposhta ; UE — Nova Post / Meest).",
+    "La livraison est facturée séparément au tarif du transporteur (Nova Poshta / Ukrposhta ).",
     "Paiement par Visa / Mastercard en ligne (LiqPay) ou à la livraison.",
     "Les articles sont fabriqués sur commande ; délai 1–3 jours ouvrés plus expédition.",
   ],
@@ -336,7 +336,7 @@ const fr: Catalog = {
   ctaLabel: "Créer votre carte",
   faqTitle: "Questions fréquentes",
   faq: [
-    { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés d'impression, puis livraison en Ukraine ou via Nova Post/Meest vers l'UE." },
+    { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés d'impression, puis livraison en Ukraine." },
     { q: "Y a-t-il des remises pour les grandes commandes ?", a: "Oui — pour 5 pièces identiques ou plus (porte-clés d'entreprise par exemple), le prix se négocie séparément." },
     { q: "Qu'est-ce qui est inclus dans le prix ?", a: "Le prix concerne le produit fini en Eco PLA. La livraison et le relief du terrain (+≈1,5 €) sont facturés à part." },
     { q: "Puis-je payer à la livraison ?", a: "Oui, en plus du paiement en ligne par carte via LiqPay, le paiement à la livraison est disponible." },
@@ -383,7 +383,7 @@ const pl: Catalog = {
   notesTitle: "Warunki",
   notes: [
     "Wszystkie ceny są w hrywnach ukraińskich (₴), za sztukę.",
-    "Dostawa naliczana osobno według taryfy przewoźnika (Nova Poshta / Ukrposhta; UE — Nova Post / Meest).",
+    "Dostawa naliczana osobno według taryfy przewoźnika (Nova Poshta / Ukrposhta).",
     "Płatność kartą Visa / Mastercard online (LiqPay) lub za pobraniem.",
     "Produkty wykonywane na zamówienie; czas realizacji 1–3 dni robocze plus wysyłka.",
   ],
@@ -394,7 +394,7 @@ const pl: Catalog = {
   ctaLabel: "Stwórz swoją mapę",
   faqTitle: "Częste pytania",
   faq: [
-    { q: "Ile trwa wykonanie?", a: "1–3 dni robocze druku, potem dostawa po Ukrainie lub przez Nova Post/Meest do UE." },
+    { q: "Ile trwa wykonanie?", a: "1–3 dni robocze druku, potem dostawa po Ukrainie." },
     { q: "Czy są rabaty przy większych zamówieniach?", a: "Tak — przy 5 i więcej identycznych sztukach (np. breloki firmowe) cena ustalana jest indywidualnie." },
     { q: "Co zawiera cena?", a: "Cena dotyczy gotowego produktu z Eco PLA. Dostawa i relief terenu (+≈1,5 €) są płatne osobno." },
     { q: "Czy mogę zapłacić przy odbiorze?", a: "Tak, oprócz płatności kartą online przez LiqPay dostępna jest płatność za pobraniem." },

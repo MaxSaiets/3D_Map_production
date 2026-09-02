@@ -34,7 +34,7 @@ export const es: LegalSet = {
         { p: "El Comprador es el único responsable de la corrección de los parámetros del modelo elegidos (zona del mapa, texto, tamaño) y de la veracidad de los datos de contacto. El Vendedor no se hace responsable de las consecuencias de los errores en los datos facilitados por el Comprador, en particular de la fabricación de un artículo con un texto o una zona del mapa erróneos que el propio Comprador aprobó en el Configurador." },
       ] },
       { h: "4. Precio y forma de pago", blocks: [
-        { p: "Los precios del Sitio se indican en grivnas (para pedidos dentro de Ucrania) y en euros (orientativos, para envíos a países de la UE). El Comprador ve el coste final del pedido en el paso de formalización, antes del pago. Los gastos de envío no están incluidos en el precio del Producto y se abonan por separado según las tarifas del transportista." },
+        { p: "Los precios del Sitio se indican en grivnas (para pedidos dentro de Ucrania) y en euros (orientativos). El Comprador ve el coste final del pedido en el paso de formalización, antes del pago. Los gastos de envío no están incluidos en el precio del Producto y se abonan por separado según las tarifas del transportista." },
         { p: "El pago se realiza en línea a través del servicio de pago LiqPay (JSC CB «PrivatBank»): con tarjeta bancaria Visa/Mastercard y otros métodos disponibles en LiqPay. Los datos de la tarjeta de pago se procesan en el lado del sistema de pago; el Vendedor no los recibe ni los almacena." },
         { p: "Previo acuerdo con el operador, es posible el pago por otro método convenido. La descarga del Contenido digital terminado dentro del límite gratuito de la cuenta es gratuita." },
         { p: "El Producto se paga íntegramente antes de su puesta en producción, salvo acuerdo en contrario de las partes. Más detalles en la página [delivery:«Pago y entrega»]." },
@@ -44,7 +44,7 @@ export const es: LegalSet = {
         { p: "El plazo orientativo de fabricación del artículo físico es de 1 a 3 días laborables desde el pago/confirmación del pedido. En caso de alta carga de trabajo o complejidad técnica del artículo, el plazo puede ampliarse, de lo cual el Vendedor informa al Comprador." },
       ] },
       { h: "6. Entrega", blocks: [
-        { p: "La entrega dentro de Ucrania se realiza mediante los servicios «Nova Poshta» (sucursal, taquilla postal) o «Ukrposhta». La entrega a países de la UE, mediante los servicios Nova Post EU o Meest. El plazo orientativo de entrega dentro de Ucrania es de 2 a 4 días laborables tras el envío." },
+        { p: "La entrega dentro de Ucrania se realiza mediante los servicios «Nova Poshta» (sucursal, taquilla postal) o «Ukrposhta». El plazo orientativo de entrega dentro de Ucrania es de 2 a 4 días laborables tras el envío." },
         { p: "El coste de la entrega se calcula según las tarifas del transportista y lo abona el Comprador por separado (normalmente al recibir el pedido). La propiedad del Producto y el riesgo de daño fortuito se transfieren al Comprador en el momento de recibir el Producto del transportista." },
         { p: "Al recibirlo, el Comprador está obligado a inspeccionar el envío para comprobar la integridad del embalaje y del artículo. En caso de daños durante el transporte, deben documentarse mediante un acta del transportista y comunicarse al Vendedor: dicho caso se resuelve mediante una reimpresión gratuita o la devolución del dinero (véase la sección 8)." },
       ] },
@@ -147,8 +147,6 @@ export const es: LegalSet = {
       { h: "Entrega", blocks: [
         { p: "Ucrania:" },
         { ul: ["Nova Poshta: sucursal o consigna automática.", "Ukrposhta: sucursal."] },
-        { p: "Unión Europea (15 países):" },
-        { ul: ["Nova Post EU.", "Meest."] },
         { p: "El coste de envío se calcula según las tarifas del transportista y se paga por separado (habitualmente al recibirlo). Plazo orientativo de entrega dentro de Ucrania: 2–4 días laborables tras el envío." },
       ] },
       { h: "Devoluciones", blocks: [

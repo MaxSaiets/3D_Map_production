@@ -1621,11 +1621,12 @@ export function KeychainDesigner({
           <text x={value.bodyWidthMm + 7.2} y={value.bodyHeightMm / 2} textAnchor="middle" transform={`rotate(90 ${value.bodyWidthMm + 7.2} ${value.bodyHeightMm / 2})`}>
             {value.bodyHeightMm.toFixed(0)} mm
           </text>
+          {/* T-5.1 (F-16): без інженерних «map / O / hole» — мовно-нейтральні розміри у мм. */}
           <text x={value.mapXMm + value.mapWidthMm / 2} y={value.mapYMm - 4.2} textAnchor="middle" fill="#5eead4">
-            map {value.mapWidthMm.toFixed(0)} x {value.mapHeightMm.toFixed(0)}
+            ▣ {value.mapWidthMm.toFixed(0)}×{value.mapHeightMm.toFixed(0)} mm
           </text>
           <text x={value.loopXMm} y={value.loopYMm - value.loopOuterMm - 2.2} textAnchor="middle">
-            {value.baseShape === "token" ? `hole Ø${(value.loopInnerMm * 2).toFixed(1)}` : `O ${value.loopOuterMm.toFixed(1)} / hole ${value.loopInnerMm.toFixed(1)}`}
+            {value.baseShape === "token" ? `○ Ø${(value.loopInnerMm * 2).toFixed(1)} mm` : `○ Ø${value.loopOuterMm.toFixed(1)} · Ø${value.loopInnerMm.toFixed(1)} mm`}
           </text>
         </g>
 

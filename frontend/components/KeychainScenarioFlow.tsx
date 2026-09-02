@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Check, Home, Loader2, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
@@ -77,6 +78,7 @@ export function KeychainScenarioFlow({
   // Діаспора (не-uk) бачить € за тим самим позиційним курсом, що й решта сайту.
   const isEu = locale !== "uk";
   const disp = (uah: number) => (isEu ? `€${mapPriceEur(uah)}` : `${uah} ₴`);
+  const tOrder = useTranslations("order");
 
   const s = useGenerationStore(useShallow((st) => ({
     selectedArea: st.selectedArea,
@@ -178,13 +180,17 @@ export function KeychainScenarioFlow({
     import("@/lib/analytics")
       .then((m) => m.track("guided_generate", { product: "keychain", scenario: tplId }))
       .catch(() => {});
+    setRan(false);
     setStarted(true);
     window.dispatchEvent(new Event("monadruk:kc-guided-generate"));
   };
 
+  // F-10: помилку показуємо лише після РЕАЛЬНОГО запуску генерації (див. ScenarioFlow).
+  const [ran, setRan] = useState(false);
+  useEffect(() => { if (s.isGenerating) setRan(true); }, [s.isGenerating]);
   const generatingView = s.isGenerating;
   const successView = started && !s.isGenerating && !!s.downloadUrl;
-  const failedNote = started && !s.isGenerating && !s.downloadUrl;
+  const failedNote = started && ran && !s.isGenerating && !s.downloadUrl;
   const displayStep = generatingView || successView || tplId !== null ? 2 : 1;
 
   const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
@@ -267,6 +273,7 @@ export function KeychainScenarioFlow({
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(priceUah)}
                 </button>
+                <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                   <button
                     type="button"
@@ -448,16 +455,24 @@ export function KeychainScenarioFlow({
                   </p>
                 )}
                 {!s.isGenerating && (
+                  <>
+                  {/* F-08: превʼю безкоштовне — ціна рядком під кнопкою, не на ній. */}
                   <button
                     type="button"
                     onClick={create}
                     disabled={!placePicked}
                     title={!placePicked ? t("waitingPlace") : undefined}
                     data-testid="kc-scenario-create"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${successView ? "bg-[var(--accent-strong)] shadow-[0_8px_24px_rgba(11,92,87,0.3)]" : "bg-[var(--bronze,#8E6B3D)] shadow-[0_8px_24px_rgba(142,107,61,0.35)]"}`}
                   >
-                    {successView ? t("updateKeychain") : t("createKeychain")} · {disp(priceUah)}
+                    {successView ? t("updateKeychain") : t("previewCta")}
                   </button>
+                  {!successView && (
+                    <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--text-secondary)]">
+                      {t("printFromLine", { price: disp(priceUah) })}
+                    </p>
+                  )}
+                  </>
                 )}
                 {/* Вихід у повний дизайнер прямо з кроку 2 — стан зберігається. */}
                 <button
@@ -472,6 +487,23 @@ export function KeychainScenarioFlow({
           </div>
         )}
       </div>
+      {/* F-04: sticky ціна + дія стану на мобільному (портал). */}
+      <GuidedStickyBar
+        visible={displayStep === 2}
+        testId="kc-guided-sticky-bar"
+        label={tOrder("prodKeychain")}
+        price={disp(priceUah)}
+        busy={generatingView}
+        tone={successView ? "bronze" : "primary"}
+        disabled={!generatingView && !successView && !placePicked}
+        cta={generatingView
+          ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
+          : successView ? t("orderPrint") : t("previewCtaShort")}
+        onCta={() => {
+          if (successView) window.dispatchEvent(new Event("monadruk:kc-guided-order"));
+          else create();
+        }}
+      />
     </div>
   );
 }

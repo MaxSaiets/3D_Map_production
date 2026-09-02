@@ -299,9 +299,9 @@ test.describe("Конструктор мап /create", () => {
     await expect(page.getByRole("link", { name: /Створити свою 3D-мапу/ })).toBeVisible();
   });
 
-  test("діалог замовлення: ціна, Україна/Європа, 15 країн ЄС", async ({ page }) => {
+  test("діалог замовлення: ціна, лише Україна (Нова Пошта / Укрпошта), без ЄС", async ({ page }) => {
     // Тур-оверлей («Підказка») і cookie-банер перехоплюють кліки в модалці —
-    // вимикаємо обидва (як в order-now тесті), щоб клік по «Європа» доходив.
+    // вимикаємо обидва (як в order-now тесті).
     await page.addInitScript(() => {
       localStorage.setItem("onb_create_v1", "1");
       document.cookie = "mnd_consent=denied;path=/";
@@ -316,13 +316,15 @@ test.describe("Конструктор мап /create", () => {
     // ціна: жива (N ₴) або статичний fallback (від N ₴)
     await expect(dialog.getByText(/\d+\s*₴/).first()).toBeVisible();
 
-    // Регіон і служба доставки — це role="radio" (a11y), не button
-    await dialog.getByRole("radio", { name: /Європа/ }).click();
-    await expect(dialog.getByRole("radio", { name: "Nova Post (EU)" })).toBeVisible();
-    await expect(dialog.getByRole("radio", { name: "Meest" })).toBeVisible();
-    // Жорсткий <select> країн замінено на input+datalist (можна ввести будь-яку
-    // країну ЄС) — підказок у датасписку 15
-    await expect(dialog.getByPlaceholder("Країна")).toBeVisible();
-    await expect(dialog.locator("datalist#eu-countries option")).toHaveCount(15);
+    // Рішення власника 2026-09-02: доставка ЛИШЕ по Україні — регіону «Європа»,
+    // Nova Post (EU)/Meest і датасписку країн у формі більше НЕМАЄ; є чесна
+    // примітка «лише по Україні» і два способи: Нова Пошта / Укрпошта.
+    await expect(dialog.getByText(/лише по Україні/)).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: /Європа/ })).toHaveCount(0);
+    await expect(dialog.getByRole("radio", { name: "Nova Post (EU)" })).toHaveCount(0);
+    await expect(dialog.getByRole("radio", { name: "Meest" })).toHaveCount(0);
+    await expect(dialog.locator("datalist#eu-countries")).toHaveCount(0);
+    await expect(dialog.getByRole("radio", { name: /Нова Пошта/ })).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: /Укрпошта/ })).toBeVisible();
   });
 });

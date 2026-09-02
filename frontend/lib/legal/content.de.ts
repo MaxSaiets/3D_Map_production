@@ -34,7 +34,7 @@ export const de: LegalSet = {
         { p: "Der Käufer ist selbst für die Richtigkeit der gewählten Modellparameter (Kartenausschnitt, Text, Größe) und die Korrektheit der Kontaktdaten verantwortlich. Der Verkäufer haftet nicht für die Folgen von Fehlern in den vom Käufer angegebenen Daten, insbesondere nicht für die Fertigung eines Produkts mit fehlerhaftem Text oder Kartenausschnitt, die der Käufer selbst im Konfigurator bestätigt hat." },
       ] },
       { h: "4. Preis und Zahlung", blocks: [
-        { p: "Die Preise auf der Website sind in Hrywnja (für Bestellungen innerhalb der Ukraine) und in Euro (Richtwert, für Lieferungen in EU-Länder) angegeben. Den endgültigen Bestellwert sieht der Käufer im Bestellschritt vor der Zahlung. Die Versandkosten sind nicht im Warenpreis enthalten und werden gesondert nach den Tarifen des Transportdienstleisters bezahlt." },
+        { p: "Die Preise auf der Website sind in Hrywnja (für Bestellungen innerhalb der Ukraine) und in Euro (Richtwert) angegeben. Den endgültigen Bestellwert sieht der Käufer im Bestellschritt vor der Zahlung. Die Versandkosten sind nicht im Warenpreis enthalten und werden gesondert nach den Tarifen des Transportdienstleisters bezahlt." },
         { p: "Die Zahlung erfolgt online über den Zahlungsdienst LiqPay (JSC CB „PrivatBank“): mit Visa-/Mastercard-Bankkarte und über andere in LiqPay verfügbare Methoden. Die Daten der Zahlungskarte werden auf Seiten des Zahlungssystems verarbeitet; der Verkäufer erhält und speichert sie nicht." },
         { p: "Nach Vereinbarung mit dem Operator ist die Zahlung auf eine andere abgestimmte Weise möglich. Der Download des fertigen Digitalen Inhalts im Rahmen des kostenlosen Kontolimits ist kostenlos." },
         { p: "Die Ware wird vor der Übergabe in die Produktion vollständig bezahlt, sofern die Parteien nichts anderes vereinbart haben. Details finden Sie auf der Seite [delivery:„Zahlung und Lieferung“]." },
@@ -44,7 +44,7 @@ export const de: LegalSet = {
         { p: "Die voraussichtliche Fertigungsdauer eines physischen Produkts beträgt 1–3 Werktage ab Zahlung/Bestätigung der Bestellung. Bei erhöhter Auslastung oder technischer Komplexität des Produkts kann sich die Frist verlängern; der Verkäufer informiert den Käufer darüber." },
       ] },
       { h: "6. Lieferung", blocks: [
-        { p: "Die Lieferung innerhalb der Ukraine erfolgt durch „Nova Poshta“ (Filiale, Paketautomat) oder „Ukrposhta“. Die Lieferung in EU-Länder erfolgt durch Nova Post EU oder Meest. Die voraussichtliche Lieferzeit innerhalb der Ukraine beträgt 2–4 Werktage nach dem Versand." },
+        { p: "Die Lieferung innerhalb der Ukraine erfolgt durch „Nova Poshta“ (Filiale, Paketautomat) oder „Ukrposhta“. Die voraussichtliche Lieferzeit innerhalb der Ukraine beträgt 2–4 Werktage nach dem Versand." },
         { p: "Die Versandkosten werden nach den Tarifen des Transportdienstleisters berechnet und vom Käufer gesondert bezahlt (in der Regel bei Erhalt). Das Eigentum an der Ware und die Gefahr der zufälligen Beschädigung gehen mit dem Erhalt der Ware vom Transportdienstleister auf den Käufer über." },
         { p: "Bei Erhalt ist der Käufer verpflichtet, die Sendung auf Unversehrtheit der Verpackung und des Produkts zu prüfen. Bei Transportschäden ist ein Schadensprotokoll des Transportdienstleisters zu erstellen und der Verkäufer zu benachrichtigen — ein solcher Fall wird durch kostenlosen Neudruck oder Rückerstattung gelöst (siehe Abschnitt 8)." },
       ] },
@@ -147,8 +147,6 @@ export const de: LegalSet = {
       { h: "Lieferung", blocks: [
         { p: "Ukraine:" },
         { ul: ["Nova Poshta — Filiale oder Paketautomat.", "Ukrposhta — Filiale."] },
-        { p: "Europäische Union (15 Länder):" },
-        { ul: ["Nova Post EU.", "Meest."] },
         { p: "Die Versandkosten werden nach den Tarifen des Transportunternehmens berechnet und separat bezahlt (in der Regel bei Erhalt). Die voraussichtliche Lieferzeit innerhalb der Ukraine beträgt 2–4 Werktage nach dem Versand." },
       ] },
       { h: "Rückgabe", blocks: [

@@ -1419,6 +1419,41 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   // Bubbled up from ModelLoader (inside the Canvas) so a failed model load shows
   // a visible localized message instead of an empty scene.
   const [loadError, setLoadError] = useState<string | null>(null);
+  // F-02 (скрол-пастка на телефоні): three.OrbitControls ставить canvas
+  // `touch-action:none`, і сторінка не прокручується свайпом над сценою. На
+  // coarse-pointer пристроях керування вмикається лише після дотику
+  // («Торкніться, щоб покрутити»), інакше canvas пропускає вертикальний скрол.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [coarse, setCoarse] = useState(false);
+  const [touchActive, setTouchActive] = useState(false);
+  useEffect(() => {
+    try { setCoarse(window.matchMedia("(pointer: coarse)").matches); } catch { /* ignore */ }
+  }, []);
+  const controlsEnabled = !coarse || touchActive || isFs;
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const apply = () => {
+      const c = root.querySelector("canvas");
+      // !important — бо OrbitControls пише touchAction='none' у конструкторі (без important).
+      if (c) c.style.setProperty("touch-action", controlsEnabled ? "none" : "pan-y", "important");
+    };
+    apply();
+    // Canvas зʼявляється асинхронно (Suspense) — дочекатись і застосувати ще раз.
+    const mo = new MutationObserver(apply);
+    mo.observe(root, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [controlsEnabled]);
+  // Вихід із режиму обертання, коли сцена майже зникла з екрана (скрол далі).
+  useEffect(() => {
+    if (!touchActive || !rootRef.current || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries.some((e) => !e.isIntersecting)) setTouchActive(false); },
+      { threshold: 0.25 },
+    );
+    io.observe(rootRef.current);
+    return () => io.disconnect();
+  }, [touchActive]);
   // CSS-розгортання (працює на iPhone, на відміну від Fullscreen API).
   useEffect(() => {
     if (!isFs) return;
@@ -1430,6 +1465,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
 
   return (
     <div
+      ref={rootRef}
       className={isFs ? "fixed inset-0 z-[9999] bg-slate-950" : "relative h-full w-full bg-slate-950"}
       style={isFs ? undefined : { minHeight: "100%" }}
     >
@@ -1692,6 +1728,30 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           </div>
         </div>
       )}
+      {/* F-02: на телефоні сцена спершу «прозора» для скролу; тап вмикає обертання. */}
+      {coarse && !isFs && !capture && !!downloadUrl && !isGenerating && (
+        touchActive ? (
+          <button
+            type="button"
+            onClick={() => setTouchActive(false)}
+            className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/20 bg-[rgba(2,6,23,0.75)] px-4 py-2 text-[12px] font-semibold text-white backdrop-blur"
+          >
+            ✓ {t("tapDone")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-testid="preview-tap-to-rotate"
+            onClick={() => setTouchActive(true)}
+            aria-label={t("tapRotate")}
+            className="absolute inset-0 z-[15] flex items-end justify-center bg-transparent pb-3"
+          >
+            <span className="rounded-full border border-white/20 bg-[rgba(2,6,23,0.75)] px-4 py-2 text-[12px] font-semibold text-white backdrop-blur">
+              {t("tapRotate")}
+            </span>
+          </button>
+        )
+      )}
       <CanvasErrorBoundary
         fallback={
           <div className="absolute inset-0 z-20 flex items-center justify-center px-6 text-center">
@@ -1726,7 +1786,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
             <FreeFlyControls enabled={cameraMode === "fly"} speed={flySpeed} onSpeedChange={setFlySpeed} />
             <OrbitControls
               makeDefault
-              enabled={cameraMode === "orbit"}
+              enabled={cameraMode === "orbit" && controlsEnabled}
               enableDamping
               dampingFactor={0.05}
               minDistance={10}

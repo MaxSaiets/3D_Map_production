@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
@@ -127,6 +127,7 @@ export function SimpleControlPanel({
   showStickyBar = true,
   onSeriesGenerated,
   listenGuidedGenerate = false,
+  primary = true,
 }: {
   availableCities?: Record<string, { center: [number, number]; bounds: any }>;
   selectedCityKey?: string;
@@ -147,6 +148,9 @@ export function SimpleControlPanel({
   // логіки запиту). Проп гарантує, що слухає РІВНО ОДНА копія — інакше при
   // подвійному монтуванні (desktop+mobile) подія стартувала б ДВІ генерації.
   listenGuidedGenerate?: boolean;
+  /** Панель монтується двічі (desktop aside + mobile). Лише «головна» копія слухає
+   *  monadruk:open-order і полить статус — інакше два OrderDialog і подвійний полінг (F-06). */
+  primary?: boolean;
 }) {
   const t = useTranslations("simple");
   const locale = useLocale();
@@ -360,6 +364,8 @@ export function SimpleControlPanel({
   const activeTemplate = s.simpleTemplate;
   const setActiveTemplate = s.setSimpleTemplate;
   const [orderOpen, setOrderOpen] = useState(false);
+  // Свіже замикання orderNow для слухача події (ефект нижче має [] deps).
+  const orderNowRef = useRef<() => void>(() => {});
   const [dlBusy, setDlBusy] = useState(false);
   // Прогрес фонової генерації друкарського 3MF при завантаженні стандартної карти
   // (на екрані — швидкий GLB-прев'ю; друкарський файл готуємо на вимогу). null = не йде.
@@ -470,7 +476,7 @@ export function SimpleControlPanel({
   // ОБОВʼЯЗКОВО розблоковують UI — інакше «Генерація N%» висіла назавжди
   // і переживала перезавантаження сторінки (taskGroupId у localStorage).
   useEffect(() => {
-    if (!taskGroupId) return;
+    if (!taskGroupId || !primary) return;
     let stop = false;
     let pollFails = 0;
     const iv = setInterval(async () => {
@@ -543,11 +549,15 @@ export function SimpleControlPanel({
 
   // UX-FIX: «Замовити друк» зі сторонніх місць (Швидкий статус на мобілці)
   // відкриває OrderDialog цієї панелі через глобальну подію.
+  // F-05: подія має проходити через orderNow() (фонова print-3MF генерація + діалог),
+  // а не лише відкривати форму — інакше оператор отримував task GLB-превʼю.
+  // F-06: слухає лише primary-копія (інакше два діалоги).
   useEffect(() => {
-    const open = () => setOrderOpen(true);
+    if (!primary) return;
+    const open = () => orderNowRef.current();
     window.addEventListener("monadruk:open-order", open);
     return () => window.removeEventListener("monadruk:open-order", open);
-  }, []);
+  }, [primary]);
 
   // UX-FIX: явне скасування генерації — DELETE на бек + миттєве розблокування
   const cancelGeneration = async () => {
@@ -918,6 +928,7 @@ export function SimpleControlPanel({
     if (needPrint && !isGenerating) handleGenerate({ forPrint: true });
     setOrderOpen(true);
   };
+  orderNowRef.current = orderNow;
 
   const downloadHref = downloadUrl
     ? (downloadUrl.startsWith("http") ? downloadUrl : `${API_BASE}${downloadUrl}`)

@@ -34,7 +34,7 @@ export const en: LegalSet = {
         { p: "The Buyer is solely responsible for the correctness of the selected model parameters (map area, text, size) and the accuracy of the contact details provided. The Seller bears no responsibility for the consequences of errors in the data supplied by the Buyer, including the manufacture of a product with erroneous text or map area that the Buyer themselves approved in the Builder." },
       ] },
       { h: "4. Price and Payment", blocks: [
-        { p: "Prices on the Website are shown in hryvnia (for orders within Ukraine) and in euros (indicative, for delivery to EU countries). The Buyer sees the final cost of the order at the checkout step, before payment. Delivery costs are not included in the price of the Goods and are paid separately at the carrier's tariffs." },
+        { p: "Prices on the Website are shown in hryvnia (for orders within Ukraine) and in euros (indicative). The Buyer sees the final cost of the order at the checkout step, before payment. Delivery costs are not included in the price of the Goods and are paid separately at the carrier's tariffs." },
         { p: "Payment is made online via the LiqPay payment service (JSC CB \"PrivatBank\"): by Visa/Mastercard bank card and other methods available in LiqPay. Payment card data is processed on the payment system's side; the Seller does not receive or store it." },
         { p: "By arrangement with an operator, payment by another agreed method is possible. Downloading finished Digital content within the account's free limit is free of charge." },
         { p: "The Goods are paid for in full before being sent to production, unless otherwise agreed by the parties. Details are on the [delivery:\"Payment and Delivery\"] page." },
@@ -44,7 +44,7 @@ export const en: LegalSet = {
         { p: "The estimated production time for a physical product is 1–3 business days from payment/confirmation of the order. In the event of high workload or technical complexity of the product, this time may be extended, of which the Seller notifies the Buyer." },
       ] },
       { h: "6. Delivery", blocks: [
-        { p: "Delivery within Ukraine is carried out by Nova Poshta (branch, parcel locker) or Ukrposhta. Delivery to EU countries — by Nova Post EU or Meest. The estimated delivery time within Ukraine is 2–4 business days after dispatch." },
+        { p: "Delivery within Ukraine is carried out by Nova Poshta (branch, parcel locker) or Ukrposhta. The estimated delivery time within Ukraine is 2–4 business days after dispatch." },
         { p: "Delivery costs are calculated at the carrier's tariffs and paid by the Buyer separately (usually on receipt). Title to the Goods and the risk of accidental damage pass to the Buyer upon receipt of the Goods from the carrier." },
         { p: "Upon receipt, the Buyer must inspect the shipment for the integrity of the packaging and the product. In the event of damage in transit, it should be documented in the carrier's damage report and the Seller notified — such cases are resolved by a free reprint or a refund (see Section 8)." },
       ] },
@@ -147,8 +147,6 @@ export const en: LegalSet = {
       { h: "Delivery", blocks: [
         { p: "Ukraine:" },
         { ul: ["Nova Poshta — branch or parcel locker.", "Ukrposhta — branch."] },
-        { p: "European Union (15 countries):" },
-        { ul: ["Nova Post EU.", "Meest."] },
         { p: "Delivery cost is calculated according to the carrier's tariffs and paid separately (usually on receipt). The estimated delivery time within Ukraine is 2–4 business days after dispatch." },
       ] },
       { h: "Refunds", blocks: [

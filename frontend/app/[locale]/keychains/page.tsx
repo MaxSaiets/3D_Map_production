@@ -406,7 +406,7 @@ export default function KeychainsPage() {
             інакше на низькому ноуті grid ділив ~600px навпіл (~300px/панель) і
             overflow-hidden РІЗАВ налаштування/превʼю (скарга «все закріплено, нічого
             не видно»). Тепер кожна панель = своя висота, сторінка СКРОЛИТЬСЯ. */}
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-24 lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
+        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-[var(--sticky-h,0px)] lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
           <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:h-[calc(100dvh-150px)] lg:min-h-[440px]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
@@ -418,7 +418,9 @@ export default function KeychainsPage() {
                 </p>
               </div>
             </div>
-            <div className="min-h-[56dvh] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[400px] sm:p-3 lg:min-h-0">
+            {/* T-5.3 (F-18): 56dvh зʼїдало пів екрана телефону до перших контролів і
+                стрибало в iOS Safari; фіксована мін-висота у px стабільна. */}
+            <div className="min-h-[320px] flex-1 bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[400px] sm:p-3 lg:min-h-0">
               <div className="h-full overflow-hidden rounded-[24px]">
                 <MapSelector center={currentCity.center} keychainCrop={keychainCrop} />
               </div>

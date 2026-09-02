@@ -290,7 +290,7 @@ export default async function CorporatePage({ params }: { params: { locale: stri
         name: c.h1,
         description: c.description,
         provider: { "@type": "Organization", name: "Monadruk", url: BASE },
-        areaServed: ["UA", "EU"],
+        areaServed: ["UA"],
         url: localeUrl(locale, "/corporate"),
       },
       {

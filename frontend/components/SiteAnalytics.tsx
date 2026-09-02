@@ -172,21 +172,23 @@ export default function SiteAnalytics() {
       )}
 
       {ready && consent === null && (
-        <div className="fixed inset-x-3 bottom-[96px] z-[50] mx-auto max-w-[680px] rounded-2xl border border-line bg-paper/95 p-4 shadow-lift backdrop-blur sm:bottom-3 sm:flex sm:items-center sm:gap-4">
-          <p className="text-[13px] leading-relaxed text-ink-2">
+        // F-17/F-12b: банер більше НЕ перекриває CTA — на mobile компактна смужка
+        // ЗВЕРХУ, на desktop маленька картка ліворуч унизу (праворуч живуть CTA/ціна/чат).
+        <div className="fixed inset-x-2 top-2 z-[50] rounded-2xl border border-line bg-paper/95 p-3 shadow-lift backdrop-blur sm:inset-x-auto sm:bottom-3 sm:left-4 sm:top-auto sm:max-w-[360px]">
+          <p className="text-[12px] leading-snug text-ink-2">
             {t("text")}{" "}
             <Link href="/privacy" className="font-semibold text-forest underline">{t("more")}</Link>
           </p>
-          <div className="mt-3 flex shrink-0 gap-2 sm:mt-0">
+          <div className="mt-2 flex shrink-0 gap-2">
             <button
               onClick={() => decide("denied")}
-              className="min-h-[44px] flex-1 rounded-full border border-line px-4 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 sm:flex-none"
+              className="min-h-[40px] flex-1 rounded-full border border-line px-3 text-[12px] font-semibold text-ink-2 transition hover:border-forest/40"
             >
               {t("decline")}
             </button>
             <button
               onClick={() => decide("granted")}
-              className="min-h-[44px] flex-1 rounded-full bg-forest px-5 text-[13px] font-bold text-[#F4EFE4] transition hover:brightness-110 sm:flex-none"
+              className="min-h-[40px] flex-1 rounded-full bg-forest px-4 text-[12px] font-bold text-[#F4EFE4] transition hover:brightness-110"
             >
               {t("accept")}
             </button>

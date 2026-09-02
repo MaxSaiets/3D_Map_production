@@ -57,7 +57,7 @@
     "path": {
       "eyebrow1": "Weg 1 · Eigene Geometrie",
       "title1": "Karte erstellen",
-      "desc1": "Finde jeden Ort der Erde, umreiße den Bereich, wähle Stil und Größe. 5 Schritte — etwa 3 Minuten.",
+      "desc1": "Finde jeden Ort der Erde — der Rahmen setzt sich selbst. 2 Schritte, 1–2 Minuten — und die 3D-Vorschau ist fertig.",
       "cta1": "Konfigurator starten",
       "eyebrow2": "Weg 2 · Accessoire",
       "title2": "Karten-Anhänger",
@@ -134,15 +134,15 @@
       "a6": "Ja — auf einen 55×30-mm-Karten-Anhänger kannst du einen Stadtnamen oder eigenen Text setzen, der als Relief über der Viertelkarte gedruckt wird.",
       "q7": "Gibt es einen Anhänger mit Gebirgsrelief statt Straßenkarte?",
       "a7": "Ja — der Topo-Anhänger. Aktiviere im Konfigurator den Modus „Höhenrelief“, und das echte Geländerelief des Ortes wird aus Satelliten-Höhendaten gedruckt: Alpen, Karpaten, Fjorde oder Küstenlinien. Gipfel und Täler sind mit den Fingern fühlbar.",
-      "q8": "Versendet ihr Anhänger und Karten nach Europa?",
-      "a8": "Ja. Wir drucken und versenden innerhalb der Ukraine sowie in 15 EU-Länder über Nova Post EU und Meest: Deutschland, Polen, Tschechien, Spanien, Italien, Frankreich und weitere.",
+      "q8": "Versendet ihr ins Ausland?",
+      "a8": "Derzeit drucken und versenden wir nur innerhalb der Ukraine (Nova Poshta, Ukrposhta). Im Ausland? Laden Sie die fertige 3MF/STL-Datei herunter und drucken Sie sie in einem lokalen 3D-Druckstudio.",
       "q9": "Was ist ein Stadtkarten-Kühlschrankmagnet?",
       "a9": "Ein flacher 3D-gedruckter Magnet von ca. 60 mm mit der Karte deines Viertels: Straßen, Parks und Flüsse als Relief, hinten eine Tasche für einen Neodym-Magneten. Ein günstiges persönliches Andenken an einen besonderen Ort."
     },
     "cta": {
       "eyebrow": "Bereit anzufangen?",
       "title": "Erstelle eine Karte von einem Ort, der mehr bedeutet als ein Punkt.",
-      "desc": "5 Schritte, etwa 3 Minuten — und du lädst eine druckfertige 3D-Datei herunter.",
+      "desc": "2 Schritte, 1–2 Minuten — und deine 3D-Vorschau ist fertig. Danach: Druck bestellen oder Datei laden.",
       "create": "Karte erstellen",
       "keychain": "Anhänger"
     },
@@ -166,7 +166,7 @@
     "seo": {
       "title": "3D-Stadtkarten und personalisierte Anhänger — was wir machen",
       "p1": "Monadruk verwandelt jeden Ort der Erde in ein druckbares 3D-Modell: eine 3D-Stadtkarte mit echten Gebäudehöhen, Parks und Flüssen aus OpenStreetMap-Daten, einen Karten-Schlüsselanhänger mit eigenem Text, einen topografischen Anhänger mit echtem Gebirgsrelief aus Satelliten-Höhendaten oder einen Stadtkarten-Magneten. Die 3MF- und STL-Dateien öffnen sich direkt in Bambu Studio und PrusaSlicer.",
-      "p2": "Kein 3D-Drucker? Wir drucken für dich in umweltfreundlichem Eco PLA und liefern in die Ukraine und in die EU. Eine 3D-Karte von Berlin, München, Kyjiw oder New York, das Relief der Alpen, ein personalisierter Anhänger zum Jahrestag — wähle einen Ort auf der Karte, und das Modell ist in Minuten fertig."
+      "p2": "Kein 3D-Drucker? Wir drucken für dich in umweltfreundlichem Eco PLA und liefern innerhalb der Ukraine. Eine 3D-Karte von Berlin, München, Kyjiw oder New York, das Relief der Alpen, ein personalisierter Anhänger zum Jahrestag — wähle einen Ort auf der Karte, und das Modell ist in Minuten fertig."
     },
     "alt": {
       "keychainMap": "Stadtkarten-Schlüsselanhänger",
@@ -183,7 +183,7 @@
   },
   "keychainsMeta": {
     "title": "Karten-Schlüsselanhänger — mit Gravur und Text, ab ≈3 €",
-    "description": "Karten-Anhänger 55×30 mm auf Bestellung: die Straßen deines Viertels als Relief, eigener Text bzw. Gravur auf der Rückseite — Name, Datum, Koordinaten. 3D-Druck ab ≈3 €, Versand EU-weit.",
+    "description": "Karten-Anhänger 55×30 mm auf Bestellung: die Straßen deines Viertels als Relief, eigener Text bzw. Gravur auf der Rückseite — Name, Datum, Koordinaten. 3D-Druck ab ≈3 €, Versand innerhalb der Ukraine.",
     "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
@@ -389,8 +389,11 @@
     "errBranchEu": "Nova-Post-Filialnummer angeben",
     "errAddressEu": "Vollständige Lieferadresse angeben",
     "errUkrAddress": "Für Ukrposhta auch Straße und Haus angeben",
+    "retry": "Erneut versuchen",
+    "contactsHeading": "Kontakt",
     "deliveryHeading": "Lieferung",
-    "deliveryHint": "Wir versenden in die Ukraine und EU. Methode und Kosten bestätigt der Operator.",
+    "uaOnly": "Versand derzeit nur innerhalb der Ukraine. Im Ausland? Laden Sie die Datei herunter und drucken Sie sie in einem lokalen 3D-Druckstudio.",
+    "deliveryHint": "Wir versenden innerhalb der Ukraine. Methode und Kosten bestätigt der Operator.",
     "costNova": "Nova Poshta — ab 70 ₴ nach Tarif, Zahlung bei Erhalt",
     "costUkr": "Ukrposhta — ab 45 ₴ nach Tarif, Zahlung bei Erhalt",
     "costEu": "Nova Post / Meest — ab 8 € nach Tarif des Zustellers",
@@ -563,7 +566,7 @@
     "trustEco": "Eco PLA",
     "trustReprint": "60 Tage Garantie",
     "trustNoPrepay": "Keine Vorkasse",
-    "trustShip": "Versand Ukraine + EU",
+    "trustShip": "Versand in der Ukraine",
     "seriesConnectorsSquareHint": "Verbinder-Schlösser funktionieren nur mit dem quadratischen Raster.",
     "seriesTab": "▦ Zonenserie (Raster)"
   },
@@ -581,10 +584,10 @@
   },
   "cityPages": {
     "title": "3D-Karte von {city} — ab 6 €, in 2 Min. fertig",
-    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten entsteht ein Modell mit Straßen, Gebäuden und Flüssen. Eco-PLA-Druck ab ≈6 € mit EU-Versand, oder 3MF/STL-Datei zum Selbstdrucken laden. Anhänger ab ≈3 €.",
+    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten entsteht ein Modell mit Straßen, Gebäuden und Flüssen. Eco-PLA-Druck ab ≈6 € mit Versand in der Ukraine, oder 3MF/STL-Datei zum Selbstdrucken laden. Anhänger ab ≈3 €.",
     "h1": "3D-Karte von {city}",
     "p1": "Die 3D-Karte von {city} ist ein taktiles dreidimensionales Modell eines Viertels: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
-    "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern in die Ukraine und in die EU. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",
+    "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern innerhalb der Ukraine. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",
     "ctaMap": "3D-Karte von {city} erstellen",
     "ctaKeychain": "{city}-Karten-Schlüsselanhänger",
     "others": "Weitere Städte",
@@ -618,7 +621,7 @@
   },
   "deliveryMeta": {
     "title": "Zahlung & Lieferung — Monadruk",
-    "description": "Preise, Zahlung per LiqPay, Lieferung mit Nova Poshta, Ukrposhta und in die EU — Monadruk."
+    "description": "Preise, Zahlung per LiqPay, Lieferung mit Nova Poshta und Ukrposhta in der Ukraine — Monadruk."
   },
   "contactsMeta": {
     "title": "Kontakte & Angaben — Monadruk",
@@ -1438,6 +1441,8 @@
   },
   "preview": {
     "generating": "Modell wird generiert...",
+    "tapRotate": "Tippen, um das Modell zu drehen",
+    "tapDone": "Fertig",
     "emptyTitle": "Hier erscheint Ihr 3D-Modell",
     "emptyBody": "Wählen Sie einen Bereich auf der Karte und klicken Sie „Generieren“.",
     "batchLoadError": "Batch-Vorschau konnte nicht geladen werden",
@@ -1697,6 +1702,7 @@
     "keychainDesc": "Die Karte Ihres Zuhauses immer am Schlüsselbund",
     "fullTitle": "Voller Konfigurator",
     "fullDesc": "Alle Einstellungen: Serien, GPX, Stile, Formen",
+    "moreLabel": "Mehr:",
     "back": "Zurück",
     "step2Hint": "Finden Sie eine Stadt oder Adresse über die Kartensuche und klicken Sie darauf — die Zone wird automatisch gesetzt",
     "placeChosen": "Ort ausgewählt",
@@ -1712,7 +1718,7 @@
     "createAnother": "Noch eins erstellen",
     "backToGuided": "← Einfacher Modus",
     "sizeTitle": "Größe wählen",
-    "advancedSettings": "Erweiterte Einstellungen",
+    "advancedSettings": "Mehr Einstellungen",
     "personalizeTitle": "Machen Sie sie persönlich",
     "myHome": "Mein Zuhause auf der Karte",
     "myHomeCount": "Mein Zuhause: {n} ausgewählt",
@@ -1723,13 +1729,17 @@
     "readyBadge": "Fertig",
     "changePlace": "Ort ändern",
     "addLabel": "Text auf der Karte hinzufügen",
-    "updateModel": "Modell aktualisieren",
+    "updateModel": "Vorschau aktualisieren",
     "changeSomething": "Möchten Sie etwas ändern?",
-    "connectors": "Serien-Verbinder",
+    "connectors": "Nut zum Anschluss der Nachbarkachel (Serie)",
     "connectorsHint": "Randnuten, um später Nachbarkacheln zu einer großen Karte zu verbinden",
     "pannoTitle": "Wandpaneel",
     "pannoDesc": "Große Karte aus Kacheln — ein Blickfang für Zuhause oder Büro",
-    "downloadFree": "3MF herunterladen (kostenlos)"
+    "downloadFree": "Datei für den eigenen Drucker (3MF) · kostenlos, Google-Anmeldung nötig",
+    "previewCta": "3D-Vorschau anzeigen · kostenlos",
+    "previewCtaShort": "3D-Vorschau · kostenlos",
+    "printFromLine": "Druck {price} · Versand mit Nova Poshta in der Ukraine",
+    "readyDelivery": "Druck und Versand in 2–4 Werktagen · Nova Poshta oder Ukrposhta · Zahlung nach Bestätigung"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",
@@ -1757,14 +1767,18 @@
     "backLabelPlaceholder": "Rückseitentext (Datum, Namen…)",
     "clearField": "Leeren",
     "createKeychain": "Anhänger erstellen",
-    "updateKeychain": "Anhänger aktualisieren",
+    "updateKeychain": "Vorschau aktualisieren",
     "generating": "Anhänger wird generiert…",
     "etaNote": "Dauert meist etwa eine Minute",
     "genFailed": "Anhänger konnte nicht generiert werden. Versuchen Sie es erneut oder öffnen Sie den vollen Designer.",
     "readyTitle": "Anhänger ist fertig!",
     "readyHint": "Drehen Sie die 3D-Vorschau unten. Wenn alles gefällt — bestellen Sie den Druck.",
     "orderPrint": "Druck bestellen",
-    "downloadFree": "3MF herunterladen (kostenlos)",
+    "downloadFree": "Datei für den eigenen Drucker (3MF) · kostenlos, Google-Anmeldung nötig",
+    "previewCta": "Anhänger in 3D anzeigen · kostenlos",
+    "previewCtaShort": "3D-Vorschau · kostenlos",
+    "printFromLine": "Druck {price} · Versand mit Nova Poshta in der Ukraine",
+    "readyDelivery": "Druck und Versand in 2–4 Werktagen · Nova Poshta oder Ukrposhta · Zahlung nach Bestätigung",
     "tuneDetails": "Details anpassen",
     "createAnother": "Noch einen erstellen",
     "changeSomething": "Möchten Sie etwas ändern?",

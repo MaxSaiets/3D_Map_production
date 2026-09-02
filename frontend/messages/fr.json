@@ -57,7 +57,7 @@
     "path": {
       "eyebrow1": "Voie 1 · Ta propre géométrie",
       "title1": "Créer ta carte",
-      "desc1": "Trouve n'importe quel lieu, délimite la zone, choisis un style et une taille. 5 étapes — environ 3 minutes.",
+      "desc1": "Trouve n'importe quel lieu — le cadre se place tout seul. 2 étapes, 1–2 minutes — et l'aperçu 3D est prêt.",
       "cta1": "Lancer le configurateur",
       "eyebrow2": "Voie 2 · Accessoire",
       "title2": "Porte-clés carte",
@@ -134,15 +134,15 @@
       "a6": "Oui — sur un porte-clés carte 55×30 mm, tu peux ajouter un nom de ville ou un texte personnalisé imprimé en relief sur la carte du quartier.",
       "q7": "Peut-on avoir un porte-clés avec le relief des montagnes au lieu des rues ?",
       "a7": "Oui — c'est le porte-clés topo. Activez le mode « Relief du terrain » dans le configurateur, et le vrai relief du lieu est imprimé à partir des données satellite d'altitude : Alpes, Carpates, fjords ou littoral. Les sommets et vallées se lisent du bout des doigts.",
-      "q8": "Livrez-vous les porte-clés et cartes en Europe ?",
-      "a8": "Oui. Nous imprimons et expédions en Ukraine ainsi que dans 15 pays de l'UE via Nova Post EU et Meest : France, Allemagne, Pologne, Espagne, Italie et plus encore.",
+      "q8": "Livrez-vous à l’étranger ?",
+      "a8": "Pour l’instant, nous imprimons et livrons uniquement en Ukraine (Nova Poshta, Ukrposhta). À l’étranger ? Téléchargez le fichier 3MF/STL prêt et imprimez-le dans un studio d’impression 3D local.",
       "q9": "Qu'est-ce qu'un magnet frigo carte de ville ?",
       "a9": "Un magnet plat imprimé en 3D d'environ 60 mm avec la carte de votre quartier : rues, parcs et rivières en relief, avec une poche au dos pour un aimant néodyme. Un souvenir personnel et abordable d'un lieu mémorable."
     },
     "cta": {
       "eyebrow": "Prêt à commencer ?",
       "title": "Crée la carte d'un lieu qui compte plus qu'un point sur une carte.",
-      "desc": "5 étapes, environ 3 minutes — et tu télécharges un fichier 3D prêt à imprimer.",
+      "desc": "2 étapes, 1–2 minutes — et ton aperçu 3D est prêt. Ensuite : commande l'impression ou télécharge le fichier.",
       "create": "Créer une carte",
       "keychain": "Porte-clés"
     },
@@ -166,7 +166,7 @@
     "seo": {
       "title": "Cartes de villes 3D et porte-clés personnalisés — ce que nous faisons",
       "p1": "Monadruk transforme n'importe quel endroit de la Terre en modèle 3D imprimable : une carte 3D de quartier avec les vraies hauteurs des bâtiments, parcs et rivières issues d'OpenStreetMap, un porte-clés carte de ville avec votre texte, un porte-clés topographique avec le vrai relief des montagnes issu des données satellite d'altitude, ou un magnet frigo carte. Les fichiers 3MF et STL s'ouvrent directement dans Bambu Studio et PrusaSlicer.",
-      "p2": "Pas d'imprimante 3D ? Nous imprimons pour vous en Eco PLA écologique et livrons en Ukraine et dans l'UE. Une carte 3D de Paris, Lyon, Kyiv ou New York, le relief des Alpes, un porte-clés personnalisé pour un anniversaire — choisissez un lieu sur la carte et le modèle est prêt en quelques minutes."
+      "p2": "Pas d'imprimante 3D ? Nous imprimons pour vous en Eco PLA écologique et livrons en Ukraine. Une carte 3D de Paris, Lyon, Kyiv ou New York, le relief des Alpes, un porte-clés personnalisé pour un anniversaire — choisissez un lieu sur la carte et le modèle est prêt en quelques minutes."
     },
     "alt": {
       "keychainMap": "Porte-clés carte de la ville",
@@ -183,7 +183,7 @@
   },
   "keychainsMeta": {
     "title": "Porte-clés carte de ville — gravé à votre texte, dès ≈3 €",
-    "description": "Porte-clés carte 55×30 mm sur mesure : les rues de votre quartier en relief, texte gravé au dos — prénom, date, coordonnées. Impression 3D dès ≈3 €, livraison UE.",
+    "description": "Porte-clés carte 55×30 mm sur mesure : les rues de votre quartier en relief, texte gravé au dos — prénom, date, coordonnées. Impression 3D dès ≈3 €, livraison en Ukraine.",
     "keywords": "porte-clés carte de ville, porte-clés carte, porte-clés 3D personnalisé, porte-clés avec prénom, porte-clés gravé, porte-clés topographique, porte-clés relief montagne, porte-clés cœur carte, porte-clés maison, cadeau pour lui, cadeau pour elle, cadeau d'anniversaire, porte-clés couple"
   },
   "showcaseMeta": {
@@ -389,8 +389,11 @@
     "errBranchEu": "Indiquez le n° d’agence Nova Post",
     "errAddressEu": "Indiquez l’adresse complète",
     "errUkrAddress": "Pour Ukrposhta, indiquez la rue et le numéro",
+    "retry": "Réessayer",
+    "contactsHeading": "Contact",
     "deliveryHeading": "Livraison",
-    "deliveryHint": "Nous livrons en Ukraine et dans l’UE. L’opérateur confirme le mode et le coût.",
+    "uaOnly": "Pour l’instant, livraison uniquement en Ukraine. À l’étranger ? Téléchargez le fichier et imprimez-le dans un studio d’impression 3D local.",
+    "deliveryHint": "Nous livrons en Ukraine. L’opérateur confirme le mode et le coût.",
     "costNova": "Nova Poshta — dès 70 ₴ selon le tarif, paiement à la réception",
     "costUkr": "Ukrposhta — dès 45 ₴ selon le tarif, paiement à la réception",
     "costEu": "Nova Post / Meest — dès 8 € selon le tarif du transporteur",
@@ -563,7 +566,7 @@
     "trustEco": "Eco PLA",
     "trustReprint": "Garantie 60 jours",
     "trustNoPrepay": "Sans acompte",
-    "trustShip": "Livraison Ukraine + UE",
+    "trustShip": "Livraison en Ukraine",
     "seriesConnectorsSquareHint": "Les connecteurs fonctionnent uniquement avec la grille carrée.",
     "seriesTab": "▦ Série de zones (grille)"
   },
@@ -581,10 +584,10 @@
   },
   "cityPages": {
     "title": "Carte 3D de {city} — dès 6 €, prête en 2 min",
-    "description": "Carte 3D de {city} : choisissez un quartier dans le configurateur — un modèle avec rues, bâtiments et rivières en 2 minutes. Impression Eco PLA dès ≈6 € livrée dans l'UE, ou fichier 3MF/STL à télécharger. Porte-clés dès ≈3 €.",
+    "description": "Carte 3D de {city} : choisissez un quartier dans le configurateur — un modèle avec rues, bâtiments et rivières en 2 minutes. Impression Eco PLA dès ≈6 € livrée en Ukraine, ou fichier 3MF/STL à télécharger. Porte-clés dès ≈3 €.",
     "h1": "Carte 3D de {city}",
     "p1": "La carte 3D de {city} est un modèle tridimensionnel tactile d'un quartier : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
-    "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine et dans l'UE. Un cadeau parfait pour qui aime sa ville.",
+    "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine. Un cadeau parfait pour qui aime sa ville.",
     "ctaMap": "Créer la carte 3D de {city}",
     "ctaKeychain": "Porte-clés carte de {city}",
     "others": "Autres villes",
@@ -618,7 +621,7 @@
   },
   "deliveryMeta": {
     "title": "Paiement et livraison — Monadruk",
-    "description": "Tarifs, paiement par LiqPay, livraison via Nova Poshta, Ukrposhta et vers l UE — Monadruk."
+    "description": "Tarifs, paiement par LiqPay, livraison via Nova Poshta et Ukrposhta en Ukraine — Monadruk."
   },
   "contactsMeta": {
     "title": "Contacts et coordonnées — Monadruk",
@@ -1438,6 +1441,8 @@
   },
   "preview": {
     "generating": "Génération du modèle...",
+    "tapRotate": "Touchez pour faire pivoter le modèle",
+    "tapDone": "Terminé",
     "emptyTitle": "Votre modèle 3D apparaîtra ici",
     "emptyBody": "Sélectionnez une zone sur la carte et cliquez sur « Générer ».",
     "batchLoadError": "Échec du chargement de l'aperçu du lot",
@@ -1697,6 +1702,7 @@
     "keychainDesc": "La carte de votre maison toujours sur vos clés",
     "fullTitle": "Constructeur complet",
     "fullDesc": "Tous les réglages : séries, GPX, styles, formes",
+    "moreLabel": "Plus :",
     "back": "Retour",
     "step2Hint": "Trouvez une ville ou une adresse dans la recherche de la carte et cliquez : la zone se place automatiquement",
     "placeChosen": "Lieu choisi",
@@ -1712,7 +1718,7 @@
     "createAnother": "En créer un autre",
     "backToGuided": "← Mode simple",
     "sizeTitle": "Choisissez la taille",
-    "advancedSettings": "Paramètres avancés",
+    "advancedSettings": "Plus de réglages",
     "personalizeTitle": "Rendez-la personnelle",
     "myHome": "Ma maison sur la carte",
     "myHomeCount": "Ma maison : {n} sélectionné",
@@ -1723,13 +1729,17 @@
     "readyBadge": "Prêt",
     "changePlace": "Changer de lieu",
     "addLabel": "Ajouter un texte sur la carte",
-    "updateModel": "Mettre à jour le modèle",
+    "updateModel": "Mettre à jour l’aperçu",
     "changeSomething": "Envie de changer quelque chose ?",
-    "connectors": "Connecteurs de série",
+    "connectors": "Encoche pour assembler la tuile voisine (série)",
     "connectorsHint": "Encoches sur les bords pour assembler plus tard les tuiles voisines en une grande carte",
     "pannoTitle": "Panneau mural",
     "pannoDesc": "Une grande carte en tuiles — une pièce déco pour la maison ou le bureau",
-    "downloadFree": "Télécharger le 3MF (gratuit)"
+    "downloadFree": "Fichier pour votre imprimante (3MF) · gratuit, connexion Google requise",
+    "previewCta": "Voir l’aperçu 3D · gratuit",
+    "previewCtaShort": "Aperçu 3D · gratuit",
+    "printFromLine": "Impression {price} · livraison Nova Poshta en Ukraine",
+    "readyDelivery": "Impression et envoi sous 2–4 jours ouvrés · Nova Poshta ou Ukrposhta · paiement après confirmation"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",
@@ -1757,14 +1767,18 @@
     "backLabelPlaceholder": "Texte au verso (date, prénoms…)",
     "clearField": "Effacer",
     "createKeychain": "Créer le porte-clés",
-    "updateKeychain": "Mettre à jour le porte-clés",
+    "updateKeychain": "Mettre à jour l’aperçu",
     "generating": "Génération du porte-clés…",
     "etaNote": "Environ une minute en général",
     "genFailed": "Impossible de générer le porte-clés. Réessayez ou ouvrez le créateur complet.",
     "readyTitle": "Le porte-clés est prêt !",
     "readyHint": "Faites tourner l'aperçu 3D ci-dessous. Si tout vous plaît — commandez l'impression.",
     "orderPrint": "Commander l'impression",
-    "downloadFree": "Télécharger le 3MF (gratuit)",
+    "downloadFree": "Fichier pour votre imprimante (3MF) · gratuit, connexion Google requise",
+    "previewCta": "Voir le porte-clés en 3D · gratuit",
+    "previewCtaShort": "Aperçu 3D · gratuit",
+    "printFromLine": "Impression {price} · livraison Nova Poshta en Ukraine",
+    "readyDelivery": "Impression et envoi sous 2–4 jours ouvrés · Nova Poshta ou Ukrposhta · paiement après confirmation",
     "tuneDetails": "Peaufiner les détails",
     "createAnother": "En créer un autre",
     "changeSomething": "Envie de changer quelque chose ?",
