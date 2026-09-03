@@ -28,7 +28,7 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-3 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink"
+        className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink ${compact ? "px-2.5 py-2" : "px-3 py-2"}`}
       >
         <Globe size={15} />
         <span className="uppercase">{locale}</span>
@@ -60,12 +60,63 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
 }
 
 /* ---------- Header ---------- */
-export function SiteHeader() {
+type BuilderProps = {
+  /** A-1 (2026-09-03): «builder» = один ряд ≤ 56 px для /create і /keychains:
+   *  лого · назва сторінки · мова · кабінет · лінк на інший продукт. Без заливних
+   *  CTA, що конкурують із флоу, без бургера. */
+  variant?: "default" | "builder";
+  /** Назва сторінки для builder-варіанту (рендериться як h1 — SEO лишається). */
+  title?: string;
+  /** Лінк на «інший продукт» (з /create → брелок, з /keychains → мапа). */
+  other?: { href: string; label: string; icon?: "keychain" | "map" };
+};
+
+export function SiteHeader({ variant = "default", title, other }: BuilderProps = {}) {
   const { user, configured } = useAuth();
   const t = useTranslations("nav");
   const locale = useLocale();
   const pricesLabel = PRICES_LABEL[locale] ?? PRICES_LABEL.uk;
   const [open, setOpen] = useState(false);
+
+  if (variant === "builder") {
+    return (
+      <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.9)] backdrop-blur" data-testid="site-header-builder">
+        <div className="mx-auto flex max-w-[1760px] items-center gap-2 px-3 py-1.5 sm:px-4 lg:px-6">
+          <Link href="/" className="flex min-h-[44px] shrink-0 items-center gap-1.5 font-serif text-lg font-semibold tracking-tight text-ink" aria-label="monadruk">
+            <Box size={20} className="text-forest" />
+            <span className="hidden sm:inline">monadruk</span>
+          </Link>
+          <span className="hidden h-5 w-px bg-line sm:block" />
+          {title && (
+            <h1 className="min-w-0 flex-1 truncate font-title text-[15px] font-semibold text-ink sm:text-base">{title}</h1>
+          )}
+          {!title && <span className="flex-1" />}
+          <div className="flex shrink-0 items-center gap-1.5">
+            <LanguageSwitcher compact />
+            <Link
+              href="/account"
+              title={configured && user ? (user.email || user.phoneNumber || t("account")) : t("login")}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line px-2.5 py-2 text-sm font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink sm:px-3.5"
+            >
+              <User size={15} />
+              <span className="hidden md:inline">{configured && user ? t("account") : t("login")}</span>
+            </Link>
+            {other && (
+              <Link
+                href={other.href}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-2.5 py-2 text-sm font-semibold text-forest transition hover:bg-[rgba(46,74,58,0.08)] sm:px-3"
+              >
+                {other.icon === "keychain" ? <KeyRound size={15} /> : null}
+                <span>{other.label}</span>
+                <ArrowRight size={14} />
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
@@ -160,6 +211,22 @@ export function SiteHeader() {
       )}
     </header>
   );
+}
+
+/* Маршрути, що рендерять власну шапку: головна (SiteHeader сама), білдери
+   (/create, /keychains — builder-варіант усередині сторінки), /start (link-in-bio,
+   без chrome) і службовий /capture. Решта ~28 сторінок раніше НЕ мали шапки
+   взагалі (лише 20-лінковий футер) і перемикача мови — A-1 (2026-09-03). */
+const NO_GLOBAL_HEADER = new Set<string>(["/", "/create", "/keychains", "/start"]);
+function isCapturePath(pathname: string): boolean {
+  return pathname === "/capture" || pathname.startsWith("/capture/");
+}
+
+/** Монтується глобально в locale-layout над children. */
+export function GlobalHeader() {
+  const pathname = usePathname();
+  if (NO_GLOBAL_HEADER.has(pathname) || isCapturePath(pathname)) return null;
+  return <SiteHeader />;
 }
 
 export default SiteHeader;

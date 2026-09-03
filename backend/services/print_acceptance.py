@@ -329,14 +329,19 @@ def write_mask_printability_report(
     scale_factor_override: float | None = None,
     check_road_holes: bool = True,
     check_layer_overlaps: bool = True,
+    report: Mapping[str, Any] | None = None,
 ) -> Path:
-    report = build_mask_printability_report(
-        bundle_dir,
-        min_feature_mm=float(printer_profile.min_printable_feature_mm),
-        scale_factor_override=scale_factor_override,
-        check_road_holes=check_road_holes,
-        check_layer_overlaps=check_layer_overlaps,
-    )
+    # perf-2026-09-03: `report` lets a caller that already built the audit reuse it
+    # instead of paying for a second identical build (the audit re-reads and
+    # re-intersects every mask geojson in the bundle).
+    if report is None:
+        report = build_mask_printability_report(
+            bundle_dir,
+            min_feature_mm=float(printer_profile.min_printable_feature_mm),
+            scale_factor_override=scale_factor_override,
+            check_road_holes=check_road_holes,
+            check_layer_overlaps=check_layer_overlaps,
+        )
     out_path = bundle_dir / "printability_audit.json"
     out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return out_path

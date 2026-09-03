@@ -1536,19 +1536,26 @@ def run_full_generation_pipeline(
         # PERF: split the ~30-60s figure above into its two real sub-costs — building
         # union vs terrain merge — so future optimization work knows which half to
         # target instead of guessing. Pure logging, no behavior change.
-        _t_union_start = time.perf_counter()
-        _merged_bmesh = union_mesh_collection(building_meshes, label="clipped_building_layer")
-        _t_union_end = time.perf_counter()
-        print(f"[TIMING][MERGE] building_union ({len(building_meshes)} buildings): "
-              f"{_t_union_end - _t_union_start:.2f}s")
+        # perf-2026-09-03: the aggregate union is only consumed by the
+        # BUILDINGS_FORCE_FUSE path (off by default) — with fusion off it was built,
+        # bottom-extended and then thrown away. Hand merge_terrain_and_buildings a
+        # FACTORY so the union runs only when the fuse path actually needs it.
+        def _build_merged_building_mesh():
+            _t_union_start = time.perf_counter()
+            _m = union_mesh_collection(building_meshes, label="clipped_building_layer")
+            print(f"[TIMING][MERGE] building_union ({len(building_meshes)} buildings): "
+                  f"{time.perf_counter() - _t_union_start:.2f}s")
+            return _m
+
+        _t_merge_start = time.perf_counter()
         merge_result = merge_terrain_and_buildings(
             terrain_mesh=terrain_mesh,
             building_meshes=building_meshes,
-            merged_building_mesh=_merged_bmesh,
+            merged_building_mesh_factory=_build_merged_building_mesh,
             support_meshes=detail_layers.support_meshes,
             bottom_clearance_m=_merge_bottom_clr,
         )
-        print(f"[TIMING][MERGE] terrain_merge_only: {time.perf_counter() - _t_union_end:.2f}s")
+        print(f"[TIMING][MERGE] terrain_merge_only: {time.perf_counter() - _t_merge_start:.2f}s")
         _log_stage("merge_terrain_buildings", stage_start)
         if stage_snapshot_collector is not None:
             try:

@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
 // посилання з /en/create губили префікс локалі (/keychains замість /en/keychains).
-import { Link } from "@/i18n/navigation";
+import { SiteHeader } from "@/components/SiteHeader";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, KeyRound, User, X, Home as HomeIcon, ShoppingBag } from "lucide-react";
+import { Download, X, ShoppingBag } from "lucide-react";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useGenerationStore } from "@/store/generation-store";
 import { WORLD_CITIES } from "@/lib/worldCities";
@@ -14,6 +14,7 @@ import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { ConstructorIntro, useIntroGate } from "@/components/ConstructorIntro";
 import { SimpleControlPanel } from "@/components/SimpleControlPanel";
+import { AppViewportHeight } from "@/components/ViewportRuntime";
 import { ScenarioFlow } from "@/components/ScenarioFlow";
 import { MAP_TEMPLATES, cityKeychainText } from "@/lib/templates";
 import { useAuth } from "@/components/AuthProvider";
@@ -156,7 +157,8 @@ export default function Home() {
       // вмикають повний конструктор — ScenarioFlow сам стартує з кроку 2 і ставить
       // рамку на місті/районі. Повний режим лишається для ?grid (збережена сітка)
       // і ?capture (службовий рендер).
-      if (p.get("grid") || p.get("capture")) {
+      // A-6 (2026-09-03): ?mode=pro — єдина адреса розширеного режиму.
+      if (p.get("grid") || p.get("capture") || p.get("mode") === "pro") {
         setGuidedState(false);
         return;
       }
@@ -597,7 +599,8 @@ export default function Home() {
   const settingsPanelClasses = "order-2 flex lg:hidden";
 
   return (
-    <div className="min-h-[100dvh] bg-transparent">
+    <div className="min-h-[var(--app-vh)] bg-transparent">
+      <AppViewportHeight />
       {/* UX: тур лише ДО першої генерації — інакше перекривав 3D-результат
           і прогрес. Текст без «панелі зліва» (на мобілці її нема — там таби). */}
       {/* Тур — лише ПІСЛЯ закриття вступного блоку: два онбординги нараз
@@ -613,55 +616,11 @@ export default function Home() {
           ]}
         />
       )}
-      <div id="main-content" tabIndex={-1} className="mx-auto flex min-h-[100dvh] max-w-[1760px] flex-col px-3 pb-[var(--sticky-h,0px)] pt-3 sm:px-4 lg:px-6 lg:pb-6">
-        <header className="sticky top-0 z-30 rounded-[18px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-3 py-2.5 shadow-[0_10px_30px_rgba(31,41,55,0.07)] backdrop-blur lg:static lg:px-4">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Back to home (prominent, always visible). Суцільний білий +
-                сильніша рамка + легка тінь → контрастніше на кремовій шапці;
-                min-h-[40px] = зручний тап-таргет. */}
-            <Link
-              href="/"
-              title={tc("backHomeTitle")}
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
-            >
-              <HomeIcon size={15} /> <span className="hidden sm:inline">{tc("backHome")}</span>
-            </Link>
-            <span className="hidden h-5 w-px bg-[var(--surface-border)] sm:block" />
-            {/* T-4.1 (F-29): на телефоні заголовок ховаємо ВІЗУАЛЬНО (лишається в DOM
-                для SEO/скрінрідера) — інакше шапка переносилась у 2 ряди ≈220 px і
-                зʼїдала екран до першого контролу. */}
-            <h1 className="sr-only font-title text-base font-semibold tracking-tight text-[var(--text-primary)] sm:not-sr-only sm:text-lg">
-              {tc("title")}
-            </h1>
-
-            {/* Controls (compact toolbar, right-aligned). Вибір міста + статус
-                «Оберіть зони» прибрано зі шапки (власник: захаращено) — місто тепер
-                у лівій панелі (там, де райони), статус і так видно в панелі/на барі. */}
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              {/* БРЕЛОК: помітна заливна акцент-кнопка; підпис ВИДНО і на мобільному
-                  (раніше hidden sm:inline → на телефоні лишалась лише іконка й
-                  користувач не знав про брелки). */}
-              <Link
-                href="/keychains"
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--accent-strong)] bg-[var(--accent-strong)] px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(11,92,87,0.25)] transition hover:bg-[rgba(11,92,87,0.92)]"
-              >
-                <KeyRound size={15} /> <span>{tc("keychain")}</span>
-              </Link>
-              {/* Кабінет лишаємо компактним (іконка-онлі на мобільному). */}
-              <Link
-                href="/account"
-                title={tc("account")}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--text-secondary)] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
-              >
-                <User size={15} /> <span className="hidden sm:inline">{tc("account")}</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Навігацію спрощено: степер КРОК 1/2/3 прибрано (зайвий chrome —
-              сцена карта⇄рендер уже самопояснювана). Раніше тут був ще й
-              дубль-ряд табів — теж прибрано. Нижній бар = StickyActionBar. */}
-        </header>
+      {/* A-1 (2026-09-03): єдина шапка сайту у builder-варіанті (лого · назва ·
+          мова · кабінет · «Брелок →»). Раніше тут була власна шапка з заливною
+          CTA «Брелок», що конкурувала з флоу, і без перемикача мови. */}
+      <SiteHeader variant="builder" title={tc("title")} other={{ href: "/keychains", label: tc("keychain"), icon: "keychain" }} />
+      <div id="main-content" tabIndex={-1} className="mx-auto flex min-h-[var(--app-vh)] max-w-[1760px] flex-col px-3 pb-[var(--sticky-h,0px)] pt-3 sm:px-4 lg:px-6 lg:pb-6">
 
         {/* Вступ «ось що вийде» — ДО інструмента. Воронка показувала обвал
             view→area (71%): людина бачила чужу карту Києва й не розуміла,
@@ -824,7 +783,7 @@ export default function Home() {
               {/* Карта — головна взаємодія: на десктопі вся сцена (перемикач +
                   картка) ВЛІЗАЄ в один екран (calc під шапку) → без скролу
                   сторінки. На мобільному лишаємо min-h і дозволяємо скрол. */}
-              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[calc(100dvh-140px)] lg:min-h-0 lg:max-h-[calc(100dvh-110px)]">
+              <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[var(--builder-h)] lg:min-h-0 lg:max-h-[var(--builder-max-h)]">
                 {/* РЕДИЗАЙН: керування сіткою більше НЕ стоїть стосом над картою
                     (з'їдало вертикаль) — карта займає всю картку, а контроли
                     плавають компактною карткою у ПРАВОМУ ВЕРХНЬОМУ куті прямо НА
@@ -877,7 +836,7 @@ export default function Home() {
                     контроли лягали поверх карти. МОБ: 42dvh (було 60dvh — карта
                     з'їдала весь перший екран і ховала розмір/ціну/CTA нижче згину;
                     UX-аудит P0 «користувачам нічого не ясно»). */}
-                <div className="relative flex min-h-[42dvh] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
+                <div className="relative flex min-h-[var(--builder-map-min-h)] flex-1 flex-col bg-[rgba(255,255,255,0.55)] p-2 sm:min-h-[460px] sm:p-3 lg:min-h-0">
                   {showHexGrid ? (
                     <HexagonalGrid
                       // boughtCells.size у ключі: коли куплені клітини
@@ -1034,7 +993,7 @@ export default function Home() {
 
             {stageView === "render" && (
             <div id="panel-preview" className={previewPanelClasses}>
-              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[calc(100dvh-140px)] lg:min-h-0 lg:max-h-[calc(100dvh-110px)]">
+              <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[var(--builder-h)] lg:min-h-0 lg:max-h-[var(--builder-max-h)]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">

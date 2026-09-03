@@ -10,6 +10,7 @@ import json
 import trimesh
 import numpy as np
 import warnings
+import shapely as _shapely  # perf-2026-09-03 B-9 (vectorised shapely 2 API)
 from shapely.ops import unary_union, transform, snap
 from shapely.geometry import Polygon, MultiPolygon, box, LineString, Point
 from shapely.geometry import mapping, shape
@@ -364,15 +365,19 @@ def _mesh_projection_geometry(mesh: Optional[trimesh.Trimesh], *, top_only: bool
     try:
         z_vals = mesh.vertices[:, 2]
         zmid = (float(np.min(z_vals)) + float(np.max(z_vals))) / 2.0
-        polys = []
-        for face in mesh.faces:
-            tri3 = mesh.vertices[face]
-            if top_only and float(np.mean(tri3[:, 2])) < zmid:
-                continue
-            poly = Polygon([(float(x), float(y)) for x, y, _ in tri3])
-            if poly.is_empty or poly.area <= 1e-9:
-                continue
-            polys.append(poly)
+        # perf-2026-09-03 B-9: build every triangle polygon in one shapely call
+        # instead of a Python loop. Same triangles, same order, same filters
+        # (np.mean over 3 z-values is the identical add.reduce; area/is_empty are
+        # the same GEOS calls), so unary_union gets an identical input list.
+        verts = np.asarray(mesh.vertices, dtype=float)
+        tris = verts[np.asarray(mesh.faces)]
+        if top_only:
+            tris = tris[~(np.mean(tris[:, :, 2], axis=1) < zmid)]
+        if len(tris) == 0:
+            return None
+        tri_polys = _shapely.polygons(np.ascontiguousarray(tris[:, :, :2]))
+        keep = (~_shapely.is_empty(tri_polys)) & (_shapely.area(tri_polys) > 1e-9)
+        polys = list(tri_polys[keep])
         if not polys:
             return None
         geom = unary_union(polys)
@@ -2847,6 +2852,17 @@ def process_roads(
             pass
         return g
 
+    # perf-2026-09-03: [TIMING][ROADS] phase breakdown. process_roads is by far the
+    # heaviest detail stage; this shows which phase owns the time. Print-only.
+    import time as _t_rp
+    _rp_marks = [_t_rp.perf_counter()]
+
+    def _rp_mark(_name):
+        _now = _t_rp.perf_counter()
+        print(f"[TIMING][ROADS] {_name}: {_now - _rp_marks[-1]:.2f}s "
+              f"(total {_now - _rp_marks[0]:.2f}s)")
+        _rp_marks.append(_now)
+
     # Build or reuse merged road geometry
     if merged_roads is None:
         print("РЎС‚РІРѕСЂРµРЅРЅСЏ Р±СѓС„РµСЂС–РІ РґРѕСЂС–Рі...")
@@ -2859,6 +2875,7 @@ def process_roads(
     if merged_roads is None:
         return RoadProcessingResult(mesh=None, source_polygons=None, cutting_polygons=None) if return_result else None
     
+    _rp_mark("build_road_polygons")
     # Ensure merged_roads are in LOCAL coords if we have global_center
     merged_roads = _to_local_geom(merged_roads)
     _write_debug_geometry_geojson("road_mask_initial_local", merged_roads)
@@ -2989,6 +3006,7 @@ def process_roads(
         if merged_roads is None or getattr(merged_roads, "is_empty", True):
             print("[WARN] merged_roads became empty after non-printable fragment filtering")
             return RoadProcessingResult(mesh=None, source_polygons=None, cutting_polygons=None) if return_result else None
+    _rp_mark("normalize_mask_2d")
     _write_debug_geometry_geojson("road_mask_final_2d", merged_roads)
     
     if isinstance(merged_roads, Polygon):
@@ -3066,6 +3084,7 @@ def process_roads(
     else:
         bridges = []
     
+    _rp_mark("detect_bridges")
     # --- INLAY MODE DETECTION ---
     use_inlay_mode = (clearance_mm > 0 or scale_factor > 0) and terrain_provider is not None
     if use_inlay_mode:
@@ -3157,6 +3176,17 @@ def process_roads(
             road_geoms_densified.append(g)
     
     road_geoms = road_geoms_densified
+
+    # perf-2026-09-03 B-9: loop-invariant ground cut mask (was rebuilt + unioned
+    # once per road polygon inside the loop). A unary_union failure leaves it None,
+    # matching the old per-iteration except-branch (ground_parts = poly).
+    _b9_ground_cut_polys = [b[1] for b in bridges if (b[4] <= 1 or b[3]) and b[1] is not None]
+    _b9_ground_cut_union = None
+    if _b9_ground_cut_polys:
+        try:
+            _b9_ground_cut_union = unary_union(_b9_ground_cut_polys)
+        except Exception:
+            _b9_ground_cut_union = None
 
     for poly in road_geoms:
         try:
@@ -3476,18 +3506,12 @@ def process_roads(
                 # Ground = Poly MINUS (Low Bridges + Bridges Over Water)
                 # High bridges (over land) do NOT cut the ground (road runs underneath)
                 
-                # Identify mask for cutting
-                cut_mask_polys = []
-                for b in bridges:
-                    # Layer <= 1 OR Over Water = Cut Ground
-                    if b[4] <= 1 or b[3]:
-                        if b[1] is not None:
-                            cut_mask_polys.append(b[1])
-                
-                if cut_mask_polys:
+                # perf-2026-09-03 B-9: the cut mask depends only on `bridges`, not
+                # on `poly`, so the list build + unary_union are hoisted above the
+                # loop (_b9_ground_cut_union). Same geometry for every road.
+                if _b9_ground_cut_union is not None:
                     try:
-                        bridge_cut_union_local = unary_union(cut_mask_polys)
-                        ground_parts = poly.difference(bridge_cut_union_local)
+                        ground_parts = poly.difference(_b9_ground_cut_union)
                     except Exception as e:
                         print(f"[WARN] Error calculating ground difference: {e}")
                         ground_parts = poly # Fallback
@@ -3617,6 +3641,7 @@ def process_roads(
             if best_name is not None:
                 print(f"[ROAD] Selected {best_name} combined mesh candidate")
 
+        _rp_mark("per_road_mesh_build")
         if combined_roads is None:
             combined_roads = union_mesh_collection(road_meshes, label="roads")
 
@@ -3632,6 +3657,7 @@ def process_roads(
 
         print(f"Р”РѕСЂРѕРіРё РѕР±'С”РґРЅР°РЅРѕ: {len(combined_roads.vertices)} РІРµСЂС€РёРЅ, {len(combined_roads.faces)} РіСЂР°РЅРµР№")
         
+        _rp_mark("union_and_cleanup")
         # РџРѕРєСЂР°С‰РµРЅРЅСЏ mesh РґР»СЏ 3D РїСЂРёРЅС‚РµСЂР°
         # DISABLED: This removes small faces after scaling, which deletes bridge geometry!
         # print("РџРѕРєСЂР°С‰РµРЅРЅСЏ СЏРєРѕСЃС‚С– mesh РґР»СЏ 3D РїСЂРёРЅС‚РµСЂР° (Standard Mode)...")

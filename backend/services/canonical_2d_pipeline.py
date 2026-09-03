@@ -349,11 +349,12 @@ def _audit_bundle_or_none(
     if not bundle_dir.exists():
         return None
     try:
-        write_mask_printability_report(bundle_dir, printer_profile=printer_profile)
-        return build_mask_printability_report(
+        report = build_mask_printability_report(  # perf-2026-09-03: build once
             bundle_dir,
             min_feature_mm=float(printer_profile.min_printable_feature_mm),
         )
+        write_mask_printability_report(bundle_dir, printer_profile=printer_profile, report=report)
+        return report
     except Exception:
         return None
 
@@ -655,10 +656,12 @@ def prepare_canonical_2d_stage(
                     roads_semantic_preview=getattr(bundle, "roads_semantic_preview", None),
                     groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
                 )
-                write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
-                sanitized_report = build_mask_printability_report(
+                sanitized_report = build_mask_printability_report(  # perf-2026-09-03: build once
                     sanitized_bundle.source_dir,
                     min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                )
+                write_mask_printability_report(
+                    sanitized_bundle.source_dir, printer_profile=printer_profile, report=sanitized_report
                 )
                 if _has_blocking_mask_failures(sanitized_report):
                     healed_bundle = _attempt_runtime_overlap_self_heal(
@@ -673,10 +676,12 @@ def prepare_canonical_2d_stage(
                     )
                     if healed_bundle is not None:
                         sanitized_bundle = healed_bundle
-                        write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
-                        sanitized_report = build_mask_printability_report(
+                        sanitized_report = build_mask_printability_report(  # perf-2026-09-03: build once
                             sanitized_bundle.source_dir,
                             min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                        )
+                        write_mask_printability_report(
+                            sanitized_bundle.source_dir, printer_profile=printer_profile, report=sanitized_report
                         )
                 if _has_blocking_mask_failures(sanitized_report):
                     failing_overlaps = [str(name) for name in (sanitized_report.get("failing_overlaps") or [])]
@@ -692,10 +697,12 @@ def prepare_canonical_2d_stage(
                         )
                         if dropped_water_bundle is not None:
                             sanitized_bundle = dropped_water_bundle
-                            write_mask_printability_report(sanitized_bundle.source_dir, printer_profile=printer_profile)
-                            sanitized_report = build_mask_printability_report(
+                            sanitized_report = build_mask_printability_report(  # perf-2026-09-03: build once
                                 sanitized_bundle.source_dir,
                                 min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                            )
+                            write_mask_printability_report(
+                                sanitized_bundle.source_dir, printer_profile=printer_profile, report=sanitized_report
                             )
                 if _has_blocking_mask_failures(sanitized_report):
                     if _is_road_only_debt(sanitized_report):
@@ -727,6 +734,17 @@ def prepare_canonical_2d_stage(
                 f"({summary}); rebuilding runtime canonical bundle"
             )
 
+    # perf-2026-09-03: [TIMING][C2D] sub-phase breakdown of the single
+    # "[TIMING] canonical_2d: X.XXs" figure. Print-only, no behaviour change.
+    import time as _t_c2d
+    _c2d_marks = [_t_c2d.perf_counter()]
+
+    def _c2d_mark(_name):
+        _now = _t_c2d.perf_counter()
+        print(f"[TIMING][C2D] {_name}: {_now - _c2d_marks[-1]:.2f}s "
+              f"(total {_now - _c2d_marks[0]:.2f}s)")
+        _c2d_marks.append(_now)
+
     building_geometry = prepare_building_geometry(
         gdf_buildings=source.gdf_buildings,
         global_center=global_center,
@@ -744,6 +762,7 @@ def prepare_canonical_2d_stage(
     # KEYCHAIN: НЕ агресивно merge'имо — користувач хоче чисту мережу без
     # «заливки» junction-трикутників. Використовуємо мінімальний gap-fill.
     road_gap_fill_mm_effective = 1.0
+    _c2d_mark("building_geometry")
     building_exclusion_for_roads = _expand_building_mask_for_roads(
         building_geometry.building_union_local,
         scale_factor=zone.scale_factor,
@@ -757,6 +776,7 @@ def prepare_canonical_2d_stage(
         zone_polygon_local=zone.zone_polygon_local,
         zone_prefix=zone_prefix,
     )
+    _c2d_mark("preclip")
     road_geometry = prepare_road_geometry(
         G_roads=source.G_roads,
         scale_factor=zone.scale_factor,
@@ -771,6 +791,7 @@ def prepare_canonical_2d_stage(
         zone_prefix=zone_prefix,
     )
 
+    _c2d_mark("road_geometry")
     road_insert_source = road_geometry.merged_roads_geom_local
     if road_insert_source is None or getattr(road_insert_source, "is_empty", True):
         road_insert_source = road_geometry.merged_roads_geom_local_raw
@@ -1203,6 +1224,7 @@ def prepare_canonical_2d_stage(
     # place and rebuilds road_groove from the final road insert. Pass the raw
     # building union in and let that resolver decide which buildings yield,
     # which roads are cut, and what the final building footprint mask is.
+    _c2d_mark("mask_build_finalize_prune")
     runtime_bundle = build_runtime_canonical_bundle(
         task_id=task_id,
         debug_generated_dir=debug_generated_dir,
@@ -1218,55 +1240,70 @@ def prepare_canonical_2d_stage(
         roads_semantic_preview=getattr(road_geometry, "semantic_centerlines_local", None),
         groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
     )
-    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
-    audit_report = build_mask_printability_report(
-        runtime_bundle.source_dir,
-        min_feature_mm=float(printer_profile.min_printable_feature_mm),
-    )
-    if _has_blocking_mask_failures(audit_report):
-        healed_bundle = _attempt_runtime_overlap_self_heal(
-            task_id=task_id,
-            debug_generated_dir=debug_generated_dir,
-            zone_polygon_local=zone.zone_polygon_local,
-            scale_factor=zone.scale_factor,
-            groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
-            runtime_bundle=runtime_bundle,
-            failing_overlaps=list(audit_report.get("failing_overlaps") or []),
-            zone_prefix=zone_prefix,
+    _c2d_mark("bundle_geojson_write")
+    # perf-2026-09-03 B-8: PREVIEW skips the mask printability audit (build+write
+    # report) and every self-heal branch it drives. The report is print-only: no
+    # downstream stage reads Canonical2DStageResult.printability_report, and the
+    # heal branches only re-engineer masks for printability, never for the GLB.
+    audit_report: dict[str, Any] = {}
+    if os.environ.get("PREVIEW_MODE", "").lower() not in ("1", "true", "yes"):
+        audit_report = build_mask_printability_report(  # perf-2026-09-03: build once
+            runtime_bundle.source_dir,
+            min_feature_mm=float(printer_profile.min_printable_feature_mm),
         )
-        if healed_bundle is not None:
-            runtime_bundle = healed_bundle
-            write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
-            audit_report = build_mask_printability_report(
-                runtime_bundle.source_dir,
-                min_feature_mm=float(printer_profile.min_printable_feature_mm),
-            )
+        write_mask_printability_report(
+            runtime_bundle.source_dir, printer_profile=printer_profile, report=audit_report
+        )
+        _c2d_mark("audit")
         if _has_blocking_mask_failures(audit_report):
-            failing_overlaps = [str(name) for name in (audit_report.get("failing_overlaps") or [])]
-            if failing_overlaps and all(name.startswith("water") for name in failing_overlaps):
-                dropped_water_bundle = _attempt_drop_water_overlap_fallback(
-                    task_id=task_id,
-                    debug_generated_dir=debug_generated_dir,
-                    zone_polygon_local=zone.zone_polygon_local,
-                    scale_factor=zone.scale_factor,
-                    groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
-                    runtime_bundle=runtime_bundle,
-                    zone_prefix=zone_prefix,
+            healed_bundle = _attempt_runtime_overlap_self_heal(
+                task_id=task_id,
+                debug_generated_dir=debug_generated_dir,
+                zone_polygon_local=zone.zone_polygon_local,
+                scale_factor=zone.scale_factor,
+                groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
+                runtime_bundle=runtime_bundle,
+                failing_overlaps=list(audit_report.get("failing_overlaps") or []),
+                zone_prefix=zone_prefix,
+            )
+            if healed_bundle is not None:
+                runtime_bundle = healed_bundle
+                audit_report = build_mask_printability_report(  # perf-2026-09-03: build once
+                    runtime_bundle.source_dir,
+                    min_feature_mm=float(printer_profile.min_printable_feature_mm),
                 )
-                if dropped_water_bundle is not None:
-                    runtime_bundle = dropped_water_bundle
-                    write_mask_printability_report(runtime_bundle.source_dir, printer_profile=printer_profile)
-                    audit_report = build_mask_printability_report(
-                        runtime_bundle.source_dir,
-                        min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                write_mask_printability_report(
+                    runtime_bundle.source_dir, printer_profile=printer_profile, report=audit_report
+                )
+            if _has_blocking_mask_failures(audit_report):
+                failing_overlaps = [str(name) for name in (audit_report.get("failing_overlaps") or [])]
+                if failing_overlaps and all(name.startswith("water") for name in failing_overlaps):
+                    dropped_water_bundle = _attempt_drop_water_overlap_fallback(
+                        task_id=task_id,
+                        debug_generated_dir=debug_generated_dir,
+                        zone_polygon_local=zone.zone_polygon_local,
+                        scale_factor=zone.scale_factor,
+                        groove_side_clearance_mm=float(printer_profile.groove_side_clearance_mm),
+                        runtime_bundle=runtime_bundle,
+                        zone_prefix=zone_prefix,
                     )
-    if audit_report.get("failing_road_holes"):
-        summary = summarize_mask_printability_failures(audit_report)
-        print(
-            f"[WARN] {zone_prefix}Runtime canonical bundle accepted with road-hole debt "
-            f"({summary})"
-        )
+                    if dropped_water_bundle is not None:
+                        runtime_bundle = dropped_water_bundle
+                        audit_report = build_mask_printability_report(  # perf-2026-09-03: build once
+                            runtime_bundle.source_dir,
+                            min_feature_mm=float(printer_profile.min_printable_feature_mm),
+                        )
+                        write_mask_printability_report(
+                            runtime_bundle.source_dir, printer_profile=printer_profile, report=audit_report
+                        )
+        if audit_report.get("failing_road_holes"):
+            summary = summarize_mask_printability_failures(audit_report)
+            print(
+                f"[WARN] {zone_prefix}Runtime canonical bundle accepted with road-hole debt "
+                f"({summary})"
+            )
 
+    _c2d_mark("self_heal")
     print(f"[INFO] {zone_prefix}Canonical 2D stage ready: {runtime_bundle.source_dir}")
     return Canonical2DStageResult(
         canonical_mask_bundle=runtime_bundle,

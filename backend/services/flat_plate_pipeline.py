@@ -3221,6 +3221,17 @@ def run_flat_plate_pipeline(
     if not (zone.scale_factor and float(zone.scale_factor) > 0):
         raise ValueError("flat_plate_mode requires a valid scale_factor")
 
+    # perf-2026-09-03: [TIMING][FLAT] phase breakdown of the keychain / flat-plate
+    # pipeline (previously one opaque figure). Print-only, no behaviour change.
+    import time as _t_fp
+    _fp_marks = [_t_fp.perf_counter()]
+
+    def _fp_mark(_name):
+        _now = _t_fp.perf_counter()
+        print(f"[TIMING][FLAT] {_name}: {_now - _fp_marks[-1]:.2f}s "
+              f"(total {_now - _fp_marks[0]:.2f}s)")
+        _fp_marks.append(_now)
+
     task.update_status("processing", 55, "Генерую пласкі шари (вода/дороги/будівлі)...")
     scale_factor = float(zone.scale_factor)
     export_scale_factor = scale_factor
@@ -4441,6 +4452,7 @@ def run_flat_plate_pipeline(
         except Exception as _gex:
             print(f"[GPX] road-subtract skipped (non-fatal): {_gex}")
             _gpx_poly_local = None
+    _fp_mark("base_frame_water")
     road_mesh = build_flat_layer_mesh_from_mask(
         _clip_geometry(road_mask, content_area),
         bottom_z_m=base_top_m,
@@ -4603,6 +4615,7 @@ def run_flat_plate_pipeline(
     if keychain_mode:
         try: task.update_status("processing", 80, "Будую 3D будівлі з висотами OSM...")
         except Exception: pass
+    _fp_mark("roads_parks_gpx")
     building_meshes, landmark_meshes = build_flat_building_meshes(
         request=request,
         scale_factor=scale_factor,
@@ -5090,6 +5103,7 @@ def run_flat_plate_pipeline(
         except Exception:
             pass
 
+    _fp_mark("buildings_text_keychain")
     return export_generation_outputs(
         task=task,
         request=request,

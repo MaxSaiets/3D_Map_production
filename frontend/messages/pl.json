@@ -71,7 +71,7 @@
       "dragHint": "Modele 3D na żywo — przeciągnij, aby obrócić",
       "try": "Stwórz mapę",
       "badgeEco": "Eco PLA",
-      "badgeReady": "Gotowy 3MF"
+      "badgeReady": "Plik do druku 3D"
     },
     "path": {
       "eyebrow1": "Ścieżka 1 · Własna geometria",
@@ -94,7 +94,7 @@
       "s3t": "Generujemy",
       "s3d": "Serwer buduje dokładny model 3D z danych OpenStreetMap i wysokości.",
       "s4t": "Pobierz",
-      "s4d": "Gotowy 3MF do Bambu Studio / PrusaSlicer. Drukuj w domu.",
+      "s4d": "Plik otwiera się w programie Twojej drukarki 3D (Bambu, Prusa). Drukuj w domu.",
       "cta": "Stwórz mapę"
     },
     "templates": {
@@ -110,13 +110,13 @@
       "titleItalic": "Dokument.",
       "desc": "Każda mapa to geodane OpenStreetMap i realne wysokości. Model jest automatycznie upraszczany do czystego druku FDM: minimalne grubości, warstwy kolorów dla drukarek wielokolorowych (Bambu AMS).",
       "spec1t": "Precyzyjny druk",
-      "spec1d": "Zoptymalizowane pod FDM",
+      "spec1d": "Zoptymalizowano pod domowy druk 3D",
       "spec2t": "Biotworzywo PLA",
       "spec2d": "Ze skrobi kukurydzianej",
       "spec3t": "Realne dane",
       "spec3d": "OpenStreetMap + wysokości",
-      "spec4t": "Format 3MF",
-      "spec4d": "Gotowe dla Bambu / Prusa"
+      "spec4t": "Plik do drukarki",
+      "spec4d": "otwiera się w Bambu / Prusa"
     },
     "prints": {
       "title": "Jak to wygląda po wydruku",
@@ -126,15 +126,23 @@
       "alt": "Wydrukowany wyrób 3D {n}"
     },
     "testimonials": {
-      "title": "Co mówią klienci",
-      "sub": "Przewiń, aby zobaczyć więcej opinii →",
+      "title": "Dlaczego można nam zaufać",
+      "sub": "Nie ma tu opinii z wymyślonymi imionami — tylko to, co możesz sprawdzić na stronie.",
       "badge": "Opinia",
       "q1": "Bardzo mi się podobało, dziękuję! Efekt przerósł oczekiwania.",
       "q2": "Szybko i wygodnie. Wyszło świetnie, polecam.",
       "q3": "Bardzo dobra jakość, wszystko wyraźne. Jestem zadowolona.",
       "q4": "Prosta i przyjemna usługa. Zadziałało za pierwszym razem.",
       "q5": "Ładny efekt, starannie wykonane. Dziękuję za pracę!",
-      "q6": "Zrobione w kilka minut, wszystko jasne. Super!"
+      "q6": "Zrobione w kilka minut, wszystko jasne. Super!",
+      "f1t": "Prawdziwe zdjęcia wydruków",
+      "f1d": "W galerii są zdjęcia wydrukowanych modeli, a nie rendery.",
+      "f2t": "Dane OpenStreetMap",
+      "f2d": "Ulice, budynki i wodę bierzemy z otwartej mapy świata, wysokości z danych terenu.",
+      "f3t": "Drukujemy i wysyłamy sami",
+      "f3d": "Nova Poshta lub Ukrposhta na terenie Ukrainy, płatność po potwierdzeniu zamówienia.",
+      "f4t": "Zarejestrowana działalność",
+      "f4d": "Dane firmy, oferta i warunki zwrotu są w stopce każdej strony."
     },
     "faq": {
       "eyebrow": "Pytania i odpowiedzi",
@@ -464,7 +472,7 @@
     "areaPrompt": "Narysuj prostokąt na mapie",
     "done": "Gotowe",
     "generating": "Generowanie {progress}%",
-    "downloadReady": "Pobierz 3MF",
+    "downloadReady": "Pobierz plik do drukarki",
     "generatePrompt": "Wygeneruj model",
     "aria": "Kroki tworzenia",
     "step": "Krok {n}",
@@ -494,7 +502,7 @@
     "errSelectZone": "Wybierz co najmniej jedną komórkę na siatce",
     "errGen": "Błąd generowania",
     "qualityWarn": "Model gotowy, ale są uwagi do druku. Szczegóły w trybie „Pro”.",
-    "downloadFile": "Pobierz 3MF",
+    "downloadFile": "Plik do Twojej drukarki 3D",
     "downloadShort": "Pobierz",
     "mapLabelPh": "Napis na magnesie (np. KYIV) — opcjonalnie",
     "mapLabelAria": "Tekst grawerunku magnesu",
@@ -520,7 +528,7 @@
     "advancedHint": "Potrzebujesz serii stref (heksagony / kwadraty)? Otwórz tryb „Pro” →",
     "orderPrint": "Zamów druk",
     "limitMsg": "Wykorzystałem 5 darmowych pobrań. Chcę więcej / druk — proszę o kontakt.",
-    "gpxUpload": "Trasa GPX na mapie",
+    "gpxUpload": "Trasa biegu lub podróży (plik GPX)",
     "gpxChoose": "Wybierz plik",
     "gpxReplace": "Zamień",
     "gpxClear": "Usuń",
@@ -557,7 +565,7 @@
     "fmtStandard": "Mapa 3D",
     "fmtStandardHint": "Klasyczna wypukła mapa: budynki, parki i woda z wysokością. Włącz relief, aby uzyskać wysokości terenu.",
     "fmtFlat": "Płaska kolorowa",
-    "fmtFlatHint": "Każda warstwa swój kolor, druk płaski. Idealne do Bambu AMS. Dodaj łącznik, ramkę lub zaznacz dom.",
+    "fmtFlatHint": "Każda warstwa w swoim kolorze, drukowana płasko. Idealne do druku wielokolorowego. Dodaj łącznik, ramkę lub zaznacz swój dom.",
     "fmtMagnet": "Magnes",
     "fmtMagnetHint": "Płaski magnes na lodówkę 6 cm z kieszeniami na magnesy z tyłu.",
     "fmtPanel": "Panel",
@@ -568,7 +576,7 @@
     "magnetOffForPanel": "Magnes i GPX wyłączone — panel generuje pełne kafelki",
     "generatePreview": "Wygeneruj podgląd",
     "generatePrint": "Wygeneruj 3MF do druku",
-    "etaPrint": "≈ 1–3 min · pełny 3MF do druku",
+    "etaPrint": "≈ 1–3 min · pełny model do druku",
     "dlCount": "pozostało {n}",
     "dlUnlimited": "bez limitu",
     "piecesTitle": "Kilka stref",
@@ -699,7 +707,7 @@
     "aboutText": "Zamień dowolne miejsce na Ziemi w pamiątkę 3D. Wszystko w przeglądarce, gotowe do druku.",
     "bullet1": "Dowolne miasto na świecie — mapa 3D w ~3 minuty",
     "bullet2": "Breloki z Twoją dzielnicą i napisem",
-    "bullet3": "5 darmowych pobrań 3MF (pełny model)",
+    "bullet3": "5 darmowych plików do drukarki (pełny model)",
     "bullet4": "Gotowe do druku 3D (FDM 0,4 mm) — lub zamów druk u nas",
     "bullet5": "Historia modeli i zapisane siatki miasta na koncie",
     "accountLabel": "Konto",
@@ -723,7 +731,7 @@
     "createFirst": "Utwórz pierwszy →",
     "previewAlt": "podgląd",
     "orderPrint": "Zamów druk",
-    "downloadTitle": "Pobierz 3MF",
+    "downloadTitle": "Pobierz plik do drukarki",
     "myGrids": "Moje siatki miasta",
     "noGrids": "Na razie brak zapisanych siatek. W kreatorze włącz „Siatkę stref”, utwórz siatkę i kliknij „Zapisz siatkę” — później będzie można wygenerować sąsiednie komórki.",
     "gridFallback": "Siatka",
@@ -828,7 +836,7 @@
       "bad": "Potrzebne poprawki",
       "fix": "Popraw: {issue}",
       "nextWarn": "Dla lepszego efektu wybierz mniejszy kadr lub większy obszar mapy.",
-      "nextGood": "Możesz utworzyć plik 3MF."
+      "nextGood": "Można tworzyć model."
     },
     "details": {
       "summary": "Szczegóły druku i szybkie akcje",
@@ -902,7 +910,7 @@
       "title": "Sprawdzenie przed generowaniem",
       "desc": "Tu powinny być tylko zrozumiałe dla klienta parametry: rozmiar, tekst, poziom szczegółów i gotowość do druku.",
       "noText": "bez tekstu",
-      "generated3mf": "Wygenerowany 3MF",
+      "generated3mf": "Wygenerowany model",
       "layersNote": "Tekst i krawędź to osobne warstwy, mapa jest przycięta do wewnętrznego obszaru breloka."
     },
     "metric": {
@@ -1062,29 +1070,29 @@
     },
     "verdict": {
       "bad": {
-        "title": "3MF wymaga sprawdzenia",
+        "title": "Model wymaga sprawdzenia",
         "detail": "Problematyczne warstwy: {layers}."
       },
       "warn": {
-        "title": "3MF utworzony, są ostrzeżenia",
+        "title": "Model utworzono, są ostrzeżenia",
         "detail": "Sprawdź: {layers}."
       },
       "good": {
-        "title": "3MF wygląda na gotowy do slicera",
+        "title": "Model gotowy do druku",
         "detail": "Podstawa, krawędź, mapa, budynki i tekst są obecne jako osobne warstwy."
       }
     },
     "status": {
       "generating": "Generowanie breloka",
-      "ready3mf": "3MF gotowy",
+      "ready3mf": "Model gotowy",
       "ready": "Gotowe"
     },
     "btn": {
       "generating": "Generowanie...",
-      "create3mf": "Utwórz 3MF",
+      "create3mf": "Utwórz model",
       "buyOrder": "Kup / zamów druk",
       "order": "Zamów druk",
-      "download3mf": "Pobierz 3MF"
+      "download3mf": "Pobierz plik do drukarki"
     },
     "quota": {
       "remaining": "Pozostało {remaining} z {limit} darmowych pobrań",
@@ -1102,7 +1110,7 @@
       "notReady": "Nie gotowe do druku: {issues}.",
       "generic": "Błąd generowania breloka",
       "limitContact": "Wykorzystałem 5 darmowych pobrań breloków. Chcę więcej / druk — proszę o kontakt.",
-      "downloadFailed": "Nie udało się pobrać pliku 3MF",
+      "downloadFailed": "Nie udało się pobrać pliku",
       "retry": "Spróbuj ponownie"
     },
     "templates": {
@@ -1726,7 +1734,7 @@
     "magnetDesc": "Kompaktowa mapa 6 cm z magnesem w podstawie",
     "keychainTitle": "Brelok z moim miejscem",
     "keychainDesc": "Mapa Twojego domu zawsze przy kluczach",
-    "fullTitle": "Pełny konfigurator",
+    "fullTitle": "Tryb zaawansowany",
     "fullDesc": "Wszystkie ustawienia: serie, GPX, style, kształty",
     "moreLabel": "Więcej:",
     "moreTitle": "Co jeszcze potrafimy",
@@ -1756,7 +1764,7 @@
     "createAnother": "Utwórz kolejny",
     "backToGuided": "← Tryb prosty",
     "sizeTitle": "Wybierz rozmiar",
-    "advancedSettings": "Więcej ustawień",
+    "advancedSettings": "Tryb zaawansowany (wszystkie ustawienia)",
     "personalizeTitle": "Spersonalizuj ją",
     "myHome": "Mój dom na mapie",
     "myHomeCount": "Mój dom: {n} wybrano",
@@ -1777,13 +1785,23 @@
     "twoWays": "Dwa sposoby na model",
     "wayPrint": "Drukujemy i wysyłamy",
     "waySelf": "Drukuję sam",
-    "downloadCta": "Pobierz plik (3MF)",
-    "downloadSub": "Bezpłatnie · logowanie Google · otworzy się w aplikacji Twojej drukarki",
+    "downloadCta": "Pobierz plik do drukarki 3D",
+    "downloadSub": "Bezpłatnie · logowanie Google · plik powstaje ≈2 min i otworzy się w programie drukarki",
     "quotaLeft": "Pozostało {n} z {limit} bezpłatnych plików",
     "previewCta": "Pokaż podgląd 3D · bezpłatnie",
     "previewCtaShort": "Podgląd 3D · bezpłatnie",
     "printFromLine": "Druk {price} · dostawa Nova Poshta po Ukrainie",
-    "readyDelivery": "Druk i wysyłka w 2–4 dni robocze · Nova Poshta lub Ukrposhta · płatność po potwierdzeniu"
+    "readyDelivery": "Druk i wysyłka w 2–4 dni robocze · Nova Poshta lub Ukrposhta · płatność po potwierdzeniu",
+    "defaultPlace": "Centrum Kijowa (domyślnie)",
+    "defaultPlaceHint": "Wyszukaj adres, wybierz miasto lub przeciągnij ramkę na mapie — drukujemy to, co jest w ramce.",
+    "customPlace": "wybrany obszar na mapie",
+    "stageData": "Dane OSM i wysokości",
+    "stageTerrain": "Teren podstawy",
+    "stageDetail": "Drogi, woda, budynki",
+    "stageFile": "Składamy plik 3D",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "mniej niż minuta",
+    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -1801,7 +1819,7 @@
     "cardTokenDesc": "Kompaktowy żeton z mapą Twojego domu",
     "cardRectTitle": "Klasyczny prostokąt",
     "cardRectDesc": "Pionowy brelok 35×55 mm z mapą Twojej dzielnicy",
-    "cardFullTitle": "Pełny kreator",
+    "cardFullTitle": "Tryb zaawansowany",
     "cardFullDesc": "Wszystkie kształty, suwaki, trasa GPX, relief topo",
     "waitingPlace": "Znajdź adres, dotknij miasta powyżej lub przeciągnij ramkę na mapie",
     "placeChosen": "Miejsce wybrane",
@@ -1823,8 +1841,8 @@
     "twoWays": "Dwa sposoby na model",
     "wayPrint": "Drukujemy i wysyłamy",
     "waySelf": "Drukuję sam",
-    "downloadCta": "Pobierz plik (3MF)",
-    "downloadSub": "Bezpłatnie · logowanie Google · otworzy się w aplikacji Twojej drukarki",
+    "downloadCta": "Pobierz plik do drukarki 3D",
+    "downloadSub": "Bezpłatnie · logowanie Google · otworzy się w programie drukarki",
     "quotaLeft": "Pozostało {n} z {limit} bezpłatnych plików",
     "previewCta": "Pokaż brelok w 3D · bezpłatnie",
     "previewCtaShort": "Podgląd 3D · bezpłatnie",
@@ -1834,12 +1852,21 @@
     "createAnother": "Utwórz kolejny",
     "changeSomething": "Chcesz coś zmienić?",
     "backToGuided": "← Tryb prosty",
-    "advancedSettings": "Pełny kreator (wszystkie ustawienia)",
+    "advancedSettings": "Tryb zaawansowany (wszystkie ustawienia)",
     "fullModeTitle": "Pełny kreator",
     "myHome": "Mój dom na mapie",
     "myHomeCount": "Mój dom: {n} wybrano",
     "myHomeClear": "Wyczyść wybór",
-    "myHomeHintClick": "Kliknij swój budynek na mapie — stanie się osobną czerwoną wstawką"
+    "myHomeHintClick": "Kliknij swój budynek na mapie — stanie się osobną czerwoną wstawką",
+    "defaultPlace": "Centrum Kijowa (domyślnie)",
+    "defaultPlaceHint": "Wyszukaj adres, wybierz miasto lub przeciągnij ramkę — na breloku będzie to, co w ramce.",
+    "customPlace": "wybrany obszar na mapie",
+    "stageData": "Dane OSM",
+    "stageDetail": "Warstwy: drogi, woda, budynki",
+    "stageFile": "Składamy plik 3D",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "mniej niż minuta",
+    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę"
   },
   "maket": {
     "backHome": "Strona główna",
@@ -1898,7 +1925,7 @@
     "building": "Buduję makietę…",
     "genFailed": "Nie udało się zbudować makiety. Spróbuj ponownie.",
     "readyTitle": "Makieta gotowa",
-    "download3mf": "Pobierz 3MF",
+    "download3mf": "Pobierz plik do drukarki",
     "orderPrint": "Zamów druk",
     "backToEdit": "Wróć do edycji",
     "areaLabel": "Powierzchnia, m²",

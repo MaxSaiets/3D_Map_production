@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os  # perf-2026-09-03 B-8
 from pathlib import Path
 from typing import Optional
 
@@ -8,7 +9,11 @@ from shapely.geometry import Polygon, box, mapping
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
-from services.canonical_mask_bundle import CanonicalMaskBundle, load_canonical_mask_bundle
+from services.canonical_mask_bundle import (  # perf-2026-09-03 B-8: _normalize_loaded_geometry
+    CanonicalMaskBundle,
+    _normalize_loaded_geometry,
+    load_canonical_mask_bundle,
+)
 from services.detail_layer_utils import MIN_LAND_WIDTH_MODEL_MM
 
 CANONICAL_PARTITION_MIN_FEATURE_MM = 0.6
@@ -2365,6 +2370,37 @@ def build_runtime_canonical_bundle(
         parks_groove_geom = _apply_mask_difference(parks_groove_geom, final_parks_building_exclusion)
         water_geom = _apply_mask_difference(water_geom, final_water_building_exclusion)
         water_groove_geom = _apply_mask_difference(water_groove_geom, final_water_building_exclusion)
+
+    # perf-2026-09-03 B-8: PREVIEW skips the print-only tail of the bundle stage —
+    # terrain_bare/terrain_land audit masks and all 11 GeoJSON + manifest writes.
+    # Nothing downstream reads the bundle DIRECTORY in preview (only the returned
+    # CanonicalMaskBundle object), and the audit that consumed the terrain masks is
+    # skipped too. The in-memory bundle reproduces the disk round-trip's
+    # normalization (unary_union + buffer(0)) exactly, so geometry is unchanged.
+    if os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes"):
+        def _b8_inmem(_geom):
+            if _geom is None or getattr(_geom, "is_empty", True):
+                return None
+            try:
+                return _normalize_loaded_geometry(unary_union([_geom]))
+            except Exception:
+                try:
+                    return _normalize_loaded_geometry(_geom)
+                except Exception:
+                    return _geom
+
+        return CanonicalMaskBundle(
+            source_dir=bundle_dir,
+            zone_polygon=_b8_inmem(zone_geom),
+            roads_final=_b8_inmem(roads_geom),
+            road_groove_mask=_b8_inmem(road_groove_geom),
+            parks_final=_b8_inmem(parks_geom),
+            parks_groove_mask=_b8_inmem(parks_groove_geom),
+            water_final=_b8_inmem(water_geom),
+            water_groove_mask=_b8_inmem(water_groove_geom),
+            buildings_footprints=_b8_inmem(buildings_geom),
+            roads_semantic_preview=_b8_inmem(roads_semantic_geom),
+        )
 
     terrain_bare_geom = zone_geom
     terrain_land_geom = zone_geom

@@ -71,7 +71,7 @@
       "dragHint": "Live 3D models — drag to rotate",
       "try": "Create a map",
       "badgeEco": "Eco PLA",
-      "badgeReady": "Ready 3MF"
+      "badgeReady": "File for 3D printing"
     },
     "path": {
       "eyebrow1": "Path 1 · Your own geometry",
@@ -94,7 +94,7 @@
       "s3t": "We generate",
       "s3d": "Our server builds a precise 3D model from OpenStreetMap data and elevations.",
       "s4t": "Download",
-      "s4d": "A ready 3MF for Bambu Studio / PrusaSlicer. Print at home.",
+      "s4d": "The file opens in your 3D printer software (Bambu, Prusa). Print at home.",
       "cta": "Create a map"
     },
     "templates": {
@@ -110,13 +110,13 @@
       "titleItalic": "A document.",
       "desc": "Every map is OpenStreetMap geodata and real elevations. The model is automatically simplified for clean FDM printing: minimal wall thickness, colour layers for multi-colour printers (Bambu AMS).",
       "spec1t": "Precise print",
-      "spec1d": "Optimised for FDM",
+      "spec1d": "Optimised for home 3D printing",
       "spec2t": "PLA bioplastic",
       "spec2d": "Made from corn starch",
       "spec3t": "Real data",
       "spec3d": "OpenStreetMap + elevation",
-      "spec4t": "3MF format",
-      "spec4d": "Bambu / Prusa ready"
+      "spec4t": "Printer file",
+      "spec4d": "opens in Bambu / Prusa"
     },
     "prints": {
       "title": "What it looks like printed",
@@ -126,15 +126,23 @@
       "alt": "3D-printed product {n}"
     },
     "testimonials": {
-      "title": "What customers say",
-      "sub": "Swipe to see more reviews →",
+      "title": "Why you can trust us",
+      "sub": "No testimonials with made-up names here — only what you can verify on this site.",
       "badge": "Review",
       "q1": "Loved it, thank you! The result exceeded my expectations.",
       "q2": "Fast and easy. It turned out great, highly recommend.",
       "q3": "Great quality, all crisp. Very happy with it.",
       "q4": "Simple and pleasant service. Worked on the first try.",
       "q5": "Lovely result, neatly made. Thanks for the work!",
-      "q6": "Done in a few minutes, all clear. Awesome!"
+      "q6": "Done in a few minutes, all clear. Awesome!",
+      "f1t": "Real photos of prints",
+      "f1d": "The gallery shows printed models, not renders.",
+      "f2t": "OpenStreetMap data",
+      "f2d": "Streets, buildings and water come from the open world map; elevations from terrain data.",
+      "f3t": "We print and ship ourselves",
+      "f3d": "Nova Poshta or Ukrposhta across Ukraine, payment after the order is confirmed.",
+      "f4t": "Registered business",
+      "f4d": "Company details, public offer and refund terms are in the footer of every page."
     },
     "faq": {
       "eyebrow": "Questions & answers",
@@ -464,7 +472,7 @@
     "areaPrompt": "Draw a rectangle on the map",
     "done": "Done",
     "generating": "Generating {progress}%",
-    "downloadReady": "Download 3MF",
+    "downloadReady": "Download the printer file",
     "generatePrompt": "Generate the model",
     "aria": "Creation steps",
     "step": "Step {n}",
@@ -494,7 +502,7 @@
     "errSelectZone": "Select at least one cell on the grid",
     "errGen": "Generation error",
     "qualityWarn": "The model is ready, but there are print remarks. Details in “Pro” mode.",
-    "downloadFile": "Download 3MF",
+    "downloadFile": "File for your 3D printer",
     "downloadShort": "Download",
     "mapLabelPh": "Label on the magnet (e.g. KYIV) — optional",
     "mapLabelAria": "Magnet engraving text",
@@ -520,7 +528,7 @@
     "advancedHint": "Need a series of zones (hexagons / squares)? Open “Pro” mode →",
     "orderPrint": "Order printing",
     "limitMsg": "I've used all 5 free downloads. I'd like more / printing — please contact me.",
-    "gpxUpload": "GPX route on the map",
+    "gpxUpload": "Run or trip route (GPX file)",
     "gpxChoose": "Choose file",
     "gpxReplace": "Replace",
     "gpxClear": "Remove",
@@ -557,7 +565,7 @@
     "fmtStandard": "3D map",
     "fmtStandardHint": "Classic raised map: buildings, parks and water with height. Turn on relief for ground elevation.",
     "fmtFlat": "Flat color",
-    "fmtFlatHint": "Each layer its own colour, prints flat. Ideal for Bambu AMS. Add a joiner, frame or mark your home.",
+    "fmtFlatHint": "Each layer in its own colour, printed flat. Ideal for multi-colour printing. Add a connector, a frame or mark your home.",
     "fmtMagnet": "Magnet",
     "fmtMagnetHint": "A flat 6 cm fridge magnet with magnet pockets on the back.",
     "fmtPanel": "Wall panel",
@@ -568,7 +576,7 @@
     "magnetOffForPanel": "Magnet and GPX turned off — a panel generates full tiles",
     "generatePreview": "Generate preview",
     "generatePrint": "Generate print 3MF",
-    "etaPrint": "≈ 1–3 min · full print 3MF",
+    "etaPrint": "≈ 1–3 min · full model for printing",
     "dlCount": "{n} left",
     "dlUnlimited": "unlimited",
     "piecesTitle": "Multiple zones",
@@ -699,7 +707,7 @@
     "aboutText": "Turn any place on Earth into a 3D souvenir. All in your browser, ready to print.",
     "bullet1": "Any city in the world — a 3D map in ~3 minutes",
     "bullet2": "Keychain tags with your district and inscription",
-    "bullet3": "5 free downloads of 3MF (full model)",
+    "bullet3": "5 free printer files (full model)",
     "bullet4": "Ready for 3D printing (FDM 0.4 mm) — or order printing from us",
     "bullet5": "Model history and saved city grids in your account",
     "accountLabel": "Account",
@@ -723,7 +731,7 @@
     "createFirst": "Create your first →",
     "previewAlt": "preview",
     "orderPrint": "Order printing",
-    "downloadTitle": "Download 3MF",
+    "downloadTitle": "Download printer file",
     "myGrids": "My city grids",
     "noGrids": "No saved grids yet. In the builder, enable “Zone grid”, create a grid and tap “Save grid” — then you can generate neighbouring cells.",
     "gridFallback": "Grid",
@@ -828,7 +836,7 @@
       "bad": "Fixes needed",
       "fix": "Fix: {issue}",
       "nextWarn": "For a better result pick a smaller crop or a larger map area.",
-      "nextGood": "You can create the 3MF."
+      "nextGood": "You can create the model."
     },
     "details": {
       "summary": "Print details and quick actions",
@@ -902,7 +910,7 @@
       "title": "Pre-generation check",
       "desc": "Only parameters a client understands belong here: size, text, detail level and print readiness.",
       "noText": "no text",
-      "generated3mf": "Generated 3MF",
+      "generated3mf": "Generated model",
       "layersNote": "Text and rim are separate layers, the map is clipped to the inner area of the keychain."
     },
     "metric": {
@@ -1062,29 +1070,29 @@
     },
     "verdict": {
       "bad": {
-        "title": "3MF needs a review",
+        "title": "Model needs a check",
         "detail": "Problem layers: {layers}."
       },
       "warn": {
-        "title": "3MF created, there are warnings",
+        "title": "Model created, with warnings",
         "detail": "Check: {layers}."
       },
       "good": {
-        "title": "3MF looks ready for the slicer",
+        "title": "Model is ready to print",
         "detail": "Base, rim, map, buildings and text are present as separate layers."
       }
     },
     "status": {
       "generating": "Generating keychain",
-      "ready3mf": "3MF ready",
+      "ready3mf": "Model ready",
       "ready": "Done"
     },
     "btn": {
       "generating": "Generating...",
-      "create3mf": "Create 3MF",
+      "create3mf": "Create model",
       "buyOrder": "Buy / order print",
       "order": "Order print",
-      "download3mf": "Download 3MF"
+      "download3mf": "Download printer file"
     },
     "quota": {
       "remaining": "{remaining} of {limit} free downloads left",
@@ -1102,7 +1110,7 @@
       "notReady": "Not ready to print: {issues}.",
       "generic": "Keychain generation error",
       "limitContact": "I've used up 5 free keychain downloads. I want more / a print — please get in touch with me.",
-      "downloadFailed": "Could not download the 3MF",
+      "downloadFailed": "Could not download the file",
       "retry": "Try again"
     },
     "templates": {
@@ -1726,7 +1734,7 @@
     "magnetDesc": "Compact 6 cm map with a magnet in the base",
     "keychainTitle": "Keychain with my place",
     "keychainDesc": "The map of your home always on your keys",
-    "fullTitle": "Full builder",
+    "fullTitle": "Advanced mode",
     "fullDesc": "All settings: series, GPX, styles, shapes",
     "moreLabel": "More:",
     "moreTitle": "What else we can do",
@@ -1756,7 +1764,7 @@
     "createAnother": "Create another one",
     "backToGuided": "← Simple mode",
     "sizeTitle": "Choose a size",
-    "advancedSettings": "More settings",
+    "advancedSettings": "Advanced mode (all settings)",
     "personalizeTitle": "Make it personal",
     "myHome": "My home on the map",
     "myHomeCount": "My home: {n} selected",
@@ -1777,13 +1785,23 @@
     "twoWays": "Two ways to get your model",
     "wayPrint": "We print and ship it",
     "waySelf": "I print it on my own printer",
-    "downloadCta": "Download the file (3MF)",
-    "downloadSub": "Free · Google sign-in · opens in your printer's app",
+    "downloadCta": "Download file for your 3D printer",
+    "downloadSub": "Free · Google sign-in · the file takes ≈2 min and opens in your printer software",
     "quotaLeft": "{n} of {limit} free files left",
     "previewCta": "Show 3D preview · free",
     "previewCtaShort": "3D preview · free",
     "printFromLine": "Print {price} · Nova Poshta delivery across Ukraine",
-    "readyDelivery": "Print & dispatch in 2–4 business days · Nova Poshta or Ukrposhta · pay after confirmation"
+    "readyDelivery": "Print & dispatch in 2–4 business days · Nova Poshta or Ukrposhta · pay after confirmation",
+    "defaultPlace": "Kyiv centre (default)",
+    "defaultPlaceHint": "Search your address, tap a city or drag the frame on the map — we print what is inside the frame.",
+    "customPlace": "selected area on the map",
+    "stageData": "OSM data & elevations",
+    "stageTerrain": "Base terrain",
+    "stageDetail": "Roads, water, buildings",
+    "stageFile": "Building the 3D file",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "under a minute",
+    "etaOver": "taking longer than usual — almost there"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -1801,7 +1819,7 @@
     "cardTokenDesc": "A compact token with the map of your home",
     "cardRectTitle": "Classic rectangle",
     "cardRectDesc": "Vertical 35×55 mm keychain with your district map",
-    "cardFullTitle": "Full designer",
+    "cardFullTitle": "Advanced mode",
     "cardFullDesc": "All shapes, sliders, GPX track, topo relief",
     "waitingPlace": "Find an address, tap a city above or drag the frame on the map",
     "placeChosen": "Place selected",
@@ -1823,8 +1841,8 @@
     "twoWays": "Two ways to get your model",
     "wayPrint": "We print and ship it",
     "waySelf": "I print it on my own printer",
-    "downloadCta": "Download the file (3MF)",
-    "downloadSub": "Free · Google sign-in · opens in your printer's app",
+    "downloadCta": "Download file for your 3D printer",
+    "downloadSub": "Free · Google sign-in · opens in your printer software",
     "quotaLeft": "{n} of {limit} free files left",
     "previewCta": "Show keychain in 3D · free",
     "previewCtaShort": "3D preview · free",
@@ -1834,12 +1852,21 @@
     "createAnother": "Create another one",
     "changeSomething": "Want to change something?",
     "backToGuided": "← Simple mode",
-    "advancedSettings": "Full designer (all settings)",
+    "advancedSettings": "Advanced mode (all settings)",
     "fullModeTitle": "Full designer",
     "myHome": "My home on the map",
     "myHomeCount": "My home: {n} selected",
     "myHomeClear": "Clear selection",
-    "myHomeHintClick": "Click your building on the map — it becomes a separate red insert"
+    "myHomeHintClick": "Click your building on the map — it becomes a separate red insert",
+    "defaultPlace": "Kyiv centre (default)",
+    "defaultPlaceHint": "Search your address, tap a city or drag the frame on the map — the keychain shows what is inside the frame.",
+    "customPlace": "selected area on the map",
+    "stageData": "OSM data",
+    "stageDetail": "Layers: roads, water, buildings",
+    "stageFile": "Building the 3D file",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "under a minute",
+    "etaOver": "taking longer than usual — almost there"
   },
   "maket": {
     "backHome": "Home",
@@ -1898,7 +1925,7 @@
     "building": "Building the model…",
     "genFailed": "Could not build the model. Please try again.",
     "readyTitle": "Your model is ready",
-    "download3mf": "Download 3MF",
+    "download3mf": "Download printer file",
     "orderPrint": "Order a print",
     "backToEdit": "Back to editing",
     "areaLabel": "Total area, m²",

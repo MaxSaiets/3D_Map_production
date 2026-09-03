@@ -257,7 +257,7 @@ test.describe("Конструктор мап /create", () => {
   test("GPX: завантаження треку показує назву і кількість точок", async ({ page }) => {
     // Панель рендериться двічі (desktop sidebar + mobile tabs) — беремо першу
     await page.locator('[data-testid="more-options"]').first().click();
-    await expect(page.getByText(/GPX-маршрут на мапі/).first()).toBeVisible();
+    await expect(page.getByText(/GPX-файл|GPX-маршрут на мапі/).first()).toBeVisible();
     const gpx = `<?xml version="1.0"?><gpx><trk><name>Ранкова пробіжка</name><trkseg>${Array.from(
       { length: 30 },
       (_, i) => `<trkpt lat="${50.45 + i * 0.0002}" lon="${30.52 + i * 0.0002}"/>`,

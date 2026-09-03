@@ -822,11 +822,13 @@ export function KeychainControlPanel({
     if (!taskGroupId || !isGenerating) return;
     pollFailRef.current = 0;
 
-    const interval = window.setInterval(async () => {
+    // perf-2026-09-03: перший полінг одразу (кеш-HIT = миттєве completed), далі 2.5 с.
+    const tick = async () => {
       if (pollingInFlightRef.current) return;
       pollingInFlightRef.current = true;
       try {
         const resp = await api.getStatus(taskGroupId);
+        useGenerationStore.getState().setEta(typeof (resp as any)?.eta_s === "number" ? (resp as any).eta_s : null, typeof (resp as any)?.elapsed_s === "number" ? (resp as any).elapsed_s : null);
         const task = resp as any;
         pollFailRef.current = 0;
         setTaskStatuses({ [task.task_id]: task });
@@ -851,7 +853,9 @@ export function KeychainControlPanel({
       } finally {
         pollingInFlightRef.current = false;
       }
-    }, 3500);
+    };
+    const interval = window.setInterval(tick, 2500);
+    void tick();
 
     return () => {
       window.clearInterval(interval);
@@ -1031,9 +1035,13 @@ export function KeychainControlPanel({
       preview,
       // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
       getIdToken, openLogin: () => openLogin(() => { void handleDownload(); }),
-      onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-        detail: { message: t("error.limitContact") },
-      })),
+      // A-7 (2026-09-03): вичерпана квота → пояснення + форма замовлення друку,
+      // а не глухий кут у Telegram-чат.
+      onLimit: () => {
+        import("@/lib/analytics").then((m) => m.track("quota_block", { product: "keychain", at: "download" })).catch(() => {});
+        window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("error.limitContact") } }));
+        orderNow();
+      },
     });
     if (res.status === "error") setError(t("error.downloadFailed"));
     if (res.status === "ok") {

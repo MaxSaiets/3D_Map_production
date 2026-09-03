@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Boxes, Check, Download, Home, KeyRound, LayoutGrid, Loader2, MapPin, PenLine, Ruler, ShoppingBag, Sliders, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Check, Download, Home, Loader2, MapPin, PenLine, ShoppingBag, X } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link — інакше лінк на
 // /keychains з /en/create губив би префікс локалі.
@@ -21,6 +21,7 @@ import {
   MAP_RELIEF_ADDON_UAH,
   mapPriceEur,
 } from "@/lib/mapPrices";
+import { GenerationStages } from "@/components/GenerationStages";
 
 /** Зона ПІД РОЗМІР плитки: ~7.5 м/мм — «добра деталізація» і гарантовано в
  *  безпечних межах (isSafe = ≤10 м/мм у MapSelector). Фіксована 800×800
@@ -38,12 +39,18 @@ const QUICK_CITIES: Array<{ uk: string; en: string; lat: number; lon: number }> 
 
 /** Сценарії, що лишаються всередині guided-флоу (брелок = лінк, повний = вихід). */
 type ScenarioId = "map3d" | "relief" | "flat" | "magnet";
+const SCENARIO_IDS: ScenarioId[] = ["map3d", "relief", "flat", "magnet"];
 
 /**
  * СЦЕНАРНИЙ ВХІД /create (guided-режим). UX-аудит: новий користувач бачив ~43
  * інтерактивні контроли до першої генерації. Тут — ДВА кроки: ЩО створюємо →
- * ДЕ місце (пошук на карті, зона стає сама) + розмір і ОДНА кнопка «Створити
- * модель · ціна» на тому ж екрані (нуль зайвих кліків, без окремого кроку).
+ * ДЕ місце (пошук на карті, зона стає сама) + розмір і ОДНА кнопка на тому ж
+ * екрані (нуль зайвих кліків, без окремого кроку).
+ *
+ * A-2/A-3/A-4 (2026-09-03): `?product=` відкриває одразу крок 2; крок 1 = 4
+ * картки + один рядок «Ще:»; CTA активна ЗАВЖДИ (бейдж каже, яке місце буде
+ * надруковано); екран «готово» = 2 дії (замовити / завантажити), кнопка
+ * «Оновити превʼю» зʼявляється лише коли щось змінили після генерації.
  *
  * Компонент НЕ дублює логіку генерації: кнопка шле window-подію
  * `monadruk:guided-generate`, яку слухає прихована «машинна» копія
@@ -68,6 +75,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     isGenerating: st.isGenerating,
     progress: st.progress,
     status: st.status,
+    etaS: st.etaS,
+    elapsedS: st.elapsedS,
     downloadUrl: st.downloadUrl,
     modelSizeMm: st.modelSizeMm,
     setModelSizeMm: st.setModelSizeMm,
@@ -94,6 +103,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // Напис на мапі — ОПЦІЙНИЙ (v3, юзер: «текст не по дефолту, а коли включаю»):
   // поле зʼявляється лише після кліку «Додати напис»; вибір сценарію чистить його.
   const [labelOn, setLabelOn] = useState(false);
+
+  // A-6: єдиний вихід у розширений режим + подія для воронки (раніше 5 назв
+  // і жодної події — не було видно, скільки людей тікає з простого режиму).
+  const exitGuided = (from: string) => {
+    import("@/lib/analytics").then((m) => m.track("mode_switch", { product: "map", to: "advanced", from })).catch(() => {});
+    onExitGuided();
+  };
 
   // v3.1 (юзер: «не можна пересувати рамку, коли обрання будинку увімкнене»):
   // режим кліку АВТО-ВИМИКАЄТЬСЯ одразу після вибору будинку — вибір лишається
@@ -131,29 +147,46 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     sizeMmRef.current = scenario === "magnet" ? 60 : s.modelSizeMm;
   }, [scenario, s.modelSizeMm]);
 
-  // ЧЕСНИЙ «Місце обрано»: дефолтна київська рамка ставиться сама при вході,
-  // тож selectedArea != null ≠ «користувач обрав місце». Без цього гейта юзер,
-  // який набрав адресу але НЕ клікнув підказку (або пошук схибив), бачив
-  // зелений бейдж і активну CTA — і мовчки генерував Київ замість свого міста
-  // (відтворено наскрізним тестом «San Francisco» → модель Києва).
-  // Вибором вважаємо: подію пошуку/чіпа (map-goto з lat/lon) АБО ручний зсув
-  // рамки (зміна selectedArea ПІСЛЯ вже наявної — перший авто-сет не рахується).
+  // A-4: CTA активна завжди, а «яке місце буде надруковано» каже БЕЙДЖ:
+  // дефолтна київська рамка → «Центр Києва (за замовчуванням) — знайдіть свою
+  // адресу», після пошуку/чіпа → «✓ Місце обрано: Львів», після ручного зсуву
+  // рамки → «✓ Місце обрано: обрана ділянка на карті». Раніше сіра кнопка без
+  // пояснення біля неї була головною «прихованою обовʼязковою дією» (F-11).
   const [placePicked, setPlacePicked] = useState(false);
+  const createdAtRef = useRef(0);
+  const touchedRef = useRef(false);
+  const [placeLabel, setPlaceLabel] = useState<string>("");
   const prevAreaRef = useRef<typeof s.selectedArea>(null);
+  // Перші ~2.5 с після монтування рамку ставить/перемасштабовує сам код (дефолт
+  // Києва, пресет розміру з ?product=) — це НЕ вибір користувача (інакше магніт
+  // одразу показував «Місце обрано: обрана ділянка на карті»).
+  const mountedAtRef = useRef(Date.now());
   useEffect(() => {
     const prev = prevAreaRef.current;
     prevAreaRef.current = s.selectedArea;
-    if (prev && s.selectedArea && s.selectedArea !== prev) setPlacePicked(true);
+    if (Date.now() - mountedAtRef.current < 2500 && Date.now() - lastGotoRef.current > 1500) return;
+    if (prev && s.selectedArea && s.selectedArea !== prev) {
+      // Зсув рамки пізніше ніж 2.5 с після старту генерації = дія користувача
+      // (раніше — доліт карти після пошуку, він не має вмикати «Оновити превʼю»).
+      if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
+      setPlacePicked(true);
+      // Ручний зсув/ресайз рамки після пошуку — назву місця вже не гарантуємо.
+      setPlaceLabel((cur) => (cur && lastGotoRef.current && Date.now() - lastGotoRef.current < 1500 ? cur : ""));
+    }
   }, [s.selectedArea]);
+  const lastGotoRef = useRef(0);
   useEffect(() => {
     const onPick = (e: Event) => {
       const d = (e as CustomEvent).detail as
-        | { lat?: number; lon?: number; widthM?: number; centerOnly?: boolean }
+        | { lat?: number; lon?: number; widthM?: number; centerOnly?: boolean; label?: string }
         | undefined;
       // Лише користувацькі події (пошук/чіп): наші власні ре-диспатчі несуть widthM.
       if (!d || d.centerOnly || typeof d.widthM === "number") return;
       if (!Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
+      lastGotoRef.current = Date.now();
+      if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
       setPlacePicked(true);
+      if (typeof d.label === "string" && d.label.trim()) setPlaceLabel(d.label.trim());
     };
     window.addEventListener("monadruk:map-goto", onPick as EventListener);
     return () => window.removeEventListener("monadruk:map-goto", onPick as EventListener);
@@ -168,6 +201,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       if (!Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
       // Затримка — даємо overlay спершу відпрацювати оригінальну подію (переліт).
       window.setTimeout(() => {
+        lastGotoRef.current = Date.now();
         window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
           detail: { lat: d.lat, lon: d.lon, widthM: zoneForSizeM(sizeMmRef.current) },
         }));
@@ -179,9 +213,12 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
 
   // Вибір сценарію = пресет формату у store (той самий шлях, що сегмент-контрол
   // «Формат» у SimpleControlPanel) + одразу крок 2. M (80 мм) — передвибраний.
-  const pick = (id: ScenarioId) => {
+  const pick = (id: ScenarioId, source: "card" | "url" = "card") => {
     // Guided-воронка: яку картку обирають (adмінка порівнює зі звичайним funnel).
-    import("@/lib/analytics").then((m) => m.track("guided_pick", { product: "map", scenario: id })).catch(() => {});
+    import("@/lib/analytics").then((m) => {
+      m.track("guided_pick", { product: "map", scenario: id, source });
+      m.track("guided_step", { product: "map", step: 2 });
+    }).catch(() => {});
     s.setShowHexGrid(false);
     try { localStorage.setItem("3dmap_hex_grid", "0"); } catch { /* ignore */ }
     s.setPreviewMode(true);
@@ -196,16 +233,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     setScenario(id);
   };
 
-  // T-3.1 (F-07): deep-link ?template=<id> або ?city=<key> (SEO-сторінки /maps,
-  // галерея шаблонів на головній) — стартуємо одразу з кроку 2 і ставимо рамку
-  // на район/центр міста. Подія map-goto БЕЗ widthM = «користувацька»: слухач
-  // вище позначає «Місце обрано» і ре-диспатчить зону під обраний розмір.
+  // T-3.1 (F-07) + A-2: deep-links. `?product=map3d|relief|flat|magnet` (головна,
+  // сторінки нагод) відкриває одразу крок 2 з обраним товаром; `?template=<id>` /
+  // `?city=<key>` (SEO-сторінки /maps, галерея шаблонів) — ще й ставить рамку на
+  // район/центр міста. Подія map-goto БЕЗ widthM = «користувацька»: слухач вище
+  // позначає «Місце обрано» і ре-диспатчить зону під обраний розмір.
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search);
+      const prod = p.get("product");
       const tplId = p.get("template");
       const cityKey = p.get("city");
-      if (!tplId && !cityKey) return;
+      const prodId = prod && (SCENARIO_IDS as string[]).includes(prod) ? (prod as ScenarioId) : null;
+      if (!prodId && !tplId && !cityKey) return;
       let center: [number, number] | undefined;
       let label = "";
       const tpl = tplId ? MAP_TEMPLATES.find((x) => x.id === tplId) : undefined;
@@ -214,9 +254,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         const c = CITIES.find((x) => x.key === cityKey) || WORLD_CITIES.find((x) => x.key === cityKey);
         if (c) { center = c.center; label = ("label" in c ? c.label : c.names?.uk) || ""; }
       }
-      if (!center) return;
-      pick(tpl && tpl.style === "relief" ? "relief" : "map3d");
+      pick(prodId ?? (tpl && tpl.style === "relief" ? "relief" : "map3d"), "url");
       if (tpl?.sizeMm) s.setModelSizeMm(tpl.sizeMm);
+      if (!center) return;
       const [lat, lon] = center;
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label } }));
@@ -225,13 +265,31 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A-3: «Оновити превʼю» лише коли щось РЕАЛЬНО змінилось після генерації —
+  // знімок параметрів у момент старту; поки він збігається, на екрані «готово»
+  // рівно дві дії (замовити / завантажити).
+  const areaKey = (() => {
+    try {
+      const b = s.selectedArea as unknown as { toBBoxString?: () => string } | null;
+      return b?.toBBoxString ? b.toBBoxString() : "";
+    } catch { return ""; }
+  })();
+  const paramsKey = JSON.stringify({
+    scenario, size: s.modelSizeMm, area: areaKey, label: s.simpleMapLabel,
+    hl: s.highlightPoints.length, conn: s.simpleConnector,
+  });
+  const [snapshotKey, setSnapshotKey] = useState<string | null>(null);
+
   const create = () => {
-    if (!s.selectedArea || !placePicked || s.isGenerating) return;
+    if (!s.selectedArea || s.isGenerating) return;
     import("@/lib/analytics")
-      .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm }))
+      .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm, placePicked }))
       .catch(() => {});
     setRan(false);
     setStarted(true);
+    setSnapshotKey(paramsKey);
+    createdAtRef.current = Date.now();
+    touchedRef.current = false;
     window.dispatchEvent(new Event("monadruk:guided-generate"));
   };
 
@@ -264,12 +322,32 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // і isGenerating=true червона помилка блимала при кожному успішному кліку.
   const [ran, setRan] = useState(false);
   useEffect(() => { if (s.isGenerating) setRan(true); }, [s.isGenerating]);
+  // perf-2026-09-03: чесний ETA — залишок від медіани реальних прогонів (бекенд).
+  const etaText = (() => {
+    if (typeof s.etaS !== "number" || s.etaS <= 0) return null;
+    const elapsed = typeof s.elapsedS === "number" ? s.elapsedS : 0;
+    // Перевищили прогноз на 20 % — чесно кажемо «довше, ніж зазвичай», а не «менше хвилини».
+    if (elapsed > s.etaS * 1.2 + 15) return t("etaOver");
+    const left = Math.max(0, s.etaS - elapsed);
+    if (left < 45) return t("etaSoon");
+    return t("etaLeft", { min: Math.max(1, Math.round(left / 60)) });
+  })();
   const generatingView = s.isGenerating;
   const successView = started && !s.isGenerating && !!s.downloadUrl;
   const failedNote = started && ran && !s.isGenerating && !s.downloadUrl;
+  // Готово: якщо користувач нічого не чіпав під час генерації, знімок = поточні
+  // параметри (доліт карти/авто-зона після пошуку не мають давати «Оновити превʼю»).
+  const prevSuccessRef = useRef(false);
+  useEffect(() => {
+    if (successView && !prevSuccessRef.current && !touchedRef.current) setSnapshotKey(paramsKey);
+    prevSuccessRef.current = successView;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successView]);
+  const dirty = successView && snapshotKey !== null && snapshotKey !== paramsKey;
   const displayStep = generatingView || successView || scenario !== null ? 2 : 1;
 
   const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
+  const moreLinkCls = "rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11.5px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]";
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur" data-testid="scenario-flow">
@@ -312,42 +390,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </button>
               ))}
             </div>
-            {/* Власник: «не зрозуміло, які взагалі є можливості». Крок 1 показує 4
-                головні продукти картками, а ВСЕ інше, що вміє сайт — видимим
-                списком із поясненням (раніше це були 3 дрібні лінки в рядок). */}
+            {/* A-2: крок 1 = вибір ТОВАРУ. Решта можливостей сайту — один компактний
+                рядок лінків (повний блок з описами живе на головній, T-D.6), щоб
+                перший екран конструктора не був мапою сайту з 15 цілей. */}
             <div className="mt-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
-              <div className="mt-2 grid gap-1.5" data-testid="scenario-more">
-                {[
-                  { key: "kc", href: "/keychains", icon: <KeyRound size={14} />, title: `${t("keychainTitle")} · ${t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}`, desc: t("keychainDesc") },
-                  { key: "panno", href: "/panno", icon: <LayoutGrid size={14} />, title: t("pannoTitle"), desc: t("pannoDesc") },
-                  { key: "maket", href: "/maket", icon: <Ruler size={14} />, title: t("maketTitle"), desc: t("maketDesc") },
-                  { key: "worlds", href: "/worlds", icon: <Sparkles size={14} />, title: t("worldsTitle"), desc: t("worldsDesc") },
-                  { key: "showcase", href: "/showcase", icon: <Boxes size={14} />, title: t("showcaseTitle"), desc: t("showcaseDesc") },
-                ].map((it) => (
-                  <Link
-                    key={it.key}
-                    href={it.href}
-                    className="flex items-start gap-2.5 rounded-[14px] border border-[var(--surface-border)] bg-white/70 px-3 py-2 transition hover:border-[rgba(11,92,87,0.4)] hover:bg-white"
-                  >
-                    <span className="mt-0.5 shrink-0 text-[var(--accent-strong)]">{it.icon}</span>
-                    <span className="min-w-0">
-                      <span className="block text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{it.title}</span>
-                      <span className="block text-[11.5px] leading-snug text-[var(--text-secondary)]">{it.desc}</span>
-                    </span>
-                  </Link>
-                ))}
-                <button
-                  type="button"
-                  onClick={onExitGuided}
-                  data-testid="scenario-full"
-                  className="flex items-start gap-2.5 rounded-[14px] border border-[var(--surface-border)] bg-white/70 px-3 py-2 text-left transition hover:border-[rgba(11,92,87,0.4)] hover:bg-white"
-                >
-                  <span className="mt-0.5 shrink-0 text-[var(--accent-strong)]"><Sliders size={14} /></span>
-                  <span className="min-w-0">
-                    <span className="block text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{t("fullTitle")}</span>
-                    <span className="block text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("fullDescLong")}</span>
-                  </span>
+              <div className="mt-2 flex flex-wrap gap-1.5" data-testid="scenario-more">
+                <Link href="/keychains" className={moreLinkCls}>{t("keychainTitle")} · {t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}</Link>
+                <Link href="/panno" className={moreLinkCls}>{t("pannoTitle")}</Link>
+                <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
+                <Link href="/worlds" className={moreLinkCls}>{t("worldsTitle")}</Link>
+                <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
+                <button type="button" onClick={() => exitGuided("step1")} data-testid="scenario-full" className={moreLinkCls}>
+                  {t("fullTitle")}
                 </button>
               </div>
             </div>
@@ -356,33 +411,34 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
           /* ── КРОК 2: ДЕ ВАШЕ МІСЦЕ? + розмір і CTA на тому ж екрані ──
               (карта лишається видимою поруч/вище; рамка зони — інтерактивна) */
           <div className="flex flex-col gap-3">
-            {/* ГОТОВО-банер (v3): модель є — головна дія зверху, а ВСІ контролі
-                НИЖЧЕ лишаються живими: міняй місце/дім/напис/розмір і одразу
-                «Оновити модель». Превʼю крутиться на сцені поруч — один екран. */}
+            {/* ГОТОВО-банер (A-3): рівно дві дії — замовити або завантажити. Усі
+                контролі НИЖЧЕ лишаються живими; «Оновити превʼю» зʼявляється
+                тільки коли щось змінили. Превʼю крутиться на сцені поруч. */}
             {successView && (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2.5" data-testid="guided-success">
                 <div className="flex items-center gap-2 text-[16px] font-semibold text-[var(--text-primary)]">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white"><Check size={15} /></span>
                   {t("readyTitle")}
                 </div>
-                {/* Рекап: що саме готове (сценарій · розмір) + підказка. */}
+                {/* Рекап: що саме готове (сценарій · розмір · місце) + підказка. */}
                 <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">
                   <b className="text-[var(--text-primary)]">
                     {scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${fallbackSize.label} · ${fallbackSize.cm}`}
+                    {placeLabel ? ` · ${placeLabel}` : ""}
                   </b>
                   {" — "}{t("readyHint")}
                 </p>
                 <button
                   type="button"
                   onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
+                  data-testid="guided-order"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
                 </button>
                 <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
-                {/* «Не зрозуміло, як качати» (власник): завантаження було дрібним
-                    текстовим лінком під бронзовою кнопкою. Тепер — рівноправна
-                    кнопка з підписом, ЩО це і що потрібен вхід. */}
+                {/* «Не зрозуміло, як качати» (власник): завантаження — рівноправна
+                    кнопка з чесним підписом (вхід через Google, файл готується ≈2 хв). */}
                 <div className="flex items-center gap-2 pt-0.5">
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
                   <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("waySelf")}</span>
@@ -401,14 +457,6 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 {dlQuota && !dlQuota.isAdmin && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
                 )}
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                  <button type="button" onClick={onExitGuided} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
-                    {t("tuneDetails")}
-                  </button>
-                  <button type="button" onClick={() => { setStarted(false); setScenario(null); }} className="text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 transition hover:text-[var(--text-primary)] hover:underline">
-                    {t("createAnother")}
-                  </button>
-                </div>
                 <div className="my-0.5 flex items-center gap-2">
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
                   <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("changeSomething")}</span>
@@ -416,19 +464,17 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </div>
               </div>
             )}
-            {/* Генерація (v3): компактний прогрес над контролями — панель жива. */}
+            {/* Генерація (A-5): ОДНА смуга прогресу з названими етапами замість
+                сирого рядка статусу бекенду; панель під нею жива. */}
             {generatingView && (
-              <div className="flex flex-col gap-2 rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3">
-                <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--text-primary)]">
-                  <Loader2 size={16} className="animate-spin text-[var(--accent-strong)]" /> {t("generating")}
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[rgba(15,23,42,0.08)]" role="progressbar" aria-label={t("generating")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.max(0, Math.min(100, s.progress || 0))}>
-                  <div className="h-full rounded-full bg-[var(--accent-strong)] transition-all duration-700" style={{ width: `${Math.max(4, Math.min(100, s.progress || 0))}%` }} />
-                </div>
-                <p className="text-[12px] text-[var(--text-secondary)]" aria-live="polite">
-                  {s.progress}%{s.status ? ` · ${s.status}` : ""} · {t("etaNote")}
-                </p>
-              </div>
+              <GenerationStages
+                progress={s.progress || 0}
+                kind={scenario === "flat" || scenario === "magnet" ? "flat" : "map"}
+                title={t("generating")}
+                note={t("etaNote")}
+                eta={etaText}
+                stages={{ data: t("stageData"), terrain: t("stageTerrain"), detail: t("stageDetail"), file: t("stageFile") }}
+              />
             )}
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
             {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}
@@ -455,170 +501,176 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </button>
               ))}
             </div>
+            {/* A-4: бейдж завжди каже, ЯКЕ місце піде в друк. */}
             {!placePicked ? (
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-medium text-[var(--text-secondary)]">
-                <MapPin size={15} className="animate-pulse text-[var(--accent-strong)]" /> {t("waitingPlace")}
+              <div className="flex flex-col gap-1" data-testid="place-default">
+                <div className="inline-flex items-center gap-2 self-start rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)]">
+                  <MapPin size={15} className="text-[var(--accent-strong)]" /> {t("defaultPlace")}
+                </div>
+                <p className="text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("defaultPlaceHint")}</p>
               </div>
             ) : (
-              <>
-                <div className="inline-flex items-center gap-2 self-start rounded-full border border-[rgba(11,92,87,0.35)] bg-[rgba(15,118,110,0.1)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)]">
-                  <Check size={15} className="text-[var(--accent-strong)]" /> {t("placeChosen")}
+              <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[rgba(11,92,87,0.35)] bg-[rgba(15,118,110,0.1)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text-primary)]" data-testid="place-picked">
+                <Check size={15} className="shrink-0 text-[var(--accent-strong)]" />
+                <span className="truncate">{t("placeChosen")}{placeLabel ? `: ${placeLabel}` : `: ${t("customPlace")}`}</span>
+              </div>
+            )}
+            {/* ПЕРСОНАЛІЗАЦІЯ (v2, юзер: «немає легких доступів»): мій дім +
+                напис — емоційне ядро продукту, тепер на видноті. Обидва
+                контроли пишуть у ті САМІ поля стору, що й повний конструктор. */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("personalizeTitle")}</p>
+              <div className="mt-2 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-pressed={s.mapHighlightBuilding}
+                    onClick={() => s.setMapHighlightBuilding(!s.mapHighlightBuilding)}
+                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
+                      s.mapHighlightBuilding
+                        ? "border-[rgba(192,57,43,0.45)] bg-[rgba(192,57,43,0.1)] text-[#8f2a20]"
+                        : s.highlightPoints.length > 0
+                          ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                          : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                    }`}
+                  >
+                    <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : "text-[var(--accent-strong)]"} />
+                    {s.highlightPoints.length > 0
+                      ? t("myHomeCount", { n: s.highlightPoints.length })
+                      : t("myHome")}
+                  </button>
+                  {s.highlightPoints.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => s.clearHighlights()}
+                      aria-label={t("myHomeClear")}
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
-                {/* ПЕРСОНАЛІЗАЦІЯ (v2, юзер: «немає легких доступів»): мій дім +
-                    напис — емоційне ядро продукту, тепер на видноті. Обидва
-                    контроли пишуть у ті САМІ поля стору, що й повний конструктор. */}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("personalizeTitle")}</p>
-                  <div className="mt-2 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        aria-pressed={s.mapHighlightBuilding}
-                        onClick={() => s.setMapHighlightBuilding(!s.mapHighlightBuilding)}
-                        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
-                          s.mapHighlightBuilding
-                            ? "border-[rgba(192,57,43,0.45)] bg-[rgba(192,57,43,0.1)] text-[#8f2a20]"
-                            : s.highlightPoints.length > 0
-                              ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
-                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
-                        }`}
-                      >
-                        <Home size={15} className={s.mapHighlightBuilding ? "text-[#c0392b]" : s.highlightPoints.length > 0 ? "text-[var(--accent-strong)]" : "text-[var(--accent-strong)]"} />
-                        {s.highlightPoints.length > 0
-                          ? t("myHomeCount", { n: s.highlightPoints.length })
-                          : t("myHome")}
-                      </button>
-                      {s.highlightPoints.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => s.clearHighlights()}
-                          aria-label={t("myHomeClear")}
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </div>
-                    {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
-                      <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
-                    )}
-                    {/* Напис тепер підтримують ОБИДВА пайплайни (бекенд 2026-07-23:
-                        піднятий напис на передній смузі обʼємної/рельєфної мапи),
-                        тож чіп доступний для всіх сценаріїв. */}
-                    {(!labelOn ? (
-                      <button
-                        type="button"
-                        onClick={() => setLabelOn(true)}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] transition hover:border-[rgba(11,92,87,0.35)]"
-                      >
-                        <PenLine size={15} className="text-[var(--accent-strong)]" /> {t("addLabel")}
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 focus-within:border-[rgba(11,92,87,0.45)]">
-                          <PenLine size={14} className="shrink-0 text-[var(--accent-strong)]" />
-                          <input
-                            autoFocus
-                            value={s.simpleMapLabel}
-                            onChange={(e) => s.setSimpleMapLabel(e.target.value.slice(0, 24))}
-                            maxLength={24}
-                            placeholder={t("mapLabelPlaceholder")}
-                            aria-label={t("mapLabelPlaceholder")}
-                            className="w-full bg-transparent text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => { s.setSimpleMapLabel(""); setLabelOn(false); }}
-                          aria-label={t("myHomeClear")}
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    {/* Зʼєднувачі (юзер: «немає щоб включити зʼєднувачі»): пази по
-                        краях плитки — потім можна доклеїти сусідні. Магніт малий —
-                        не показуємо. Той самий store-прапор, що в повній панелі. */}
-                    {scenario !== "magnet" && (
-                      <button
-                        type="button"
-                        aria-pressed={s.simpleConnector}
-                        onClick={() => s.setSimpleConnector(!s.simpleConnector)}
-                        className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
-                          s.simpleConnector
-                            ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
-                            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
-                        }`}
-                      >
-                        <span aria-hidden>{s.simpleConnector ? "✓" : ""}</span> {t("connectors")}
-                      </button>
-                    )}
-                    {scenario !== "magnet" && s.simpleConnector && (
-                      <p className="text-[12px] leading-snug text-[var(--text-secondary)]">{t("connectorsHint")}</p>
-                    )}
-                  </div>
-                </div>
-                {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}
-                {scenario === "magnet" ? (
-                  <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
-                    {t("magnetFixedNote", { price: disp(quote?.price ?? MAP_MAGNET_PRICE_UAH) })}
-                  </p>
+                {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
+                  <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
+                )}
+                {/* Напис тепер підтримують ОБИДВА пайплайни (бекенд 2026-07-23:
+                    піднятий напис на передній смузі обʼємної/рельєфної мапи),
+                    тож чіп доступний для всіх сценаріїв. */}
+                {(!labelOn ? (
+                  <button
+                    type="button"
+                    onClick={() => setLabelOn(true)}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] transition hover:border-[rgba(11,92,87,0.35)]"
+                  >
+                    <PenLine size={15} className="text-[var(--accent-strong)]" /> {t("addLabel")}
+                  </button>
                 ) : (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("sizeTitle")}</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("sizeTitle")}>
-                      {SIMPLE_SIZES.map((z) => (
-                        <button
-                          key={z.key}
-                          type="button"
-                          role="radio"
-                          aria-checked={s.modelSizeMm === z.mm}
-                          onClick={() => {
-                            s.setModelSizeMm(z.mm);
-                            // Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо
-                            // поточного центру з масштабом під нову плитку —
-                            // інакше S зі старою 800м-зоною ловила червоне
-                            // «завелика», а XL марнувала деталізацію.
-                            // Лише коли місце вже ОБРАНЕ: інакше ресайзили б
-                            // дефолтну київську рамку, якої юзер не торкався.
-                            const c = placePicked ? s.selectedArea?.getCenter?.() : null;
-                            if (c) {
-                              window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
-                                detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(z.mm) },
-                              }));
-                            }
-                          }}
-                          className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-2 py-2 transition ${
-                            s.modelSizeMm === z.mm
-                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
-                              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
-                          }`}
-                        >
-                          <span className="text-[15px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
-                          <span className="text-[13px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
-                          {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
-                          <span className="text-[10.5px] leading-tight text-[var(--text-secondary)]">
-                            {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3.5 py-2 focus-within:border-[rgba(11,92,87,0.45)]">
+                      <PenLine size={14} className="shrink-0 text-[var(--accent-strong)]" />
+                      <input
+                        autoFocus
+                        value={s.simpleMapLabel}
+                        onChange={(e) => s.setSimpleMapLabel(e.target.value.slice(0, 24))}
+                        maxLength={24}
+                        placeholder={t("mapLabelPlaceholder")}
+                        aria-label={t("mapLabelPlaceholder")}
+                        className="w-full bg-transparent text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { s.setSimpleMapLabel(""); setLabelOn(false); }}
+                      aria-label={t("myHomeClear")}
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
+                ))}
+                {/* Зʼєднувачі (юзер: «немає щоб включити зʼєднувачі»): пази по
+                    краях плитки — потім можна доклеїти сусідні. Магніт малий —
+                    не показуємо. Той самий store-прапор, що в повній панелі. */}
+                {scenario !== "magnet" && (
+                  <button
+                    type="button"
+                    aria-pressed={s.simpleConnector}
+                    onClick={() => s.setSimpleConnector(!s.simpleConnector)}
+                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
+                      s.simpleConnector
+                        ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+                    }`}
+                  >
+                    <span aria-hidden>{s.simpleConnector ? "✓" : ""}</span> {t("connectors")}
+                  </button>
                 )}
-                {failedNote && (
-                  <p className="rounded-[12px] border border-red-200 bg-red-50 px-3 py-2 text-[12.5px] text-red-700">
-                    {t("genFailed")}
-                  </p>
+                {scenario !== "magnet" && s.simpleConnector && (
+                  <p className="text-[12px] leading-snug text-[var(--text-secondary)]">{t("connectorsHint")}</p>
                 )}
-                {!s.isGenerating && (
-                <>
-                {/* F-08: превʼю безкоштовне — ціна не на кнопці дії, а рядком під нею. */}
+              </div>
+            </div>
+            {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}
+            {scenario === "magnet" ? (
+              <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                {t("magnetFixedNote", { price: disp(quote?.price ?? MAP_MAGNET_PRICE_UAH) })}
+              </p>
+            ) : (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("sizeTitle")}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("sizeTitle")}>
+                  {SIMPLE_SIZES.map((z) => (
+                    <button
+                      key={z.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={s.modelSizeMm === z.mm}
+                      onClick={() => {
+                        s.setModelSizeMm(z.mm);
+                        // Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо
+                        // поточного центру з масштабом під нову плитку —
+                        // інакше S зі старою 800м-зоною ловила червоне
+                        // «завелика», а XL марнувала деталізацію.
+                        // Лише коли місце вже ОБРАНЕ: інакше ресайзили б
+                        // дефолтну київську рамку, якої юзер не торкався.
+                        const c = placePicked ? s.selectedArea?.getCenter?.() : null;
+                        if (c) {
+                          window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
+                            detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(z.mm) },
+                          }));
+                        }
+                      }}
+                      className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-2 py-2 transition ${
+                        s.modelSizeMm === z.mm
+                          ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
+                          : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                      }`}
+                    >
+                      <span className="text-[15px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
+                      <span className="text-[13px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
+                      {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
+                      <span className="text-[10.5px] leading-tight text-[var(--text-secondary)]">
+                        {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {failedNote && (
+              <p className="rounded-[12px] border border-red-200 bg-red-50 px-3 py-2 text-[12.5px] text-red-700">
+                {t("genFailed")}
+              </p>
+            )}
+            {/* F-08: превʼю безкоштовне — ціна не на кнопці дії, а рядком під нею.
+                A-3/A-4: кнопка активна завжди; після успіху зʼявляється лише як
+                «Оновити превʼю», коли параметри змінились. */}
+            {!s.isGenerating && (!successView || dirty) && (
+              <>
                 <button
                   type="button"
                   onClick={create}
-                  disabled={!placePicked}
-                  title={!placePicked ? t("waitingPlace") : undefined}
+                  disabled={!s.selectedArea}
                   data-testid="scenario-create"
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${successView ? "bg-[var(--accent-strong)] shadow-[0_8px_24px_rgba(11,92,87,0.3)]" : "bg-[var(--bronze,#8E6B3D)] shadow-[0_8px_24px_rgba(142,107,61,0.35)]"}`}
                 >
@@ -629,19 +681,17 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {t("printFromLine", { price: disp(ctaPriceUah) })}
                   </p>
                 )}
-                </>
-                )}
-                {/* Вихід у повний конструктор ПРЯМО з кроку 2 (обіцяно в макеті):
-                    стан (зона/формат/розмір) зберігається — юзер продовжує там же. */}
-                <button
-                  type="button"
-                  onClick={onExitGuided}
-                  className="mt-2 w-full text-center text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]"
-                >
-                  {t("advancedSettings")}
-                </button>
               </>
             )}
+            {/* A-6: єдиний вихід у розширений режим (стан зони/формату/розміру
+                зберігається — юзер продовжує там же). */}
+            <button
+              type="button"
+              onClick={() => exitGuided("step2")}
+              className="mt-2 w-full text-center text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]"
+            >
+              {t("advancedSettings")}
+            </button>
           </div>
         )}
       </div>
@@ -651,13 +701,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         label={scenario === "magnet" ? t("magnetTitle") : `${fallbackSize.label} · ${fallbackSize.cm}`}
         price={disp(ctaPriceUah)}
         busy={generatingView}
-        tone={successView ? "bronze" : "primary"}
-        disabled={!generatingView && !successView && !placePicked}
+        tone={successView && !dirty ? "bronze" : "primary"}
+        disabled={!generatingView && !s.selectedArea}
         cta={generatingView
           ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
-          : successView ? t("orderPrint") : t("previewCtaShort")}
+          : successView ? (dirty ? t("updateModel") : t("orderPrint")) : t("previewCtaShort")}
         onCta={() => {
-          if (successView) window.dispatchEvent(new Event("monadruk:open-order"));
+          if (successView && !dirty) window.dispatchEvent(new Event("monadruk:open-order"));
           else create();
         }}
       />

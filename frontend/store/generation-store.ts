@@ -13,6 +13,8 @@ interface GenerationState {
   activeTaskId: string | null;
   progress: number;
   status: string;
+  etaS: number | null;
+  elapsedS: number | null;
   downloadUrl: string | null;
   printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
@@ -164,6 +166,8 @@ interface GenerationState {
   setShowAllZones: (value: boolean) => void;
   setBatchZoneMetaByTaskId: (value: Record<string, { zoneId: string; row?: number; col?: number }>) => void;
   updateProgress: (progress: number, status: string) => void;
+  /** perf-2026-09-03: чесний ETA з бекенду (медіана реальних прогонів) + скільки вже минуло. */
+  setEta: (etaS: number | null, elapsedS: number | null) => void;
   setDownloadUrl: (url: string | null) => void;
   setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
@@ -206,6 +210,8 @@ const initialState = {
   activeTaskId: null,
   progress: 0,
   status: "",
+  etaS: null,
+  elapsedS: null,
   downloadUrl: null,
   printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
@@ -394,6 +400,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setShowAllZones: (showAllZones) => set({ showAllZones }),
   setBatchZoneMetaByTaskId: (batchZoneMetaByTaskId) => set({ batchZoneMetaByTaskId }),
   updateProgress: (progress, status) => set({ progress, status }),
+  setEta: (etaS, elapsedS) => set({ etaS, elapsedS }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
   setPrintQuality: (pq) => set({ printQuality: pq }),
 

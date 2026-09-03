@@ -50,7 +50,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 const ShowcaseSection = dynamic(() => import("@/components/ShowcaseSection"), { ssr: false });
 const RealPrints = dynamic(() => import("@/components/RealPrints"), { ssr: false });
-const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), { ssr: false });
+// T-6.5: three.js (≈1.5 МБ у dev) вантажиться, лише коли демо доїхало до екрана —
+// на телефоні герой-демо нижче згину (заміряно: канвасів 0, а чанк уже завантажено).
+const Model3DViewer = dynamic(() => import("@/components/Model3DViewerLazy"), { ssr: false });
 
 /* ---------- decorative isometric map tile (pure SVG, fast) ---------- */
 function MapTile({ accent = "#2E4A3A", paper = "#EFE6D2" }: { accent?: string; paper?: string }) {
@@ -593,35 +595,29 @@ function Craft() {
   );
 }
 
-/* ---------- Testimonials ---------- */
+/* ---------- Trust facts (T-4.4) ---------- */
+/* Раніше тут були 6 цитат із вигаданими іменами (Anna/Taras/…) без джерела й дати —
+   ризик довіри і GSC merchant-listing spam. Реальних відгуків у репозиторії немає,
+   тож секція показує лише ПЕРЕВІРЮВАНІ факти: усе нижче можна побачити на сайті
+   (галерея реальних друків, дані OSM, способи доставки й оплати, ФОП у футері). */
 function Testimonials() {
   const t = useTranslations("home.testimonials");
-  const items = [
-    { q: t("q1"), a: "Anna" },
-    { q: t("q2"), a: "Taras" },
-    { q: t("q3"), a: "Olena" },
-    { q: t("q4"), a: "Dmytro" },
-    { q: t("q5"), a: "Iryna" },
-    { q: t("q6"), a: "Maksym" },
+  const facts = [
+    { t: t("f1t"), d: t("f1d") },
+    { t: t("f2t"), d: t("f2d") },
+    { t: t("f3t"), d: t("f3d") },
+    { t: t("f4t"), d: t("f4d") },
   ];
-  const tBadge = t("badge");
   return (
-    <section className="bg-bg-2 py-20 lg:py-28">
+    <section className="bg-bg-2 py-20 lg:py-28" data-testid="home-trust">
       <div className="mx-auto max-w-[1360px] px-5 lg:px-8">
-        <h2 className="mb-3 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">
-          {t("title")}
-        </h2>
-        <p className="mb-10 text-[15px] text-ink-2">{t("sub")}</p>
-        <div className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {items.map((t, i) => (
-            <article key={i} className="card card-paper flex w-[300px] shrink-0 snap-start flex-col p-7">
-              {/* T-4.4 (F-12e): фіксований ряд «5 зірок» прибрано — це не рейтинг з
-                  джерела, а декорація (ризик GSC merchant-listing spam). */}
-              <p className="mb-6 flex-1 font-serif text-[18px] leading-snug">«{t.q}»</p>
-              <div className="flex items-center justify-between border-t border-line-soft pt-5">
-                <div className="text-[14px] font-semibold">{t.a}</div>
-                <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">{tBadge}</span>
-              </div>
+        <h2 className="mb-3 max-w-[560px] text-[clamp(28px,3.2vw,46px)]">{t("title")}</h2>
+        <p className="mb-10 max-w-[620px] text-[15px] text-ink-2">{t("sub")}</p>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {facts.map((f, i) => (
+            <article key={i} className="card card-paper flex flex-col p-7">
+              <h3 className="font-serif text-[20px] leading-snug">{f.t}</h3>
+              <p className="mt-3 text-[14px] leading-relaxed text-ink-2">{f.d}</p>
             </article>
           ))}
         </div>

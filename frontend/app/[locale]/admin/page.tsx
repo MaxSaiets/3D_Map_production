@@ -235,6 +235,8 @@ export default function AdminPage() {
 
                   {stats.funnel?.length > 0 && <Funnel funnel={stats.funnel} />}
 
+                  {stats.guided && <GuidedFunnel g={stats.guided} />}
+
                   <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatList title="Країни" rows={stats.byCountry} />
                     <StatList title="Топ сторінок" rows={stats.topPaths} />
@@ -496,6 +498,68 @@ function Funnel({ funnel }: { funnel: { step: string; count: number; pct: number
           );
         })}
       </div>
+    </div>
+  );
+}
+
+const GUIDED_LABELS: Record<string, string> = {
+  pick: "Обрали сценарій (крок 1)",
+  step2: "Дійшли до кроку 2 (місце/напис)",
+  generate: "Натиснули «Готово» (генерація)",
+  order_open: "Відкрили форму замовлення",
+};
+
+/** Guided-воронка: де саме люди відвалюються всередині 2-крокового флоу
+ *  (/create і /keychains). Дані — за обраний період (periodDays), на відміну
+ *  від класичної воронки вище (вона за весь час). */
+function GuidedFunnel({ g }: { g: any }) {
+  const steps: { step: string; count: number; pct: number | null }[] = Array.isArray(g.steps) ? g.steps : [];
+  const rows = (r: any): [string, number][] => (Array.isArray(r) ? r : []).map((x: any) => [String(x[0]), Number(x[1]) || 0]);
+  const picks = rows(g.picksByScenario);
+  const modes = rows(g.modeSwitch);
+  const quotaAt = rows(g.quotaBlock?.byAt);
+  const dash = (n: number) => (n > 0 ? n : "—");
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Guided-воронка (2 кроки)</div>
+      <div className="mb-3 text-[11px] text-ink-3">
+        Новий спрощений флоу конструкторів за останні {g.periodDays ?? 30} днів. % = конверсія з попереднього кроку.
+      </div>
+      <table className="w-full text-[12px]">
+        <tbody>
+          {steps.map((s, i) => (
+            <tr key={s.step} className="border-b border-line/60 last:border-0">
+              <td className="py-1.5 text-ink-2">{i + 1}. {GUIDED_LABELS[s.step] || s.step}</td>
+              <td className="py-1.5 text-right font-semibold text-ink">{s.count ?? 0}</td>
+              <td className="w-16 py-1.5 text-right text-ink-3">
+                {i === 0 || s.pct === null || s.pct === undefined ? "—" : `${s.pct}%`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px]">
+          <div className="mb-1 font-semibold text-ink-2">Генерації</div>
+          <div className="text-ink-3">Обрали своє місце: <b className="text-ink">{dash(g.generate?.placePicked || 0)}</b></div>
+          <div className="text-ink-3">На дефолтному місці: <b className="text-ink">{dash(g.generate?.placeDefault || 0)}</b></div>
+        </div>
+        <div className="rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px]">
+          <div className="mb-1 font-semibold text-ink-2">Тертя</div>
+          <div className="text-ink-3">Уперлись у ліміт (квота): <b className="text-ink">{dash(g.quotaBlock?.total || 0)}</b>
+            {quotaAt.length > 0 && <span className="ml-1">({quotaAt.map(([k, n]) => `${k}: ${n}`).join(", ")})</span>}
+          </div>
+          <div className="text-ink-3">Довге очікування файлу: <b className="text-ink">{dash(g.downloadWait || 0)}</b></div>
+          <div className="text-ink-3">Перейшли в розширений режим: <b className="text-ink">{dash(modes.reduce((a, m) => a + m[1], 0))}</b></div>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <StatList title="Сценарії (що обирають)" rows={picks} />
+        <StatList title="Перемикання режиму" rows={modes} />
+      </div>
+      {g.byDevice == null && (
+        <p className="mt-2 text-[10px] text-ink-3">Розбивки «мобільний / комп'ютер» немає: аналітика не зберігає User-Agent.</p>
+      )}
     </div>
   );
 }

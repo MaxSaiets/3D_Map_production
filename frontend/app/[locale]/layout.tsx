@@ -9,6 +9,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import SiteAnalytics from "@/components/SiteAnalytics";
 import { ToastHost } from "@/components/ToastHost";
 import { GlobalFooter } from "@/components/SiteFooter";
+import { GlobalHeader } from "@/components/SiteHeader";
 import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
 import { mapPriceRange } from "@/lib/mapPrices";
@@ -217,6 +218,9 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
+            {/* A-1 (2026-09-03): одна шапка на весь сайт (лого · меню · мова ·
+                кабінет). Головна і білдери рендерять свій варіант самі. */}
+            <GlobalHeader />
             {children}
             {/* Global footer (legal links + ФОП requisites + contacts + way home)
                 on every content page. Suppressed on "/" (renders its own) and on

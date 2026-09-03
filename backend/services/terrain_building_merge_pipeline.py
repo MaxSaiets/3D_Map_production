@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import trimesh
 
@@ -24,6 +24,11 @@ def merge_terrain_and_buildings(
     terrain_mesh: Optional[trimesh.Trimesh],
     building_meshes: Any,
     merged_building_mesh: Optional[trimesh.Trimesh] = None,
+    # perf-2026-09-03: lazy alternative to `merged_building_mesh`. The aggregate
+    # union is ONLY consumed by the BUILDINGS_FORCE_FUSE path (off by default), so
+    # the caller passes a factory and we materialise it only when we need it. Passing
+    # a factory also means "an aggregate IS available" for the branch check below.
+    merged_building_mesh_factory: Optional[Callable[[], Optional[trimesh.Trimesh]]] = None,
     support_meshes: Any = None,
     bottom_clearance_m: float = 0.0,
 ) -> TerrainBuildingMergeResult:
@@ -39,7 +44,7 @@ def merge_terrain_and_buildings(
             support_meshes=support_meshes,
         )
 
-    if merged_building_mesh is None:
+    if merged_building_mesh is None and merged_building_mesh_factory is None:
         # Немає агрегованого building-меша. Якщо все ж є окремі будівлі —
         # ЗЛИВАЄМО їх у базу одним мешем (юзер: один шар), інакше просто база.
         has_buildings = (
@@ -75,8 +80,17 @@ def merge_terrain_and_buildings(
             support_meshes=support_meshes,
         )
 
-    terrain_components = _component_count(terrain_mesh)
-    building_components = _component_count(merged_building_mesh)
+    # DETERMINISTIC by default: `_force_fuse` is resolved up-front (it used to be
+    # read further down) because everything between here and the early return that
+    # touches the AGGREGATE mesh — the union itself, both component counts (each a
+    # full mesh.split()) and the aggregate bottom-extend — is discarded unless the
+    # fusion actually runs. perf-2026-09-03.
+    _force_fuse = os.environ.get("BUILDINGS_FORCE_FUSE", "").lower() in ("1", "true", "yes")
+    if _force_fuse and merged_building_mesh is None and merged_building_mesh_factory is not None:
+        # Built BEFORE the bottom-extend below, exactly as the caller used to do it.
+        merged_building_mesh = merged_building_mesh_factory()
+    terrain_components = _component_count(terrain_mesh) if _force_fuse else 0
+    building_components = _component_count(merged_building_mesh) if _force_fuse else 0
 
     # FIX (2026-05-15) — крок 1/2 для "один шар":
     # ДО boolean union опускаємо нижню грань кожної будівлі до самого дна
@@ -90,9 +104,10 @@ def merge_terrain_and_buildings(
             building_meshes, target_z=target_z_for_extend
         )
         # Той самий extend на агрегаті, щоб не довелось перебудовувати union.
-        extend_buildings_mesh_to_uniform_bottom(
-            [merged_building_mesh], target_z=target_z_for_extend
-        )
+        if merged_building_mesh is not None:  # perf-2026-09-03: None unless force-fuse
+            extend_buildings_mesh_to_uniform_bottom(
+                [merged_building_mesh], target_z=target_z_for_extend
+            )
         print(
             f"[INFO] pre-merge: building bottoms extended to Z={target_z_for_extend:.4f} "
             f"(floor={float(terrain_mesh.bounds[0][2]):.4f} clearance={_clr:.4f}) "
@@ -113,7 +128,7 @@ def merge_terrain_and_buildings(
     # float; single-material slicing unions them. Set BUILDINGS_FORCE_FUSE=1 to
     # attempt the old one-layer fusion (only fused when it actually collapses to ~one
     # solid; otherwise still falls back to a separate part so nothing is dropped).
-    _force_fuse = os.environ.get("BUILDINGS_FORCE_FUSE", "").lower() in ("1", "true", "yes")
+    # (_force_fuse resolved above - perf-2026-09-03)
     if not _force_fuse:
         return TerrainBuildingMergeResult(
             terrain_mesh=terrain_mesh,

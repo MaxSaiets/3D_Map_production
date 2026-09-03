@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link: інакше внутрішні
 // посилання з /en/keychains губили префікс локалі.
-import { Link } from "@/i18n/navigation";
+import { SiteHeader } from "@/components/SiteHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, KeyRound, Layers3, Map as MapIcon, User } from "lucide-react";
+import { KeyRound, Layers3, Map as MapIcon } from "lucide-react";
 import { KeychainControlPanel } from "@/components/KeychainControlPanel";
 import { KeychainScenarioFlow } from "@/components/KeychainScenarioFlow";
 import { KeychainSlicerPreview } from "@/components/KeychainLifePreview";
@@ -21,6 +21,7 @@ import { useShallow } from "zustand/react/shallow";
 import { GPX_MAX_M_PER_MM } from "@/lib/generation";
 import { useTranslations } from "next-intl";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { AppViewportHeight } from "@/components/ViewportRuntime";
 import { ConstructorIntro, useIntroGate } from "@/components/ConstructorIntro";
 import { KEYCHAIN_PRICE_UAH } from "@/lib/mapPrices";
 
@@ -249,7 +250,8 @@ export default function KeychainsPage() {
   };
 
   return (
-    <div id="main-content" tabIndex={-1} className="min-h-[100dvh] bg-transparent">
+    <div id="main-content" tabIndex={-1} className="min-h-[var(--app-vh)] bg-transparent">
+      <AppViewportHeight />
       {/* UX: тур лише до першої генерації — не перекриває прогрес/3D-результат */}
       {/* Тур — лише ПІСЛЯ закриття вступного блоку (див. /create). */}
       {/* GUIDED: тур не потрібен — сценарний флоу сам веде по кроках. */}
@@ -263,56 +265,10 @@ export default function KeychainsPage() {
           ]}
         />
       )}
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1800px] flex-col px-2 pb-4 pt-2 sm:px-4 lg:px-5">
-        <header className="rounded-[24px] border border-[var(--surface-border)] bg-[rgba(252,249,243,0.92)] px-4 py-3 shadow-[0_12px_40px_rgba(31,41,55,0.07)] backdrop-blur lg:px-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              {/* T-4.1: на телефоні eyebrow+заголовок ховаємо візуально (лишаються в DOM) —
-                  шапка стає одним рядом, контроли видно одразу. */}
-              <p className="sr-only text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)] sm:not-sr-only">
-                {t("eyebrow")}
-              </p>
-              <div>
-                <h1 className="sr-only font-title text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:not-sr-only sm:text-2xl">
-                  {t("title")}
-                </h1>
-                <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-[var(--text-secondary)] xl:block xl:text-[15px]">
-                  {t("subtitle")}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {/* Паритет із шапкою /create: [На головну] + [Карти→/create] +
-                  [Кабінет]. Раніше «Карти» вело на «/» (домашня), тож з
-                  конструктора брелка не можна було стрибнути одразу в
-                  конструктор МАП. Тепер «Карти» = помітна акцент-кнопка → /create
-                  (дзеркало create→«Брелок»), а домашню дає окреме «На головну». */}
-              <div className="flex gap-2">
-                <Link
-                  href="/"
-                  title={t("navHome")}
-                  className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-[22px] border border-[var(--surface-border)] bg-white/80 px-3 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white"
-                >
-                  <ArrowLeft size={16} /> <span className="hidden sm:inline">{t("navHome")}</span>
-                </Link>
-                <Link
-                  href="/create"
-                  className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[22px] border border-[var(--accent-strong)] bg-[var(--accent-strong)] px-3 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(11,92,87,0.25)] transition hover:bg-[rgba(11,92,87,0.92)]"
-                >
-                  <MapIcon size={16} /> {t("navMaps")}
-                </Link>
-                <Link
-                  href="/account"
-                  title={t("navAccount")}
-                  className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-[22px] border border-[rgba(11,92,87,0.25)] bg-[rgba(15,118,110,0.08)] px-3 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
-                >
-                  <User size={16} /> <span className="hidden sm:inline">{t("navAccount")}</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </header>
+      {/* A-1 (2026-09-03): єдина шапка сайту у builder-варіанті (лого · назва ·
+          мова · кабінет · «Мапа →»). Власну 2-рядну шапку з заливною CTA прибрано. */}
+      <SiteHeader variant="builder" title={t("title")} other={{ href: "/create", label: t("navMaps"), icon: "map" }} />
+      <div className="mx-auto flex min-h-[var(--app-vh)] max-w-[1800px] flex-col px-2 pb-4 pt-2 sm:px-4 lg:px-5">
 
         {/* Вступ «ось що вийде» — реальні фото друків до інструмента. Див.
             ConstructorIntro: обвал воронки був на першому кроці. */}
@@ -409,7 +365,7 @@ export default function KeychainsPage() {
             overflow-hidden РІЗАВ налаштування/превʼю (скарга «все закріплено, нічого
             не видно»). Тепер кожна панель = своя висота, сторінка СКРОЛИТЬСЯ. */}
         <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-[var(--sticky-h,0px)] lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
-          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:h-[calc(100dvh-150px)] lg:min-h-[440px]`}>
+          <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:h-[var(--kc-panel-h)] lg:min-h-[440px]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
                 <h2 className="flex items-center gap-2 font-title text-base font-semibold text-[var(--text-primary)] sm:text-lg">
@@ -435,7 +391,7 @@ export default function KeychainsPage() {
               у body) та слухає події monadruk:kc-guided-* (listenGuidedGenerate).
               КАРТА, SVG-макет і 3D-превʼю лишаються видимими — guided це шар. */}
           {guided ? (
-            <aside id="kc-settings" className="order-1 flex min-h-0 flex-col scroll-mt-3 lg:order-1 lg:col-start-1 lg:row-start-1 lg:h-[calc(100dvh-150px)]">
+            <aside id="kc-settings" className="order-1 flex min-h-0 flex-col scroll-mt-3 lg:order-1 lg:col-start-1 lg:row-start-1 lg:h-[var(--kc-panel-h)]">
               <KeychainScenarioFlow
                 onExitGuided={() => setGuided(false)}
                 onApplyTemplate={applyTemplate}
@@ -466,7 +422,7 @@ export default function KeychainsPage() {
               </div>
             </aside>
           ) : (
-          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-150px)] lg:overflow-y-auto lg:backdrop-blur`}>
+          <aside id="kc-settings" className={`${settingsPanelClasses} order-3 scroll-mt-3 overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] lg:order-1 lg:col-start-1 lg:row-start-1 lg:max-h-[var(--kc-panel-h)] lg:overflow-y-auto lg:backdrop-blur`}>
             {/* Назад у сценарний вхід (guided) — маленька кнопка у шапці панелі. */}
             <div className="flex items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-2.5">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -498,7 +454,7 @@ export default function KeychainsPage() {
           )}
 
           {/* PRODUCT LAYOUT — редактор форми. Перед картою (order-1). */}
-          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:h-[calc(100dvh-150px)]`}>
+          <section id="kc-design" className={`${designPanelClasses} order-1 scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_18px_54px_rgba(15,23,42,0.08)] backdrop-blur lg:order-3 lg:col-start-3 lg:row-start-1 lg:h-[var(--kc-panel-h)]`}>
               <div className="flex items-start justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-3 sm:px-5">
                 <div>
                   <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">

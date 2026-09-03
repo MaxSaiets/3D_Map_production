@@ -440,9 +440,15 @@ export function SimpleControlPanel({
         // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
         if (!token) { openLogin(() => { void doGatedDownload(); }); setDlBusy(false); return; }
         if (quota && !quota.isAdmin && quota.remaining <= 0) {
-          window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: t("limitMsg") } }));
+          // A-7 (2026-09-03): вичерпана квота → не глухий кут у Telegram-чат, а
+          // пояснення + одразу форма замовлення друку (ми надрукуємо і надішлемо).
+          import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map" })).catch(() => {});
+          window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("quotaExhausted") } }));
+          orderNowRef.current();
           setDlBusy(false); return;
         }
+        // A-9: «завантажити» = друга генерація 1–3 хв — рахуємо, скільки людей у це впирається.
+        import("@/lib/analytics").then((m) => m.track("download_wait", { product: "map" })).catch(() => {});
         setPrintPrep(0);
         const print = await generatePrint3mf((p) => setPrintPrep(p));
         setPrintPrep(null);
@@ -454,9 +460,11 @@ export function SimpleControlPanel({
         taskId: dlTaskId, downloadUrl: dlUrl,
         meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
         getIdToken, openLogin: () => openLogin(() => { void doGatedDownload(); }),
-        onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
-          detail: { message: t("limitMsg") },
-        })),
+        onLimit: () => {
+          import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map", at: "download" })).catch(() => {});
+          window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("quotaExhausted") } }));
+          orderNowRef.current();
+        },
       });
       if (res.quota && typeof res.quota.remaining === "number") {
         setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
@@ -481,11 +489,14 @@ export function SimpleControlPanel({
     if (!taskGroupId || !primary) return;
     let stop = false;
     let pollFails = 0;
-    const iv = setInterval(async () => {
+    // perf-2026-09-03: перший полінг ОДРАЗУ (кеш-HIT віддає completed миттєво — не
+    // чекати 2.5 с), далі кожні 2.5 с.
+    const tick = async () => {
       try {
         const { api } = await import("@/lib/api");
         const r: any = await api.getStatus(taskGroupId);
         if (stop) return;
+        useGenerationStore.getState().setEta(typeof r.eta_s === "number" ? r.eta_s : null, typeof r.elapsed_s === "number" ? r.elapsed_s : null);
         pollFails = 0;
         setTaskStatuses({ [r.task_id]: r });
         // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,
@@ -544,7 +555,9 @@ export function SimpleControlPanel({
           clearInterval(iv);
         }
       }
-    }, 2500);
+    };
+    const iv = setInterval(tick, 2500);
+    void tick();
     return () => { stop = true; clearInterval(iv); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskGroupId]);

@@ -5,6 +5,7 @@ Utilities for polygon extrusion with more uniform triangulation.
 from typing import Optional
 
 import numpy as np
+import shapely  # perf-2026-09-03 B-9 (vectorised shapely 2 API)
 import trimesh
 from shapely.geometry import Point, Polygon
 
@@ -200,16 +201,36 @@ def extrude_polygon_grid(
                     if _pp.contains(Point(cx, cy)):
                         final_faces.append(face)
             else:
-                for face in tri.simplices:
-                    tri_poly = Polygon(vertices_2d[face])
-                    if tri_poly.is_empty or tri_poly.area <= 1e-9:
+                # perf-2026-09-03 B-9: same exact predicate, cheaper route to it.
+                # 1) all triangles built/measured in one shapely call;
+                # 2) prepared contains() -> difference is empty (outside_area 0) and
+                #    intersection is the whole triangle (area > 1e-9 > 0): passes;
+                # 3) prepared not-intersects -> intersection empty, inside_area 0.0:
+                #    fails. Everything else still pays for the exact overlay pair.
+                from shapely.prepared import prep as _prep_exact
+
+                _simplices = tri.simplices
+                _tri_polys = shapely.polygons(
+                    np.ascontiguousarray(vertices_2d[_simplices])
+                )
+                _tri_empty = shapely.is_empty(_tri_polys)
+                _tri_areas = shapely.area(_tri_polys)
+                _pp_exact = _prep_exact(polygon)
+                for _fi, face in enumerate(_simplices):
+                    if _tri_empty[_fi] or _tri_areas[_fi] <= 1e-9:
+                        continue
+                    tri_poly = _tri_polys[_fi]
+                    if _pp_exact.contains(tri_poly):
+                        final_faces.append(face)
+                        continue
+                    if not _pp_exact.intersects(tri_poly):
                         continue
                     try:
                         outside_area = float(tri_poly.difference(polygon).area)
                         inside_area = float(tri_poly.intersection(polygon).area)
                     except Exception:
                         continue
-                    tol_area = max(float(tri_poly.area) * 1e-6, 1e-8)
+                    tol_area = max(float(_tri_areas[_fi]) * 1e-6, 1e-8)
                     if inside_area > 0.0 and outside_area <= tol_area:
                         final_faces.append(face)
             if not final_faces:

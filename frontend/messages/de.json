@@ -71,7 +71,7 @@
       "dragHint": "Live-3D-Modelle — zum Drehen ziehen",
       "try": "Karte erstellen",
       "badgeEco": "Eco PLA",
-      "badgeReady": "Fertige 3MF"
+      "badgeReady": "Datei für den 3D-Druck"
     },
     "path": {
       "eyebrow1": "Weg 1 · Eigene Geometrie",
@@ -94,7 +94,7 @@
       "s3t": "Wir generieren",
       "s3d": "Der Server baut ein präzises 3D-Modell aus OpenStreetMap-Daten und Höhen.",
       "s4t": "Herunterladen",
-      "s4d": "Fertige 3MF für Bambu Studio / PrusaSlicer. Drucke zuhause.",
+      "s4d": "Die Datei öffnet sich in Ihrer Drucker-Software (Bambu, Prusa). Drucken Sie zu Hause.",
       "cta": "Karte erstellen"
     },
     "templates": {
@@ -110,13 +110,13 @@
       "titleItalic": "Ein Dokument.",
       "desc": "Jede Karte basiert auf OpenStreetMap-Geodaten und echten Höhen. Das Modell wird automatisch für sauberen FDM-Druck vereinfacht: minimale Wandstärken, Farbebenen für Mehrfarbdrucker (Bambu AMS).",
       "spec1t": "Präziser Druck",
-      "spec1d": "Für FDM optimiert",
+      "spec1d": "Optimiert für den 3D-Druck zu Hause",
       "spec2t": "PLA-Biokunststoff",
       "spec2d": "Aus Maisstärke",
       "spec3t": "Echte Daten",
       "spec3d": "OpenStreetMap + Höhen",
-      "spec4t": "3MF-Format",
-      "spec4d": "Bambu / Prusa bereit"
+      "spec4t": "Druckerdatei",
+      "spec4d": "öffnet sich in Bambu / Prusa"
     },
     "prints": {
       "title": "So sieht es gedruckt aus",
@@ -126,15 +126,23 @@
       "alt": "3D-gedrucktes Produkt {n}"
     },
     "testimonials": {
-      "title": "Was Kunden sagen",
-      "sub": "Wische, um mehr Bewertungen zu sehen →",
+      "title": "Warum Sie uns vertrauen können",
+      "sub": "Keine Bewertungen mit erfundenen Namen — nur das, was Sie auf dieser Seite prüfen können.",
       "badge": "Bewertung",
       "q1": "Hat mir sehr gefallen, danke! Das Ergebnis übertraf meine Erwartungen.",
       "q2": "Schnell und einfach. Es ist toll geworden, sehr empfehlenswert.",
       "q3": "Tolle Qualität, alles scharf. Sehr zufrieden.",
       "q4": "Einfacher, angenehmer Service. Hat beim ersten Mal geklappt.",
       "q5": "Schönes Ergebnis, sauber gemacht. Danke für die Arbeit!",
-      "q6": "In wenigen Minuten fertig, alles klar. Klasse!"
+      "q6": "In wenigen Minuten fertig, alles klar. Klasse!",
+      "f1t": "Echte Fotos der Drucke",
+      "f1d": "In der Galerie sehen Sie gedruckte Modelle, keine Renderings.",
+      "f2t": "OpenStreetMap-Daten",
+      "f2d": "Straßen, Gebäude und Gewässer stammen aus der offenen Weltkarte, Höhen aus Geländedaten.",
+      "f3t": "Wir drucken und versenden selbst",
+      "f3d": "Nova Poshta oder Ukrposhta innerhalb der Ukraine, Zahlung nach Bestätigung der Bestellung.",
+      "f4t": "Eingetragenes Unternehmen",
+      "f4d": "Firmendaten, Angebot und Rückgabebedingungen stehen im Fußbereich jeder Seite."
     },
     "faq": {
       "eyebrow": "Fragen & Antworten",
@@ -464,7 +472,7 @@
     "areaPrompt": "Zeichne ein Rechteck auf der Karte",
     "done": "Fertig",
     "generating": "Generierung {progress}%",
-    "downloadReady": "3MF herunterladen",
+    "downloadReady": "Druckerdatei herunterladen",
     "generatePrompt": "Modell generieren",
     "aria": "Erstellungsschritte",
     "step": "Schritt {n}",
@@ -494,7 +502,7 @@
     "errSelectZone": "Wähle mindestens eine Zelle im Raster aus",
     "errGen": "Generierungsfehler",
     "qualityWarn": "Das Modell ist fertig, aber es gibt Druckhinweise. Details im „Pro“-Modus.",
-    "downloadFile": "3MF herunterladen",
+    "downloadFile": "Datei für Ihren 3D-Drucker",
     "downloadShort": "Herunterladen",
     "mapLabelPh": "Beschriftung auf dem Magneten (z. B. KYIV) — optional",
     "mapLabelAria": "Gravurtext des Magneten",
@@ -520,7 +528,7 @@
     "advancedHint": "Brauchst du eine Reihe von Zonen (Hexagone / Quadrate)? „Pro“-Modus öffnen →",
     "orderPrint": "Druck bestellen",
     "limitMsg": "Ich habe alle 5 kostenlosen Downloads aufgebraucht. Ich möchte mehr / Druck — bitte kontaktiert mich.",
-    "gpxUpload": "GPX-Route auf der Karte",
+    "gpxUpload": "Lauf- oder Reiseroute (GPX-Datei)",
     "gpxChoose": "Datei wählen",
     "gpxReplace": "Ersetzen",
     "gpxClear": "Entfernen",
@@ -557,7 +565,7 @@
     "fmtStandard": "3D-Karte",
     "fmtStandardHint": "Klassische erhabene Karte: Gebäude, Parks und Wasser mit Höhe. Relief für Geländehöhen aktivieren.",
     "fmtFlat": "Flach farbig",
-    "fmtFlatHint": "Jede Schicht eine Farbe, druckt flach. Ideal für Bambu AMS. Verbinder, Rahmen oder Zuhause-Markierung möglich.",
+    "fmtFlatHint": "Jede Ebene in eigener Farbe, flach gedruckt. Ideal für Mehrfarbdruck. Verbinder, Rahmen oder Ihr Zuhause markieren möglich.",
     "fmtMagnet": "Magnet",
     "fmtMagnetHint": "Flacher 6-cm-Kühlschrankmagnet mit Magnettaschen auf der Rückseite.",
     "fmtPanel": "Wandpaneel",
@@ -568,7 +576,7 @@
     "magnetOffForPanel": "Magnet und GPX deaktiviert — ein Panel erzeugt volle Kacheln",
     "generatePreview": "Vorschau generieren",
     "generatePrint": "Druck-3MF generieren",
-    "etaPrint": "≈ 1–3 Min · vollständiges Druck-3MF",
+    "etaPrint": "≈ 1–3 Min. · vollständiges Druckmodell",
     "dlCount": "{n} übrig",
     "dlUnlimited": "unbegrenzt",
     "piecesTitle": "Mehrere Zonen",
@@ -699,7 +707,7 @@
     "aboutText": "Verwandle jeden Ort der Erde in ein 3D-Souvenir. Alles im Browser, druckfertig.",
     "bullet1": "Jede Stadt der Welt — eine 3D-Karte in ~3 Minuten",
     "bullet2": "Schlüsselanhänger mit Ihrem Stadtteil und Ihrer Aufschrift",
-    "bullet3": "5 kostenlose Downloads von 3MF (vollständiges Modell)",
+    "bullet3": "5 kostenlose Druckerdateien (Vollmodell)",
     "bullet4": "Bereit für den 3D-Druck (FDM 0,4 mm) — oder bestellen Sie den Druck bei uns",
     "bullet5": "Modellverlauf und gespeicherte Stadtraster in Ihrem Konto",
     "accountLabel": "Konto",
@@ -723,7 +731,7 @@
     "createFirst": "Erstellen Sie Ihr erstes →",
     "previewAlt": "Vorschau",
     "orderPrint": "Druck bestellen",
-    "downloadTitle": "3MF herunterladen",
+    "downloadTitle": "Druckerdatei herunterladen",
     "myGrids": "Meine Stadtraster",
     "noGrids": "Noch keine gespeicherten Raster. Aktivieren Sie im Konfigurator „Zonenraster“, erstellen Sie ein Raster und tippen Sie auf „Raster speichern“ — danach können Sie benachbarte Zellen generieren.",
     "gridFallback": "Raster",
@@ -828,7 +836,7 @@
       "bad": "Korrekturen nötig",
       "fix": "Beheben: {issue}",
       "nextWarn": "Für ein besseres Ergebnis einen kleineren Ausschnitt oder größeren Kartenbereich wählen.",
-      "nextGood": "Du kannst die 3MF erstellen."
+      "nextGood": "Das Modell kann erstellt werden."
     },
     "details": {
       "summary": "Druckdetails und Schnellaktionen",
@@ -902,7 +910,7 @@
       "title": "Prüfung vor der Generierung",
       "desc": "Hier gehören nur für den Kunden verständliche Parameter hin: Größe, Text, Detailgrad und Druckbereitschaft.",
       "noText": "kein Text",
-      "generated3mf": "Generierte 3MF",
+      "generated3mf": "Erstelltes Modell",
       "layersNote": "Text und Rand sind separate Ebenen, die Karte ist auf den Innenbereich des Anhängers zugeschnitten."
     },
     "metric": {
@@ -1062,29 +1070,29 @@
     },
     "verdict": {
       "bad": {
-        "title": "3MF muss geprüft werden",
+        "title": "Modell braucht eine Prüfung",
         "detail": "Problem-Ebenen: {layers}."
       },
       "warn": {
-        "title": "3MF erstellt, es gibt Warnungen",
+        "title": "Modell erstellt, mit Hinweisen",
         "detail": "Prüfen: {layers}."
       },
       "good": {
-        "title": "3MF sieht bereit für den Slicer aus",
+        "title": "Modell ist druckbereit",
         "detail": "Basis, Rand, Karte, Gebäude und Text sind als separate Ebenen vorhanden."
       }
     },
     "status": {
       "generating": "Anhänger wird generiert",
-      "ready3mf": "3MF fertig",
+      "ready3mf": "Modell fertig",
       "ready": "Fertig"
     },
     "btn": {
       "generating": "Generierung...",
-      "create3mf": "3MF erstellen",
+      "create3mf": "Modell erstellen",
       "buyOrder": "Kaufen / Druck bestellen",
       "order": "Druck bestellen",
-      "download3mf": "3MF herunterladen"
+      "download3mf": "Druckerdatei herunterladen"
     },
     "quota": {
       "remaining": "{remaining} von {limit} kostenlosen Downloads übrig",
@@ -1102,7 +1110,7 @@
       "notReady": "Nicht druckbereit: {issues}.",
       "generic": "Fehler bei der Anhänger-Generierung",
       "limitContact": "Ich habe 5 kostenlose Anhänger-Downloads aufgebraucht. Ich möchte mehr / einen Druck — bitte kontaktiere mich.",
-      "downloadFailed": "3MF konnte nicht heruntergeladen werden",
+      "downloadFailed": "Datei konnte nicht geladen werden",
       "retry": "Erneut versuchen"
     },
     "templates": {
@@ -1726,7 +1734,7 @@
     "magnetDesc": "Kompakte 6-cm-Karte mit Magnet im Boden",
     "keychainTitle": "Schlüsselanhänger mit meinem Ort",
     "keychainDesc": "Die Karte Ihres Zuhauses immer am Schlüsselbund",
-    "fullTitle": "Voller Konfigurator",
+    "fullTitle": "Erweiterter Modus",
     "fullDesc": "Alle Einstellungen: Serien, GPX, Stile, Formen",
     "moreLabel": "Mehr:",
     "moreTitle": "Was wir sonst können",
@@ -1756,7 +1764,7 @@
     "createAnother": "Noch eins erstellen",
     "backToGuided": "← Einfacher Modus",
     "sizeTitle": "Größe wählen",
-    "advancedSettings": "Mehr Einstellungen",
+    "advancedSettings": "Erweiterter Modus (alle Einstellungen)",
     "personalizeTitle": "Machen Sie sie persönlich",
     "myHome": "Mein Zuhause auf der Karte",
     "myHomeCount": "Mein Zuhause: {n} ausgewählt",
@@ -1777,13 +1785,23 @@
     "twoWays": "Zwei Wege zum Modell",
     "wayPrint": "Wir drucken und versenden",
     "waySelf": "Ich drucke selbst",
-    "downloadCta": "Datei herunterladen (3MF)",
-    "downloadSub": "Kostenlos · Google-Anmeldung · öffnet sich in der App deines Druckers",
+    "downloadCta": "Datei für Ihren 3D-Drucker laden",
+    "downloadSub": "Kostenlos · Google-Anmeldung · Datei dauert ≈2 Min. und öffnet sich in Ihrer Drucker-Software",
     "quotaLeft": "{n} von {limit} kostenlosen Dateien übrig",
     "previewCta": "3D-Vorschau anzeigen · kostenlos",
     "previewCtaShort": "3D-Vorschau · kostenlos",
     "printFromLine": "Druck {price} · Versand mit Nova Poshta in der Ukraine",
-    "readyDelivery": "Druck und Versand in 2–4 Werktagen · Nova Poshta oder Ukrposhta · Zahlung nach Bestätigung"
+    "readyDelivery": "Druck und Versand in 2–4 Werktagen · Nova Poshta oder Ukrposhta · Zahlung nach Bestätigung",
+    "defaultPlace": "Zentrum von Kyjiw (Standard)",
+    "defaultPlaceHint": "Suchen Sie Ihre Adresse, tippen Sie auf eine Stadt oder ziehen Sie den Rahmen auf der Karte – wir drucken, was im Rahmen ist.",
+    "customPlace": "gewählter Kartenausschnitt",
+    "stageData": "OSM-Daten & Höhen",
+    "stageTerrain": "Gelände der Basis",
+    "stageDetail": "Straßen, Wasser, Gebäude",
+    "stageFile": "3D-Datei wird erstellt",
+    "etaLeft": "≈ {min} Min.",
+    "etaSoon": "unter einer Minute",
+    "etaOver": "dauert länger als üblich — gleich fertig"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",
@@ -1801,7 +1819,7 @@
     "cardTokenDesc": "Kompakter Anhänger mit der Karte Ihres Zuhauses",
     "cardRectTitle": "Klassisches Rechteck",
     "cardRectDesc": "Vertikaler 35×55-mm-Anhänger mit Ihrer Viertelkarte",
-    "cardFullTitle": "Voller Designer",
+    "cardFullTitle": "Erweiterter Modus",
     "cardFullDesc": "Alle Formen, Regler, GPX-Track, Topo-Relief",
     "waitingPlace": "Adresse suchen, oben eine Stadt antippen oder den Rahmen auf der Karte ziehen",
     "placeChosen": "Ort ausgewählt",
@@ -1823,8 +1841,8 @@
     "twoWays": "Zwei Wege zum Modell",
     "wayPrint": "Wir drucken und versenden",
     "waySelf": "Ich drucke selbst",
-    "downloadCta": "Datei herunterladen (3MF)",
-    "downloadSub": "Kostenlos · Google-Anmeldung · öffnet sich in der App deines Druckers",
+    "downloadCta": "Datei für Ihren 3D-Drucker laden",
+    "downloadSub": "Kostenlos · Google-Anmeldung · öffnet sich in Ihrer Drucker-Software",
     "quotaLeft": "{n} von {limit} kostenlosen Dateien übrig",
     "previewCta": "Anhänger in 3D anzeigen · kostenlos",
     "previewCtaShort": "3D-Vorschau · kostenlos",
@@ -1834,12 +1852,21 @@
     "createAnother": "Noch einen erstellen",
     "changeSomething": "Möchten Sie etwas ändern?",
     "backToGuided": "← Einfacher Modus",
-    "advancedSettings": "Voller Designer (alle Einstellungen)",
+    "advancedSettings": "Erweiterter Modus (alle Einstellungen)",
     "fullModeTitle": "Voller Designer",
     "myHome": "Mein Zuhause auf der Karte",
     "myHomeCount": "Mein Zuhause: {n} ausgewählt",
     "myHomeClear": "Auswahl aufheben",
-    "myHomeHintClick": "Klicken Sie Ihr Gebäude auf der Karte an — es wird ein separater roter Einsatz"
+    "myHomeHintClick": "Klicken Sie Ihr Gebäude auf der Karte an — es wird ein separater roter Einsatz",
+    "defaultPlace": "Zentrum von Kyjiw (Standard)",
+    "defaultPlaceHint": "Suchen Sie Ihre Adresse, tippen Sie auf eine Stadt oder ziehen Sie den Rahmen – der Anhänger zeigt, was im Rahmen ist.",
+    "customPlace": "gewählter Kartenausschnitt",
+    "stageData": "OSM-Daten",
+    "stageDetail": "Ebenen: Straßen, Wasser, Gebäude",
+    "stageFile": "3D-Datei wird erstellt",
+    "etaLeft": "≈ {min} Min.",
+    "etaSoon": "unter einer Minute",
+    "etaOver": "dauert länger als üblich — gleich fertig"
   },
   "maket": {
     "backHome": "Startseite",
@@ -1898,7 +1925,7 @@
     "building": "Modell wird gebaut…",
     "genFailed": "Modell konnte nicht erstellt werden. Bitte erneut versuchen.",
     "readyTitle": "Ihr Modell ist fertig",
-    "download3mf": "3MF herunterladen",
+    "download3mf": "Druckerdatei herunterladen",
     "orderPrint": "Druck bestellen",
     "backToEdit": "Zurück zum Bearbeiten",
     "areaLabel": "Gesamtfläche, m²",

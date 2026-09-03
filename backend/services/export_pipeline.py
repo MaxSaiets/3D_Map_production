@@ -399,8 +399,42 @@ def export_generation_outputs(
     # opaque number before; splitting it shows which of the 3 export passes
     # (primary/preview-parts/print-package) actually dominates. Pure logging.
     import time as _time_exp
-    _t_main_start = _time_exp.perf_counter()
-    parts_from_main = export_scene(
+
+    # perf-2026-09-03: the preview-parts item list is built HERE (it used to be built
+    # further below) so we can detect the case where the preview-parts pass writes the
+    # very same file as the primary export and silently overwrites it.
+    _preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    preview_items: list[Tuple[str, trimesh.Trimesh]] = []
+    if include_preview_parts and not _preview_mode:
+        if terrain_mesh_for_export is not None:
+            preview_items.append(("Base", terrain_mesh_for_export))
+        if road_mesh is not None:
+            preview_items.append(("Roads", road_mesh))
+        if building_meshes_for_export:
+            try:
+                combined_buildings = trimesh.util.concatenate([b for b in building_meshes_for_export if b is not None])
+                if combined_buildings is not None and len(combined_buildings.vertices) > 0:
+                    preview_items.append(("Buildings", combined_buildings))
+            except Exception:
+                pass
+        if water_mesh is not None:
+            preview_items.append(("Water", water_mesh))
+        if parks_mesh is not None:
+            preview_items.append(("Parks", parks_mesh))
+        if extra_mesh_items:
+            preview_items.extend((name, mesh) for name, mesh in extra_mesh_items if mesh is not None)
+    _preview_prefix = str((output_dir / basename).resolve())
+    # perf-2026-09-03: export_preview_parts_3mf() writes "<prefix>.3mf". For a 3MF
+    # primary that is the SAME path the primary export just wrote, so the primary
+    # file never survives — running it first is pure waste. Defer it; the safety net
+    # below runs it if the preview-parts pass produces no file.
+    _skip_primary_export = (
+        bool(preview_items)
+        and primary_format == "3mf"
+        and Path(_preview_prefix + ".3mf").resolve() == output_file_abs
+    )
+
+    _primary_export_kwargs = dict(  # perf-2026-09-03: reusable so it can be deferred
         terrain_mesh=terrain_mesh_for_export,
         road_mesh=road_mesh,
         building_meshes=building_meshes_for_export,
@@ -418,13 +452,28 @@ def export_generation_outputs(
         extra_mesh_items=extra_mesh_items,
         repair_meshes=repair_meshes,
     )
-    print(f"[TIMING][EXPORT] primary_scene_export: {_time_exp.perf_counter() - _t_main_start:.2f}s")
+
+    def _run_primary_export():  # perf-2026-09-03
+        _t_main_start = _time_exp.perf_counter()
+        _res = export_scene(**_primary_export_kwargs)
+        print(f"[TIMING][EXPORT] primary_scene_export: {_time_exp.perf_counter() - _t_main_start:.2f}s")
+        return _res
+
+    if _skip_primary_export:
+        parts_from_main = {"3mf": str(output_file_abs)}
+        print("[TIMING][EXPORT] primary_scene_export: SKIPPED - the preview-parts pass "
+              "writes the identical file (perf-2026-09-03)")
+    else:
+        parts_from_main = _run_primary_export()
 
     # ТЕМА/ПАЛІТРА (#2): post-export перепатч m:colorgroup 3MF на тематичні кольори
     # (sepia/noir/ocean/neon). classic/порожньо → пропуск (основний експорт не зачеплено).
     try:
         _palette = str(getattr(request, "color_palette", "") or "").lower().strip()
-        if primary_format == "3mf" and _palette and _palette != "classic":
+        # perf-2026-09-03: nothing to patch when the primary export was deferred.
+        # (NOTE: even before this change the patch was destroyed by the preview-parts
+        # pass overwriting the file — the palette feature is dead in the map path.)
+        if primary_format == "3mf" and _palette and _palette != "classic" and not _skip_primary_export:
             from services.model_exporter import get_palette_color_map, _patch_3mf_colors
             _pm = get_palette_color_map(_palette)
             if _pm:
@@ -439,7 +488,7 @@ def export_generation_outputs(
                 continue
             task.set_output(f"{part_name}_stl", str(Path(path).resolve()))
 
-    _preview_mode = os.environ.get("PREVIEW_MODE", "").lower() in ("1", "true", "yes")
+    # (_preview_mode is computed above - perf-2026-09-03)
     # The parallel STL is a SECOND full export (with its own slow "aggressive
     # cleanup" mesh repair) on top of the primary 3MF. On big terrain meshes
     # (~640k verts) it roughly DOUBLES the export stage for a format the site
@@ -481,27 +530,10 @@ def export_generation_outputs(
     if include_preview_parts and not _preview_mode:
         _t_parts_start = _time_exp.perf_counter()
         try:
-            preview_items: list[Tuple[str, trimesh.Trimesh]] = []
-            if terrain_mesh_for_export is not None:
-                preview_items.append(("Base", terrain_mesh_for_export))
-            if road_mesh is not None:
-                preview_items.append(("Roads", road_mesh))
-            if building_meshes_for_export:
-                try:
-                    combined_buildings = trimesh.util.concatenate([b for b in building_meshes_for_export if b is not None])
-                    if combined_buildings is not None and len(combined_buildings.vertices) > 0:
-                        preview_items.append(("Buildings", combined_buildings))
-                except Exception:
-                    pass
-            if water_mesh is not None:
-                preview_items.append(("Water", water_mesh))
-            if parks_mesh is not None:
-                preview_items.append(("Parks", parks_mesh))
-            if extra_mesh_items:
-                preview_items.extend((name, mesh) for name, mesh in extra_mesh_items if mesh is not None)
-
+            # perf-2026-09-03: preview_items / prefix are built above (before the
+            # primary export) so the duplicate-path check can run first.
             if preview_items:
-                prefix = str((output_dir / basename).resolve())
+                prefix = _preview_prefix
                 include_components = {
                     "base": getattr(request, "preview_include_base", True),
                     "terrain": getattr(request, "preview_include_base", True),
@@ -532,6 +564,12 @@ def export_generation_outputs(
         print(f"[TIMING][EXPORT] preview_parts_5x (Base/Roads/Buildings/Water/Parks): "
               f"{_time_exp.perf_counter() - _t_parts_start:.2f}s")
 
+    # perf-2026-09-03 safety net: the primary export was deferred, but the
+    # preview-parts pass produced no file (it is wrapped in try/except) - run it now.
+    if _skip_primary_export and not output_file_abs.exists():
+        print("[WARN] preview-parts export produced no file - running the deferred primary export")
+        parts_from_main = _run_primary_export()
+
     if not output_file_abs.exists():
         if primary_format == "3mf":
             stl_fallback = (output_dir / f"{basename}.stl").resolve()
@@ -552,9 +590,19 @@ def export_generation_outputs(
     if stl_preview_abs and stl_preview_abs.exists():
         task.set_output("stl", str(stl_preview_abs))
 
-    if include_print_package and not _preview_mode:
+    # perf-2026-09-03: the print LAYOUT and the print PACKAGE only ever carry the
+    # per-part meshes (base/roads/parks/water/buildings). Without EXPORT_PARALLEL_STL=1
+    # there are none: _create_print_layout_3mf() always returns None and the package
+    # degenerates to a zip that merely re-wraps the primary 3MF (nothing downstream
+    # reads "print_package"). Skip that no-op work.
+    _layout_part_keys = ("base", "roads", "parks", "water", "buildings")
+    _parts_for_layout = stl_parts_from_preview or parts_from_main
+    _has_print_parts = bool(_parts_for_layout) and any(
+        str(_k).lower() in _layout_part_keys for _k in _parts_for_layout
+    )
+    if include_print_package and not _preview_mode and _has_print_parts:
         _t_pkg_start = _time_exp.perf_counter()
-        parts_for_layout = stl_parts_from_preview or parts_from_main
+        parts_for_layout = _parts_for_layout
         print_layout_3mf_abs = _create_print_layout_3mf(
             output_dir=output_dir,
             task_id=task_id,

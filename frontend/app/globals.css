@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 :root {
+  /* ---- T-6.4: стабільна висота екрана (див. components/ViewportRuntime.tsx) ----
+     Фолбек до маунта JS. AppViewportHeight підміняє на фіксовані px і НЕ оновлює
+     на resize — саме resize від iOS-адресного рядка змушував карту «стрибати». */
+  --app-vh: 100vh;
+  /* Похідні висоти панелей конструкторів — одне джерело замість calc(100dvh-…) у класах. */
+  --builder-h: calc(var(--app-vh) - 140px);
+  --builder-max-h: calc(var(--app-vh) - 110px);
+  --builder-map-min-h: calc(var(--app-vh) * 0.42);
+  --kc-panel-h: calc(var(--app-vh) - 150px);
+
   /* ---- Premium palette (monadruk / 3d-fish) ---- */
   --bg: #f4efe4;        /* warm ivory */
   --bg-2: #ece5d3;      /* deeper sand */
@@ -57,6 +67,11 @@
   border-radius: 3px;
 }
 
+/* До маунта JS (і без JS) поводимось як раніше — dvh там, де він є. */
+@supports (height: 100dvh) {
+  :root { --app-vh: 100dvh; }
+}
+
 html {
   height: 100%;
   color-scheme: light;
@@ -66,7 +81,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  min-height: 100dvh;
+  min-height: var(--app-vh);
   overflow-x: hidden;
   color: var(--ink);
   background: var(--bg);

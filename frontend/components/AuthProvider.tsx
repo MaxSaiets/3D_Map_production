@@ -93,7 +93,9 @@ type Tab = "email" | "phone" | "google";
 
 function LoginModal({ onClose }: { onClose: () => void }) {
   const t = useTranslations("auth");
-  const [tab, setTab] = useState<Tab>("email");
+  // A-7 (2026-09-03): підпис під кнопкою завантаження обіцяє «вхід через Google» —
+  // модалка відкривається одразу на цій вкладці (email/телефон лишаються поруч).
+  const [tab, setTab] = useState<Tab>("google");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

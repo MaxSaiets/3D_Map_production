@@ -61,6 +61,7 @@ from services.full_generation_pipeline import run_full_generation_pipeline
 from services.generation_runtime_context import prepare_generation_runtime_context
 
 from services.generation_task import GenerationTask
+from services import result_cache as _rc  # perf-2026-09-03: кеш результатів + ETA
 from services.firebase_service import FirebaseService
 from services.global_center import set_global_center, get_global_center, GlobalCenter
 from services.hexagonal_grid import generate_hexagonal_grid, hexagons_to_geojson, validate_hexagonal_grid, calculate_grid_center_from_geojson
@@ -107,6 +108,7 @@ app.add_middleware(
 # This protects the expensive/abuse-prone endpoints (generation, order, contact,
 # analytics, share) from a single host hammering us.
 import time as _time
+from datetime import datetime as _dtm  # perf-2026-09-03
 from collections import deque as _deque
 import threading as _threading
 
@@ -908,6 +910,10 @@ class GenerationResponse(BaseModel):
     status: str
     message: Optional[str] = None
     all_task_ids: Optional[List[str]] = None  # Р”Р»СЏ РјРЅРѕР¶РёРЅРЅРёС… Р·РѕРЅ
+    # perf-2026-09-03: чесний ETA (медіана реальних прогонів) + ознаки кешу/закордону.
+    eta_s: Optional[int] = None
+    cached: bool = False
+    foreign: bool = False
 
 
 @app.get("/")
@@ -1610,6 +1616,22 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     # відвідувача (анонім) ОКРЕМО: країна, ЗВІДКИ (реферер), які сторінки, коли.
     visitor_sessions: Dict[str, Dict] = {}
     FUNNEL_STEPS = ["view", "area", "generate", "order_open", "order_submit", "paid"]
+    # ── Guided-воронка (нові події гайд-флоу /create та /keychains) ──────────
+    # На відміну від класичної воронки (все за весь час), guided-блок рахуємо ЗА
+    # ПЕРІОД `days` — guided-флоу молодий, старі дані до редизайну лише шумлять.
+    # ПАСТКА: /api/track зберігає props як РЯДКИ (str(v)), тож step == "2", а
+    # placePicked == "True"/"False" — порівнюємо нормалізовано, не за типом.
+    from datetime import timedelta as _td, timezone as _tz
+    _cutoff_day = (_dt.now(_tz.utc) - _td(days=max(1, int(days or 30)))).strftime("%Y-%m-%d")
+    g_pick: Counter = Counter()        # "продукт · сценарій" → к-сть
+    g_step2 = 0                        # дійшли до кроку 2 (місце/напис)
+    g_gen_picked = 0                   # генерації з обраним місцем
+    g_gen_default = 0                  # генерації на дефолтному місці
+    g_mode: Counter = Counter()        # "from→to" → к-сть перемикань у розширений
+    g_quota: Counter = Counter()       # місце блокування квотою ("download"/"—")
+    g_wait = 0                         # скільки разів бачили довге очікування
+    g_funnel: Counter = Counter()      # класичні кроки, але В МЕЖАХ періоду
+    _TRUE = ("true", "1", "yes")
     try:
         # Читаємо ПОПЕРЕДНІЙ ротований лог (.jsonl.1, якщо є) + поточний — щоб одна
         # ротація (при перевищенні 25МБ) не ховала й не втрачала недавню історію.
@@ -1648,6 +1670,29 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                     step = props.get("step")
                     if step:
                         funnel_counter[step] += 1
+                        if str(r.get("day", "")) >= _cutoff_day:
+                            g_funnel[step] += 1
+                elif ev in ("guided_pick", "guided_step", "guided_generate",
+                            "mode_switch", "quota_block", "download_wait"):
+                    # той самий один прохід по логу — без окремого читання файлу
+                    if str(r.get("day", "")) >= _cutoff_day:
+                        _p = str(props.get("product") or "?")
+                        if ev == "guided_pick":
+                            g_pick[f"{_p} · {props.get('scenario') or '—'}"] += 1
+                        elif ev == "guided_step":
+                            if str(props.get("step") or "") == "2":
+                                g_step2 += 1
+                        elif ev == "guided_generate":
+                            if str(props.get("placePicked") or "").lower() in _TRUE:
+                                g_gen_picked += 1
+                            else:
+                                g_gen_default += 1
+                        elif ev == "mode_switch":
+                            g_mode[f"{_p}: {props.get('from') or '—'} → {props.get('to') or '—'}"] += 1
+                        elif ev == "quota_block":
+                            g_quota[str(props.get("at") or "generate")] += 1
+                        else:  # download_wait
+                            g_wait += 1
                 elif ev == "click":
                     x, y = props.get("x"), props.get("y")
                     if isinstance(x, (int, float)) and isinstance(y, (int, float)) and len(click_points[path]) < 1200:
@@ -1713,6 +1758,30 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     first = funnel_counter.get("view", 0) or 1
     funnel = [{"step": st, "count": funnel_counter.get(st, 0),
                "pct": round(100.0 * funnel_counter.get(st, 0) / first, 1)} for st in FUNNEL_STEPS]
+    # ── Guided-воронка: pick → крок 2 → генерація → відкрили замовлення ──────
+    # pct = конверсія з ПОПЕРЕДНЬОГО кроку (де саме відвалюються всередині гайду).
+    _g_pick_total = sum(g_pick.values())
+    _g_gen_total = g_gen_picked + g_gen_default
+    _g_seq = [("pick", _g_pick_total), ("step2", g_step2),
+              ("generate", _g_gen_total), ("order_open", g_funnel.get("order_open", 0))]
+    _g_steps = []
+    for _i, (_k, _c) in enumerate(_g_seq):
+        _prev = _g_seq[_i - 1][1] if _i > 0 else _c
+        _g_steps.append({"step": _k, "count": _c,
+                         "pct": round(100.0 * _c / _prev, 1) if _prev else None})
+    guided = {
+        "periodDays": days,
+        "steps": _g_steps,
+        "picksByScenario": g_pick.most_common(12),
+        "generate": {"total": _g_gen_total, "placePicked": g_gen_picked, "placeDefault": g_gen_default},
+        "modeSwitch": g_mode.most_common(8),
+        "quotaBlock": {"total": sum(g_quota.values()), "byAt": g_quota.most_common(5)},
+        "downloadWait": g_wait,
+        # Розбивки по пристрою НЕМАЄ: /api/track не зберігає ні User-Agent, ні
+        # прапорець mobile/desktop (лише денний хеш) → фронт ховає цей рядок.
+        "byDevice": None,
+    }
+
     # Топ-6 сторінок за к-стю кліків (для теплокарти) + топ елементів.
     top_click_paths = sorted(click_points.items(), key=lambda kv: -len(kv[1]))[:6]
 
@@ -1818,6 +1887,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "byCountry": country_counter.most_common(15),
         "topRefs": ref_counter.most_common(10),
         "funnel": funnel,
+        "guided": guided,
         "recentVisitors": recent_visitors,
         "clicksByPath": {p: pts for p, pts in top_click_paths},
         "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
@@ -2227,10 +2297,31 @@ async def generate_model(
         task_id = str(uuid.uuid4())
         task = GenerationTask(task_id=task_id, request=request)
         tasks[task_id] = task
-        
+        polygon_coords = getattr(request, "zone_polygon_coords", None)
+
+        # perf-2026-09-03 (B-1): ідентичний запит, файл ще на диску → віддаємо одразу.
+        # Ключ рахуємо ДО generate_model_task (він мутує request у preview-режимі).
+        _ckey = _rc.request_cache_key(request, polygon_coords)
+        task.cache_key = _ckey
+        _cached = _rc.lookup(_ckey)
+        if _cached:
+            _rc.apply_cached(task, _cached)
+            print(f"[RESULT_CACHE] HIT {task_id} ← {_cached.get('task_id')} ({Path(_cached['output_file']).name})")
+            return GenerationResponse(task_id=task_id, status="completed", message=task.message, eta_s=0, cached=True)
+
+        # perf-2026-09-03 (B-2): чесний час. За межами покриття ukraine.duckdb дані
+        # тягнуться з Overpass (~4 хв на проді) — кажемо це одразу, а не «1–2 хвилини».
+        _foreign = not _rc.within_local_coverage(_bn, _bs, _be, _bw)
+        _bucket = _rc.eta_bucket(request)
+        _eta = _rc.eta_seconds(_bucket, foreign=_foreign)
+        task.eta_s = _eta
+        task.eta_bucket = _bucket
+        task.foreign = _foreign
+        if _foreign:
+            task.update_status("processing", 0, "Місце за межами України: дані з OSM-сервера, це довше (≈4–5 хв)")
+
         # Запускаємо генерацію в фоні. Передаємо zone_polygon_coords якщо є —
         # для повернутих rect-ділянок backend обріже OSM по полігону, а не bbox.
-        polygon_coords = getattr(request, "zone_polygon_coords", None)
         background_tasks.add_task(
             generate_model_task,
             task_id,
@@ -2239,8 +2330,8 @@ async def generate_model(
             polygon_coords,  # zone_polygon_coords
         )
         
-        print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С–")
-        return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
+        print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С– (eta≈{_eta}s, bucket={_bucket}, foreign={_foreign})")
+        return GenerationResponse(task_id=task_id, status="processing", message="Задача створена", eta_s=_eta, foreign=_foreign)
     except HTTPException:
         raise
     except Exception as e:
@@ -2438,11 +2529,20 @@ async def get_status(task_id: str):
         elif "stl" in output_files:
              main_download_url = to_static_url(output_files["stl"])
 
+    # perf-2026-09-03: ETA/elapsed для чесного прогресу на фронті.
+    try:
+        _elapsed = int((_dtm.utcnow() - task.created_at).total_seconds())
+    except Exception:
+        _elapsed = None
     return {
         "task_id": task_id,
         "status": task.status,
         "progress": task.progress,
         "message": task.message,
+        "eta_s": getattr(task, "eta_s", None),
+        "elapsed_s": _elapsed,
+        "cached": bool(getattr(task, "from_cache", False)),
+        "foreign": bool(getattr(task, "foreign", False)),
         "download_url": main_download_url,
         "firebase_url": task.firebase_url,
         "print_quality": getattr(task, "print_quality", None),
@@ -4215,6 +4315,18 @@ def generate_model_task(
         if workflow_result.terrain_only_result is not None:
             return
         print(f"[OK] Model generation completed. Task ID: {task_id}, Zone ID: {zone_id}, File: {workflow_result.output_file_abs}")
+        # perf-2026-09-03: тривалість у статистику ETA + результат у кеш (лише одиночні
+        # задачі з ключем; серії/сітки не кешуємо).
+        try:
+            _dur = (_dtm.utcnow() - task.created_at).total_seconds()
+            _b = getattr(task, "eta_bucket", None) or _rc.eta_bucket(request)
+            if not getattr(task, "foreign", False):
+                _rc.record_duration(_b, _dur)
+            if zone_id is None and getattr(task, "cache_key", None) and task.status == "completed":
+                _rc.store(task.cache_key, task)
+            print(f"[TIMING] task total: {_dur:.1f}s (bucket={_b})")
+        except Exception as _rce:  # noqa: BLE001
+            print(f"[RESULT_CACHE] post-success hook failed (ignored): {_rce}")
         
         
     except Exception as e:

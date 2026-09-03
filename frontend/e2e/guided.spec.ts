@@ -116,3 +116,87 @@ test.describe("Guided /create на телефоні", () => {
     expect(parseInt(stickyH, 10)).toBeGreaterThan(40);
   });
 });
+
+/**
+ * A-1…A-6 (2026-09-03): єдина шапка, товар до конструктора, CTA завжди активна,
+ * «готово» = 2 дії, один розширений режим.
+ */
+test.describe("Guided /create — хвиля «простіше» (2026-09-03)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_create_v1", "1");
+        localStorage.setItem("onb_create_v1", "1");
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+  });
+
+  test("A-1: builder-шапка з перемикачем мови на /create і /keychains; звичайна шапка на /prices", async ({ page }) => {
+    await page.goto("/uk/create");
+    const hdr = page.getByTestId("site-header-builder");
+    await expect(hdr).toBeVisible();
+    await expect(hdr.getByRole("button", { name: "Мова" })).toBeVisible();
+    await expect(hdr.getByRole("link", { name: /Брелок/ })).toBeVisible();
+    const box = await hdr.boundingBox();
+    expect(box!.height).toBeLessThanOrEqual(64);
+    await page.goto("/uk/keychains");
+    await expect(page.getByTestId("site-header-builder")).toBeVisible();
+    await page.goto("/uk/prices");
+    await expect(page.locator("header").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Мова" }).first()).toBeVisible();
+  });
+
+  test("A-2: ?product=relief відкриває одразу крок 2 з рельєфною мапою", async ({ page }) => {
+    await page.goto("/uk/create?product=relief");
+    const flow = page.getByTestId("scenario-flow");
+    await expect(flow.getByText("Крок 2 із 2")).toBeVisible();
+    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("410 ₴");
+  });
+
+  test("A-4: CTA активна без жодної дії, бейдж каже «Центр Києва (за замовчуванням)»", async ({ page }) => {
+    await page.goto("/uk/create?product=map3d");
+    const flow = page.getByTestId("scenario-flow");
+    await expect(flow.getByTestId("place-default")).toContainText("Центр Києва");
+    await expect(page.getByTestId("scenario-create")).toBeEnabled();
+    await flow.getByRole("button", { name: "Одеса", exact: true }).click();
+    await expect(flow.getByTestId("place-picked")).toContainText("Місце обрано: Одеса");
+  });
+
+  test("A-3: «готово» = замовити + завантажити; «Оновити превʼю» лише після зміни", async ({ page }) => {
+    await page.route("**/api/generate", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e2e-1", status: "processing", message: "ok", eta_s: 50 }),
+    }));
+    await page.route("**/api/status/t-e2e-1", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e2e-1", status: "completed", progress: 100, message: "done", download_url: "/files/e2e.glb", eta_s: 50, elapsed_s: 49 }),
+    }));
+    await page.goto("/uk/create?product=map3d");
+    const flow = page.getByTestId("scenario-flow");
+    await flow.getByRole("button", { name: "Львів", exact: true }).click();
+    await page.waitForTimeout(1800); // доліт карти + авто-зона під розмір
+    await page.getByTestId("scenario-create").click();
+    const success = flow.getByTestId("guided-success");
+    await expect(success).toBeVisible({ timeout: 15_000 });
+    await expect(success.getByTestId("guided-order")).toContainText(/Замовити друк · \d+ ₴/);
+    await expect(success.getByTestId("guided-download")).toBeVisible();
+    await expect(success.getByText("Підлаштувати деталі")).toHaveCount(0);
+    await expect(success.getByText("Створити ще одну")).toHaveCount(0);
+    // Нічого не міняли → кнопки «Оновити превʼю» нема (sticky-бар — лише <lg, див. мобільний describe)
+    await expect(page.getByTestId("scenario-create")).toHaveCount(0);
+    // Змінили розмір → зʼявляється «Оновити превʼю»
+    await flow.getByRole("radio", { name: /L · 11 см/ }).click();
+    await expect(page.getByTestId("scenario-create")).toHaveText(/Оновити превʼю/);
+  });
+
+  test("A-6: єдиний вихід «Розширений режим»; ?mode=pro відкриває його одразу", async ({ page }) => {
+    await page.goto("/uk/create");
+    const flow = page.getByTestId("scenario-flow");
+    await expect(flow.getByTestId("scenario-full")).toHaveText("Розширений режим");
+    await expect(flow.getByText("Повний конструктор")).toHaveCount(0);
+    await page.goto("/uk/create?mode=pro");
+    await expect(page.getByTestId("scenario-flow")).toHaveCount(0);
+  });
+});

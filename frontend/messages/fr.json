@@ -71,7 +71,7 @@
       "dragHint": "Modèles 3D en direct — fais glisser pour tourner",
       "try": "Créer une carte",
       "badgeEco": "Eco PLA",
-      "badgeReady": "3MF prêt"
+      "badgeReady": "Fichier pour impression 3D"
     },
     "path": {
       "eyebrow1": "Voie 1 · Ta propre géométrie",
@@ -94,7 +94,7 @@
       "s3t": "Nous générons",
       "s3d": "Le serveur construit un modèle 3D précis à partir des données OpenStreetMap et des altitudes.",
       "s4t": "Télécharge",
-      "s4d": "Un 3MF prêt pour Bambu Studio / PrusaSlicer. Imprime chez toi.",
+      "s4d": "Le fichier s'ouvre dans le logiciel de votre imprimante 3D (Bambu, Prusa). Imprimez chez vous.",
       "cta": "Créer une carte"
     },
     "templates": {
@@ -110,13 +110,13 @@
       "titleItalic": "Un document.",
       "desc": "Chaque carte repose sur les géodonnées OpenStreetMap et des altitudes réelles. Le modèle est automatiquement simplifié pour une impression FDM propre : épaisseurs minimales, couches de couleur pour imprimantes multicolores (Bambu AMS).",
       "spec1t": "Impression précise",
-      "spec1d": "Optimisé pour le FDM",
+      "spec1d": "Optimisé pour l'impression 3D à la maison",
       "spec2t": "Bioplastique PLA",
       "spec2d": "À base d'amidon de maïs",
       "spec3t": "Données réelles",
       "spec3d": "OpenStreetMap + altitudes",
-      "spec4t": "Format 3MF",
-      "spec4d": "Prêt pour Bambu / Prusa"
+      "spec4t": "Fichier imprimante",
+      "spec4d": "s'ouvre dans Bambu / Prusa"
     },
     "prints": {
       "title": "À quoi ça ressemble imprimé",
@@ -126,15 +126,23 @@
       "alt": "Produit imprimé en 3D {n}"
     },
     "testimonials": {
-      "title": "Ce que disent les clients",
-      "sub": "Fais défiler pour voir plus d'avis →",
+      "title": "Pourquoi nous faire confiance",
+      "sub": "Pas d'avis avec des noms inventés — seulement ce que vous pouvez vérifier sur ce site.",
       "badge": "Avis",
       "q1": "J'ai adoré, merci ! Le résultat a dépassé mes attentes.",
       "q2": "Rapide et pratique. Le rendu est superbe, je recommande.",
       "q3": "Très bonne qualité, tout est net. Très satisfaite.",
       "q4": "Service simple et agréable. A marché du premier coup.",
       "q5": "Beau résultat, soigné. Merci pour le travail !",
-      "q6": "Fait en quelques minutes, tout est clair. Génial !"
+      "q6": "Fait en quelques minutes, tout est clair. Génial !",
+      "f1t": "Vraies photos des impressions",
+      "f1d": "La galerie montre des modèles imprimés, pas des rendus.",
+      "f2t": "Données OpenStreetMap",
+      "f2d": "Rues, bâtiments et eau viennent de la carte ouverte du monde, les altitudes des données de relief.",
+      "f3t": "Nous imprimons et expédions nous-mêmes",
+      "f3d": "Nova Poshta ou Ukrposhta en Ukraine, paiement après confirmation de la commande.",
+      "f4t": "Entreprise enregistrée",
+      "f4d": "Coordonnées, offre publique et conditions de retour sont en bas de chaque page."
     },
     "faq": {
       "eyebrow": "Questions & réponses",
@@ -464,7 +472,7 @@
     "areaPrompt": "Dessine un rectangle sur la carte",
     "done": "Terminé",
     "generating": "Génération {progress}%",
-    "downloadReady": "Télécharger 3MF",
+    "downloadReady": "Téléchargez le fichier imprimante",
     "generatePrompt": "Générer le modèle",
     "aria": "Étapes de création",
     "step": "Étape {n}",
@@ -494,7 +502,7 @@
     "errSelectZone": "Sélectionne au moins une cellule sur la grille",
     "errGen": "Erreur de génération",
     "qualityWarn": "Le modèle est prêt, mais il y a des remarques d'impression. Détails en mode « Pro ».",
-    "downloadFile": "Télécharger 3MF",
+    "downloadFile": "Fichier pour votre imprimante 3D",
     "downloadShort": "Télécharger",
     "mapLabelPh": "Texte sur le magnet (ex. KYIV) — optionnel",
     "mapLabelAria": "Texte de gravure de l'aimant",
@@ -520,7 +528,7 @@
     "advancedHint": "Besoin d'une série de zones (hexagones / carrés) ? Ouvre le mode « Pro » →",
     "orderPrint": "Commander l'impression",
     "limitMsg": "J'ai utilisé mes 5 téléchargements gratuits. J'en veux plus / impression — contactez-moi.",
-    "gpxUpload": "Itinéraire GPX sur la carte",
+    "gpxUpload": "Parcours de course ou de voyage (fichier GPX)",
     "gpxChoose": "Choisir un fichier",
     "gpxReplace": "Remplacer",
     "gpxClear": "Retirer",
@@ -557,7 +565,7 @@
     "fmtStandard": "Carte 3D",
     "fmtStandardHint": "Carte en relief classique : bâtiments, parcs et eau en hauteur. Activez le relief pour les altitudes du terrain.",
     "fmtFlat": "Plat couleur",
-    "fmtFlatHint": "Chaque couche sa couleur, impression à plat. Idéale pour Bambu AMS. Ajoutez un connecteur, un cadre ou marquez votre maison.",
+    "fmtFlatHint": "Chaque couche a sa couleur, imprimée à plat. Idéal pour l'impression multicolore. Ajoutez un connecteur, un cadre ou marquez votre maison.",
     "fmtMagnet": "Aimant",
     "fmtMagnetHint": "Aimant de frigo plat de 6 cm avec logements pour aimants au dos.",
     "fmtPanel": "Panneau",
@@ -568,7 +576,7 @@
     "magnetOffForPanel": "Aimant et GPX désactivés — un panneau génère des tuiles complètes",
     "generatePreview": "Générer l'aperçu",
     "generatePrint": "Générer le 3MF d'impression",
-    "etaPrint": "≈ 1–3 min · 3MF d'impression complet",
+    "etaPrint": "≈ 1–3 min · modèle complet pour l'impression",
     "dlCount": "{n} restants",
     "dlUnlimited": "illimité",
     "piecesTitle": "Plusieurs zones",
@@ -699,7 +707,7 @@
     "aboutText": "Transformez n'importe quel endroit de la Terre en souvenir 3D. Tout dans le navigateur, prêt à imprimer.",
     "bullet1": "N'importe quelle ville du monde — une carte 3D en ~3 minutes",
     "bullet2": "Porte-clés avec votre quartier et une inscription",
-    "bullet3": "5 téléchargements gratuits de 3MF (modèle complet)",
+    "bullet3": "5 fichiers imprimante gratuits (modèle complet)",
     "bullet4": "Prêt pour l'impression 3D (FDM 0,4 mm) — ou commandez l'impression chez nous",
     "bullet5": "Historique des modèles et grilles de ville enregistrées dans votre compte",
     "accountLabel": "Compte",
@@ -723,7 +731,7 @@
     "createFirst": "Créez le premier →",
     "previewAlt": "aperçu",
     "orderPrint": "Commander l'impression",
-    "downloadTitle": "Télécharger 3MF",
+    "downloadTitle": "Télécharger le fichier imprimante",
     "myGrids": "Mes grilles de ville",
     "noGrids": "Aucune grille enregistrée pour l'instant. Dans le configurateur, activez « Grille de zones », créez une grille et appuyez sur « Enregistrer la grille » — vous pourrez ensuite générer les cellules voisines.",
     "gridFallback": "Grille",
@@ -828,7 +836,7 @@
       "bad": "Corrections nécessaires",
       "fix": "Corrigez : {issue}",
       "nextWarn": "Pour un meilleur résultat, choisissez un cadrage plus petit ou une zone de carte plus grande.",
-      "nextGood": "Vous pouvez créer le 3MF."
+      "nextGood": "Vous pouvez créer le modèle."
     },
     "details": {
       "summary": "Détails d'impression et actions rapides",
@@ -902,7 +910,7 @@
       "title": "Vérification avant génération",
       "desc": "Seuls les paramètres compréhensibles par le client doivent figurer ici : taille, texte, niveau de détail et préparation à l'impression.",
       "noText": "sans texte",
-      "generated3mf": "3MF généré",
+      "generated3mf": "Modèle généré",
       "layersNote": "Le texte et le bord sont des couches séparées, la carte est découpée à la zone intérieure du porte-clés."
     },
     "metric": {
@@ -1062,29 +1070,29 @@
     },
     "verdict": {
       "bad": {
-        "title": "Le 3MF doit être vérifié",
+        "title": "Le modèle doit être vérifié",
         "detail": "Couches problématiques : {layers}."
       },
       "warn": {
-        "title": "3MF créé, il y a des avertissements",
+        "title": "Modèle créé, avec avertissements",
         "detail": "Vérifiez : {layers}."
       },
       "good": {
-        "title": "Le 3MF semble prêt pour le trancheur",
+        "title": "Modèle prêt à imprimer",
         "detail": "Base, bord, carte, bâtiments et texte sont présents en couches séparées."
       }
     },
     "status": {
       "generating": "Génération du porte-clés",
-      "ready3mf": "3MF prêt",
+      "ready3mf": "Modèle prêt",
       "ready": "Terminé"
     },
     "btn": {
       "generating": "Génération...",
-      "create3mf": "Créer le 3MF",
+      "create3mf": "Créer le modèle",
       "buyOrder": "Acheter / commander l'impression",
       "order": "Commander l'impression",
-      "download3mf": "Télécharger le 3MF"
+      "download3mf": "Télécharger le fichier imprimante"
     },
     "quota": {
       "remaining": "Il reste {remaining} sur {limit} téléchargements gratuits",
@@ -1102,7 +1110,7 @@
       "notReady": "Pas prêt à imprimer : {issues}.",
       "generic": "Erreur de génération du porte-clés",
       "limitContact": "J'ai épuisé 5 téléchargements gratuits de porte-clés. Je veux plus / une impression — merci de me contacter.",
-      "downloadFailed": "Impossible de télécharger le 3MF",
+      "downloadFailed": "Impossible de télécharger le fichier",
       "retry": "Réessayer"
     },
     "templates": {
@@ -1726,7 +1734,7 @@
     "magnetDesc": "Carte compacte de 6 cm avec aimant au dos",
     "keychainTitle": "Porte-clés avec mon lieu",
     "keychainDesc": "La carte de votre maison toujours sur vos clés",
-    "fullTitle": "Constructeur complet",
+    "fullTitle": "Mode avancé",
     "fullDesc": "Tous les réglages : séries, GPX, styles, formes",
     "moreLabel": "Plus :",
     "moreTitle": "Ce que nous savons faire aussi",
@@ -1756,7 +1764,7 @@
     "createAnother": "En créer un autre",
     "backToGuided": "← Mode simple",
     "sizeTitle": "Choisissez la taille",
-    "advancedSettings": "Plus de réglages",
+    "advancedSettings": "Mode avancé (tous les réglages)",
     "personalizeTitle": "Rendez-la personnelle",
     "myHome": "Ma maison sur la carte",
     "myHomeCount": "Ma maison : {n} sélectionné",
@@ -1777,13 +1785,23 @@
     "twoWays": "Deux façons d’obtenir le modèle",
     "wayPrint": "Nous imprimons et expédions",
     "waySelf": "J’imprime moi-même",
-    "downloadCta": "Télécharger le fichier (3MF)",
-    "downloadSub": "Gratuit · connexion Google · s’ouvre dans l’app de votre imprimante",
+    "downloadCta": "Télécharger le fichier pour votre imprimante 3D",
+    "downloadSub": "Gratuit · connexion Google · le fichier prend ≈2 min et s'ouvre dans le logiciel de votre imprimante",
     "quotaLeft": "{n} fichiers gratuits restants sur {limit}",
     "previewCta": "Voir l’aperçu 3D · gratuit",
     "previewCtaShort": "Aperçu 3D · gratuit",
     "printFromLine": "Impression {price} · livraison Nova Poshta en Ukraine",
-    "readyDelivery": "Impression et envoi sous 2–4 jours ouvrés · Nova Poshta ou Ukrposhta · paiement après confirmation"
+    "readyDelivery": "Impression et envoi sous 2–4 jours ouvrés · Nova Poshta ou Ukrposhta · paiement après confirmation",
+    "defaultPlace": "Centre de Kyiv (par défaut)",
+    "defaultPlaceHint": "Cherchez votre adresse, touchez une ville ou déplacez le cadre sur la carte — nous imprimons ce qui est dans le cadre.",
+    "customPlace": "zone choisie sur la carte",
+    "stageData": "Données OSM et altitudes",
+    "stageTerrain": "Relief de la base",
+    "stageDetail": "Routes, eau, bâtiments",
+    "stageFile": "Assemblage du fichier 3D",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "moins d'une minute",
+    "etaOver": "plus long que d'habitude — encore un peu"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",
@@ -1801,7 +1819,7 @@
     "cardTokenDesc": "Jeton compact avec la carte de votre chez-vous",
     "cardRectTitle": "Rectangle classique",
     "cardRectDesc": "Porte-clés vertical 35×55 mm avec la carte de votre quartier",
-    "cardFullTitle": "Créateur complet",
+    "cardFullTitle": "Mode avancé",
     "cardFullDesc": "Toutes les formes, réglages, trace GPX, relief topo",
     "waitingPlace": "Cherchez une adresse, touchez une ville ci-dessus ou déplacez le cadre sur la carte",
     "placeChosen": "Lieu choisi",
@@ -1823,8 +1841,8 @@
     "twoWays": "Deux façons d’obtenir le modèle",
     "wayPrint": "Nous imprimons et expédions",
     "waySelf": "J’imprime moi-même",
-    "downloadCta": "Télécharger le fichier (3MF)",
-    "downloadSub": "Gratuit · connexion Google · s’ouvre dans l’app de votre imprimante",
+    "downloadCta": "Télécharger le fichier pour votre imprimante 3D",
+    "downloadSub": "Gratuit · connexion Google · s'ouvre dans le logiciel de votre imprimante",
     "quotaLeft": "{n} fichiers gratuits restants sur {limit}",
     "previewCta": "Voir le porte-clés en 3D · gratuit",
     "previewCtaShort": "Aperçu 3D · gratuit",
@@ -1834,12 +1852,21 @@
     "createAnother": "En créer un autre",
     "changeSomething": "Envie de changer quelque chose ?",
     "backToGuided": "← Mode simple",
-    "advancedSettings": "Créateur complet (tous les réglages)",
+    "advancedSettings": "Mode avancé (tous les réglages)",
     "fullModeTitle": "Créateur complet",
     "myHome": "Ma maison sur la carte",
     "myHomeCount": "Ma maison : {n} sélectionné",
     "myHomeClear": "Effacer la sélection",
-    "myHomeHintClick": "Cliquez votre bâtiment sur la carte — il devient un insert rouge séparé"
+    "myHomeHintClick": "Cliquez votre bâtiment sur la carte — il devient un insert rouge séparé",
+    "defaultPlace": "Centre de Kyiv (par défaut)",
+    "defaultPlaceHint": "Cherchez votre adresse, touchez une ville ou déplacez le cadre — le porte-clés montre ce qui est dans le cadre.",
+    "customPlace": "zone choisie sur la carte",
+    "stageData": "Données OSM",
+    "stageDetail": "Couches : routes, eau, bâtiments",
+    "stageFile": "Assemblage du fichier 3D",
+    "etaLeft": "≈ {min} min",
+    "etaSoon": "moins d'une minute",
+    "etaOver": "plus long que d'habitude — encore un peu"
   },
   "maket": {
     "backHome": "Accueil",
@@ -1898,7 +1925,7 @@
     "building": "Construction de la maquette…",
     "genFailed": "Impossible de construire la maquette. Réessayez.",
     "readyTitle": "Votre maquette est prête",
-    "download3mf": "Télécharger le 3MF",
+    "download3mf": "Télécharger le fichier imprimante",
     "orderPrint": "Commander l'impression",
     "backToEdit": "Revenir à l'édition",
     "areaLabel": "Surface totale, m²",
