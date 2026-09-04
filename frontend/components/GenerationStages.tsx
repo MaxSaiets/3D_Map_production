@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
 /**
@@ -42,7 +43,26 @@ export function GenerationStages({
   onCancel?: () => void;
   cancelLabel?: string;
 }) {
-  const p = Math.max(0, Math.min(100, progress || 0));
+  // D-1 (2026-09-03): бекенд віддає прогрес СТРИБКАМИ (15 → 20 → 50 → 85), тож
+  // смуга стояла по 30–60 с і виглядала як зависання. Показуємо плавне значення:
+  // підтягуємось до серверного, а між оновленнями повільно повземо вперед — але
+  // НЕ більше ніж на 7 п.п. попереду сервера і ніколи не до 100 % (100 = готово).
+  const target = Math.max(0, Math.min(100, progress || 0));
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  useEffect(() => { if (target > shownRef.current) { shownRef.current = target; setShown(target); } }, [target]);
+  useEffect(() => {
+    if (queued) return; // у черзі нічого не «повземо» — робота ще не почалась
+    const id = window.setInterval(() => {
+      const cap = Math.min(97, target + 7);
+      if (shownRef.current < cap) {
+        shownRef.current = Math.min(cap, shownRef.current + 0.4);
+        setShown(Math.round(shownRef.current * 10) / 10);
+      }
+    }, 400);
+    return () => window.clearInterval(id);
+  }, [target, queued]);
+  const p = Math.round(Math.max(target, shown));
   const list = kind === "map"
     ? [
         { key: "data", label: stages.data, from: 0 },

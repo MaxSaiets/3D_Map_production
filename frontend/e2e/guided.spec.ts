@@ -257,4 +257,23 @@ test.describe("Guided /create — хід створення (2026-09-03)", () =>
     await expect(page.getByTestId("guided-success")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("guided-order")).toBeVisible();
   });
+
+  test("D-1/D-3: смуга повзе між стрибками сервера; сцена не дублює прогрес", async ({ page }) => {
+    await page.route("**/api/generate", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-sm", status: "processing", eta_s: 60 }) }));
+    await page.route("**/api/status/t-sm", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-sm", status: "processing", progress: 20, message: "Будую рельєф", eta_s: 60, elapsed_s: 10 }) }));
+    await page.goto("/uk/create?product=map3d");
+    await page.getByTestId("scenario-create").click();
+    const stages = page.getByTestId("generation-stages");
+    await expect(stages).toBeVisible({ timeout: 15_000 });
+    const pct = async () => Number((await stages.locator("[role=progressbar]").getAttribute("aria-valuenow")) || 0);
+    const first = await pct();
+    await page.waitForTimeout(3000);
+    const later = await pct();
+    expect(later).toBeGreaterThan(first);   // повзе між стрибками
+    expect(later).toBeLessThanOrEqual(27);  // але не обганяє сервер більш ніж на 7 п.п.
+    // D-3: у guided прогрес рівно один — оверлей сцени не рендериться
+    await expect(page.getByText(/^Генерація моделі/)).toHaveCount(0);
+  });
 });

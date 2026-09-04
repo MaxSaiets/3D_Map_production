@@ -136,6 +136,9 @@ export default function KeychainsPage() {
       setGuidedState(localStorage.getItem("3dmap_kc_guided_v1") !== "0");
     } catch { /* приватний режим → лишаємо guided on */ }
   }, []);
+  // D-3: сцена не дублює прогрес, коли активний guided (там панель з етапами).
+  useEffect(() => { useGenerationStore.getState().setGuidedMode(guided); }, [guided]);
+
   const setGuided = (v: boolean) => {
     setGuidedState(v);
     try { localStorage.setItem("3dmap_kc_guided_v1", v ? "1" : "0"); } catch { /* ignore */ }

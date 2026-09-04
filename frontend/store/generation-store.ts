@@ -21,6 +21,8 @@ interface GenerationState {
   genError: string | null;
   printPrep: number | null;
   taskRestored: boolean;
+  /** D-3: guided-режим активний → прогрес живе в панелі, сцена його не дублює. */
+  guidedMode: boolean;
   downloadUrl: string | null;
   printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
@@ -178,6 +180,7 @@ interface GenerationState {
   setGenError: (genError: string | null) => void;
   setPrintPrep: (printPrep: number | null) => void;
   setTaskRestored: (taskRestored: boolean) => void;
+  setGuidedMode: (guidedMode: boolean) => void;
   setDownloadUrl: (url: string | null) => void;
   setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
@@ -226,6 +229,7 @@ const initialState = {
   genError: null,
   printPrep: null,
   taskRestored: false,
+  guidedMode: false,
   downloadUrl: null,
   printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
@@ -419,6 +423,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setGenError: (genError) => set({ genError }),
   setPrintPrep: (printPrep) => set({ printPrep }),
   setTaskRestored: (taskRestored) => set({ taskRestored }),
+  setGuidedMode: (guidedMode) => set({ guidedMode }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
   setPrintQuality: (pq) => set({ printQuality: pq }),
 

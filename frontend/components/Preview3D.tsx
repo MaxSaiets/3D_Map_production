@@ -1372,6 +1372,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   const {
     downloadUrl,
     isGenerating,
+    guidedMode,
     progress,
     terrainSmoothShading,
     setTerrainSmoothShading,
@@ -1390,6 +1391,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
   } = useGenerationStore(useShallow((st) => ({
     downloadUrl: st.downloadUrl,
     isGenerating: st.isGenerating,
+    guidedMode: st.guidedMode,
     progress: st.progress,
     terrainSmoothShading: st.terrainSmoothShading,
     setTerrainSmoothShading: st.setTerrainSmoothShading,
@@ -1698,7 +1700,9 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
         </div>
       </div>
       </div>}
-      {isGenerating && !capture && (
+      {/* D-3 (2026-09-03): у guided прогрес живе ОДИН — у панелі з етапами.
+          Сцена дублювала його своїм оверлеєм (третій індикатор в аудиті). */}
+      {isGenerating && !capture && !guidedMode && (
         <div className="absolute inset-0 flex items-center justify-center text-white z-10 pointer-events-none">
           <div className="text-center">
             <p className="text-lg mb-2">{t("generating")}</p>
