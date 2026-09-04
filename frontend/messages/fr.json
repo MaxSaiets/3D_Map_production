@@ -1801,7 +1801,14 @@
     "stageFile": "Assemblage du fichier 3D",
     "etaLeft": "≈ {min} min",
     "etaSoon": "moins d'une minute",
-    "etaOver": "plus long que d'habitude — encore un peu"
+    "etaOver": "plus long que d'habitude — encore un peu",
+    "queuedTitle": "En file d'attente — un autre modèle est en cours",
+    "queuedNote": "Votre tour dans quelques minutes. Vous pouvez fermer la page — le modèle sera conservé.",
+    "cancelGen": "Annuler la génération",
+    "printPrepLine": "Préparation du fichier d'impression —",
+    "tryAgain": "Réessayer",
+    "shrinkZone": "Réduire la zone",
+    "contactUs": "Nous écrire"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",
@@ -1866,7 +1873,13 @@
     "stageFile": "Assemblage du fichier 3D",
     "etaLeft": "≈ {min} min",
     "etaSoon": "moins d'une minute",
-    "etaOver": "plus long que d'habitude — encore un peu"
+    "etaOver": "plus long que d'habitude — encore un peu",
+    "queuedTitle": "En file d'attente — un autre modèle est en cours",
+    "queuedNote": "Votre tour dans quelques minutes. Vous pouvez fermer la page — le modèle sera conservé.",
+    "cancelGen": "Annuler la génération",
+    "printPrepLine": "Préparation du fichier d'impression —",
+    "tryAgain": "Réessayer",
+    "contactUs": "Nous écrire"
   },
   "maket": {
     "backHome": "Accueil",

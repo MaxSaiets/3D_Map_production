@@ -164,6 +164,7 @@ export default function KeychainsPage() {
         const ids = savedTaskIds ? JSON.parse(savedTaskIds) : [savedGroupId];
         setTaskGroup(savedGroupId, ids, "keychain");
         setGenerating(true);
+        useGenerationStore.getState().setTaskRestored(true); // C-1
       }
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps

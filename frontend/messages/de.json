@@ -1801,7 +1801,14 @@
     "stageFile": "3D-Datei wird erstellt",
     "etaLeft": "≈ {min} Min.",
     "etaSoon": "unter einer Minute",
-    "etaOver": "dauert länger als üblich — gleich fertig"
+    "etaOver": "dauert länger als üblich — gleich fertig",
+    "queuedTitle": "In der Warteschlange — ein anderes Modell wird erstellt",
+    "queuedNote": "Sie sind in wenigen Minuten dran. Sie können die Seite schließen — das Modell bleibt gespeichert.",
+    "cancelGen": "Erstellung abbrechen",
+    "printPrepLine": "Druckdatei wird vorbereitet —",
+    "tryAgain": "Erneut versuchen",
+    "shrinkZone": "Bereich verkleinern",
+    "contactUs": "Schreiben Sie uns"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",
@@ -1866,7 +1873,13 @@
     "stageFile": "3D-Datei wird erstellt",
     "etaLeft": "≈ {min} Min.",
     "etaSoon": "unter einer Minute",
-    "etaOver": "dauert länger als üblich — gleich fertig"
+    "etaOver": "dauert länger als üblich — gleich fertig",
+    "queuedTitle": "In der Warteschlange — ein anderes Modell wird erstellt",
+    "queuedNote": "Sie sind in wenigen Minuten dran. Sie können die Seite schließen — das Modell bleibt gespeichert.",
+    "cancelGen": "Erstellung abbrechen",
+    "printPrepLine": "Druckdatei wird vorbereitet —",
+    "tryAgain": "Erneut versuchen",
+    "contactUs": "Schreiben Sie uns"
   },
   "maket": {
     "backHome": "Startseite",

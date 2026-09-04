@@ -830,6 +830,8 @@ export function KeychainControlPanel({
         const resp = await api.getStatus(taskGroupId);
         useGenerationStore.getState().setEta(typeof (resp as any)?.eta_s === "number" ? (resp as any).eta_s : null, typeof (resp as any)?.elapsed_s === "number" ? (resp as any).elapsed_s : null);
         const task = resp as any;
+        // C-4: «у черзі» — окремий стан для guided-прогресу.
+        useGenerationStore.getState().setQueued(task.status === "queued");
         pollFailRef.current = 0;
         setTaskStatuses({ [task.task_id]: task });
         updateProgress(task.progress, task.message);
@@ -839,7 +841,12 @@ export function KeychainControlPanel({
         } else if (task.status === "failed" || task.status === "cancelled") {
           // cancelled теж термінальний — інакше «Генерація N%» крутилась би вічно
           setGenerating(false);
-          if (task.status === "failed") setError(task.message || t("error.generateFailed"));
+          if (task.status === "failed") {
+            // C-3: причина з бекенду — і в панель, і в guided-банер.
+            const msg = task.message || t("error.generateFailed");
+            setError(msg);
+            useGenerationStore.getState().setGenError(msg);
+          }
         }
       } catch (pollError) {
         // Задача зникла (404 після рестарту бека) / мережа: після ~4 невдач підряд
@@ -874,6 +881,10 @@ export function KeychainControlPanel({
     }
 
     setError(null);
+    {
+      const st0 = useGenerationStore.getState();
+      st0.setGenError(null); st0.setQueued(false); st0.setTaskRestored(false); // C-3
+    }
     setGenerating(true);
     setShowAllZones(false);
     // Ads/GA4: генерація = сильний сигнал наміру (ремаркетинг-аудиторія).
@@ -1085,6 +1096,22 @@ export function KeychainControlPanel({
   // GUIDED-РЕЖИМ: KeychainScenarioFlow шле window-події → викликаємо ТІ САМІ
   // хендлери, що й кнопки панелі. Без масиву залежностей — пересубскрайб
   // щорендера тримає свіжі замикання (той самий патерн, що SimpleControlPanel).
+  // C-2: «Скасувати» з guided-панелі брелка (своєї кнопки там не було).
+  useEffect(() => {
+    if (!listenGuidedGenerate) return;
+    const onCancel = async () => {
+      try {
+        const gid = useGenerationStore.getState().taskGroupId;
+        if (gid) await api.cancelTask(gid).catch(() => {});
+      } finally {
+        const st = useGenerationStore.getState();
+        st.setGenerating(false); st.updateProgress(0, ""); st.setQueued(false);
+      }
+    };
+    window.addEventListener("monadruk:guided-cancel", onCancel);
+    return () => window.removeEventListener("monadruk:guided-cancel", onCancel);
+  }, [listenGuidedGenerate]);
+
   useEffect(() => {
     if (!listenGuidedGenerate) return;
     const run = () => { void handleGenerate(); };

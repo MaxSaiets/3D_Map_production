@@ -94,6 +94,10 @@ export function KeychainScenarioFlow({
     status: st.status,
     etaS: st.etaS,
     elapsedS: st.elapsedS,
+    queued: st.queued,
+    genError: st.genError,
+    printPrep: st.printPrep,
+    taskRestored: st.taskRestored,
     downloadUrl: st.downloadUrl,
     // Виділення будинку «мій дім» — той самий store, що на /create; машинна
     // копія KeychainControlPanel читає його і шле keychain_highlight_building.
@@ -246,8 +250,10 @@ export function KeychainScenarioFlow({
     return t("etaLeft", { min: Math.max(1, Math.round(left / 60)) });
   })();
   const generatingView = s.isGenerating;
-  const successView = started && !s.isGenerating && !!s.downloadUrl;
-  const failedNote = started && ran && !s.isGenerating && !s.downloadUrl;
+  // C-1: після F5 задача відновлюється зі сторіджу — показуємо готову модель.
+  const successView = (started || s.taskRestored) && !s.isGenerating && !!s.downloadUrl;
+  // C-3: помилка = реальний fail з бекенду (з причиною), а не «немає файлу».
+  const failedNote = !!s.genError && !s.isGenerating && (started || s.taskRestored);
   // Готово: якщо користувач нічого не чіпав під час генерації, знімок = поточні
   // параметри (доліт карти/авто-зона після пошуку не мають давати «Оновити превʼю»).
   const prevSuccessRef = useRef(false);
@@ -366,6 +372,13 @@ export function KeychainScenarioFlow({
                 title={t("generating")}
                 note={t("etaNote")}
                 eta={etaText}
+                queued={s.queued}
+                queuedTitle={t("queuedTitle")}
+                queuedNote={t("queuedNote")}
+                printPrep={s.printPrep}
+                printPrepLabel={t("printPrepLine")}
+                cancelLabel={t("cancelGen")}
+                onCancel={() => window.dispatchEvent(new Event("monadruk:guided-cancel"))}
                 stages={{ data: t("stageData"), detail: t("stageDetail"), file: t("stageFile") }}
               />
             )}
@@ -517,10 +530,28 @@ export function KeychainScenarioFlow({
                 )}
               </div>
             </div>
+            {/* C-3: причина з бекенду + дії (повтор, написати нам). */}
             {failedNote && (
-              <p className="rounded-[12px] border border-red-200 bg-red-50 px-3 py-2 text-[12.5px] text-red-700">
-                {t("genFailed")}
-              </p>
+              <div className="flex flex-col gap-2 rounded-[12px] border border-red-200 bg-red-50 px-3 py-2.5" data-testid="kc-guided-error">
+                <p className="text-[12.5px] leading-snug text-red-800">{s.genError || t("genFailed")}</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={create}
+                    data-testid="kc-guided-retry"
+                    className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
+                  >
+                    {t("tryAgain")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: `${t("genFailed")} ${s.genError || ""}`.trim() } }))}
+                    className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-red-800 underline underline-offset-2"
+                  >
+                    {t("contactUs")}
+                  </button>
+                </div>
+              </div>
             )}
             {!s.isGenerating && (!successView || dirty) && (
               <>

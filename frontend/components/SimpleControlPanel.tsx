@@ -450,8 +450,10 @@ export function SimpleControlPanel({
         // A-9: «завантажити» = друга генерація 1–3 хв — рахуємо, скільки людей у це впирається.
         import("@/lib/analytics").then((m) => m.track("download_wait", { product: "map" })).catch(() => {});
         setPrintPrep(0);
-        const print = await generatePrint3mf((p) => setPrintPrep(p));
+        useGenerationStore.getState().setPrintPrep(0);
+        const print = await generatePrint3mf((p) => { setPrintPrep(p); useGenerationStore.getState().setPrintPrep(p); });
         setPrintPrep(null);
+        useGenerationStore.getState().setPrintPrep(null);
         if (!print) { setError(t("errGen")); setDlBusy(false); return; }
         dlTaskId = print.taskId;
         dlUrl = print.url;
@@ -496,7 +498,10 @@ export function SimpleControlPanel({
         const { api } = await import("@/lib/api");
         const r: any = await api.getStatus(taskGroupId);
         if (stop) return;
-        useGenerationStore.getState().setEta(typeof r.eta_s === "number" ? r.eta_s : null, typeof r.elapsed_s === "number" ? r.elapsed_s : null);
+        const _st = useGenerationStore.getState();
+        _st.setEta(typeof r.eta_s === "number" ? r.eta_s : null, typeof r.elapsed_s === "number" ? r.elapsed_s : null);
+        // C-4: «у черзі» — окремий стан, не «генеруємо 0 %» (сервер зайнятий іншою задачею).
+        _st.setQueued(r.status === "queued");
         pollFails = 0;
         setTaskStatuses({ [r.task_id]: r });
         // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,
@@ -542,7 +547,12 @@ export function SimpleControlPanel({
           clearInterval(iv);
         } else if (r.status === "failed" || r.status === "cancelled") {
           setGenerating(false);
-          if (r.status === "failed") setError(r.message || t("errGen"));
+          if (r.status === "failed") {
+            // C-3: причина з бекенду (дружній український текст) — і в панель, і в guided.
+            const msg = r.message || t("errGen");
+            setError(msg);
+            useGenerationStore.getState().setGenError(msg);
+          }
           clearInterval(iv);
         }
       } catch {
@@ -552,6 +562,7 @@ export function SimpleControlPanel({
         if (pollFails >= 4 && !stop) {
           setGenerating(false);
           setError(t("errStale"));
+          useGenerationStore.getState().setGenError(t("errStale"));
           clearInterval(iv);
         }
       }
@@ -582,8 +593,20 @@ export function SimpleControlPanel({
     } finally {
       setGenerating(false);
       updateProgress(0, "");
+      const st = useGenerationStore.getState();
+      st.setQueued(false);
+      st.setPrintPrep(null);
     }
   };
+  const cancelRef = useRef(cancelGeneration);
+  cancelRef.current = cancelGeneration;
+  // C-2: «Скасувати» доступне і з guided-панелі (там своєї кнопки не було).
+  useEffect(() => {
+    if (!primary) return;
+    const onCancel = () => { void cancelRef.current(); };
+    window.addEventListener("monadruk:guided-cancel", onCancel);
+    return () => window.removeEventListener("monadruk:guided-cancel", onCancel);
+  }, [primary]);
 
   const applyStyle = (id: string) => {
     const preset = MAP_STYLE_PRESETS.find((p) => p.id === id);
@@ -793,6 +816,14 @@ export function SimpleControlPanel({
   const canGenerate = s.showHexGrid ? (s.selectedZones?.length || 0) > 0 : !!selectedArea;
 
   const handleGenerate = async (opts?: { forPrint?: boolean }) => {
+    // C-3: новий запуск чистить попередню помилку/чергу — інакше червоний текст
+    // із минулої спроби висів над свіжим прогресом.
+    {
+      const st0 = useGenerationStore.getState();
+      st0.setGenError(null);
+      st0.setQueued(false);
+      st0.setTaskRestored(false);
+    }
     // СІТКА СЕРІЇ (повна Профі-сітка у «Просто»): клітини несуть власну геометрію
     // (feature.geometry) → той самий батч-шлях, що й у ControlPanel. Має ПРІОРИТЕТ
     // над single-картою/«Кілька частин» і НЕ потребує selectedArea (карта в режимі
@@ -833,6 +864,7 @@ export function SimpleControlPanel({
         s.setBatchZoneMetaByTaskId(res.batchMeta);
       } catch (e: any) {
         setError(e?.message || t("errGen"));
+      useGenerationStore.getState().setGenError(e?.message || t("errGen"));
         setGenerating(false);
       }
       return;
@@ -910,6 +942,7 @@ export function SimpleControlPanel({
       s.setBatchZoneMetaByTaskId({});
     } catch (e: any) {
       setError(e?.message || t("errGen"));
+      useGenerationStore.getState().setGenError(e?.message || t("errGen"));
       setGenerating(false);
     }
   };

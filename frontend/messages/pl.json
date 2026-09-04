@@ -1801,7 +1801,14 @@
     "stageFile": "Składamy plik 3D",
     "etaLeft": "≈ {min} min",
     "etaSoon": "mniej niż minuta",
-    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę"
+    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę",
+    "queuedTitle": "W kolejce — trwa generowanie innego modelu",
+    "queuedNote": "Twoja kolej za kilka minut. Możesz zamknąć stronę — model zostanie zapisany.",
+    "cancelGen": "Anuluj generowanie",
+    "printPrepLine": "Przygotowujemy plik do druku —",
+    "tryAgain": "Spróbuj ponownie",
+    "shrinkZone": "Zmniejsz obszar",
+    "contactUs": "Napisz do nas"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -1866,7 +1873,13 @@
     "stageFile": "Składamy plik 3D",
     "etaLeft": "≈ {min} min",
     "etaSoon": "mniej niż minuta",
-    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę"
+    "etaOver": "trwa dłużej niż zwykle — jeszcze chwilę",
+    "queuedTitle": "W kolejce — trwa generowanie innego modelu",
+    "queuedNote": "Twoja kolej za kilka minut. Możesz zamknąć stronę — model zostanie zapisany.",
+    "cancelGen": "Anuluj generowanie",
+    "printPrepLine": "Przygotowujemy plik do druku —",
+    "tryAgain": "Spróbuj ponownie",
+    "contactUs": "Napisz do nas"
   },
   "maket": {
     "backHome": "Strona główna",

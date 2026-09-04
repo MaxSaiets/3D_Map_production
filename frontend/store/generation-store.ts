@@ -15,6 +15,12 @@ interface GenerationState {
   status: string;
   etaS: number | null;
   elapsedS: number | null;
+  /** C-series (2026-09-03): хід створення моделі — чергa, помилка з причиною,
+   *  підготовка друк-файлу і ознака відновленої з localStorage задачі. */
+  queued: boolean;
+  genError: string | null;
+  printPrep: number | null;
+  taskRestored: boolean;
   downloadUrl: string | null;
   printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
@@ -168,6 +174,10 @@ interface GenerationState {
   updateProgress: (progress: number, status: string) => void;
   /** perf-2026-09-03: чесний ETA з бекенду (медіана реальних прогонів) + скільки вже минуло. */
   setEta: (etaS: number | null, elapsedS: number | null) => void;
+  setQueued: (queued: boolean) => void;
+  setGenError: (genError: string | null) => void;
+  setPrintPrep: (printPrep: number | null) => void;
+  setTaskRestored: (taskRestored: boolean) => void;
   setDownloadUrl: (url: string | null) => void;
   setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
@@ -212,6 +222,10 @@ const initialState = {
   status: "",
   etaS: null,
   elapsedS: null,
+  queued: false,
+  genError: null,
+  printPrep: null,
+  taskRestored: false,
   downloadUrl: null,
   printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
@@ -401,6 +415,10 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setBatchZoneMetaByTaskId: (batchZoneMetaByTaskId) => set({ batchZoneMetaByTaskId }),
   updateProgress: (progress, status) => set({ progress, status }),
   setEta: (etaS, elapsedS) => set({ etaS, elapsedS }),
+  setQueued: (queued) => set({ queued }),
+  setGenError: (genError) => set({ genError }),
+  setPrintPrep: (printPrep) => set({ printPrep }),
+  setTaskRestored: (taskRestored) => set({ taskRestored }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
   setPrintQuality: (pq) => set({ printQuality: pq }),
 

@@ -477,6 +477,9 @@ export default function Home() {
         const ids = Array.isArray(parsed) ? parsed : [savedGroupId];
         setTaskGroup(savedGroupId, ids, "map");
         setGenerating(true);
+        // C-1: після F5 / повернення на вкладку guided має показати ГОТОВУ модель,
+        // а не порожній крок 2 (успіх раніше вимагав локального `started`).
+        useGenerationStore.getState().setTaskRestored(true);
       }
     } catch { /* ignore corrupt saved task ids */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps

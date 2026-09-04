@@ -1801,7 +1801,14 @@
     "stageFile": "Building the 3D file",
     "etaLeft": "≈ {min} min",
     "etaSoon": "under a minute",
-    "etaOver": "taking longer than usual — almost there"
+    "etaOver": "taking longer than usual — almost there",
+    "queuedTitle": "In queue — another model is generating",
+    "queuedNote": "Your turn comes in a few minutes. You can close the page — the model will be saved.",
+    "cancelGen": "Cancel generation",
+    "printPrepLine": "Preparing the print file —",
+    "tryAgain": "Try again",
+    "shrinkZone": "Shrink the area",
+    "contactUs": "Contact us"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -1866,7 +1873,13 @@
     "stageFile": "Building the 3D file",
     "etaLeft": "≈ {min} min",
     "etaSoon": "under a minute",
-    "etaOver": "taking longer than usual — almost there"
+    "etaOver": "taking longer than usual — almost there",
+    "queuedTitle": "In queue — another model is generating",
+    "queuedNote": "Your turn comes in a few minutes. You can close the page — the model will be saved.",
+    "cancelGen": "Cancel generation",
+    "printPrepLine": "Preparing the print file —",
+    "tryAgain": "Try again",
+    "contactUs": "Contact us"
   },
   "maket": {
     "backHome": "Home",

@@ -200,3 +200,61 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await expect(page.getByTestId("scenario-flow")).toHaveCount(0);
   });
 });
+
+/** C-1…C-5 (2026-09-03): логіка ходу створення — черга, скасування, помилка з
+ *  причиною та діями, прогрес друк-файлу, відновлення після перезавантаження. */
+test.describe("Guided /create — хід створення (2026-09-03)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_create_v1", "1");
+        localStorage.setItem("onb_create_v1", "1");
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+  });
+
+  test("C-4: стан «у черзі» показано окремо від прогресу", async ({ page }) => {
+    await page.route("**/api/generate", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q", status: "processing", eta_s: 90 }) }));
+    await page.route("**/api/status/t-q", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q", status: "queued", progress: 0, message: "У черзі", eta_s: 90, elapsed_s: 3 }) }));
+    await page.goto("/uk/create?product=map3d");
+    await page.getByTestId("scenario-create").click();
+    const stages = page.getByTestId("generation-stages");
+    await expect(stages).toBeVisible({ timeout: 15_000 });
+    await expect(stages.getByTestId("gen-queued")).toBeVisible();
+    await expect(stages).toContainText("У черзі");
+    await expect(stages.getByTestId("gen-cancel")).toBeVisible();
+  });
+
+  test("C-3: помилка показує причину з бекенду і дії", async ({ page }) => {
+    await page.route("**/api/generate", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e", status: "processing", eta_s: 60 }) }));
+    await page.route("**/api/status/t-e", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e", status: "failed", progress: 0,
+        message: "Зона завелика для моделі 8 см: виберіть меншу ділянку", eta_s: 60, elapsed_s: 5 }) }));
+    await page.goto("/uk/create?product=map3d");
+    await page.getByTestId("scenario-create").click();
+    const err = page.getByTestId("guided-error");
+    await expect(err).toBeVisible({ timeout: 15_000 });
+    await expect(err).toContainText("Зона завелика");
+    await expect(err.getByTestId("guided-retry")).toBeVisible();
+    await expect(err.getByRole("button", { name: "Зменшити ділянку" })).toBeVisible();
+  });
+
+  test("C-1: після перезавантаження готова модель показується без повторної генерації", async ({ page }) => {
+    await page.route("**/api/status/t-done", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-done", status: "completed", progress: 100, message: "Готово",
+        download_url: "/files/restored.glb", eta_s: 50, elapsed_s: 50 }) }));
+    await page.addInitScript(() => {
+      localStorage.setItem("3dmap_task_group_id", "t-done");
+      localStorage.setItem("3dmap_task_ids", JSON.stringify(["t-done"]));
+      localStorage.setItem("3dmap_task_product", "map");
+    });
+    await page.goto("/uk/create?product=map3d");
+    await expect(page.getByTestId("guided-success")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("guided-order")).toBeVisible();
+  });
+});
