@@ -244,7 +244,26 @@ def create_solid_terrain_robust(
         
         # Faces: walls + bottom cap + terrain top (з offset)
         terrain_faces_offset = terrain_top.faces + offset_terrain
-        
+
+        # perf-2026-09-05: ТОП-поверхня приходила з ІНВЕРТОВАНИМ winding відносно вже
+        # зорієнтованих стінок/дна (вище). Через це fix_normals() у кроці 8 падав у
+        # trimesh.repair.fix_winding, який Python-BFS'ом обходив ~89k пар граней і
+        # перевертав ВСІ 81602 грані поверхні — 7.0s (≈17% часу друк-генерації).
+        # Орієнтуємо поверхню ОДРАЗУ, тим самим правилом, що й стінки/дно: нормаль
+        # топ-поверхні має дивитись ВГОРУ (z>0). Масив граней виходить ПОБАЙТОВО той
+        # самий, що й після BFS (той теж робив faces[i][::-1]), але тепер
+        # is_winding_consistent=True і fix_winding робить ранній вихід.
+        # ЗАПОБІЖНИК: fix_normals() нижче НЕ прибрано — якщо для якоїсь геометрії ця
+        # евристика помилиться, BFS відпрацює як раніше (повільно, але правильно).
+        try:
+            _top_nz = float(np.sum(terrain_top.face_normals[:, 2]))
+            if _top_nz < 0.0:
+                terrain_faces_offset = terrain_faces_offset[:, ::-1]
+                print(f"[SOLIDIFIER] Terrain top pointed DOWN (nz={_top_nz:.1f}) → flipped UP")
+        except Exception as _tnx:  # noqa: BLE001
+            print(f"[SOLIDIFIER] terrain-top orientation check skipped ({_tnx})")
+
+
         face_lists = [wall_faces, bottom_cap_faces, terrain_faces_offset]
         all_faces = np.vstack(face_lists)
         print(f"[SOLIDIFIER] Final mesh: {len(all_vertices)} vertices, {len(all_faces)} faces")

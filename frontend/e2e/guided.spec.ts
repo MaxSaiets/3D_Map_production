@@ -277,3 +277,30 @@ test.describe("Guided /create — хід створення (2026-09-03)", () =>
     await expect(page.getByText(/^Генерація моделі/)).toHaveCount(0);
   });
 });
+
+test.describe("Guided /keychains — зона за замовчуванням (E-1, 2026-09-04)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_keychain_v1", "1");
+        localStorage.setItem("onb_keychain_v1", "1");
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+  });
+
+  test("CTA активна одразу після вибору шаблону (раніше не вмикалась ніколи)", async ({ page }) => {
+    await page.goto("/uk/keychains");
+    const flow = page.getByTestId("kc-scenario-flow");
+    await expect(flow).toBeVisible();
+    await flow.getByTestId("kc-scenario-heart-46").click();
+    const cta = page.getByTestId("kc-scenario-create");
+    await expect(cta).toBeEnabled({ timeout: 20_000 });
+    await expect(flow.getByTestId("kc-place-default")).toContainText("Центр Києва");
+    // Зміна шаблону не має стирати рамку (скид setSelectedArea(null) прибрано)
+    await flow.getByRole("button", { name: "Назад" }).click();
+    await flow.getByTestId("kc-scenario-classic-wide").click();
+    await expect(cta).toBeEnabled({ timeout: 20_000 });
+  });
+});

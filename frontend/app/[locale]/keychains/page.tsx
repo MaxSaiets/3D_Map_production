@@ -149,12 +149,12 @@ export default function KeychainsPage() {
   const currentCity = CITIES[currentCityKey] ?? CITIES.Manual;
   const mapAspectRatio = design.mapWidthMm / Math.max(design.mapHeightMm, 1);
 
-  // Очищаємо попередню зону при відкритті /keychains щоб MapSelector стартував
-  // з targetMetersPerMm (зелена зона), а не з пам'яті з main мапи.
-  useEffect(() => {
-    setSelectedArea(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // E-1 (2026-09-04): РАНІШЕ тут був `setSelectedArea(null)` на маунті — і він
+  // ЗАВЖДИ перебивав рамку, яку KeychainCropOverlay щойно виставив (ефекти дитини
+  // виконуються ПЕРЕД ефектами батька, тож null приходив останнім). Наслідок на
+  // проді: у guided кнопка «Показати брелок у 3D» НЕ вмикалась узагалі, поки
+  // користувач не посуне рамку або не тапне місто. Overlay і так рахує власні
+  // bounds під поточний aspect при кожній ініціалізації — скид зайвий.
 
   // Відновлюємо задачу БРЕЛКА після refresh (ЛИШЕ keychain-задачі — не мап, бо ключ
   // localStorage спільний). Інакше генерація брелка зависала «осиротілою» при перезавантаженні.
@@ -203,19 +203,15 @@ export default function KeychainsPage() {
       if (cityParam && CITIES[cityParam]) {
         setCurrentCityKey(cityParam);
         setLabel(CITIES[cityParam].defaultText);
-        setSelectedArea(null);
       }
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Якщо користувач змінює шаблон (Token 45×26, 35×55, тощо) — мапа має інший
-  // aspect ratio для карти. Скидаємо crop щоб MapSelector перерахував його під
-  // новий aspect (вертикальний vs горизонтальний). Інакше залишається стара форма.
-  useEffect(() => {
-    setSelectedArea(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapAspectRatio]);
+  // Зміна шаблону (Token 45×26, 35×55…) міняє aspect ratio карти. Перерахунок
+  // робить сам KeychainCropOverlay: `spec.aspectRatio` є в його deps, тож він
+  // перестворює рамку і кладе НОВІ bounds у стор. Додатковий `setSelectedArea(null)`
+  // тут лише стирав їх після дитини (див. E-1) — прибрано.
   const handleCropRotationChange = useCallback((rotationDeg: number) => {
     setCropRotationDeg(rotationDeg);
   }, []);
