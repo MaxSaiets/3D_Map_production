@@ -25,6 +25,7 @@
   "nav": {
     "how": "How it works",
     "gallery": "Gallery",
+    "prices": "Prices",
     "templates": "Templates",
     "keychains": "Keychains",
     "account": "Account",
@@ -59,7 +60,7 @@
       "ctaKeychain": "Make a keychain",
       "stat1n": "Any city",
       "stat1l": "worldwide",
-      "stat2n": "1–3 days",
+      "stat2n": "2–4 days",
       "stat2l": "print & dispatch",
       "stat3n": "Eco PLA",
       "stat3l": "bioplastic",
@@ -71,7 +72,8 @@
       "dragHint": "Live 3D models — drag to rotate",
       "try": "Create a map",
       "badgeEco": "Eco PLA",
-      "badgeReady": "File for 3D printing"
+      "badgeReady": "File for 3D printing",
+      "shipPill": "We print & ship · from {p} ₴"
     },
     "path": {
       "eyebrow1": "Path 1 · Your own geometry",
@@ -188,12 +190,25 @@
       "entity": "Sole proprietor Maksym Saiets",
       "addressLine": "Ukraine, Khmelnytskyi oblast, Khmelnytskyi, Zavadskoho St. 38",
       "gift": "Gift",
-      "maket": "Floor plan model"
+      "maket": "Floor plan model",
+      "prices": "Prices",
+      "blog": "Blog",
+      "worlds3d": "3D Worlds",
+      "panno": "Wall map",
+      "karpaty": "Carpathians map",
+      "corporate": "For business",
+      "brelok": "City keychains",
+      "cookieSettings": "Cookie settings"
     },
     "seo": {
       "title": "3D city maps and personalised keychains — what we make",
       "p1": "Monadruk turns any place on Earth into a printable 3D model: a 3D map of a city district with real building heights, parks and rivers from OpenStreetMap data, a city map keychain with your own text, a topographic keychain with real mountain relief from satellite elevation data, or a city-map fridge magnet. The 3MF and STL files open straight in Bambu Studio and PrusaSlicer, ready to print at home.",
       "p2": "No 3D printer? We print for you in eco-friendly Eco PLA and ship across Ukraine. A 3D map of London, Berlin, Kyiv or New York, the relief of the Alps or Hoverla, a personalised anniversary keychain — pick a spot on the map and the model is ready in minutes."
+    },
+    "popularCities": {
+      "title": "3D maps of popular cities",
+      "subtitle": "Pick your city — or any point on Earth in the builder.",
+      "allCities": "All cities"
     },
     "alt": {
       "keychainMap": "City map keychain",
@@ -351,7 +366,7 @@
     "realAlt": "Photo of a real printed Monadruk product"
   },
   "consent": {
-    "text": "We use cookies for analytics and to improve the site.",
+    "text": "Analytics and ad-measurement cookies (our own stats, Google, Meta) are enabled only with your consent. Without it, only technical cookies for sign-in and language are used.",
     "accept": "Accept",
     "decline": "Decline",
     "more": "Learn more"
@@ -750,7 +765,14 @@
     "detailLocation": "Location",
     "downloadAria": "Download model (choose format)",
     "downloadFormat3mf": "Download 3MF",
-    "downloadFormatStl": "Download STL"
+    "downloadFormatStl": "Download STL",
+    "modelExpired": "Storage period expired (90 days)",
+    "dangerZone": "Danger zone",
+    "deleteHint": "Data is deleted permanently. Order records are kept for the period required by accounting law.",
+    "deleteAccount": "Delete account and all data",
+    "deleteConfirm": "Really delete your account and all data? This cannot be undone.",
+    "deleted": "Account deleted. See you around.",
+    "deleteFailed": "Couldn't delete the account. Try again or write to us."
   },
   "tour": {
     "hintAria": "Hint",
@@ -815,7 +837,9 @@
     "a11yRotateGroup": "Rotate the shape on the map",
     "a11yRotateLeft": "Rotate 15° counter-clockwise",
     "a11yRotateRight": "Rotate 15° clockwise",
-    "a11yRotateValue": "Rotation angle: {deg}°"
+    "a11yRotateValue": "Rotation angle: {deg}°",
+    "a11yFrameKeyboard": "Print area frame. Move and resize it with the mouse, touch, or arrow keys.",
+    "a11yFrameKeyboardHint": "Arrow keys move 10 m, Shift+Arrow moves faster (50 m), [ ] shrink/grow by 10%, Esc to exit"
   },
   "kc": {
     "tabs": {
@@ -1685,7 +1709,7 @@
       "s2t": "Size and style",
       "s2b": "See the 3D model before you pay",
       "s3t": "We print and ship",
-      "s3b": "1–3 working days, Nova Poshta",
+      "s3b": "2–4 business days, Nova Poshta",
       "cta": "Pick your place"
     },
     "keychain": {
@@ -1698,7 +1722,7 @@
       "s2t": "Text and colours",
       "s2b": "Engrave your own wording",
       "s3t": "We print and ship",
-      "s3b": "1–3 working days, Nova Poshta",
+      "s3b": "2–4 business days, Nova Poshta",
       "cta": "Create your keychain"
     }
   },
@@ -1710,7 +1734,7 @@
     "pendingTitle": "Order received",
     "pendingBody": "If you have just paid, the status will update within a few minutes. If the payment didn't complete, we will contact you to confirm.",
     "orderLabel": "Order",
-    "step1": "Production — 1–3 business days",
+    "step1": "Production — 2–4 business days",
     "step2": "Shipping via Nova Poshta with a tracking number",
     "step3": "Track your order status in your account",
     "toAccount": "My account",
@@ -1808,7 +1832,13 @@
     "printPrepLine": "Preparing the print file —",
     "tryAgain": "Try again",
     "shrinkZone": "Shrink the area",
-    "contactUs": "Contact us"
+    "contactUs": "Contact us",
+    "myHomeMarked": "Your house is marked in red — it'll print as a separate coloured part.",
+    "shareLink": "Share the 3D model",
+    "shareCopied": "Link copied",
+    "mapLoadingWait": "The map is still loading — we'll start as soon as it's ready",
+    "previewPromise": "The preview is built from the same data as the print file — no placeholders, no “roughly like this”",
+    "qrHint": "Open this 3D scene on your phone"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -1879,7 +1909,13 @@
     "cancelGen": "Cancel generation",
     "printPrepLine": "Preparing the print file —",
     "tryAgain": "Try again",
-    "contactUs": "Contact us"
+    "contactUs": "Contact us",
+    "myHomeMarked": "Your house is marked in red — it'll print as a separate coloured part.",
+    "shareLink": "Share the 3D model",
+    "shareCopied": "Link copied",
+    "mapLoadingWait": "The map is still loading — we'll start as soon as it's ready",
+    "previewPromise": "The preview is built from the same data as the print file — no placeholders, no “roughly like this”",
+    "qrHint": "Open this 3D scene on your phone"
   },
   "maket": {
     "backHome": "Home",

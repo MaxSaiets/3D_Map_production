@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Мобільна (lg:hidden) закріплена панель знизу: завжди видима орієнтовна ціна +
@@ -58,23 +58,25 @@ export function StickyActionBar({
         )}
         <div className={`flex min-w-0 items-center gap-2 ${price != null ? "flex-1" : "w-full"}`}>
           {secondaryLabel && onSecondary && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="md"
               onClick={onSecondary}
-              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center truncate rounded-full border border-[var(--surface-border)] bg-white px-3 py-3 text-sm font-bold text-[var(--text-primary)] transition hover:bg-white/70"
+              className="min-h-12 min-w-0 flex-1 truncate"
             >
               {secondaryLabel}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="md"
             onClick={onAction}
             disabled={disabled}
-            className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-full bg-[var(--accent-strong)] px-3 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(11,92,87,0.28)] transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:bg-slate-400"
+            busy={busy}
+            className="min-h-12 min-w-0 flex-1 truncate"
           >
-            {busy && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
             <span className="truncate">{actionLabel}</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Download, Home, Loader2, MapPin, PenLine, ShoppingBag, X } from "lucide-react";
+import { ArrowLeft, Check, Download, Home, Loader2, MapPin, PenLine, Share2, ShoppingBag, X, ShieldCheck } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 // ЛОКАЛІЗОВАНИЙ Link (@/i18n/navigation), НЕ next/link — інакше лінк на
 // /keychains з /en/create губив би префікс локалі.
 import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/Button";
+import { ShareQr } from "@/components/ShareQr";
 import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
 import { SIMPLE_SIZES } from "@/lib/generation";
@@ -81,7 +83,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     genError: st.genError,
     printPrep: st.printPrep,
     taskRestored: st.taskRestored,
+    pendingGenerate: st.pendingGenerate,
+    setPendingGenerate: st.setPendingGenerate,
     downloadUrl: st.downloadUrl,
+    taskGroupId: st.taskGroupId,
     modelSizeMm: st.modelSizeMm,
     setModelSizeMm: st.setModelSizeMm,
     setSimpleFormat: st.setSimpleFormat,
@@ -99,6 +104,25 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     simpleConnector: st.simpleConnector,
     setSimpleConnector: st.setSimpleConnector,
   })));
+
+  // T-2.1: текстовий лінк «Поділитись» у ГОТОВО-банері — та сама /share/{taskId}
+  // сторінка, що й повна панель (SimpleControlPanel.doShare), без картинки-прев'ю
+  // (це best-effort деталь повної панелі, тут досить самого лінку).
+  const [shareCopied, setShareCopied] = useState(false);
+  const doShareGuided = async () => {
+    if (!s.taskGroupId) return;
+    import("@/lib/analytics").then((m) => m.track("guided_share", { product: "map" })).catch(() => {});
+    const url = `${window.location.origin}/share/${s.taskGroupId}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ url, title: "Monadruk" }).catch(() => {});
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2500);
+      }
+    } catch { /* ignore */ }
+  };
 
   const [scenario, setScenario] = useState<ScenarioId | null>(null);
   // started: генерацію запущено САМЕ з guided-флоу (відрізняємо від відновленої
@@ -123,10 +147,18 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   useEffect(() => {
     if (s.mapHighlightBuilding && s.highlightPoints.length > hlCountRef.current) {
       s.setMapHighlightBuilding(false);
+      // Guided-воронка: позначили «мій дім» на мапі.
+      import("@/lib/analytics").then((m) => m.track("guided_home", { product: "map", action: "mark" })).catch(() => {});
     }
     hlCountRef.current = s.highlightPoints.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.highlightPoints.length, s.mapHighlightBuilding]);
+
+  // Guided-воронка: очистили позначку «мій дім» (обидва місця виклику clearHighlights).
+  const clearHomeGuided = () => {
+    import("@/lib/analytics").then((m) => m.track("guided_home", { product: "map", action: "clear" })).catch(() => {});
+    s.clearHighlights();
+  };
 
   // ЖИВА ЦІНА на CTA: ТОЙ САМИЙ quote-механізм, що в SimpleControlPanel /
   // StickyActionBar (fetchQuote з бекенд-прайсу; fallback нижче — mapPrices.ts).
@@ -173,11 +205,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       // Зсув рамки пізніше ніж 2.5 с після старту генерації = дія користувача
       // (раніше — доліт карти після пошуку, він не має вмикати «Оновити превʼю»).
       if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
+      // Guided-воронка: ручний зсув/ресайз рамки — трек лише на ПЕРШИЙ перехід
+      // «місце ще не обране» → «обране» (щоб не спамити подіями на кожен рух карти).
+      if (!placePicked && !customPlaceTrackedRef.current) {
+        customPlaceTrackedRef.current = true;
+        import("@/lib/analytics").then((m) => m.track("guided_place", { product: "map", place: "custom" })).catch(() => {});
+      }
       setPlacePicked(true);
       // Ручний зсув/ресайз рамки після пошуку — назву місця вже не гарантуємо.
       setPlaceLabel((cur) => (cur && lastGotoRef.current && Date.now() - lastGotoRef.current < 1500 ? cur : ""));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.selectedArea]);
+  const customPlaceTrackedRef = useRef(false);
   const lastGotoRef = useRef(0);
   useEffect(() => {
     const onPick = (e: Event) => {
@@ -190,7 +230,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       lastGotoRef.current = Date.now();
       if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
       setPlacePicked(true);
-      if (typeof d.label === "string" && d.label.trim()) setPlaceLabel(d.label.trim());
+      const label = typeof d.label === "string" ? d.label.trim() : "";
+      if (label) setPlaceLabel(label);
+      // Guided-воронка: дискретна подія (чіп/пошук), а не рух карти — трекаємо завжди.
+      import("@/lib/analytics").then((m) => m.track("guided_place", { product: "map", place: label || "search" })).catch(() => {});
     };
     window.addEventListener("monadruk:map-goto", onPick as EventListener);
     return () => window.removeEventListener("monadruk:map-goto", onPick as EventListener);
@@ -284,10 +327,17 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   });
   const [snapshotKey, setSnapshotKey] = useState<string | null>(null);
 
+  // H-4 (2026-09-05): на повільному звʼязку Leaflet вантажиться ~6 с, і доти
+  // `selectedArea` порожній. Раніше кнопка була disabled — людина тапала в
+  // мертву кнопку. Тепер намір ЗАПАМʼЯТОВУЄМО і запускаємо, щойно рамка є.
+  const waitingForMap = s.pendingGenerate;
+  const setWaitingForMap = s.setPendingGenerate;
   const create = () => {
-    if (!s.selectedArea || s.isGenerating) return;
+    if (s.isGenerating) return;
+    if (!s.selectedArea) { setWaitingForMap(true); return; }
+    setWaitingForMap(false);
     import("@/lib/analytics")
-      .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm, placePicked }))
+      .then((m) => m.track("guided_generate", { product: "map", scenario, sizeMm: s.modelSizeMm, placePicked, place: placeLabel || "custom" }))
       .catch(() => {});
     setRan(false);
     setStarted(true);
@@ -336,11 +386,34 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     if (left < 45) return t("etaSoon");
     return t("etaLeft", { min: Math.max(1, Math.round(left / 60)) });
   })();
+  // Карта віддала рамку — виконуємо відкладений намір користувача.
+  useEffect(() => {
+    if (!waitingForMap || !s.selectedArea || s.isGenerating) return;
+    // ⚠️НЕ запускати синхронно в цьому ефекті: панель-слухач перепідписується
+    // на `monadruk:guided-generate` КОЖЕН рендер (ефект без deps), тож у мить
+    // нашого коміту слухача може не бути — подія летіла в порожнечу (відтворено).
+    const id = window.setTimeout(() => { setWaitingForMap(false); create(); }, 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingForMap, s.selectedArea, s.isGenerating]);
   const generatingView = s.isGenerating;
   // C-1: після F5 задача відновлюється зі сторіджу — показуємо готову модель.
   const successView = (started || s.taskRestored) && !s.isGenerating && !!s.downloadUrl;
   // C-3: помилка = реальний fail з бекенду (з причиною), а не «немає файлу».
   const failedNote = !!s.genError && !s.isGenerating && (started || s.taskRestored);
+  // Guided-воронка: результат генерації — ОДИН раз на прогін (ключ = момент
+  // старту create(), а не taskGroupId, бо в помилки його може не бути).
+  const resultTrackedAtRef = useRef(0);
+  useEffect(() => {
+    if (successView && resultTrackedAtRef.current !== createdAtRef.current) {
+      resultTrackedAtRef.current = createdAtRef.current;
+      import("@/lib/analytics").then((m) => m.track("guided_result", { product: "map", ok: true, elapsedS: s.elapsedS })).catch(() => {});
+    } else if (failedNote && resultTrackedAtRef.current !== createdAtRef.current) {
+      resultTrackedAtRef.current = createdAtRef.current;
+      import("@/lib/analytics").then((m) => m.track("guided_result", { product: "map", ok: false, reason: s.genError || undefined })).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successView, failedNote]);
   // Готово: якщо користувач нічого не чіпав під час генерації, знімок = поточні
   // параметри (доліт карти/авто-зона після пошуку не мають давати «Оновити превʼю»).
   const prevSuccessRef = useRef(false);
@@ -353,7 +426,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const displayStep = generatingView || successView || scenario !== null ? 2 : 1;
 
   const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
-  const moreLinkCls = "rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11.5px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]";
+  // "bronze"/"sm" — сирий слот примітива (Button.tsx): повністю бесспокий вигляд,
+  // жоден із 4 варіантів його не описує без спотворення, тож весь клас іде через className.
+  const moreLinkCls = `rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11.5px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]`;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur" data-testid="scenario-flow">
@@ -363,13 +438,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
           {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
         </span>
         {scenario !== null && !generatingView && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => { setScenario(null); setStarted(false); }}
-            className="inline-flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
           >
             <ArrowLeft size={12} /> {t("back")}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -407,9 +482,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
                 <Link href="/worlds" className={moreLinkCls}>{t("worldsTitle")}</Link>
                 <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
-                <button type="button" onClick={() => exitGuided("step1")} data-testid="scenario-full" className={moreLinkCls}>
+                <Button variant="bronze" size="sm" onClick={() => exitGuided("step1")} data-testid="scenario-full" className={moreLinkCls}>
                   {t("fullTitle")}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -434,14 +509,23 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   </b>
                   {" — "}{t("readyHint")}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new Event("monadruk:open-order"))}
+                {/* R-04 (Cities3ds): одна чесна фраза-обіцянка проти головного сумніву
+                    «а надрукують те, що бачу?». Превʼю і 3MF — з одного canonical_2d. */}
+                <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="guided-promise">
+                  <ShieldCheck size={13} className="mt-[1px] shrink-0 text-[var(--accent-strong)]" /> {t("previewPromise")}
+                </p>
+                <Button
+                  variant="bronze"
+                  size="md"
+                  onClick={() => {
+                    import("@/lib/analytics").then((m) => m.track("guided_order_click", { product: "map", priceUah: ctaPriceUah })).catch(() => {});
+                    window.dispatchEvent(new Event("monadruk:open-order"));
+                  }}
                   data-testid="guided-order"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
+                  className="w-full"
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(ctaPriceUah)}
-                </button>
+                </Button>
                 <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
                 {/* «Не зрозуміло, як качати» (власник): завантаження — рівноправна
                     кнопка з чесним підписом (вхід через Google, файл готується ≈2 хв). */}
@@ -450,18 +534,45 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("waySelf")}</span>
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="lg"
                   data-testid="guided-download"
-                  onClick={() => window.dispatchEvent(new Event("monadruk:guided-download"))}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white px-6 py-3 text-[14.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)] hover:bg-[rgba(15,118,110,0.06)]"
+                  onClick={() => {
+                    import("@/lib/analytics").then((m) => m.track("guided_download", { product: "map" })).catch(() => {});
+                    window.dispatchEvent(new Event("monadruk:guided-download"));
+                  }}
+                  className="w-full"
                 >
                   <Download size={17} /> {t("downloadCta")}
-                </button>
+                </Button>
                 <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
                 {dlQuota && !dlQuota.isAdmin && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
+                )}
+                {/* T-2.1: текстовий лінк, НЕ третя кнопка — банер лишається з рівно
+                    двома заповненими кнопками (замовити/завантажити). */}
+                {!!s.taskGroupId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="guided-share"
+                    onClick={doShareGuided}
+                    className="mx-auto"
+                  >
+                    <Share2 size={13} /> {shareCopied ? t("shareCopied") : t("shareLink")}
+                  </Button>
+                )}
+                {/* I-2 (R-04/TerraPrinter): на десктопі — QR, щоб відкрити цю ж сцену на
+                    телефоні й показати рідним; на мобільному QR безглуздий (є «Поділитись»). */}
+                {!!s.taskGroupId && (
+                  <ShareQr
+                    url={`${window.location.origin}/share/${s.taskGroupId}`}
+                    size={88}
+                    label={t("qrHint")}
+                    className="mx-auto hidden lg:flex"
+                  />
                 )}
                 <div className="my-0.5 flex items-center gap-2">
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
@@ -555,7 +666,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   {s.highlightPoints.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => s.clearHighlights()}
+                      onClick={clearHomeGuided}
                       aria-label={t("myHomeClear")}
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
                     >
@@ -563,6 +674,20 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     </button>
                   )}
                 </div>
+                {/* T-3.8: підтвердження ЩО саме позначено — раніше кнопка міняла
+                    напис на лічильник без пояснення, що це буде окрема деталь. */}
+                {s.highlightPoints.length > 0 && (
+                  <p className="text-[12px] leading-snug text-[var(--text-secondary)]">
+                    {t("myHomeMarked")}{" "}
+                    <button
+                      type="button"
+                      onClick={clearHomeGuided}
+                      className="font-semibold text-[var(--text-primary)] underline underline-offset-2 hover:text-[#8f2a20]"
+                    >
+                      {t("myHomeClear")}
+                    </button>
+                  </p>
+                )}
                 {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
                   <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
                 )}
@@ -640,6 +765,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                       aria-checked={s.modelSizeMm === z.mm}
                       onClick={() => {
                         s.setModelSizeMm(z.mm);
+                        import("@/lib/analytics").then((m) => m.track("guided_size", { product: "map", sizeMm: z.mm, label: z.label })).catch(() => {});
                         // Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо
                         // поточного центру з масштабом під нову плитку —
                         // інакше S зі старою 800м-зоною ловила червоне
@@ -677,17 +803,19 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <div className="flex flex-col gap-2 rounded-[12px] border border-red-200 bg-red-50 px-3 py-2.5" data-testid="guided-error">
                 <p className="text-[12.5px] leading-snug text-red-800">{s.genError || t("genFailed")}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="bronze"
+                    size="sm"
                     onClick={create}
                     data-testid="guided-retry"
                     className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
                   >
                     {t("tryAgain")}
-                  </button>
+                  </Button>
                   {/zона|зона|завелик|too large|large/i.test(s.genError || "") && (
-                    <button
-                      type="button"
+                    <Button
+                      variant="bronze"
+                      size="sm"
                       onClick={() => {
                         // Зменшуємо рамку навколо поточного центру до 70 % — типова
                         // причина відмови бекенду «Зона завелика для моделі N см».
@@ -700,15 +828,16 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                       className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
                     >
                       {t("shrinkZone")}
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    type="button"
+                  <Button
+                    variant="bronze"
+                    size="sm"
                     onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: `${t("genFailed")} ${s.genError || ""}`.trim() } }))}
                     className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-red-800 underline underline-offset-2"
                   >
                     {t("contactUs")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -717,15 +846,21 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 «Оновити превʼю», коли параметри змінились. */}
             {!s.isGenerating && (!successView || dirty) && (
               <>
-                <button
-                  type="button"
+                <Button
+                  variant={successView ? "primary" : "bronze"}
+                  size="lg"
                   onClick={create}
-                  disabled={!s.selectedArea}
+                  disabled={waitingForMap}
                   data-testid="scenario-create"
-                  className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${successView ? "bg-[var(--accent-strong)] shadow-[0_8px_24px_rgba(11,92,87,0.3)]" : "bg-[var(--bronze,#8E6B3D)] shadow-[0_8px_24px_rgba(142,107,61,0.35)]"}`}
+                  className="w-full"
                 >
                   {successView ? t("updateModel") : t("previewCta")}
-                </button>
+                </Button>
+                {waitingForMap && (
+                  <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--accent-strong)]" aria-live="polite" data-testid="map-loading-wait">
+                    {t("mapLoadingWait")}
+                  </p>
+                )}
                 {!successView && (
                   <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--text-secondary)]">
                     {t("printFromLine", { price: disp(ctaPriceUah) })}
@@ -735,13 +870,14 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
             )}
             {/* A-6: єдиний вихід у розширений режим (стан зони/формату/розміру
                 зберігається — юзер продовжує там же). */}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={() => exitGuided("step2")}
-              className="mt-2 w-full text-center text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]"
+              className="mt-2 w-full text-center"
             >
               {t("advancedSettings")}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -752,7 +888,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         price={disp(ctaPriceUah)}
         busy={generatingView}
         tone={successView && !dirty ? "bronze" : "primary"}
-        disabled={!generatingView && !s.selectedArea}
+        disabled={!generatingView && waitingForMap}
         cta={generatingView
           ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
           : successView ? (dirty ? t("updateModel") : t("orderPrint")) : t("previewCtaShort")}

@@ -25,6 +25,7 @@
   "nav": {
     "how": "Cómo funciona",
     "gallery": "Galería",
+    "prices": "Precios",
     "templates": "Plantillas",
     "keychains": "Llaveros",
     "account": "Cuenta",
@@ -59,7 +60,7 @@
       "ctaKeychain": "Crear llavero",
       "stat1n": "Cualquier ciudad",
       "stat1l": "en todo el mundo",
-      "stat2n": "1–3 días",
+      "stat2n": "2–4 días",
       "stat2l": "impresión y envío",
       "stat3n": "Eco PLA",
       "stat3l": "bioplástico",
@@ -71,7 +72,8 @@
       "dragHint": "Modelos 3D en vivo — arrastra para girar",
       "try": "Crear mapa",
       "badgeEco": "Eco PLA",
-      "badgeReady": "Archivo para impresión 3D"
+      "badgeReady": "Archivo para impresión 3D",
+      "shipPill": "Imprimimos y enviamos · desde {p} ₴"
     },
     "path": {
       "eyebrow1": "Vía 1 · Tu propia geometría",
@@ -188,12 +190,25 @@
       "entity": "Empresario individual Maksym Saiets",
       "addressLine": "Ucrania, óblast de Jmelnitski, Jmelnitski, calle Zavadskoho 38",
       "gift": "Regalo",
-      "maket": "Maqueta del plano"
+      "maket": "Maqueta del plano",
+      "prices": "Precios",
+      "blog": "Blog",
+      "worlds3d": "Mundos 3D",
+      "panno": "Mapa de pared",
+      "karpaty": "Mapa de los Cárpatos",
+      "corporate": "Para empresas",
+      "brelok": "Llaveros por ciudad",
+      "cookieSettings": "Ajustes de cookies"
     },
     "seo": {
       "title": "Mapas 3D de ciudades y llaveros personalizados — qué hacemos",
       "p1": "Monadruk convierte cualquier lugar de la Tierra en un modelo 3D imprimible: un mapa 3D de un barrio con alturas reales de edificios, parques y ríos a partir de datos de OpenStreetMap, un llavero con el mapa de tu ciudad y tu propio texto, un llavero topográfico con el relieve real de las montañas a partir de datos satelitales de altura, o un imán de nevera con mapa. Los archivos 3MF y STL se abren directamente en Bambu Studio y PrusaSlicer.",
       "p2": "¿No tienes impresora 3D? Imprimimos por ti en Eco PLA ecológico y enviamos dentro de Ucrania. Un mapa 3D de Madrid, Barcelona, Kyiv o Nueva York, el relieve de los Alpes, un llavero personalizado para un aniversario — elige un lugar en el mapa y el modelo está listo en minutos."
+    },
+    "popularCities": {
+      "title": "Mapas 3D de ciudades populares",
+      "subtitle": "Elige tu ciudad — o cualquier punto del mundo en el configurador.",
+      "allCities": "Todas las ciudades"
     },
     "alt": {
       "keychainMap": "Llavero con mapa de la ciudad",
@@ -351,7 +366,7 @@
     "realAlt": "Foto de un producto Monadruk realmente impreso"
   },
   "consent": {
-    "text": "Usamos cookies para análisis y para mejorar el sitio.",
+    "text": "Las cookies de analítica y medición publicitaria (nuestras propias estadísticas, Google, Meta) solo se activan con tu consentimiento. Sin él, usamos únicamente cookies técnicas para el inicio de sesión y el idioma.",
     "accept": "Aceptar",
     "decline": "Rechazar",
     "more": "Más información"
@@ -439,7 +454,7 @@
     "trustOperator": "Un operador confirmará los detalles antes de imprimir",
     "trustSecure": "Tus datos están seguros y solo se usan para el pedido",
     "submitReassure": "Al pulsar no pagas nada aún — solo envías la solicitud",
-    "loginPrompt": "Inicie sesión para guardar su modelo y seguir su pedido.",
+    "loginPrompt": "Inicia sesión para guardar tu modelo y seguir tu pedido.",
     "loginCta": "Entrar",
     "savedToAccount": "El pedido se guardará en {email}",
     "prodFloorplan": "Maqueta del plano",
@@ -750,7 +765,14 @@
     "detailLocation": "Ubicación",
     "downloadAria": "Descargar modelo (elegir formato)",
     "downloadFormat3mf": "Descargar 3MF",
-    "downloadFormatStl": "Descargar STL"
+    "downloadFormatStl": "Descargar STL",
+    "modelExpired": "Plazo de almacenamiento vencido (90 días)",
+    "dangerZone": "Zona de peligro",
+    "deleteHint": "Los datos se borran para siempre. Los pedidos se guardan el tiempo que exige la contabilidad.",
+    "deleteAccount": "Eliminar cuenta y todos los datos",
+    "deleteConfirm": "¿Seguro que quieres eliminar tu cuenta y todos los datos? No se puede deshacer.",
+    "deleted": "Cuenta eliminada. ¡Hasta pronto!",
+    "deleteFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo o escríbenos."
   },
   "tour": {
     "hintAria": "Sugerencia",
@@ -815,7 +837,9 @@
     "a11yRotateGroup": "Girar la forma en el mapa",
     "a11yRotateLeft": "Girar 15° a la izquierda",
     "a11yRotateRight": "Girar 15° a la derecha",
-    "a11yRotateValue": "Ángulo de giro: {deg}°"
+    "a11yRotateValue": "Ángulo de giro: {deg}°",
+    "a11yFrameKeyboard": "Marco del área de impresión. Muévelo y cambia su tamaño con el ratón, el dedo o las flechas.",
+    "a11yFrameKeyboardHint": "Las flechas mueven 10 m, Mayús+flecha más rápido (50 m), [ ] reducir/ampliar un 10 %, Esc para salir"
   },
   "kc": {
     "tabs": {
@@ -1685,7 +1709,7 @@
       "s2t": "Tamaño y estilo",
       "s2b": "El modelo 3D visible antes de pagar",
       "s3t": "Imprimimos y enviamos",
-      "s3b": "1–3 días laborables, Nova Poshta",
+      "s3b": "2–4 días hábiles, Nova Poshta",
       "cta": "Elegir mi lugar"
     },
     "keychain": {
@@ -1698,34 +1722,34 @@
       "s2t": "Texto y colores",
       "s2b": "Grabado de su propio texto",
       "s3t": "Imprimimos y enviamos",
-      "s3b": "1–3 días laborables, Nova Poshta",
+      "s3b": "2–4 días hábiles, Nova Poshta",
       "cta": "Crear mi llavero"
     }
   },
   "orderSuccess": {
-    "checkingTitle": "Confirmando su pago…",
-    "checkingBody": "Espere unos segundos mientras confirmamos su pago.",
+    "checkingTitle": "Confirmando tu pago…",
+    "checkingBody": "Espera unos segundos mientras confirmamos tu pago.",
     "paidTitle": "¡Gracias! Pago recibido",
-    "paidBody": "Su pedido está pagado y enviado a producción. Lo imprimiremos y lo enviaremos con el transportista.",
+    "paidBody": "Tu pedido está pagado y enviado a producción. Lo imprimiremos y lo enviaremos con el transportista.",
     "pendingTitle": "Pedido recibido",
-    "pendingBody": "Si acaba de pagar, el estado se actualizará en unos minutos. Si el pago no se completó, nos pondremos en contacto con usted para confirmarlo.",
+    "pendingBody": "Si acabas de pagar, el estado se actualizará en unos minutos. Si el pago no se completó, nos pondremos en contacto contigo para confirmarlo.",
     "orderLabel": "Pedido",
-    "step1": "Producción — 1–3 días hábiles",
+    "step1": "Producción — 2–4 días hábiles",
     "step2": "Envío mediante Nova Poshta con número de seguimiento",
-    "step3": "Consulte el estado de su pedido en su cuenta",
+    "step3": "Consulta el estado de tu pedido en tu cuenta",
     "toAccount": "Mi cuenta",
     "makeAnother": "Crear otro",
     "toHome": "Inicio",
-    "support": "¿Tiene preguntas? Contáctenos — los datos están al pie de la página."
+    "support": "¿Tienes preguntas? Contáctanos — los datos están al pie de la página."
   },
   "scenario": {
     "stepOf": "Paso {step} de 2",
     "step1Title": "¿Qué creamos?",
-    "step2Title": "¿Dónde está su lugar?",
+    "step2Title": "¿Dónde está tu lugar?",
     "howItWorks": "Busca un lugar → el marco en el mapa es lo que imprimimos (arrastra sus esquinas) → «Ver vista previa 3D»",
     "from": "desde {price}",
     "map3dTitle": "Mapa 3D de la ciudad",
-    "map3dDesc": "Edificios, calles y parques de su barrio en volumen",
+    "map3dDesc": "Edificios, calles y parques de tu barrio en volumen",
     "reliefTitle": "Mapa de relieve",
     "reliefDesc": "Con alturas del terreno: colinas, valles, curvas de nivel",
     "flatTitle": "Mapa plano a color",
@@ -1733,7 +1757,7 @@
     "magnetTitle": "Imán para nevera",
     "magnetDesc": "Mapa compacto de 6 cm con imán en la base",
     "keychainTitle": "Llavero con mi lugar",
-    "keychainDesc": "El mapa de su hogar siempre en sus llaves",
+    "keychainDesc": "El mapa de tu hogar siempre en tus llaves",
     "fullTitle": "Modo avanzado",
     "fullDesc": "Todos los ajustes: series, GPX, estilos, formas",
     "moreLabel": "Más:",
@@ -1750,7 +1774,7 @@
     "sizeCmpL": "como una palma",
     "sizeCmpXL": "como una hoja A5",
     "back": "Atrás",
-    "step2Hint": "Busque una ciudad o dirección en el buscador del mapa y haga clic: la zona se establecerá automáticamente",
+    "step2Hint": "Busca una ciudad o dirección en el buscador del mapa y haz clic: la zona se establecerá automáticamente",
     "placeChosen": "Lugar seleccionado",
     "waitingPlace": "Busca una dirección, toca una ciudad arriba o arrastra el marco en el mapa",
     "magnetFixedNote": "El imán tiene un tamaño fijo de 6 cm — {price}",
@@ -1769,7 +1793,7 @@
     "myHome": "Mi casa en el mapa",
     "myHomeCount": "Mi casa: {n} seleccionado",
     "myHomeClear": "Quitar selección",
-    "myHomeHintClick": "Haga clic en su edificio en el mapa — se convierte en un inserto rojo aparte",
+    "myHomeHintClick": "Haz clic en tu edificio en el mapa — se convierte en un inserto rojo aparte",
     "mapLabelPlaceholder": "Texto en el mapa (ciudad, nombre…)",
     "etaNote": "Normalmente 1–2 minutos. No hace falta esperar — el modelo queda guardado en esta página",
     "readyBadge": "Listo",
@@ -1808,7 +1832,13 @@
     "printPrepLine": "Preparando el archivo de impresión —",
     "tryAgain": "Intentar de nuevo",
     "shrinkZone": "Reducir la zona",
-    "contactUs": "Escríbenos"
+    "contactUs": "Escríbenos",
+    "myHomeMarked": "Tu casa está marcada en rojo — se imprimirá como una pieza de color independiente.",
+    "shareLink": "Compartir el modelo 3D",
+    "shareCopied": "Enlace copiado",
+    "mapLoadingWait": "El mapa aún se está cargando: empezamos en cuanto esté listo",
+    "previewPromise": "La vista previa se construye con los mismos datos que el archivo de impresión: sin relleno ni «más o menos así»",
+    "qrHint": "Abrir esta escena 3D en tu móvil"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",
@@ -1864,7 +1894,7 @@
     "myHome": "Mi casa en el mapa",
     "myHomeCount": "Mi casa: {n} seleccionado",
     "myHomeClear": "Quitar selección",
-    "myHomeHintClick": "Haga clic en su edificio en el mapa — se convierte en un inserto rojo aparte",
+    "myHomeHintClick": "Haz clic en tu edificio en el mapa — se convierte en un inserto rojo aparte",
     "defaultPlace": "Centro de Kyiv (por defecto)",
     "defaultPlaceHint": "Busca tu dirección, toca una ciudad o arrastra el marco: el llavero muestra lo que hay dentro del marco.",
     "customPlace": "zona elegida en el mapa",
@@ -1879,7 +1909,13 @@
     "cancelGen": "Cancelar la generación",
     "printPrepLine": "Preparando el archivo de impresión —",
     "tryAgain": "Intentar de nuevo",
-    "contactUs": "Escríbenos"
+    "contactUs": "Escríbenos",
+    "myHomeMarked": "Tu casa está marcada en rojo — se imprimirá como una pieza de color independiente.",
+    "shareLink": "Compartir el modelo 3D",
+    "shareCopied": "Enlace copiado",
+    "mapLoadingWait": "El mapa aún se está cargando: empezamos en cuanto esté listo",
+    "previewPromise": "La vista previa se construye con los mismos datos que el archivo de impresión: sin relleno ni «más o menos así»",
+    "qrHint": "Abrir esta escena 3D en tu móvil"
   },
   "maket": {
     "backHome": "Inicio",

@@ -32,7 +32,7 @@ class ModelErrorBoundary extends Component<{ fallback: ReactNode; children: Reac
 }
 
 interface Quota { downloads: number; limit: number; remaining: number; is_admin: boolean; can_download: boolean }
-interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string }
+interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string; expired?: boolean }
 interface AccOrder {
   order_number?: string | number; created_at?: string; status?: string; product_type?: string;
   est_price?: string; delivery_country?: string; delivery_city?: string;
@@ -65,6 +65,9 @@ export default function AccountPage() {
   const [fmtMenu, setFmtMenu] = useState<string | null>(null);
   // Замовлення друку з раніше згенерованої моделі (генеруй зараз — замов потім).
   const [orderModel, setOrderModel] = useState<AccModel | null>(null);
+  // Небезпечна зона: видалення акаунта й усіх даних (DELETE /api/account).
+  const [deleting, setDeleting] = useState(false);
+  const [deleteState, setDeleteState] = useState<"ok" | "error" | null>(null);
   // Safety: ніколи не лишаємо вічний спінер. Якщо Firebase не відповів за 3.5с
   // (повільний клієнт / не гідратувалось) — показуємо екран входу, а не крутилку.
   const [gracePassed, setGracePassed] = useState(false);
@@ -149,6 +152,26 @@ export default function AccountPage() {
       load();
     }
     setBusy(null);
+  };
+
+  const deleteAccount = async () => {
+    if (!window.confirm(t("deleteConfirm"))) return;
+    const token = await getIdToken();
+    if (!token) return;
+    setDeleting(true); setDeleteState(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/account`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setDeleteState("ok");
+      await signOut();
+    } catch {
+      setDeleteState("error");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -342,7 +365,13 @@ export default function AccountPage() {
                       style={{ background: "var(--bronze,#8E6B3D)" }}>
                       <ShoppingBag size={15} /> {t("orderPrint")}
                     </button>
-                    {/* Завантаження з вибором формату (3MF за замовч. або STL) */}
+                    {/* Завантаження з вибором формату (3MF за замовч. або STL); файл
+                        видалено ретеншеном (90 днів) — замість кнопки бейдж-пояснення. */}
+                    {m.expired ? (
+                      <span className="inline-flex min-h-10 items-center justify-center rounded-full border border-line bg-bg-2 px-3 py-2 text-[12px] font-semibold text-ink-3" title={t("modelExpired")}>
+                        {t("modelExpired")}
+                      </span>
+                    ) : (
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => setFmtMenu((cur) => (cur === m.task_id ? null : m.task_id))}
@@ -367,6 +396,7 @@ export default function AccountPage() {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                   </div>
                 </div>
@@ -404,6 +434,26 @@ export default function AccountPage() {
               ))}
             </div>
           )}
+
+          {/* Небезпечна зона: незворотне видалення акаунта й усіх даних. */}
+          <div className="mt-10 rounded-[18px] border border-red-200 bg-red-50 p-5">
+            <h3 className="font-serif text-lg text-red-900">{t("dangerZone")}</h3>
+            <p className="mt-1 text-[13px] text-red-800">{t("deleteHint")}</p>
+            {deleteState === "error" && (
+              <p className="mt-2 text-[13px] font-semibold text-red-900">{t("deleteFailed")}</p>
+            )}
+            {deleteState === "ok" ? (
+              <p className="mt-3 text-[13px] font-semibold text-red-900">{t("deleted")}</p>
+            ) : (
+              <button
+                onClick={deleteAccount}
+                disabled={deleting}
+                className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {t("deleteAccount")}
+              </button>
+            )}
+          </div>
         </>
       )}
 

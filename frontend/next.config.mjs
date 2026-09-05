@@ -30,6 +30,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // T-6.5 (perf, 2026-09-05): lucide-react is imported as named icons across many
+  // pages/components; without this Next bundles the whole barrel file per entry.
+  // optimizePackageImports rewrites those to per-icon imports (tree-shaking) —
+  // pure build-time transform, zero behavior/visual change.
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

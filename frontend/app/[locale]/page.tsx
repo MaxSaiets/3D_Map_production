@@ -1,50 +1,13 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, Boxes, Download, KeyRound, Layers3, LayoutGrid, Leaf, Ruler, Sparkles, Star, Truck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Boxes, Download, KeyRound, Layers3, LayoutGrid, Leaf, MapPin, Ruler, Sparkles, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 
-// «Друкуємо й доставляємо · від {p} ₴» — конкретна пропозиція у героя (раніше герой
-// тільки про «завантаж файл», а реальний бізнес=друк+доставка був прихований). Inline
-// локалізований мап → без правок 6 messages-файлів.
-// Ціна БЕРЕТЬСЯ з mapPrices.ts (MAP_PRICE_RANGE.uk.low), а не хардкодиться — раніше
-// цей pill вручну не оновили разом зі зміною цін S250/M350/L450/XL550 2026-07-09
-// (був застарілим 150₴), знайдено при живій перевірці.
-const SHIP_PILL_TMPL: Record<string, string> = {
-  uk: "Друкуємо й доставляємо · від {p} ₴",
-  en: "We print & ship · from {p} ₴",
-  de: "Wir drucken & versenden · ab {p} ₴",
-  es: "Imprimimos y enviamos · desde {p} ₴",
-  fr: "Nous imprimons et livrons · dès {p} ₴",
-  pl: "Drukujemy i wysyłamy · od {p} ₴",
-};
-function shipPillText(locale: string): string {
-  const tmpl = SHIP_PILL_TMPL[locale] ?? SHIP_PILL_TMPL.uk;
-  return tmpl.replace("{p}", MAP_PRICE_RANGE.uk.low);
-}
-
-// Блок «Популярні міста» на лендінгу — ПРЯМІ лінки з найавторитетнішої сторінки на
-// city-сторінки (раніше вони були ОРФАНАМИ: лише футер→/maps, 2 кліки → Google не
-// давав їм link-equity). Локалізовані заголовки inline (без правок 6 messages).
-const POP_CITIES_H: Record<string, string> = {
-  uk: "3D-мапи популярних міст", en: "3D maps of popular cities", de: "3D-Karten beliebter Städte",
-  es: "Mapas 3D de ciudades populares", fr: "Cartes 3D des villes populaires", pl: "Mapy 3D popularnych miast",
-};
-const POP_CITIES_SUB: Record<string, string> = {
-  uk: "Обери своє місто — або будь-яку точку світу у конструкторі.",
-  en: "Pick your city — or any point on Earth in the builder.",
-  de: "Wähle deine Stadt — oder einen beliebigen Punkt im Konfigurator.",
-  es: "Elige tu ciudad — o cualquier punto del mundo en el configurador.",
-  fr: "Choisis ta ville — ou n'importe quel point du monde dans le configurateur.",
-  pl: "Wybierz swoje miasto — lub dowolny punkt świata w kreatorze.",
-};
-const ALL_CITIES_L: Record<string, string> = {
-  uk: "Усі міста", en: "All cities", de: "Alle Städte", es: "Todas las ciudades", fr: "Toutes les villes", pl: "Wszystkie miasta",
-};
 import { Link } from "@/i18n/navigation";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { CITY_PAGES } from "@/lib/cityPages";
-import { MAP_PRICE_RANGE } from "@/lib/mapPrices";
+import { MAP_PRICE_RANGE, MAP_SIZE_PRICES_UAH, mapPriceEur } from "@/lib/mapPrices";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -139,13 +102,14 @@ function SeoTextBlock() {
 
 /* ---------- Popular cities (internal links → de-orphan city pages) ---------- */
 function PopularCities() {
+  const t = useTranslations("home.popularCities");
   const locale = useLocale();
   const cities = CITY_PAGES.slice(0, 16);
   return (
     <section className="border-t border-line-soft bg-bg-2/40">
       <div className="mx-auto max-w-[1360px] px-5 py-14 lg:px-8 lg:py-20">
-        <h2 className="text-[clamp(22px,2.8vw,34px)]">{POP_CITIES_H[locale] ?? POP_CITIES_H.uk}</h2>
-        <p className="mt-3 text-[14.5px] text-ink-2">{POP_CITIES_SUB[locale] ?? POP_CITIES_SUB.uk}</p>
+        <h2 className="text-[clamp(22px,2.8vw,34px)]">{t("title")}</h2>
+        <p className="mt-3 text-[14.5px] text-ink-2">{t("subtitle")}</p>
         <ul className="mt-6 flex flex-wrap gap-2.5">
           {cities.map((c) => (
             <li key={c.slug}>
@@ -163,7 +127,7 @@ function PopularCities() {
               className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-forest/10 px-4 py-2 text-[14px] font-bold text-forest transition hover:bg-forest/15"
               style={{ color: "var(--forest, #2E4A3A)" }}
             >
-              {ALL_CITIES_L[locale] ?? ALL_CITIES_L.uk} <ArrowRight size={14} />
+              {t("allCities")} <ArrowRight size={14} />
             </Link>
           </li>
         </ul>
@@ -203,7 +167,6 @@ export default function HomePage() {
 function Hero() {
   const t = useTranslations("home.hero");
   const tAlt = useTranslations("home.alt");
-  const locale = useLocale();
   return (
     <section className="border-b border-line-soft">
       <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
@@ -225,7 +188,7 @@ function Hero() {
             </Link>
           </div>
           <Link href="/prices" className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-soft bg-paper/70 px-4 py-2 text-[13px] font-semibold text-ink-2 transition hover:border-forest/40 hover:text-ink">
-            <Truck size={15} className="text-forest" /> {shipPillText(locale)}
+            <Truck size={15} className="text-forest" /> {t("shipPill", { p: MAP_PRICE_RANGE.uk.low })}
           </Link>
           <div className="mt-12 flex flex-wrap gap-x-9 gap-y-5 border-t border-line-soft pt-8">
             <Stat n={t("stat1n")} l={t("stat1l")} />
@@ -470,9 +433,23 @@ function HowItWorks() {
   );
 }
 
+// Плитки шаблонів району: замість циклічного stock-фото (T-4.7, false visual
+// claim) — стилізований градієнт у палітрі ivory/forest/bronze, що чесно
+// виглядає навмисно, а не як «зламана картинка».
+const TILE_GRADIENTS = [
+  "linear-gradient(135deg, var(--forest) 0%, var(--forest-2) 100%)",
+  "linear-gradient(135deg, var(--forest-2) 0%, var(--ink) 100%)",
+  "linear-gradient(135deg, var(--bronze) 0%, var(--forest-2) 100%)",
+  "linear-gradient(135deg, var(--forest-3) 0%, var(--forest-2) 100%)",
+];
+
 /* ---------- Templates gallery ---------- */
 function TemplatesGallery() {
   const t = useTranslations("home.templates");
+  // Валюта як на решті сайту: uk — гривні, інші локалі — євро за тим самим
+  // позиційним курсом (mapPriceEur). Раніше плитка писала «₴» усім мовам.
+  const tileLocale = useLocale();
+  const tilePrice = (uah: number) => (tileLocale === "uk" ? `${uah} ₴` : `€${mapPriceEur(uah)}`);
   const tAlt = useTranslations("home.alt");
   const tg = useTranslations("gallery");
   const tCity = useTranslations("cities");
@@ -500,19 +477,37 @@ function TemplatesGallery() {
             href={{ pathname: "/create", query: { template: t.id } }}
             className="group overflow-hidden rounded-[18px] border border-line-soft bg-paper transition-transform hover:-translate-y-1 hover:shadow-soft"
           >
-            <div className="relative aspect-[16/10] overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/showcase/map-${(i % 11) + 1}.webp`}
-                alt={tAlt("districtMap", { district: tg(`district.${t.id}`), city: tCity(t.cityKey) })}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+            <div
+              className="relative aspect-[16/10] overflow-hidden transition-transform duration-500 group-hover:scale-[1.03]"
+              style={{ background: TILE_GRADIENTS[i % TILE_GRADIENTS.length] }}
+              role="img"
+              aria-label={tAlt("districtMap", { district: tg(`district.${t.id}`), city: tCity(t.cityKey) })}
+            >
+              {/* Стилізована плитка замість фото — реального рендеру району ще нема,
+                  а циклічне stock-фото (map-N.webp) видавало себе за фото району
+                  (T-4.7). Контурні кола + пін чесно кажуть «це шаблон», не фото. */}
+              <div
+                className="absolute inset-0 opacity-[0.16]"
+                style={{
+                  backgroundImage:
+                    "repeating-radial-gradient(circle at 82% 78%, transparent 0, transparent 14px, rgba(244,239,228,.9) 15px, rgba(244,239,228,.9) 16px)",
+                }}
               />
+              <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(244,239,228,.14)] text-[#F4EFE4]">
+                <MapPin size={18} />
+              </div>
               {badgeKey(t.tag) && (
-                <span className="absolute left-3 top-3 rounded-full bg-paper-2/90 px-3 py-1 text-[11px] font-semibold text-forest">
+                <span className="absolute right-3 top-3 rounded-full bg-paper-2/90 px-3 py-1 text-[11px] font-semibold text-forest">
                   {tg(`badge.${badgeKey(t.tag)}`)}
                 </span>
               )}
+              <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-[#F4EFE4]">
+                <div className="font-serif text-[15px] leading-tight opacity-90">{tCity(t.cityKey)}</div>
+                <div className="text-right">
+                  <div className="text-[13px] font-semibold">{t.sizeMm ?? 80} мм</div>
+                  <div className="text-[12px] opacity-80">{tilePrice(MAP_SIZE_PRICES_UAH[(t.sizeMm ?? 80) as keyof typeof MAP_SIZE_PRICES_UAH] ?? Number(MAP_PRICE_RANGE.uk.low))}</div>
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-between px-4 py-4">
               <div>

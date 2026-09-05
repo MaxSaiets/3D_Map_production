@@ -200,25 +200,70 @@ export const en: LegalSet = {
 
   privacy: {
     title: "Privacy Policy",
+    intro: [
+      "Here it is, plainly and specifically: what data we collect, where it is stored, how long we keep it, who we share it with, and how to delete it. In short: we only keep what is needed to build the model and fulfill the order, we never sell anything, and model files are automatically deleted after 90 days.",
+    ],
     sections: [
+      { h: "Who Is Responsible for the Data", blocks: [
+        { p: "The controller of personal data is {ownerFull} ({storeName}, {storeAddress}). We are guided by the Law of Ukraine \"On Protection of Personal Data\"; for visitors from the EU, the GDPR also applies where relevant. For any question about your data, write to {email}." },
+      ] },
       { h: "What Data We Collect", blocks: [
-        { p: "Your name, email or phone number (when you sign in / register), as well as the contact details and delivery address you provide when placing an order. Technical data (the history of generated models) is stored in your account." },
+        { ul: [
+          "Account: your email address and sign-in identifier via Google (Firebase Authentication). We never see or store your password.",
+          "Order: name, phone number, delivery method, city and branch or address, comment, estimated price, screenshots of the model from the builder.",
+          "Model: the coordinates of the selected map area, the settings you chose (size, style, engraving, the \"my home\" marker), the generated files (GLB for preview, 3MF/STL for printing), and the GPX route if you uploaded one.",
+          "Technical data during your visit — only with your consent to cookies (see \"Cookies and Analytics\").",
+        ] },
       ] },
-      { h: "How We Use the Data", blocks: [
-        { p: "Solely to provide the service: signing in to your account, saving your model history, processing and delivering orders, and contacting you about your order. We do not sell or share your data with third parties for advertising." },
+      { h: "Why We Use It", blocks: [
+        { p: "Solely to: build your model and show you a preview; fulfill and deliver your order and contact you about it; keep records as a sole proprietor (FOP); measure traffic and improve the website (in aggregated form). We do not sell your data or share it with third parties for advertising." },
       ] },
-      { h: "Uploaded Routes (GPX) and Geodata", blocks: [
-        { p: "If you upload a GPX file (for example, an export of your own activity from Strava or another app), we process the route coordinates solely to build your 3D model. This is your own data — we do not publish it, share it with third parties or use it for advertising. The route points are simplified and stored only for as long as needed to generate the model and (if you are logged in) to maintain your model history in your account; you can ask us to delete them at any time." },
-        { p: "Searching for a place on the map sends your query to the OpenStreetMap geocoding service (Nominatim), and the maps themselves are loaded from OpenStreetMap tiles — in accordance with their terms of use. We do not pass your name or contact details to these services." },
+      { h: "How Long We Keep It", blocks: [
+        { ul: [
+          "Model files and previews (GLB, 3MF/STL, service files) — 90 days from creation, after which they are automatically deleted. The record stays in your account history, but the file becomes unavailable after this period — generate the model again if you need it.",
+          "Models tied to a placed order — together with the order: up to 3 years (the retention period for primary accounting documents).",
+          "Order data (name, phone, delivery) — up to 3 years for the same reason.",
+          "Account and history — until you delete your account (a button in your account) or ask us to.",
+          "Analytics — anonymized records of limited scope (the log is rotated), kept for no longer than 12 months.",
+          "Backup copies of key data are kept for 7 days.",
+        ] },
       ] },
-      { h: "Storage and Services", blocks: [
-        { p: "Authentication works through Google Firebase Authentication. The Website is protected by Cloudflare. Orders are processed manually. Data is stored on a secure server only for as long as needed to fulfill the order and maintain history." },
+      { h: "Who We Share It With (Processors)", blocks: [
+        { p: "For the website to work, part of the data is processed by services we work with. Each one receives only what it needs for its function:" },
+        { ul: [
+          "Google Firebase Authentication — account sign-in (email, Google identifier).",
+          "Cloudflare — website protection and content delivery network; we only see the visitor's country code, which Cloudflare adds to the request.",
+          "LiqPay (PrivatBank) — online payment. Card details are entered on LiqPay's side; we never receive them.",
+          "Nova Poshta / Ukrposhta — delivery: name, phone, branch or address.",
+          "Telegram — our internal messaging channel: your order card (name, phone, delivery, screenshots) is sent to the team's private chat. No third parties have access.",
+          "OpenStreetMap and Nominatim — the map and place search: only the search text and coordinates are sent, without your contact details.",
+        ] },
+      ] },
+      { h: "Where the Data Is Stored", blocks: [
+        { p: "Model files, orders and accounts are stored on a server under our control in Ukraine; access to it goes through Cloudflare. Only the owner has access to order data." },
       ] },
       { h: "Cookies and Analytics", blocks: [
-        { p: "We use Cloudflare's privacy-friendly analytics with no third-party advertising cookies. Cookies are used only to make account sign-in work." },
+        { p: "Without your consent, the website sets only technical cookies: account sign-in, your chosen language, and the record of your cookie choice itself. After clicking \"Agree\" in the banner, the following are enabled:" },
+        { ul: [
+          "Our own analytics on our server: page views, clicks and steps in the builder (which scenario, size, and place you chose). No IP address is stored — only a daily hash and country code.",
+          "Google Analytics 4 and Google Ads (conversion measurement) and Meta Pixel — the standard cookies of these services under their own policies. They operate under Consent Mode and are not enabled if you decline.",
+        ] },
+        { p: "You can change your choice at any time via the \"Cookie Settings\" button in the website footer." },
+      ] },
+      { h: "The \"Share in 3D\" Link", blocks: [
+        { p: "If you click \"Share in 3D\", a page with your model is created, open to anyone who has the link. It contains none of your personal data — only the 3D model. The link works for as long as the model file is stored (90 days)." },
+      ] },
+      { h: "Uploaded Routes (GPX) and Geodata", blocks: [
+        { p: "If you upload a GPX file (for example, an export of your own activity from Strava or another app), we process the route coordinates solely to build your 3D model. This is your own data — we do not publish it, share it with third parties or use it for advertising. The route points are simplified and stored under the same retention periods as model files." },
       ] },
       { h: "Your Rights", blocks: [
-        { p: "You can ask us to delete your account and the associated data. Write to us at {email}." },
+        { p: "You have the right to know what data we hold, to correct it, or to have it deleted. Your account has a \"Delete account and all data\" button — it immediately deletes your account, history and model files. Order data remains for the accounting retention period (up to 3 years). You can also send any request to {email} — we respond within 30 days." },
+      ] },
+      { h: "Age", blocks: [
+        { p: "The service is intended for adults. Orders must be placed by a person aged 18 or over." },
+      ] },
+      { h: "Changes to This Policy", blocks: [
+        { p: "If we change our data-handling practices, we update this document and the \"Updated\" date on this page." },
       ] },
       { h: "Contact", blocks: [
         { p: "For privacy questions: {email}." },
@@ -235,14 +280,24 @@ export const en: LegalSet = {
       { h: "Account and Free Downloads", blocks: [
         { p: "An account is required to download the full model. Each user gets 5 free downloads. Beyond that — by arrangement (printing/payment), get in touch via the website." },
       ] },
+      { h: "Storage of Models", blocks: [
+        { p: "Generated files are stored for 90 days, after which they are automatically deleted (models tied to an order are deleted together with the order). The record stays in your account history; you can generate the model again. The \"Share in 3D\" link is open to anyone who has it and works for as long as the file is stored. You can delete your account together with all models in your account at any time. Details — in the [privacy:Privacy Policy]." },
+      ] },
       { h: "Data and Copyright", blocks: [
         { p: "Cartographic data © OpenStreetMap contributors (ODbL). You may use the generated files for personal printing. Reselling the service or large-scale commercial use requires a separate arrangement." },
+      ] },
+      { h: "Rules of Use", blocks: [
+        { ul: [
+          "Only upload GPX routes you have the right to use.",
+          "Do not use automated tools for mass model generation and do not overload the service — generation runs on our own equipment, and we may temporarily restrict access in case of abuse.",
+          "The engraving on a model must not contain offensive or unlawful content; we may refuse to print such an order with a full refund.",
+        ] },
       ] },
       { h: "Orders and Payment", blocks: [
         { p: "Orders are placed through the website; payment is made online via LiqPay or by arrangement. Price and delivery details are on the [delivery:\"Payment and Delivery\"] page, and the full terms are in the [offer:Public Offer Agreement]." },
       ] },
       { h: "Liability", blocks: [
-        { p: "The service is provided \"as is\". We strive for maximum model accuracy but do not guarantee full correspondence to real-world objects due to the limitations of the source OSM data." },
+        { p: "The service is provided \"as is\". We strive for maximum model accuracy but do not guarantee full correspondence to real-world objects due to the limitations of the source OSM data. The 3D preview is built from the same data as the print file." },
       ] },
       { h: "Contact", blocks: [
         { p: "Questions: {email}." },

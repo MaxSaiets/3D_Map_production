@@ -200,25 +200,70 @@ export const es: LegalSet = {
 
   privacy: {
     title: "Política de privacidad",
+    intro: [
+      "Aquí, con toda honestidad y claridad: qué datos recibimos, dónde se guardan, cuánto tiempo se conservan, a quién se transmiten y cómo eliminarlos. En resumen: solo guardamos lo necesario para crear el modelo y ejecutar el pedido, no vendemos nada, y los archivos de los modelos se eliminan automáticamente a los 90 días." ,
+    ],
     sections: [
-      { h: "Qué datos recopilamos", blocks: [
-        { p: "Nombre, email o número de teléfono (al iniciar sesión o registrarte), así como los datos de contacto y la dirección de entrega que indicas al tramitar un pedido. Los datos técnicos (el historial de modelos generados) se guardan en tu cuenta." },
+      { h: "Quién es responsable de los datos", blocks: [
+        { p: "El responsable de los datos personales es {ownerFull} ({storeName}, {storeAddress}). Nos regimos por la ley ucraniana «Sobre la protección de datos personales»; para los visitantes de la UE, también por el RGPD en lo que resulte aplicable. Para cualquier consulta sobre datos, escribe a {email}." },
       ] },
-      { h: "Cómo utilizamos los datos", blocks: [
-        { p: "Exclusivamente para prestar el servicio: inicio de sesión en la cuenta, conservación del historial de modelos, tramitación y entrega de pedidos y contacto contigo respecto al pedido. No vendemos ni cedemos tus datos a terceros con fines publicitarios." },
+      { h: "Qué datos recibimos", blocks: [
+        { ul: [
+          "Cuenta: dirección de email e identificador de inicio de sesión mediante Google (Firebase Authentication). No vemos ni guardamos tu contraseña.",
+          "Pedido: nombre, teléfono, forma de entrega, ciudad y punto de recogida o dirección, comentario, precio estimado, capturas de pantalla del modelo desde el configurador.",
+          "Modelo: coordenadas de la zona del mapa elegida, ajustes seleccionados (tamaño, estilo, inscripción, marca «mi casa»), archivos generados (GLB para la vista previa, 3MF/STL para la impresión), así como la ruta GPX si la has subido.",
+          "Datos técnicos durante la visita, solo con tu consentimiento sobre cookies (sección «Cookies y analítica»).",
+        ] },
       ] },
-      { h: "Rutas cargadas (GPX) y geodatos", blocks: [
-        { p: "Si cargas un archivo GPX (por ejemplo, la exportación de tu propia actividad desde Strava u otra aplicación), procesamos las coordenadas de la ruta exclusivamente para construir tu modelo 3D. Estos son tus propios datos: no los publicamos, no los cedemos a terceros ni los usamos con fines publicitarios. Los puntos de la ruta se simplifican y se conservan solo el tiempo necesario para la generación y (si has iniciado sesión) para mantener el historial de modelos en tu cuenta; puedes solicitar su eliminación en cualquier momento." },
-        { p: "La búsqueda de un lugar en el mapa envía tu consulta al servicio de geocodificación de OpenStreetMap (Nominatim), y los propios mapas se cargan desde los tiles de OpenStreetMap, conforme a sus condiciones de uso. No facilitamos a estos servicios tu nombre ni tus datos de contacto." },
+      { h: "Para qué los usamos", blocks: [
+        { p: "Exclusivamente para: construir tu modelo y mostrarte la vista previa; ejecutar y entregar el pedido y contactarte al respecto; llevar la contabilidad como empresario individual (FOP); medir la audiencia y mejorar el sitio (de forma agregada). No vendemos datos ni los cedemos a terceros con fines publicitarios." },
       ] },
-      { h: "Almacenamiento y servicios", blocks: [
-        { p: "La autenticación funciona mediante Google Firebase Authentication. El sitio está protegido por Cloudflare. Los pedidos se procesan manualmente. Los datos se guardan en un servidor seguro solo el tiempo necesario para ejecutar el pedido y mantener el historial." },
+      { h: "Cuánto tiempo los conservamos", blocks: [
+        { ul: [
+          "Los archivos de modelos y vistas previas (GLB, 3MF/STL, archivos de servicio): 90 días desde su creación, tras lo cual se eliminan automáticamente. El registro en el historial de tu cuenta permanece, pero el archivo deja de estar disponible pasado ese plazo; genera el modelo de nuevo.",
+          "Los modelos con un pedido asociado, junto con el pedido: hasta 3 años (plazo de conservación de los documentos contables primarios).",
+          "Los datos del pedido (nombre, teléfono, entrega): hasta 3 años por el mismo motivo.",
+          "La cuenta y el historial: hasta que elimines la cuenta (botón en tu área personal) o nos lo solicites.",
+          "La analítica: registros anonimizados de volumen limitado (el registro rota), no más de 12 meses.",
+          "Las copias de seguridad de los datos clave se conservan 7 días.",
+        ] },
+      ] },
+      { h: "A quién se los transmitimos (encargados del tratamiento)", blocks: [
+        { p: "Para que el sitio funcione, parte de los datos los procesan los servicios con los que trabajamos. Cada uno recibe solo lo necesario para su función:" },
+        { ul: [
+          "Google Firebase Authentication: inicio de sesión en la cuenta (email, identificador de Google).",
+          "Cloudflare: protección del sitio y red de distribución; solo vemos el código de país del visitante, que Cloudflare añade a la solicitud.",
+          "LiqPay (PrivatBank): pago en línea. Los datos de la tarjeta se introducen en el lado de LiqPay, nosotros no los recibimos.",
+          "Nova Poshta / Ukrposhta: entrega: nombre, teléfono, punto de recogida o dirección.",
+          "Telegram: nuestro canal interno de notificaciones: la ficha de tu pedido (nombre, teléfono, entrega, capturas de pantalla) llega al chat privado del equipo. Ningún tercero tiene acceso.",
+          "OpenStreetMap y Nominatim: mapa y búsqueda de lugares: solo se envía el texto de búsqueda y las coordenadas, sin tus datos de contacto.",
+        ] },
+      ] },
+      { h: "Dónde se guardan los datos", blocks: [
+        { p: "Los archivos de modelos, los pedidos y las cuentas se guardan en un servidor bajo nuestro control en Ucrania; el acceso pasa por Cloudflare. Solo el propietario tiene acceso a los datos de los pedidos." },
       ] },
       { h: "Cookies y analítica", blocks: [
-        { p: "Utilizamos la analítica privada de Cloudflare, sin cookies publicitarias de terceros. Las cookies se emplean únicamente para el funcionamiento del inicio de sesión en la cuenta." },
+        { p: "Sin tu consentimiento, el sitio solo coloca cookies técnicas: inicio de sesión en la cuenta, idioma elegido y el propio registro de tu elección sobre cookies. Al pulsar «Acepto» en el banner se activan:" },
+        { ul: [
+          "Analítica propia en nuestro servidor: páginas vistas, clics y pasos en el configurador (qué escenario, tamaño y lugar se han elegido). La dirección IP no se guarda: solo un hash diario y el código de país.",
+          "Google Analytics 4 y Google Ads (medición de conversiones) y Meta Pixel: cookies estándar de estos servicios conforme a sus propias políticas. Funcionan en modo de consentimiento (Consent Mode) y no se activan si has rechazado.",
+        ] },
+        { p: "Puedes cambiar tu elección en cualquier momento con el botón «Configuración de cookies» en el pie del sitio." },
+      ] },
+      { h: "Enlace «Compartir en 3D»", blocks: [
+        { p: "Si pulsas «Compartir en 3D», se crea una página con tu modelo, accesible para cualquiera que tenga el enlace. No contiene tus datos personales, solo el modelo 3D. El enlace funciona mientras se conserve el archivo del modelo (90 días)." },
+      ] },
+      { h: "Rutas cargadas (GPX) y geodatos", blocks: [
+        { p: "Si cargas un archivo GPX (por ejemplo, la exportación de tu propia actividad desde Strava u otra aplicación), procesamos las coordenadas de la ruta exclusivamente para construir tu modelo 3D. Estos son tus propios datos: no los publicamos, no los cedemos a terceros ni los usamos con fines publicitarios. Los puntos de la ruta se simplifican y se conservan con los mismos plazos que los archivos de los modelos." },
       ] },
       { h: "Tus derechos", blocks: [
-        { p: "Puedes solicitar la eliminación de tu cuenta y de los datos asociados. Escríbenos a {email}." },
+        { p: "Tienes derecho a saber qué datos tenemos, a corregirlos o a eliminarlos. En tu área personal hay un botón «Eliminar cuenta y todos los datos»: elimina de inmediato la cuenta, el historial y los archivos de tus modelos. Los datos de los pedidos permanecen durante el plazo contable (hasta 3 años). Cualquier solicitud también puede enviarse a {email}; respondemos en un plazo de 30 días." },
+      ] },
+      { h: "Edad", blocks: [
+        { p: "El servicio está pensado para personas adultas. El pedido lo realiza una persona mayor de 18 años." },
+      ] },
+      { h: "Cambios en la política", blocks: [
+        { p: "Si cambiamos nuestras prácticas respecto a los datos, actualizamos este documento y la fecha «Actualizado» en esta página." },
       ] },
       { h: "Contacto", blocks: [
         { p: "Para cuestiones de privacidad: {email}." },
@@ -235,14 +280,24 @@ export const es: LegalSet = {
       { h: "Cuenta y descargas gratuitas", blocks: [
         { p: "Para descargar el modelo completo se necesita una cuenta. Cada usuario dispone de 5 descargas gratuitas. A partir de ahí, por acuerdo (impresión/pago), con contacto a través del sitio." },
       ] },
+      { h: "Conservación de los modelos", blocks: [
+        { p: "Los archivos generados se conservan 90 días, tras lo cual se eliminan automáticamente (los modelos con un pedido asociado, junto con el pedido). El registro en el historial de la cuenta permanece; el modelo puede generarse de nuevo. El enlace «Compartir en 3D» está accesible para cualquiera que lo tenga y funciona mientras se conserve el archivo. Puedes eliminar tu cuenta en cualquier momento junto con todos los modelos de tu área personal. Más detalles en la [privacy:Política de privacidad]." },
+      ] },
       { h: "Datos y derechos de autor", blocks: [
         { p: "Datos cartográficos © OpenStreetMap contributors (ODbL). Los archivos generados puedes utilizarlos para impresión personal. La reventa del servicio o el uso comercial masivo requieren un acuerdo aparte." },
+      ] },
+      { h: "Normas de uso", blocks: [
+        { ul: [
+          "Sube solo rutas GPX sobre las que tengas derechos.",
+          "No utilices medios automatizados para generar modelos de forma masiva ni sobrecargues el servicio; la generación se ejecuta en nuestro equipo, y podemos restringir temporalmente el acceso en caso de abuso.",
+          "La inscripción en el modelo no debe contener contenido ofensivo o ilegal; podemos rechazar la impresión de tal pedido con reembolso íntegro.",
+        ] },
       ] },
       { h: "Pedidos y pago", blocks: [
         { p: "El pedido se tramita a través del sitio; el pago, en línea mediante LiqPay o por acuerdo. Los detalles de precios y entrega están en la página [delivery:«Pago y entrega»]; las condiciones completas, en el [offer:Contrato de oferta pública]." },
       ] },
       { h: "Responsabilidad", blocks: [
-        { p: "El servicio se presta «tal cual». Procuramos la máxima precisión de los modelos, pero no garantizamos su correspondencia total con los objetos reales debido a las limitaciones de los datos de origen de OSM." },
+        { p: "El servicio se presta «tal cual». Procuramos la máxima precisión de los modelos, pero no garantizamos su correspondencia total con los objetos reales debido a las limitaciones de los datos de origen de OSM. La vista previa 3D se construye a partir de los mismos datos que el archivo de impresión." },
       ] },
       { h: "Contacto", blocks: [
         { p: "Consultas: {email}." },

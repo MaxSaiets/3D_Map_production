@@ -23,6 +23,8 @@ interface GenerationState {
   taskRestored: boolean;
   /** D-3: guided-режим активний → прогрес живе в панелі, сцена його не дублює. */
   guidedMode: boolean;
+  /** H-4: тап по CTA, поки карта ще не віддала рамку. Виконається, щойн рамка є. */
+  pendingGenerate: boolean;
   downloadUrl: string | null;
   printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
@@ -181,6 +183,7 @@ interface GenerationState {
   setPrintPrep: (printPrep: number | null) => void;
   setTaskRestored: (taskRestored: boolean) => void;
   setGuidedMode: (guidedMode: boolean) => void;
+  setPendingGenerate: (pendingGenerate: boolean) => void;
   setDownloadUrl: (url: string | null) => void;
   setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
@@ -230,6 +233,7 @@ const initialState = {
   printPrep: null,
   taskRestored: false,
   guidedMode: false,
+  pendingGenerate: false,
   downloadUrl: null,
   printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
@@ -424,6 +428,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setPrintPrep: (printPrep) => set({ printPrep }),
   setTaskRestored: (taskRestored) => set({ taskRestored }),
   setGuidedMode: (guidedMode) => set({ guidedMode }),
+  setPendingGenerate: (pendingGenerate) => set({ pendingGenerate }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
   setPrintQuality: (pq) => set({ printQuality: pq }),
 

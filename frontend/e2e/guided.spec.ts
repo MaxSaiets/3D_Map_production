@@ -256,6 +256,13 @@ test.describe("Guided /create — хід створення (2026-09-03)", () =>
     await page.goto("/uk/create?product=map3d");
     await expect(page.getByTestId("guided-success")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("guided-order")).toBeVisible();
+    // I-1/I-2/I-3: фраза-обіцянка, «Поділитись 3D» з uk-текстом (не сирий ключ), QR на десктопі
+    await expect(page.getByTestId("guided-promise")).toContainText("з тих самих даних");
+    await expect(page.getByTestId("guided-share")).toHaveText(/Поділитись 3D/);
+    const qr = page.getByTestId("share-qr");
+    await expect(qr).toBeVisible();
+    await expect(qr.locator("img")).toHaveAttribute("src", /^data:image\/png/, { timeout: 10_000 });
+    await expect(qr).toContainText("на телефоні");
   });
 
   test("D-1/D-3: смуга повзе між стрибками сервера; сцена не дублює прогрес", async ({ page }) => {
@@ -302,5 +309,42 @@ test.describe("Guided /keychains — зона за замовчуванням (E
     await flow.getByRole("button", { name: "Назад" }).click();
     await flow.getByTestId("kc-scenario-classic-wide").click();
     await expect(cta).toBeEnabled({ timeout: 20_000 });
+  });
+});
+
+test.describe("Guided /create — тап до готовності карти (H-4)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_create_v1", "1");
+        localStorage.setItem("onb_create_v1", "1");
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+  });
+
+  test("CTA активна ще до появи рамки; намір не губиться", async ({ page }) => {
+    let gen = 0;
+    await page.route("**/api/generate", (r) => {
+      gen += 1;
+      return r.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ task_id: "t-h4", status: "processing", eta_s: 50 }) });
+    });
+    await page.route("**/api/status/t-h4", (r) => r.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-h4", status: "processing", progress: 20, message: "Будую", eta_s: 50, elapsed_s: 4 }),
+    }));
+
+    await page.goto("/uk/create?product=map3d");
+    const cta = page.getByTestId("scenario-create");
+    await cta.waitFor({ state: "attached" });
+    // Кнопка НЕ мертва одразу (раніше була disabled, поки Leaflet не віддасть рамку)
+    await expect(cta).toBeEnabled();
+    await cta.click({ force: true });
+    // Чи то рамка вже була, чи ні — генерація мусить стартувати рівно один раз
+    await expect(page.getByTestId("generation-stages")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("map-loading-wait")).toHaveCount(0);
+    expect(gen).toBe(1);
   });
 });

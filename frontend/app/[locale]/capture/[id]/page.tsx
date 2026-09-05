@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { useGenerationStore } from "@/store/generation-store";
@@ -13,19 +13,48 @@ import { MAP_TEMPLATES } from "@/lib/templates";
 // route-config (export const dynamic вище), тому імпорт з аліасом nextDynamic.
 const Preview3D = nextDynamic(() => import("@/components/Preview3D").then((m) => m.Preview3D), { ssr: false });
 
+// T-6.6 (security): same shared-secret gate as /create?capture= — this route auto-runs
+// a real generation with zero UI, so it must not be reachable by a stray link/crawler.
+// If NEXT_PUBLIC_CAPTURE_TOKEN is unset (local dev / tooling not configured), fall back
+// to today's ungated behaviour and warn once.
+let warnedCaptureTokenMissing = false;
+function isCaptureAuthorized(t: string | null): boolean {
+  const expected = process.env.NEXT_PUBLIC_CAPTURE_TOKEN;
+  if (!expected) {
+    if (!warnedCaptureTokenMissing) {
+      warnedCaptureTokenMissing = true;
+      // eslint-disable-next-line no-console
+      console.warn("[capture] NEXT_PUBLIC_CAPTURE_TOKEN не задано — /capture/[id] працює без гейту (dev fallback).");
+    }
+    return true;
+  }
+  return t === expected;
+}
+
 /**
  * Internal capture route for generating gallery thumbnails through the real
  * site pipeline. /capture/<templateId> auto-runs a preview generation for that
  * district and renders ONLY the clean 3D model (no UI chrome), then sets
  * window.__captureReady = true so an automated screenshot/toDataURL can grab it.
- * Not linked anywhere in the UI.
+ * Not linked anywhere in the UI. Requires ?t=<NEXT_PUBLIC_CAPTURE_TOKEN>.
  */
 export default function CapturePage() {
   const params = useParams();
   const id = String(params?.id || "");
   const { downloadUrl, taskGroupId, setTaskGroup, setActiveTaskId, setGenerating, setSelectedArea, setDownloadUrl, setTaskStatuses, updateProgress } = useGenerationStore();
+  // Checked client-side after mount (no window during SSR) — null while pending.
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  useEffect(() => {
+    try {
+      const t = new URLSearchParams(window.location.search).get("t");
+      setAuthorized(isCaptureAuthorized(t));
+    } catch {
+      setAuthorized(false);
+    }
+  }, []);
 
   useEffect(() => {
+    if (!authorized) return;
     const tpl = MAP_TEMPLATES.find((t) => t.id === id);
     if (!tpl) return;
     const [lat, lon] = tpl.center;
@@ -57,12 +86,12 @@ export default function CapturePage() {
       } catch {/* ignore */}
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, authorized]);
 
   // This route has no ControlPanel, so it must poll task status itself and feed
   // the store (downloadUrl) that Preview3D reads to load the generated model.
   useEffect(() => {
-    if (!taskGroupId) return;
+    if (!authorized || !taskGroupId) return;
     let stop = false;
     const iv = setInterval(async () => {
       try {
@@ -82,16 +111,24 @@ export default function CapturePage() {
       } catch {/* ignore */}
     }, 2500);
     return () => { stop = true; clearInterval(iv); };
-  }, [taskGroupId, setDownloadUrl, setGenerating, setTaskStatuses, updateProgress]);
+  }, [authorized, taskGroupId, setDownloadUrl, setGenerating, setTaskStatuses, updateProgress]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !authorized) return;
     (window as any).__captureReady = Boolean(downloadUrl);
     if (downloadUrl) {
       // give three.js a moment to render the loaded model before flagging ready
       setTimeout(() => document.body.setAttribute("data-capture-ready", "1"), 2500);
     }
-  }, [downloadUrl]);
+  }, [authorized, downloadUrl]);
+
+  if (authorized === false) {
+    return (
+      <div className="h-[100dvh] w-[100vw] bg-slate-950 flex items-center justify-center text-slate-500 text-sm">
+        Not available
+      </div>
+    );
+  }
 
   return (
     <div className="h-[100dvh] w-[100vw] bg-slate-950">

@@ -7,9 +7,6 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { locales, localeMeta } from "@/i18n/routing";
 import { useAuth } from "@/components/AuthProvider";
 
-// Локалізований лейбл сторінки «Ціни» (тримаємо тут, щоб не чіпати 6 messages-файлів).
-const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de: "Preise", es: "Precios", fr: "Tarifs", pl: "Cennik" };
-
 /* ---------- Language switcher ---------- */
 export function LanguageSwitcher({ compact }: { compact?: boolean }) {
   const t = useTranslations("nav");
@@ -74,8 +71,6 @@ type BuilderProps = {
 export function SiteHeader({ variant = "default", title, other }: BuilderProps = {}) {
   const { user, configured } = useAuth();
   const t = useTranslations("nav");
-  const locale = useLocale();
-  const pricesLabel = PRICES_LABEL[locale] ?? PRICES_LABEL.uk;
   const [open, setOpen] = useState(false);
 
   if (variant === "builder") {
@@ -126,9 +121,9 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
         </Link>
         {/* Спрощено: лише чіткі ПУНКТИ ПРИЗНАЧЕННЯ (без home-якорів #how/#templates,
             що захаращували глобальне меню). Галерея · Ціни · Брелоки. */}
-        <nav className="hidden items-center gap-8 text-sm text-ink-2 md:flex">
+        <nav className="hidden items-center gap-8 text-sm text-ink-2 lg:flex">
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
-          <Link href="/prices" className="hover:text-ink">{pricesLabel}</Link>
+          <Link href="/prices" className="hover:text-ink">{t("prices")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
           <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
           <Link href="/maket" className="hover:text-ink">{t("maket")}</Link>
@@ -171,7 +166,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink md:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink lg:hidden"
           >
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -180,11 +175,11 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
 
       {/* Mobile dropdown nav */}
       {open && (
-        <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur md:hidden">
+        <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur lg:hidden">
           <ul className="flex flex-col">
             {[
               { href: "/showcase", label: t("gallery") },
-              { href: "/prices", label: pricesLabel },
+              { href: "/prices", label: t("prices") },
               { href: "/keychains", label: t("keychains") },
               { href: "/worlds", label: t("worlds") },
               { href: "/maket", label: t("maket") },

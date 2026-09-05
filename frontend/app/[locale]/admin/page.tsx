@@ -519,6 +519,12 @@ function GuidedFunnel({ g }: { g: any }) {
   const modes = rows(g.modeSwitch);
   const quotaAt = rows(g.quotaBlock?.byAt);
   const dash = (n: number) => (n > 0 ? n : "—");
+  // Що конкретно обирають у guided-флоу (старий бекенд без choices — просто ховаємо блок).
+  const choices = g.choices as
+    | { sizes?: [number, number][]; places?: [string, number][]; homeMarked?: number; shares?: number; downloads?: number; orderClicks?: number; results?: { ok?: number; fail?: number } }
+    | undefined;
+  const sizeRows: [string, number][] = (choices?.sizes || []).map(([mm, n]) => [`${mm} мм`, Number(n) || 0]);
+  const placeRows = rows(choices?.places);
   return (
     <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
       <div className="mb-1 text-[13px] font-semibold text-ink-2">Guided-воронка (2 кроки)</div>
@@ -557,6 +563,28 @@ function GuidedFunnel({ g }: { g: any }) {
         <StatList title="Сценарії (що обирають)" rows={picks} />
         <StatList title="Перемикання режиму" rows={modes} />
       </div>
+      {choices && (
+        <>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <StatList title="Розміри" rows={sizeRows} />
+            <StatList title="Місця" rows={placeRows} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              ["Мій дім позначено", choices.homeMarked],
+              ["Поділились", choices.shares],
+              ["Завантажили", choices.downloads],
+              ["Клік Замовити", choices.orderClicks],
+              ["Генерацій ✓ / ✗", `${choices.results?.ok ?? 0} / ${choices.results?.fail ?? 0}`],
+            ].map(([label, val]) => (
+              <div key={label as string} className="rounded-lg border border-line bg-bg-2 px-3 py-2 text-center">
+                <div className="font-serif text-[18px] text-ink">{val ?? 0}</div>
+                <div className="text-[10.5px] text-ink-3">{label as string}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
       {g.byDevice == null && (
         <p className="mt-2 text-[10px] text-ink-3">Розбивки «мобільний / комп'ютер» немає: аналітика не зберігає User-Agent.</p>
       )}
@@ -564,7 +592,38 @@ function GuidedFunnel({ g }: { g: any }) {
   );
 }
 
+// Мітки для рядків таймлайну одного відвідувача (timeline: [{t, e, p}]).
+// Хардкод, як решта цього адмін-файлу (не проходить через next-intl).
+function timelineEventLabel(e: string, p: Record<string, unknown> | undefined): string {
+  const P = p || {};
+  const s = (k: string) => (P[k] == null ? "" : String(P[k]));
+  switch (e) {
+    case "pageview": return s("path") ? `Сторінка ${s("path")}` : "Перегляд";
+    case "guided_pick": return `Обрав сценарій: ${s("scenario")}`;
+    case "guided_step": return `Крок ${s("step")}`;
+    case "guided_size": return `Розмір: ${s("sizeMm")} мм`;
+    case "guided_place": return `Місце: ${s("place")}`;
+    case "guided_home": return P.action === "clear" ? "Мій дім: очистив" : "Мій дім: позначив";
+    case "guided_generate": return `Запустив генерацію (${s("scenario")}, ${s("sizeMm")} мм, ${s("place")})`;
+    // ПАСТКА: /api/track зберігає props як РЯДКИ → "False" truthy; порівнюємо текстом.
+    case "guided_result": return ["True", "true", "1"].includes(s("ok")) ? `Готово ✓ ${s("elapsedS")} с` : `Помилка: ${s("reason")}`;
+    case "guided_share": return "Поділився 3D";
+    case "guided_download": return "Завантажив файл";
+    case "guided_order_click": return `Клік «Замовити друк» (${s("priceUah")} ₴)`;
+    case "funnel": return `Воронка: ${s("step")}`;
+    case "mode_switch": return `Режим: ${s("mode")}`;
+    case "quota_block": return `Ліміт завантажень (${s("at")})`;
+    case "download_model": return "Завантаження моделі";
+    case "order_paid_confirmed": return "Оплата підтверджена";
+    case "click": return `Клік: ${s("el")}`;
+    default:
+      if (e.startsWith("maket_")) return `Макет: ${e}`;
+      return e;
+  }
+}
+
 function RecentVisits({ visitors }: { visitors: any[] }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
   const fmt = (iso: string) => {
     try { return new Date(iso).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
     catch { return (iso || "").slice(5, 16).replace("T", " "); }
@@ -572,6 +631,11 @@ function RecentVisits({ visitors }: { visitors: any[] }) {
   const hm = (iso: string) => {
     try { return new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }); }
     catch { return (iso || "").slice(11, 16); }
+  };
+  // HH:MM:SS для рядків таймлайну (детальніше, ніж hm() у зведеному рядку).
+  const hms = (iso: string) => {
+    try { return new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+    catch { return (iso || "").slice(11, 19); }
   };
   // Час на сайті у людському вигляді: «12 с», «3 хв 20 с», «1 год 05 хв».
   const dur = (s: number) => {
@@ -599,27 +663,58 @@ function RecentVisits({ visitors }: { visitors: any[] }) {
       <div className="mb-1 text-[13px] font-semibold text-ink-2">Останні візити (анонімні)</div>
       <div className="mb-3 text-[11px] text-ink-3">Кожен рядок = ОДИН відвідувач (без cookie/IP). Видно: звідки прийшов, з якої країни, <b>скільки часу був на сайті</b>, які сторінки дивився та коли.</div>
       <div className="space-y-1.5">
-        {visitors.map((v, i) => (
-          <div key={(v.id || "") + i} className="flex flex-col gap-1 rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px] sm:flex-row sm:items-start sm:gap-3">
-            <div className="flex items-center gap-2 sm:w-36 sm:shrink-0">
-              <span className="text-base leading-none">{flag(v.cc)}</span>
-              <span className="font-semibold text-ink-2">{v.cc}</span>
-              <span className="font-mono text-[10px] text-ink-3">#{v.id}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-ink-2"><span className="text-ink-3">звідки:</span> <b>{v.ref}</b></div>
-              <div className="truncate text-[11px] text-ink-3">{(v.paths || []).join("  ›  ") || "—"}</div>
-            </div>
-            <div className="shrink-0 text-left text-[11px] sm:w-44 sm:text-right">
-              <div className="font-semibold text-forest">⏱ був {dur(v.duration)}</div>
-              <div className="text-ink-3">
-                {v.events} {plural(v.events, "дія", "дії", "дій")}
-                {v.sessions > 1 ? ` · ${v.sessions} ${plural(v.sessions, "захід", "заходи", "заходів")}` : ""}
+        {visitors.map((v, i) => {
+          const timeline: Array<{ t: string; e: string; p?: Record<string, unknown> }> = Array.isArray(v.timeline) ? v.timeline : [];
+          const open = expanded === i;
+          const canExpand = timeline.length > 0;
+          return (
+            <div key={(v.id || "") + i} className="rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px]">
+              <div
+                className={`flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3 ${canExpand ? "cursor-pointer" : ""}`}
+                onClick={() => canExpand && setExpanded(open ? null : i)}
+              >
+                <div className="flex items-center gap-2 sm:w-36 sm:shrink-0">
+                  {canExpand ? (
+                    <button
+                      type="button"
+                      aria-label={open ? "Згорнути" : "Розгорнути"}
+                      aria-expanded={open}
+                      className="inline-flex items-center justify-center rounded p-0.5 text-ink-3 hover:text-ink"
+                      onClick={(e) => { e.stopPropagation(); setExpanded(open ? null : i); }}
+                    >
+                      {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                    </button>
+                  ) : null}
+                  <span className="text-base leading-none">{flag(v.cc)}</span>
+                  <span className="font-semibold text-ink-2">{v.cc}</span>
+                  <span className="font-mono text-[10px] text-ink-3">#{v.id}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-ink-2"><span className="text-ink-3">звідки:</span> <b>{v.ref}</b></div>
+                  <div className="truncate text-[11px] text-ink-3">{(v.paths || []).join("  ›  ") || "—"}</div>
+                </div>
+                <div className="shrink-0 text-left text-[11px] sm:w-44 sm:text-right">
+                  <div className="font-semibold text-forest">⏱ був {dur(v.duration)}</div>
+                  <div className="text-ink-3">
+                    {v.events} {plural(v.events, "дія", "дії", "дій")}
+                    {v.sessions > 1 ? ` · ${v.sessions} ${plural(v.sessions, "захід", "заходи", "заходів")}` : ""}
+                  </div>
+                  <div className="text-ink-3">{fmt(v.first)} → {hm(v.last)}</div>
+                </div>
               </div>
-              <div className="text-ink-3">{fmt(v.first)} → {hm(v.last)}</div>
+              {open && canExpand && (
+                <div className="mt-2 space-y-1 border-t border-line/60 pt-2">
+                  {timeline.map((row, j) => (
+                    <div key={j} className="flex items-baseline gap-2 text-[11px]">
+                      <span className="shrink-0 font-mono text-ink-3">{hms(row.t)}</span>
+                      <span className="text-ink-2">{timelineEventLabel(row.e, row.p)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

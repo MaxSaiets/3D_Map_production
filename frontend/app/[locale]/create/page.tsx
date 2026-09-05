@@ -23,6 +23,26 @@ import { useTranslations, useLocale } from "next-intl";
 import { SIMPLE_SIZES } from "@/lib/generation";
 import { mapPriceEur, MAP_SIZE_PRICES_UAH } from "@/lib/mapPrices";
 
+// T-6.6 (security): ?capture=<templateId> triggers a REAL model generation on the
+// production box — internal OG-image/screenshot tooling only. Gated behind a shared
+// secret (?t=<NEXT_PUBLIC_CAPTURE_TOKEN>) so a stray link can't let a stranger/crawler
+// burn a generation slot. If the env var is unset (local dev, tooling not configured
+// yet) we fall back to today's ungated behaviour and warn once in the console.
+let warnedCaptureTokenMissing = false;
+function isCaptureAuthorized(params: URLSearchParams): boolean {
+  if (!params.get("capture")) return false;
+  const expected = process.env.NEXT_PUBLIC_CAPTURE_TOKEN;
+  if (!expected) {
+    if (!warnedCaptureTokenMissing) {
+      warnedCaptureTokenMissing = true;
+      // eslint-disable-next-line no-console
+      console.warn("[capture] NEXT_PUBLIC_CAPTURE_TOKEN не задано — ?capture= працює без гейту (dev fallback).");
+    }
+    return true;
+  }
+  return params.get("t") === expected;
+}
+
 function MapLoading() {
   const tc = useTranslations("create");
   return (
@@ -158,7 +178,7 @@ export default function Home() {
       // рамку на місті/районі. Повний режим лишається для ?grid (збережена сітка)
       // і ?capture (службовий рендер).
       // A-6 (2026-09-03): ?mode=pro — єдина адреса розширеного режиму.
-      if (p.get("grid") || p.get("capture") || p.get("mode") === "pro") {
+      if (p.get("grid") || isCaptureAuthorized(p) || p.get("mode") === "pro") {
         setGuidedState(false);
         return;
       }
@@ -402,6 +422,7 @@ export default function Home() {
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
+      if (!isCaptureAuthorized(params)) return;
       const cap = params.get("capture");
       if (!cap) return;
       const tpl = MAP_TEMPLATES.find((t) => t.id === cap);
@@ -441,7 +462,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (!params.get("capture")) return;
+    if (!isCaptureAuthorized(params)) return;
     (window as any).__captureReady = Boolean(downloadUrl);
     if (downloadUrl) document.body.setAttribute("data-capture-ready", "1");
   }, [downloadUrl]);
@@ -501,7 +522,7 @@ export default function Home() {
       if (st.selectedArea || st.showHexGrid || (st.selectedZones || []).length > 0) return; // вже щось обрано
       // grid=/template=/city= з URL теж означають намір — не перебиваємо центр
       const params = new URLSearchParams(window.location.search);
-      if (params.get("grid") || params.get("template") || params.get("city") || params.get("capture")) return;
+      if (params.get("grid") || params.get("template") || params.get("city") || isCaptureAuthorized(params)) return;
       (async () => {
         try {
           const { API_BASE_URL } = await import("@/lib/api");

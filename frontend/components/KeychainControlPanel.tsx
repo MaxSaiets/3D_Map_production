@@ -1758,7 +1758,7 @@ export function KeychainControlPanel({
         {showStickyBar && <div className="h-20 lg:hidden" aria-hidden="true" />}
         {showStickyBar && <StickyActionBar
           priceLabel={t("sticky.priceLabel")}
-          price={null}
+          price={quote ? dispPrice(quote.price) : null}
           actionLabel={downloadUrl ? t("btn.order") : isGenerating ? t("sticky.generating", { progress }) : t("sticky.createKeychain")}
           busy={isGenerating}
           // НЕ блокуємо коли зона не вибрана / є print-issue — інакше на мобільному
@@ -1766,7 +1766,9 @@ export function KeychainControlPanel({
           // Замість цього тап дає тост із причиною + перемикає на потрібну секцію.
           disabled={isGenerating}
           onAction={() => {
-            if (downloadUrl) { setOrderOpen(true); return; }
+            // Готово → та сама orderNow(), що й бронзова кнопка панелі (не дублюємо
+            // логіку тут — інакше дві копії розходяться при майбутніх правках).
+            if (downloadUrl) { orderNow(); return; }
             if (!selectedArea) {
               setError(t("error.noArea"));
               window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "warn", message: t("error.noArea") } }));

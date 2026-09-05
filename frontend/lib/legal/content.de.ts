@@ -200,25 +200,70 @@ export const de: LegalSet = {
 
   privacy: {
     title: "Datenschutzerklärung",
+    intro: [
+      "Hier steht ehrlich und konkret: welche Daten wir erhalten, wo sie liegen, wie lange wir sie aufbewahren, an wen wir sie weitergeben und wie du sie löschen lassen kannst. Kurz gesagt: Wir speichern nur, was für die Erstellung des Modells und die Ausführung der Bestellung nötig ist, verkaufen nichts, und Modelldateien werden nach 90 Tagen automatisch gelöscht.",
+    ],
     sections: [
+      { h: "Wer für die Daten verantwortlich ist", blocks: [
+        { p: "Verantwortlicher für personenbezogene Daten ist {ownerFull} ({storeName}, {storeAddress}). Wir richten uns nach dem Gesetz der Ukraine „Über den Schutz personenbezogener Daten“; für Besucher aus der EU gilt zusätzlich die DSGVO, soweit anwendbar. Bei jeder Frage zu deinen Daten schreib uns an {email}." },
+      ] },
       { h: "Welche Daten wir erheben", blocks: [
-        { p: "Name, E-Mail oder Telefonnummer (beim Anmelden/Registrieren) sowie die Kontaktdaten und die Lieferadresse, die du bei der Bestellung angibst. Technische Daten (der Verlauf der generierten Modelle) werden in deinem Konto gespeichert." },
+        { ul: [
+          "Konto: E-Mail-Adresse und Anmelde-Kennung über Google (Firebase Authentication). Dein Passwort sehen und speichern wir nicht.",
+          "Bestellung: Name, Telefonnummer, Versandart, Stadt und Filiale oder Adresse, Kommentar, geschätzter Preis, Screenshots des Modells aus dem Konstruktor.",
+          "Modell: Koordinaten des ausgewählten Kartenausschnitts, gewählte Einstellungen (Größe, Stil, Gravur, Markierung „mein Zuhause“), generierte Dateien (GLB für die Vorschau, 3MF/STL für den Druck) sowie die GPX-Route, falls du eine hochgeladen hast.",
+          "Technische Daten während deines Besuchs — nur mit deiner Zustimmung zu Cookies (Abschnitt „Cookies und Analyse“).",
+        ] },
       ] },
-      { h: "Wie wir die Daten verwenden", blocks: [
-        { p: "Ausschließlich zur Erbringung der Dienstleistung: Anmeldung im Konto, Speicherung des Modellverlaufs, Bearbeitung und Lieferung von Bestellungen, Kontakt mit dir bezüglich der Bestellung. Wir verkaufen deine Daten nicht und geben sie nicht zu Werbezwecken an Dritte weiter." },
+      { h: "Wofür wir sie verwenden", blocks: [
+        { p: "Ausschließlich um: dein Modell zu erstellen und dir eine Vorschau zu zeigen; deine Bestellung auszuführen, zu liefern und dich diesbezüglich zu kontaktieren; als Einzelunternehmer (FOP) Buchführung zu betreiben; Besucherzahlen zu ermitteln und die Website zu verbessern (in aggregierter Form). Wir verkaufen deine Daten nicht und geben sie nicht zu Werbezwecken an Dritte weiter." },
       ] },
-      { h: "Hochgeladene Routen (GPX) und Geodaten", blocks: [
-        { p: "Wenn du eine GPX-Datei hochlädst (zum Beispiel den Export deiner eigenen Aktivität aus Strava oder einer anderen App), verarbeiten wir die Koordinaten der Route ausschließlich zur Erstellung deines 3D-Modells. Das sind deine eigenen Daten — wir veröffentlichen sie nicht, geben sie nicht an Dritte weiter und verwenden sie nicht für Werbung. Die Punkte der Route werden ausgedünnt und genau so lange gespeichert, wie es für die Generierung und (falls du angemeldet bist) für die Führung des Modellverlaufs in deinem Konto erforderlich ist; du kannst jederzeit ihre Löschung verlangen." },
-        { p: "Die Ortssuche auf der Karte sendet deine Anfrage an den Geokodierungsdienst von OpenStreetMap (Nominatim), und die Karten selbst werden aus den Kacheln von OpenStreetMap geladen — gemäß deren Nutzungsbedingungen. Wir geben deinen Namen oder deine Kontaktdaten nicht an diese Dienste weiter." },
+      { h: "Wie lange wir sie aufbewahren", blocks: [
+        { ul: [
+          "Modelldateien und Vorschauen (GLB, 3MF/STL, Hilfsdateien) — 90 Tage ab Erstellung, danach werden sie automatisch gelöscht. Der Eintrag im Kontoverlauf bleibt bestehen, die Datei selbst ist nach dieser Frist jedoch nicht mehr verfügbar — generiere das Modell in diesem Fall erneut.",
+          "Modelle, zu denen eine Bestellung vorliegt — zusammen mit der Bestellung: bis zu 3 Jahre (Aufbewahrungsfrist für buchhalterische Primärdokumente).",
+          "Bestelldaten (Name, Telefon, Lieferung) — aus demselben Grund bis zu 3 Jahre.",
+          "Konto und Verlauf — bis du dein Konto löschst (Schaltfläche im Konto) oder uns darum bittest.",
+          "Analyse — anonymisierte Datensätze begrenzten Umfangs (das Protokoll wird rotiert), nicht länger als 12 Monate.",
+          "Sicherungskopien wichtiger Daten werden 7 Tage aufbewahrt.",
+        ] },
       ] },
-      { h: "Speicherung und Dienste", blocks: [
-        { p: "Die Authentifizierung erfolgt über Google Firebase Authentication. Die Website ist durch Cloudflare geschützt. Bestellungen werden manuell bearbeitet. Die Daten werden auf einem geschützten Server genau so lange gespeichert, wie es für die Ausführung der Bestellung und die Führung des Verlaufs erforderlich ist." },
+      { h: "An wen wir sie weitergeben (Auftragsverarbeiter)", blocks: [
+        { p: "Damit die Website funktioniert, verarbeitet ein Teil der Daten Dienste, mit denen wir zusammenarbeiten. Jeder erhält nur das, was er für seine Funktion benötigt:" },
+        { ul: [
+          "Google Firebase Authentication — Konto-Anmeldung (E-Mail, Google-Kennung).",
+          "Cloudflare — Schutz der Website und Content Delivery Network; wir sehen nur den Ländercode des Besuchers, den Cloudflare der Anfrage hinzufügt.",
+          "LiqPay (PrivatBank) — Online-Zahlung. Kartendaten werden auf Seiten von LiqPay eingegeben, wir erhalten sie nicht.",
+          "Nova Poshta / Ukrposhta — Lieferung: Name, Telefon, Filiale oder Adresse.",
+          "Telegram — unser interner Nachrichtenkanal: Deine Bestellkarte (Name, Telefon, Lieferung, Screenshots) geht an den privaten Chat des Teams. Dritte haben keinen Zugriff.",
+          "OpenStreetMap und Nominatim — Karte und Ortssuche: Dorthin gehen nur der Suchtext und Koordinaten, ohne deine Kontaktdaten.",
+        ] },
+      ] },
+      { h: "Wo die Daten gespeichert werden", blocks: [
+        { p: "Modelldateien, Bestellungen und Konten werden auf einem Server unter unserer Kontrolle in der Ukraine gespeichert; der Zugriff darauf erfolgt über Cloudflare. Zugriff auf Bestelldaten hat nur der Inhaber." },
       ] },
       { h: "Cookies und Analyse", blocks: [
-        { p: "Wir verwenden die datenschutzfreundliche Analyse von Cloudflare ohne Werbe-Cookies von Drittanbietern. Cookies werden ausschließlich für die Funktion der Konto-Anmeldung verwendet." },
+        { p: "Ohne deine Zustimmung setzt die Website nur technische Cookies: Konto-Anmeldung, gewählte Sprache und die Aufzeichnung deiner Cookie-Entscheidung selbst. Nach dem Klick auf „Zustimmen“ im Banner werden aktiviert:" },
+        { ul: [
+          "Eigene Analyse auf unserem Server: Seitenaufrufe, Klicks und Schritte im Konstruktor (welches Szenario, welche Größe, welcher Ort gewählt wurde). Die IP-Adresse wird nicht gespeichert — nur ein Tages-Hash und der Ländercode.",
+          "Google Analytics 4 und Google Ads (Conversion-Messung) sowie Meta Pixel — die Standard-Cookies dieser Dienste gemäß deren eigenen Richtlinien. Sie arbeiten im Consent Mode und werden nicht aktiviert, wenn du ablehnst.",
+        ] },
+        { p: "Du kannst deine Wahl jederzeit über die Schaltfläche „Cookie-Einstellungen“ in der Fußzeile der Website ändern." },
+      ] },
+      { h: "Der Link „In 3D teilen“", blocks: [
+        { p: "Wenn du auf „In 3D teilen“ klickst, wird eine Seite mit deinem Modell erstellt, die für jeden zugänglich ist, der den Link hat. Sie enthält keine deiner persönlichen Daten — nur das 3D-Modell. Der Link funktioniert, solange die Modelldatei gespeichert ist (90 Tage)." },
+      ] },
+      { h: "Hochgeladene Routen (GPX) und Geodaten", blocks: [
+        { p: "Wenn du eine GPX-Datei hochlädst (zum Beispiel den Export deiner eigenen Aktivität aus Strava oder einer anderen App), verarbeiten wir die Koordinaten der Route ausschließlich zur Erstellung deines 3D-Modells. Das sind deine eigenen Daten — wir veröffentlichen sie nicht, geben sie nicht an Dritte weiter und verwenden sie nicht für Werbung. Die Punkte der Route werden ausgedünnt und mit denselben Fristen gespeichert wie die Modelldateien." },
       ] },
       { h: "Deine Rechte", blocks: [
-        { p: "Du kannst die Löschung deines Kontos und der damit verbundenen Daten verlangen. Schreib uns an {email}." },
+        { p: "Du hast das Recht zu erfahren, welche Daten wir über dich haben, sie zu berichtigen oder löschen zu lassen. In deinem Konto gibt es die Schaltfläche „Konto und alle Daten löschen“ — sie löscht Konto, Verlauf und Modelldateien sofort. Bestelldaten bleiben für die buchhalterische Aufbewahrungsfrist bestehen (bis zu 3 Jahre). Du kannst jede Anfrage auch an {email} senden — wir antworten innerhalb von 30 Tagen." },
+      ] },
+      { h: "Alter", blocks: [
+        { p: "Der Dienst richtet sich an Erwachsene. Bestellungen dürfen nur von Personen ab 18 Jahren aufgegeben werden." },
+      ] },
+      { h: "Änderungen dieser Richtlinie", blocks: [
+        { p: "Wenn wir unsere Praxis im Umgang mit Daten ändern, aktualisieren wir dieses Dokument und das Datum „Aktualisiert“ auf dieser Seite." },
       ] },
       { h: "Kontakt", blocks: [
         { p: "Bei Fragen zum Datenschutz: {email}." },
@@ -235,14 +280,24 @@ export const de: LegalSet = {
       { h: "Konto und kostenlose Downloads", blocks: [
         { p: "Für den Download des vollständigen Modells ist ein Konto erforderlich. Jedem Nutzer stehen 5 kostenlose Downloads zur Verfügung. Danach — nach Absprache (Druck/Zahlung), Kontakt über die Website." },
       ] },
+      { h: "Speicherung von Modellen", blocks: [
+        { p: "Generierte Dateien werden 90 Tage aufbewahrt und danach automatisch gelöscht (Modelle, zu denen eine Bestellung vorliegt, werden zusammen mit der Bestellung gelöscht). Der Eintrag im Kontoverlauf bleibt bestehen; das Modell kann erneut generiert werden. Der Link „In 3D teilen“ ist für jeden zugänglich, der ihn hat, und funktioniert, solange die Datei gespeichert ist. Du kannst dein Konto jederzeit zusammen mit allen Modellen im Konto löschen. Details — in der [privacy:Datenschutzerklärung]." },
+      ] },
       { h: "Daten und Urheberrecht", blocks: [
         { p: "Kartendaten © OpenStreetMap contributors (ODbL). Die generierten Dateien darfst du für den persönlichen Druck verwenden. Der Weiterverkauf des Dienstes oder eine massenhafte kommerzielle Nutzung bedarf einer gesonderten Vereinbarung." },
+      ] },
+      { h: "Nutzungsregeln", blocks: [
+        { ul: [
+          "Lade nur GPX-Routen hoch, an denen du die Rechte hast.",
+          "Verwende keine automatisierten Mittel zur massenhaften Modellerstellung und überlaste den Dienst nicht — die Generierung läuft auf unserer eigenen Ausrüstung, und wir können den Zugriff bei Missbrauch vorübergehend einschränken.",
+          "Die Gravur auf dem Modell darf keinen beleidigenden oder rechtswidrigen Inhalt enthalten; wir können den Druck einer solchen Bestellung ablehnen und den vollen Betrag erstatten.",
+        ] },
       ] },
       { h: "Bestellung und Zahlung", blocks: [
         { p: "Die Bestellung erfolgt über die Website; die Zahlung — online über LiqPay oder nach Absprache. Details zu Preisen und Lieferung findest du auf der Seite [delivery:„Zahlung und Lieferung“], die vollständigen Bedingungen im [offer:Vertrag des öffentlichen Angebots]." },
       ] },
       { h: "Haftung", blocks: [
-        { p: "Der Dienst wird „wie besehen“ bereitgestellt. Wir streben höchste Genauigkeit der Modelle an, garantieren jedoch aufgrund der Beschränkungen der OSM-Ausgangsdaten keine vollständige Übereinstimmung mit realen Objekten." },
+        { p: "Der Dienst wird „wie besehen“ bereitgestellt. Wir streben höchste Genauigkeit der Modelle an, garantieren jedoch aufgrund der Beschränkungen der OSM-Ausgangsdaten keine vollständige Übereinstimmung mit realen Objekten. Die 3D-Vorschau basiert auf denselben Daten wie die Druckdatei." },
       ] },
       { h: "Kontakt", blocks: [
         { p: "Fragen: {email}." },

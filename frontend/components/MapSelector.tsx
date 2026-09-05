@@ -798,6 +798,66 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
       lastDragEndedAtRef.current = Date.now();
     };
 
+    // T-6.2 A11Y: клавіатурне керування рамкою друку. Той самий updateBounds(),
+    // що й drag/resize мишею/тачем — жодного другого джерела правди: store,
+    // бейдж «Місце обрано» і onPolygonChange реагують так само.
+    const KEY_MOVE_M = 10;
+    const KEY_MOVE_FAST_M = 50;
+    const KEY_RESIZE_FACTOR = 0.1;
+    mapEl.setAttribute("tabindex", "0");
+    mapEl.setAttribute("role", "application");
+    mapEl.setAttribute("aria-label", t("a11yFrameKeyboard"));
+    mapEl.setAttribute("data-a11y-hint", t("a11yFrameKeyboardHint"));
+    mapEl.classList.add("mn-frame-focusable");
+    // Leaflet's own arrow-key panning would fight our frame-move semantics —
+    // вимикаємо, бо рамка важливіша за панорамування карти стрілками.
+    try { (map as any).keyboard?.disable(); } catch { /* no-op */ }
+
+    const handleFrameKeyDown = (event: KeyboardEvent) => {
+      const bounds = currentBoundsRef.current ?? initialBounds;
+      const center = bounds.getCenter();
+      const size = boundsSizeMeters(bounds);
+      const stepM = event.shiftKey ? KEY_MOVE_FAST_M : KEY_MOVE_M;
+      let handled = true;
+      switch (event.key) {
+        case "ArrowUp":
+          updateBounds(boundsFromCenterMeters(offsetLatLngMeters(center, 0, stepM), size.widthM, size.heightM));
+          break;
+        case "ArrowDown":
+          updateBounds(boundsFromCenterMeters(offsetLatLngMeters(center, 0, -stepM), size.widthM, size.heightM));
+          break;
+        case "ArrowLeft":
+          updateBounds(boundsFromCenterMeters(offsetLatLngMeters(center, -stepM, 0), size.widthM, size.heightM));
+          break;
+        case "ArrowRight":
+          updateBounds(boundsFromCenterMeters(offsetLatLngMeters(center, stepM, 0), size.widthM, size.heightM));
+          break;
+        case "[": {
+          // Той самий safety-clamp, що й handleResize: ніколи не переходить safeSize.widthM.
+          const raw = size.widthM * (1 - KEY_RESIZE_FACTOR);
+          const widthM = Math.min(Math.max(raw, Math.min(80, safeSize.widthM)), safeSize.widthM);
+          updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
+          break;
+        }
+        case "]": {
+          const raw = size.widthM * (1 + KEY_RESIZE_FACTOR);
+          const widthM = Math.min(Math.max(raw, Math.min(80, safeSize.widthM)), safeSize.widthM);
+          updateBounds(boundsFromCenterMeters(center, widthM, widthM / aspect));
+          break;
+        }
+        case "Escape":
+          mapEl.blur();
+          break;
+        default:
+          handled = false;
+      }
+      if (handled) {
+        event.preventDefault();
+        blockMapPlacement();
+      }
+    };
+    mapEl.addEventListener("keydown", handleFrameKeyDown);
+
     const beginHandleInteraction = (event?: L.LeafletEvent) => {
       handleInteractionRef.current = true;
       blockMapPlacement();
@@ -1040,6 +1100,7 @@ function KeychainCropOverlay({ spec }: { spec: KeychainCropSpec }) {
         window.clearTimeout(handleInteractionTimerRef.current);
         handleInteractionTimerRef.current = null;
       }
+      mapEl.removeEventListener("keydown", handleFrameKeyDown);
       shape.off("mousedown", handleRectangleDown);
       shape.off("touchstart", handleRectangleDown as any);
       map.off("click", handleMapClick);
@@ -1177,6 +1238,32 @@ export function MapSelector({ center = [50.4501, 30.5234], keychainCrop }: MapSe
         : "relative h-full w-full bg-[#050a18]"}
       style={expanded ? undefined : { minHeight: '100%' }}
     >
+      {/* T-6.2 A11Y: підказка про клавіші зʼявляється ЛИШЕ при клавіатурному фокусі
+          (:focus-visible) — для миші/тача нічого нового не зʼявляється. */}
+      <style>{`
+        .mn-frame-focusable:focus-visible {
+          outline: 3px solid #5eead4;
+          outline-offset: -3px;
+        }
+        .mn-frame-focusable:focus-visible::after {
+          content: attr(data-a11y-hint);
+          position: absolute;
+          left: 50%;
+          bottom: 12px;
+          transform: translateX(-50%);
+          z-index: 10001;
+          max-width: 92%;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: rgba(5,10,24,.92);
+          border: 1px solid rgba(94,234,212,.6);
+          color: #fff;
+          font: 700 12px/1.3 system-ui;
+          text-align: center;
+          pointer-events: none;
+          white-space: normal;
+        }
+      `}</style>
       <MapContainer
         key={mapInstanceKey}
         center={center} // Initial center

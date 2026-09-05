@@ -112,9 +112,34 @@ def add_model(uid: str, email: str, model: Dict[str, Any]) -> None:
         _save(data)
 
 
+def _model_file_path(model: Dict[str, Any]) -> Path | None:
+    """Resolve a stored model entry to its on-disk path (best effort)."""
+    name = ""
+    for key in ("download_url", "file"):
+        v = model.get(key)
+        if v:
+            name = str(v).split("/")[-1].split("?")[0]
+            if name:
+                break
+    if not name:
+        return None
+    return OUTPUT_DIR / name
+
+
 def list_models(uid: str) -> List[Dict[str, Any]]:
+    """User's saved models, most-recent-first. Entries whose backing file no
+    longer exists on disk (retention cleanup, manual deletion, restart loss)
+    are flagged `expired: True` — NOT removed, so history stays intact."""
     with _lock:
-        return list(_load().get(uid, {}).get("models", []))
+        models = list(_load().get(uid, {}).get("models", []))
+    out = []
+    for m in models:
+        p = _model_file_path(m)
+        entry = dict(m)
+        if p is not None and not p.exists():
+            entry["expired"] = True
+        out.append(entry)
+    return out
 
 
 import uuid as _uuid
@@ -203,6 +228,90 @@ def mark_grid_cell(uid: str, grid_id: str, cell: Dict[str, Any]) -> Dict[str, An
             _save(data)
             return g
     return None
+
+
+def delete_user(uid: str) -> Dict[str, Any]:
+    """GDPR-style account deletion: removes the user's generated model files
+    from disk, drops their grids/models/quota record from users.json.
+
+    Orders are intentionally NOT touched (accounting retention — orders.jsonl
+    keeps its own record independent of the account). Returns
+    {"deleted_models": n, "deleted_files": m}."""
+    import shutil as _shutil
+
+    with _lock:
+        data = _load()
+        u = data.get(uid)
+        if not u:
+            return {"deleted_models": 0, "deleted_files": 0}
+
+        models: List[Dict[str, Any]] = u.get("models", [])
+        deleted_models = len(models)
+
+        # Collect every task-id-ish token referenced by this user's models so we
+        # can also catch on-disk siblings (e.g. <task>_print_*.zip) that aren't
+        # directly named by download_url/file.
+        tokens: set[str] = set()
+        for m in models:
+            tid = str(m.get("task_id") or "").strip()
+            if tid:
+                tokens.add(tid.lower())
+                tokens.add(tid.replace("-", "").lower())
+            p = _model_file_path(m)
+            if p is not None:
+                tokens.add(p.stem.lower())
+
+        deleted_files = 0
+        seen_paths: set[Path] = set()
+        for m in models:
+            p = _model_file_path(m)
+            if p is not None and p.exists() and p not in seen_paths:
+                seen_paths.add(p)
+                try:
+                    p.unlink()
+                    deleted_files += 1
+                except OSError:
+                    pass
+
+        if tokens and OUTPUT_DIR.exists():
+            try:
+                for entry in OUTPUT_DIR.iterdir():
+                    if entry.name == "previews":
+                        continue
+                    lname = entry.name.lower()
+                    if entry in seen_paths:
+                        continue
+                    if any(tok and tok in lname for tok in tokens):
+                        seen_paths.add(entry)
+                        try:
+                            if entry.is_dir():
+                                _shutil.rmtree(entry, ignore_errors=True)
+                            else:
+                                entry.unlink()
+                            deleted_files += 1
+                        except OSError:
+                            pass
+            except OSError:
+                pass
+            # Share OG-preview PNGs live under output/previews/<task_id>.png.
+            previews_dir = OUTPUT_DIR / "previews"
+            if previews_dir.exists():
+                try:
+                    for entry in previews_dir.iterdir():
+                        if entry.suffix.lower() != ".png":
+                            continue
+                        if entry.stem.lower() in tokens:
+                            try:
+                                entry.unlink()
+                                deleted_files += 1
+                            except OSError:
+                                pass
+                except OSError:
+                    pass
+
+        data.pop(uid, None)
+        _save(data)
+        return {"deleted_models": deleted_models, "deleted_files": deleted_files}
 
 
 def list_all_users() -> List[Dict[str, Any]]:

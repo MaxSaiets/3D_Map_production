@@ -372,7 +372,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як замовити за 5 хвилин",
             p: [
-              "Оберіть ділянку на карті у конструкторі, розмір — і сервіс збере модель автоматично. Друкуємо з біопластику Eco PLA та надсилаємо Новою Поштою; можна замовити і цифровий файл для власного друку. Встигнути до дати легко: виготовлення 1–3 робочі дні.",
+              "Оберіть ділянку на карті у конструкторі, розмір — і сервіс збере модель автоматично. Друкуємо з біопластику Eco PLA та надсилаємо Новою Поштою; можна замовити і цифровий файл для власного друку. Встигнути до дати легко: виготовлення 2–4 робочі дні.",
             ],
           },
         ],
@@ -404,7 +404,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Order in 5 minutes",
             p: [
-              "Pick the area in the builder, choose a size — the model is assembled automatically. We print in Eco PLA and ship to Ukraine; you can also get the digital file. Production takes 1–3 business days.",
+              "Pick the area in the builder, choose a size — the model is assembled automatically. We print in Eco PLA and ship to Ukraine; you can also get the digital file. Production takes 2–4 business days.",
             ],
           },
         ],
@@ -436,7 +436,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "In 5 Minuten bestellen",
             p: [
-              "Wähle den Bereich im Konfigurator und eine Größe — das Modell wird automatisch erstellt. Wir drucken aus Eco PLA und versenden in die Ukraine; auch die Digitaldatei ist erhältlich. Fertigung 1–3 Werktage.",
+              "Wähle den Bereich im Konfigurator und eine Größe — das Modell wird automatisch erstellt. Wir drucken aus Eco PLA und versenden in die Ukraine; auch die Digitaldatei ist erhältlich. Fertigung 2–4 Werktage.",
             ],
           },
         ],
@@ -468,7 +468,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Zamów w 5 minut",
             p: [
-              "Wybierz obszar w kreatorze i rozmiar — model powstaje automatycznie. Drukujemy z Eco PLA i wysyłamy na Ukrainę; dostępny jest też plik cyfrowy. Wykonanie 1–3 dni robocze.",
+              "Wybierz obszar w kreatorze i rozmiar — model powstaje automatycznie. Drukujemy z Eco PLA i wysyłamy na Ukrainę; dostępny jest też plik cyfrowy. Wykonanie 2–4 dni robocze.",
             ],
           },
         ],
@@ -500,7 +500,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Commander en 5 minutes",
             p: [
-              "Choisissez la zone dans le configurateur et une taille — le modèle est assemblé automatiquement. Nous imprimons en Eco PLA et livrons en Ukraine ; le fichier numérique est aussi disponible. Fabrication 1–3 jours ouvrés.",
+              "Choisissez la zone dans le configurateur et une taille — le modèle est assemblé automatiquement. Nous imprimons en Eco PLA et livrons en Ukraine ; le fichier numérique est aussi disponible. Fabrication 2–4 jours ouvrés.",
             ],
           },
         ],
@@ -532,7 +532,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Pide en 5 minutos",
             p: [
-              "Elige la zona en el configurador y un tamaño — el modelo se genera automáticamente. Imprimimos en Eco PLA y enviamos a Ucrania; también está disponible el archivo digital. Fabricación 1–3 días hábiles.",
+              "Elige la zona en el configurador y un tamaño — el modelo se genera automáticamente. Imprimimos en Eco PLA y enviamos a Ucrania; también está disponible el archivo digital. Fabricación 2–4 días hábiles.",
             ],
           },
         ],
@@ -570,7 +570,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна і терміни",
             p: [
-              "Брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка Новою Пошта по Україні. Оплата карткою онлайн (LiqPay) або при отриманні.",
+              "Брелок-мапа — від 120 ₴. Виготовлення 2–4 робочі дні, доставка Новою Пошта по Україні. Оплата карткою онлайн (LiqPay) або при отриманні.",
             ],
           },
         ],
@@ -601,7 +601,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price and lead time",
             p: [
-              "Map keychain — from 120 ₴ (≈€3). Production 1–3 business days, delivery across Ukraine. Card payment online or on delivery.",
+              "Map keychain — from 120 ₴ (≈€3). Production 2–4 business days, delivery across Ukraine. Card payment online or on delivery.",
             ],
           },
         ],
@@ -632,7 +632,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis und Lieferzeit",
             p: [
-              "Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand mit Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
+              "Karten-Anhänger — ab ≈3 €. Fertigung 2–4 Werktage, Versand mit Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
             ],
           },
         ],
@@ -663,7 +663,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena i termin",
             p: [
-              "Brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
+              "Brelok-mapa — od ≈3 €. Wykonanie 2–4 dni robocze, wysyłka Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
             ],
           },
         ],
@@ -694,7 +694,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix et délai",
             p: [
-              "Porte-clés carte — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
+              "Porte-clés carte — dès ≈3 €. Fabrication 2–4 jours ouvrés, livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
             ],
           },
         ],
@@ -725,7 +725,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio y plazo",
             p: [
-              "Llavero-mapa — desde ≈3 €. Fabricación 1–3 días hábiles, envío con Nova Poshta en Ucrania. Pago con tarjeta online o contra entrega.",
+              "Llavero-mapa — desde ≈3 €. Fabricación 2–4 días hábiles, envío con Nova Poshta en Ucrania. Pago con tarjeta online o contra entrega.",
             ],
           },
         ],
@@ -762,7 +762,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна",
             p: [
-              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 120 ₴. Виготовлення 1–3 робочі дні, доставка по Україні.",
+              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 120 ₴. Виготовлення 2–4 робочі дні, доставка по Україні.",
             ],
           },
         ],
@@ -793,7 +793,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price",
             p: [
-              "A GPX keychain costs the same as a regular map keychain — from 120 ₴ (≈€3). Production 1–3 business days, shipping to Ukraine.",
+              "A GPX keychain costs the same as a regular map keychain — from 120 ₴ (≈€3). Production 2–4 business days, shipping to Ukraine.",
             ],
           },
         ],
@@ -824,7 +824,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis",
             p: [
-              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 1–3 Werktage, Versand in die Ukraine.",
+              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 2–4 Werktage, Versand in die Ukraine.",
             ],
           },
         ],
@@ -855,7 +855,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena",
             p: [
-              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 1–3 dni robocze, wysyłka na Ukrainę.",
+              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 2–4 dni robocze, wysyłka na Ukrainę.",
             ],
           },
         ],
@@ -886,7 +886,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix",
             p: [
-              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 1–3 jours ouvrés, livraison en Ukraine.",
+              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 2–4 jours ouvrés, livraison en Ukraine.",
             ],
           },
         ],
@@ -917,7 +917,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio",
             p: [
-              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 1–3 días hábiles, envío a Ucrania.",
+              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 2–4 días hábiles, envío a Ucrania.",
             ],
           },
         ],
@@ -1147,7 +1147,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Скільки це триває і скільки коштує",
             p: [
-              "Брелок друкується близько години, мапа 8 см — кілька годин, велика панель — до доби. Звідси й терміни виготовлення 1–3 робочі дні. Ціни: брелок від 120 ₴, мапа від 250 ₴ — дешевше за більшість «іменних» подарунків.",
+              "Брелок друкується близько години, мапа 8 см — кілька годин, велика панель — до доби. Звідси й терміни виготовлення 2–4 робочі дні. Ціни: брелок від 120 ₴, мапа від 250 ₴ — дешевше за більшість «іменних» подарунків.",
             ],
           },
         ],
@@ -1180,7 +1180,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How long and how much",
             p: [
-              "A keychain prints in about an hour, an 8 cm map in a few hours, a large panel up to a day. Hence the 1–3 business day lead time. Prices: keychain from ≈€3, map from ≈€6 — cheaper than most personalized gifts.",
+              "A keychain prints in about an hour, an 8 cm map in a few hours, a large panel up to a day. Hence the 2–4 business day lead time. Prices: keychain from ≈€3, map from ≈€6 — cheaper than most personalized gifts.",
             ],
           },
         ],
@@ -1213,7 +1213,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Wie lange es dauert und was es kostet",
             p: [
-              "Ein Anhänger druckt etwa eine Stunde, eine 8-cm-Karte einige Stunden, ein großes Panel bis zu einem Tag. Daher die Fertigungszeit von 1–3 Werktagen. Preise: Anhänger ab ≈3 €, Karte ab ≈6 € — günstiger als die meisten personalisierten Geschenke.",
+              "Ein Anhänger druckt etwa eine Stunde, eine 8-cm-Karte einige Stunden, ein großes Panel bis zu einem Tag. Daher die Fertigungszeit von 2–4 Werktagen. Preise: Anhänger ab ≈3 €, Karte ab ≈6 € — günstiger als die meisten personalisierten Geschenke.",
             ],
           },
         ],
@@ -1246,7 +1246,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ile to trwa i ile kosztuje",
             p: [
-              "Brelok drukuje się około godziny, mapa 8 cm — kilka godzin, duży panel — nawet dobę. Stąd terminy realizacji 1–3 dni robocze. Ceny: brelok od ≈3 €, mapa od ≈6 € — taniej niż większość «imiennych» prezentów.",
+              "Brelok drukuje się około godziny, mapa 8 cm — kilka godzin, duży panel — nawet dobę. Stąd terminy realizacji 2–4 dni robocze. Ceny: brelok od ≈3 €, mapa od ≈6 € — taniej niż większość «imiennych» prezentów.",
             ],
           },
         ],
@@ -1279,7 +1279,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Combien de temps et combien ça coûte",
             p: [
-              "Un porte-clés s'imprime en une heure environ, une carte de 8 cm en quelques heures, un grand panneau jusqu'à une journée. D'où le délai de fabrication de 1–3 jours ouvrés. Prix : porte-clés dès ≈3 €, carte dès ≈6 € — moins cher que la plupart des cadeaux personnalisés.",
+              "Un porte-clés s'imprime en une heure environ, une carte de 8 cm en quelques heures, un grand panneau jusqu'à une journée. D'où le délai de fabrication de 2–4 jours ouvrés. Prix : porte-clés dès ≈3 €, carte dès ≈6 € — moins cher que la plupart des cadeaux personnalisés.",
             ],
           },
         ],
@@ -1312,7 +1312,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cuánto tarda y cuánto cuesta",
             p: [
-              "Un llavero se imprime en cerca de una hora, un mapa de 8 cm en unas horas, un panel grande hasta un día. De ahí el plazo de 1–3 días hábiles. Precios: llavero desde ≈3 €, mapa desde ≈6 € — más barato que la mayoría de regalos personalizados.",
+              "Un llavero se imprime en cerca de una hora, un mapa de 8 cm en unas horas, un panel grande hasta un día. De ahí el plazo de 2–4 días hábiles. Precios: llavero desde ≈3 €, mapa desde ≈6 € — más barato que la mayoría de regalos personalizados.",
             ],
           },
         ],
@@ -2130,7 +2130,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як замовити",
             p: [
-              "У конструкторі оберіть ділянку — так само, як для великої мапи, — і формат «магніт». Виготовлення 1–3 робочі дні, доставка Новою Поштою по Україні.",
+              "У конструкторі оберіть ділянку — так само, як для великої мапи, — і формат «магніт». Виготовлення 2–4 робочі дні, доставка Новою Поштою по Україні.",
             ],
           },
         ],
@@ -2161,7 +2161,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How to order",
             p: [
-              "Pick the area in the builder — same as for a big map — and choose the magnet format. Production 1–3 business days, delivery to Ukraine.",
+              "Pick the area in the builder — same as for a big map — and choose the magnet format. Production 2–4 business days, delivery to Ukraine.",
             ],
           },
         ],
@@ -2192,7 +2192,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "So bestellst du",
             p: [
-              "Wähle im Konfigurator den Bereich — genau wie für eine große Karte — und das Format «Magnet». Fertigung 1–3 Werktage, Versand in die Ukraine.",
+              "Wähle im Konfigurator den Bereich — genau wie für eine große Karte — und das Format «Magnet». Fertigung 2–4 Werktage, Versand in die Ukraine.",
             ],
           },
         ],
@@ -2223,7 +2223,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Jak zamówić",
             p: [
-              "W kreatorze wybierz obszar — tak samo jak dla dużej mapy — i format «magnes». Wykonanie 1–3 dni robocze, wysyłka na Ukrainę.",
+              "W kreatorze wybierz obszar — tak samo jak dla dużej mapy — i format «magnes». Wykonanie 2–4 dni robocze, wysyłka na Ukrainę.",
             ],
           },
         ],
@@ -2254,7 +2254,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Comment commander",
             p: [
-              "Dans le configurateur, choisissez la zone — comme pour une grande carte — et le format «magnet». Fabrication 1–3 jours ouvrés, livraison en Ukraine.",
+              "Dans le configurateur, choisissez la zone — comme pour une grande carte — et le format «magnet». Fabrication 2–4 jours ouvrés, livraison en Ukraine.",
             ],
           },
         ],
@@ -2285,7 +2285,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cómo pedirlo",
             p: [
-              "En el configurador elige la zona — igual que para un mapa grande — y el formato «imán». Fabricación 1–3 días hábiles, envío a Ucrania.",
+              "En el configurador elige la zona — igual que para un mapa grande — y el formato «imán». Fabricación 2–4 días hábiles, envío a Ucrania.",
             ],
           },
         ],
@@ -2301,10 +2301,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "3D-друк на замовлення: Київ, Львів, Вінниця та вся Україна",
         description:
-          "3D-друк мап, брелоків і панно на замовлення з доставкою в будь-яке місто України: Київ, Львів, Одесу, Дніпро, Вінницю. Eco PLA, 1–3 робочі дні, від 120 ₴.",
+          "3D-друк мап, брелоків і панно на замовлення з доставкою в будь-яке місто України: Київ, Львів, Одесу, Дніпро, Вінницю. Eco PLA, 2–4 робочі дні, від 120 ₴.",
         h1: "3D-друк на замовлення з доставкою по всій Україні",
         intro:
-          "Шукаєте 3D-друк на замовлення у своєму місті? Ми спеціалізуємось на одному типі виробів — персональних 3D-мапах: карти районів, брелоки з маршрутами, настінні панно й магніти. Друкуємо у власній майстерні та надсилаємо Новою Поштою в будь-яке місто України за 1–3 робочі дні — тож не важливо, чи ви в Києві, Львові, Вінниці чи маленькому селищі: доставка працює однаково швидко.",
+          "Шукаєте 3D-друк на замовлення у своєму місті? Ми спеціалізуємось на одному типі виробів — персональних 3D-мапах: карти районів, брелоки з маршрутами, настінні панно й магніти. Друкуємо у власній майстерні та надсилаємо Новою Поштою в будь-яке місто України за 2–4 робочі дні — тож не важливо, чи ви в Києві, Львові, Вінниці чи маленькому селищі: доставка працює однаково швидко.",
         sections: [
           {
             h2: "Що ми друкуємо",
@@ -2317,7 +2317,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Як це працює для будь-якого міста",
             p: [
               "Київ, Харків, Одеса, Дніпро, Львів, Запоріжжя, Вінниця, Полтава, Луцьк, Хмельницький, Ужгород — конструктор працює з будь-якою точкою України та світу. Обираєте ділянку на карті, налаштовуєте розмір і стиль, тиснете «Створити» — за 2–4 хвилини модель готова.",
-              "Далі два шляхи: замовляєте друк у нас (Eco PLA, виготовлення 1–3 робочі дні, доставка Новою Поштою) — або завантажуєте файл 3MF/STL і друкуєте на власному принтері. Файл відкривається у Bambu Studio та PrusaSlicer без жодної підготовки.",
+              "Далі два шляхи: замовляєте друк у нас (Eco PLA, виготовлення 2–4 робочі дні, доставка Новою Поштою) — або завантажуєте файл 3MF/STL і друкуєте на власному принтері. Файл відкривається у Bambu Studio та PrusaSlicer без жодної підготовки.",
             ],
           },
           {
@@ -2341,10 +2341,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "Custom 3D printing of maps — shipping across Ukraine",
         description:
-          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia. Eco PLA, 1–3 business days, from ≈€3.",
+          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia. Eco PLA, 2–4 business days, from ≈€3.",
         h1: "Custom 3D printing of maps with delivery across Ukraine",
         intro:
-          "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 1–3 business days — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
+          "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 2–4 business days — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
         sections: [
           {
             h2: "What we print",
@@ -2357,7 +2357,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "How it works for any city",
             p: [
               "The builder works with any point in Ukraine and the world. Pick an area on the map, set the size and style, hit «Create» — the model is ready in 2–4 minutes.",
-              "Then two paths: order the print from us (Eco PLA, made in 1–3 business days, shipped) — or download the 3MF/STL and print on your own machine. The file opens in Bambu Studio and PrusaSlicer with zero preparation.",
+              "Then two paths: order the print from us (Eco PLA, made in 2–4 business days, shipped) — or download the 3MF/STL and print on your own machine. The file opens in Bambu Studio and PrusaSlicer with zero preparation.",
             ],
           },
           {
@@ -2380,10 +2380,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "3D-Druck auf Bestellung: Karten mit Versand in die Ukraine",
         description:
-          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja. Eco PLA, 1–3 Werktage, ab ≈3 €.",
+          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja. Eco PLA, 2–4 Werktage, ab ≈3 €.",
         h1: "3D-Druck auf Bestellung mit Versand in die Ukraine",
         intro:
-          "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 1–3 Werktagen.",
+          "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 2–4 Werktagen.",
         sections: [
           {
             h2: "Was wir drucken",
@@ -2396,7 +2396,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Wie es für jede Stadt funktioniert",
             p: [
               "Der Konfigurator arbeitet mit jedem Punkt der Ukraine und der Welt. Wähle einen Bereich auf der Karte, stelle Größe und Stil ein, klicke «Erstellen» — in 2–4 Minuten ist das Modell fertig.",
-              "Dann zwei Wege: du bestellst den Druck bei uns (Eco PLA, Fertigung 1–3 Werktage, Versand) — oder lädst die 3MF/STL-Datei herunter und druckst auf dem eigenen Gerät. Die Datei öffnet sich ohne Vorbereitung in Bambu Studio und PrusaSlicer.",
+              "Dann zwei Wege: du bestellst den Druck bei uns (Eco PLA, Fertigung 2–4 Werktage, Versand) — oder lädst die 3MF/STL-Datei herunter und druckst auf dem eigenen Gerät. Die Datei öffnet sich ohne Vorbereitung in Bambu Studio und PrusaSlicer.",
             ],
           },
           {
@@ -2419,10 +2419,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Druk 3D na zamówienie: mapy z wysyłką na Ukrainę",
         description:
-          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica. Eco PLA, 1–3 dni robocze, od ≈3 €.",
+          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica. Eco PLA, 2–4 dni robocze, od ≈3 €.",
         h1: "Druk 3D na zamówienie z wysyłką na Ukrainę",
         intro:
-          "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 1–3 dni robocze.",
+          "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 2–4 dni robocze.",
         sections: [
           {
             h2: "Co drukujemy",
@@ -2435,7 +2435,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Jak to działa dla dowolnego miasta",
             p: [
               "Kreator działa z dowolnym punktem Ukrainy i świata. Wybierasz obszar na mapie, ustawiasz rozmiar i styl, klikasz «Utwórz» — w 2–4 minuty model jest gotowy.",
-              "Dalej dwie drogi: zamawiasz druk u nas (Eco PLA, wykonanie 1–3 dni robocze, wysyłka) — albo pobierasz plik 3MF/STL i drukujesz na własnej drukarce. Plik otwiera się w Bambu Studio i PrusaSlicer bez żadnego przygotowania.",
+              "Dalej dwie drogi: zamawiasz druk u nas (Eco PLA, wykonanie 2–4 dni robocze, wysyłka) — albo pobierasz plik 3MF/STL i drukujesz na własnej drukarce. Plik otwiera się w Bambu Studio i PrusaSlicer bez żadnego przygotowania.",
             ],
           },
           {
@@ -2458,10 +2458,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Impression 3D sur mesure : cartes livrées en Ukraine",
         description:
-          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia. Eco PLA, 1–3 jours ouvrés, dès ≈3 €.",
+          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia. Eco PLA, 2–4 jours ouvrés, dès ≈3 €.",
         h1: "Impression 3D sur mesure avec livraison en Ukraine",
         intro:
-          "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 1–3 jours ouvrés.",
+          "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 2–4 jours ouvrés.",
         sections: [
           {
             h2: "Ce que nous imprimons",
@@ -2474,7 +2474,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Comment ça marche pour n'importe quelle ville",
             p: [
               "Le configurateur fonctionne avec n'importe quel point d'Ukraine et du monde. Choisissez une zone sur la carte, réglez la taille et le style, cliquez sur «Créer» — le modèle est prêt en 2–4 minutes.",
-              "Ensuite deux voies : vous commandez l'impression chez nous (Eco PLA, fabrication 1–3 jours ouvrés, livraison) — ou vous téléchargez le fichier 3MF/STL et imprimez sur votre propre machine. Le fichier s'ouvre dans Bambu Studio et PrusaSlicer sans aucune préparation.",
+              "Ensuite deux voies : vous commandez l'impression chez nous (Eco PLA, fabrication 2–4 jours ouvrés, livraison) — ou vous téléchargez le fichier 3MF/STL et imprimez sur votre propre machine. Le fichier s'ouvre dans Bambu Studio et PrusaSlicer sans aucune préparation.",
             ],
           },
           {
@@ -2497,10 +2497,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Impresión 3D a medida: mapas con envío a Ucrania",
         description:
-          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia. Eco PLA, 1–3 días hábiles, desde ≈3 €.",
+          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia. Eco PLA, 2–4 días hábiles, desde ≈3 €.",
         h1: "Impresión 3D a medida con envío a Ucrania",
         intro:
-          "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 1–3 días hábiles.",
+          "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 2–4 días hábiles.",
         sections: [
           {
             h2: "Qué imprimimos",
@@ -2513,7 +2513,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Cómo funciona para cualquier ciudad",
             p: [
               "El configurador funciona con cualquier punto de Ucrania y del mundo. Eliges una zona en el mapa, ajustas tamaño y estilo, pulsas «Crear» — en 2–4 minutos el modelo está listo.",
-              "Después, dos caminos: pides la impresión con nosotros (Eco PLA, fabricación 1–3 días hábiles, envío) — o descargas el archivo 3MF/STL e imprimes en tu propia máquina. El archivo se abre en Bambu Studio y PrusaSlicer sin ninguna preparación.",
+              "Después, dos caminos: pides la impresión con nosotros (Eco PLA, fabricación 2–4 días hábiles, envío) — o descargas el archivo 3MF/STL e imprimes en tu propia máquina. El archivo se abre en Bambu Studio y PrusaSlicer sin ninguna preparación.",
             ],
           },
           {
@@ -2563,7 +2563,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Практичні деталі",
             p: [
-              "Виготовлення 1–3 робочі дні, Нова Пошта доставляє й на фронтові напрямки — вкажіть відділення, яке працює. Пластик легкий і не дзвенить, гострих країв немає. Якщо не знаєте точну адресу дитинства — досить назви району чи школи, допоможемо знайти ділянку.",
+              "Виготовлення 2–4 робочі дні, Нова Пошта доставляє й на фронтові напрямки — вкажіть відділення, яке працює. Пластик легкий і не дзвенить, гострих країв немає. Якщо не знаєте точну адресу дитинства — досить назви району чи школи, допоможемо знайти ділянку.",
             ],
           },
         ],
@@ -2595,7 +2595,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Practical details",
             p: [
-              "Made in 1–3 business days; Nova Poshta delivers to most areas — specify a working branch. The plastic is light, doesn't jingle, no sharp edges. If you don't know the exact childhood address — a district or school name is enough, we'll help find the area.",
+              "Made in 2–4 business days; Nova Poshta delivers to most areas — specify a working branch. The plastic is light, doesn't jingle, no sharp edges. If you don't know the exact childhood address — a district or school name is enough, we'll help find the area.",
             ],
           },
         ],
@@ -2627,7 +2627,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Praktische Details",
             p: [
-              "Fertigung 1–3 Werktage; Nova Poshta liefert in die meisten Gebiete — gib eine funktionierende Filiale an. Der Kunststoff ist leicht, klappert nicht, keine scharfen Kanten. Wenn du die genaue Adresse der Kindheit nicht kennst — ein Viertel- oder Schulname reicht, wir helfen beim Finden.",
+              "Fertigung 2–4 Werktage; Nova Poshta liefert in die meisten Gebiete — gib eine funktionierende Filiale an. Der Kunststoff ist leicht, klappert nicht, keine scharfen Kanten. Wenn du die genaue Adresse der Kindheit nicht kennst — ein Viertel- oder Schulname reicht, wir helfen beim Finden.",
             ],
           },
         ],
@@ -2659,7 +2659,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Praktyczne szczegóły",
             p: [
-              "Wykonanie 1–3 dni robocze; Nova Poshta dowozi na większość kierunków — podaj działające oddziału. Plastik jest lekki i nie brzęczy, nie ma ostrych krawędzi. Jeśli nie znasz dokładnego adresu z dzieciństwa — wystarczy nazwa dzielnicy lub szkoły, pomożemy znaleźć obszar.",
+              "Wykonanie 2–4 dni robocze; Nova Poshta dowozi na większość kierunków — podaj działające oddziału. Plastik jest lekki i nie brzęczy, nie ma ostrych krawędzi. Jeśli nie znasz dokładnego adresu z dzieciństwa — wystarczy nazwa dzielnicy lub szkoły, pomożemy znaleźć obszar.",
             ],
           },
         ],
@@ -2691,7 +2691,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Détails pratiques",
             p: [
-              "Fabrication 1–3 jours ouvrés ; Nova Poshta livre la plupart des directions — indiquez une agence en service. Le plastique est léger et ne cliquette pas, sans arêtes vives. Si vous ne connaissez pas l'adresse exacte de l'enfance — un nom de quartier ou d'école suffit, nous vous aidons à trouver la zone.",
+              "Fabrication 2–4 jours ouvrés ; Nova Poshta livre la plupart des directions — indiquez une agence en service. Le plastique est léger et ne cliquette pas, sans arêtes vives. Si vous ne connaissez pas l'adresse exacte de l'enfance — un nom de quartier ou d'école suffit, nous vous aidons à trouver la zone.",
             ],
           },
         ],
@@ -2723,7 +2723,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Detalles prácticos",
             p: [
-              "Fabricación 1–3 días hábiles; Nova Poshta llega a la mayoría de destinos — indica una sucursal operativa. El plástico es ligero y no tintinea, sin bordes afilados. Si no sabes la dirección exacta de la infancia — basta el nombre del barrio o de la escuela, te ayudamos a encontrar la zona.",
+              "Fabricación 2–4 días hábiles; Nova Poshta llega a la mayoría de destinos — indica una sucursal operativa. El plástico es ligero y no tintinea, sin bordes afilados. Si no sabes la dirección exacta de la infancia — basta el nombre del barrio o de la escuela, te ayudamos a encontrar la zona.",
             ],
           },
         ],
@@ -2761,7 +2761,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як замовити",
             p: [
-              "Експортуйте GPX зі Strava, Garmin Connect чи Komoot (у Strava: активність → три крапки → «Експорт GPX»). Завантажте файл у конструктор — сервіс сам знайде місце, підбере масштаб і покаже превʼю. Від 120 ₴, виготовлення 1–3 робочі дні.",
+              "Експортуйте GPX зі Strava, Garmin Connect чи Komoot (у Strava: активність → три крапки → «Експорт GPX»). Завантажте файл у конструктор — сервіс сам знайде місце, підбере масштаб і покаже превʼю. Від 120 ₴, виготовлення 2–4 робочі дні.",
             ],
           },
         ],
@@ -2793,7 +2793,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How to order",
             p: [
-              "Export a GPX from Strava, Garmin Connect or Komoot (in Strava: activity → three dots → «Export GPX»). Upload it in the builder — the service locates the route, scales the map and shows a preview. From ≈€3, made in 1–3 business days.",
+              "Export a GPX from Strava, Garmin Connect or Komoot (in Strava: activity → three dots → «Export GPX»). Upload it in the builder — the service locates the route, scales the map and shows a preview. From ≈€3, made in 2–4 business days.",
             ],
           },
         ],
@@ -2825,7 +2825,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "So bestellst du",
             p: [
-              "Exportiere GPX aus Strava, Garmin Connect oder Komoot (in Strava: Aktivität → drei Punkte → «GPX exportieren»). Lade die Datei in den Konfigurator — der Dienst findet den Ort, wählt den Maßstab und zeigt die Vorschau. Ab ≈3 €, Fertigung 1–3 Werktage.",
+              "Exportiere GPX aus Strava, Garmin Connect oder Komoot (in Strava: Aktivität → drei Punkte → «GPX exportieren»). Lade die Datei in den Konfigurator — der Dienst findet den Ort, wählt den Maßstab und zeigt die Vorschau. Ab ≈3 €, Fertigung 2–4 Werktage.",
             ],
           },
         ],
@@ -2857,7 +2857,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Jak zamówić",
             p: [
-              "Wyeksportuj GPX ze Stravy, Garmin Connect lub Komoot (w Stravie: aktywność → trzy kropki → «Eksportuj GPX»). Wgraj plik do kreatora — serwis sam znajdzie miejsce, dobierze skalę i pokaże podgląd. Od ≈3 €, wykonanie 1–3 dni robocze.",
+              "Wyeksportuj GPX ze Stravy, Garmin Connect lub Komoot (w Stravie: aktywność → trzy kropki → «Eksportuj GPX»). Wgraj plik do kreatora — serwis sam znajdzie miejsce, dobierze skalę i pokaże podgląd. Od ≈3 €, wykonanie 2–4 dni robocze.",
             ],
           },
         ],
@@ -2889,7 +2889,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Comment commander",
             p: [
-              "Exportez le GPX depuis Strava, Garmin Connect ou Komoot (dans Strava : activité → trois points → «Exporter en GPX»). Téléversez le fichier dans le configurateur — le service trouve le lieu, choisit l'échelle et montre l'aperçu. Dès ≈3 €, fabrication 1–3 jours ouvrés.",
+              "Exportez le GPX depuis Strava, Garmin Connect ou Komoot (dans Strava : activité → trois points → «Exporter en GPX»). Téléversez le fichier dans le configurateur — le service trouve le lieu, choisit l'échelle et montre l'aperçu. Dès ≈3 €, fabrication 2–4 jours ouvrés.",
             ],
           },
         ],
@@ -2921,7 +2921,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cómo pedirlo",
             p: [
-              "Exporta el GPX desde Strava, Garmin Connect o Komoot (en Strava: actividad → tres puntos → «Exportar GPX»). Sube el archivo al configurador — el servicio localiza el lugar, elige la escala y muestra la vista previa. Desde ≈3 €, fabricación 1–3 días hábiles.",
+              "Exporta el GPX desde Strava, Garmin Connect o Komoot (en Strava: actividad → tres puntos → «Exportar GPX»). Sube el archivo al configurador — el servicio localiza el lugar, elige la escala y muestra la vista previa. Desde ≈3 €, fabricación 2–4 días hábiles.",
             ],
           },
         ],
@@ -2960,7 +2960,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Доставка за кордон",
             p: [
-              "Надсилаємо Новою Поштою по Україні. Виготовлення 1–3 робочі дні. Замовити можна з будь-якої країни, оплата карткою онлайн.",
+              "Надсилаємо Новою Поштою по Україні. Виготовлення 2–4 робочі дні. Замовити можна з будь-якої країни, оплата карткою онлайн.",
             ],
           },
         ],
@@ -2993,7 +2993,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Delivery abroad",
             p: [
-              "We ship across Ukraine. Production 1–3 business days. card payment online.",
+              "We ship across Ukraine. Production 2–4 business days. card payment online.",
             ],
           },
         ],
@@ -3026,7 +3026,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Versand ins Ausland",
             p: [
-              "Wir versenden mit Nova Poshta in der Ukraine. Fertigung 1–3 Werktage. Kartenzahlung online.",
+              "Wir versenden mit Nova Poshta in der Ukraine. Fertigung 2–4 Werktage. Kartenzahlung online.",
             ],
           },
         ],
@@ -3059,7 +3059,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Wysyłka za granicę",
             p: [
-              "Wysyłamy Nova Poshta po Ukrainie. Wykonanie 1–3 dni robocze. płatność kartą online.",
+              "Wysyłamy Nova Poshta po Ukrainie. Wykonanie 2–4 dni robocze. płatność kartą online.",
             ],
           },
         ],
@@ -3092,7 +3092,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Livraison à l'étranger",
             p: [
-              "Nous expédions avec Nova Poshta en Ukraine. Fabrication 1–3 jours ouvrés. paiement par carte en ligne.",
+              "Nous expédions avec Nova Poshta en Ukraine. Fabrication 2–4 jours ouvrés. paiement par carte en ligne.",
             ],
           },
         ],
@@ -3125,7 +3125,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Envío al extranjero",
             p: [
-              "Enviamos con Nova Poshta por Ucrania. Fabricación 1–3 días hábiles. pago con tarjeta online.",
+              "Enviamos con Nova Poshta por Ucrania. Fabricación 2–4 días hábiles. pago con tarjeta online.",
             ],
           },
         ],

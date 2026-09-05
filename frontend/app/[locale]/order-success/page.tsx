@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, Clock, ArrowRight, Home, LayoutGrid } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { Button, buttonClasses } from "@/components/ui/Button";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -13,8 +14,10 @@ type PayState = "checking" | "paid" | "pending" | "unknown";
 
 export default function OrderSuccessPage() {
   const t = useTranslations("orderSuccess");
+  const tOrder = useTranslations("order");
   const [order, setOrder] = useState<string>("");
   const [state, setState] = useState<PayState>("checking");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -65,8 +68,24 @@ export default function OrderSuccessPage() {
       </h1>
 
       {order && (
-        <p className="mt-2 text-[15px] text-ink-2">
-          {t("orderLabel")} <span className="font-semibold text-ink">#{order}</span>
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[15px] text-ink-2">
+          <span>
+            {t("orderLabel")} <span className="font-semibold text-ink">#{order}</span>
+          </span>
+          <Button
+            variant="bronze"
+            size="sm"
+            onClick={() => {
+              try {
+                navigator.clipboard?.writeText(String(order));
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              } catch { /* ignore */ }
+            }}
+            className="rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-2 hover:text-ink"
+          >
+            {copied ? `✓ ${tOrder("copied")}` : tOrder("copyNo")}
+          </Button>
         </p>
       )}
 
@@ -74,25 +93,25 @@ export default function OrderSuccessPage() {
         {isChecking ? t("checkingBody") : isPaid ? t("paidBody") : t("pendingBody")}
       </p>
 
-      {isPaid && (
+      {(isPaid || state === "pending") && (
         <ul className="mt-6 flex max-w-[460px] flex-col gap-2 text-left">
-          {[t("step1"), t("step2"), t("step3")].map((s, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-[14px] text-ink-2">
+          {(["next1", "next2", "next3"] as const).map((k, i) => (
+            <li key={k} className="flex items-start gap-2.5 text-[14px] text-ink-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--forest,#2F4A3C)]" />
-              <span>{s}</span>
+              <span>{tOrder(k)}</span>
             </li>
           ))}
         </ul>
       )}
 
       <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/account" className="inline-flex items-center gap-2 rounded-full bg-[var(--forest,#2F4A3C)] px-6 py-3 text-sm font-bold text-white hover:opacity-90">
+        <Link href="/account" className={buttonClasses("primary", "sm")}>
           {t("toAccount")} <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link href="/create" className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-semibold text-ink-2 hover:bg-bg-2">
+        <Link href="/create" className={buttonClasses("ghost", "lg")}>
           <LayoutGrid className="h-4 w-4" /> {t("makeAnother")}
         </Link>
-        <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-semibold text-ink-2 hover:bg-bg-2">
+        <Link href="/" className={buttonClasses("ghost", "lg")}>
           <Home className="h-4 w-4" /> {t("toHome")}
         </Link>
       </div>

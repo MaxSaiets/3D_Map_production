@@ -1,24 +1,9 @@
 "use client";
 
 import { Box, Instagram, Youtube, Send } from "lucide-react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { BUSINESS } from "@/lib/legal";
-
-// Локалізований лейбл сторінки «Ціни» (без правок 6 messages-файлів).
-const PRICES_LABEL: Record<string, string> = { uk: "Ціни", en: "Prices", de: "Preise", es: "Precios", fr: "Tarifs", pl: "Cennik" };
-// Лейбли нових SEO-сторінок (blog/showcase/worlds) — теж без правок messages.
-const BLOG_LABEL: Record<string, string> = { uk: "Блог", en: "Blog", de: "Blog", es: "Blog", fr: "Blog", pl: "Blog" };
-const SHOWCASE_LABEL: Record<string, string> = { uk: "Галерея", en: "Gallery", de: "Galerie", es: "Galería", fr: "Galerie", pl: "Galeria" };
-const WORLDS_LABEL: Record<string, string> = { uk: "3D-світи", en: "3D Worlds", de: "3D-Welten", es: "Mundos 3D", fr: "Mondes 3D", pl: "Światy 3D" };
-const PANNO_LABEL: Record<string, string> = { uk: "Карта на стіну", en: "Wall map", de: "Wandkarte", es: "Mapa de pared", fr: "Carte murale", pl: "Mapa na ścianę" };
-const KARPATY_LABEL: Record<string, string> = { uk: "Мапа Карпат", en: "Carpathians map", de: "Karpaten-Karte", es: "Mapa de los Cárpatos", fr: "Carte des Carpates", pl: "Mapa Karpat" };
-// T-6.8 (F-26): /corporate був сиротою (лише sitemap) — даємо вхід із футера.
-const CORPORATE_LABEL: Record<string, string> = { uk: "Для бізнесу", en: "For business", de: "Für Unternehmen", es: "Para empresas", fr: "Pour les entreprises", pl: "Dla firm" };
-// SEO-FIX: хаб /brelok був СИРОТОЮ — на нього не вело жодне посилання з
-// головної чи /maps, тому 24 сторінки /brelok/{місто} висіли в GSC як
-// «Виявлено — наразі не проіндексовано» (Google не витрачав краул-бюджет).
-const BRELOK_LABEL: Record<string, string> = { uk: "Брелки по містах", en: "City keychains", de: "Stadt-Anhänger", es: "Llaveros por ciudad", fr: "Porte-clés par ville", pl: "Breloki miast" };
 
 /* ---------- Footer ----------
    Shared global footer: legal links + ФОП requisites + contacts.
@@ -26,14 +11,7 @@ const BRELOK_LABEL: Record<string, string> = { uk: "Брелки по міста
    gets a consistent footer + a way home. */
 export function SiteFooter() {
   const t = useTranslations("home.footer");
-  const locale = useLocale();
-  const pricesLabel = PRICES_LABEL[locale] ?? PRICES_LABEL.uk;
-  const blogLabel = BLOG_LABEL[locale] ?? BLOG_LABEL.uk;
-  const showcaseLabel = SHOWCASE_LABEL[locale] ?? SHOWCASE_LABEL.uk;
-  const worldsLabel = WORLDS_LABEL[locale] ?? WORLDS_LABEL.uk;
-  const pannoLabel = PANNO_LABEL[locale] ?? PANNO_LABEL.uk;
-  const karpatyLabel = KARPATY_LABEL[locale] ?? KARPATY_LABEL.uk;
-  const brelokLabel = BRELOK_LABEL[locale] ?? BRELOK_LABEL.uk;
+  const tNav = useTranslations("nav");
   return (
     <footer className="border-t border-line-soft py-12">
       <div className="mx-auto flex max-w-[1360px] flex-col gap-6 px-5 text-sm text-ink-3 lg:px-8">
@@ -45,17 +23,17 @@ export function SiteFooter() {
             {/* min-h 44px — комфортний touch-target на мобільних (WCAG) */}
             <Link href="/create" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("create")}</Link>
             <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("keychains")}</Link>
-            <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pricesLabel}</Link>
+            <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("prices")}</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
-            <Link href="/brelok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{brelokLabel}</Link>
+            <Link href="/brelok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("brelok")}</Link>
             <Link href="/podarunok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("gift")}</Link>
-            <Link href="/panno" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{pannoLabel}</Link>
-            <Link href="/karpaty" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{karpatyLabel}</Link>
-            <Link href="/corporate" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{CORPORATE_LABEL[locale] ?? CORPORATE_LABEL.uk}</Link>
+            <Link href="/panno" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("panno")}</Link>
+            <Link href="/karpaty" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("karpaty")}</Link>
+            <Link href="/corporate" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("corporate")}</Link>
             <Link href="/maket" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maket")}</Link>
-            <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{blogLabel}</Link>
-            <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{showcaseLabel}</Link>
-            <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{worldsLabel}</Link>
+            <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("blog")}</Link>
+            <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("gallery")}</Link>
+            <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("worlds3d")}</Link>
             <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
             <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>
             <Link href="/refund" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("refund")}</Link>
@@ -92,7 +70,21 @@ export function SiteFooter() {
           <span className="hidden md:inline">·</span>
           <span>{t("addressLine")}</span>
         </div>
-        <div className="text-center">© {new Date().getFullYear()} monadruk.com</div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <span>© {new Date().getFullYear()} monadruk.com</span>
+          {/* Право змінити рішення про cookie в будь-який момент (GDPR): скидає
+              cookie згоди і показує банер (SiteAnalytics) знову. */}
+          <button
+            type="button"
+            onClick={() => {
+              document.cookie = "mnd_consent=; path=/; max-age=0";
+              window.dispatchEvent(new CustomEvent("mnd:consent", { detail: null }));
+            }}
+            className="inline-flex min-h-[32px] items-center px-2 text-[12px] text-ink-3 underline underline-offset-2 hover:text-ink"
+          >
+            {t("cookieSettings")}
+          </button>
+        </div>
       </div>
     </footer>
   );

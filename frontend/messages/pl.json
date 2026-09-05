@@ -25,6 +25,7 @@
   "nav": {
     "how": "Jak to działa",
     "gallery": "Galeria",
+    "prices": "Cennik",
     "templates": "Szablony",
     "keychains": "Breloki",
     "account": "Konto",
@@ -59,7 +60,7 @@
       "ctaKeychain": "Stwórz brelok",
       "stat1n": "Dowolne miasto",
       "stat1l": "na całym świecie",
-      "stat2n": "1–3 dni",
+      "stat2n": "2–4 dni",
       "stat2l": "druk i wysyłka",
       "stat3n": "Eco PLA",
       "stat3l": "biotworzywo",
@@ -71,7 +72,8 @@
       "dragHint": "Modele 3D na żywo — przeciągnij, aby obrócić",
       "try": "Stwórz mapę",
       "badgeEco": "Eco PLA",
-      "badgeReady": "Plik do druku 3D"
+      "badgeReady": "Plik do druku 3D",
+      "shipPill": "Drukujemy i wysyłamy · od {p} ₴"
     },
     "path": {
       "eyebrow1": "Ścieżka 1 · Własna geometria",
@@ -188,12 +190,25 @@
       "entity": "Działalność gospodarcza Maksym Saiets",
       "addressLine": "Ukraina, obwód chmielnicki, Chmielnicki, ul. Zawadskoho 38",
       "gift": "Prezent",
-      "maket": "Makieta mieszkania"
+      "maket": "Makieta mieszkania",
+      "prices": "Cennik",
+      "blog": "Blog",
+      "worlds3d": "Światy 3D",
+      "panno": "Mapa na ścianę",
+      "karpaty": "Mapa Karpat",
+      "corporate": "Dla firm",
+      "brelok": "Breloki miast",
+      "cookieSettings": "Ustawienia cookie"
     },
     "seo": {
       "title": "Mapy miast 3D i personalizowane breloki — co robimy",
       "p1": "Monadruk zamienia dowolne miejsce na Ziemi w model 3D do druku: mapę dzielnicy z prawdziwymi wysokościami budynków, parkami i rzekami z danych OpenStreetMap, brelok z mapą miasta z własnym napisem, brelok topograficzny z rzeźbą gór z satelitarnych danych wysokości albo magnes na lodówkę z mapą. Pliki 3MF i STL otwierają się w Bambu Studio i PrusaSlicer.",
       "p2": "Nie masz drukarki 3D? Wydrukujemy za ciebie z ekologicznego Eco PLA i wyślemy po Ukrainie. Mapa 3D Warszawy, Krakowa, Kijowa czy Nowego Jorku, rzeźba Tatr lub Howerli, imienny brelok na rocznicę — wybierz miejsce na mapie, a model będzie gotowy w kilka minut."
+    },
+    "popularCities": {
+      "title": "Mapy 3D popularnych miast",
+      "subtitle": "Wybierz swoje miasto — lub dowolny punkt świata w kreatorze.",
+      "allCities": "Wszystkie miasta"
     },
     "alt": {
       "keychainMap": "Brelok z mapą miasta",
@@ -351,7 +366,7 @@
     "realAlt": "Zdjęcie prawdziwego wydrukowanego produktu Monadruk"
   },
   "consent": {
-    "text": "Używamy plików cookie do analiz i ulepszania witryny.",
+    "text": "Pliki cookie do analityki i pomiaru reklam (nasza własna statystyka, Google, Meta) włączamy tylko za twoją zgodą. Bez zgody używamy wyłącznie technicznych cookie do logowania i języka.",
     "accept": "Akceptuję",
     "decline": "Odrzuć",
     "more": "Więcej"
@@ -750,7 +765,14 @@
     "detailLocation": "Lokalizacja",
     "downloadAria": "Pobierz model (wybierz format)",
     "downloadFormat3mf": "Pobierz 3MF",
-    "downloadFormatStl": "Pobierz STL"
+    "downloadFormatStl": "Pobierz STL",
+    "modelExpired": "Okres przechowywania minął (90 dni)",
+    "dangerZone": "Strefa niebezpieczna",
+    "deleteHint": "Dane zostają usunięte na stałe. Zapisy zamówień zostają zachowane przez okres wymagany przepisami księgowymi.",
+    "deleteAccount": "Usuń konto i wszystkie dane",
+    "deleteConfirm": "Na pewno usunąć konto i wszystkie dane? Tego nie można cofnąć.",
+    "deleted": "Konto usunięte. Do zobaczenia.",
+    "deleteFailed": "Nie udało się usunąć konta. Spróbuj jeszcze raz albo napisz do nas."
   },
   "tour": {
     "hintAria": "Wskazówka",
@@ -815,7 +837,9 @@
     "a11yRotateGroup": "Obróć kształt na mapie",
     "a11yRotateLeft": "Obróć o 15° w lewo",
     "a11yRotateRight": "Obróć o 15° w prawo",
-    "a11yRotateValue": "Kąt obrotu: {deg}°"
+    "a11yRotateValue": "Kąt obrotu: {deg}°",
+    "a11yFrameKeyboard": "Ramka obszaru wydruku. Przesuwaj i zmieniaj jej rozmiar myszą, dotykiem lub strzałkami.",
+    "a11yFrameKeyboardHint": "Strzałki przesuwają o 10 m, Shift+strzałka szybciej (50 m), [ ] zmniejsz/zwiększ o 10%, Esc aby wyjść"
   },
   "kc": {
     "tabs": {
@@ -1685,7 +1709,7 @@
       "s2t": "Rozmiar i styl",
       "s2b": "Model 3D widoczny przed zapłatą",
       "s3t": "Drukujemy i wysyłamy",
-      "s3b": "1–3 dni robocze, Nova Poshta",
+      "s3b": "2–4 dni robocze, Nova Poshta",
       "cta": "Wybierz swoje miejsce"
     },
     "keychain": {
@@ -1698,7 +1722,7 @@
       "s2t": "Tekst i kolory",
       "s2b": "Grawer własnego napisu",
       "s3t": "Drukujemy i wysyłamy",
-      "s3b": "1–3 dni robocze, Nova Poshta",
+      "s3b": "2–4 dni robocze, Nova Poshta",
       "cta": "Stwórz swój brelok"
     }
   },
@@ -1710,7 +1734,7 @@
     "pendingTitle": "Zamówienie przyjęte",
     "pendingBody": "Jeśli płatność została właśnie dokonana, status zaktualizuje się w ciągu kilku minut. Jeśli płatność się nie powiodła, skontaktujemy się z Tobą w celu potwierdzenia.",
     "orderLabel": "Zamówienie",
-    "step1": "Produkcja — 1–3 dni robocze",
+    "step1": "Produkcja — 2–4 dni robocze",
     "step2": "Wysyłka za pośrednictwem Nova Poshta z numerem do śledzenia",
     "step3": "Śledź status swojego zamówienia na swoim koncie",
     "toAccount": "Moje konto",
@@ -1808,7 +1832,13 @@
     "printPrepLine": "Przygotowujemy plik do druku —",
     "tryAgain": "Spróbuj ponownie",
     "shrinkZone": "Zmniejsz obszar",
-    "contactUs": "Napisz do nas"
+    "contactUs": "Napisz do nas",
+    "myHomeMarked": "Twój dom jest zaznaczony na czerwono — w druku będzie osobnym, kolorowym elementem.",
+    "shareLink": "Udostępnij model 3D",
+    "shareCopied": "Skopiowano link",
+    "mapLoadingWait": "Mapa jeszcze się ładuje — zaczniemy, gdy będzie gotowa",
+    "previewPromise": "Podgląd powstaje z tych samych danych co plik do druku — bez zaślepek i „mniej więcej tak”",
+    "qrHint": "Otwórz tę scenę 3D na telefonie"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -1879,7 +1909,13 @@
     "cancelGen": "Anuluj generowanie",
     "printPrepLine": "Przygotowujemy plik do druku —",
     "tryAgain": "Spróbuj ponownie",
-    "contactUs": "Napisz do nas"
+    "contactUs": "Napisz do nas",
+    "myHomeMarked": "Twój dom jest zaznaczony na czerwono — w druku będzie osobnym, kolorowym elementem.",
+    "shareLink": "Udostępnij model 3D",
+    "shareCopied": "Skopiowano link",
+    "mapLoadingWait": "Mapa jeszcze się ładuje — zaczniemy, gdy będzie gotowa",
+    "previewPromise": "Podgląd powstaje z tych samych danych co plik do druku — bez zaślepek i „mniej więcej tak”",
+    "qrHint": "Otwórz tę scenę 3D na telefonie"
   },
   "maket": {
     "backHome": "Strona główna",

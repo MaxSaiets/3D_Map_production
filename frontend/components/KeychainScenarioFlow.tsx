@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Download, Home, MapPin, PenLine, ShoppingBag, Sliders, X } from "lucide-react";
+import { ArrowLeft, Check, Download, Home, MapPin, PenLine, Share2, ShoppingBag, Sliders, X, ShieldCheck } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
@@ -15,6 +15,8 @@ import {
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
 import { GenerationStages } from "@/components/GenerationStages";
+import { Button } from "@/components/ui/Button";
+import { ShareQr } from "@/components/ShareQr";
 
 /** Швидкі міста: 1 тап замість друкування адреси (та сама подія, що й пошук).
  *  text — авто-напис для гравіювання (як defaultText у повній панелі). */
@@ -98,7 +100,10 @@ export function KeychainScenarioFlow({
     genError: st.genError,
     printPrep: st.printPrep,
     taskRestored: st.taskRestored,
+    pendingGenerate: st.pendingGenerate,
+    setPendingGenerate: st.setPendingGenerate,
     downloadUrl: st.downloadUrl,
+    taskGroupId: st.taskGroupId,
     // Виділення будинку «мій дім» — той самий store, що на /create; машинна
     // копія KeychainControlPanel читає його і шле keychain_highlight_building.
     mapHighlightBuilding: st.mapHighlightBuilding,
@@ -106,6 +111,24 @@ export function KeychainScenarioFlow({
     setMapHighlightBuilding: st.setMapHighlightBuilding,
     clearHighlights: st.clearHighlights,
   })));
+
+  // T-2.1: текстовий лінк «Поділитись» у ГОТОВО-банері — та сама /share/{taskId}
+  // сторінка, що й повна панель (SimpleControlPanel.doShare).
+  const [shareCopied, setShareCopied] = useState(false);
+  const doShareGuided = async () => {
+    if (!s.taskGroupId) return;
+    import("@/lib/analytics").then((m) => m.track("guided_share", { product: "keychain" })).catch(() => {});
+    const url = `${window.location.origin}/share/${s.taskGroupId}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ url, title: "Monadruk" }).catch(() => {});
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2500);
+      }
+    } catch { /* ignore */ }
+  };
 
   // A-6: єдиний вихід у розширений режим + подія для воронки.
   const exitGuided = (from: string) => {
@@ -119,10 +142,18 @@ export function KeychainScenarioFlow({
   useEffect(() => {
     if (s.mapHighlightBuilding && s.highlightPoints.length > hlCountRef.current) {
       s.setMapHighlightBuilding(false);
+      // Guided-воронка: позначили «мій дім» на мапі.
+      import("@/lib/analytics").then((m) => m.track("guided_home", { product: "keychain", action: "mark" })).catch(() => {});
     }
     hlCountRef.current = s.highlightPoints.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.highlightPoints.length, s.mapHighlightBuilding]);
+
+  // Guided-воронка: очистили позначку «мій дім» (обидва місця виклику clearHighlights).
+  const clearHomeGuided = () => {
+    import("@/lib/analytics").then((m) => m.track("guided_home", { product: "keychain", action: "clear" })).catch(() => {});
+    s.clearHighlights();
+  };
 
   const [tplId, setTplId] = useState<string | null>(null);
   // Чи редагував користувач напис ВЛАСНОРУЧ: якщо ні — чіп міста оновлює його
@@ -169,10 +200,18 @@ export function KeychainScenarioFlow({
       // Зсув рамки пізніше ніж 2.5 с після старту генерації = дія користувача
       // (раніше — доліт карти після пошуку, він не має вмикати «Оновити превʼю»).
       if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
+      // Guided-воронка: ручний зсув/ресайз рамки — трек лише на ПЕРШИЙ перехід
+      // «місце ще не обране» → «обране» (щоб не спамити подіями на кожен рух карти).
+      if (!placePicked && !customPlaceTrackedRef.current) {
+        customPlaceTrackedRef.current = true;
+        import("@/lib/analytics").then((m) => m.track("guided_place", { product: "keychain", place: "custom" })).catch(() => {});
+      }
       setPlacePicked(true);
       setPlaceLabel((cur) => (cur && Date.now() - lastGotoRef.current < 1500 ? cur : ""));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.selectedArea]);
+  const customPlaceTrackedRef = useRef(false);
   useEffect(() => {
     const onPick = (e: Event) => {
       const d = (e as CustomEvent).detail as
@@ -183,7 +222,10 @@ export function KeychainScenarioFlow({
       lastGotoRef.current = Date.now();
       if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
       setPlacePicked(true);
-      if (typeof d.label === "string" && d.label.trim()) setPlaceLabel(d.label.trim());
+      const pickedLabel = typeof d.label === "string" ? d.label.trim() : "";
+      if (pickedLabel) setPlaceLabel(pickedLabel);
+      // Guided-воронка: дискретна подія (чіп/пошук), а не рух карти — трекаємо завжди.
+      import("@/lib/analytics").then((m) => m.track("guided_place", { product: "keychain", place: pickedLabel || "search" })).catch(() => {});
       // ПОШУК нового місця робить старий авто-напис (KYIV…) брехнею —
       // чистимо його, якщо користувач не вводив свій. Чіпи міст не постраждають:
       // їх onClick ставить правильний текст СИНХРОННО після цього ж dispatch
@@ -223,10 +265,17 @@ export function KeychainScenarioFlow({
   const paramsKey = JSON.stringify({ tplId, area: areaKey, label, backLabel, placeMarker, hl: s.highlightPoints.length });
   const [snapshotKey, setSnapshotKey] = useState<string | null>(null);
 
+  // H-4 (2026-09-05): на повільному звʼязку Leaflet вантажиться ~6 с, і доти
+  // `selectedArea` порожній. Раніше кнопка була disabled — людина тапала в
+  // мертву кнопку. Тепер намір ЗАПАМʼЯТОВУЄМО і запускаємо, щойно рамка є.
+  const waitingForMap = s.pendingGenerate;
+  const setWaitingForMap = s.setPendingGenerate;
   const create = () => {
-    if (!s.selectedArea || s.isGenerating) return;
+    if (s.isGenerating) return;
+    if (!s.selectedArea) { setWaitingForMap(true); return; }
+    setWaitingForMap(false);
     import("@/lib/analytics")
-      .then((m) => m.track("guided_generate", { product: "keychain", scenario: tplId, placePicked }))
+      .then((m) => m.track("guided_generate", { product: "keychain", scenario: tplId, placePicked, place: placeLabel || "custom" }))
       .catch(() => {});
     setRan(false);
     setStarted(true);
@@ -249,11 +298,34 @@ export function KeychainScenarioFlow({
     if (left < 45) return t("etaSoon");
     return t("etaLeft", { min: Math.max(1, Math.round(left / 60)) });
   })();
+  // Карта віддала рамку — виконуємо відкладений намір користувача.
+  useEffect(() => {
+    if (!waitingForMap || !s.selectedArea || s.isGenerating) return;
+    // ⚠️НЕ запускати синхронно в цьому ефекті: панель-слухач перепідписується
+    // на `monadruk:guided-generate` КОЖЕН рендер (ефект без deps), тож у мить
+    // нашого коміту слухача може не бути — подія летіла в порожнечу (відтворено).
+    const id = window.setTimeout(() => { setWaitingForMap(false); create(); }, 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingForMap, s.selectedArea, s.isGenerating]);
   const generatingView = s.isGenerating;
   // C-1: після F5 задача відновлюється зі сторіджу — показуємо готову модель.
   const successView = (started || s.taskRestored) && !s.isGenerating && !!s.downloadUrl;
   // C-3: помилка = реальний fail з бекенду (з причиною), а не «немає файлу».
   const failedNote = !!s.genError && !s.isGenerating && (started || s.taskRestored);
+  // Guided-воронка: результат генерації — ОДИН раз на прогін (ключ = момент
+  // старту create(), а не taskGroupId, бо в помилки його може не бути).
+  const resultTrackedAtRef = useRef(0);
+  useEffect(() => {
+    if (successView && resultTrackedAtRef.current !== createdAtRef.current) {
+      resultTrackedAtRef.current = createdAtRef.current;
+      import("@/lib/analytics").then((m) => m.track("guided_result", { product: "keychain", ok: true, elapsedS: s.elapsedS })).catch(() => {});
+    } else if (failedNote && resultTrackedAtRef.current !== createdAtRef.current) {
+      resultTrackedAtRef.current = createdAtRef.current;
+      import("@/lib/analytics").then((m) => m.track("guided_result", { product: "keychain", ok: false, reason: s.genError || undefined })).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successView, failedNote]);
   // Готово: якщо користувач нічого не чіпав під час генерації, знімок = поточні
   // параметри (доліт карти/авто-зона після пошуку не мають давати «Оновити превʼю»).
   const prevSuccessRef = useRef(false);
@@ -277,13 +349,13 @@ export function KeychainScenarioFlow({
           {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
         </span>
         {tplId !== null && !generatingView && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => { setTplId(null); setStarted(false); }}
-            className="inline-flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
           >
             <ArrowLeft size={12} /> {t("back")}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -311,9 +383,15 @@ export function KeychainScenarioFlow({
               ))}
             </div>
             {/* A-6: розширений режим — один текстовий лінк під картками, не пʼята картка. */}
-            <button type="button" onClick={() => exitGuided("step1")} data-testid="kc-scenario-full" className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 hover:text-[var(--text-primary)] hover:underline">
+            <Button
+              variant="bronze"
+              size="sm"
+              onClick={() => exitGuided("step1")}
+              data-testid="kc-scenario-full"
+              className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 hover:text-[var(--text-primary)] hover:underline"
+            >
               <Sliders size={12} /> {t("cardFullTitle")} — {t("cardFullDesc")}
-            </button>
+            </Button>
           </div>
         ) : (
           /* ── КРОК 2: ДЕ ВАШЕ МІСЦЕ? + напис і CTA на тому ж екрані ──
@@ -329,14 +407,23 @@ export function KeychainScenarioFlow({
                 <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">
                   {placeLabel ? <b className="text-[var(--text-primary)]">{placeLabel} — </b> : null}{t("readyHint")}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new Event("monadruk:kc-guided-order"))}
+                {/* R-04 (Cities3ds): одна чесна фраза-обіцянка проти головного сумніву
+                    «а надрукують те, що бачу?». Превʼю і 3MF — з одного canonical_2d. */}
+                <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="kc-guided-promise">
+                  <ShieldCheck size={13} className="mt-[1px] shrink-0 text-[var(--accent-strong)]" /> {t("previewPromise")}
+                </p>
+                <Button
+                  variant="bronze"
+                  size="md"
+                  onClick={() => {
+                    import("@/lib/analytics").then((m) => m.track("guided_order_click", { product: "keychain", priceUah })).catch(() => {});
+                    window.dispatchEvent(new Event("monadruk:kc-guided-order"));
+                  }}
                   data-testid="kc-guided-order"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--bronze,#8E6B3D)] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(142,107,61,0.35)] transition hover:brightness-110"
+                  className="w-full"
                 >
                   <ShoppingBag size={18} /> {t("orderPrint")} · {disp(priceUah)}
-                </button>
+                </Button>
                 <p className="text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("readyDelivery")}</p>
                 {/* Завантаження — рівноправна кнопка, а не дрібний лінк (див. ScenarioFlow). */}
                 <div className="flex items-center gap-2 pt-0.5">
@@ -344,18 +431,45 @@ export function KeychainScenarioFlow({
                   <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{t("waySelf")}</span>
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="lg"
                   data-testid="kc-guided-download"
-                  onClick={() => window.dispatchEvent(new Event("monadruk:kc-guided-download"))}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(11,92,87,0.45)] bg-white px-6 py-3 text-[14.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)] hover:bg-[rgba(15,118,110,0.06)]"
+                  onClick={() => {
+                    import("@/lib/analytics").then((m) => m.track("guided_download", { product: "keychain" })).catch(() => {});
+                    window.dispatchEvent(new Event("monadruk:kc-guided-download"));
+                  }}
+                  className="w-full"
                 >
                   <Download size={17} /> {t("downloadCta")}
-                </button>
+                </Button>
                 <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
                 {dlQuota && !dlQuota.isAdmin && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
+                )}
+                {/* T-2.1: текстовий лінк, НЕ третя кнопка — рівно дві заповнені
+                    кнопки лишаються (замовити/завантажити). */}
+                {!!s.taskGroupId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="kc-guided-share"
+                    onClick={doShareGuided}
+                    className="mx-auto"
+                  >
+                    <Share2 size={13} /> {shareCopied ? t("shareCopied") : t("shareLink")}
+                  </Button>
+                )}
+                {/* I-2 (R-04/TerraPrinter): на десктопі — QR, щоб відкрити цю ж сцену на
+                    телефоні й показати рідним; на мобільному QR безглуздий (є «Поділитись»). */}
+                {!!s.taskGroupId && (
+                  <ShareQr
+                    url={`${window.location.origin}/share/${s.taskGroupId}`}
+                    size={88}
+                    label={t("qrHint")}
+                    className="mx-auto hidden lg:flex"
+                  />
                 )}
                 <div className="my-0.5 flex items-center gap-2">
                   <span className="h-px flex-1 bg-[var(--surface-border)]" />
@@ -484,7 +598,7 @@ export function KeychainScenarioFlow({
                   {s.highlightPoints.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => s.clearHighlights()}
+                      onClick={clearHomeGuided}
                       aria-label={t("myHomeClear")}
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] transition hover:text-[#8f2a20]"
                     >
@@ -492,6 +606,20 @@ export function KeychainScenarioFlow({
                     </button>
                   )}
                 </div>
+                {/* T-3.8: підтвердження ЩО саме позначено — раніше кнопка міняла
+                    напис на лічильник без пояснення, що це буде окрема деталь. */}
+                {s.highlightPoints.length > 0 && (
+                  <p className="text-[12px] leading-snug text-[var(--text-secondary)]">
+                    {t("myHomeMarked")}{" "}
+                    <button
+                      type="button"
+                      onClick={clearHomeGuided}
+                      className="font-semibold text-[var(--text-primary)] underline underline-offset-2 hover:text-[#8f2a20]"
+                    >
+                      {t("myHomeClear")}
+                    </button>
+                  </p>
+                )}
                 {s.mapHighlightBuilding && s.highlightPoints.length === 0 && (
                   <p className="text-[12px] leading-snug text-[#8f2a20]">{t("myHomeHintClick")}</p>
                 )}
@@ -535,36 +663,44 @@ export function KeychainScenarioFlow({
               <div className="flex flex-col gap-2 rounded-[12px] border border-red-200 bg-red-50 px-3 py-2.5" data-testid="kc-guided-error">
                 <p className="text-[12.5px] leading-snug text-red-800">{s.genError || t("genFailed")}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="bronze"
+                    size="sm"
                     onClick={create}
                     data-testid="kc-guided-retry"
                     className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
                   >
                     {t("tryAgain")}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="bronze"
+                    size="sm"
                     onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: `${t("genFailed")} ${s.genError || ""}`.trim() } }))}
                     className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-red-800 underline underline-offset-2"
                   >
                     {t("contactUs")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
             {!s.isGenerating && (!successView || dirty) && (
               <>
               {/* F-08: превʼю безкоштовне — ціна рядком під кнопкою, не на ній. */}
-              <button
-                type="button"
+              <Button
+                variant={successView ? "primary" : "bronze"}
+                size="lg"
                 onClick={create}
-                disabled={!s.selectedArea}
+                disabled={waitingForMap}
                 data-testid="kc-scenario-create"
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 ${successView ? "bg-[var(--accent-strong)] shadow-[0_8px_24px_rgba(11,92,87,0.3)]" : "bg-[var(--bronze,#8E6B3D)] shadow-[0_8px_24px_rgba(142,107,61,0.35)]"}`}
+                className="w-full"
               >
                 {successView ? t("updateKeychain") : t("previewCta")}
-              </button>
+              </Button>
+              {waitingForMap && (
+                <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--accent-strong)]" aria-live="polite" data-testid="kc-map-loading-wait">
+                  {t("mapLoadingWait")}
+                </p>
+              )}
               {!successView && (
                 <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--text-secondary)]">
                   {t("printFromLine", { price: disp(priceUah) })}
@@ -573,13 +709,14 @@ export function KeychainScenarioFlow({
               </>
             )}
             {/* A-6: єдиний вихід у розширений режим — стан зберігається. */}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={() => exitGuided("step2")}
-              className="mt-2 w-full text-center text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]"
+              className="mt-2 w-full text-center"
             >
               {t("advancedSettings")}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -591,7 +728,7 @@ export function KeychainScenarioFlow({
         price={disp(priceUah)}
         busy={generatingView}
         tone={successView && !dirty ? "bronze" : "primary"}
-        disabled={!generatingView && !s.selectedArea}
+        disabled={!generatingView && waitingForMap}
         cta={generatingView
           ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
           : successView ? (dirty ? t("updateKeychain") : t("orderPrint")) : t("previewCtaShort")}

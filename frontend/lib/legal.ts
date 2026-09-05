@@ -36,7 +36,7 @@ export const BUSINESS = {
   city: "м. Хмельницький",
   country: "Україна",
 
-  updated: "2026-06-15", // ISO — LegalArticle форматує під локаль (Intl.DateTimeFormat)
+  updated: "2026-09-05", // ISO — LegalArticle форматує під локаль (Intl.DateTimeFormat)
 } as const;
 
 export const IBAN_DISPLAY = BUSINESS.iban.replace(/(.{4})/g, "$1 ").trim();

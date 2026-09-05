@@ -556,10 +556,32 @@ async def _ttl_cleanup_loop():
             print(f"[TTL] Removed {len(stale)} stale tasks")
 
 
+async def _retention_loop():
+    """Privacy: expire old generated model files from output/ so they don't
+    accumulate forever. Runs once ~60s after startup, then every 24h. The
+    actual filesystem work happens in a thread executor so a large output/
+    directory scan never blocks the event loop. MODEL_RETENTION_DAYS<=0
+    disables the loop entirely (checked both here and inside run_retention)."""
+    import asyncio as _asyncio
+    from services.retention import run_retention, MODEL_RETENTION_DAYS as _MRD
+    if _MRD <= 0:
+        print("[RETENTION] disabled (MODEL_RETENTION_DAYS<=0)")
+        return
+    await _asyncio.sleep(60)
+    loop = _asyncio.get_event_loop()
+    while True:
+        try:
+            await loop.run_in_executor(None, run_retention, OUTPUT_DIR, DATA_DIR)
+        except Exception as _rexc:  # noqa: BLE001
+            print(f"[RETENTION] run failed (non-fatal): {_rexc}")
+        await _asyncio.sleep(86400)
+
+
 @app.on_event("startup")
 async def startup_event():
     import asyncio as _asyncio
     _asyncio.create_task(_ttl_cleanup_loop())
+    _asyncio.create_task(_retention_loop())
 
     # Прогрів локальної OSM-БД (DuckDB) у фоні — перший конект ~5с; інакше перший
     # /api/building-at (підсвітка будинку) або генерація після рестарту гальмують.
@@ -1577,12 +1599,11 @@ async def track_event(
     return {"status": "ok"}
 
 
-@app.get("/api/admin/stats")
-async def admin_stats(authorization: Optional[str] = Header(default=None), days: int = 30):
-    """Aggregate analytics.jsonl for the admin dashboard (free, self-hosted)."""
-    u = _require_user(authorization)
-    if not u["is_admin"]:
-        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
+    """Pure aggregation over raw analytics.jsonl lines (old-rotated + current,
+    already concatenated in chronological order) for the admin dashboard.
+    Factored out of the /api/admin/stats endpoint so it's unit-testable without
+    a running server / auth / disk layout."""
     import json
     from collections import Counter, defaultdict
     from datetime import datetime as _dt
@@ -1599,6 +1620,18 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
             return _dt.fromisoformat(s).timestamp()
         except Exception:  # noqa: BLE001
             return None
+
+    # Timeline: конкретні події, що складають «історію дій» відвідувача в
+    # адмінці (не «ping»/сирі кліки без цілі). Тримаємо лише known-корисні
+    # поля з props — інше на фронті все одно не використовується.
+    _TIMELINE_PROP_KEYS = (
+        "product", "scenario", "sizeMm", "place", "placePicked", "step",
+        "ok", "reason", "el", "at", "mode", "priceUah", "cached", "elapsedS",
+    )
+
+    def _timeline_item(ts: str, ev: str, props: Dict[str, Any]) -> Dict[str, Any]:
+        p = {k: props[k] for k in _TIMELINE_PROP_KEYS if k in props}
+        return {"t": ts, "e": ev, "p": p}
 
     totals = {"events": 0, "pageviews": 0, "uniqueVisitors": 0}
     by_day: Dict[str, Dict[str, Any]] = {}
@@ -1631,123 +1664,172 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     g_quota: Counter = Counter()       # місце блокування квотою ("download"/"—")
     g_wait = 0                         # скільки разів бачили довге очікування
     g_funnel: Counter = Counter()      # класичні кроки, але В МЕЖАХ періоду
+    # ── Guided-вибори (для адмінки: «що конкретно клікнув/обрав користувач») ──
+    g_sizes: Counter = Counter()       # обраний розмір (sizeMm) → к-сть
+    g_places: Counter = Counter()      # обране місце → к-сть
+    g_home_marked = 0                  # guided_home з action=mark
+    g_shares = 0                       # guided_share
+    g_downloads = 0                    # guided_download + download_model
+    g_order_clicks = 0                 # guided_order_click
+    g_results_ok = 0
+    g_results_fail = 0
     _TRUE = ("true", "1", "yes")
+    _GUIDED_EVENTS = (
+        "guided_pick", "guided_step", "guided_generate", "mode_switch",
+        "quota_block", "download_wait", "guided_size", "guided_place",
+        "guided_home", "guided_share", "guided_download", "download_model",
+        "guided_order_click", "guided_result",
+    )
     try:
-        # Читаємо ПОПЕРЕДНІЙ ротований лог (.jsonl.1, якщо є) + поточний — щоб одна
-        # ротація (при перевищенні 25МБ) не ховала й не втрачала недавню історію.
-        # Файли йдуть у хронологічному порядку (старіший → новіший), тож потокова
-        # логіка тривалості (per-visitor _prev) лишається коректною.
-        for _lp in (ANALYTICS_LOG.with_name("analytics.jsonl.1"), ANALYTICS_LOG):
-            if not _lp.exists():
+        for line in lines:
+            try:
+                r = json.loads(line)
+            except Exception:  # noqa: BLE001
                 continue
-            for line in _lp.read_text(encoding="utf-8").splitlines():
-                try:
-                    r = json.loads(line)
-                except Exception:  # noqa: BLE001
-                    continue
-                ev = r.get("event", "")
-                # «ping» = серцебиття присутності (вимір часу на сайті), НЕ дія
-                # користувача → НЕ рахуємо його ні в «усього подій», ні в топ-подіях
-                # (інакше хедлайн розходився б із розбивкою). first/last/тривалість
-                # нижче все одно враховують ping.
-                if ev != "ping":
-                    totals["events"] += 1
-                    if ev:
-                        ev_counter[ev] += 1
-                props = r.get("props") or {}
-                path = r.get("path", "")
-                if ev == "pageview":
-                    totals["pageviews"] += 1
-                    path_counter[path] += 1
-                    if r.get("locale"):
-                        locale_counter[r["locale"]] += 1
-                    if r.get("cc"):
-                        country_counter[r["cc"]] += 1
-                    _ref = (r.get("ref") or "").split("?")[0][:60]
-                    if _ref and "monadruk" not in _ref:
-                        ref_counter[_ref] += 1
-                elif ev == "funnel":
-                    step = props.get("step")
-                    if step:
-                        funnel_counter[step] += 1
-                        if str(r.get("day", "")) >= _cutoff_day:
-                            g_funnel[step] += 1
-                elif ev in ("guided_pick", "guided_step", "guided_generate",
-                            "mode_switch", "quota_block", "download_wait"):
-                    # той самий один прохід по логу — без окремого читання файлу
+            ev = r.get("event", "")
+            # «ping» = серцебиття присутності (вимір часу на сайті), НЕ дія
+            # користувача → НЕ рахуємо його ні в «усього подій», ні в топ-подіях
+            # (інакше хедлайн розходився б із розбивкою). first/last/тривалість
+            # нижче все одно враховують ping.
+            if ev != "ping":
+                totals["events"] += 1
+                if ev:
+                    ev_counter[ev] += 1
+            props = r.get("props") or {}
+            path = r.get("path", "")
+            if ev == "pageview":
+                totals["pageviews"] += 1
+                path_counter[path] += 1
+                if r.get("locale"):
+                    locale_counter[r["locale"]] += 1
+                if r.get("cc"):
+                    country_counter[r["cc"]] += 1
+                _ref = (r.get("ref") or "").split("?")[0][:60]
+                if _ref and "monadruk" not in _ref:
+                    ref_counter[_ref] += 1
+            elif ev == "funnel":
+                step = props.get("step")
+                if step:
+                    funnel_counter[step] += 1
                     if str(r.get("day", "")) >= _cutoff_day:
-                        _p = str(props.get("product") or "?")
-                        if ev == "guided_pick":
-                            g_pick[f"{_p} · {props.get('scenario') or '—'}"] += 1
-                        elif ev == "guided_step":
-                            if str(props.get("step") or "") == "2":
-                                g_step2 += 1
-                        elif ev == "guided_generate":
-                            if str(props.get("placePicked") or "").lower() in _TRUE:
-                                g_gen_picked += 1
-                            else:
-                                g_gen_default += 1
-                        elif ev == "mode_switch":
-                            g_mode[f"{_p}: {props.get('from') or '—'} → {props.get('to') or '—'}"] += 1
-                        elif ev == "quota_block":
-                            g_quota[str(props.get("at") or "generate")] += 1
-                        else:  # download_wait
-                            g_wait += 1
-                elif ev == "click":
-                    x, y = props.get("x"), props.get("y")
-                    if isinstance(x, (int, float)) and isinstance(y, (int, float)) and len(click_points[path]) < 1200:
-                        click_points[path].append([round(float(x), 1), round(float(y), 1)])
-                    el = props.get("el")
-                    if el:
-                        click_label_counter[(path, str(el)[:48])] += 1
-                d = r.get("day", "")
-                vis = r.get("visitor", "")
-                if vis:
-                    visitors.add(vis)
-                    day_visitors.setdefault(d, set()).add(vis)
-                    _ts = r.get("ts", "")
-                    vs = visitor_sessions.setdefault(vis, {
-                        "id": vis[:6], "cc": "", "ref": "", "paths": [], "events": 0,
-                        "first": _ts, "last": _ts, "locale": "",
-                        "dur": 0.0, "sessions": 0, "_prev": None,
-                    })
-                    # Лічильник ДІЙ (без ping-серцебиття) — щоб «N подій» = реальні
-                    # переходи/кліки, а не технічні пінги присутності.
-                    if ev != "ping":
-                        vs["events"] += 1
-                    if _ts > vs["last"]:
-                        vs["last"] = _ts
-                    if _ts and _ts < vs["first"]:
-                        vs["first"] = _ts
-                    # Активний час на сайті: додаємо проміжок до попередньої події,
-                    # якщо він ≤ 30 хв; інакше це новий захід (простій не рахуємо).
-                    _ep = _epoch(_ts)
-                    if _ep is not None:
-                        _prev = vs["_prev"]
-                        if _prev is not None:
-                            _gap = _ep - _prev
-                            if 0.0 <= _gap <= _SESSION_GAP:
-                                vs["dur"] += _gap
-                            else:
-                                vs["sessions"] += 1
+                        g_funnel[step] += 1
+            elif ev in _GUIDED_EVENTS:
+                # той самий один прохід по логу — без окремого читання файлу
+                if str(r.get("day", "")) >= _cutoff_day:
+                    _p = str(props.get("product") or "?")
+                    if ev == "guided_pick":
+                        g_pick[f"{_p} · {props.get('scenario') or '—'}"] += 1
+                    elif ev == "guided_step":
+                        if str(props.get("step") or "") == "2":
+                            g_step2 += 1
+                    elif ev == "guided_generate":
+                        if str(props.get("placePicked") or "").lower() in _TRUE:
+                            g_gen_picked += 1
+                        else:
+                            g_gen_default += 1
+                        _size = props.get("sizeMm")
+                        if _size:
+                            g_sizes[str(_size)] += 1
+                        _place = props.get("place")
+                        if _place:
+                            g_places[str(_place)] += 1
+                    elif ev == "mode_switch":
+                        g_mode[f"{_p}: {props.get('from') or '—'} → {props.get('to') or '—'}"] += 1
+                    elif ev == "quota_block":
+                        g_quota[str(props.get("at") or "generate")] += 1
+                    elif ev == "download_wait":
+                        g_wait += 1
+                    elif ev == "guided_size":
+                        _size = props.get("sizeMm")
+                        if _size:
+                            g_sizes[str(_size)] += 1
+                    elif ev == "guided_place":
+                        _place = props.get("place")
+                        if _place:
+                            g_places[str(_place)] += 1
+                    elif ev == "guided_home":
+                        if str(props.get("action") or "") == "mark":
+                            g_home_marked += 1
+                    elif ev == "guided_share":
+                        g_shares += 1
+                    elif ev in ("guided_download", "download_model"):
+                        g_downloads += 1
+                    elif ev == "guided_order_click":
+                        g_order_clicks += 1
+                    else:  # guided_result
+                        if str(props.get("ok") or "").lower() in _TRUE:
+                            g_results_ok += 1
+                        else:
+                            g_results_fail += 1
+            elif ev == "click":
+                x, y = props.get("x"), props.get("y")
+                if isinstance(x, (int, float)) and isinstance(y, (int, float)) and len(click_points[path]) < 1200:
+                    click_points[path].append([round(float(x), 1), round(float(y), 1)])
+                el = props.get("el")
+                if el:
+                    click_label_counter[(path, str(el)[:48])] += 1
+            d = r.get("day", "")
+            vis = r.get("visitor", "")
+            if vis:
+                visitors.add(vis)
+                day_visitors.setdefault(d, set()).add(vis)
+                _ts = r.get("ts", "")
+                vs = visitor_sessions.setdefault(vis, {
+                    "id": vis[:6], "cc": "", "ref": "", "paths": [], "events": 0,
+                    "first": _ts, "last": _ts, "locale": "",
+                    "dur": 0.0, "sessions": 0, "_prev": None,
+                    "timeline": [], "_clicks": 0,
+                })
+                # Лічильник ДІЙ (без ping-серцебиття) — щоб «N подій» = реальні
+                # переходи/кліки, а не технічні пінги присутності.
+                if ev != "ping":
+                    vs["events"] += 1
+                if _ts > vs["last"]:
+                    vs["last"] = _ts
+                if _ts and _ts < vs["first"]:
+                    vs["first"] = _ts
+                # Активний час на сайті: додаємо проміжок до попередньої події,
+                # якщо він ≤ 30 хв; інакше це новий захід (простій не рахуємо).
+                _ep = _epoch(_ts)
+                if _ep is not None:
+                    _prev = vs["_prev"]
+                    if _prev is not None:
+                        _gap = _ep - _prev
+                        if 0.0 <= _gap <= _SESSION_GAP:
+                            vs["dur"] += _gap
                         else:
                             vs["sessions"] += 1
-                        vs["_prev"] = _ep
-                    if not vs["cc"] and r.get("cc"):
-                        vs["cc"] = r["cc"]
-                    if not vs["locale"] and r.get("locale"):
-                        vs["locale"] = r["locale"]
-                    if not vs["ref"]:  # реферер входу = перший непорожній не-monadruk
-                        _rf = (r.get("ref") or "").split("?")[0][:60]
-                        if _rf and "monadruk" not in _rf:
-                            vs["ref"] = _rf
-                    if ev == "pageview" and path and path not in vs["paths"] and len(vs["paths"]) < 12:
-                        vs["paths"].append(path)
-                bd = by_day.setdefault(d, {"day": d, "events": 0, "pageviews": 0})
-                if ev != "ping":  # ping = серцебиття, не дія → не роздуваємо лічильник
-                    bd["events"] += 1
-                if ev == "pageview":
-                    bd["pageviews"] += 1
+                    else:
+                        vs["sessions"] += 1
+                    vs["_prev"] = _ep
+                if not vs["cc"] and r.get("cc"):
+                    vs["cc"] = r["cc"]
+                if not vs["locale"] and r.get("locale"):
+                    vs["locale"] = r["locale"]
+                if not vs["ref"]:  # реферер входу = перший непорожній не-monadruk
+                    _rf = (r.get("ref") or "").split("?")[0][:60]
+                    if _rf and "monadruk" not in _rf:
+                        vs["ref"] = _rf
+                if ev == "pageview" and path and path not in vs["paths"] and len(vs["paths"]) < 12:
+                    vs["paths"].append(path)
+                # Таймлайн: усе, крім ping/click-без-цілі; кліки — лише з el, до 8/візит.
+                if ev == "ping":
+                    pass
+                elif ev == "click":
+                    if props.get("el") and vs["_clicks"] < 8:
+                        vs["_clicks"] += 1
+                        vs["timeline"].append(_timeline_item(_ts, ev, props))
+                        if len(vs["timeline"]) > 40:
+                            vs["timeline"].pop(0)
+                else:
+                    vs["timeline"].append(_timeline_item(_ts, ev, props))
+                    if len(vs["timeline"]) > 40:
+                        vs["timeline"].pop(0)
+            bd = by_day.setdefault(d, {"day": d, "events": 0, "pageviews": 0})
+            if ev != "ping":  # ping = серцебиття, не дія → не роздуваємо лічильник
+                bd["events"] += 1
+            if ev == "pageview":
+                bd["pageviews"] += 1
     except Exception:  # noqa: BLE001
         pass
     totals["uniqueVisitors"] = len(visitors)
@@ -1780,10 +1862,77 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         # Розбивки по пристрою НЕМАЄ: /api/track не зберігає ні User-Agent, ні
         # прапорець mobile/desktop (лише денний хеш) → фронт ховає цей рядок.
         "byDevice": None,
+        # Конкретні кліки/вибори всередині guided-флоу (для адмін-панелі «що
+        # користувач клікнув/обрав»), рахуємо В МЕЖАХ періоду `days`, як і решту guided.
+        "choices": {
+            "sizes": g_sizes.most_common(8),
+            "places": g_places.most_common(10),
+            "homeMarked": g_home_marked,
+            "shares": g_shares,
+            "downloads": g_downloads,
+            "orderClicks": g_order_clicks,
+            "results": {"ok": g_results_ok, "fail": g_results_fail},
+        },
     }
 
     # Топ-6 сторінок за к-стю кліків (для теплокарти) + топ елементів.
     top_click_paths = sorted(click_points.items(), key=lambda kv: -len(kv[1]))[:6]
+
+    # Стрічка останніх ВІЗИТІВ (анонім): сортуємо за останньою активністю.
+    recent_visitors = sorted(
+        visitor_sessions.values(), key=lambda v: v.get("last", ""), reverse=True
+    )[:30]
+    recent_visitors = [{
+        "id": v["id"],
+        "cc": v["cc"] or "—",
+        "ref": v["ref"] or "(прямий/закладка)",
+        "paths": v["paths"][:8],
+        "events": v["events"],
+        "locale": v["locale"] or "",
+        "first": v["first"],
+        "last": v["last"],
+        "duration": int(round(v.get("dur", 0.0))),   # активний час на сайті, сек
+        "sessions": max(1, v.get("sessions", 1)),     # к-сть окремих заходів
+        "timeline": v.get("timeline", []),            # хронологія значущих подій (до 40)
+    } for v in recent_visitors]
+
+    return {
+        "totals": totals,
+        "byDay": series,
+        "topEvents": ev_counter.most_common(15),
+        "topPaths": path_counter.most_common(15),
+        "byLocale": locale_counter.most_common(10),
+        "byCountry": country_counter.most_common(15),
+        "topRefs": ref_counter.most_common(10),
+        "funnel": funnel,
+        "guided": guided,
+        "recentVisitors": recent_visitors,
+        "clicksByPath": {p: pts for p, pts in top_click_paths},
+        "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
+    }
+
+
+@app.get("/api/admin/stats")
+async def admin_stats(authorization: Optional[str] = Header(default=None), days: int = 30):
+    """Aggregate analytics.jsonl for the admin dashboard (free, self-hosted)."""
+    u = _require_user(authorization)
+    if not u["is_admin"]:
+        raise HTTPException(status_code=403, detail="Лише для адміністраторів")
+    import json
+
+    # Читаємо ПОПЕРЕДНІЙ ротований лог (.jsonl.1, якщо є) + поточний — щоб одна
+    # ротація (при перевищенні 25МБ) не ховала й не втрачала недавню історію.
+    # Файли йдуть у хронологічному порядку (старіший → новіший), тож потокова
+    # логіка тривалості (per-visitor _prev) у _aggregate_analytics лишається коректною.
+    lines: List[str] = []
+    for _lp in (ANALYTICS_LOG.with_name("analytics.jsonl.1"), ANALYTICS_LOG):
+        if not _lp.exists():
+            continue
+        try:
+            lines.extend(_lp.read_text(encoding="utf-8").splitlines())
+        except Exception:  # noqa: BLE001
+            pass
+    agg = _aggregate_analytics(lines, days)
 
     # ── Замовлення + дохід (щоб адмін бачив гроші, а не лише трафік) ────────
     # orders.jsonl містить по записі замовлення + окремі type:payment події.
@@ -1797,10 +1946,11 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     }
     try:
         import re as _re
+        from collections import Counter as _Counter
         from services.order_service import ORDERS_LOG as _ORDERS_LOG, ORDER_STATUSES as _ORDER_STATUSES
 
         def _price_num(s: Any) -> float:
-            m = _re.search(r"-?\d[\d\s]*[.,]?\d*", str(s or "").replace(" ", " "))
+            m = _re.search(r"-?\d[\d\s]*[.,]?\d*", str(s or "").replace(" ", " "))
             if not m:
                 return 0.0
             try:
@@ -1835,8 +1985,8 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
                 latest[onum] = cur
 
         paid_states = {"paid", "printed", "shipped", "done"}
-        prod_counter: Counter = Counter()
-        status_counter: Counter = Counter()
+        prod_counter: _Counter = _Counter()
+        status_counter: _Counter = _Counter()
         rev_est = 0.0
         rev_paid = 0.0
         for onum, rec in latest.items():
@@ -1860,38 +2010,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
     except Exception as _oe:  # noqa: BLE001
         print(f"[admin/stats] orders aggregation failed (non-fatal): {_oe}")
 
-    # Стрічка останніх ВІЗИТІВ (анонім): сортуємо за останньою активністю.
-    recent_visitors = sorted(
-        visitor_sessions.values(), key=lambda v: v.get("last", ""), reverse=True
-    )[:30]
-    recent_visitors = [{
-        "id": v["id"],
-        "cc": v["cc"] or "—",
-        "ref": v["ref"] or "(прямий/закладка)",
-        "paths": v["paths"][:8],
-        "events": v["events"],
-        "locale": v["locale"] or "",
-        "first": v["first"],
-        "last": v["last"],
-        "duration": int(round(v.get("dur", 0.0))),   # активний час на сайті, сек
-        "sessions": max(1, v.get("sessions", 1)),     # к-сть окремих заходів
-    } for v in recent_visitors]
-
-    return {
-        "totals": totals,
-        "byDay": series,
-        "orders": orders_summary,
-        "topEvents": ev_counter.most_common(15),
-        "topPaths": path_counter.most_common(15),
-        "byLocale": locale_counter.most_common(10),
-        "byCountry": country_counter.most_common(15),
-        "topRefs": ref_counter.most_common(10),
-        "funnel": funnel,
-        "guided": guided,
-        "recentVisitors": recent_visitors,
-        "clicksByPath": {p: pts for p, pts in top_click_paths},
-        "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
-    }
+    return {**agg, "orders": orders_summary}
 
 
 # ── Account / auth (Firebase token verified without a service account) ──────────
@@ -1916,6 +2035,20 @@ async def account_models(authorization: Optional[str] = Header(default=None)):
     from services.user_store import list_models
     u = _require_user(authorization)
     return {"models": list_models(u["uid"])}
+
+
+@app.delete("/api/account")
+async def account_delete(
+    authorization: Optional[str] = Header(default=None),
+    _rl: None = Depends(rate_limit("account_delete", [(3, 3600.0)])),
+):
+    """Privacy: user-initiated account deletion. Removes the user's model files
+    from disk, their saved grids, and their users.json record. Orders are kept
+    (accounting retention) but no longer linked to any live account data."""
+    from services.user_store import delete_user
+    u = _require_user(authorization)
+    res = delete_user(u["uid"])
+    return {"status": "ok", "deleted_models": res["deleted_models"], "deleted_files": res["deleted_files"]}
 
 
 # ── Per-user city grids (save / history / generate neighbouring cells) ──────────
