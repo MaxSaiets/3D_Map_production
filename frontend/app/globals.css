@@ -232,3 +232,15 @@ input[type="range"] {
     font-size: 20px;
   }
 }
+
+/* M-1 (2026-09-06, iPhone-аудит): iOS Safari АВТОМАТИЧНО зумить сторінку при фокусі
+   на полі з font-size < 16px (у нас усі поля 13–14 px: пошук міста, напис брелка,
+   форма замовлення). Після цього юзер мусить «розщипувати» екран назад. На touch-
+   пристроях робимо 16 px — стандартне рішення; десктоп не чіпаємо. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
