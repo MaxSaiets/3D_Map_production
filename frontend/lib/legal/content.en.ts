@@ -41,7 +41,7 @@ export const en: LegalSet = {
       ] },
       { h: "5. Production Time", blocks: [
         { p: "Digital content is generated automatically and provided in the Buyer's account / by email immediately after generation or after the order is confirmed." },
-        { p: "The estimated production time for a physical product is 1–3 business days from payment/confirmation of the order. In the event of high workload or technical complexity of the product, this time may be extended, of which the Seller notifies the Buyer." },
+        { p: "The estimated production time for a physical product is 2–4 business days from payment/confirmation of the order. In the event of high workload or technical complexity of the product, this time may be extended, of which the Seller notifies the Buyer." },
       ] },
       { h: "6. Delivery", blocks: [
         { p: "Delivery within Ukraine is carried out by Nova Poshta (branch, parcel locker) or Ukrposhta. The estimated delivery time within Ukraine is 2–4 business days after dispatch." },
@@ -80,7 +80,7 @@ export const en: LegalSet = {
         { p: "The parties are released from liability for full or partial non-performance of obligations if it resulted from force majeure circumstances: military action, shelling, power outages, natural disasters, decisions of public authorities, carrier disruptions, etc. Deadlines for performance are extended for the duration of such circumstances." },
       ] },
       { h: "13. Complaints and Dispute Resolution", blocks: [
-        { p: "Complaints regarding an order are accepted at {email} or by phone {phone}, stating the order number. The Seller reviews requests within 1–3 business days. Disputes are resolved through negotiation and, failing agreement, in the manner established by the applicable laws of Ukraine." },
+        { p: "Complaints regarding an order are accepted at {email} or by phone {phone}, stating the order number. The Seller reviews requests within 2–4 business days. Disputes are resolved through negotiation and, failing agreement, in the manner established by the applicable laws of Ukraine." },
       ] },
       { h: "14. Term and Amendment of the Terms", blocks: [
         { p: "The Agreement enters into force upon the Buyer's acceptance of the offer and remains in effect until the parties have fully performed their obligations. The Seller may amend the terms of this offer by publishing a new version on this page; the new version applies to orders placed after its publication. The current version is permanently available at {domain}/offer." },
@@ -117,7 +117,7 @@ export const en: LegalSet = {
         ] },
       ] },
       { h: "How to Request a Refund", blocks: [
-        { p: "Write to {email} or call {phone}, providing the order number, the reason and (for defects) a photo of the product. We will review your request within 1–3 business days." },
+        { p: "Write to {email} or call {phone}, providing the order number, the reason and (for defects) a photo of the product. We will review your request within 2–4 business days." },
         { p: "Refunds are made using the same method by which payment was made (a refund to the card via LiqPay), within the timeframes set by the rules of the payment system and the bank." },
       ] },
       { h: "Contact", blocks: [
@@ -142,7 +142,7 @@ export const en: LegalSet = {
         { p: "Online payment by Visa / Mastercard bank card through the secure LiqPay service. Card data is processed on the payment system's side — we do not store it. Payment by arrangement with an operator is also possible. The digital file within the free limit is provided at no charge." },
       ] },
       { h: "Manufacture", blocks: [
-        { p: "Products are printed to order from Eco PLA bioplastic. The estimated production time is 1–3 business days after the order is confirmed (depending on workload and complexity)." },
+        { p: "Products are printed to order from Eco PLA bioplastic. The estimated production time is 2–4 business days after the order is confirmed (depending on workload and complexity)." },
       ] },
       { h: "Delivery", blocks: [
         { p: "Ukraine:" },

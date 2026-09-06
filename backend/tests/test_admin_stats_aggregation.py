@@ -147,3 +147,53 @@ def test_multiple_visitors_get_separate_timelines():
     assert len(agg["recentVisitors"]) == 2
     ids = {v["id"] for v in agg["recentVisitors"]}
     assert len(ids) == 2
+
+
+def test_ab_split_counts_milestones_per_variant():
+    lines = [
+        # visitor A1: variant A, reaches view + generate
+        _line("funnel", props={"step": "view", "ab_cta": "A"}, visitor="a1"),
+        _line("funnel", props={"step": "generate", "ab_cta": "A"}, visitor="a1"),
+        # visitor A2: variant A, only view
+        _line("funnel", props={"step": "view", "ab_cta": "A"}, visitor="a2"),
+        # visitor B1: variant B, reaches everything through paid
+        _line("guided_step", props={"ab_cta": "B"}, visitor="b1"),
+        _line("guided_generate", props={"ab_cta": "B"}, visitor="b1"),
+        _line("guided_result", props={"ok": "True", "ab_cta": "B"}, visitor="b1"),
+        _line("guided_order_click", props={"ab_cta": "B"}, visitor="b1"),
+        _line("funnel", props={"step": "order_submit", "ab_cta": "B"}, visitor="b1"),
+        _line("order_paid_confirmed", props={"ab_cta": "B"}, visitor="b1"),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    ab = agg["ab"]["cta"]
+    assert ab["A"] == {
+        "visitors": 2, "view": 2, "generate": 1, "result_ok": 0,
+        "order_click": 0, "order_submit": 0, "paid": 0,
+    }
+    assert ab["B"] == {
+        "visitors": 1, "view": 1, "generate": 1, "result_ok": 1,
+        "order_click": 1, "order_submit": 1, "paid": 1,
+    }
+
+
+def test_ab_split_visitor_uniqueness_across_events():
+    """Same visitor firing the same milestone twice must not double-count."""
+    lines = [
+        _line("funnel", props={"step": "view", "ab_cta": "A"}, visitor="v1"),
+        _line("funnel", props={"step": "view", "ab_cta": "A"}, visitor="v1"),
+        _line("funnel", props={"step": "generate", "ab_cta": "A"}, visitor="v1"),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    ab = agg["ab"]["cta"]["A"]
+    assert ab["visitors"] == 1
+    assert ab["view"] == 1
+    assert ab["generate"] == 1
+
+
+def test_ab_split_empty_when_no_ab_props():
+    lines = [
+        _line("pageview", path="/"),
+        _line("funnel", props={"step": "view"}),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    assert agg["ab"] == {}

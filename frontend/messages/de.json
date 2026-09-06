@@ -776,7 +776,8 @@
     "deleteAccount": "Konto und alle Daten löschen",
     "deleteConfirm": "Konto und alle Daten wirklich löschen? Das lässt sich nicht rückgängig machen.",
     "deleted": "Konto gelöscht. Bis bald.",
-    "deleteFailed": "Konto konnte nicht gelöscht werden. Versuch's nochmal oder schreib uns."
+    "deleteFailed": "Konto konnte nicht gelöscht werden. Versuch's nochmal oder schreib uns.",
+    "regenerate": "Erneut erstellen"
   },
   "tour": {
     "hintAria": "Hinweis",
@@ -1842,7 +1843,9 @@
     "shareCopied": "Link kopiert",
     "mapLoadingWait": "Die Karte lädt noch — wir starten, sobald sie bereit ist",
     "previewPromise": "Die Vorschau entsteht aus denselben Daten wie die Druckdatei — keine Platzhalter, kein „ungefähr so“",
-    "qrHint": "Diese 3D-Szene auf dem Handy öffnen"
+    "qrHint": "Diese 3D-Szene auf dem Handy öffnen",
+    "previewCtaB": "Meine 3D-Karte anzeigen · kostenlos",
+    "previewCtaShortB": "Meine 3D-Karte · kostenlos"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",

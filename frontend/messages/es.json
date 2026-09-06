@@ -776,7 +776,8 @@
     "deleteAccount": "Eliminar cuenta y todos los datos",
     "deleteConfirm": "¿Seguro que quieres eliminar tu cuenta y todos los datos? No se puede deshacer.",
     "deleted": "Cuenta eliminada. ¡Hasta pronto!",
-    "deleteFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo o escríbenos."
+    "deleteFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo o escríbenos.",
+    "regenerate": "Crear de nuevo"
   },
   "tour": {
     "hintAria": "Sugerencia",
@@ -1842,7 +1843,9 @@
     "shareCopied": "Enlace copiado",
     "mapLoadingWait": "El mapa aún se está cargando: empezamos en cuanto esté listo",
     "previewPromise": "La vista previa se construye con los mismos datos que el archivo de impresión: sin relleno ni «más o menos así»",
-    "qrHint": "Abrir esta escena 3D en tu móvil"
+    "qrHint": "Abrir esta escena 3D en tu móvil",
+    "previewCtaB": "Ver mi mapa 3D · gratis",
+    "previewCtaShortB": "Mi mapa 3D · gratis"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",

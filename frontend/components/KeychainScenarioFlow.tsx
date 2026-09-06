@@ -255,6 +255,23 @@ export function KeychainScenarioFlow({
     setTplId(id);
   };
 
+  // Deep-link ?lat=&lon= (кабінет: «Створити знову» зі збереженої моделі) —
+  // переносить рамку карти на точні координати. Той самий event, що й пошук/
+  // чіп міста; слухач вище позначає «Місце обрано». Шаблон карткою користувач
+  // обирає сам на кроці 1 (тут навмисно НЕ форсуємо крок 2).
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const latParam = Number(p.get("lat"));
+      const lonParam = Number(p.get("lon"));
+      if (!Number.isFinite(latParam) || !Number.isFinite(lonParam)) return;
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: latParam, lon: lonParam, label: "" } }));
+      }, 400);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // A-3: знімок параметрів у момент старту → «Оновити превʼю» лише при змінах.
   const areaKey = (() => {
     try {

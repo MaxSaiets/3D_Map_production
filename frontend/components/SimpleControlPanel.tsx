@@ -458,9 +458,14 @@ export function SimpleControlPanel({
         dlTaskId = print.taskId;
         dlUrl = print.url;
       }
+      // S-2: параметри для «Створити знову» в кабінеті (центр рамки, розмір, сценарій).
+      const _c = selectedArea?.getCenter?.();
+      const _scenario = magnetMode ? "magnet" : flatPlateUi ? "flat" : reliefMode ? "relief" : "map3d";
+      const dlParams = _c ? { lat: _c.lat, lon: _c.lng, size_mm: magnetMode ? 60 : modelSizeMm, scenario: _scenario, product: "map" } : undefined;
       const res = await gatedDownload({
         taskId: dlTaskId, downloadUrl: dlUrl,
         meta: { title: selectedCityKey, city: selectedCityKey, product_type: "map" },
+        params: dlParams,
         getIdToken, openLogin: () => openLogin(() => { void doGatedDownload(); }),
         onLimit: () => {
           import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map", at: "download" })).catch(() => {});
@@ -1051,7 +1056,7 @@ export function SimpleControlPanel({
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       <span className="truncate text-sm font-semibold text-[var(--text-primary)]">{t.district}</span>
-                      {t.tag && <span className="shrink-0 rounded-full bg-[var(--accent-strong)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">{t.tag}</span>}
+                      {t.tag && <span className="shrink-0 rounded-full bg-[var(--accent-strong)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{t.tag}</span>}
                     </span>
                     {active && <Check size={16} className="shrink-0 text-[var(--accent-strong)]" />}
                   </button>

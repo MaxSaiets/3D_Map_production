@@ -1764,6 +1764,11 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_order_clicks = 0                 # guided_order_click
     g_results_ok = 0
     g_results_fail = 0
+    # ── A/B-спліт: фронт додає до кожної своєї події плоскі props виду
+    # `ab_<experiment>: "A"|"B"` — тут групуємо унікальних відвідувачів по
+    # (experiment, variant) для набору контрольних точок вирви. Рахуємо лише
+    # в межах `days` (як guided-блок): старі дані до старту експерименту шумлять.
+    ab_data: Dict[str, Dict[str, Dict[str, set]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
     _TRUE = ("true", "1", "yes")
     _GUIDED_EVENTS = (
         "guided_pick", "guided_step", "guided_generate", "mode_switch",
@@ -1788,6 +1793,30 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                     ev_counter[ev] += 1
             props = r.get("props") or {}
             path = r.get("path", "")
+            if props and str(r.get("day", "")) >= _cutoff_day:
+                _vis_ab = r.get("visitor", "")
+                if _vis_ab:
+                    for _pk, _pv in props.items():
+                        if not _pk.startswith("ab_"):
+                            continue
+                        _exp = _pk[3:]
+                        _variant = str(_pv)
+                        if not _exp or not _variant:
+                            continue
+                        _slot = ab_data[_exp][_variant]
+                        _slot["visitors"].add(_vis_ab)
+                        if ev == "guided_step" or (ev == "funnel" and props.get("step") == "view"):
+                            _slot["view"].add(_vis_ab)
+                        if ev == "guided_generate" or (ev == "funnel" and props.get("step") == "generate"):
+                            _slot["generate"].add(_vis_ab)
+                        if ev == "guided_result" and str(props.get("ok") or "").lower() in ("true", "1"):
+                            _slot["result_ok"].add(_vis_ab)
+                        if ev == "guided_order_click" or (ev == "funnel" and props.get("step") == "order_open"):
+                            _slot["order_click"].add(_vis_ab)
+                        if ev == "funnel" and props.get("step") == "order_submit":
+                            _slot["order_submit"].add(_vis_ab)
+                        if ev == "order_paid_confirmed":
+                            _slot["paid"].add(_vis_ab)
             if ev == "pageview":
                 totals["pageviews"] += 1
                 path_counter[path] += 1
@@ -1987,6 +2016,15 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
         "timeline": v.get("timeline", []),            # хронологія значущих подій (до 40)
     } for v in recent_visitors]
 
+    _AB_METRICS = ("visitors", "view", "generate", "result_ok", "order_click", "order_submit", "paid")
+    ab_result: Dict[str, Dict[str, Dict[str, int]]] = {
+        _exp: {
+            _var: {_m: len(_slot.get(_m, set())) for _m in _AB_METRICS}
+            for _var, _slot in _variants.items()
+        }
+        for _exp, _variants in ab_data.items()
+    }
+
     return {
         "totals": totals,
         "byDay": series,
@@ -1997,6 +2035,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
         "topRefs": ref_counter.most_common(10),
         "funnel": funnel,
         "guided": guided,
+        "ab": ab_result,
         "recentVisitors": recent_visitors,
         "clicksByPath": {p: pts for p, pts in top_click_paths},
         "topClicks": [[f"{p or '/'} · {lbl}", c] for (p, lbl), c in click_label_counter.most_common(20)],
@@ -2243,6 +2282,10 @@ class DownloadGrantRequest(BaseModel):
     product_type: str = "map"
     download_url: str = ""
     preview: str = ""   # optional small PNG data-URL thumbnail for the account history
+    # optional regenerate-params snapshot (lat/lon/size_mm/scenario/...) so the
+    # account history "regenerate" action can rebuild the same request later;
+    # sanitized down to a known whitelist in user_store.add_model before storage.
+    params: Optional[Dict[str, Any]] = None
 
 
 def _resolve_model_path(req: "DownloadGrantRequest") -> Optional[Path]:
@@ -2310,6 +2353,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
             "task_id": _bid, "title": req.title, "city": req.city,
             "product_type": req.product_type, "download_url": _dl_url,
             "preview": (req.preview or "")[:200000],
+            "params": req.params,
         })
         return resp
     path = _resolve_model_path(req)
@@ -2323,6 +2367,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
         "product_type": req.product_type, "download_url": req.download_url,
         # cap thumbnail size so users.json stays small (~a small PNG data-URL)
         "preview": (req.preview or "")[:200000],
+        "params": req.params,
     })
     return FileResponse(
         str(path), media_type="model/3mf", filename=path.name,

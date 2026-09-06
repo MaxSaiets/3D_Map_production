@@ -11,7 +11,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 OUTPUT_DIR = Path("output").resolve()
 # БЕЗПЕКА: users.json (емейли/квоти/історія) НЕ можна в OUTPUT_DIR — він віддається
@@ -97,6 +97,33 @@ def register_download(uid: str, email: str, is_admin: bool, task_id: str = "") -
         }}
 
 
+# Регенерація моделі з історії акаунта: тримаємо лише ЦІ ключі (примітивні
+# значення, рядки ≤80 символів) — /api/account/download приймає `params` від
+# клієнта, тож НІКОЛИ не довіряємо йому напряму перед записом у users.json.
+_PARAMS_ALLOWED_KEYS = (
+    "lat", "lon", "size_mm", "scenario", "product", "relief", "label",
+    "north", "south", "east", "west",
+)
+
+
+def sanitize_model_params(params: Any) -> Optional[Dict[str, Any]]:
+    """Filter a client-supplied regenerate-params dict down to the known
+    whitelist with bounded primitive values. Returns None if nothing valid
+    survives (unknown dict, wrong type, or every key dropped)."""
+    if not isinstance(params, dict):
+        return None
+    out: Dict[str, Any] = {}
+    for k, v in params.items():
+        if k not in _PARAMS_ALLOWED_KEYS:
+            continue
+        if isinstance(v, bool) or v is None or isinstance(v, (int, float)):
+            out[k] = v
+        elif isinstance(v, str) and len(v) <= 80:
+            out[k] = v
+        # інші типи (dict/list/...) і задовгі рядки — мовчки відкидаємо
+    return out or None
+
+
 def add_model(uid: str, email: str, model: Dict[str, Any]) -> None:
     """Associate a generated model with the user (most-recent-first, capped)."""
     if not model.get("task_id"):
@@ -107,7 +134,14 @@ def add_model(uid: str, email: str, model: Dict[str, Any]) -> None:
         models: List[Dict[str, Any]] = u.get("models", [])
         if any(m.get("task_id") == model["task_id"] for m in models):
             return
-        models.insert(0, {**model, "ts": int(time.time())})
+        entry = {**model, "ts": int(time.time())}
+        if "params" in entry:
+            sanitized = sanitize_model_params(entry.get("params"))
+            if sanitized:
+                entry["params"] = sanitized
+            else:
+                entry.pop("params", None)
+        models.insert(0, entry)
         u["models"] = models[:100]
         _save(data)
 

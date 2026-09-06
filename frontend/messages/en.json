@@ -776,7 +776,8 @@
     "deleteAccount": "Delete account and all data",
     "deleteConfirm": "Really delete your account and all data? This cannot be undone.",
     "deleted": "Account deleted. See you around.",
-    "deleteFailed": "Couldn't delete the account. Try again or write to us."
+    "deleteFailed": "Couldn't delete the account. Try again or write to us.",
+    "regenerate": "Create again"
   },
   "tour": {
     "hintAria": "Hint",
@@ -1842,7 +1843,9 @@
     "shareCopied": "Link copied",
     "mapLoadingWait": "The map is still loading — we'll start as soon as it's ready",
     "previewPromise": "The preview is built from the same data as the print file — no placeholders, no “roughly like this”",
-    "qrHint": "Open this 3D scene on your phone"
+    "qrHint": "Open this 3D scene on your phone",
+    "previewCtaB": "Show my 3D map · free",
+    "previewCtaShortB": "My 3D map · free"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",

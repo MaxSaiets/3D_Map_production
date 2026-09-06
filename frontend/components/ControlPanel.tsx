@@ -569,10 +569,19 @@ export function ControlPanel({
     if (!downloadUrl) return;
     const status = activeTaskId ? taskStatuses[activeTaskId] : undefined;
     const localUrl = status?.download_url_3mf ?? status?.download_url ?? downloadUrl;
+    // Зберігаємо lat/lon/розмір/сценарій разом з моделлю — кабінет пропонує
+    // «Створити знову» з тими самими параметрами (params опційний, бекенд
+    // просто нічого не збереже, якщо не підтримує це поле).
+    const center = selectedArea?.getCenter?.();
+    const scenarioGuess = flatPlateMode ? "flat" : terrainEnabled ? "relief" : "map3d";
+    const params = center
+      ? { lat: center.lat, lon: center.lng, size_mm: modelSizeMm, scenario: scenarioGuess, product: "map" }
+      : undefined;
     const res = await gatedDownload({
       taskId: activeTaskId || taskGroupId,
       downloadUrl: localUrl,
       meta: { city: selectedCityKey, product_type: "map" },
+      params,
       getIdToken, openLogin,
       onLimit: () => window.dispatchEvent(new CustomEvent("monadruk:open-contact", {
         detail: { message: t("contactLimitMessage") },

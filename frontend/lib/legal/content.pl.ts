@@ -41,7 +41,7 @@ export const pl: LegalSet = {
       ] },
       { h: "5. Terminy realizacji", blocks: [
         { p: "Treść cyfrowa jest generowana automatycznie i udostępniana na koncie Kupującego / e-mailem bezpośrednio po wygenerowaniu lub po potwierdzeniu zamówienia." },
-        { p: "Orientacyjny czas wytworzenia wyrobu fizycznego wynosi 1–3 dni robocze od momentu opłacenia/potwierdzenia zamówienia. W przypadku zwiększonego obciążenia lub technicznej złożoności wyrobu termin może ulec wydłużeniu, o czym Sprzedawca informuje Kupującego." },
+        { p: "Orientacyjny czas wytworzenia wyrobu fizycznego wynosi 2–4 dni robocze od momentu opłacenia/potwierdzenia zamówienia. W przypadku zwiększonego obciążenia lub technicznej złożoności wyrobu termin może ulec wydłużeniu, o czym Sprzedawca informuje Kupującego." },
       ] },
       { h: "6. Dostawa", blocks: [
         { p: "Dostawa na terenie Ukrainy realizowana jest przez firmy „Nova Poshta” (oddział, paczkomat) lub „Ukrposhta”. Orientacyjny czas dostawy na terenie Ukrainy to 2–4 dni robocze od nadania." },
@@ -80,7 +80,7 @@ export const pl: LegalSet = {
         { p: "Strony są zwolnione z odpowiedzialności za całkowite lub częściowe niewykonanie zobowiązań, jeżeli było ono skutkiem okoliczności siły wyższej: działań wojennych, ostrzałów, przerw w dostawie energii elektrycznej, klęsk żywiołowych, decyzji organów władzy, zakłóceń w pracy przewoźników itp. Terminy wykonania zobowiązań ulegają przedłużeniu o czas trwania takich okoliczności." },
       ] },
       { h: "13. Reklamacje i rozstrzyganie sporów", blocks: [
-        { p: "Reklamacje dotyczące zamówienia przyjmowane są pod adresem {email} lub telefonicznie pod numerem {phone}, z podaniem numeru zamówienia. Sprzedawca rozpatruje zgłoszenia w ciągu 1–3 dni roboczych. Spory rozstrzygane są w drodze negocjacji, a w przypadku braku porozumienia — w trybie określonym obowiązującym ustawodawstwem Ukrainy." },
+        { p: "Reklamacje dotyczące zamówienia przyjmowane są pod adresem {email} lub telefonicznie pod numerem {phone}, z podaniem numeru zamówienia. Sprzedawca rozpatruje zgłoszenia w ciągu 2–4 dni roboczych. Spory rozstrzygane są w drodze negocjacji, a w przypadku braku porozumienia — w trybie określonym obowiązującym ustawodawstwem Ukrainy." },
       ] },
       { h: "14. Okres obowiązywania i zmiana warunków", blocks: [
         { p: "Umowa wchodzi w życie z chwilą akceptacji oferty przez Kupującego i obowiązuje do pełnego wykonania zobowiązań przez strony. Sprzedawca ma prawo zmieniać warunki niniejszej oferty, publikując nową wersję na tej stronie; nowa wersja ma zastosowanie do zamówień złożonych po jej opublikowaniu. Aktualna wersja jest stale dostępna pod adresem {domain}/offer." },
@@ -117,7 +117,7 @@ export const pl: LegalSet = {
         ] },
       ] },
       { h: "Jak złożyć zwrot", blocks: [
-        { p: "Napisz na {email} lub zadzwoń pod {phone}, podając numer zamówienia, przyczynę oraz (w przypadku wady) zdjęcie wyrobu. Rozpatrzymy zgłoszenie w ciągu 1–3 dni roboczych." },
+        { p: "Napisz na {email} lub zadzwoń pod {phone}, podając numer zamówienia, przyczynę oraz (w przypadku wady) zdjęcie wyrobu. Rozpatrzymy zgłoszenie w ciągu 2–4 dni roboczych." },
         { p: "Zwrot środków odbywa się tym samym sposobem, którym dokonano płatności (zwrot na kartę przez LiqPay), w terminach przewidzianych regulaminem systemu płatniczego i banku." },
       ] },
       { h: "Kontakt", blocks: [
@@ -142,7 +142,7 @@ export const pl: LegalSet = {
         { p: "Płatność online kartą bankową Visa / Mastercard za pośrednictwem bezpiecznego serwisu LiqPay. Dane karty są przetwarzane po stronie systemu płatniczego — nie przechowujemy ich. Możliwa jest również płatność po uzgodnieniu z operatorem. Plik cyfrowy w ramach bezpłatnego limitu jest udostępniany bez opłaty." },
       ] },
       { h: "Wytworzenie", blocks: [
-        { p: "Wyroby są drukowane na zamówienie z bioplastiku Eco PLA. Orientacyjny czas wytworzenia — 1–3 dni robocze po potwierdzeniu zamówienia (w zależności od obciążenia i złożoności)." },
+        { p: "Wyroby są drukowane na zamówienie z bioplastiku Eco PLA. Orientacyjny czas wytworzenia — 2–4 dni robocze po potwierdzeniu zamówienia (w zależności od obciążenia i złożoności)." },
       ] },
       { h: "Dostawa", blocks: [
         { p: "Ukraina:" },

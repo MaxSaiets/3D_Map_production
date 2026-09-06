@@ -136,7 +136,7 @@ export default async function BrelokCityPage({
 
   const eur = mapPriceEur(KEYCHAIN_PRICE_UAH);
   const UI: Record<AppLocale, { breadcrumb: string; cta: string; ctaGift: string; districts: string; price: string; others: string; map: string }> = {
-    uk: { breadcrumb: "Брелоки", cta: "Створити брелок у конструкторі", ctaGift: "Подарунок з цього міста", districts: "Популярні райони на брелок", price: `Ціна: від ${KEYCHAIN_PRICE_UAH} ₴ за брелок · виготовлення 1–3 робочі дні`, others: "Брелоки з інших міст", map: `3D-мапа міста — ${name}` },
+    uk: { breadcrumb: "Брелоки", cta: "Створити брелок у конструкторі", ctaGift: "Подарунок з цього міста", districts: "Популярні райони на брелок", price: `Ціна: від ${KEYCHAIN_PRICE_UAH} ₴ за брелок · виготовлення 2–4 робочі дні`, others: "Брелоки з інших міст", map: `3D-мапа міста — ${name}` },
     en: { breadcrumb: "Keychains", cta: "Create a keychain in the builder", ctaGift: "A gift from this city", districts: "Popular districts for a keychain", price: `Price: from ≈€${eur} per keychain · made in 1–3 business days`, others: "Keychains from other cities", map: `3D city map — ${name}` },
     de: { breadcrumb: "Anhänger", cta: "Anhänger im Konfigurator erstellen", ctaGift: "Ein Geschenk aus dieser Stadt", districts: "Beliebte Viertel für einen Anhänger", price: `Preis: ab ≈${eur} € pro Anhänger · Fertigung 1–3 Werktage`, others: "Anhänger aus anderen Städten", map: `3D-Stadtkarte — ${name}` },
     pl: { breadcrumb: "Breloki", cta: "Stwórz brelok w kreatorze", ctaGift: "Prezent z tego miasta", districts: "Popularne dzielnice na brelok", price: `Cena: od ≈${eur} € za brelok · wykonanie 1–3 dni robocze`, others: "Breloki z innych miast", map: `Mapa 3D miasta — ${name}` },

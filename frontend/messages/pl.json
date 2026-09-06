@@ -776,7 +776,8 @@
     "deleteAccount": "Usuń konto i wszystkie dane",
     "deleteConfirm": "Na pewno usunąć konto i wszystkie dane? Tego nie można cofnąć.",
     "deleted": "Konto usunięte. Do zobaczenia.",
-    "deleteFailed": "Nie udało się usunąć konta. Spróbuj jeszcze raz albo napisz do nas."
+    "deleteFailed": "Nie udało się usunąć konta. Spróbuj jeszcze raz albo napisz do nas.",
+    "regenerate": "Utwórz ponownie"
   },
   "tour": {
     "hintAria": "Wskazówka",
@@ -1842,7 +1843,9 @@
     "shareCopied": "Skopiowano link",
     "mapLoadingWait": "Mapa jeszcze się ładuje — zaczniemy, gdy będzie gotowa",
     "previewPromise": "Podgląd powstaje z tych samych danych co plik do druku — bez zaślepek i „mniej więcej tak”",
-    "qrHint": "Otwórz tę scenę 3D na telefonie"
+    "qrHint": "Otwórz tę scenę 3D na telefonie",
+    "previewCtaB": "Pokaż moją mapę 3D · bezpłatnie",
+    "previewCtaShortB": "Moja mapa 3D · bezpłatnie"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",

@@ -117,7 +117,7 @@ export const fr: LegalSet = {
         ] },
       ] },
       { h: "Comment effectuer un retour", blocks: [
-        { p: "Écris à {email} ou appelle le {phone}, en indiquant le numéro de commande, le motif et (en cas de défaut) une photo du produit. Nous examinerons ta demande sous 1–3 jours ouvrés." },
+        { p: "Écris à {email} ou appelle le {phone}, en indiquant le numéro de commande, le motif et (en cas de défaut) une photo du produit. Nous examinerons ta demande sous 2–4 jours ouvrés." },
         { p: "Le remboursement s'effectue par le même moyen que celui utilisé pour le paiement (remboursement sur la carte via LiqPay), dans les délais prévus par les règles du système de paiement et de la banque." },
       ] },
       { h: "Contact", blocks: [
@@ -142,7 +142,7 @@ export const fr: LegalSet = {
         { p: "Paiement en ligne par carte bancaire Visa / Mastercard via le service sécurisé LiqPay. Les données de la carte sont traitées du côté du système de paiement — nous ne les conservons pas. Le paiement par accord avec un opérateur est également possible. Le fichier numérique dans la limite gratuite est fourni sans paiement." },
       ] },
       { h: "Fabrication", blocks: [
-        { p: "Les produits sont imprimés sur commande en bioplastique Eco PLA. Délai de fabrication indicatif — 1–3 jours ouvrés après la confirmation de la commande (selon la charge et la complexité)." },
+        { p: "Les produits sont imprimés sur commande en bioplastique Eco PLA. Délai de fabrication indicatif — 2–4 jours ouvrés après la confirmation de la commande (selon la charge et la complexité)." },
       ] },
       { h: "Livraison", blocks: [
         { p: "Ukraine :" },

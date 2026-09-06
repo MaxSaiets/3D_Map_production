@@ -9,6 +9,9 @@ export interface GatedDownloadOpts {
   meta?: { title?: string; city?: string; product_type?: "map" | "keychain" };
   /** Optional small PNG data-URL thumbnail saved with the model in account history. */
   preview?: string | null;
+  /** Optional generation params (lat/lon/size_mm/scenario/...) saved alongside the
+   *  model — lets the account page offer "regenerate" with the same place/size later. */
+  params?: Record<string, unknown> | null;
   getIdToken: () => Promise<string | null>;
   openLogin: () => void;
   onLimit?: () => void;
@@ -30,6 +33,7 @@ export async function gatedDownload(opts: GatedDownloadOpts): Promise<GatedResul
         city: opts.meta?.city || "",
         product_type: opts.meta?.product_type || "map",
         preview: opts.preview || "",
+        ...(opts.params ? { params: opts.params } : {}),
       }),
     });
     if (res.status === 402) { opts.onLimit?.(); return { status: "limit" }; }

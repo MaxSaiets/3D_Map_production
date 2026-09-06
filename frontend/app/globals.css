@@ -241,6 +241,7 @@ input[type="range"] {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   textarea,
   select {
-    font-size: 16px;
+    /* !important: Tailwind-утиліта text-[14px] на <select> у pro-режимі перебивала правило */
+    font-size: 16px !important;
   }
 }

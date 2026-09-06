@@ -41,7 +41,7 @@ export const de: LegalSet = {
       ] },
       { h: "5. Fertigungsfristen", blocks: [
         { p: "Der Digitale Inhalt wird automatisch generiert und im Konto des Käufers/per E-Mail unmittelbar nach der Generierung oder nach Bestätigung der Bestellung bereitgestellt." },
-        { p: "Die voraussichtliche Fertigungsdauer eines physischen Produkts beträgt 1–3 Werktage ab Zahlung/Bestätigung der Bestellung. Bei erhöhter Auslastung oder technischer Komplexität des Produkts kann sich die Frist verlängern; der Verkäufer informiert den Käufer darüber." },
+        { p: "Die voraussichtliche Fertigungsdauer eines physischen Produkts beträgt 2–4 Werktage ab Zahlung/Bestätigung der Bestellung. Bei erhöhter Auslastung oder technischer Komplexität des Produkts kann sich die Frist verlängern; der Verkäufer informiert den Käufer darüber." },
       ] },
       { h: "6. Lieferung", blocks: [
         { p: "Die Lieferung innerhalb der Ukraine erfolgt durch „Nova Poshta“ (Filiale, Paketautomat) oder „Ukrposhta“. Die voraussichtliche Lieferzeit innerhalb der Ukraine beträgt 2–4 Werktage nach dem Versand." },
@@ -80,7 +80,7 @@ export const de: LegalSet = {
         { p: "Die Parteien sind von der Haftung für die vollständige oder teilweise Nichterfüllung ihrer Verpflichtungen befreit, wenn diese auf Umständen höherer Gewalt beruht: Kriegshandlungen, Beschuss, Stromausfälle, Naturkatastrophen, Entscheidungen von Behörden, Störungen bei Transportdienstleistern usw. Die Erfüllungsfristen verlängern sich um die Dauer solcher Umstände." },
       ] },
       { h: "13. Reklamationen und Streitbeilegung", blocks: [
-        { p: "Reklamationen zur Bestellung werden unter Angabe der Bestellnummer an {email} oder telefonisch unter {phone} entgegengenommen. Der Verkäufer bearbeitet Anfragen innerhalb von 1–3 Werktagen. Streitigkeiten werden durch Verhandlungen beigelegt; kommt keine Einigung zustande, erfolgt die Beilegung nach dem geltenden Recht der Ukraine." },
+        { p: "Reklamationen zur Bestellung werden unter Angabe der Bestellnummer an {email} oder telefonisch unter {phone} entgegengenommen. Der Verkäufer bearbeitet Anfragen innerhalb von 2–4 Werktagen. Streitigkeiten werden durch Verhandlungen beigelegt; kommt keine Einigung zustande, erfolgt die Beilegung nach dem geltenden Recht der Ukraine." },
       ] },
       { h: "14. Laufzeit und Änderung der Bedingungen", blocks: [
         { p: "Der Vertrag tritt mit der Annahme des Angebots durch den Käufer in Kraft und gilt bis zur vollständigen Erfüllung der Verpflichtungen durch die Parteien. Der Verkäufer ist berechtigt, die Bedingungen dieses Angebots zu ändern, indem er eine neue Fassung auf dieser Seite veröffentlicht; die neue Fassung gilt für Bestellungen, die nach ihrer Veröffentlichung aufgegeben werden. Die aktuelle Fassung ist jederzeit unter {domain}/offer verfügbar." },
@@ -117,7 +117,7 @@ export const de: LegalSet = {
         ] },
       ] },
       { h: "So beantragst du eine Rückerstattung", blocks: [
-        { p: "Schreib an {email} oder ruf {phone} an und gib die Bestellnummer, den Grund und (bei einem Mangel) ein Foto des Produkts an. Wir bearbeiten dein Anliegen innerhalb von 1–3 Werktagen." },
+        { p: "Schreib an {email} oder ruf {phone} an und gib die Bestellnummer, den Grund und (bei einem Mangel) ein Foto des Produkts an. Wir bearbeiten dein Anliegen innerhalb von 2–4 Werktagen." },
         { p: "Die Rückerstattung erfolgt auf demselben Weg, auf dem die Zahlung getätigt wurde (Rückerstattung auf die Karte über LiqPay), innerhalb der durch die Regeln des Zahlungssystems und der Bank vorgesehenen Fristen." },
       ] },
       { h: "Kontakt", blocks: [
@@ -142,7 +142,7 @@ export const de: LegalSet = {
         { p: "Online-Zahlung mit Visa-/Mastercard-Bankkarte über den sicheren Dienst LiqPay. Die Kartendaten werden auf der Seite des Zahlungssystems verarbeitet — wir speichern sie nicht. Eine Zahlung nach Absprache mit dem Operator ist ebenfalls möglich. Die digitale Datei wird im Rahmen des kostenlosen Limits ohne Bezahlung bereitgestellt." },
       ] },
       { h: "Herstellung", blocks: [
-        { p: "Die Produkte werden auf Bestellung aus dem Biokunststoff Eco PLA gedruckt. Die voraussichtliche Herstellungszeit beträgt 1–3 Werktage nach Bestätigung der Bestellung (je nach Auslastung und Komplexität)." },
+        { p: "Die Produkte werden auf Bestellung aus dem Biokunststoff Eco PLA gedruckt. Die voraussichtliche Herstellungszeit beträgt 2–4 Werktage nach Bestätigung der Bestellung (je nach Auslastung und Komplexität)." },
       ] },
       { h: "Lieferung", blocks: [
         { p: "Ukraine:" },

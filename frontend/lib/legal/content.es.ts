@@ -117,7 +117,7 @@ export const es: LegalSet = {
         ] },
       ] },
       { h: "Cómo tramitar una devolución", blocks: [
-        { p: "Escribe a {email} o llama al {phone}, indicando el número de pedido, el motivo y (en caso de defecto) una foto del producto. Examinaremos tu solicitud en un plazo de 1–3 días laborables." },
+        { p: "Escribe a {email} o llama al {phone}, indicando el número de pedido, el motivo y (en caso de defecto) una foto del producto. Examinaremos tu solicitud en un plazo de 2–4 días laborables." },
         { p: "El reembolso se realiza por el mismo medio con el que se efectuó el pago (reembolso a la tarjeta a través de LiqPay), dentro de los plazos previstos por las normas del sistema de pago y del banco." },
       ] },
       { h: "Contacto", blocks: [
@@ -142,7 +142,7 @@ export const es: LegalSet = {
         { p: "Pago en línea con tarjeta bancaria Visa / Mastercard a través del servicio seguro LiqPay. Los datos de la tarjeta se procesan en el lado del sistema de pago; nosotros no los almacenamos. También es posible pagar por acuerdo con el operador. El archivo digital dentro del límite gratuito se facilita sin coste." },
       ] },
       { h: "Fabricación", blocks: [
-        { p: "Los productos se imprimen bajo pedido en bioplástico Eco PLA. Plazo orientativo de fabricación: 1–3 días laborables tras la confirmación del pedido (según la carga de trabajo y la complejidad)." },
+        { p: "Los productos se imprimen bajo pedido en bioplástico Eco PLA. Plazo orientativo de fabricación: 2–4 días laborables tras la confirmación del pedido (según la carga de trabajo y la complejidad)." },
       ] },
       { h: "Entrega", blocks: [
         { p: "Ucrania:" },

@@ -776,7 +776,8 @@
     "deleteAccount": "Supprimer le compte et toutes les données",
     "deleteConfirm": "Tu veux vraiment supprimer ton compte et toutes tes données ? Impossible de revenir en arrière.",
     "deleted": "Compte supprimé. À bientôt.",
-    "deleteFailed": "Impossible de supprimer le compte. Réessaie ou écris-nous."
+    "deleteFailed": "Impossible de supprimer le compte. Réessaie ou écris-nous.",
+    "regenerate": "Créer à nouveau"
   },
   "tour": {
     "hintAria": "Astuce",
@@ -1842,7 +1843,9 @@
     "shareCopied": "Lien copié",
     "mapLoadingWait": "La carte charge encore — on démarre dès qu'elle est prête",
     "previewPromise": "L'aperçu est construit à partir des mêmes données que le fichier d'impression — pas de simulacre, pas d'« à peu près »",
-    "qrHint": "Ouvrir cette scène 3D sur ton téléphone"
+    "qrHint": "Ouvrir cette scène 3D sur ton téléphone",
+    "previewCtaB": "Voir ma carte 3D · gratuit",
+    "previewCtaShortB": "Ma carte 3D · gratuit"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",

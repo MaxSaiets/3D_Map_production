@@ -1,5 +1,6 @@
 // Free, self-hosted analytics — events go to our own backend (/api/track).
 // No third party, no cost, data stays on our server. Consent-gated.
+import { abProps } from "@/lib/ab";
 // Optional Google stack (off until env IDs are set):
 //   NEXT_PUBLIC_GA_ID    = "G-XXXXXXX"  (Google Analytics 4 — measurement)
 //   NEXT_PUBLIC_GADS_ID  = "AW-XXXXXXX" (Google Ads — conversion tracking)
@@ -77,13 +78,16 @@ export function track(event: string, props?: Record<string, unknown>) {
   if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
   if (getConsent() !== "granted") return;
   if (isOwnerOptOut()) return; // не рахуємо власні (адмінські) заходи
+  // A/B: додаємо ab_<exp> у КОЖНУ подію — адмінка порівнює funnel A vs B без
+  // окремого механізму (lib/ab.ts, детермінований варіант на visitorId).
+  const mergedProps = { ...(props || {}), ...abProps() };
   try {
     const body = JSON.stringify({
       event,
       path: location.pathname,
       locale: document.documentElement.lang || "",
       ref: document.referrer || "",
-      props: props || undefined,
+      props: Object.keys(mergedProps).length > 0 ? mergedProps : undefined,
     });
     const url = `${API}/api/track`;
     if (navigator.sendBeacon) {
@@ -93,7 +97,7 @@ export function track(event: string, props?: Record<string, unknown>) {
     }
   } catch { /* ignore */ }
   const g = (window as any).gtag;
-  if (typeof g === "function") g("event", event, props || {});
+  if (typeof g === "function") g("event", event, mergedProps);
 }
 
 /** Серцебиття присутності: поки вкладка відкрита й видима, шлемо легкий «ping»
@@ -107,11 +111,13 @@ export function trackPing() {
   if (getConsent() !== "granted") return;
   if (isOwnerOptOut()) return;
   try {
+    const abP = abProps();
     const body = JSON.stringify({
       event: "ping",
       path: location.pathname,
       locale: document.documentElement.lang || "",
       ref: document.referrer || "",
+      props: Object.keys(abP).length > 0 ? abP : undefined,
     });
     const url = `${API}/api/track`;
     if (navigator.sendBeacon) navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));

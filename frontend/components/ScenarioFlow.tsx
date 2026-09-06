@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getVariant } from "@/lib/ab";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
@@ -125,6 +126,12 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       }
     } catch { /* ignore */ }
   };
+
+  // A/B "cta": рендеримо "A" на сервері (SSR-безпечно), варіант призначаємо
+  // ЛИШЕ ПІСЛЯ монтування — інакше клієнтський рендер розійшовся б із SSR
+  // (hydration mismatch), бо getVariant читає localStorage.
+  const [ctaVariant, setCtaVariant] = useState<"A" | "B">("A");
+  useEffect(() => { setCtaVariant(getVariant("cta")); }, []);
 
   const [scenario, setScenario] = useState<ScenarioId | null>(null);
   // started: генерацію запущено САМЕ з guided-флоу (відрізняємо від відновленої
@@ -294,14 +301,20 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // `?city=<key>` (SEO-сторінки /maps, галерея шаблонів) — ще й ставить рамку на
   // район/центр міста. Подія map-goto БЕЗ widthM = «користувацька»: слухач вище
   // позначає «Місце обрано» і ре-диспатчить зону під обраний розмір.
+  // ?lat=&lon= (кабінет: «Створити знову» зі збереженої моделі) — точні
+  // координати замість готового шаблону/міста; ?size= (мм) обирає розмір,
+  // якщо він збігається з одним із SIMPLE_SIZES.
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search);
       const prod = p.get("product");
       const tplId = p.get("template");
       const cityKey = p.get("city");
+      const latParam = Number(p.get("lat"));
+      const lonParam = Number(p.get("lon"));
+      const hasLatLon = Number.isFinite(latParam) && Number.isFinite(lonParam);
       const prodId = prod && (SCENARIO_IDS as string[]).includes(prod) ? (prod as ScenarioId) : null;
-      if (!prodId && !tplId && !cityKey) return;
+      if (!prodId && !tplId && !cityKey && !hasLatLon) return;
       let center: [number, number] | undefined;
       let label = "";
       const tpl = tplId ? MAP_TEMPLATES.find((x) => x.id === tplId) : undefined;
@@ -309,9 +322,15 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       else if (cityKey) {
         const c = CITIES.find((x) => x.key === cityKey) || WORLD_CITIES.find((x) => x.key === cityKey);
         if (c) { center = c.center; label = ("label" in c ? c.label : c.names?.uk) || ""; }
+      } else if (hasLatLon) {
+        center = [latParam, lonParam];
       }
       pick(prodId ?? (tpl && tpl.style === "relief" ? "relief" : "map3d"), "url");
       if (tpl?.sizeMm) s.setModelSizeMm(tpl.sizeMm);
+      const sizeParam = Number(p.get("size"));
+      if (Number.isFinite(sizeParam) && SIMPLE_SIZES.some((z) => z.mm === sizeParam)) {
+        s.setModelSizeMm(sizeParam);
+      }
       // Nightly cache warming: тегуємо задачу id шаблону з ?template=<id>, щоб
       // /api/generate передав template_id — нічний прогрів кешує саме ці прев'ю.
       // Скидається нижче (touchedRef) щойно користувач щось торкне.
@@ -878,7 +897,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   data-testid="scenario-create"
                   className="w-full"
                 >
-                  {successView ? t("updateModel") : t("previewCta")}
+                  {successView ? t("updateModel") : ctaVariant === "B" ? t("previewCtaB") : t("previewCta")}
                 </Button>
                 {waitingForMap && (
                   <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--accent-strong)]" aria-live="polite" data-testid="map-loading-wait">
@@ -915,7 +934,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         disabled={!generatingView && waitingForMap}
         cta={generatingView
           ? `${Math.max(0, Math.min(100, s.progress || 0))}%`
-          : successView ? (dirty ? t("updateModel") : t("orderPrint")) : t("previewCtaShort")}
+          : successView ? (dirty ? t("updateModel") : t("orderPrint")) : (ctaVariant === "B" ? t("previewCtaShortB") : t("previewCtaShort"))}
         onCta={() => {
           if (successView && !dirty) window.dispatchEvent(new Event("monadruk:open-order"));
           else create();

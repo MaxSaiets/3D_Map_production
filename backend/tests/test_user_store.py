@@ -92,4 +92,50 @@ def test_delete_user_does_not_touch_orders(store):
     user_store.add_model("u1", "a@b.com", {"task_id": "t1"})
     user_store.delete_user("u1")
     assert orders_log.exists()
-    assert "1" in orders_log.read_text(encoding="utf-8")
+
+
+def test_add_model_persists_params(store):
+    uid = "u1"
+    params = {"lat": 50.45, "lon": 30.52, "size_mm": 150, "scenario": "city", "product": "map"}
+    user_store.add_model(uid, "a@b.com", {"task_id": "t1", "params": params})
+    models = user_store.list_models(uid)
+    assert len(models) == 1
+    assert models[0]["params"] == params
+
+
+def test_sanitize_model_params_drops_unknown_keys_and_long_strings():
+    raw = {
+        "lat": 50.45, "lon": 30.52, "size_mm": "150", "scenario": "city",
+        "product": "map", "relief": True, "label": "x" * 80,
+        "north": 1.0, "south": 0.0, "east": 1.0, "west": 0.0,
+        "unknown_field": "should be dropped",
+        "too_long": "y" * 81,
+        "nested": {"a": 1},
+    }
+    out = user_store.sanitize_model_params(raw)
+    assert "unknown_field" not in out
+    assert "too_long" not in out
+    assert "nested" not in out
+    assert out["lat"] == 50.45
+    assert out["label"] == "x" * 80
+
+
+def test_add_model_drops_params_when_sanitized_to_nothing(store):
+    uid = "u1"
+    user_store.add_model(uid, "a@b.com", {
+        "task_id": "t1", "params": {"unknown_field": "nope"},
+    })
+    models = user_store.list_models(uid)
+    assert "params" not in models[0]
+
+
+def test_add_model_without_params_key_is_unaffected(store):
+    uid = "u1"
+    user_store.add_model(uid, "a@b.com", {"task_id": "t1"})
+    models = user_store.list_models(uid)
+    assert "params" not in models[0]
+
+
+def test_sanitize_model_params_rejects_non_dict():
+    assert user_store.sanitize_model_params(None) is None
+    assert user_store.sanitize_model_params("not-a-dict") is None

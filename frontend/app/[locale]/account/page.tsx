@@ -32,7 +32,14 @@ class ModelErrorBoundary extends Component<{ fallback: ReactNode; children: Reac
 }
 
 interface Quota { downloads: number; limit: number; remaining: number; is_admin: boolean; can_download: boolean }
-interface AccModel { task_id: string; title?: string; city?: string; product_type?: string; download_url?: string; ts?: number; preview?: string; expired?: boolean }
+interface AccModelParams {
+  lat?: number; lon?: number; size_mm?: number; scenario?: string; product?: string;
+  relief?: boolean; label?: string;
+}
+interface AccModel {
+  task_id: string; title?: string; city?: string; product_type?: string; download_url?: string;
+  ts?: number; preview?: string; expired?: boolean; params?: AccModelParams;
+}
 interface AccOrder {
   order_number?: string | number; created_at?: string; status?: string; product_type?: string;
   est_price?: string; delivery_country?: string; delivery_city?: string;
@@ -43,6 +50,24 @@ const ORDER_STATUS_KEYS: Record<string, string> = {
   pending_payment: "orderStatusPending", new: "orderStatusNew", paid: "orderStatusPaid",
   printed: "orderStatusPrinted", shipped: "orderStatusShipped", done: "orderStatusDone",
 };
+
+/** Посилання «Створити знову» з параметрами збереженої моделі — той самий
+ *  scenario/lat/lon/size, deep-links, які вже підтримує ScenarioFlow/
+ *  KeychainScenarioFlow (?product=&lat=&lon=&size= / ?lat=&lon=). null, якщо
+ *  бекенд не зберіг координати для цієї моделі (старіші записи без params). */
+function regenerateHref(m: AccModel): string | null {
+  const p = m.params;
+  if (!p || typeof p.lat !== "number" || typeof p.lon !== "number") return null;
+  if (m.product_type === "keychain") {
+    return `/keychains?lat=${p.lat}&lon=${p.lon}`;
+  }
+  const product = p.scenario && ["map3d", "relief", "flat", "magnet"].includes(p.scenario)
+    ? p.scenario
+    : "map3d";
+  const q = new URLSearchParams({ product, lat: String(p.lat), lon: String(p.lon) });
+  if (typeof p.size_mm === "number") q.set("size", String(p.size_mm));
+  return `/create?${q.toString()}`;
+}
 
 export default function AccountPage() {
   const t = useTranslations("account");
@@ -126,6 +151,9 @@ export default function AccountPage() {
     const res = await gatedDownload({
       taskId: m.task_id, downloadUrl: m.download_url,
       meta: { title: m.title, city: m.city, product_type: (m.product_type as any) || "map" },
+      // Пересилаємо params назад (якщо вже були збережені бекендом) — щоб
+      // повторне завантаження не «губило» lat/lon/розмір для «Створити знову».
+      params: (m.params as Record<string, unknown> | undefined) || undefined,
       getIdToken, openLogin: signIn,
       onLimit: () => setNotice(t("limitNotice")),
     });
@@ -358,6 +386,12 @@ export default function AccountPage() {
                       </div>
                     ) : null}
                   </dl>
+                  {regenerateHref(m) && (
+                    <Link href={regenerateHref(m) as string}
+                      className="mt-2 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 hover:bg-bg-2">
+                      <MapIcon size={13} /> {t("regenerate")}
+                    </Link>
+                  )}
                   <div className="mt-3 flex gap-2">
                     {/* Замовити друк цієї моделі (управління+покупка: генеруй зараз, замов потім) */}
                     <button onClick={() => setOrderModel(m)}

@@ -237,6 +237,8 @@ export default function AdminPage() {
 
                   {stats.guided && <GuidedFunnel g={stats.guided} />}
 
+                  {stats.ab && Object.keys(stats.ab).length > 0 && <AbTests ab={stats.ab} />}
+
                   <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatList title="Країни" rows={stats.byCountry} />
                     <StatList title="Топ сторінок" rows={stats.topPaths} />
@@ -588,6 +590,73 @@ function GuidedFunnel({ g }: { g: any }) {
       {g.byDevice == null && (
         <p className="mt-2 text-[10px] text-ink-3">Розбивки «мобільний / комп'ютер» немає: аналітика не зберігає User-Agent.</p>
       )}
+    </div>
+  );
+}
+
+interface AbVariantStats {
+  visitors?: number; view?: number; generate?: number; result_ok?: number;
+  order_click?: number; order_submit?: number; paid?: number;
+}
+const AB_EXP_LABELS: Record<string, string> = {
+  cta: "CTA-кнопка (текст «Показати мою 3D-мапу»)",
+};
+
+/** A/B-тести: одна таблиця на кожен активний експеримент (lib/ab.ts на
+ *  фронтенді, `ab_<exp>` у пропсах кожної події). Бекенд агрегує в stats.ab. */
+function AbTests({ ab }: { ab: Record<string, { A?: AbVariantStats; B?: AbVariantStats }> }) {
+  const pct = (n: number | undefined, of: number | undefined) =>
+    of && of > 0 ? `${Math.round(((n || 0) / of) * 100)}%` : "—";
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">A/B-тести</div>
+      <div className="mb-3 text-[11px] text-ink-3">Різниця значуща лише від ~100 відвідувачів на варіант.</div>
+      <div className="space-y-4">
+        {Object.entries(ab).map(([exp, variants]) => {
+          const A = variants.A || {};
+          const B = variants.B || {};
+          return (
+            <div key={exp}>
+              <div className="mb-1.5 text-[12px] font-semibold text-ink">{AB_EXP_LABELS[exp] || exp}</div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-[12px]">
+                  <thead className="text-ink-3">
+                    <tr>
+                      <th className="py-1 pr-2 text-left">Варіант</th>
+                      <th className="py-1 px-2 text-right">Відвідувачі</th>
+                      <th className="py-1 px-2 text-right">Генерували</th>
+                      <th className="py-1 px-2 text-right">Результат ✓</th>
+                      <th className="py-1 px-2 text-right">Клік «Замовити»</th>
+                      <th className="py-1 px-2 text-right">Замовлення</th>
+                      <th className="py-1 pl-2 text-right">Оплата</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(["A", "B"] as const).map((key) => {
+                      const v = key === "A" ? A : B;
+                      return (
+                        <tr key={key} className="border-t border-line/60">
+                          <td className="py-1.5 pr-2 font-semibold text-ink">{key}</td>
+                          <td className="py-1.5 px-2 text-right text-ink">{v.visitors ?? 0}</td>
+                          <td className="py-1.5 px-2 text-right text-ink">
+                            {v.generate ?? 0} <span className="text-ink-3">({pct(v.generate, v.visitors)})</span>
+                          </td>
+                          <td className="py-1.5 px-2 text-right text-ink">{v.result_ok ?? 0}</td>
+                          <td className="py-1.5 px-2 text-right text-ink">
+                            {v.order_click ?? 0} <span className="text-ink-3">({pct(v.order_click, v.visitors)})</span>
+                          </td>
+                          <td className="py-1.5 px-2 text-right text-ink">{v.order_submit ?? 0}</td>
+                          <td className="py-1.5 pl-2 text-right text-ink">{v.paid ?? 0}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
