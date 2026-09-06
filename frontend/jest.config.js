@@ -15,6 +15,7 @@ const customJestConfig = {
     '^three/examples/jsm/loaders/GLTFLoader(\\.js)?$': '<rootDir>/__tests__/stubs/GLTFLoader.js',
     '^three/examples/jsm/loaders/STLLoader(\\.js)?$': '<rootDir>/__tests__/stubs/STLLoader.js',
     '^three/examples/jsm/loaders/3MFLoader(\\.js)?$': '<rootDir>/__tests__/stubs/ThreeMFLoader.js',
+    '^three/examples/jsm/libs/meshopt_decoder\\.module(\\.js)?$': '<rootDir>/__tests__/stubs/MeshoptDecoder.js',
   },
   // Do not treat helper/mocks as test suites; e2e — це Playwright, не Jest
   testPathIgnorePatterns: ['<rootDir>/__tests__/__mocks__/', '<rootDir>/__tests__/stubs/', '<rootDir>/e2e/'],

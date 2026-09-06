@@ -2094,6 +2094,11 @@ def export_glb(
     os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
     scene.export(filename, file_type="glb")
     print(f"[GLB PREVIEW] Exported local preview with {len(scene.geometry)} parts to {filename}")
+    try:
+        from services.glb_pack import pack_glb_inplace
+        pack_glb_inplace(filename)
+    except Exception as _pack_exc:  # noqa: BLE001 - packing is a pure optimization
+        print(f"[GLB PREVIEW] glb_pack skipped: {_pack_exc}")
     return {"glb": filename}
 
 

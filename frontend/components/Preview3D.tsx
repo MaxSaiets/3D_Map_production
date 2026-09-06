@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { useFrame } from "@react-three/fiber";
 
 function bakeStlZUpToThreeYUp(object: THREE.Object3D) {
@@ -289,6 +290,11 @@ async function loadGLB(blob: Blob): Promise<THREE.Group> {
   const url = URL.createObjectURL(blob);
   return await new Promise<THREE.Group>((resolve, reject) => {
     const loader = new GLTFLoader();
+    // Preview GLBs from the backend may be meshopt-compressed (gltfpack -cc);
+    // decode both compressed and uncompressed GLBs with the same loader.
+    if (typeof loader.setMeshoptDecoder === "function") {
+      loader.setMeshoptDecoder(MeshoptDecoder);
+    }
     loader.load(
       url,
       (gltf) => {

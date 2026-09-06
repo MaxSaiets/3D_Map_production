@@ -2601,6 +2601,11 @@ def generate_custom_task(task_id: str, prompt: str, size_mm: float, keychain_mod
         pstl = str(OUTPUT_DIR / f"{basename}.stl")
         pglb = str(OUTPUT_DIR / f"{basename}.glb")
         mesh.export(p3mf); mesh.export(pstl); mesh.export(pglb)
+        try:
+            from services.glb_pack import pack_glb_inplace
+            pack_glb_inplace(pglb)
+        except Exception as _pack_exc:  # noqa: BLE001 - packing is a pure optimization
+            print(f"[CUSTOM] glb_pack skipped: {_pack_exc}")
         task.set_output("3mf", p3mf); task.set_output("stl", pstl); task.set_output("glb", pglb)
         task.complete(p3mf)
         task.message = f"Світ готовий · {spec.get('shape', '')} [{src}]"
