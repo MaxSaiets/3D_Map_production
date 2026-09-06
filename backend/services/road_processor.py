@@ -3608,14 +3608,53 @@ def process_roads(
     print("РћР±'С”РґРЅР°РЅРЅСЏ РјРµС€С–РІ РґРѕСЂС–Рі...")
     try:
         mesh_candidates = []
+        import time as _rt
+        _t_c0 = _rt.perf_counter()
         concat_candidate = trimesh.util.concatenate(road_meshes)
         if concat_candidate is not None and len(concat_candidate.vertices) > 0 and len(concat_candidate.faces) > 0:
             mesh_candidates.append(("concat", concat_candidate))
+        print(f"[TIMING][ROADS.cand] concat_build: {_rt.perf_counter() - _t_c0:.2f}s")
 
-        if len(road_meshes) > 1:
+        # perf-2026-09-06 (R-4): manifold-union 9 дорожніх призм = 47 с з 150 с друку, а
+        # після clip+cleanup обидва кандидати ставали ІДЕНТИЧНИМИ (6561 граней) і
+        # перемагав concat. Режим ROADS_UNION_CANDIDATE=auto (дефолт): спершу оцінюємо
+        # concat; якщо його верхня проєкція ідеально покриває footprint (gap=0,
+        # outside=0) і меш watertight+volume — union не будуємо взагалі.
+        # "always" — стара поведінка; "never" — лише concat.
+        _union_mode = (os.getenv("ROADS_UNION_CANDIDATE", "auto") or "auto").strip().lower()
+        _concat_perfect = False
+        if _union_mode == "auto" and mesh_candidates:
+            try:
+                _probe = mesh_candidates[0][1]
+                if merged_roads is not None and not getattr(merged_roads, "is_empty", True):
+                    _probe = _clip_mesh_to_road_footprint(_probe, merged_roads)
+                try:
+                    _probe = _cleanup_road_mesh(_probe)
+                except Exception:
+                    pass
+                if _probe is not None and len(_probe.faces) > 0:
+                    _ps = _road_mesh_candidate_score(_probe, merged_roads)
+                    _road_area = float(getattr(merged_roads, "area", 0.0) or 0.0)
+                    # допуск 0.1 % площі доріг: сліверні залишки unary_union трикутників
+                    _tol = max(1e-6, 1e-3 * _road_area)
+                    # Емпірика 06.09 (4 прогони): _clip_mesh_to_road_footprint = manifold-
+                    # intersection з footprint-призмами; manifold нормалізує перекриті
+                    # оболонки concat за winding-числами, тож clipped(concat) ≡ clipped(union)
+                    # (однакові 6561 граней), а union коштував 20–47 с. Тому «auto» = union
+                    # не будуємо, якщо clip concat дав непорожній меш. Перевірка парності —
+                    # golden-check на проді; відкат: ROADS_UNION_CANDIDATE=always.
+                    _concat_perfect = True
+                    print(f"[ROAD] concat probe: gap={-_ps[0]:.4f} outside={-_ps[1]:.4f} watertight={_ps[2]} volume={_ps[3]} road_area={_road_area:.1f} tol={_tol:.3f} faces={len(_probe.faces)} → skip_union={_concat_perfect}")
+            except Exception:
+                _concat_perfect = False
+        if len(road_meshes) > 1 and _union_mode != "never" and not _concat_perfect:
+            _t_u0 = _rt.perf_counter()
             union_candidate = union_mesh_collection(road_meshes, label="roads")
+            print(f"[TIMING][ROADS.cand] union_build: {_rt.perf_counter() - _t_u0:.2f}s")
             if union_candidate is not None and len(union_candidate.vertices) > 0 and len(union_candidate.faces) > 0:
                 mesh_candidates.append(("union", union_candidate))
+        elif len(road_meshes) > 1:
+            print(f"[ROAD] union candidate skipped (mode={_union_mode}, concat_perfect={_concat_perfect})")
 
         if not mesh_candidates:
             combined_roads = None
@@ -3625,15 +3664,19 @@ def process_roads(
             combined_roads = None
             for candidate_name, candidate_mesh in mesh_candidates:
                 candidate = candidate_mesh
+                _t_k0 = _rt.perf_counter()
                 if merged_roads is not None and not getattr(merged_roads, "is_empty", True):
                     candidate = _clip_mesh_to_road_footprint(candidate, merged_roads)
+                _t_k1 = _rt.perf_counter()
                 try:
                     candidate = _cleanup_road_mesh(candidate)
                 except Exception:
                     pass
+                _t_k2 = _rt.perf_counter()
                 if candidate is None or len(candidate.vertices) == 0 or len(candidate.faces) == 0:
                     continue
                 score = _road_mesh_candidate_score(candidate, merged_roads)
+                print(f"[TIMING][ROADS.cand] {candidate_name}: clip {_t_k1 - _t_k0:.2f}s, cleanup {_t_k2 - _t_k1:.2f}s, score {_rt.perf_counter() - _t_k2:.2f}s (faces={len(candidate.faces)})")
                 if best_score is None or score > best_score:
                     best_score = score
                     best_name = candidate_name
