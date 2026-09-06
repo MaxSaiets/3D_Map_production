@@ -16,6 +16,7 @@ import os
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -144,12 +145,41 @@ def pack_glb_inplace(path: Union[str, Path], timeout_s: float = 40.0) -> dict:
         tmp_path = Path(tmp_name)
 
         cmd = [gltfpack_bin, "-i", str(path), "-o", str(tmp_path), "-cc", "-kn", "-km", "-ke"]
+        # ІНЦИДЕНТ 06.09.2026 (×3): wasm-gltfpack у node на ~3 МБ GLB (Львів M) роздував
+        # памʼять, 6.4 ГБ VM ішла у своп, mem_guard вбивав бекенд, а сирота-node далі
+        # душив VM → тунель мовчав ~25 хв. Два запобіжники: (1) не пакуємо файли більші за
+        # GLB_PACK_MAX_MB (дефолт 2.0 — Одеса 1 МБ проходила, Львів 3 МБ валив);
+        # (2) на Linux — RLIMIT_AS для дочірнього процесу (GLB_PACK_MEM_MB, дефолт 1200):
+        # при перевищенні gltfpack падає сам, оригінал лишається (Caddy віддасть gzip).
+        try:
+            _max_mb = float(os.environ.get("GLB_PACK_MAX_MB", "2.0") or 2.0)
+        except ValueError:
+            _max_mb = 2.0
+        if _max_mb > 0 and before > _max_mb * 1048576:
+            result["error"] = f"skipped: {before/1048576:.2f} MB > GLB_PACK_MAX_MB={_max_mb}"
+            print(f"[GLB_PACK] {result['error']} path={path}")
+            return result
+        _preexec = None
+        if sys.platform.startswith("linux"):
+            try:
+                _mem_mb = int(os.environ.get("GLB_PACK_MEM_MB", "1200") or 1200)
+                import resource as _res
+                _lim = _mem_mb * 1048576
+                def _preexec():  # noqa: E306
+                    try:
+                        _res.setrlimit(_res.RLIMIT_AS, (_lim, _lim))
+                    except Exception:
+                        pass
+            except Exception:
+                _preexec = None
         try:
             proc = subprocess.run(
                 cmd,
                 capture_output=True,
                 timeout=timeout_s,
                 shell=False,
+                preexec_fn=_preexec,
+                start_new_session=True,
             )
         except subprocess.TimeoutExpired:
             result["error"] = f"gltfpack timed out after {timeout_s}s"
