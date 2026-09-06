@@ -4436,6 +4436,36 @@ def _friendly_generation_error(exc: Exception) -> str:
             "Спробуйте іншу зону або інші параметри, або повторіть пізніше.")
 
 
+def _current_rss_mb() -> float:
+    try:
+        with open("/proc/self/statm", "r", encoding="utf-8") as _f:
+            return int(_f.read().split()[1]) * 4096 / 1048576.0
+    except Exception:
+        return -1.0
+
+
+def _release_memory_after_task(tag: str = "") -> None:
+    """Інцидент 06.09.2026: після важкого друку RSS бекенду лишався ~2.4 ГБ (фрагментація
+    glibc-heap), наступне превʼю дотиснуло VM (6.4 ГБ) у своп → mem_guard SIGKILL
+    посеред генерації → thrash → тунель упав (~25 хв простою). Тут повертаємо памʼять
+    ОС одразу після кожної задачі: gc + glibc malloc_trim(0). Безпечно й дешево."""
+    _before = _current_rss_mb()
+    try:
+        import gc as _gc
+        _gc.collect()
+    except Exception:
+        pass
+    try:
+        import ctypes as _ct, sys as _sys
+        if _sys.platform.startswith("linux"):
+            _ct.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
+    _after = _current_rss_mb()
+    if _before >= 0 and _after >= 0:
+        print(f"[MEM] after task {str(tag)[:8]}: rss {_before:.0f} -> {_after:.0f} MB (trim)")
+
+
 def generate_model_task(
     task_id: str,
     request: GenerationRequest,
@@ -4804,6 +4834,7 @@ def floorplan_build_task(task_id: str, request: "FloorplanBuildRequest") -> None
         task.fail(f"Не вдалось побудувати макет: {exc}")
     finally:
         gen_queue.release(weight)
+        _release_memory_after_task(task_id)
 
 
 @app.post("/api/floorplan/generate", response_model=GenerationResponse)

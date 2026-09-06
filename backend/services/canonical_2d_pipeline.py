@@ -1225,6 +1225,11 @@ def prepare_canonical_2d_stage(
     # building union in and let that resolver decide which buildings yield,
     # which roads are cut, and what the final building footprint mask is.
     _c2d_mark("mask_build_finalize_prune")
+    # PROFILE_BUNDLE=1 → cProfile навколо резолвера (діагностика R-6, без зміни логіки)
+    _prof = None
+    if os.getenv("PROFILE_BUNDLE") == "1":
+        import cProfile as _cp
+        _prof = _cp.Profile(); _prof.enable()
     runtime_bundle = build_runtime_canonical_bundle(
         task_id=task_id,
         debug_generated_dir=debug_generated_dir,
@@ -1240,6 +1245,11 @@ def prepare_canonical_2d_stage(
         roads_semantic_preview=getattr(road_geometry, "semantic_centerlines_local", None),
         groove_clearance_mm=float(printer_profile.groove_side_clearance_mm),
     )
+    if _prof is not None:
+        _prof.disable()
+        import pstats as _ps, io as _io
+        _buf = _io.StringIO(); _ps.Stats(_prof, stream=_buf).sort_stats("cumulative").print_stats(28)
+        print("[PROFILE_BUNDLE]" + chr(10) + _buf.getvalue()[:6000])
     _c2d_mark("bundle_geojson_write")
     # perf-2026-09-03 B-8: PREVIEW skips the mask printability audit (build+write
     # report) and every self-heal branch it drives. The report is print-only: no

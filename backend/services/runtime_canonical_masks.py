@@ -1582,6 +1582,8 @@ def build_runtime_canonical_bundle(
 ) -> CanonicalMaskBundle:
     bundle_dir = (debug_generated_dir / "runtime_canonical_bundles" / task_id).resolve()
     bundle_dir.mkdir(parents=True, exist_ok=True)
+    import time as _bt
+    _t_b0 = _bt.perf_counter()
 
     zone_geom = zone_polygon
     roads_geom = _clip_to_zone(roads_final, zone_geom)
@@ -2449,6 +2451,7 @@ def build_runtime_canonical_bundle(
         terrain_land_geom = _filter_tiny_polygon_parts(terrain_land_geom, min_feature_m=min_land_feature_m)
         terrain_land_geom = _drop_outlier_components(terrain_land_geom)
 
+    _t_b1 = _bt.perf_counter()
     _write_geojson(bundle_dir / "zone_polygon.geojson", zone_geom)
     _write_geojson(bundle_dir / "roads_final.geojson", roads_geom)
     _write_geojson(bundle_dir / "road_groove_mask.geojson", road_groove_geom)
@@ -2468,4 +2471,7 @@ def build_runtime_canonical_bundle(
         "bundle_dir": str(bundle_dir),
     }
     (bundle_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    return load_canonical_mask_bundle(bundle_dir)
+    _t_b2 = _bt.perf_counter()
+    _loaded = load_canonical_mask_bundle(bundle_dir)
+    print(f"[TIMING][BUNDLE] resolve {_t_b1 - _t_b0:.2f}s, write_geojson {_t_b2 - _t_b1:.2f}s, reload {_bt.perf_counter() - _t_b2:.2f}s")
+    return _loaded
