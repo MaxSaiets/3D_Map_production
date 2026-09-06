@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import threading
 from collections import OrderedDict
 from pathlib import Path
@@ -145,6 +146,29 @@ def _get_conn():
             if path is None:
                 return None
             _CONN = duckdb.connect(str(path), read_only=True)
+            # Інцидент 06.09.2026: дефолт DuckDB = memory_limit 80 % RAM (~5 ГБ на 6.4-ГБ VM)
+            # і всі ядра. Просторовий запит по щільному центру міг вибрати гігабайти в
+            # buffer pool → своп → thrash → тунель мовчить. Обмежуємо явно (env), а spill
+            # шлемо у ЗАПИСУВАНУ теку — /var/lib/3dmap змонтовано read-only.
+            _mem = (os.getenv("OSM_DUCKDB_MEMORY_LIMIT", "1200MB") or "").strip()
+            _thr = (os.getenv("OSM_DUCKDB_THREADS", "2") or "").strip()
+            _tmp = (os.getenv("OSM_DUCKDB_TEMP_DIR", "") or "").strip() or str(Path(tempfile.gettempdir()) / "duckdb_osm_tmp")
+            for _stmt in (
+                f"SET memory_limit='{_mem}'" if _mem else None,
+                f"SET threads={int(_thr)}" if _thr.isdigit() else None,
+                f"SET temp_directory='{_tmp}'",
+            ):
+                if not _stmt:
+                    continue
+                try:
+                    _CONN.execute(_stmt)
+                except Exception as _exc:  # noqa: BLE001
+                    print(f"[OSM-DB] {_stmt} failed: {_exc}")
+            try:
+                Path(_tmp).mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass
+            print(f"[OSM-DB] limits: memory_limit={_mem or 'default'} threads={_thr or 'default'} temp={_tmp}")
         return _CONN
 
 
