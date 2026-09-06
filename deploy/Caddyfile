@@ -64,6 +64,16 @@ monadruk.com {
 
 	# Generated model files (FastAPI static mount)
 	handle /files/* {
+		# 2026-09-06: GLB-превʼю 3 МБ гнеться gzip до ~1.45 МБ (52 %), а origin через
+		# тунель віддає ~130 КБ/с → 22 с → ~11 с. Глобальний encode не чіпає
+		# model/gltf-binary (нема в дефолтних matcher-ах) — вмикаємо явно.
+		encode zstd gzip {
+			match {
+				header Content-Type model/gltf-binary*
+				header Content-Type application/octet-stream*
+			}
+			minimum_length 1024
+		}
 		reverse_proxy 127.0.0.1:8000 {
 			header_up Host {host}
 		}

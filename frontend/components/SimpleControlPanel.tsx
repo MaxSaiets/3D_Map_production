@@ -468,6 +468,15 @@ export function SimpleControlPanel({
           orderNowRef.current();
         },
       });
+      // Q-2 (аналітика 06.09): відвідувач тиснув «Download 3MF» 16 разів за 10 с —
+      // збій завантаження був МОВЧАЗНИМ (лише keychain-панель показувала помилку).
+      // Тепер: тост (видно і в guided, де ця панель прихована) + помилка в панелі + подія.
+      if (res.status === "error") {
+        const msg = t("errDownload", { msg: res.message || "" });
+        setError(msg);
+        window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "error", message: msg } }));
+        import("@/lib/analytics").then((m) => m.track("download_fail", { product: "map", msg: String(res.message || "").slice(0, 60) })).catch(() => {});
+      }
       if (res.quota && typeof res.quota.remaining === "number") {
         setQuota((q) => ({ remaining: res.quota!.remaining as number, limit: q?.limit ?? 5, isAdmin: q?.isAdmin }));
       } else if (res.status === "ok") {

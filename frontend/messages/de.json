@@ -616,7 +616,8 @@
     "trustNoPrepay": "Keine Vorkasse",
     "trustShip": "Versand in der Ukraine",
     "seriesConnectorsSquareHint": "Verbinder-Schlösser funktionieren nur mit dem quadratischen Raster.",
-    "seriesTab": "▦ Zonenserie (Raster)"
+    "seriesTab": "▦ Zonenserie (Raster)",
+    "errDownload": "Die Datei konnte nicht geladen werden ({msg}). Versuch es in einer Minute noch einmal oder schreib uns im Chat — wir schicken die Datei manuell."
   },
   "mapsMeta": {
     "title": "3D-Stadtkarten der Ukraine — wähle deine Stadt",

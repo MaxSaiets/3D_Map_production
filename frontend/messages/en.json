@@ -616,7 +616,8 @@
     "trustNoPrepay": "No prepayment",
     "trustShip": "Ships across Ukraine",
     "seriesConnectorsSquareHint": "Connector locks work only with the square grid.",
-    "seriesTab": "▦ Series of zones (grid)"
+    "seriesTab": "▦ Series of zones (grid)",
+    "errDownload": "Couldn't download the file ({msg}). Try again in a minute or message us in the chat — we'll send the file manually."
   },
   "mapsMeta": {
     "title": "3D city maps of Ukraine — pick your city",

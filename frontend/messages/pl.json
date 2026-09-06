@@ -616,7 +616,8 @@
     "trustNoPrepay": "Bez przedpłaty",
     "trustShip": "Wysyłka po Ukrainie",
     "seriesConnectorsSquareHint": "Łączniki działają tylko z siatką kwadratową.",
-    "seriesTab": "▦ Seria stref (siatka)"
+    "seriesTab": "▦ Seria stref (siatka)",
+    "errDownload": "Nie udało się pobrać pliku ({msg}). Spróbuj ponownie za minutę albo napisz do nas na czacie — wyślemy plik ręcznie."
   },
   "mapsMeta": {
     "title": "Mapy 3D miast Ukrainy — wybierz swoje miasto",

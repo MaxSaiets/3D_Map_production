@@ -616,7 +616,8 @@
     "trustNoPrepay": "Sin pago previo",
     "trustShip": "Envío en toda Ucrania",
     "seriesConnectorsSquareHint": "Los conectores funcionan solo con la cuadrícula cuadrada.",
-    "seriesTab": "▦ Serie de zonas (cuadrícula)"
+    "seriesTab": "▦ Serie de zonas (cuadrícula)",
+    "errDownload": "No se pudo descargar el archivo ({msg}). Inténtalo de nuevo en un minuto o escríbenos en el chat: te enviaremos el archivo a mano."
   },
   "mapsMeta": {
     "title": "Mapas 3D de ciudades de Ucrania — elige tu ciudad",

@@ -614,6 +614,7 @@ function timelineEventLabel(e: string, p: Record<string, unknown> | undefined): 
     case "mode_switch": return `Режим: ${s("mode")}`;
     case "quota_block": return `Ліміт завантажень (${s("at")})`;
     case "download_model": return "Завантаження моделі";
+    case "download_fail": return `Збій завантаження файлу: ${s("msg")}`;
     case "order_paid_confirmed": return "Оплата підтверджена";
     case "click": return `Клік: ${s("el")}`;
     default:

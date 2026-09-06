@@ -616,7 +616,8 @@
     "trustNoPrepay": "Sans acompte",
     "trustShip": "Livraison en Ukraine",
     "seriesConnectorsSquareHint": "Les connecteurs fonctionnent uniquement avec la grille carrée.",
-    "seriesTab": "▦ Série de zones (grille)"
+    "seriesTab": "▦ Série de zones (grille)",
+    "errDownload": "Impossible de télécharger le fichier ({msg}). Réessaie dans une minute ou écris-nous dans le chat — on t'enverra le fichier à la main."
   },
   "mapsMeta": {
     "title": "Cartes 3D des villes d'Ukraine — choisissez votre ville",
