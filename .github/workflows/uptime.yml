@@ -1,0 +1,48 @@
+# Зовнішній моніторинг (06.09.2026): healthcheck.sh живе ВСЕРЕДИНІ VM, тож при
+# падінні VM/тунелю ніхто не дізнається (інцидент 04–05.09: ~13 год простою).
+# GitHub Actions — зовнішня точка: кожні 15 хв б'є /api/health і головну.
+# Провал job'а → GitHub сам шле e-mail власнику репо. Якщо задані секрети
+# TG_BOT_TOKEN / TG_CHAT_ID — додатково повідомлення в Telegram.
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Health (3 спроби, крок 20 с)
+        id: probe
+        shell: bash
+        run: |
+          set +e
+          ok=0
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://monadruk.com/api/health)
+            home=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://monadruk.com/)
+            echo "attempt $i: health=$code home=$home"
+            if [ "$code" = "200" ] && [ "$home" = "200" ]; then ok=1; break; fi
+            sleep 20
+          done
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          echo "health=$code" >> "$GITHUB_OUTPUT"
+          echo "home=$home" >> "$GITHUB_OUTPUT"
+          [ "$ok" = "1" ]
+      - name: Telegram alert (якщо секрети задані)
+        if: failure() && secrets.TG_BOT_TOKEN != '' && secrets.TG_CHAT_ID != ''
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          HEALTH: ${{ steps.probe.outputs.health }}
+          HOME: ${{ steps.probe.outputs.home }}
+        shell: bash
+        run: |
+          msg="🔴 monadruk.com недоступний ззовні (GitHub uptime): health=${HEALTH:-000} home=${HOME:-000} $(date -u +'%Y-%m-%d %H:%M UTC')"
+          curl -s -o /dev/null --max-time 20 "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT_ID}" --data-urlencode "text=${msg}" || true
