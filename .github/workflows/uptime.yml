@@ -26,18 +26,26 @@ jobs:
         shell: bash
         run: |
           set +e
-          ok=0
+          ok=0; blocked=0
+          UA="Mozilla/5.0 (compatible; monadruk-uptime/1.0; +https://monadruk.com)"
           for i in 1 2 3; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://monadruk.com/api/health)
-            home=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://monadruk.com/)
-            echo "attempt $i: health=$code home=$home"
+            hh=$(curl -s -D - -o /dev/null -A "$UA" --max-time 30 https://monadruk.com/api/health)
+            code=$(echo "$hh" | head -1 | awk '{print $2}')
+            home=$(curl -s -o /dev/null -A "$UA" -w "%{http_code}" --max-time 30 https://monadruk.com/)
+            mit=$(echo "$hh" | tr -d '' | grep -i '^cf-mitigated:' | awk '{print $2}')
+            echo "attempt $i: health=${code:-000} home=$home cf-mitigated=${mit:-none}"
             if [ "$code" = "200" ] && [ "$home" = "200" ]; then ok=1; break; fi
+            # 403/503 з cf-mitigated = Cloudflare заблокував РАННЕР, а не сайт упав → не тривожимо
+            if [ -n "$mit" ] || { [ "$code" = "403" ] && echo "$hh" | grep -qi '^server: cloudflare'; }; then blocked=1; fi
             sleep 20
           done
           echo "ok=$ok" >> "$GITHUB_OUTPUT"
-          echo "health=$code" >> "$GITHUB_OUTPUT"
+          echo "health=${code:-000}" >> "$GITHUB_OUTPUT"
           echo "home=$home" >> "$GITHUB_OUTPUT"
-          [ "$ok" = "1" ]
+          if [ "$ok" = "1" ]; then exit 0; fi
+          if [ "$blocked" = "1" ]; then echo "::warning::Cloudflare blocked the runner (health=${code:-000} home=$home) — not an outage"; exit 0; fi
+          echo "::error::monadruk.com unreachable from GitHub: health=${code:-000} home=$home"
+          exit 1
       - name: Telegram alert (якщо секрети задані)
         if: failure() && env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != ''
         env:
