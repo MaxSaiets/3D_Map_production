@@ -53,8 +53,10 @@ export default function ShareViewer({ taskId, ogImage }: { taskId: string; ogIma
 
   return (
     <div>
+      {/* N-4: min-h = висота вʼювера → контейнер займає місце ще до приходу three-чанка
+          (немає стрибка макета; e2e не ловить «hidden» під навантаженням). */}
       {glbUrl ? (
-        <div data-testid="share-viewer">
+        <div data-testid="share-viewer" className="min-h-[420px]">
           <Model3DViewerLazy
             url={glbUrl}
             height={420}

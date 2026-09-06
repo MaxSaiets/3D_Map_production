@@ -365,13 +365,15 @@ export function KeychainScenarioFlow({
           <div>
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step1Title")}</h2>
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2">
-              {CARD_DEFS.map((c) => (
+              {CARD_DEFS.map((c, i) => (
                 <button key={c.tplId} type="button" onClick={() => pick(c.tplId)} className={cardBtnCls} data-testid={`kc-scenario-${c.tplId}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {/* N-3 (перф): 400w за 1×, 640 за 2×; перші дві картки над згином → eager.
+                      eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/showcase/${c.img}.webp`}
+                    src={`/showcase/${c.img}-400.webp`}
+                    srcSet={`/showcase/${c.img}-400.webp 1x, /showcase/${c.img}.webp 2x`}
                     alt={t(c.titleKey)}
-                    loading="lazy"
+                    loading={i < 2 ? "eager" : "lazy"}
                     className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                   />
                   <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">

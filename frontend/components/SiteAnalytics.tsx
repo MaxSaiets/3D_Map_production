@@ -148,7 +148,10 @@ export default function SiteAnalytics() {
           default DENIED → cookieless modelled conversions until the visitor accepts. */}
       {GTAG_ON && (
         <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID || GADS_ID}`} strategy="afterInteractive" />
+          {/* N-1 (перф, 2026-09-06): gtag.js = 340 КБ JS на КОЖНІЙ сторінці (Fast-3G/4×CPU: LCP
+              /create 6.5 с). lazyOnload → після load+idle; ga-init нижче лишається
+              afterInteractive — stub `gtag()` черга події до приходу бібліотеки, нічого не губиться. */}
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID || GADS_ID}`} strategy="lazyOnload" />
           <Script id="ga-init" strategy="afterInteractive">
             {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());` +
               `gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});` +
