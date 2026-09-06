@@ -16,6 +16,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # secrets-контекст НЕ дозволений у step-level `if` → прокидаємо через env job'а
+    env:
+      TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+      TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
     steps:
       - name: Health (3 спроби, крок 20 с)
         id: probe
@@ -35,10 +39,8 @@ jobs:
           echo "home=$home" >> "$GITHUB_OUTPUT"
           [ "$ok" = "1" ]
       - name: Telegram alert (якщо секрети задані)
-        if: failure() && secrets.TG_BOT_TOKEN != '' && secrets.TG_CHAT_ID != ''
+        if: failure() && env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != ''
         env:
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           HEALTH: ${{ steps.probe.outputs.health }}
           HOME: ${{ steps.probe.outputs.home }}
         shell: bash
