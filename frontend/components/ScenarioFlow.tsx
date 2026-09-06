@@ -405,7 +405,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     if (elapsed > s.etaS * 1.2 + 15) return t("etaOver");
     const left = Math.max(0, s.etaS - elapsed);
     if (left < 45) return t("etaSoon");
-    return t("etaLeft", { min: Math.max(1, Math.round(left / 60)) });
+    return t("etaLeft", { min: Math.max(1, Math.ceil(left / 60)) }); // P-1: округлення ВГОРУ — краще недообіцяти
   })();
   // Карта віддала рамку — виконуємо відкладений намір користувача.
   useEffect(() => {

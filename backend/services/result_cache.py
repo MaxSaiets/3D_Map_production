@@ -220,7 +220,11 @@ def eta_seconds(bucket: str, foreign: bool = False) -> int:
         _load()
         arr = _stats.get(bucket) or []
     if len(arr) >= 3:
-        base = statistics.median(arr[-15:])
+        # P-1 (2026-09-06): медіана обіцяла «≈1 хв», а реальний Львів M ішов 80 с
+        # (вибірка 40–59 с). Беремо 75-й перцентиль останніх 15 — краще
+        # недообіцяти: юзер радіє, коли швидше, і дратується, коли довше.
+        recent = sorted(arr[-15:])
+        base = recent[min(len(recent) - 1, int(round(0.75 * (len(recent) - 1))))]
     else:
         kind = bucket.split(":")[0] if bucket else "preview"
         base = _ETA_DEFAULTS.get(kind, 90)
