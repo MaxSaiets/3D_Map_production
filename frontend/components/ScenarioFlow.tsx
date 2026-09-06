@@ -801,7 +801,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                       <span className="text-[15px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
                       <span className="text-[13px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
                       {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
-                      <span className="text-[10.5px] leading-tight text-[var(--text-secondary)]">
+                      <span className="text-[11.5px] leading-tight text-[var(--text-secondary)]">
                         {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
                       </span>
                     </button>

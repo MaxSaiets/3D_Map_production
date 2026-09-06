@@ -378,7 +378,7 @@ export default async function PannoPage({ params }: { params: { locale: string }
         <ol className="mt-4 flex flex-col gap-2.5">
           {c.how.map((step, i) => (
             <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-ink-2">
-              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-strong)]/10 text-[13px] font-bold text-[var(--accent-strong)]">{i + 1}</span>
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[rgba(31,51,40,0.10)] text-[13px] font-bold text-[var(--accent-strong)]">{i + 1}</span>
               {step}
             </li>
           ))}

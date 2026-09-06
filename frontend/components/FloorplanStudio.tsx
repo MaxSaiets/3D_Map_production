@@ -838,7 +838,7 @@ export default function FloorplanStudio() {
                     onClick={() => setSizeMm(size)}
                     className={`rounded-xl border px-3 py-2 text-[13px] transition ${
                       sizeMm === size
-                        ? "border-[var(--forest,#2f6b46)] bg-[var(--forest,#2f6b46)]/10 font-medium text-[var(--forest,#2f6b46)]"
+                        ? "border-[var(--forest,#2f6b46)] bg-[rgba(46,74,58,0.10)] font-medium text-[var(--forest,#2f6b46)]"
                         : "border-[var(--line-soft,#e3e0d5)] text-[var(--text-secondary,#5a655a)]"
                     }`}
                   >
@@ -865,7 +865,7 @@ export default function FloorplanStudio() {
                     onClick={() => setWallHeightM(height)}
                     className={`rounded-full border px-3 py-1.5 text-[13px] ${
                       wallHeightM === height
-                        ? "border-[var(--forest,#2f6b46)] bg-[var(--forest,#2f6b46)]/10 font-medium text-[var(--forest,#2f6b46)]"
+                        ? "border-[var(--forest,#2f6b46)] bg-[rgba(46,74,58,0.10)] font-medium text-[var(--forest,#2f6b46)]"
                         : "border-[var(--line-soft,#e3e0d5)] text-[var(--text-secondary,#5a655a)]"
                     }`}
                   >

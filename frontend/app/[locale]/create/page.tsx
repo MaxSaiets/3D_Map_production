@@ -888,7 +888,7 @@ export default function Home() {
                       верху НА мапі. Лише моб/планшет (lg:hidden): на десктопі картка
                       керування й так стоїть у правому верху і містить ту саму підказку. */}
                   {showHexGrid && (
-                    <div className="pointer-events-none absolute right-2 top-2 z-[500] w-[160px] max-w-[58%] rounded-[12px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+                    <div className="pointer-events-none absolute right-2 top-2 z-[500] w-[160px] max-w-[58%] rounded-[12px] border border-[var(--surface-border)] bg-[rgba(251,248,240,0.95)] px-2.5 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
                       <p className="text-[11px] font-semibold text-[var(--text-primary)]">{tc("gridSelectHintTitle")}</p>
                       <p className="mt-0.5 text-[10px] leading-tight text-[var(--text-secondary)]">{tc("pickAdjacentZones")}</p>
                     </div>
@@ -907,7 +907,7 @@ export default function Home() {
                   {/* GUIDED ховає плаваючу картку керування (Ділянка/Серія + сітка) —
                       сценарний вхід працює лише з одиночною зоною. */}
                   {!guided && (
-                  <div className={`relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[var(--surface-panel)]/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)] ${showHexGrid ? "lg:top-2" : "lg:top-[80px]"}`}>
+                  <div className={`relative order-2 mt-2 w-full z-[500] space-y-1.5 rounded-[16px] border border-[var(--surface-border)] bg-[rgba(251,248,240,0.95)] px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:absolute lg:order-none lg:right-2 lg:mt-0 lg:w-[220px] lg:max-w-[calc(100%-1rem)] ${showHexGrid ? "lg:top-2" : "lg:top-[80px]"}`}>
                     {/* Сегмент-контрол: дві пігулки в один ряд (доступно в ОБОХ режимах). */}
                     <div className="flex items-center gap-1" role="radiogroup" aria-label={tc("selectionModeAria")}>
                       <button
@@ -1010,7 +1010,7 @@ export default function Home() {
 
                   {/* gridNotice — плаваючий тост ВНИЗУ по центру карти (не штовхає мапу). */}
                   {gridNotice && (
-                    <div className="absolute bottom-2 left-1/2 z-[500] -translate-x-1/2 max-w-[calc(100%-1rem)] rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[var(--surface-panel)]/95 px-3 py-2 text-center text-[12px] text-[var(--text-primary)] shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
+                    <div className="absolute bottom-2 left-1/2 z-[500] -translate-x-1/2 max-w-[calc(100%-1rem)] rounded-[14px] border border-[rgba(11,92,87,0.3)] bg-[rgba(251,248,240,0.95)] px-3 py-2 text-center text-[12px] text-[var(--text-primary)] shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
                       {gridNotice}
                     </div>
                   )}
@@ -1019,7 +1019,7 @@ export default function Home() {
             </div>
 
             {stageView === "render" && (
-            <div id="panel-preview" className={previewPanelClasses}>
+            <div id="panel-preview" className={`${previewPanelClasses} scroll-mt-[64px]`}>
               <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:h-[var(--builder-h)] lg:min-h-0 lg:max-h-[var(--builder-max-h)]">
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-border)] px-4 py-4 sm:px-5">
                   <div>

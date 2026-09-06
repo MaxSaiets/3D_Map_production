@@ -70,7 +70,7 @@ export function GuidedStickyBar({
     <div
       ref={ref}
       data-testid={testId}
-      className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--surface-border)] bg-[var(--surface-panel,#FBF8F0)]/95 px-3 pt-2 backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--surface-border)] bg-[rgba(251,248,240,0.95)] px-3 pt-2 backdrop-blur lg:hidden"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)" }}
     >
       <div className="mx-auto flex max-w-[680px] items-center gap-3">
