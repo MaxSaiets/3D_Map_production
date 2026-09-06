@@ -42,18 +42,11 @@ export async function getFirebaseAuth(): Promise<Auth | null> {
   ]);
   if (!app) app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   if (!auth) {
-    // N-2 (перф): getAuth() за замовчуванням підключає popupRedirectResolver, який
-    // одразу вантажить iframe auth (~92 КБ JS) на КОЖНІЙ сторінці. initializeAuth без
-    // resolver-а — iframe зʼявляється лише при реальному signInWithPopup (див. нижче).
-    // Дублювання ініціалізації (HMR/два виклики) → фолбек на getAuth.
-    try {
-      auth = authMod.initializeAuth(app, {
-        persistence: [authMod.indexedDBLocalPersistence, authMod.browserLocalPersistence],
-        popupRedirectResolver: undefined,
-      });
-    } catch {
-      auth = authMod.getAuth(app);
-    }
+    // 06.09.2026: N-2 (initializeAuth без popupRedirectResolver, −92 КБ iframe) ВІДКОЧЕНО —
+    // свіжий вхід через попап працював, але ВІДНОВЛЕННЯ збереженої сесії при повторному
+    // відкритті кабінету/адмінки не завершувалось (сторінка лишалась порожньою).
+    // Надійність важливіша за 92 КБ.
+    auth = authMod.getAuth(app);
     try { auth.useDeviceLanguage(); } catch {/* ignore */}
   }
   return auth;
@@ -79,8 +72,7 @@ export async function signInWithGoogle() {
   const a = await requireAuth();
   const provider = new authMod.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  // resolver передаємо ТУТ (N-2) — iframe auth вантажиться лише в момент входу.
-  return authMod.signInWithPopup(a, provider, authMod.browserPopupRedirectResolver);
+  return authMod.signInWithPopup(a, provider);
 }
 
 // ── Email / password ──
