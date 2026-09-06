@@ -85,6 +85,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     taskRestored: st.taskRestored,
     pendingGenerate: st.pendingGenerate,
     setPendingGenerate: st.setPendingGenerate,
+    templateId: st.templateId,
+    setTemplateId: st.setTemplateId,
     downloadUrl: st.downloadUrl,
     taskGroupId: st.taskGroupId,
     modelSizeMm: st.modelSizeMm,
@@ -204,7 +206,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     if (prev && s.selectedArea && s.selectedArea !== prev) {
       // Зсув рамки пізніше ніж 2.5 с після старту генерації = дія користувача
       // (раніше — доліт карти після пошуку, він не має вмикати «Оновити превʼю»).
-      if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
+      // Nightly cache warming: реальна користувацька зміна після старту знімає
+      // тег шаблону — прогрів більше не має сенсу кешувати саме цей deep-link.
+      if (Date.now() - createdAtRef.current > 2500) { touchedRef.current = true; s.setTemplateId(null); }
       // Guided-воронка: ручний зсув/ресайз рамки — трек лише на ПЕРШИЙ перехід
       // «місце ще не обране» → «обране» (щоб не спамити подіями на кожен рух карти).
       if (!placePicked && !customPlaceTrackedRef.current) {
@@ -228,7 +232,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       if (!d || d.centerOnly || typeof d.widthM === "number") return;
       if (!Number.isFinite(d.lat) || !Number.isFinite(d.lon)) return;
       lastGotoRef.current = Date.now();
-      if (Date.now() - createdAtRef.current > 2500) touchedRef.current = true;
+      // Nightly cache warming: реальна користувацька зміна після старту знімає
+      // тег шаблону — прогрів більше не має сенсу кешувати саме цей deep-link.
+      if (Date.now() - createdAtRef.current > 2500) { touchedRef.current = true; s.setTemplateId(null); }
       setPlacePicked(true);
       const label = typeof d.label === "string" ? d.label.trim() : "";
       if (label) setPlaceLabel(label);
@@ -278,6 +284,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     s.setSimpleMapLabel("");
     setLabelOn(false);
     setScenario(id);
+    // Nightly cache warming: ручний вибір іншої картки (не той самий deep-link
+    // ?template=) — це вже не «шаблонний» перегляд, знімаємо тег.
+    if (source === "card") s.setTemplateId(null);
   };
 
   // T-3.1 (F-07) + A-2: deep-links. `?product=map3d|relief|flat|magnet` (головна,
@@ -303,6 +312,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       }
       pick(prodId ?? (tpl && tpl.style === "relief" ? "relief" : "map3d"), "url");
       if (tpl?.sizeMm) s.setModelSizeMm(tpl.sizeMm);
+      // Nightly cache warming: тегуємо задачу id шаблону з ?template=<id>, щоб
+      // /api/generate передав template_id — нічний прогрів кешує саме ці прев'ю.
+      // Скидається нижче (touchedRef) щойно користувач щось торкне.
+      if (tplId && tpl) s.setTemplateId(tplId);
       if (!center) return;
       const [lat, lon] = center;
       window.setTimeout(() => {

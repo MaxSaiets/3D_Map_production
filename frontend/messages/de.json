@@ -657,7 +657,10 @@
     "description": "Eine dreidimensionale Karte eines echten Ortes — Straßen, Gebäude und Flüsse, bereit für den 3D-Druck. Erstelle deine in Minuten.",
     "imageAlt": "3D-Modell-Render des Nutzers",
     "ctaMap": "Eigene 3D-Karte erstellen",
-    "ctaKeychain": "Karten-Schlüsselanhänger"
+    "ctaKeychain": "Karten-Schlüsselanhänger",
+    "unavailable": "Dieses Modell ist nicht mehr verfügbar — Dateien werden 90 Tage aufbewahrt",
+    "expires": "Dieser Link bleibt 90 Tage nach Erstellung des Modells aktiv",
+    "viewerHint": "Zieh mit Maus oder Finger · Scrollen zum Zoomen"
   },
   "offerMeta": {
     "title": "Öffentliches Angebot — Monadruk",

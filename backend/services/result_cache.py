@@ -105,11 +105,19 @@ def _norm(v: Any) -> Any:
 
 
 def request_cache_key(request: Any, zone_polygon_coords: Any = None) -> str:
-    """sha1 усіх полів запиту (нормалізованих) + полігон зони + версія."""
+    """sha1 усіх полів запиту (нормалізованих) + полігон зони + версія.
+
+    template_id — це лише етикетка для нічного прогріву (main._template_warm_loop),
+    не параметр геометрії, тож свідомо виключена з хешу: інакше той самий шаблон
+    згенерований напряму (без template_id з фронта) вважався б ІНШИМ запитом і
+    прогрів кешу не бив би по ручних генераціях того самого шаблону."""
     try:
         data = request.model_dump() if hasattr(request, "model_dump") else request.dict()
     except Exception:
         data = dict(getattr(request, "__dict__", {}))
+    if isinstance(data, dict):
+        data = dict(data)
+        data.pop("template_id", None)
     payload = {"_v": _CACHE_VERSION, "req": _norm(data), "poly": _norm(zone_polygon_coords)}
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()

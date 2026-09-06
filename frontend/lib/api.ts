@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { useGenerationStore } from "@/store/generation-store";
+
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ── Auth token provider ───────────────────────────────────────────────────────
@@ -267,9 +269,14 @@ export type StatusResponse = TaskStatus | BatchTaskStatusResponse;
 
 export const api = {
   async generateModel(request: GenerationRequest): Promise<GenerationResponse> {
+    // Nightly cache warming: якщо задача прийшла з ?template=<id> (ScenarioFlow)
+    // і користувач ще нічого не чіпав — тегуємо тіло template_id, щоб нічний
+    // прогрів кешу знав, які прев'ю варто розігрівати. Keychain-флоу store
+    // ніколи не виставляє templateId, тож там це поле лишається відсутнім.
+    const templateId = useGenerationStore.getState().templateId;
     const response = await axios.post<GenerationResponse>(
       `${API_BASE_URL}/api/generate`,
-      request
+      templateId ? { ...request, template_id: templateId } : request
     );
     return response.data;
   },
@@ -348,11 +355,15 @@ export const api = {
     zones: any[],
     params: GenerationRequest
   ): Promise<GenerationResponse & { all_task_ids?: string[] }> {
+    // Nightly cache warming: те саме тегування, що й generateModel (batch-шлях
+    // серій/сітки).
+    const templateId = useGenerationStore.getState().templateId;
     const response = await axios.post(
       `${API_BASE_URL}/api/generate-zones`,
       {
         zones,
         ...params,
+        ...(templateId ? { template_id: templateId } : {}),
       }
     );
     return response.data;

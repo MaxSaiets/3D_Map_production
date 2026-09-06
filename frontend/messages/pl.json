@@ -657,7 +657,10 @@
     "description": "Trójwymiarowa mapa prawdziwego miejsca — ulice, budynki i rzeki, gotowe do druku 3D. Stwórz swoją w kilka minut.",
     "imageAlt": "Render modelu 3D użytkownika",
     "ctaMap": "Stwórz własną mapę 3D",
-    "ctaKeychain": "Brelok z mapą"
+    "ctaKeychain": "Brelok z mapą",
+    "unavailable": "Ten model jest już niedostępny — pliki są przechowywane 90 dni",
+    "expires": "Ten link jest aktywny przez 90 dni od utworzenia modelu",
+    "viewerHint": "Przeciągaj myszką lub palcem · kółko myszy — zoom"
   },
   "offerMeta": {
     "title": "Oferta publiczna — Monadruk",

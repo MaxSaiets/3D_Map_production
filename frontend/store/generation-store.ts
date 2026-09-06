@@ -25,6 +25,10 @@ interface GenerationState {
   guidedMode: boolean;
   /** H-4: тап по CTA, поки карта ще не віддала рамку. Виконається, щойн рамка є. */
   pendingGenerate: boolean;
+  /** Nightly cache warming: id шаблону з ?template=<id>, доки користувач нічого не чіпав.
+   *  Йде в /api/generate template_id, щоб нічний прогрів кешував саме ці прев'ю. Скидається
+   *  в null щойно користувач торкнувся параметрів (touchedRef) або обрав інший сценарій. */
+  templateId: string | null;
   downloadUrl: string | null;
   printQuality: TaskStatus["print_quality"] | null;
   taskStatuses: Record<string, TaskStatus>;
@@ -184,6 +188,7 @@ interface GenerationState {
   setTaskRestored: (taskRestored: boolean) => void;
   setGuidedMode: (guidedMode: boolean) => void;
   setPendingGenerate: (pendingGenerate: boolean) => void;
+  setTemplateId: (templateId: string | null) => void;
   setDownloadUrl: (url: string | null) => void;
   setPrintQuality: (pq: TaskStatus["print_quality"] | null) => void;
 
@@ -234,6 +239,7 @@ const initialState = {
   taskRestored: false,
   guidedMode: false,
   pendingGenerate: false,
+  templateId: null as string | null,
   downloadUrl: null,
   printQuality: null as TaskStatus["print_quality"] | null,
   taskStatuses: {} as Record<string, TaskStatus>,
@@ -429,6 +435,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setTaskRestored: (taskRestored) => set({ taskRestored }),
   setGuidedMode: (guidedMode) => set({ guidedMode }),
   setPendingGenerate: (pendingGenerate) => set({ pendingGenerate }),
+  setTemplateId: (templateId) => set({ templateId }),
   setDownloadUrl: (url) => set({ downloadUrl: url }),
   setPrintQuality: (pq) => set({ printQuality: pq }),
 

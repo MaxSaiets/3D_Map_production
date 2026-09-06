@@ -28,6 +28,12 @@ class GenerationTask:
     # Скасування та TTL
     cancelled: bool = False
     created_at: datetime = field(default_factory=datetime.utcnow)
+    # perf-2026-09: id шаблону головної сторінки (/create?template=<id>) і сирий
+    # JSON-body запиту, як він прийшов на /api/generate, ДО будь-яких мутацій у
+    # пайплайні (preview-режим тощо) — потрібен незайманим, щоб нічний прогрів
+    # (main._template_warm_loop) міг повторно надіслати ІДЕНТИЧНИЙ запит.
+    template_id: Optional[str] = None
+    template_body: Optional[Dict] = None
 
     def update_status(self, status: str, progress: int, message: str = ""):
         """Оновлює статус задачі. Якщо задача скасована — ігнорує оновлення."""

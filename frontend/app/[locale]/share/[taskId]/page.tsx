@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
+import ShareViewer from "@/components/ShareViewer";
 
 /**
  * E4: публічна share-сторінка згенерованої моделі. og:image = реальний рендер
@@ -58,12 +59,9 @@ export default async function SharePage({
       <h1 className="mt-3 text-[clamp(26px,4vw,40px)] leading-tight">{t("title")}</h1>
       <p className="mx-auto mt-4 max-w-[480px] text-[15px] leading-relaxed text-ink-2">{t("description")}</p>
       {ok && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/og/${params.taskId}`}
-          alt={t("imageAlt")}
-          className="mx-auto mt-8 w-full max-w-[560px] rounded-[24px] border border-line-soft bg-white/70 shadow-[0_18px_50px_rgba(46,74,58,0.12)]"
-        />
+        <div className="mt-8">
+          <ShareViewer taskId={params.taskId} ogImage={`/api/og/${params.taskId}`} />
+        </div>
       )}
       <div className="mt-9 flex flex-wrap justify-center gap-3">
         <Link

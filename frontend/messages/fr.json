@@ -657,7 +657,10 @@
     "description": "Une carte en trois dimensions d'un lieu réel — rues, bâtiments et rivières, prête pour l'impression 3D. Créez la vôtre en quelques minutes.",
     "imageAlt": "Rendu du modèle 3D de l'utilisateur",
     "ctaMap": "Créer ma carte 3D",
-    "ctaKeychain": "Porte-clés carte"
+    "ctaKeychain": "Porte-clés carte",
+    "unavailable": "Ce modèle n'est plus disponible — les fichiers sont gardés 90 jours",
+    "expires": "Ce lien reste actif 90 jours après la création du modèle",
+    "viewerHint": "Fais glisser avec la souris ou le doigt · molette pour zoomer"
   },
   "offerMeta": {
     "title": "Offre publique — Monadruk",

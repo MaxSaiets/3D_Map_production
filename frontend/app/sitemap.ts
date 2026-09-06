@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BUSINESS } from "@/lib/legal";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES } from "@/lib/blog";
@@ -10,6 +11,7 @@ const BASE = "https://monadruk.com";
 const WAVE2_LASTMOD = new Date("2026-07-13");
 // Хвиля 4: міста Європи (нові сторінки під de/pl/fr/es).
 const WAVE4_LASTMOD = new Date("2026-07-29");
+const LEGAL_LASTMOD = new Date(BUSINESS.updated); // до PATHS — інакше TDZ
 const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date }[] = [
   { path: "", changeFrequency: "weekly", priority: 1.0 },
   { path: "/create", changeFrequency: "monthly", priority: 0.9 },
@@ -79,8 +81,9 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/contacts", changeFrequency: "yearly", priority: 0.3 },
   { path: "/offer", changeFrequency: "yearly", priority: 0.2 },
   { path: "/refund", changeFrequency: "yearly", priority: 0.2 },
-  { path: "/privacy", changeFrequency: "yearly", priority: 0.2 },
-  { path: "/terms", changeFrequency: "yearly", priority: 0.2 },
+  // J-1: юр-тексти переписані 2026-09-05 → lastmod з BUSINESS.updated (єдине джерело дати).
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.2, lastmod: LEGAL_LASTMOD },
+  { path: "/terms", changeFrequency: "yearly", priority: 0.2, lastmod: LEGAL_LASTMOD },
 ];
 
 function url(locale: string, path: string) {

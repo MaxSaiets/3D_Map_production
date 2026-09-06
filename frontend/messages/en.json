@@ -657,7 +657,10 @@
     "description": "A three-dimensional map of a real place — streets, buildings and rivers, ready for 3D printing. Make yours in minutes.",
     "imageAlt": "User's 3D model render",
     "ctaMap": "Create your own 3D map",
-    "ctaKeychain": "Map keychain"
+    "ctaKeychain": "Map keychain",
+    "unavailable": "This model is no longer available — files are kept for 90 days",
+    "expires": "This link stays active for 90 days after the model was created",
+    "viewerHint": "Drag with mouse or finger · scroll to zoom"
   },
   "offerMeta": {
     "title": "Public Offer Agreement — Monadruk",

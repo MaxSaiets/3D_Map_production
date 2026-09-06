@@ -577,11 +577,97 @@ async def _retention_loop():
         await _asyncio.sleep(86400)
 
 
+def _run_template_warm_once() -> None:
+    """Синхронна (thread-executor) робота одного нічного прогріву: перевіряє
+    чергу генерації, читає збережені шаблонні body і проганяє їх через
+    services.template_warm.run_template_warm. Ніколи не кидає назовні —
+    викликач (_template_warm_loop) огортає у try, але й тут своя страховка."""
+    from services import gen_queue, template_warm
+
+    try:
+        q = gen_queue.stats()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[TEMPLATE_WARM] gen_queue.stats() failed (skip run): {exc}")
+        return
+    if q.get("used", 0) > 0:
+        print(f"[TEMPLATE_WARM] skipped — generation queue busy ({q})")
+        return
+
+    bodies = template_warm.load_template_bodies()
+    if not bodies:
+        print("[TEMPLATE_WARM] no saved template bodies — nothing to warm")
+        return
+
+    port = os.getenv("PORT", "8000")
+    base_url = f"http://127.0.0.1:{port}"
+
+    def _post(body: dict):
+        import json as _json
+        import urllib.request as _ur
+
+        req = _ur.Request(
+            base_url + "/api/generate",
+            data=_json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json", "X-Warm": "1"},
+            method="POST",
+        )
+        with _ur.urlopen(req, timeout=30) as resp:
+            data = _json.loads(resp.read().decode("utf-8"))
+        return data.get("task_id")
+
+    def _status(task_id: str):
+        import json as _json
+        import urllib.request as _ur
+
+        req = _ur.Request(base_url + f"/api/status/{task_id}", headers={"X-Warm": "1"})
+        with _ur.urlopen(req, timeout=15) as resp:
+            data = _json.loads(resp.read().decode("utf-8"))
+        return data.get("status")
+
+    try:
+        results = template_warm.run_template_warm(_post, _status, _rc.lookup, bodies)
+        ok = sum(1 for _tid, outcome in results if outcome == "completed")
+        print(f"[TEMPLATE_WARM] run finished: {ok}/{len(results)} completed — {results}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[TEMPLATE_WARM] run_template_warm crashed (non-fatal): {exc}")
+
+
+async def _template_warm_loop():
+    """Раз на добу о TEMPLATE_WARM_HOUR_UTC (год., 0-23; -1 = вимкнено) прогріває
+    result_cache для збережених шаблонних тіл (/create?template=<id>). Важка
+    робота (HTTP self-call + polling з time.sleep) виконується в thread
+    executor, щоб не блокувати event loop."""
+    import asyncio as _asyncio
+
+    try:
+        hour = int(os.getenv("TEMPLATE_WARM_HOUR_UTC", "3"))
+    except Exception:
+        hour = 3
+    if hour < 0:
+        print("[TEMPLATE_WARM] disabled (TEMPLATE_WARM_HOUR_UTC<0)")
+        return
+
+    from services import template_warm
+
+    loop = _asyncio.get_event_loop()
+    while True:
+        try:
+            delay = template_warm.next_warm_delay(_dtm.utcnow(), hour)
+            print(f"[TEMPLATE_WARM] next run in {delay/3600:.1f}h (hour={hour} UTC)")
+            await _asyncio.sleep(delay)
+            await loop.run_in_executor(None, _run_template_warm_once)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[TEMPLATE_WARM] loop iteration failed (non-fatal): {exc}")
+            # Уникаємо busy-loop, якщо щось системно ламається (напр. годинник).
+            await _asyncio.sleep(3600)
+
+
 @app.on_event("startup")
 async def startup_event():
     import asyncio as _asyncio
     _asyncio.create_task(_ttl_cleanup_loop())
     _asyncio.create_task(_retention_loop())
+    _asyncio.create_task(_template_warm_loop())
 
     # Прогрів локальної OSM-БД (DuckDB) у фоні — перший конект ~5с; інакше перший
     # /api/building-at (підсвітка будинку) або генерація після рестарту гальмують.
@@ -728,6 +814,11 @@ class GenerationRequest(BaseModel):
     # Rotated rect polygon (4 corners as [lon, lat]) — для повернутих ділянок.
     # Якщо задано, backend обрізає OSM до цього полігону, а не axis-aligned bbox.
     zone_polygon_coords: Optional[list] = None
+    # perf-2026-09: id шаблону з головної (/create?template=<id>), надсилається
+    # ЛИШЕ коли юзер згенерував дефолтні параметри шаблону без змін — дозволяє
+    # нічному прогріву кешувати результат заздалегідь (див. _template_warm_loop).
+    # НЕ впливає на геометрію і НЕ входить у request_cache_key (див. result_cache).
+    template_id: Optional[str] = Field(default=None, max_length=64)
     road_height_mm: float = Field(default=0.5, ge=0.2, le=5.0)
     road_embed_mm: float = Field(default=0.3, ge=0.0, le=2.0)
     # road_clearance_mm РІРёРґР°Р»РµРЅРѕ вЂ” Р·Р°РІР¶РґРё РІРёРєРѕСЂРёСЃС‚РѕРІСѓС”С‚СЊСЃСЏ GROOVE_CLEARANCE_MM = 0.15
@@ -2432,6 +2523,17 @@ async def generate_model(
         tasks[task_id] = task
         polygon_coords = getattr(request, "zone_polygon_coords", None)
 
+        # perf-2026-09: якщо фронт позначив запит як шаблонний (дефолтні
+        # параметри /create?template=<id>), фіксуємо ID і СИРИЙ body ДО
+        # мутацій пайплайну — знадобиться нічному прогріву кешу.
+        _tpl_id = getattr(request, "template_id", None)
+        if _tpl_id:
+            task.template_id = str(_tpl_id)
+            try:
+                task.template_body = request.model_dump()
+            except Exception:
+                task.template_body = None
+
         # perf-2026-09-03 (B-1): ідентичний запит, файл ще на диску → віддаємо одразу.
         # Ключ рахуємо ДО generate_model_task (він мутує request у preview-режимі).
         _ckey = _rc.request_cache_key(request, polygon_coords)
@@ -2754,6 +2856,49 @@ async def og_image(task_id: str):
         media_type="image/png",
         headers={"Cache-Control": "public, max-age=86400"},
     )
+
+
+@app.get("/api/share/{task_id}")
+async def share_info(
+    task_id: str,
+    _rl: None = Depends(rate_limit("share_get", [(120, 60.0), (1500, 3600.0)])),
+):
+    """Публічні метадані для /share/{task}: посилання на glb (для 3D-вʼювера) і
+    png (OG-превʼю), якщо вони існують. 404 лише якщо НЕМАЄ жодного з двох —
+    сторінка шерингу все одно може показати те, що є."""
+    if not _SHARE_ID_RE.match(task_id or ""):
+        raise HTTPException(status_code=400, detail="Невалідний task_id")
+
+    glb_url: Optional[str] = None
+    disk_glb = _find_file_on_disk_by_task_id(task_id, "glb")
+    if disk_glb is not None and str(disk_glb).lower().endswith(".glb"):
+        glb_url = f"/files/{Path(disk_glb).name}"
+
+    png_url: Optional[str] = None
+    png_path = OUTPUT_DIR / "previews" / f"{task_id}.png"
+    if png_path.exists():
+        png_url = f"/files/previews/{task_id}.png"
+
+    if glb_url is None and png_url is None:
+        raise HTTPException(status_code=404, detail="Модель не знайдено")
+
+    product: Optional[str] = None
+    task = tasks.get(task_id)
+    if task is not None:
+        try:
+            if bool(getattr(task.request, "keychain_mode", False)):
+                product = "keychain"
+            else:
+                product = "map"
+        except Exception:
+            product = None
+
+    return {
+        "task_id": task_id,
+        "glb_url": glb_url,
+        "png_url": png_url,
+        "product": product,
+    }
 
 
 @app.get("/api/zones/{batch_id}/download_all")
@@ -4457,6 +4602,10 @@ def generate_model_task(
                 _rc.record_duration(_b, _dur)
             if zone_id is None and getattr(task, "cache_key", None) and task.status == "completed":
                 _rc.store(task.cache_key, task)
+                if getattr(task, "template_id", None) and getattr(task, "template_body", None):
+                    from services import template_warm as _tw
+                    _tw.persist_template_body(task.template_id, task.template_body, task.cache_key)
+                    print(f"[TEMPLATE_WARM] saved body for template_id={task.template_id}")
             print(f"[TIMING] task total: {_dur:.1f}s (bucket={_b})")
         except Exception as _rce:  # noqa: BLE001
             print(f"[RESULT_CACHE] post-success hook failed (ignored): {_rce}")

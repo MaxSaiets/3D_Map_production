@@ -657,7 +657,10 @@
     "description": "Un mapa tridimensional de un lugar real — calles, edificios y ríos, listo para impresión 3D. Crea el tuyo en minutos.",
     "imageAlt": "Render del modelo 3D del usuario",
     "ctaMap": "Crear mi mapa 3D",
-    "ctaKeychain": "Llavero con mapa"
+    "ctaKeychain": "Llavero con mapa",
+    "unavailable": "Este modelo ya no está disponible — los archivos se guardan 90 días",
+    "expires": "Este enlace sigue activo 90 días después de crear el modelo",
+    "viewerHint": "Arrastra con el ratón o el dedo · rueda para zoom"
   },
   "offerMeta": {
     "title": "Oferta pública — Monadruk",
