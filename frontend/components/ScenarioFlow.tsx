@@ -310,8 +310,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       const prod = p.get("product");
       const tplId = p.get("template");
       const cityKey = p.get("city");
-      const latParam = Number(p.get("lat"));
-      const lonParam = Number(p.get("lon"));
+      // ПАСТКА: Number(null) === 0 → без перевірки p.has() кожен вхід стрибав на крок 2.
+      const latParam = p.has("lat") ? Number(p.get("lat")) : NaN;
+      const lonParam = p.has("lon") ? Number(p.get("lon")) : NaN;
       const hasLatLon = Number.isFinite(latParam) && Number.isFinite(lonParam);
       const prodId = prod && (SCENARIO_IDS as string[]).includes(prod) ? (prod as ScenarioId) : null;
       if (!prodId && !tplId && !cityKey && !hasLatLon) return;

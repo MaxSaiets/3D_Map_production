@@ -262,6 +262,8 @@ export function KeychainScenarioFlow({
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search);
+      // ПАСТКА: Number(null) === 0 → без p.has() карта стрибала б у (0,0) при КОЖНОМУ вході.
+      if (!p.has("lat") || !p.has("lon")) return;
       const latParam = Number(p.get("lat"));
       const lonParam = Number(p.get("lon"));
       if (!Number.isFinite(latParam) || !Number.isFinite(lonParam)) return;
