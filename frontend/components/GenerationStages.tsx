@@ -80,7 +80,7 @@ export function GenerationStages({
 
   const q = !!queued;
   return (
-    <div className="flex flex-col gap-2 rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3" data-testid="generation-stages">
+    <div className="flex flex-col gap-2 scroll-mt-[72px] rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-3.5 py-3" data-testid="generation-stages">
       <div className="flex items-center justify-between gap-2 text-[14px] font-semibold text-[var(--text-primary)]">
         <span className="inline-flex items-center gap-2"><Loader2 size={16} className="animate-spin text-[var(--accent-strong)]" /> {q ? (queuedTitle ?? title) : title}</span>
         <span className="text-[12px] font-semibold text-[var(--text-secondary)]" style={{ fontVariantNumeric: "tabular-nums" }}>{p}%{eta ? ` · ${eta}` : ""}</span>

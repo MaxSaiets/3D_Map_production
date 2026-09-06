@@ -283,6 +283,14 @@ export function KeychainScenarioFlow({
     createdAtRef.current = Date.now();
     touchedRef.current = false;
     window.dispatchEvent(new Event("monadruk:kc-guided-generate"));
+    // O-1 (реальний прогін на iPhone): після тапу по sticky-CTA сторінка стоїть на
+    // картках розмірів, а смуга стадій/ETA лишається вище за екраном — юзер бачить
+    // лише тісний бокс «СТАН 10%» у панелі превʼю. На мобільному ведемо до стадій.
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      window.setTimeout(() => {
+        document.querySelector('[data-testid="generation-stages"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 250);
+    }
   };
 
   // F-10: помилку показуємо лише після РЕАЛЬНОГО запуску генерації (див. ScenarioFlow).

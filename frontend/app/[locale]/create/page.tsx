@@ -562,7 +562,14 @@ export default function Home() {
   const prevDownloadRef = useRef<string | null>(null);
   useEffect(() => {
     if (downloadUrl && !prevDownloadRef.current && typeof window !== "undefined" && window.innerWidth < 1024) {
-      document.getElementById("panel-preview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // O-1: у момент успіху блок стадій вище ЗНИКАЄ → контент зсувається вгору вже
+      // ПІСЛЯ старту прокрутки, і перемикач «Карта/3D» опинявся під шапкою. Даємо
+      // макету осісти (наступний кадр + анімація банера), потім скролимо.
+      // Ціль — перемикач «Карта/3D» НАД панеллю (з scroll-mt під шапку): інакше сам
+      // перемикач лишався під sticky-шапкою.
+      window.setTimeout(() => {
+        (document.getElementById("scene-toggle") ?? document.getElementById("panel-preview"))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
     }
     prevDownloadRef.current = downloadUrl ?? null;
   }, [downloadUrl]);
@@ -758,7 +765,7 @@ export default function Home() {
             <div className="order-1 flex min-h-0 flex-col gap-3 lg:sticky lg:top-4 lg:z-auto">
               {/* ДЕСКТОП: sticky top-4 → карта «їде» за користувачем поки гортає aside. */}
             {/* Перемикач сцени: Карта ⇄ 3D-модель (рендер доступний після генерації) */}
-            <div className="order-0 flex shrink-0 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div id="scene-toggle" className="order-0 flex shrink-0 scroll-mt-[64px] items-center gap-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur">
               <button
                 type="button"
                 onClick={() => switchStage("map")}
