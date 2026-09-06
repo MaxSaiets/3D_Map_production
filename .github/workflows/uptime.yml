@@ -3,6 +3,8 @@
 # GitHub Actions — зовнішня точка: кожні 15 хв б'є /api/health і головну.
 # Провал job'а → GitHub сам шле e-mail власнику репо. Якщо задані секрети
 # TG_BOT_TOKEN / TG_CHAT_ID — додатково повідомлення в Telegram.
+# Cloudflare може блокувати датацентрові IP раннера (403/503 з cf-mitigated) —
+# це НЕ падіння сайту: job лишається зеленим із попередженням.
 name: uptime
 
 on:
@@ -26,25 +28,35 @@ jobs:
         shell: bash
         run: |
           set +e
-          ok=0; blocked=0
+          ok=0
+          blocked=0
           UA="Mozilla/5.0 (compatible; monadruk-uptime/1.0; +https://monadruk.com)"
           for i in 1 2 3; do
-            hh=$(curl -s -D - -o /dev/null -A "$UA" --max-time 30 https://monadruk.com/api/health)
-            code=$(echo "$hh" | head -1 | awk '{print $2}')
+            hh=$(curl -s -D - -o /dev/null -A "$UA" --max-time 30 https://monadruk.com/api/health | tr -d '\r')
+            code=$(printf '%s\n' "$hh" | head -1 | awk '{print $2}')
             home=$(curl -s -o /dev/null -A "$UA" -w "%{http_code}" --max-time 30 https://monadruk.com/)
-            mit=$(echo "$hh" | tr -d '' | grep -i '^cf-mitigated:' | awk '{print $2}')
-            echo "attempt $i: health=${code:-000} home=$home cf-mitigated=${mit:-none}"
-            if [ "$code" = "200" ] && [ "$home" = "200" ]; then ok=1; break; fi
-            # 403/503 з cf-mitigated = Cloudflare заблокував РАННЕР, а не сайт упав → не тривожимо
-            if [ -n "$mit" ] || { [ "$code" = "403" ] && echo "$hh" | grep -qi '^server: cloudflare'; }; then blocked=1; fi
+            mit=$(printf '%s\n' "$hh" | grep -i '^cf-mitigated:' | awk '{print $2}')
+            srv=$(printf '%s\n' "$hh" | grep -i '^server:' | awk '{print $2}')
+            echo "attempt $i: health=${code:-000} home=${home:-000} cf-mitigated=${mit:-none} server=${srv:-?}"
+            if [ "$code" = "200" ] && [ "$home" = "200" ]; then
+              ok=1
+              break
+            fi
+            if [ -n "$mit" ]; then blocked=1; fi
+            if [ "$code" = "403" ] && [ "$srv" = "cloudflare" ]; then blocked=1; fi
             sleep 20
           done
           echo "ok=$ok" >> "$GITHUB_OUTPUT"
           echo "health=${code:-000}" >> "$GITHUB_OUTPUT"
-          echo "home=$home" >> "$GITHUB_OUTPUT"
-          if [ "$ok" = "1" ]; then exit 0; fi
-          if [ "$blocked" = "1" ]; then echo "::warning::Cloudflare blocked the runner (health=${code:-000} home=$home) — not an outage"; exit 0; fi
-          echo "::error::monadruk.com unreachable from GitHub: health=${code:-000} home=$home"
+          echo "home=${home:-000}" >> "$GITHUB_OUTPUT"
+          if [ "$ok" = "1" ]; then
+            exit 0
+          fi
+          if [ "$blocked" = "1" ]; then
+            echo "::warning::Cloudflare blocked the runner (health=${code:-000} home=${home:-000}) - not an outage"
+            exit 0
+          fi
+          echo "::error::monadruk.com unreachable from GitHub: health=${code:-000} home=${home:-000}"
           exit 1
       - name: Telegram alert (якщо секрети задані)
         if: failure() && env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != ''
@@ -53,6 +65,5 @@ jobs:
           HOME: ${{ steps.probe.outputs.home }}
         shell: bash
         run: |
-          msg="🔴 monadruk.com недоступний ззовні (GitHub uptime): health=${HEALTH:-000} home=${HOME:-000} $(date -u +'%Y-%m-%d %H:%M UTC')"
-          curl -s -o /dev/null --max-time 20 "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TG_CHAT_ID}" --data-urlencode "text=${msg}" || true
+          msg="monadruk.com недоступний ззовні (GitHub uptime): health=${HEALTH:-000} home=${HOME:-000} $(date -u +'%Y-%m-%d %H:%M UTC')"
+          curl -s -o /dev/null --max-time 20 "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TG_CHAT_ID}" --data-urlencode "text=${msg}" || true
