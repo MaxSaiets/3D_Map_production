@@ -21,6 +21,7 @@ export function GenerationStages({
   queuedTitle,
   queuedNote,
   printPrep,
+  printPrepOffer,
   printPrepLabel,
   onCancel,
   cancelLabel,
@@ -38,6 +39,9 @@ export function GenerationStages({
   queuedNote?: string;
   /** C-5: підготовка друкарського файлу після превʼю (0–100). */
   printPrep?: number | null;
+  /** Пропозиція друку під час підготовки файлу (1–3 хв) — єдиний момент, коли
+   *  увага людини гарантовано з нами. Рендериться лише разом із printPrep. */
+  printPrepOffer?: React.ReactNode;
   printPrepLabel?: string;
   /** C-2: скасувати генерацію. */
   onCancel?: () => void;
@@ -111,6 +115,7 @@ export function GenerationStages({
           {printPrepLabel} {printPrep}%
         </p>
       )}
+      {typeof printPrep === "number" && printPrepOffer}
       {onCancel && cancelLabel && (
         <button
           type="button"

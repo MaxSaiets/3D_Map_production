@@ -1892,7 +1892,9 @@
     "why_look": "Just looking",
     "why_abroad": "I’m outside Ukraine",
     "why_other": "Other",
-    "whyThanks": "Thanks — this helps us improve."
+    "whyThanks": "Thanks — this helps us improve.",
+    "waitOfferTitle": "While your file is being prepared",
+    "waitOfferSub": "Don't want to deal with a printer, filament and settings? We'll print it and ship it in 2–4 business days."
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",

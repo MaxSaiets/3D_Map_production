@@ -1892,7 +1892,9 @@
     "why_look": "Schaue nur",
     "why_abroad": "Ich bin nicht in der Ukraine",
     "why_other": "Anderes",
-    "whyThanks": "Danke – das hilft uns, besser zu werden."
+    "whyThanks": "Danke – das hilft uns, besser zu werden.",
+    "waitOfferTitle": "Während die Datei vorbereitet wird",
+    "waitOfferSub": "Keine Lust auf Drucker, Filament und Einstellungen? Wir drucken und versenden in 2–4 Werktagen."
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",

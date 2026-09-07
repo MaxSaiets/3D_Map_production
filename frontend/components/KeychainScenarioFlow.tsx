@@ -534,6 +534,24 @@ export function KeychainScenarioFlow({
                 queuedNote={t("queuedNote")}
                 printPrep={s.printPrep}
                 printPrepLabel={t("printPrepLine")}
+                printPrepOffer={
+                  <div className="mt-1 rounded-xl border border-[rgba(142,107,61,0.35)] bg-[rgba(255,247,230,0.75)] p-2.5" data-testid="wait-offer">
+                    <p className="text-[12.5px] font-semibold text-[var(--text-primary)]">{t("waitOfferTitle")}</p>
+                    <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("waitOfferSub")}</p>
+                    <Button
+                      variant="bronze"
+                      size="sm"
+                      data-testid="wait-offer-cta"
+                      className="mt-2 w-full"
+                      onClick={() => {
+                        import("@/lib/analytics").then((m) => m.track("wait_offer_click", { product: "keychain" })).catch(() => {});
+                        window.dispatchEvent(new Event("monadruk:kc-guided-order"));
+                      }}
+                    >
+                      {t("orderPrint")} · {disp(priceUah)}
+                    </Button>
+                  </div>
+                }
                 cancelLabel={t("cancelGen")}
                 onCancel={() => window.dispatchEvent(new Event("monadruk:guided-cancel"))}
                 stages={{ data: t("stageData"), detail: t("stageDetail"), file: t("stageFile") }}
