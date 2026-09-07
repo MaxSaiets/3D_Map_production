@@ -202,7 +202,11 @@ export default function WorldsPage() {
             {glbUrl ? (
               <>
                 <div className="flex-1 overflow-hidden rounded-2xl bg-[rgba(15,23,42,0.03)]">
-                  <Model3DViewer url={glbUrl} height={420} flat={false} allowZoom autoRotate label={t("title")} />
+                  {/* ПАСТКА 08.09: тут стояло flat={false} → вʼюер вважав світ «брелоком»:
+                      камера фронтальна, геометрія НЕ клалась горизонтально, і рельєф
+                      виглядав завалено-обрізаним. Світ — така сама пласка плитка з
+                      Z-вгору, як мапа, тож flat (isMap) = true. */}
+                  <Model3DViewer url={glbUrl} height={420} flat allowZoom autoRotate label={t("title")} />
                 </div>
                 {builtShape && (
                   <p data-testid="world-built" className="mt-2 text-center text-[12.5px] text-[var(--text-secondary)]">
