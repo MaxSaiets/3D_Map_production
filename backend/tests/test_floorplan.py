@@ -544,3 +544,78 @@ def test_apartment_bbox_still_ignores_dimension_chains():
     bbox = _apartment_bbox(m)
     assert bbox is not None
     assert bbox[1] > 100 and bbox[3] < 620, f"ланцюжки потрапили в габарит: {bbox}"
+
+
+def test_floorplan_capabilities_warms_detector_once():
+    """Холодний шлях макета = 27 с (імпорт 15.5 + перший analyze 11.3) і всі 27 с
+    чекав перший користувач після рестарту. Ендпоінт capabilities (його смикає
+    сторінка /maket при відкритті) має ставити прогрів у фон — і рівно один раз."""
+    import main as app_main
+
+    app_main._FLOORPLAN_WARMED = False
+    calls = []
+
+    class _BG:
+        def add_task(self, fn, *a, **k):
+            calls.append(fn)
+
+    import asyncio
+    asyncio.get_event_loop_policy().new_event_loop().run_until_complete(
+        app_main.floorplan_capabilities(_BG())
+    )
+    assert calls and calls[0] is app_main._warm_floorplan_nn
+
+    # другий виклик прогріву — no-op (сесія вже піднята)
+    app_main._warm_floorplan_nn()
+    assert app_main._FLOORPLAN_WARMED is True
+    before = app_main._FLOORPLAN_WARMED
+    app_main._warm_floorplan_nn()
+    assert app_main._FLOORPLAN_WARMED == before
+
+
+def _synthetic_plan(wall_px=22):
+    """Типова 3-кімнатна: зовнішній контур + 2 перегородки + 3 дверні розриви."""
+    import numpy as np
+    import cv2
+    img = np.full((700, 1000), 255, np.uint8)
+    for x1, y1, x2, y2 in [(60, 60, 940, 60), (940, 60, 940, 640), (940, 640, 60, 640),
+                           (60, 640, 60, 60), (500, 60, 500, 640), (500, 350, 940, 350)]:
+        cv2.line(img, (x1, y1), (x2, y2), 0, wall_px)
+    for r in [(220, 49, 300, 71), (489, 200, 511, 280), (700, 339, 780, 361)]:
+        cv2.rectangle(img, (r[0], r[1]), (r[2], r[3]), 255, -1)
+    return img
+
+
+def _as_png(img):
+    import cv2
+    ok, buf = cv2.imencode(".png", img)
+    assert ok
+    return buf.tobytes()
+
+
+def test_analyze_survives_rotated_and_photo_like_input():
+    """Реальні входи — це фото плану під кутом і зі складним освітленням, а не
+    ідеальний скан. Заміряно 08.09.2026: обидва варіанти дають ту саму структуру,
+    що й чистий план. Тест ловить регрес детекції/векторизації на них."""
+    import numpy as np
+    import cv2
+    from services.floorplan import pipeline
+
+    base = _synthetic_plan()
+    h, w = base.shape
+    rot = cv2.warpAffine(base, cv2.getRotationMatrix2D((w / 2, h / 2), 3.5, 1.0), (w, h), borderValue=255)
+
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    grad = 0.72 + 0.28 * (xx / w) * (1.0 - 0.35 * yy / h)
+    photo = np.clip(cv2.GaussianBlur(base.astype(np.float32) * grad, (3, 3), 0)
+                    + np.random.default_rng(3).normal(0, 6, base.shape), 0, 255).astype(np.uint8)
+
+    for name, img in (("rotated", rot), ("photo", photo)):
+        r = pipeline.analyze(_as_png(img), use_ocr=False)
+        assert len(r.plan.walls) >= 6, f"{name}: знайдено лише {len(r.plan.walls)} стін"
+        assert len(r.plan.openings or []) >= 2, f"{name}: отворів {len(r.plan.openings or [])}"
+        # габарит не схлопнувся в одну кімнату (регрес _apartment_bbox)
+        xs = [c for wl in r.plan.walls for c in (wl.x1, wl.x2)]
+        ys = [c for wl in r.plan.walls for c in (wl.y1, wl.y2)]
+        assert max(xs) - min(xs) > w * 0.6, f"{name}: план обрізано по X"
+        assert max(ys) - min(ys) > h * 0.6, f"{name}: план обрізано по Y"

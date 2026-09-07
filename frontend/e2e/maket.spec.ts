@@ -55,3 +55,50 @@ test.describe("Макет квартири /maket", () => {
     expect(accept).toContain("application/pdf");
   });
 });
+
+/**
+ * Наскрізний крок «завантажив план → редактор зі знайденими стінами» на моках.
+ * Раніше e2e макета перевіряв лише статику сторінки, тож регрес у розборі
+ * відповіді /api/floorplan/analyze (напр. фікс `_apartment_bbox` 08.09, який
+ * повертав 7 стін замість 4) не ловився нічим.
+ */
+test.describe("Макет: аналіз плану", () => {
+  const WALLS = [
+    { x1: 60, y1: 60, x2: 940, y2: 60, thickness_m: 22, bearing: true, height_m: null },
+    { x1: 940, y1: 60, x2: 940, y2: 640, thickness_m: 22, bearing: true, height_m: null },
+    { x1: 940, y1: 640, x2: 60, y2: 640, thickness_m: 22, bearing: true, height_m: null },
+    { x1: 60, y1: 640, x2: 60, y2: 60, thickness_m: 22, bearing: true, height_m: null },
+    { x1: 500, y1: 60, x2: 500, y2: 640, thickness_m: 12, bearing: false, height_m: null },
+    { x1: 500, y1: 350, x2: 940, y2: 350, thickness_m: 12, bearing: false, height_m: null },
+  ];
+
+  test("після аналізу відкривається редактор з усіма стінами і масштабом", async ({ page }) => {
+    await page.route("**/api/floorplan/capabilities", (r) =>
+      r.fulfill({ json: { neural_detector: true, ocr_scale: false, pdf: true, max_upload_mb: 25, sizes_mm: [100, 150, 200, 250] } }));
+    await page.route("**/api/floorplan/analyze", (r) =>
+      r.fulfill({
+        json: {
+          plan: {
+            walls: WALLS, openings: [], rooms: [], wall_height_m: 2.7,
+            scale_source: "door", m_per_px: 0.0091, image_size_px: [1000, 700],
+            confidence: 0.99, notes: [],
+          },
+          scale: { m_per_px: 0.0091, source: "door", confidence: 0.25, detail: "Ширина дверей 80 см", candidates: [], ocr: [] },
+          preview: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          image_size_px: [1000, 700], detector: "nn", confidence: 0.99,
+          notes: [], warnings: [], timings_ms: { detect: 800 },
+          estimate: { plan_width_m: 8, plan_height_m: 5.3, area_m2: 42, sheet_width_m: 9.1, interior_px2: 500000 },
+        },
+      }));
+
+    await page.goto("/uk/maket");
+    await page.setInputFiles("input[type=file]", {
+      name: "plan.png", mimeType: "image/png",
+      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"),
+    });
+    // редактор показує знайдені стіни (усі 6, а не одну кімнату) і масштаб
+    await expect(page.locator("canvas").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/6/).first()).toBeVisible();
+    await expect(page.getByTestId("beta-banner")).toBeVisible();
+  });
+});

@@ -4979,9 +4979,39 @@ async def floorplan_generate(
     return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
 
 
+_FLOORPLAN_WARMED = False
+
+
+def _warm_floorplan_nn() -> None:
+    """Піднімає ONNX-сесію детектора стін ЗАЗДАЛЕГІДЬ.
+
+    Заміряно 08.09.2026: холодний шлях = імпорт пайплайну 15.5 с + перший
+    `analyze` 11.3 с ≈ 27 с, і всі 27 с чекав ПЕРШИЙ користувач після рестарту
+    бекенду. Гріємо не на старті сервера (на 6.4 ГБ VM тримати ONNX постійно
+    заради рідко вживаного сервісу — зайвий ризик памʼяті, VM уже падала), а
+    коли хтось ВІДКРИВ /maket: між відкриттям і завантаженням файлу людина
+    витрачає десятки секунд на вибір плану. Один раз на процес."""
+    global _FLOORPLAN_WARMED
+    if _FLOORPLAN_WARMED:
+        return
+    _FLOORPLAN_WARMED = True
+    try:
+        import numpy as _np
+        from services.floorplan import detect_nn as _dnn
+        if not _dnn.is_available():
+            return
+        t0 = _time.time()
+        _dnn.detect(_np.full((256, 256, 3), 255, dtype=_np.uint8))
+        print(f"[FLOORPLAN] NN warmed in {_time.time() - t0:.1f}s", flush=True)
+    except Exception as _wexc:  # noqa: BLE001
+        print(f"[FLOORPLAN] warm-up skipped: {_wexc}", flush=True)
+
+
 @app.get("/api/floorplan/capabilities")
-async def floorplan_capabilities():
-    """Що вміє сервіс на цьому сервері — фронтенд підлаштовує підказки."""
+async def floorplan_capabilities(background_tasks: BackgroundTasks):
+    """Що вміє сервіс на цьому сервері — фронтенд підлаштовує підказки.
+    Побічно: гріє детектор, щоб перший аналіз плану не чекав 27 с."""
+    background_tasks.add_task(_warm_floorplan_nn)
     try:
         from services.floorplan import detect_nn
         nn_ready = detect_nn.is_available()
