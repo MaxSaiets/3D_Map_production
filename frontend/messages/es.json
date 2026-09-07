@@ -219,7 +219,7 @@
       "keychainMap": "Llavero con mapa de la ciudad",
       "district": "Distrito de la ciudad en 3D",
       "cityMap": "Mapa 3D de la ciudad",
-      "districtMap": "{district}, {city} — mapa 3D",
+      "districtMap": "{district}, {city} — mapa del barrio (OpenStreetMap), plantilla de mapa 3D",
       "dims": "2,4 × 1,8 km"
     }
   },

@@ -219,7 +219,7 @@
       "keychainMap": "Брелок-мапа міста",
       "district": "3D-район міста",
       "cityMap": "3D-мапа міста",
-      "districtMap": "{district}, {city} — шаблон 3D-мапи (фото: приклад друку)",
+      "districtMap": "{district}, {city} — карта району (OpenStreetMap), шаблон 3D-мапи",
       "dims": "2.4 × 1.8 км"
     }
   },

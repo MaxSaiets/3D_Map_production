@@ -219,7 +219,7 @@
       "keychainMap": "Stadtkarten-Schlüsselanhänger",
       "district": "3D-Stadtbezirk",
       "cityMap": "3D-Stadtkarte",
-      "districtMap": "{district}, {city} — 3D-Karte",
+      "districtMap": "{district}, {city} — Stadtteilkarte (OpenStreetMap), 3D-Karten-Vorlage",
       "dims": "2,4 × 1,8 km"
     }
   },

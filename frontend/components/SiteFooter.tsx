@@ -106,7 +106,9 @@ export function SiteFooter() {
    <SiteFooter /> themselves (the landing "/"). The global footer is suppressed
    on these so we never double up or break the builder layout. */
 // /start — посадкова link-in-bio: миттєва і без 19-лінкового футера (3 дії + фото).
-const NO_GLOBAL_FOOTER = new Set<string>(["/", "/create", "/keychains", "/start"]);
+// 08.09.2026 (власник): футер ПОТРІБЕН і на /create та /keychains — контакти, оферта,
+// спосіб написати в Telegram. Білдер рендерить свій контент, футер іде після SEO-прози.
+const NO_GLOBAL_FOOTER = new Set<string>(["/", "/start"]);
 function isBuilderPath(pathname: string): boolean {
   // /capture and /capture/[id] are full-screen capture flows.
   return pathname === "/capture" || pathname.startsWith("/capture/");

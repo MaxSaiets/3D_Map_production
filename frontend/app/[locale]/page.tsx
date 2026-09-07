@@ -461,6 +461,35 @@ const TILE_GRADIENTS = [
   "linear-gradient(135deg, var(--forest-3) 0%, var(--forest-2) 100%)",
 ];
 
+/* Справжня карта району для картки пресета (08.09, власник: «чому тут нічого немає»).
+   Рендер району ще не робимо, тож чесний і інформативний варіант — OSM-тайли z15
+   блоком 2×2 (512 px), відцентровані на center шаблону, приглушені під бренд-тінт.
+   Lazy: вантажаться лише картки в кадрі. Атрибуція OSM — обовʼязкова (ODbL). */
+function DistrictTiles({ center }: { center: [number, number] }) {
+  const z = 15; const n = 2 ** z;
+  const lat = (center[0] * Math.PI) / 180;
+  const xf = ((center[1] + 180) / 360) * n;
+  const yf = ((1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2) * n;
+  const x0 = Math.floor(xf - 0.5); const y0 = Math.floor(yf - 0.5);
+  // Блок 512×512 (100 % ширини картки, квадрат); картка 16/10 → зсуваємо так, щоб
+  // точка (xf, yf) опинилась у центрі картки.
+  const leftPct = (0.5 - (xf - x0) * 0.5) * 100;
+  const topPct = ((0.3125 - (yf - y0) * 0.5) / 0.625) * 100;
+  const tiles = [[x0, y0], [x0 + 1, y0], [x0, y0 + 1], [x0 + 1, y0 + 1]];
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute grid w-full grid-cols-2" style={{ left: `${leftPct}%`, top: `${topPct}%`, aspectRatio: "1" }}>
+        {tiles.map(([x, y]) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={`${x}-${y}`} src={`https://tile.openstreetmap.org/${z}/${x}/${y}.png`} alt="" aria-hidden loading="lazy" decoding="async" className="block h-auto w-full" style={{ filter: "saturate(0.55) contrast(1.05) brightness(0.92)" }} />
+        ))}
+      </div>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(46,74,58,0.18)_0%,rgba(46,74,58,0.55)_100%)]" />
+      <span className="absolute bottom-1 right-2 text-[9px] text-[#F4EFE4]/70">© OpenStreetMap</span>
+    </div>
+  );
+}
+
 /* ---------- Templates gallery ---------- */
 function TemplatesGallery() {
   const t = useTranslations("home.templates");
@@ -501,16 +530,9 @@ function TemplatesGallery() {
               role="img"
               aria-label={tAlt("districtMap", { district: tg(`district.${t.id}`), city: tCity(t.cityKey) })}
             >
-              {/* Стилізована плитка замість фото — реального рендеру району ще нема,
-                  а циклічне stock-фото (map-N.webp) видавало себе за фото району
-                  (T-4.7). Контурні кола + пін чесно кажуть «це шаблон», не фото. */}
-              <div
-                className="absolute inset-0 opacity-[0.16]"
-                style={{
-                  backgroundImage:
-                    "repeating-radial-gradient(circle at 82% 78%, transparent 0, transparent 14px, rgba(244,239,228,.9) 15px, rgba(244,239,228,.9) 16px)",
-                }}
-              />
+              {/* T-4.7 → 08.09: справжня карта району (OSM-тайли), а не stock-фото і не
+                  декоративні кола; градієнт лишається фоном до завантаження тайлів. */}
+              <DistrictTiles center={t.center} />
               <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(244,239,228,.14)] text-[#F4EFE4]">
                 <MapPin size={18} />
               </div>

@@ -219,7 +219,7 @@
       "keychainMap": "Brelok z mapą miasta",
       "district": "Dzielnica miasta 3D",
       "cityMap": "Mapa 3D miasta",
-      "districtMap": "{district}, {city} — mapa 3D",
+      "districtMap": "{district}, {city} — mapa dzielnicy (OpenStreetMap), szablon mapy 3D",
       "dims": "2,4 × 1,8 km"
     }
   },

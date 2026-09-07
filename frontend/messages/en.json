@@ -219,7 +219,7 @@
       "keychainMap": "City map keychain",
       "district": "3D city district",
       "cityMap": "3D city map",
-      "districtMap": "{district}, {city} — 3D map",
+      "districtMap": "{district}, {city} — district map (OpenStreetMap), 3D map template",
       "dims": "2.4 × 1.8 km"
     }
   },

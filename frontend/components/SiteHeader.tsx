@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowRight, Box, User, Menu, X, Globe, KeyRound } from "lucide-react";
+import { ArrowRight, Box, User, Menu, X, Globe, KeyRound, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { locales, localeMeta } from "@/i18n/routing";
@@ -87,6 +87,18 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
           )}
           {!title && <span className="flex-1" />}
           <div className="flex shrink-0 items-center gap-1.5">
+            {/* 08.09: у білдері має бути видимий спосіб написати людині (Telegram). */}
+            <a
+              href="https://t.me/monadruk"
+              target="_blank"
+              rel="noopener"
+              aria-label="Telegram"
+              title="Telegram: @monadruk"
+              data-testid="builder-telegram"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-[#2AABEE] transition hover:border-[#2AABEE]"
+            >
+              <Send size={16} />
+            </a>
             <LanguageSwitcher compact />
             <Link
               href="/account"
