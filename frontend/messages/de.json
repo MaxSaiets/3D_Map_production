@@ -1643,6 +1643,11 @@
     "model": "Interaktives 3D-Modell",
     "modelLabeled": "3D-Modell: {label}"
   },
+  "beta": {
+    "title": "Testmodus.",
+    "worlds": "Das Relief wird prozedural aus Ihrer Beschreibung erzeugt. Die Form lässt sich manuell wählen. Für Druck oder Bestellung schreiben Sie uns — den Preis rechnen wir separat.",
+    "maket": "Die Planerkennung lernt noch: Prüfen Sie Wände und Maßstab vor der Bestellung. Der Preis wird separat berechnet."
+  },
   "worlds": {
     "badge": "KI-Generierung",
     "title": "Beschreibe deine Welt — erhalte sie in 3D",
@@ -1669,7 +1674,23 @@
     "hint": "Das Gelände wird vorerst prozedural erzeugt. Dies ist eine Vorschau — für Druck/Bestellung kontaktiere uns.",
     "errGen": "Generierung fehlgeschlagen. Bitte erneut versuchen.",
     "downloadGlb": "3D herunterladen (.glb)",
-    "previewEmpty": "Beschreibe links eine Welt — sie erscheint hier in 3D."
+    "previewEmpty": "Beschreibe links eine Welt — sie erscheint hier in 3D.",
+    "shapeLabel": "Reliefform",
+    "builtAs": "Gebaut: {shape}",
+    "reroll": "Andere Variante",
+    "downloadPrint": "Druckdatei (3MF)",
+    "genFailed": "Welt konnte nicht erzeugt werden. Andere Beschreibung oder Form versuchen.",
+    "tooLong": "Das dauert länger als üblich — Tab offen lassen.",
+    "shape_auto": "Aus der Beschreibung",
+    "shape_mountain": "Bergkamm",
+    "shape_island": "Insel",
+    "shape_valley": "Canyon",
+    "shape_plateau": "Plateau",
+    "shape_ridges": "Dünen",
+    "shape_crater": "Krater",
+    "shape_rolling": "Hügel",
+    "shape_volcano": "Vulkan",
+    "shape_archipelago": "Archipel"
   },
   "worldsMeta": {
     "title": "KI-3D-Weltgenerator",

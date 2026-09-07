@@ -502,3 +502,45 @@ def test_build_rejects_absurd_area():
     plan_px = masks_to_plan((mask == 1), (mask == 2), (mask == 3))
     with pytest.raises(FloorplanError):
         build(plan_px.to_dict(), 1.0)      # 1 м на піксель — квартира на гектар
+
+
+def test_apartment_bbox_survives_broken_outer_contour():
+    """Регрес 08.09.2026: одна щілина дверей у зовнішній стіні «випускала»
+    binary_fill_holes назовні, замкненою лишалась одна внутрішня кімната — і
+    _drop_outside різав по ній увесь план (13 відрізків → 4, зникала половина
+    квартири). Габарит має покривати ВЕСЬ план, а не одну кімнату."""
+    import numpy as np
+    import cv2
+    from services.floorplan.vectorize import _apartment_bbox
+
+    m = np.zeros((700, 1000), np.uint8)
+    W = 22
+    for x1, y1, x2, y2 in [(60, 60, 940, 60), (940, 60, 940, 640),
+                           (940, 640, 60, 640), (60, 640, 60, 60),
+                           (500, 60, 500, 640), (500, 350, 940, 350)]:
+        cv2.line(m, (x1, y1), (x2, y2), 255, W)
+    # двері: розриви у зовнішній стіні та в перегородці
+    cv2.rectangle(m, (220, 49), (300, 71), 0, -1)
+    cv2.rectangle(m, (489, 200), (511, 280), 0, -1)
+
+    bbox = _apartment_bbox(m)
+    assert bbox is not None
+    x0, y0, x1, y1 = bbox
+    assert x0 <= 120 and y0 <= 120, f"габарит почався надто пізно: {bbox}"
+    assert x1 >= 880 and y1 >= 580, f"габарит обрізав план: {bbox}"
+
+
+def test_apartment_bbox_still_ignores_dimension_chains():
+    """Фікс вище не має скасувати початкову мету: розмірні ланцюжки й рамка
+    аркуша лежать ПОЗА квартирою і не повинні розтягувати габарит."""
+    import numpy as np
+    import cv2
+    from services.floorplan.vectorize import _apartment_bbox
+
+    m = np.zeros((700, 1000), np.uint8)
+    cv2.rectangle(m, (200, 200), (600, 500), 255, 14)     # замкнена квартира
+    cv2.line(m, (40, 660), (960, 660), 255, 3)            # розмірний ланцюжок унизу
+    cv2.line(m, (40, 40), (960, 40), 255, 2)              # рамка аркуша
+    bbox = _apartment_bbox(m)
+    assert bbox is not None
+    assert bbox[1] > 100 and bbox[3] < 620, f"ланцюжки потрапили в габарит: {bbox}"

@@ -2703,9 +2703,25 @@ class CustomWorldRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
     size_mm: float = Field(default=120.0, ge=40.0, le=220.0)
     keychain_mode: bool = False
+    # 2026-09-08: користувач може ЯВНО обрати форму (інакше її вгадує парсер) і
+    # попросити «інший варіант» тим самим описом (variant зсуває seed).
+    shape: Optional[str] = None
+    variant: int = Field(default=0, ge=0, le=999)
 
 
-def generate_custom_task(task_id: str, prompt: str, size_mm: float, keychain_mode: bool):
+# Людські назви форм для статусу задачі. Було: «Будую mountain...» у
+# україномовному UI (скріншот власника 08.09).
+_WORLD_SHAPE_UK = {
+    "mountain": "гірський хребет", "island": "острів", "valley": "каньйон",
+    "plateau": "плато", "ridges": "дюни", "crater": "кратер",
+    "rolling": "пагорби", "volcano": "вулкан", "archipelago": "архіпелаг",
+}
+
+
+def generate_custom_task(
+    task_id: str, prompt: str, size_mm: float, keychain_mode: bool,
+    shape: Optional[str] = None, variant: int = 0,
+):
     """Фон: промт → spec (Claude або rule-based) → процедурний світ → 3MF/STL/GLB."""
     task = tasks.get(task_id)
     if task is None:
@@ -2714,8 +2730,9 @@ def generate_custom_task(task_id: str, prompt: str, size_mm: float, keychain_mod
         from services.llm_orchestrator import prompt_to_spec
         from services.procedural_generator import generate_world_mesh
         task.update_status("processing", 15, "Аналізую опис світу...")
-        spec, src = prompt_to_spec(prompt, size_mm)
-        task.update_status("processing", 45, f"Будую {spec.get('shape', 'світ')}...")
+        spec, src = prompt_to_spec(prompt, size_mm, shape_override=shape, seed_extra=int(variant) * 7919)
+        _human = _WORLD_SHAPE_UK.get(str(spec.get("shape", "")), "рельєф")
+        task.update_status("processing", 45, f"Будую {_human}…")
         mesh = generate_world_mesh(spec)
         task.update_status("processing", 80, "Експортую модель...")
         basename = f"custom_{task_id[:8]}"
@@ -2730,7 +2747,12 @@ def generate_custom_task(task_id: str, prompt: str, size_mm: float, keychain_mod
             print(f"[CUSTOM] glb_pack skipped: {_pack_exc}")
         task.set_output("3mf", p3mf); task.set_output("stl", pstl); task.set_output("glb", pglb)
         task.complete(p3mf)
-        task.message = f"Світ готовий · {spec.get('shape', '')} [{src}]"
+        task.message = f"Готово · {_human}"
+        # Форма й seed потрібні фронту: показати, ЩО саме збудовано, і дати
+        # «інший варіант» тим самим описом.
+        task.world_spec = {"shape": spec.get("shape"), "shapeUk": _human,
+                           "seed": spec.get("seed"), "source": src,
+                           "heightMm": spec.get("max_height_mm")}
         print(f"[CUSTOM] {task_id} done: {spec.get('shape')} src={src} -> {p3mf}", flush=True)
     except Exception as exc:  # noqa: BLE001
         import traceback
@@ -2750,7 +2772,8 @@ async def generate_custom(
     task_id = str(uuid.uuid4())
     tasks[task_id] = GenerationTask(task_id=task_id, request={"prompt": request.prompt})
     background_tasks.add_task(
-        generate_custom_task, task_id, request.prompt, float(request.size_mm), bool(request.keychain_mode),
+        generate_custom_task, task_id, request.prompt, float(request.size_mm),
+        bool(request.keychain_mode), request.shape, int(request.variant),
     )
     print(f"[CUSTOM] created task {task_id} for prompt: {request.prompt[:60]}", flush=True)
     return GenerationResponse(task_id=task_id, status="processing", message="Задача створена")
@@ -2914,6 +2937,9 @@ async def get_status(task_id: str):
         # Додано окремим ключем (а не заміною) — старі клієнти його просто ігнорують.
         "download_url_glb": to_static_url(output_files.get("glb")),
         "keychain_manifest": getattr(task, "keychain_manifest", None),
+        # Режим «опиши світ»: що саме збудовано (форма + seed) — фронт показує
+        # людську назву і дає «інший варіант».
+        "world_spec": getattr(task, "world_spec", None),
         "preview_3mf": to_static_url(output_files.get("preview_3mf")),  # РћСЃРЅРѕРІРЅРµ РїСЂРµРІ'СЋ РІ 3MF
         "preview_parts": {
             "base": to_static_url(output_files.get("base_3mf")),

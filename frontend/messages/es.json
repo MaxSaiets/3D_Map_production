@@ -1643,6 +1643,11 @@
     "model": "Modelo 3D interactivo",
     "modelLabeled": "Modelo 3D: {label}"
   },
+  "beta": {
+    "title": "Modo de prueba.",
+    "worlds": "El relieve se genera de forma procedural a partir de tu descripción. La forma se puede elegir manualmente. Para imprimir o pedir, escríbenos: lo presupuestamos aparte.",
+    "maket": "El reconocimiento del plano aún está aprendiendo: revisa las paredes y la escala antes de pedir. La maqueta se presupuesta aparte."
+  },
   "worlds": {
     "badge": "Generación IA",
     "title": "Describe tu mundo — obténlo en 3D",
@@ -1669,7 +1674,23 @@
     "hint": "El terreno se genera de forma procedural por ahora. Es una vista previa — contáctanos para imprimir o pedir.",
     "errGen": "Error al generar. Inténtalo de nuevo.",
     "downloadGlb": "Descargar 3D (.glb)",
-    "previewEmpty": "Describe un mundo a la izquierda — aparecerá aquí en 3D."
+    "previewEmpty": "Describe un mundo a la izquierda — aparecerá aquí en 3D.",
+    "shapeLabel": "Forma del relieve",
+    "builtAs": "Construido: {shape}",
+    "reroll": "Otra variante",
+    "downloadPrint": "Archivo de impresión (3MF)",
+    "genFailed": "No se pudo generar el mundo. Prueba otra descripción o forma.",
+    "tooLong": "Está tardando más de lo normal: no cierres la pestaña.",
+    "shape_auto": "Según la descripción",
+    "shape_mountain": "Cordillera",
+    "shape_island": "Isla",
+    "shape_valley": "Cañón",
+    "shape_plateau": "Meseta",
+    "shape_ridges": "Dunas",
+    "shape_crater": "Cráter",
+    "shape_rolling": "Colinas",
+    "shape_volcano": "Volcán",
+    "shape_archipelago": "Archipiélago"
   },
   "worldsMeta": {
     "title": "Generador de mundos 3D con IA",

@@ -1643,6 +1643,11 @@
     "model": "Interaktywny model 3D",
     "modelLabeled": "Model 3D: {label}"
   },
+  "beta": {
+    "title": "Tryb testowy.",
+    "worlds": "Rzeźba terenu powstaje proceduralnie z Twojego opisu. Kształt można wybrać ręcznie. W sprawie druku lub zamówienia napisz do nas — wycenimy osobno.",
+    "maket": "Rozpoznawanie planu wciąż się uczy: przed zamówieniem sprawdź ściany i skalę. Cena makiety liczona osobno."
+  },
   "worlds": {
     "badge": "Generowanie AI",
     "title": "Opisz swój świat — otrzymaj go w 3D",
@@ -1669,7 +1674,23 @@
     "hint": "Teren jest na razie generowany proceduralnie. To podgląd — skontaktuj się, aby wydrukować lub zamówić.",
     "errGen": "Generowanie nie powiodło się. Spróbuj ponownie.",
     "downloadGlb": "Pobierz 3D (.glb)",
-    "previewEmpty": "Opisz świat po lewej — pojawi się tutaj w 3D."
+    "previewEmpty": "Opisz świat po lewej — pojawi się tutaj w 3D.",
+    "shapeLabel": "Kształt terenu",
+    "builtAs": "Zbudowano: {shape}",
+    "reroll": "Inny wariant",
+    "downloadPrint": "Plik do druku (3MF)",
+    "genFailed": "Nie udało się wygenerować świata. Spróbuj innego opisu lub kształtu.",
+    "tooLong": "To trwa dłużej niż zwykle — nie zamykaj karty.",
+    "shape_auto": "Z opisu",
+    "shape_mountain": "Grzbiet górski",
+    "shape_island": "Wyspa",
+    "shape_valley": "Kanion",
+    "shape_plateau": "Płaskowyż",
+    "shape_ridges": "Wydmy",
+    "shape_crater": "Krater",
+    "shape_rolling": "Wzgórza",
+    "shape_volcano": "Wulkan",
+    "shape_archipelago": "Archipelag"
   },
   "worldsMeta": {
     "title": "Generator światów 3D z AI",

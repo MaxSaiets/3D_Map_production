@@ -282,10 +282,16 @@ export const api = {
   },
 
   // Режим «опиши світ» (#5): вільний промт → процедурна 3D-модель рельєфу.
-  async generateCustom(prompt: string, sizeMm = 120): Promise<GenerationResponse> {
+  async generateCustom(
+    prompt: string,
+    sizeMm = 120,
+    opts?: { shape?: string; variant?: number },
+  ): Promise<GenerationResponse> {
     const response = await axios.post<GenerationResponse>(
       `${API_BASE_URL}/api/generate-custom`,
-      { prompt, size_mm: sizeMm }
+      // shape — явний вибір користувача (інакше форму вгадує парсер опису);
+      // variant — «інший варіант» тим самим описом (зсув seed на бекенді).
+      { prompt, size_mm: sizeMm, shape: opts?.shape, variant: opts?.variant ?? 0 }
     );
     return response.data;
   },

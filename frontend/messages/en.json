@@ -1643,6 +1643,11 @@
     "model": "Interactive 3D model",
     "modelLabeled": "3D model: {label}"
   },
+  "beta": {
+    "title": "Test mode.",
+    "worlds": "The terrain is generated procedurally from your description. You can pick the shape manually. For printing or an order, message us — we quote it separately.",
+    "maket": "Plan recognition is still learning: always check the walls and the scale before ordering. The model is quoted separately."
+  },
   "worlds": {
     "badge": "AI generation",
     "title": "Describe your world — get it in 3D",
@@ -1669,7 +1674,23 @@
     "hint": "Terrain is generated procedurally for now. This is a preview — contact us to print or order.",
     "errGen": "Generation failed. Please try again.",
     "downloadGlb": "Download 3D (.glb)",
-    "previewEmpty": "Describe a world on the left — it'll appear here in 3D."
+    "previewEmpty": "Describe a world on the left — it'll appear here in 3D.",
+    "shapeLabel": "Terrain shape",
+    "builtAs": "Built: {shape}",
+    "reroll": "Another variant",
+    "downloadPrint": "Print file (3MF)",
+    "genFailed": "Could not generate the world. Try another description or shape.",
+    "tooLong": "This is taking longer than usual — keep the tab open.",
+    "shape_auto": "From description",
+    "shape_mountain": "Mountain ridge",
+    "shape_island": "Island",
+    "shape_valley": "Canyon",
+    "shape_plateau": "Plateau",
+    "shape_ridges": "Dunes",
+    "shape_crater": "Crater",
+    "shape_rolling": "Hills",
+    "shape_volcano": "Volcano",
+    "shape_archipelago": "Archipelago"
   },
   "worldsMeta": {
     "title": "AI 3D world generator",

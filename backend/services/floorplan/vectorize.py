@@ -226,22 +226,62 @@ def _apartment_bbox(solid: np.ndarray, min_room_px: int = 400
     from scipy.ndimage import binary_fill_holes
 
     m = (solid > 0)
-    try:
-        rooms = binary_fill_holes(m) & ~m
-    except Exception:
-        return None
-    rooms_u8 = rooms.astype(np.uint8)
-    num, _labels, stats, _ = cv2.connectedComponentsWithStats(rooms_u8, connectivity=8)
-    boxes = [
-        (stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_TOP],
-         stats[i, cv2.CC_STAT_LEFT] + stats[i, cv2.CC_STAT_WIDTH],
-         stats[i, cv2.CC_STAT_TOP] + stats[i, cv2.CC_STAT_HEIGHT])
-        for i in range(1, num) if stats[i, cv2.CC_STAT_AREA] >= min_room_px
-    ]
-    if not boxes:
-        return None
-    return (float(min(b[0] for b in boxes)), float(min(b[1] for b in boxes)),
-            float(max(b[2] for b in boxes)), float(max(b[3] for b in boxes)))
+
+    def _rooms_bbox(mask: np.ndarray):
+        try:
+            rooms = binary_fill_holes(mask) & ~mask
+        except Exception:  # noqa: BLE001
+            return None
+        num, _labels, stats, _ = cv2.connectedComponentsWithStats(
+            rooms.astype(np.uint8), connectivity=8)
+        boxes = [
+            (stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_TOP],
+             stats[i, cv2.CC_STAT_LEFT] + stats[i, cv2.CC_STAT_WIDTH],
+             stats[i, cv2.CC_STAT_TOP] + stats[i, cv2.CC_STAT_HEIGHT])
+            for i in range(1, num) if stats[i, cv2.CC_STAT_AREA] >= min_room_px
+        ]
+        if not boxes:
+            return None
+        return (float(min(b[0] for b in boxes)), float(min(b[1] for b in boxes)),
+                float(max(b[2] for b in boxes)), float(max(b[3] for b in boxes)))
+
+    def _area(b) -> float:
+        return max(0.0, b[2] - b[0]) * max(0.0, b[3] - b[1]) if b else 0.0
+
+    bbox = _rooms_bbox(m)
+
+    # ⭐ПАСТКА 08.09 (знайдено на синтетичному плані, підтверджено логікою):
+    # вхідні двері / балконний блок РОЗРИВАЮТЬ зовнішній контур, тож
+    # binary_fill_holes «витікає» назовні і замкненою лишається лише випадкова
+    # внутрішня кімната. Габаритом квартири ставала ВОНА, а _drop_outside різав
+    # решту плану (на тесті: 13 відрізків → 4, зникали дві перегородки й уся
+    # ліва половина). Лікуємо тим самим прийомом, що й builder._close_footprint:
+    # тимчасово замикаємо розриви морфологією зі зростаючим радіусом.
+    ref = None
+    num_c, _lab, stats_c, _ = cv2.connectedComponentsWithStats(
+        m.astype(np.uint8), connectivity=8)
+    if num_c > 1:
+        big = 1 + int(np.argmax(stats_c[1:, cv2.CC_STAT_AREA]))
+        ref = (float(stats_c[big, cv2.CC_STAT_LEFT]), float(stats_c[big, cv2.CC_STAT_TOP]),
+               float(stats_c[big, cv2.CC_STAT_LEFT] + stats_c[big, cv2.CC_STAT_WIDTH]),
+               float(stats_c[big, cv2.CC_STAT_TOP] + stats_c[big, cv2.CC_STAT_HEIGHT]))
+
+    if ref is not None and _area(bbox) < _area(ref) * 0.45:
+        side = float(min(m.shape[:2]))
+        for frac in (0.02, 0.045, 0.08):
+            r = max(3, int(side * frac))
+            k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+            closed = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_CLOSE, k) > 0
+            cand = _rooms_bbox(closed)
+            if _area(cand) > _area(bbox):
+                bbox = cand
+            if _area(bbox) >= _area(ref) * 0.45:
+                break
+        # Якщо навіть замикання не допомогло — краще взяти габарит найбільшої
+        # компоненти стін, ніж різати план по одній кімнаті.
+        if _area(bbox) < _area(ref) * 0.45:
+            bbox = ref
+    return bbox
 
 
 def _drop_outside(segments: List[Tuple[Pt, Pt, float]],

@@ -1643,6 +1643,11 @@
     "model": "Modèle 3D interactif",
     "modelLabeled": "Modèle 3D : {label}"
   },
+  "beta": {
+    "title": "Mode test.",
+    "worlds": "Le relief est généré de façon procédurale à partir de votre description. La forme peut être choisie manuellement. Pour l'impression ou une commande, écrivez-nous — le prix est calculé séparément.",
+    "maket": "La reconnaissance du plan apprend encore : vérifiez les murs et l'échelle avant de commander. Le prix est calculé séparément."
+  },
   "worlds": {
     "badge": "Génération IA",
     "title": "Décris ton monde — obtiens-le en 3D",
@@ -1669,7 +1674,23 @@
     "hint": "Le relief est généré de façon procédurale pour l'instant. Ceci est un aperçu — contacte-nous pour imprimer ou commander.",
     "errGen": "Échec de la génération. Réessaie.",
     "downloadGlb": "Télécharger 3D (.glb)",
-    "previewEmpty": "Décris un monde à gauche — il apparaîtra ici en 3D."
+    "previewEmpty": "Décris un monde à gauche — il apparaîtra ici en 3D.",
+    "shapeLabel": "Forme du relief",
+    "builtAs": "Construit : {shape}",
+    "reroll": "Autre variante",
+    "downloadPrint": "Fichier d'impression (3MF)",
+    "genFailed": "Impossible de générer le monde. Essayez une autre description ou forme.",
+    "tooLong": "Cela prend plus de temps que d'habitude — gardez l'onglet ouvert.",
+    "shape_auto": "D'après la description",
+    "shape_mountain": "Crête montagneuse",
+    "shape_island": "Île",
+    "shape_valley": "Canyon",
+    "shape_plateau": "Plateau",
+    "shape_ridges": "Dunes",
+    "shape_crater": "Cratère",
+    "shape_rolling": "Collines",
+    "shape_volcano": "Volcan",
+    "shape_archipelago": "Archipel"
   },
   "worldsMeta": {
     "title": "Générateur de mondes 3D par IA",

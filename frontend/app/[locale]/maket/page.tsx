@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, Home } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { BetaBanner } from "@/components/BetaBanner";
 
 // Студія тягне canvas-редактор і (лениво) three.js — на сервері їй нічого робити.
 const FloorplanStudio = dynamic(() => import("@/components/FloorplanStudio"), {
@@ -18,6 +19,7 @@ export default function MaketPage() {
 
   return (
     <main className="min-h-screen bg-[var(--ivory,#f7f5ee)]">
+      <BetaBanner mode="maket" />
       <div className="mx-auto w-full max-w-[1180px] px-4 pt-6">
         <Link
           href="/"
