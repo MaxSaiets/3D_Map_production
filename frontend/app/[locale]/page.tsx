@@ -207,13 +207,13 @@ function Hero() {
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
-                <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
+                <div className="min-h-[260px] overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
                   <Model3DViewer url="/models/keychain-fea.glb" height={260} label={t("viewerKeychain")} poster="/showcase/card-keychain-400.webp" />
                 </div>
                 <p className="mt-1.5 px-1 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{t("capKeychain")}</p>
               </div>
               <div>
-                <div className="overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
+                <div className="min-h-[260px] overflow-hidden rounded-[14px] border border-line-soft bg-gradient-to-b from-[#f6f1e6] to-[#ece4d3]">
                   <Model3DViewer url="/models/map-dense.glb" height={260} label={t("viewerMap")} poster="/showcase/card-map3d-400.webp" />
                 </div>
                 <p className="mt-1.5 px-1 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{t("capMap")}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Instagram, Youtube, Send } from "lucide-react";
+import { Box, Instagram, Youtube, Send, Facebook } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { BUSINESS } from "@/lib/legal";
@@ -58,6 +58,18 @@ export function SiteFooter() {
           <a href="https://t.me/monadruk" target="_blank" rel="noopener me" aria-label="Telegram Monadruk"
              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
             <Send size={18} />
+          </a>
+          <a href="https://www.tiktok.com/@monadruk" target="_blank" rel="noopener me" aria-label="TikTok Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M16.5 3c.3 2.3 1.7 3.9 4 4.1v3.2c-1.5 0-2.9-.5-4-1.3v6.4c0 3.2-2.6 5.6-5.8 5.6S5 18.6 5 15.4s2.6-5.6 5.7-5.6c.3 0 .6 0 .9.1v3.3a2.5 2.5 0 0 0-.9-.2 2.4 2.4 0 1 0 2.4 2.4V3h3.4z"/></svg>
+          </a>
+          <a href="https://www.facebook.com/1080540055153795" target="_blank" rel="noopener me" aria-label="Facebook Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <Facebook size={18} />
+          </a>
+          <a href="https://www.pinterest.com/monadruk/" target="_blank" rel="noopener me" aria-label="Pinterest Monadruk"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-soft text-ink-3 transition hover:border-[var(--accent)] hover:text-ink">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-3.6 19.3c-.1-.8-.2-2 0-2.9l1.2-5s-.3-.6-.3-1.5c0-1.4.8-2.4 1.8-2.4.8 0 1.3.6 1.3 1.4 0 .9-.6 2.2-.8 3.4-.2 1 .5 1.8 1.5 1.8 1.8 0 3.2-1.9 3.2-4.6 0-2.4-1.7-4.1-4.2-4.1-2.9 0-4.5 2.1-4.5 4.4 0 .9.3 1.8.8 2.3.1.1.1.2.1.3l-.3 1.2c0 .2-.2.2-.4.1-1.2-.6-2-2.4-2-3.9 0-3.2 2.3-6.1 6.6-6.1 3.5 0 6.2 2.5 6.2 5.8 0 3.4-2.2 6.2-5.2 6.2-1 0-2-.5-2.3-1.1l-.6 2.4c-.2.9-.8 2-1.2 2.6A10 10 0 1 0 12 2z"/></svg>
           </a>
         </div>
         {/* Контакти + реквізити продавця — вимога платіжних систем (LiqPay). */}

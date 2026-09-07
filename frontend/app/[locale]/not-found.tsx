@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ArrowRight } from "lucide-react";
 
 export default function NotFound() {
   const t = useTranslations("notFound");
+  // Клієнтський not-found не має metadata → без цього <title> = заголовок головної (аудит 07.09).
+  useEffect(() => { document.title = `404 — ${t("title")} · Monadruk`; }, [t]);
   return (
     <div className="mx-auto flex min-h-[70dvh] max-w-[640px] flex-col items-center justify-center px-5 text-center">
       <div className="font-serif text-[clamp(72px,16vw,140px)] leading-none text-forest/25">404</div>

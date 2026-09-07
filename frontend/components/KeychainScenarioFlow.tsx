@@ -556,7 +556,7 @@ export function KeychainScenarioFlow({
                     // (і шаблон дозволяє авто-напис — не половинка серця).
                     if (!labelManualRef.current && autoLabelRef.current) onLabelChange(c.text);
                   }}
-                  className="rounded-full border border-[var(--surface-border)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
+                  className="min-h-10 rounded-full border border-[var(--surface-border)] bg-white/70 px-3.5 py-2 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]"
                 >
                   {locale === "uk" ? c.uk : c.en}
                 </button>

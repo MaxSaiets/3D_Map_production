@@ -225,7 +225,7 @@
   },
   "keychainsMeta": {
     "title": "Porte-clés carte de ville — gravé à votre texte, dès ≈3 €",
-    "description": "Porte-clés carte 55×30 mm sur mesure : les rues de votre quartier en relief, texte gravé au dos — prénom, date, coordonnées. Impression 3D dès ≈3 €, livraison en Ukraine.",
+    "description": "Porte-clés carte 55×30 mm sur mesure : rues et parcs de votre quartier en relief, texte gravé au dos — prénom, date, coordonnées. Impression 3D dès ≈3 €, livraison en Ukraine.",
     "keywords": "porte-clés carte de ville, porte-clés carte, porte-clés 3D personnalisé, porte-clés avec prénom, porte-clés gravé, porte-clés topographique, porte-clés relief montagne, porte-clés cœur carte, porte-clés maison, cadeau pour lui, cadeau pour elle, cadeau d'anniversaire, porte-clés couple"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "Carte 3D de {city} — dès 6 €, prête en 2 min",
-    "description": "Carte 3D de {city} : choisissez un quartier dans le configurateur — un modèle avec rues, bâtiments et rivières en 2 minutes. Impression Eco PLA dès ≈6 € livrée en Ukraine, ou fichier 3MF/STL à télécharger. Porte-clés dès ≈3 €.",
+    "description": "Carte 3D de {city} : choisissez un quartier dans le configurateur — un modèle avec rues et bâtiments en 2 minutes. Impression dès ≈6 € livrée en Ukraine, ou fichier gratuit à imprimer.",
     "h1": "Carte 3D de {city}",
     "p1": "La carte 3D de {city} est un modèle tridimensionnel tactile d'un quartier : rues, bâtiments avec leurs vraies hauteurs, parcs et rivières issus d'OpenStreetMap. Choisissez n'importe quel quartier de {city} dans le configurateur — le modèle est prêt en quelques minutes en 3MF ou STL pour Bambu Studio ou PrusaSlicer.",
     "p2": "Pas d'imprimante 3D ? Nous imprimons la carte ou le porte-clés de {city} en Eco PLA écologique et livrons en Ukraine. Un cadeau parfait pour qui aime sa ville.",

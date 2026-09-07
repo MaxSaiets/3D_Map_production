@@ -173,5 +173,6 @@ export default function Model3DViewer({
   );
 }
 
-// Preload the hero models for snappy first paint.
-useGLTF.preload("/models/keychain-fea.glb");
+// Аудит 07.09: модульний useGLTF.preload тягнув GLB (144 КБ) + draco_decoder.wasm (88 КБ)
+// на КОЖНІЙ сторінці, що імпортує вʼюер, ще до появи блоку в кадрі. Вʼюер і так
+// монтується лише біля вікна (IntersectionObserver) — прелоад прибрано.

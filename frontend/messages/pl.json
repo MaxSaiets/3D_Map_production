@@ -225,7 +225,7 @@
   },
   "keychainsMeta": {
     "title": "Brelok z mapą miasta — z grawerem i napisem, od ≈3 €",
-    "description": "Brelok-mapa 55×30 mm na zamówienie: ulice Twojej dzielnicy w reliefie, własny napis lub grawer z tyłu — imię, data, współrzędne. Druk 3D od ≈3 €, wysyłka po Ukrainie.",
+    "description": "Brelok z mapą 55×30 mm na zamówienie: ulice i parki Twojej dzielnicy w reliefie, grawerowany napis z tyłu — imię, data, współrzędne. Druk 3D od ≈3 €, wysyłka po Ukrainie.",
     "keywords": "brelok z mapą miasta, brelok mapa, brelok 3d personalizowany, brelok z imieniem, brelok z grawerem, brelok topograficzny, brelok z rzeźbą gór, brelok serce z mapą, brelok domek, prezent dla niego, prezent dla niej, prezent na rocznicę, brelok dla pary"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "Mapa 3D miasta {city} — od 6 €, gotowa w 2 min",
-    "description": "Mapa 3D miasta {city}: wybierz dzielnicę w kreatorze — w 2 minuty powstaje model z ulicami, budynkami i rzekami. Druk z Eco PLA od ≈6 € z wysyłką po Ukrainie, albo plik 3MF/STL do własnego druku. Brelok od ≈3 €.",
+    "description": "Mapa 3D miasta {city}: wybierz dzielnicę w kreatorze — model z ulicami i budynkami w 2 minuty. Druk od ≈6 € z wysyłką po Ukrainie lub bezpłatny plik do samodzielnego druku.",
     "h1": "Mapa 3D miasta {city}",
     "p1": "Mapa 3D miasta {city} to dotykowy trójwymiarowy model dzielnicy: ulice, budynki z prawdziwymi wysokościami, parki i rzeki z danych OpenStreetMap. Wybierz dowolną dzielnicę miasta {city} w kreatorze — model będzie gotowy w kilka minut jako 3MF lub STL dla Bambu Studio czy PrusaSlicer.",
     "p2": "Nie masz drukarki 3D? Wydrukujemy mapę lub brelok z mapą miasta {city} z ekologicznego Eco PLA i wyślemy po Ukrainie. Idealny prezent dla każdego, kto kocha swoje miasto.",

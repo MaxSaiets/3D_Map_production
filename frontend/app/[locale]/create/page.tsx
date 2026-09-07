@@ -771,7 +771,7 @@ export default function Home() {
                 onClick={() => switchStage("map")}
                 aria-pressed={stageView === "map"}
                 data-testid="stage-map"
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${stageView === "map" ? "bg-[var(--accent-strong)] text-white shadow" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
+                className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${stageView === "map" ? "bg-[var(--accent-strong)] text-white shadow" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
               >
                 🗺 {tc("stageMap")}
               </button>
@@ -782,7 +782,7 @@ export default function Home() {
                 disabled={!canShowRender}
                 data-testid="stage-render"
                 title={canShowRender ? undefined : tc("stageRenderLocked")}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
                   stageView === "render"
                     ? "bg-[var(--accent-strong)] text-white shadow"
                     : canShowRender

@@ -4,6 +4,7 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import ShareViewer from "@/components/ShareViewer";
+import { notFound } from "next/navigation";
 
 /**
  * E4: публічна share-сторінка згенерованої моделі. og:image = реальний рендер
@@ -52,6 +53,8 @@ export default async function SharePage({
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "share" });
   const ok = ID_RE.test(params.taskId);
+  // Аудит 07.09: невалідний id віддавав 200 із заглушкою (soft-404) → чесний 404.
+  if (!ok) notFound();
 
   return (
     <main id="main-content" tabIndex={-1} className="mx-auto max-w-[720px] px-5 py-14 text-center lg:py-20">

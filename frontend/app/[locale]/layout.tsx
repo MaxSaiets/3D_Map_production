@@ -170,10 +170,15 @@ export default async function LocaleLayout({
         ],
         // sameAs = «це справжній бізнес із живими профілями» (E-E-A-T сигнал).
         // Підтверджені живі профілі; TikTok додати, щойно власник підтвердить хендл.
+        // Повний список від власника (2026-09-07).
         sameAs: [
           "https://t.me/monadruk",
           "https://www.instagram.com/monadruk/",
           "https://www.youtube.com/@monadruk",
+          "https://www.tiktok.com/@monadruk",
+          "https://www.facebook.com/1080540055153795",
+          "https://www.pinterest.com/monadruk/",
+          "https://www.threads.com/@monadruk",
         ],
       },
       {

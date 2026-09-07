@@ -116,37 +116,37 @@ export type ProseFaqItem = { q: string; a: string };
 
 const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
   uk: [
-    { q: "Скільки коштує 3D-мапа?", a: "Від 250 ₴ за розмір S (5,5 см) до 550 ₴ за XL (15 см). Рельєф місцевості — опція +60 ₴." },
+    { q: "Скільки коштує 3D-мапа?", a: "3D-мапа — від 250 ₴ за розмір S (5,5 см) до 550 ₴ за XL (15 см), рельєф місцевості +60 ₴. Магніт на холодильник — 150 ₴, брелок — від 120 ₴." },
     { q: "Яку ділянку краще обрати?", a: "Ділянку 400–800 метрів зі змішаною забудовою: трохи вулиць, парк або вода — так район впізнається з першого погляду." },
     { q: "Скільки триває виготовлення?", a: "2–4 робочі дні на друк, потім доставка Новою Поштою по Україні." },
     { q: "Чи можна надрукувати самому?", a: "Так — завантажте готовий файл 3MF або STL, він одразу відкривається в Bambu Studio чи PrusaSlicer." },
   ],
   en: [
-    { q: "How much does a 3D map cost?", a: "From ≈€6 for size S (5.5 cm) to ≈€13 for XL (15 cm). Terrain relief is an option, +≈€1.5." },
+    { q: "How much does a 3D map cost?", a: "A 3D map is from ≈€6 for size S (5.5 cm) to ≈€13 for XL (15 cm), terrain relief +≈€1.5. A fridge magnet is ≈€3.5, a keychain from ≈€3." },
     { q: "Which area should I pick?", a: "A 400–800 m area with mixed content: some streets, a park or water — the district stays recognizable at first glance." },
     { q: "How long does production take?", a: "1–3 business days to print, then shipping across Ukraine." },
     { q: "Can I print it myself?", a: "Yes — download the ready 3MF or STL file, it opens directly in Bambu Studio or PrusaSlicer." },
   ],
   de: [
-    { q: "Was kostet eine 3D-Karte?", a: "Von ≈6 € für Größe S (5,5 cm) bis ≈13 € für XL (15 cm). Geländerelief ist eine Option, +≈1,5 €." },
+    { q: "Was kostet eine 3D-Karte?", a: "Eine 3D-Karte kostet von ≈6 € (Größe S, 5,5 cm) bis ≈13 € (XL, 15 cm), Geländerelief +≈1,5 €. Kühlschrankmagnet ≈3,5 €, Anhänger ab ≈3 €." },
     { q: "Welchen Bereich soll ich wählen?", a: "Einen Bereich von 400–800 m mit gemischtem Inhalt: ein paar Straßen, ein Park oder Wasser — so bleibt das Viertel auf den ersten Blick erkennbar." },
     { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druck, dann Versand in die Ukraine." },
     { q: "Kann ich es selbst drucken?", a: "Ja — lade die fertige 3MF- oder STL-Datei herunter, sie öffnet direkt in Bambu Studio oder PrusaSlicer." },
   ],
   pl: [
-    { q: "Ile kosztuje mapa 3D?", a: "Od ≈6 € za rozmiar S (5,5 cm) do ≈13 € za XL (15 cm). Rzeźba terenu to opcja, +≈1,5 €." },
+    { q: "Ile kosztuje mapa 3D?", a: "Mapa 3D kosztuje od ≈6 € (rozmiar S, 5,5 cm) do ≈13 € (XL, 15 cm), rzeźba terenu +≈1,5 €. Magnes na lodówkę ≈3,5 €, brelok od ≈3 €." },
     { q: "Jaki obszar najlepiej wybrać?", a: "Obszar 400–800 m z mieszaną zabudową: trochę ulic, park lub woda — dzielnica pozostaje rozpoznawalna od pierwszego spojrzenia." },
     { q: "Ile trwa wykonanie?", a: "1–3 dni robocze na druk, potem wysyłka na Ukrainę." },
     { q: "Czy mogę wydrukować sam?", a: "Tak — pobierz gotowy plik 3MF lub STL, otwiera się od razu w Bambu Studio lub PrusaSlicer." },
   ],
   fr: [
-    { q: "Combien coûte une carte 3D ?", a: "De ≈6 € pour la taille S (5,5 cm) à ≈13 € pour XL (15 cm). Le relief du terrain est une option, +≈1,5 €." },
+    { q: "Combien coûte une carte 3D ?", a: "Une carte 3D coûte de ≈6 € (taille S, 5,5 cm) à ≈13 € (XL, 15 cm), relief du terrain +≈1,5 €. Magnet de frigo ≈3,5 €, porte-clés dès ≈3 €." },
     { q: "Quelle zone choisir ?", a: "Une zone de 400 à 800 m au contenu varié : quelques rues, un parc ou de l'eau — le quartier reste reconnaissable au premier coup d'œil." },
     { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés pour l'impression, puis livraison en Ukraine." },
     { q: "Puis-je l'imprimer moi-même ?", a: "Oui — téléchargez le fichier 3MF ou STL prêt, il s'ouvre directement dans Bambu Studio ou PrusaSlicer." },
   ],
   es: [
-    { q: "¿Cuánto cuesta un mapa 3D?", a: "Desde ≈6 € para el tamaño S (5,5 cm) hasta ≈13 € para XL (15 cm). El relieve del terreno es una opción, +≈1,5 €." },
+    { q: "¿Cuánto cuesta un mapa 3D?", a: "Un mapa 3D cuesta desde ≈6 € (tamaño S, 5,5 cm) hasta ≈13 € (XL, 15 cm), relieve del terreno +≈1,5 €. Imán de nevera ≈3,5 €, llavero desde ≈3 €." },
     { q: "¿Qué zona conviene elegir?", a: "Una zona de 400–800 m con contenido variado: algunas calles, un parque o agua — el distrito sigue siendo reconocible a primera vista." },
     { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío a Ucrania." },
     { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — descarga el archivo 3MF o STL listo, se abre directamente en Bambu Studio o PrusaSlicer." },

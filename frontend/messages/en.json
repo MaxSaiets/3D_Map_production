@@ -225,7 +225,7 @@
   },
   "keychainsMeta": {
     "title": "City map keychain — engraved with your text, from ≈€3",
-    "description": "A 55×30 mm map keychain made to order: your district's streets in relief, custom engraved text on the back — a name, date or coordinates. 3D-printed from ≈€3, shipped across Ukraine.",
+    "description": "A 55×30 mm map keychain made to order: your district's streets in relief, engraved text on the back — a name, date or coordinates. 3D-printed from ≈€3, shipped across Ukraine.",
     "keywords": "city map keychain, map keychain, custom 3d keychain, keychain with name, engraved keychain, topographic keychain, mountain relief keychain, heart map keychain, house keychain, gift for him, gift for her, anniversary gift, couple keychain"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "3D map of {city} — from €6, ready in 2 min",
-    "description": "3D map of {city}: pick a district in the builder — a live model with streets, buildings and rivers in 2 minutes. Eco PLA print from ≈€6 shipped across Ukraine, or download the 3MF/STL to print yourself. Keychain from ≈€3.",
+    "description": "3D map of {city}: pick a district in the builder — a live model with streets and buildings in 2 minutes. Printed from ≈€6 and shipped across Ukraine, or a free file to print yourself.",
     "h1": "3D map of {city}",
     "p1": "A 3D map of {city} is a tactile three-dimensional model of a district: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
     "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine. A perfect gift for anyone who loves their city.",

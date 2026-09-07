@@ -225,7 +225,7 @@
   },
   "keychainsMeta": {
     "title": "Karten-Schlüsselanhänger — mit Gravur und Text, ab ≈3 €",
-    "description": "Karten-Anhänger 55×30 mm auf Bestellung: die Straßen deines Viertels als Relief, eigener Text bzw. Gravur auf der Rückseite — Name, Datum, Koordinaten. 3D-Druck ab ≈3 €, Versand innerhalb der Ukraine.",
+    "description": "Schlüsselanhänger mit Karte 55×30 mm nach Maß: Straßen und Parks Ihres Viertels im Relief, Gravurtext auf der Rückseite. 3D-Druck ab ≈3 €, Versand in der Ukraine.",
     "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "3D-Karte von {city} — ab 6 €, in 2 Min. fertig",
-    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten entsteht ein Modell mit Straßen, Gebäuden und Flüssen. Eco-PLA-Druck ab ≈6 € mit Versand in der Ukraine, oder 3MF/STL-Datei zum Selbstdrucken laden. Anhänger ab ≈3 €.",
+    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten ein Modell mit Straßen und Häusern. Druck ab ≈6 € mit Versand in der Ukraine oder Datei zum Selbstdrucken.",
     "h1": "3D-Karte von {city}",
     "p1": "Die 3D-Karte von {city} ist ein taktiles dreidimensionales Modell eines Viertels: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
     "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern innerhalb der Ukraine. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",

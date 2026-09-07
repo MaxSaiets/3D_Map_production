@@ -43,13 +43,13 @@ const VARIANT_SIZE_CLASSES: Record<ButtonVariant, Record<ButtonSize, string>> = 
     // StickyActionBar: другорядна дія.
     md: "inline-flex items-center justify-center rounded-full border border-[var(--surface-border)] bg-white px-3 py-3 text-sm font-bold text-[var(--text-primary)] transition hover:bg-white/70",
     // Кнопка "Назад" у шапці кроку 2: ScenarioFlow/KeychainScenarioFlow.
-    sm: "inline-flex items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]",
+    sm: "inline-flex min-h-10 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/80 px-3 py-1 text-[11px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]",
   },
   ghost: {
     // order-success: "makeAnother"/"toHome" (border-line пілюля).
     lg: "inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-semibold text-ink-2 hover:bg-bg-2",
     // Текстовий лінк "Розширені налаштування": ScenarioFlow/KeychainScenarioFlow.
-    md: "text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]",
+    md: "inline-flex min-h-11 items-center justify-center text-[12px] text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)]",
     // Текстовий лінк "Поділитись" у банері готово.
     sm: "inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--accent-strong)] underline underline-offset-2 hover:text-[var(--text-primary)]",
   },
