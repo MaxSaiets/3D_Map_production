@@ -458,7 +458,8 @@
     "loginCta": "Sign in",
     "savedToAccount": "Order will be saved to {email}",
     "prodFloorplan": "Floor plan model",
-    "estPriceFloorplan": "from €15"
+    "estPriceFloorplan": "from €15",
+    "msgAlt": "Don’t want to fill in the form? Message us on Telegram and we’ll arrange it in the chat."
   },
   "contact": {
     "errPhone": "Enter a phone number",
@@ -1845,7 +1846,21 @@
     "previewPromise": "The preview is built from the same data as the print file — no placeholders, no “roughly like this”",
     "qrHint": "Open this 3D scene on your phone",
     "previewCtaB": "Show my 3D map · free",
-    "previewCtaShortB": "My 3D map · free"
+    "previewCtaShortB": "My 3D map · free",
+    "uaOnly": "Printing and delivery are available in Ukraine only. The file for self-printing is free for everyone.",
+    "msgOr": "Prefer a messenger?",
+    "msgTelegram": "Telegram",
+    "msgInstagram": "Instagram",
+    "msgHint": "We’ll copy the model description — just paste it into the chat.",
+    "msgCopied": "Description copied ✓ Paste it into the chat and we’ll reply with a quote.",
+    "msgPrefill": "Hi! I’d like to order a print: {summary}, approx. {price} UAH. My 3D preview: {link}",
+    "whyTitle": "What stops you from ordering a print? (1 click, anonymous)",
+    "why_price": "Too expensive",
+    "why_self": "I’ll print it myself",
+    "why_look": "Just looking",
+    "why_abroad": "I’m outside Ukraine",
+    "why_other": "Other",
+    "whyThanks": "Thanks — this helps us improve."
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",

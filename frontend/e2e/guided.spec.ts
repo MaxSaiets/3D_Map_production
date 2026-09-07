@@ -48,7 +48,8 @@ test.describe("Guided /create (простий режим)", () => {
     await expect(flow.getByText("Місце обрано")).toBeVisible();
     await expect(cta).toBeEnabled();
     // F-08: ціна НЕ на кнопці безкоштовного превʼю, а рядком під нею
-    await expect(cta).toHaveText(/Показати 3D-превʼю · безкоштовно/);
+    // A/B (lib/ab.ts, R-05): лейбл CTA залежить від visitor-id → приймаємо обидва варіанти.
+    await expect(cta).toHaveText(/Показати (3D-превʼю|мою 3D-мапу) · безкоштовно/);
     await expect(cta).not.toHaveText(/₴/);
     await expect(flow.getByText(/Друк \d+ ₴ · доставка Новою Поштою по Україні/)).toBeVisible();
     // F-31: плитки розміру з побутовим порівнянням і ділянкою
@@ -182,6 +183,19 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await expect(success).toBeVisible({ timeout: 15_000 });
     await expect(success.getByTestId("guided-order")).toContainText(/Замовити друк · \d+ ₴/);
     await expect(success.getByTestId("guided-download")).toBeVisible();
+    // S-1/S-2: месенджер-замовлення (uk-локаль → без рядка «лише по Україні») + опитування
+    // «що заважає» зʼявляється після кліку «Завантажити» (подія guided-download).
+    const alt = success.getByTestId("sales-alternatives");
+    await expect(alt.getByTestId("msg-telegram")).toBeVisible();
+    await expect(alt.getByTestId("msg-instagram")).toBeVisible();
+    await expect(alt.getByTestId("ua-only-note")).toHaveCount(0);
+    await expect(alt.getByTestId("why-not-order")).toHaveCount(0);
+    await page.evaluate(() => window.dispatchEvent(new Event("monadruk:guided-download")));
+    await expect(alt.getByTestId("why-not-order")).toBeVisible();
+    // Подія download відкриває модалку входу поверх усього — закриваємо її перед кліком по чипу.
+    await page.keyboard.press("Escape");
+    await alt.getByTestId("why-look").click({ force: true });
+    await expect(alt.getByTestId("why-thanks")).toBeVisible();
     await expect(success.getByText("Підлаштувати деталі")).toHaveCount(0);
     await expect(success.getByText("Створити ще одну")).toHaveCount(0);
     // Нічого не міняли → кнопки «Оновити превʼю» нема (sticky-бар — лише <lg, див. мобільний describe)

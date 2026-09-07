@@ -458,7 +458,8 @@
     "loginCta": "Anmelden",
     "savedToAccount": "Bestellung wird in {email} gespeichert",
     "prodFloorplan": "Wohnungsmodell",
-    "estPriceFloorplan": "ab 15 €"
+    "estPriceFloorplan": "ab 15 €",
+    "msgAlt": "Kein Formular? Schreiben Sie uns auf Telegram – wir erledigen es im Chat."
   },
   "contact": {
     "errPhone": "Telefonnummer eingeben",
@@ -1845,7 +1846,21 @@
     "previewPromise": "Die Vorschau entsteht aus denselben Daten wie die Druckdatei — keine Platzhalter, kein „ungefähr so“",
     "qrHint": "Diese 3D-Szene auf dem Handy öffnen",
     "previewCtaB": "Meine 3D-Karte anzeigen · kostenlos",
-    "previewCtaShortB": "Meine 3D-Karte · kostenlos"
+    "previewCtaShortB": "Meine 3D-Karte · kostenlos",
+    "uaOnly": "Druck und Lieferung nur innerhalb der Ukraine. Die Datei zum Selbstdrucken ist für alle kostenlos.",
+    "msgOr": "Lieber per Messenger?",
+    "msgTelegram": "Telegram",
+    "msgInstagram": "Instagram",
+    "msgHint": "Wir kopieren die Modellbeschreibung – einfach in den Chat einfügen.",
+    "msgCopied": "Beschreibung kopiert ✓ In den Chat einfügen, wir antworten mit einem Angebot.",
+    "msgPrefill": "Hallo! Ich möchte einen Druck bestellen: {summary}, ca. {price} UAH. Meine 3D-Vorschau: {link}",
+    "whyTitle": "Was hält Sie von einer Bestellung ab? (1 Klick, anonym)",
+    "why_price": "Zu teuer",
+    "why_self": "Drucke ich selbst",
+    "why_look": "Schaue nur",
+    "why_abroad": "Ich bin nicht in der Ukraine",
+    "why_other": "Anderes",
+    "whyThanks": "Danke – das hilft uns, besser zu werden."
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",

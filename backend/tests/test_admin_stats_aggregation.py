@@ -197,3 +197,19 @@ def test_ab_split_empty_when_no_ab_props():
     ]
     agg = app_main._aggregate_analytics(lines, 30)
     assert agg["ab"] == {}
+
+
+def test_why_not_order_and_messenger_counted_in_choices():
+    lines = [
+        _line("why_not_order", props={"reason": "price", "product": "map"}),
+        _line("why_not_order", props={"reason": "price", "product": "map"}, visitor="v2"),
+        _line("why_not_order", props={"reason": "abroad", "product": "keychain"}, visitor="v3"),
+        _line("messenger_order", props={"channel": "tg", "product": "map"}),
+        _line("messenger_order", props={"channel": "ig", "product": "map"}, visitor="v2"),
+        # старіше за період — не рахується
+        _line("why_not_order", props={"reason": "self"}, day="2020-01-01", ts="2020-01-01T00:00:00+00:00"),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    ch = agg["guided"]["choices"]
+    assert ch["whyNotOrder"] == [["price", 2], ["abroad", 1]] or ch["whyNotOrder"] == [("price", 2), ("abroad", 1)]
+    assert sorted(tuple(x) for x in ch["messenger"]) == [("ig", 1), ("tg", 1)]

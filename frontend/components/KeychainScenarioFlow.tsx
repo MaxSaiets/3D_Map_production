@@ -15,6 +15,7 @@ import {
   type KeychainDesignerConfig,
 } from "@/components/KeychainDesigner";
 import { GenerationStages } from "@/components/GenerationStages";
+import { SalesAlternatives } from "@/components/SalesAlternatives";
 import { Button } from "@/components/ui/Button";
 import { ShareQr } from "@/components/ShareQr";
 
@@ -477,6 +478,13 @@ export function KeychainScenarioFlow({
                 {dlQuota && !dlQuota.isAdmin && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
                 )}
+                {/* S-1/S-2: месенджер-замовлення + «що заважає» (див. SalesAlternatives). */}
+                <SalesAlternatives
+                  product="keychain"
+                  taskId={s.taskGroupId}
+                  summary={`${tOrder("prodKeychain")}${placeLabel ? ` · ${placeLabel}` : ""}`}
+                  priceUah={priceUah}
+                />
                 {/* T-2.1: текстовий лінк, НЕ третя кнопка — рівно дві заповнені
                     кнопки лишаються (замовити/завантажити). */}
                 {!!s.taskGroupId && (

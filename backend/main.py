@@ -577,6 +577,55 @@ async def _retention_loop():
         await _asyncio.sleep(86400)
 
 
+async def _weekly_digest_loop():
+    """S-4: щопонеділка (WEEKLY_DIGEST_HOUR_UTC) — короткий дайджест воронки у Telegram
+    власнику через того самого бота, що й замовлення. Без секретів — тихо вимкнено.
+    Чиста логіка (текст, розклад, підрахунок замовлень) у services/weekly_digest.py."""
+    import asyncio as _asyncio
+    from services import weekly_digest as _wd
+    from services.order_service import _tg_post as _tgp, _token as _tgtok, _chat as _tgchat
+    if not (_tgtok() and _tgchat()):
+        print("[DIGEST] disabled (no TG_BOT_TOKEN/TG_CHAT_ID)")
+        return
+    while True:
+        delay = _wd.next_digest_delay(_dtm.utcnow())
+        print(f"[DIGEST] next weekly digest in {delay/3600:.1f} h")
+        await _asyncio.sleep(delay)
+        try:
+            text = await _asyncio.get_event_loop().run_in_executor(None, _build_weekly_digest_text)
+            if text:
+                _tgp("sendMessage", chat_id=_tgchat(), text=text)
+                print("[DIGEST] sent")
+        except Exception as _dexc:  # noqa: BLE001
+            print(f"[DIGEST] failed (non-fatal): {_dexc}")
+        await _asyncio.sleep(120)
+
+
+def _build_weekly_digest_text() -> str:
+    from datetime import timedelta as _td
+    from services import weekly_digest as _wd
+    from services.order_service import ORDERS_LOG as _OL
+    lines: List[str] = []
+    for _lp in (ANALYTICS_LOG.with_name("analytics.jsonl.1"), ANALYTICS_LOG):
+        if _lp.exists():
+            try:
+                lines.extend(_lp.read_text(encoding="utf-8").splitlines())
+            except Exception:  # noqa: BLE001
+                pass
+    agg = _aggregate_analytics(lines, _wd.DIGEST_DAYS)
+    since = (_dtm.utcnow() - _td(days=_wd.DIGEST_DAYS)).isoformat()
+    orders_week = 0
+    if _OL.exists():
+        orders_week = _wd.count_orders_since(_OL.read_text(encoding="utf-8").splitlines(), since)
+    leads = 0
+    try:
+        from services import user_store as _us
+        leads = sum(1 for u in _us.list_all_users() if int(u.get("downloads") or 0) > 0)
+    except Exception:  # noqa: BLE001
+        pass
+    return _wd.build_digest(agg, orders_week, leads)
+
+
 def _run_template_warm_once() -> None:
     """Синхронна (thread-executor) робота одного нічного прогріву: перевіряє
     чергу генерації, читає збережені шаблонні body і проганяє їх через
@@ -668,6 +717,7 @@ async def startup_event():
     _asyncio.create_task(_ttl_cleanup_loop())
     _asyncio.create_task(_retention_loop())
     _asyncio.create_task(_template_warm_loop())
+    _asyncio.create_task(_weekly_digest_loop())
 
     # Прогрів локальної OSM-БД (DuckDB) у фоні — перший конект ~5с; інакше перший
     # /api/building-at (підсвітка будинку) або генерація після рестарту гальмують.
@@ -1762,6 +1812,9 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_shares = 0                       # guided_share
     g_downloads = 0                    # guided_download + download_model
     g_order_clicks = 0                 # guided_order_click
+    # S-2 (2026-09-07): «що заважає замовити» + замовлення через месенджер — у межах періоду.
+    g_reasons: Counter = Counter()     # why_not_order.reason → к-сть
+    g_messenger: Counter = Counter()   # messenger_order.channel → к-сть
     g_results_ok = 0
     g_results_fail = 0
     # ── A/B-спліт: фронт додає до кожної своєї події плоскі props виду
@@ -1833,6 +1886,12 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                     funnel_counter[step] += 1
                     if str(r.get("day", "")) >= _cutoff_day:
                         g_funnel[step] += 1
+            elif ev in ("why_not_order", "messenger_order"):
+                if str(r.get("day", "")) >= _cutoff_day:
+                    if ev == "why_not_order":
+                        g_reasons[str(props.get("reason") or "other")] += 1
+                    else:
+                        g_messenger[str(props.get("channel") or "tg")] += 1
             elif ev in _GUIDED_EVENTS:
                 # той самий один прохід по логу — без окремого читання файлу
                 if str(r.get("day", "")) >= _cutoff_day:
@@ -1992,6 +2051,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
             "downloads": g_downloads,
             "orderClicks": g_order_clicks,
             "results": {"ok": g_results_ok, "fail": g_results_fail},
+            "whyNotOrder": g_reasons.most_common(6),
+            "messenger": g_messenger.most_common(4),
         },
     }
 
@@ -2074,6 +2135,7 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
         "count": 0, "byStatus": {}, "byProduct": {},
         "revenueEstimated": 0.0, "revenuePaid": 0.0, "currency": "₴",
     }
+    _ordered_emails: set = set()
     try:
         import re as _re
         from collections import Counter as _Counter
@@ -2137,10 +2199,25 @@ async def admin_stats(authorization: Optional[str] = Header(default=None), days:
             "revenuePaid": round(rev_paid, 2),
             "currency": "₴",
         }
+        _ordered_emails = {str(v.get("user_email") or "").strip().lower() for v in latest.values()}
     except Exception as _oe:  # noqa: BLE001
         print(f"[admin/stats] orders aggregation failed (non-fatal): {_oe}")
 
-    return {**agg, "orders": orders_summary}
+    # ── Ліди (S-5, 2026-09-07): люди, що ЗАВАНТАЖИЛИ файл (отже, дали e-mail через
+    # Google-вхід), але жодного разу не замовляли друк. Власник може написати їм
+    # особисто («надрукуємо за …»). Лише для адміна; e-mail-и не йдуть у логи.
+    leads: List[Dict[str, Any]] = []
+    try:
+        from services import user_store as _us
+        for u in _us.list_all_users():
+            em = str(u.get("email") or "").strip().lower()
+            if em and int(u.get("downloads") or 0) > 0 and em not in _ordered_emails:
+                leads.append({"email": em, "downloads": int(u.get("downloads") or 0), "models": int(u.get("models") or 0), "createdAt": u.get("created_at")})
+        leads.sort(key=lambda x: -x["downloads"])
+    except Exception as _le:  # noqa: BLE001
+        print(f"[admin/stats] leads failed (non-fatal): {_le}")
+
+    return {**agg, "orders": orders_summary, "leads": leads[:50]}
 
 
 # ── Account / auth (Firebase token verified without a service account) ──────────

@@ -458,7 +458,8 @@
     "loginCta": "Zaloguj",
     "savedToAccount": "Zamówienie zostanie zapisane w {email}",
     "prodFloorplan": "Makieta mieszkania",
-    "estPriceFloorplan": "od 65 zł"
+    "estPriceFloorplan": "od 65 zł",
+    "msgAlt": "Nie chcesz wypełniać formularza? Napisz do nas na Telegramie — załatwimy to na czacie."
   },
   "contact": {
     "errPhone": "Podaj numer telefonu",
@@ -1845,7 +1846,21 @@
     "previewPromise": "Podgląd powstaje z tych samych danych co plik do druku — bez zaślepek i „mniej więcej tak”",
     "qrHint": "Otwórz tę scenę 3D na telefonie",
     "previewCtaB": "Pokaż moją mapę 3D · bezpłatnie",
-    "previewCtaShortB": "Moja mapa 3D · bezpłatnie"
+    "previewCtaShortB": "Moja mapa 3D · bezpłatnie",
+    "uaOnly": "Druk i dostawa tylko na terenie Ukrainy. Plik do samodzielnego druku jest bezpłatny dla wszystkich.",
+    "msgOr": "Wolisz komunikator?",
+    "msgTelegram": "Telegram",
+    "msgInstagram": "Instagram",
+    "msgHint": "Skopiujemy opis modelu — po prostu wklej go w czacie.",
+    "msgCopied": "Opis skopiowany ✓ Wklej go w czacie, odpowiemy z wyceną.",
+    "msgPrefill": "Cześć! Chcę zamówić wydruk: {summary}, ok. {price} UAH. Mój podgląd 3D: {link}",
+    "whyTitle": "Co powstrzymuje Cię przed zamówieniem? (1 kliknięcie, anonimowo)",
+    "why_price": "Za drogo",
+    "why_self": "Wydrukuję sam",
+    "why_look": "Tylko oglądam",
+    "why_abroad": "Jestem poza Ukrainą",
+    "why_other": "Inne",
+    "whyThanks": "Dziękujemy — to pomaga nam ulepszać serwis."
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",

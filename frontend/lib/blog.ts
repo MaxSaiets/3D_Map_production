@@ -8,6 +8,8 @@
 // ──────────────────────────────────────────────────────────────────────────
 import type { AppLocale } from "@/i18n/routing";
 import { GIFT_ARTICLES_2026 } from "@/lib/blogGifts";
+import { SEO_UA_ARTICLES_2026_A } from "@/lib/blogSeoUa2026a";
+import { SEO_UA_ARTICLES_2026_B } from "@/lib/blogSeoUa2026b";
 
 export type BlogSection = { h2?: string; p: string[] };
 export type BlogArticleContent = {
@@ -3350,6 +3352,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   },
   // Статті під подарункові запити (2026-09-03) — окремий файл, щоб не роздувати цей.
   ...GIFT_ARTICLES_2026,
+  // Статті під реальні uk-запити (2026-09-07, хвиля «немає продажів»; S-6 у plans/03).
+  ...SEO_UA_ARTICLES_2026_A,
+  ...SEO_UA_ARTICLES_2026_B,
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(

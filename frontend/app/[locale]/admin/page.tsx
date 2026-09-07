@@ -237,6 +237,9 @@ export default function AdminPage() {
 
                   {stats.guided && <GuidedFunnel g={stats.guided} />}
 
+                  {/* S-2/S-5 (2026-09-07): чому не замовляють + ліди для особистого контакту. */}
+                  <WhyAndLeads choices={stats.guided?.choices} leads={stats.leads} />
+
                   {stats.ab && Object.keys(stats.ab).length > 0 && <AbTests ab={stats.ab} />}
 
                   <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -439,6 +442,58 @@ export default function AdminPage() {
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+const WHY_LABELS: Record<string, string> = {
+  price: "Дорого", self: "Надрукують самі", look: "Просто дивились", abroad: "Не в Україні", other: "Інше",
+};
+const MSG_LABELS: Record<string, string> = { tg: "Telegram", ig: "Instagram" };
+
+/** «Що заважає замовити» (мікро-опитування на екрані «Готово»), звернення в месенджер
+ *  і ліди: люди, що завантажили файл (дали e-mail), але не замовляли друк. */
+function WhyAndLeads({ choices, leads }: {
+  choices?: { whyNotOrder?: [string, number][]; messenger?: [string, number][] };
+  leads?: { email: string; downloads: number; models: number; createdAt?: number }[];
+}) {
+  const [copied, setCopied] = useState(false);
+  const why = (choices?.whyNotOrder || []).map(([k, n]) => [WHY_LABELS[k] || k, Number(n) || 0] as [string, number]);
+  const msg = (choices?.messenger || []).map(([k, n]) => [MSG_LABELS[k] || k, Number(n) || 0] as [string, number]);
+  const list = Array.isArray(leads) ? leads : [];
+  if (why.length === 0 && msg.length === 0 && list.length === 0) return null;
+  const copyEmails = async () => {
+    try { await navigator.clipboard.writeText(list.map((l) => l.email).join(", ")); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
+  };
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Чому не замовляють · ліди</div>
+      <div className="mb-3 text-[11px] text-ink-3">
+        Відповіді з опитування на екрані «Готово» (1 клік, анонімно), звернення через кнопки Telegram/Instagram
+        і люди, які завантажили файл, але друк не замовляли — їм можна написати особисто.
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <StatList title="Що заважає замовити" rows={why} />
+        <StatList title="Пішли в месенджер" rows={msg} />
+      </div>
+      {list.length > 0 && (
+        <div className="mt-3 rounded-lg border border-line bg-bg-2 px-3 py-2 text-[12px]">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="font-semibold text-ink-2">Ліди: завантажили, не замовили ({list.length})</span>
+            <button type="button" onClick={copyEmails} className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[11px] text-ink-2 hover:border-ink-3">
+              {copied ? "Скопійовано ✓" : "Скопіювати e-mail-и"}
+            </button>
+          </div>
+          <ul className="max-h-48 overflow-auto">
+            {list.map((l) => (
+              <li key={l.email} className="flex justify-between border-b border-line/60 py-1 last:border-0">
+                <span className="truncate text-ink">{l.email}</span>
+                <span className="ml-2 shrink-0 text-ink-3">{l.downloads} файл. · {l.models} мод.</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

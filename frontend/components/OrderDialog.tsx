@@ -456,6 +456,17 @@ export function OrderDialog({
                   <li className="flex items-center gap-2"><ShieldCheck size={12} className="shrink-0 text-[var(--accent-strong)]" /><span>{t("submitReassure")}</span></li>
                 </ul>
               </details>
+              {/* S-1: альтернатива формі — чат у Telegram (для тих, хто не любить форми). */}
+              <a
+                href="https://t.me/monadruk"
+                target="_blank"
+                rel="noopener"
+                data-testid="order-msg-alt"
+                onClick={() => { import("@/lib/analytics").then((m) => m.track("messenger_order", { channel: "tg", product: productType, at: "form" })).catch(() => {}); }}
+                className="block px-1 text-center text-[11.5px] leading-snug text-[var(--text-secondary)] underline decoration-dotted underline-offset-2 hover:text-[var(--accent-strong)]"
+              >
+                {t("msgAlt")}
+              </a>
 
               {/* Sticky-футер: ЦІНА + CTA завжди на видноті — не треба скролити крізь
                   усю форму до кнопки. Лишається приклеєним до низу скрол-панелі. */}

@@ -458,7 +458,8 @@
     "loginCta": "Entrar",
     "savedToAccount": "El pedido se guardará en {email}",
     "prodFloorplan": "Maqueta del plano",
-    "estPriceFloorplan": "desde 15 €"
+    "estPriceFloorplan": "desde 15 €",
+    "msgAlt": "¿No quieres rellenar el formulario? Escríbenos por Telegram y lo gestionamos en el chat."
   },
   "contact": {
     "errPhone": "Indica un teléfono",
@@ -1845,7 +1846,21 @@
     "previewPromise": "La vista previa se construye con los mismos datos que el archivo de impresión: sin relleno ni «más o menos así»",
     "qrHint": "Abrir esta escena 3D en tu móvil",
     "previewCtaB": "Ver mi mapa 3D · gratis",
-    "previewCtaShortB": "Mi mapa 3D · gratis"
+    "previewCtaShortB": "Mi mapa 3D · gratis",
+    "uaOnly": "Impresión y envío solo dentro de Ucrania. El archivo para imprimir por tu cuenta es gratis para todos.",
+    "msgOr": "¿Prefieres un mensajero?",
+    "msgTelegram": "Telegram",
+    "msgInstagram": "Instagram",
+    "msgHint": "Copiaremos la descripción del modelo: solo pégala en el chat.",
+    "msgCopied": "Descripción copiada ✓ Pégala en el chat y te responderemos con un presupuesto.",
+    "msgPrefill": "¡Hola! Quiero pedir una impresión: {summary}, aprox. {price} UAH. Mi vista previa 3D: {link}",
+    "whyTitle": "¿Qué te impide hacer el pedido? (1 clic, anónimo)",
+    "why_price": "Muy caro",
+    "why_self": "Lo imprimo yo",
+    "why_look": "Solo miro",
+    "why_abroad": "No estoy en Ucrania",
+    "why_other": "Otro",
+    "whyThanks": "Gracias, esto nos ayuda a mejorar."
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",

@@ -458,7 +458,8 @@
     "loginCta": "Se connecter",
     "savedToAccount": "La commande sera enregistrée dans {email}",
     "prodFloorplan": "Maquette du plan",
-    "estPriceFloorplan": "dès 15 €"
+    "estPriceFloorplan": "dès 15 €",
+    "msgAlt": "Pas envie de remplir le formulaire ? Écrivez-nous sur Telegram, on s’en occupe dans le chat."
   },
   "contact": {
     "errPhone": "Indique un numéro de téléphone",
@@ -1845,7 +1846,21 @@
     "previewPromise": "L'aperçu est construit à partir des mêmes données que le fichier d'impression — pas de simulacre, pas d'« à peu près »",
     "qrHint": "Ouvrir cette scène 3D sur ton téléphone",
     "previewCtaB": "Voir ma carte 3D · gratuit",
-    "previewCtaShortB": "Ma carte 3D · gratuit"
+    "previewCtaShortB": "Ma carte 3D · gratuit",
+    "uaOnly": "Impression et livraison uniquement en Ukraine. Le fichier pour impression personnelle est gratuit pour tous.",
+    "msgOr": "Vous préférez une messagerie ?",
+    "msgTelegram": "Telegram",
+    "msgInstagram": "Instagram",
+    "msgHint": "Nous copions la description du modèle — collez-la simplement dans le chat.",
+    "msgCopied": "Description copiée ✓ Collez-la dans le chat, nous répondrons avec un devis.",
+    "msgPrefill": "Bonjour ! Je souhaite commander une impression : {summary}, environ {price} UAH. Mon aperçu 3D : {link}",
+    "whyTitle": "Qu’est-ce qui vous empêche de commander ? (1 clic, anonyme)",
+    "why_price": "Trop cher",
+    "why_self": "J’imprime moi-même",
+    "why_look": "Je regarde seulement",
+    "why_abroad": "Je ne suis pas en Ukraine",
+    "why_other": "Autre",
+    "whyThanks": "Merci — cela nous aide à nous améliorer."
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",

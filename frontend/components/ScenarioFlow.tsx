@@ -25,6 +25,7 @@ import {
   mapPriceEur,
 } from "@/lib/mapPrices";
 import { GenerationStages } from "@/components/GenerationStages";
+import { SalesAlternatives } from "@/components/SalesAlternatives";
 
 /** Зона ПІД РОЗМІР плитки: ~7.5 м/мм — «добра деталізація» і гарантовано в
  *  безпечних межах (isSafe = ≤10 м/мм у MapSelector). Фіксована 800×800
@@ -595,6 +596,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 {dlQuota && !dlQuota.isAdmin && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
                 )}
+                {/* S-1/S-2: месенджер-замовлення + «що заважає» (див. SalesAlternatives). */}
+                <SalesAlternatives
+                  product="map"
+                  taskId={s.taskGroupId}
+                  summary={`${scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${fallbackSize.label} · ${fallbackSize.cm}`}${placeLabel ? ` · ${placeLabel}` : ""}`}
+                  priceUah={ctaPriceUah}
+                />
                 {/* T-2.1: текстовий лінк, НЕ третя кнопка — банер лишається з рівно
                     двома заповненими кнопками (замовити/завантажити). */}
                 {!!s.taskGroupId && (
