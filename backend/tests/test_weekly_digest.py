@@ -65,3 +65,17 @@ def test_count_orders_since_ignores_payments_and_duplicates():
         "not json",
     ]
     assert wd.count_orders_since(lines, "2026-08-31T00:00:00") == 2
+
+
+def test_digest_hides_empty_result_counters():
+    """Було: «Генерації: 6 (✓0 / ✗0)» — читалось як поломка, хоча просто не
+    приходила подія guided_result (виправлено окремо у ScenarioFlow)."""
+    agg = {"totals": {}, "guided": {"generate": {"total": 6},
+                                    "choices": {"results": {"ok": 0, "fail": 0}}}}
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "Генерації: 6" in text
+    assert "✓0" not in text
+
+    agg["guided"]["choices"]["results"] = {"ok": 5, "fail": 1}
+    text2 = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "Генерації: 6 (✓5 / ✗1)" in text2

@@ -70,7 +70,10 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
 
     lines = [f"📊 Monadruk за {days} дн."]
     lines.append(f"👥 Відвідувачі: {visitors} · перегляди: {pageviews}")
-    lines.append(f"🧩 Генерації: {gen_total} (✓{int(results.get('ok') or 0)} / ✗{int(results.get('fail') or 0)})")
+    _ok, _fail = int(results.get("ok") or 0), int(results.get("fail") or 0)
+    # Показуємо ✓/✗ лише коли подія результату реально приходила: порожнє
+    # «(✓0 / ✗0)» поруч із «Генерації: 6» читалось як «усе зламано».
+    lines.append(f"🧩 Генерації: {gen_total}" + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
     lines.append(f"🛒 Клік «Замовити»: {order_clicks} · надіслані замовлення: {orders_week}")
     lines.append(f"⬇️ Завантажили файл: {downloads} · у месенджер: {messenger}")
     if reasons:

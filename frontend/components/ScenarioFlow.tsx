@@ -445,7 +445,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const failedNote = !!s.genError && !s.isGenerating && (started || s.taskRestored);
   // Guided-воронка: результат генерації — ОДИН раз на прогін (ключ = момент
   // старту create(), а не taskGroupId, бо в помилки його може не бути).
-  const resultTrackedAtRef = useRef(0);
+  // ⭐ПАСТКА 08.09: було useRef(0). Для ВІДНОВЛЕНОЇ з localStorage задачі
+  // createdAtRef теж лишається 0, тож умова `!==` ніколи не спрацьовувала —
+  // і `guided_result` не надсилався ЖОДНОГО разу (за 7 днів проду: 31
+  // guided_download і 0 guided_result). Через це в адмінці й тижневому
+  // дайджесті «Генерацій ✓/✗» завжди показувало 0/0. -1 не дорівнює жодному
+  // Date.now() і жодному 0 → перший успіх рахується завжди.
+  const resultTrackedAtRef = useRef(-1);
   useEffect(() => {
     if (successView && resultTrackedAtRef.current !== createdAtRef.current) {
       resultTrackedAtRef.current = createdAtRef.current;
