@@ -5,6 +5,10 @@ import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i
 import { Link } from "@/i18n/navigation";
 import { BLOG_ARTICLES, blogContent, blogIndexMeta } from "@/lib/blog";
 
+// Індекс — новіші статті зверху (масив у lib/blog.ts росте в кінець, тож без сортування
+// свіжі сезонні статті опинялись останніми).
+const BLOG_SORTED = [...BLOG_ARTICLES].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
 /**
  * Блог-індекс: контент-глибина під інформаційні запити (top-of-funnel SEO).
  * Контент у lib/blog.ts (uk+en; інші локалі → en). Той самий верстальний
@@ -51,7 +55,7 @@ export default async function BlogIndexPage({
         name: m.h1,
         description: m.description,
         url: localeUrl(locale, "/blog"),
-        blogPost: BLOG_ARTICLES.map((a) => ({
+        blogPost: BLOG_SORTED.map((a) => ({
           "@type": "BlogPosting",
           headline: blogContent(a, locale).h1,
           datePublished: a.date,
@@ -80,7 +84,7 @@ export default async function BlogIndexPage({
       <p className="mt-5 text-[15px] leading-relaxed text-ink-2">{m.intro}</p>
 
       <ul className="mt-10 grid gap-5">
-        {BLOG_ARTICLES.map((a) => {
+        {BLOG_SORTED.map((a) => {
           const c = blogContent(a, locale);
           return (
             <li key={a.slug}>

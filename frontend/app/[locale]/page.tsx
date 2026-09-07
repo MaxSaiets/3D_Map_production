@@ -301,6 +301,24 @@ function GiftOccasions() {
   ];
   return (
     <div className="mt-8" data-testid="home-gift-occasions">
+      {/* Сезон 2026/27 (08.09): свята — головний привід для подарунка; статті мають
+          проіндексуватись ДО листопада. Дедлайни рахуються з 2–4 днів друку + доставки.
+          Оновлювати дати щороку разом зі статтями. */}
+      <div className="mb-5 rounded-[16px] border border-forest/25 bg-[rgba(46,74,58,0.06)] p-4" data-testid="home-season">
+        <div className="text-[15px] font-semibold text-ink">🎄 {t("seasonTitle")}</div>
+        <p className="mt-1 text-[13px] leading-snug text-ink-2">{t("seasonSub")}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { href: "/blog/podarunok-na-den-svyatoho-mykolaya-doroslym", label: t("seasonMykolay") },
+            { href: "/blog/podarunok-na-novyi-rik-2027-shcho-podaruvaty", label: t("seasonNewYear") },
+            { href: "/blog/korporatyvni-podarunky-na-novyi-rik-2027", label: t("seasonCorporate") },
+          ].map((s) => (
+            <Link key={s.href} href={s.href} className="inline-flex min-h-[40px] items-center rounded-full border border-forest/30 bg-paper px-3.5 py-1.5 text-[13.5px] font-semibold text-forest transition hover:bg-forest hover:text-[#F4EFE4]">
+              {s.label} →
+            </Link>
+          ))}
+        </div>
+      </div>
       <div className="eyebrow mb-1">{t("title")}</div>
       <p className="mb-3 text-[14px] text-ink-2">{t("sub")}</p>
       <div className="flex flex-wrap gap-2.5">

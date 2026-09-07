@@ -34,6 +34,22 @@ export function generateStaticParams() {
 
 export const dynamicParams = false;
 
+// Перелінковка нагода → статті під ті самі наміри (08.09). Slug-и статей з lib/blog*.ts;
+// невідомі (напр. після перейменування) відкидаються, лишаємо 4 максимум; міські сторінки
+// отримують міські/загальні статті.
+const OCCASION_ARTICLES: Record<string, string[]> = {
+  "na-richnytsyu": ["podarunok-cholovikovi-na-richnytsyu-vesillya", "podarunok-divchyni-na-richnytsyu", "podarunok-na-richnytsyu-stosunkiv", "podarunok-batkam-na-richnytsyu-vesillya"],
+  "na-den-narodzhennya": ["shcho-podaruvaty-khloptsevi-na-den-narodzhennya", "shcho-podaruvaty-tatovi-na-den-narodzhennya", "podarunok-tomu-khto-lyubyt-svoye-misto", "podarunok-viyskovomu-3d-mapa-ridnoho-mista"],
+  "na-novosillya": ["podarunok-na-novosillya-druzyam", "podarunok-tomu-khto-lyubyt-svoye-misto", "podarunok-pereselentsyu", "podarunok-kolezi-na-zvilnennya-abo-pereyizd"],
+  "dlya-pary": ["podarunok-molodyatam-na-vesillya", "podarunok-na-richnytsyu-stosunkiv", "podarunok-divchyni-na-richnytsyu", "podarunok-cholovikovi-na-richnytsyu-vesillya"],
+  "korporatyvnyi-podarunok": ["korporatyvni-podarunky-na-novyi-rik-2027", "podarunok-kolezi-na-zvilnennya-abo-pereyizd", "podarunok-na-den-svyatoho-mykolaya-doroslym", "3d-druk-na-zamovlennya"],
+};
+const CITY_DEFAULT_ARTICLES = ["3d-druk-na-zamovlennya", "podarunok-tomu-khto-lyubyt-svoye-misto", "yak-obraty-rozmir-3d-mapy", "suvenir-z-kyeva-lvova-3d-mapa"];
+function relatedArticles(slug: string) {
+  const want = OCCASION_ARTICLES[slug] ?? CITY_DEFAULT_ARTICLES;
+  return want.map((s) => BLOG_ARTICLES.find((a) => a.slug === s)).filter((a): a is (typeof BLOG_ARTICLES)[number] => !!a).slice(0, 4);
+}
+
 function resolveCopy(slug: string, locale: AppLocale): { c: CityLandingCopy; isCity: boolean; cityName?: string } | null {
   const cl = contentLocale(locale);
   const occ = OCCASION_BY_SLUG[slug];
@@ -273,7 +289,7 @@ export default async function GiftSlugPage({
       <section className="mt-10">
         <h2 className="text-[18px] font-semibold text-ink">{t("readMore")}</h2>
         <ul className="mt-3 flex flex-col gap-2">
-          {BLOG_ARTICLES.slice(2, 4).map((a) => (
+          {relatedArticles(params.slug).map((a) => (
             <li key={a.slug}>
               <Link href={`/blog/${a.slug}`} className="text-[14.5px] font-medium text-[var(--accent-strong)] hover:underline">
                 {blogContent(a, locale).h1} →
