@@ -56,7 +56,7 @@ const PR = {
 const uk: Catalog = {
   metaTitle: "Ціни на 3D-мапи, магніти та брелоки",
   metaDescription:
-    "Актуальні ціни в гривнях: 3D-мапа міста від 250 ₴ (S/M/L/XL), магніт-мапа 150 ₴, брелок-мапа від 120 ₴, рельєф +60 ₴. Друк з Eco PLA, доставка Новою Поштою.",
+    "Актуальні ціни в гривнях: 3D-мапа міста від 350 ₴ (S/M/L/XL), магніт-мапа 210 ₴, брелок-мапа від 170 ₴, рельєф +85 ₴. Друк з Eco PLA, доставка Новою Поштою.",
   h1: "Ціни",
   intro:
     "Ціна вказана за готовий виріб (3D-друк з біопластику Eco PLA). Доставка оплачується окремо за тарифом перевізника. Оплата — карткою Visa / Mastercard онлайн або при отриманні.",
@@ -65,7 +65,7 @@ const uk: Catalog = {
       title: "3D-мапи міст",
       items: [
         { name: "3D-мапа міста — S (≈5,5 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~5,5 см.", uah: PR.s },
-        { name: "3D-мапа міста — M (≈8 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~8 см.", uah: PR.m },
+        { name: "3D-мапа міста — M (≈6 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~8 см.", uah: PR.m },
         { name: "3D-мапа міста — L (≈11 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~11 см.", uah: PR.l },
         { name: "3D-мапа міста — XL (≈15 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~15 см.", uah: PR.xl },
         { name: "Рельєф місцевості (опція)", desc: "Додаткові висоти ландшафту на будь-якій 3D-мапі.", uah: PR.relief, kind: "addon" },
@@ -106,7 +106,7 @@ const uk: Catalog = {
   faq: [
     { q: "Скільки триває виготовлення?", a: "2–4 робочі дні на друк, потім доставка Новою Поштою по Україні." },
     { q: "Чи є знижки для великих замовлень?", a: "Так — для тиражів від 5 однакових виробів (наприклад, корпоративні брелоки) вартість узгоджується окремо, напишіть нам." },
-    { q: "Що входить у ціну?", a: "Ціна — за готовий надрукований виріб з Eco PLA. Доставка та рельєф місцевості (+60 ₴) оплачуються окремо." },
+    { q: "Що входить у ціну?", a: "Ціна — за готовий надрукований виріб з Eco PLA. Доставка та рельєф місцевості (+85 ₴) оплачуються окремо." },
     { q: "Чи можна оплатити при отриманні?", a: "Так, крім оплати карткою онлайн через LiqPay доступний накладений платіж при отриманні." },
   ],
 };
@@ -114,7 +114,7 @@ const uk: Catalog = {
 const en: Catalog = {
   metaTitle: "Prices for 3D city maps, magnets & keychains",
   metaDescription:
-    "Current prices in UAH: 3D city map from 250 ₴ (S/M/L/XL), fridge magnet 150 ₴, map keychain from 120 ₴, relief +60 ₴. Eco PLA print, delivery by Nova Poshta.",
+    "Current prices in UAH: 3D city map from 350 ₴ (S/M/L/XL), fridge magnet 210 ₴, map keychain from 170 ₴, relief +85 ₴. Eco PLA print, delivery by Nova Poshta.",
   h1: "Prices",
   intro:
     "The price is for the finished item (3D-printed in Eco PLA bioplastic). Delivery is paid separately at the carrier's tariff. Payment by Visa / Mastercard online or on delivery.",
@@ -123,7 +123,7 @@ const en: Catalog = {
       title: "3D city maps",
       items: [
         { name: "3D city map — S (≈5.5 cm)", desc: "Printed 3D model of a city area, ~5.5 cm edge.", uah: PR.s },
-        { name: "3D city map — M (≈8 cm)", desc: "Printed 3D model of a city area, ~8 cm edge.", uah: PR.m },
+        { name: "3D city map — M (≈6 cm)", desc: "Printed 3D model of a city area, ~8 cm edge.", uah: PR.m },
         { name: "3D city map — L (≈11 cm)", desc: "Printed 3D model of a city area, ~11 cm edge.", uah: PR.l },
         { name: "3D city map — XL (≈15 cm)", desc: "Printed 3D model of a city area, ~15 cm edge.", uah: PR.xl },
         { name: "Terrain relief (option)", desc: "Extra landscape elevation on any 3D map.", uah: PR.relief, kind: "addon" },
@@ -164,7 +164,7 @@ const en: Catalog = {
   faq: [
     { q: "How long does production take?", a: "1–3 business days to print, then delivery across Ukraine." },
     { q: "Are there discounts for bulk orders?", a: "Yes — for runs of 5+ identical items (e.g. corporate keychains) pricing is agreed individually, just message us." },
-    { q: "What's included in the price?", a: "The price covers the finished item printed in Eco PLA. Delivery and terrain relief (+≈€1.5) are charged separately." },
+    { q: "What's included in the price?", a: "The price covers the finished item printed in Eco PLA. Delivery and terrain relief (+≈€2) are charged separately." },
     { q: "Can I pay on delivery?", a: "Yes, besides online card payment via LiqPay, cash on delivery is available." },
   ],
 };
@@ -172,7 +172,7 @@ const en: Catalog = {
 const de: Catalog = {
   metaTitle: "Preise für 3D-Stadtkarten, Magnete & Schlüsselanhänger",
   metaDescription:
-    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 250 ₴ (S/M/L/XL), Kühlschrankmagnet 150 ₴, Karten-Schlüsselanhänger ab 120 ₴, Relief +60 ₴. Eco-PLA-Druck.",
+    "Aktuelle Preise in UAH: 3D-Stadtkarte ab 350 ₴ (S/M/L/XL), Kühlschrankmagnet 210 ₴, Karten-Schlüsselanhänger ab 170 ₴, Relief +85 ₴. Eco-PLA-Druck.",
   h1: "Preise",
   intro:
     "Der Preis gilt für das fertige Produkt (3D-Druck aus Eco-PLA-Biokunststoff). Der Versand wird separat zum Tarif des Zustellers berechnet. Zahlung per Visa / Mastercard online oder bei Lieferung.",
@@ -181,7 +181,7 @@ const de: Catalog = {
       title: "3D-Stadtkarten",
       items: [
         { name: "3D-Stadtkarte — S (≈5,5 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~5,5 cm.", uah: PR.s },
-        { name: "3D-Stadtkarte — M (≈8 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~8 cm.", uah: PR.m },
+        { name: "3D-Stadtkarte — M (≈6 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~8 cm.", uah: PR.m },
         { name: "3D-Stadtkarte — L (≈11 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~11 cm.", uah: PR.l },
         { name: "3D-Stadtkarte — XL (≈15 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~15 cm.", uah: PR.xl },
         { name: "Geländerelief (Option)", desc: "Zusätzliche Geländehöhen auf jeder 3D-Karte.", uah: PR.relief, kind: "addon" },
@@ -222,7 +222,7 @@ const de: Catalog = {
   faq: [
     { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druckzeit, danach Versand innerhalb der Ukraine." },
     { q: "Gibt es Rabatte für größere Bestellungen?", a: "Ja — bei 5 oder mehr identischen Stücken (z. B. Firmen-Schlüsselanhänger) wird der Preis individuell vereinbart." },
-    { q: "Was ist im Preis enthalten?", a: "Der Preis gilt für das fertige Eco-PLA-Produkt. Versand und Geländerelief (+≈1,5 €) werden separat berechnet." },
+    { q: "Was ist im Preis enthalten?", a: "Der Preis gilt für das fertige Eco-PLA-Produkt. Versand und Geländerelief (+≈2 €) werden separat berechnet." },
     { q: "Kann ich bei Lieferung bezahlen?", a: "Ja, neben Online-Zahlung per LiqPay ist auch Nachnahme möglich." },
   ],
 };
@@ -230,7 +230,7 @@ const de: Catalog = {
 const es: Catalog = {
   metaTitle: "Precios de mapas 3D, imanes y llaveros",
   metaDescription:
-    "Precios actuales en UAH: mapa 3D de ciudad desde 250 ₴ (S/M/L/XL), imán 150 ₴, llavero-mapa desde 120 ₴, relieve +60 ₴. Impresión en Eco PLA.",
+    "Precios actuales en UAH: mapa 3D de ciudad desde 350 ₴ (S/M/L/XL), imán 210 ₴, llavero-mapa desde 170 ₴, relieve +85 ₴. Impresión en Eco PLA.",
   h1: "Precios",
   intro:
     "El precio corresponde al producto terminado (impreso en 3D con bioplástico Eco PLA). El envío se paga aparte según la tarifa del transportista. Pago con Visa / Mastercard en línea o contra entrega.",
@@ -239,7 +239,7 @@ const es: Catalog = {
       title: "Mapas 3D de ciudades",
       items: [
         { name: "Mapa 3D de ciudad — S (≈5,5 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~5,5 cm.", uah: PR.s },
-        { name: "Mapa 3D de ciudad — M (≈8 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~8 cm.", uah: PR.m },
+        { name: "Mapa 3D de ciudad — M (≈6 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~8 cm.", uah: PR.m },
         { name: "Mapa 3D de ciudad — L (≈11 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~11 cm.", uah: PR.l },
         { name: "Mapa 3D de ciudad — XL (≈15 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~15 cm.", uah: PR.xl },
         { name: "Relieve del terreno (opción)", desc: "Altitudes adicionales del paisaje en cualquier mapa 3D.", uah: PR.relief, kind: "addon" },
@@ -280,7 +280,7 @@ const es: Catalog = {
   faq: [
     { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío por Ucrania." },
     { q: "¿Hay descuentos para pedidos grandes?", a: "Sí — para tandas de 5 o más piezas idénticas (por ejemplo, llaveros corporativos) el precio se acuerda por separado." },
-    { q: "¿Qué incluye el precio?", a: "El precio corresponde al producto terminado en Eco PLA. El envío y el relieve del terreno (+≈1,5 €) se cobran aparte." },
+    { q: "¿Qué incluye el precio?", a: "El precio corresponde al producto terminado en Eco PLA. El envío y el relieve del terreno (+≈2 €) se cobran aparte." },
     { q: "¿Puedo pagar contra entrega?", a: "Sí, además del pago con tarjeta online vía LiqPay, está disponible el pago contra reembolso." },
   ],
 };
@@ -288,7 +288,7 @@ const es: Catalog = {
 const fr: Catalog = {
   metaTitle: "Prix des cartes 3D, aimants et porte-clés",
   metaDescription:
-    "Prix actuels en UAH : carte 3D de ville dès 250 ₴ (S/M/L/XL), aimant 150 ₴, porte-clés carte dès 120 ₴, relief +60 ₴. Impression en Eco PLA.",
+    "Prix actuels en UAH : carte 3D de ville dès 350 ₴ (S/M/L/XL), aimant 210 ₴, porte-clés carte dès 170 ₴, relief +85 ₴. Impression en Eco PLA.",
   h1: "Tarifs",
   intro:
     "Le prix concerne le produit fini (imprimé en 3D en bioplastique Eco PLA). La livraison est facturée séparément au tarif du transporteur. Paiement par Visa / Mastercard en ligne ou à la livraison.",
@@ -297,7 +297,7 @@ const fr: Catalog = {
       title: "Cartes 3D de villes",
       items: [
         { name: "Carte 3D de ville — S (≈5,5 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~5,5 cm.", uah: PR.s },
-        { name: "Carte 3D de ville — M (≈8 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~8 cm.", uah: PR.m },
+        { name: "Carte 3D de ville — M (≈6 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~8 cm.", uah: PR.m },
         { name: "Carte 3D de ville — L (≈11 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~11 cm.", uah: PR.l },
         { name: "Carte 3D de ville — XL (≈15 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~15 cm.", uah: PR.xl },
         { name: "Relief du terrain (option)", desc: "Altitudes supplémentaires du paysage sur toute carte 3D.", uah: PR.relief, kind: "addon" },
@@ -338,7 +338,7 @@ const fr: Catalog = {
   faq: [
     { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés d'impression, puis livraison en Ukraine." },
     { q: "Y a-t-il des remises pour les grandes commandes ?", a: "Oui — pour 5 pièces identiques ou plus (porte-clés d'entreprise par exemple), le prix se négocie séparément." },
-    { q: "Qu'est-ce qui est inclus dans le prix ?", a: "Le prix concerne le produit fini en Eco PLA. La livraison et le relief du terrain (+≈1,5 €) sont facturés à part." },
+    { q: "Qu'est-ce qui est inclus dans le prix ?", a: "Le prix concerne le produit fini en Eco PLA. La livraison et le relief du terrain (+≈2 €) sont facturés à part." },
     { q: "Puis-je payer à la livraison ?", a: "Oui, en plus du paiement en ligne par carte via LiqPay, le paiement à la livraison est disponible." },
   ],
 };
@@ -346,7 +346,7 @@ const fr: Catalog = {
 const pl: Catalog = {
   metaTitle: "Ceny map 3D, magnesów i breloków",
   metaDescription:
-    "Aktualne ceny w UAH: mapa 3D miasta od 250 ₴ (S/M/L/XL), magnes 150 ₴, brelok-mapa od 120 ₴, relief +60 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
+    "Aktualne ceny w UAH: mapa 3D miasta od 350 ₴ (S/M/L/XL), magnes 210 ₴, brelok-mapa od 170 ₴, relief +85 ₴. Druk z Eco PLA, dostawa Nową Pocztą.",
   h1: "Cennik",
   intro:
     "Cena dotyczy gotowego produktu (druk 3D z biotworzywa Eco PLA). Dostawa płatna osobno według taryfy przewoźnika. Płatność kartą Visa / Mastercard online lub przy odbiorze.",
@@ -355,7 +355,7 @@ const pl: Catalog = {
       title: "Mapy 3D miast",
       items: [
         { name: "Mapa 3D miasta — S (≈5,5 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~5,5 cm.", uah: PR.s },
-        { name: "Mapa 3D miasta — M (≈8 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~8 cm.", uah: PR.m },
+        { name: "Mapa 3D miasta — M (≈6 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~8 cm.", uah: PR.m },
         { name: "Mapa 3D miasta — L (≈11 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~11 cm.", uah: PR.l },
         { name: "Mapa 3D miasta — XL (≈15 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~15 cm.", uah: PR.xl },
         { name: "Relief terenu (opcja)", desc: "Dodatkowe wysokości krajobrazu na dowolnej mapie 3D.", uah: PR.relief, kind: "addon" },
@@ -396,7 +396,7 @@ const pl: Catalog = {
   faq: [
     { q: "Ile trwa wykonanie?", a: "1–3 dni robocze druku, potem dostawa po Ukrainie." },
     { q: "Czy są rabaty przy większych zamówieniach?", a: "Tak — przy 5 i więcej identycznych sztukach (np. breloki firmowe) cena ustalana jest indywidualnie." },
-    { q: "Co zawiera cena?", a: "Cena dotyczy gotowego produktu z Eco PLA. Dostawa i relief terenu (+≈1,5 €) są płatne osobno." },
+    { q: "Co zawiera cena?", a: "Cena dotyczy gotowego produktu z Eco PLA. Dostawa i relief terenu (+≈2 €) są płatne osobno." },
     { q: "Czy mogę zapłacić przy odbiorze?", a: "Tak, oprócz płatności kartą online przez LiqPay dostępna jest płatność za pobraniem." },
   ],
 };

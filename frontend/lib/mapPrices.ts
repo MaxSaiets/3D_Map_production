@@ -15,28 +15,28 @@
  *  Дзеркало backend/pricing.json → map.sizes_mm. 60мм = магніт (окремий SKU,
  *  не входить у звичайну S/M/L/XL лінійку, тому тут немає). */
 export const MAP_SIZE_PRICES_UAH = {
-  55: 250,  // S  (5.5 см)
-  80: 350,  // M  (8 см)
-  110: 450, // L  (11 см)
-  150: 550, // XL (15 см)
+  55: 350,  // S  (5.5 см)   2026-09-08: +40 % (було 250/350/450/550)
+  80: 490,  // M  (8 см)
+  110: 630, // L  (11 см)
+  150: 770, // XL (15 см)
 } as const;
 
 export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
 
 /** Магніт-мапа (60мм) — окремий SKU. UAH. Дзеркало pricing.json map.sizes_mm["60"]. */
-export const MAP_MAGNET_PRICE_UAH = 150;
+export const MAP_MAGNET_PRICE_UAH = 210;
 
 /** Брелок-мапа (3D-друк) — базова ціна. UAH. Дзеркало pricing.json keychain.base. */
-export const KEYCHAIN_PRICE_UAH = 120;
+export const KEYCHAIN_PRICE_UAH = 170;
 
 /** Макет квартири з плану — ціна за ФІЗИЧНИМ розміром виробу (мм → UAH).
  *  Дзеркало backend/pricing.json → floorplan.sizes_mm. Покупець обирає
  *  сантиметри, а не архітектурний масштаб — так само роблять Etsy-продавці. */
 export const FLOORPLAN_SIZE_PRICES_UAH = {
-  100: 590,
-  150: 890,
-  200: 1290,
-  250: 1790,
+  100: 830,
+  150: 1250,
+  200: 1810,
+  250: 2510,
 } as const;
 
 export type FloorplanSizeMm = keyof typeof FLOORPLAN_SIZE_PRICES_UAH;
@@ -48,10 +48,10 @@ export function floorplanPriceUah(sizeMm: number): number {
 }
 
 /** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
-export const MAP_RELIEF_ADDON_UAH = 60;
+export const MAP_RELIEF_ADDON_UAH = 85;
 
 /** Позиційний курс UAH→EUR (як на лендінгу, НЕ біржовий ФХ). Округлюємо до
- *  «гарних» євро (250₴≈6€, 550₴≈13€). */
+ *  «гарних» євро (350₴≈8€, 770₴≈18€). */
 export const EUR_PER_UAH = 0.024;
 
 /** Ціна розміру у EUR (позиційний курс, округлення до цілого євро). */

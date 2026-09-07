@@ -15,7 +15,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
       uk: {
         title: "Що подарувати хлопцю на день народження: 3D-мапа його району",
         description:
-          "Ідея подарунка хлопцю на день народження, якого ні в кого немає: обʼємна 3D-мапа району, де він виріс, або брелок з його вулицею. Від 120 ₴, друк за 2–4 дні.",
+          "Ідея подарунка хлопцю на день народження, якого ні в кого немає: обʼємна 3D-мапа району, де він виріс, або брелок з його вулицею. Від 170 ₴, друк за 2–4 дні.",
         h1: "Що подарувати хлопцю на день народження, якщо шкарпетки вже були",
         intro:
           "Гаджети він купує сам, парфуми — лотерея, а «сертифікат на емоції» забудеться за тиждень. Працює інше: річ, у якій є ВІН. Наприклад, обʼємна мапа району, де він виріс, або кварталу, де ви познайомились — з реальними будинками, вулицями й парком, який він упізнає з першого погляду.",
@@ -30,9 +30,9 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
           {
             h2: "Три варіанти під різний бюджет",
             p: [
-              "Брелок з мапою (від 120 ₴) — його вулиця завжди з ключами, можна додати напис або дату на звороті.",
-              "Магніт на холодильник (150 ₴) — компактна мапа 6 см, якщо хочеться недорогого, але особистого.",
-              "Обʼємна 3D-мапа району (від 250 ₴) — головний подарунок: будинки з реальними висотами, парки, річка. Розмір від 5,5 до 15 см.",
+              "Брелок з мапою (від 170 ₴) — його вулиця завжди з ключами, можна додати напис або дату на звороті.",
+              "Магніт на холодильник (210 ₴) — компактна мапа 6 см, якщо хочеться недорогого, але особистого.",
+              "Обʼємна 3D-мапа району (від 350 ₴) — головний подарунок: будинки з реальними висотами, парки, річка. Розмір від 5,5 до 15 см.",
             ],
           },
           {
@@ -56,13 +56,13 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
       en: {
         title: "Birthday gift for your boyfriend: a 3D map of his neighbourhood",
         description:
-          "A birthday gift idea nobody else has: a 3D map of the neighbourhood he grew up in, or a keychain with his street. From 120 ₴, printed in 2–4 days.",
+          "A birthday gift idea nobody else has: a 3D map of the neighbourhood he grew up in, or a keychain with his street. From 170 ₴, printed in 2–4 days.",
         h1: "What to give your boyfriend for his birthday when socks are already taken",
         intro:
           "He buys gadgets himself, perfume is a lottery, and an “experience voucher” is forgotten in a week. What works is a thing that has HIM in it: a 3D map of the neighbourhood he grew up in, or the block where you met — with real buildings, streets and the park he recognises at a glance.",
         sections: [
           { h2: "Why a map", p: ["It is not a shelf souvenir: the model exists once, because it is made for specific coordinates. On a desk it instantly becomes a conversation piece.", "A map has no clothing size and no taste risk: a place that matters always lands."] },
-          { h2: "Three options for any budget", p: ["Map keychain (from 120 ₴) — his street always on the keys, with an optional engraving on the back.", "Fridge magnet (150 ₴) — a compact 6 cm map when you want something small but personal.", "3D district map (from 250 ₴) — the main gift: buildings with real heights, parks, river. 5.5 to 15 cm."] },
+          { h2: "Three options for any budget", p: ["Map keychain (from 170 ₴) — his street always on the keys, with an optional engraving on the back.", "Fridge magnet (210 ₴) — a compact 6 cm map when you want something small but personal.", "3D district map (from 350 ₴) — the main gift: buildings with real heights, parks, river. 5.5 to 15 cm."] },
           { h2: "How to make it in 5 minutes", p: ["Open the builder, find the address or tap a city, drag the frame over the block — a free 3D preview appears in 1–2 minutes.", "Then two paths: order a print shipped within Ukraine, or download the file and print it yourself."] },
           { h2: "Make it his", p: ["Mark his house with a red inlay, add a name, a year or coordinates. For couples there is a two-half heart keychain: his district and yours."] },
         ],
@@ -100,7 +100,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
           {
             h2: "Скільки коштує і коли буде готово",
             p: [
-              "Брелок — від 120 ₴, пара сердець — два брелоки. Обʼємна мапа — від 250 ₴ (5,5 см) до 550 ₴ (15 см). Друк і відправка Новою Поштою — 2–4 робочі дні.",
+              "Брелок — від 170 ₴, пара сердець — два брелоки. Обʼємна мапа — від 350 ₴ (5,5 см) до 770 ₴ (15 см). Друк і відправка Новою Поштою — 2–4 робочі дні.",
             ],
           },
         ],
@@ -118,7 +118,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
         sections: [
           { h2: "Two ideas that work best", p: ["A 3D map of the first date: a 400–800 m district with real buildings, the park and the street you walked. Put it on a shelf and every glance brings that day back.", "A two-half heart keychain: one half is her neighbourhood, the other is yours. Together they make a whole heart; apart, each carries their own."] },
           { h2: "An engraving that makes it yours", p: ["The date you met, her name or the coordinates of the place — on a flat map, a magnet or the back of the keychain. Added with one click in the builder."] },
-          { h2: "Price and timing", p: ["Keychain from 120 ₴; a heart pair is two keychains. 3D map from 250 ₴ (5.5 cm) to 550 ₴ (15 cm). Print and dispatch in 2–4 business days."] },
+          { h2: "Price and timing", p: ["Keychain from 170 ₴; a heart pair is two keychains. 3D map from 350 ₴ (5.5 cm) to 770 ₴ (15 cm). Print and dispatch in 2–4 business days."] },
         ],
         ctaLabel: "Create a map of your place",
         ctaHref: "/podarunok/na-richnytsyu",
@@ -187,7 +187,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
       uk: {
         title: "Подарунок на новосілля друзям: мапа нового району замість чергового горщика",
         description:
-          "Що подарувати на новосілля: 3D-мапа кварталу нової квартири або магніт з новим районом. Стає першим декором у порожній квартирі. Від 150 ₴, друк 2–4 дні.",
+          "Що подарувати на новосілля: 3D-мапа кварталу нової квартири або магніт з новим районом. Стає першим декором у порожній квартирі. Від 210 ₴, друк 2–4 дні.",
         h1: "Подарунок на новосілля, який одразу стане декором",
         intro:
           "У новій квартирі порожні полиці й стіни — і горщик із квіткою це не рятує. Мапа нового району з реальними будинками, парком і вулицею, на якій тепер живуть друзі, займає своє місце на полиці в перший же вечір.",
@@ -195,8 +195,8 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
           {
             h2: "Що обрати",
             p: [
-              "Магніт з мапою нового району (150 ₴) — недорогий, доречний і одразу на холодильник.",
-              "Обʼємна мапа кварталу (від 250 ₴) — для полиці у вітальні; позначте їхній будинок червоною вставкою, щоб гості одразу бачили «ось ми».",
+              "Магніт з мапою нового району (210 ₴) — недорогий, доречний і одразу на холодильник.",
+              "Обʼємна мапа кварталу (від 350 ₴) — для полиці у вітальні; позначте їхній будинок червоною вставкою, щоб гості одразу бачили «ось ми».",
               "Панно з плиток на стіну — якщо новосілля велике й дарують кілька друзів разом.",
             ],
           },
@@ -219,12 +219,12 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
       en: {
         title: "Housewarming gift for friends: a map of the new district instead of another pot plant",
         description:
-          "What to give for a housewarming: a 3D map of the block of the new flat, or a magnet with the new district. Becomes the first decor in an empty flat. From 150 ₴, printed in 2–4 days.",
+          "What to give for a housewarming: a 3D map of the block of the new flat, or a magnet with the new district. Becomes the first decor in an empty flat. From 210 ₴, printed in 2–4 days.",
         h1: "A housewarming gift that becomes decor on day one",
         intro:
           "A new flat has empty shelves and walls — and a pot plant doesn’t fix that. A map of the new district with real buildings, the park and the street your friends now live on takes its place on the shelf the very first evening.",
         sections: [
-          { h2: "What to choose", p: ["A magnet with the new district (150 ₴) — inexpensive, fitting and straight onto the fridge.", "A 3D map of the block (from 250 ₴) — for the living-room shelf; mark their building with a red inlay so guests see “that’s us”.", "A tile wall panel — for a big housewarming when several friends chip in."] },
+          { h2: "What to choose", p: ["A magnet with the new district (210 ₴) — inexpensive, fitting and straight onto the fridge.", "A 3D map of the block (from 350 ₴) — for the living-room shelf; mark their building with a red inlay so guests see “that’s us”.", "A tile wall panel — for a big housewarming when several friends chip in."] },
           { h2: "Text on the map", p: ["The street name, the moving date or simply “Home”. Added in the builder with one click, printed on a flat map or magnet."] },
           { h2: "Don’t know the exact address?", p: ["A street and city are enough — the map search finds it and you drag the frame onto the right building. The 3D preview is free; you order after you see the result."] },
         ],

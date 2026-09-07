@@ -2,7 +2,7 @@
   "start": {
     "title": "Mapa 3D de tu ciudad",
     "line": "Elige un barrio en el mapa — imprimimos mapa 3D, llavero o imán",
-    "price": "desde 120 ₴ · impresión 2–4 días · Ucrania",
+    "price": "desde 170 ₴ · impresión 2–4 días · Ucrania",
     "cta1": "Crear el mapa de mi barrio",
     "cta2": "Crear un llavero con mapa",
     "cta3": "Ver precios",
@@ -13,7 +13,7 @@
     "homeTitle": "Mapa 3D de tu ciudad a medida — un regalo con tu barrio | Monadruk",
     "homeDescription": "Elige un barrio en el mapa — imprimimos un mapa 3D, llavero o imán. Cualquier ciudad del mundo, vista previa 3D gratis en 1–2 minutos.",
     "ogTitle": "Mapa 3D de tu barrio — un regalo que nadie más tiene",
-    "ogDescription": "Elige un lugar en el mapa — imprimimos mapa 3D, llavero o imán. Desde 120 ₴.",
+    "ogDescription": "Elige un lugar en el mapa — imprimimos mapa 3D, llavero o imán. Desde 170 ₴.",
     "keywords": "mapa 3d de ciudad, impresión 3d mapa ciudad, plano de ciudad 3d, llavero mapa de ciudad, llavero personalizado mapa, mapa stl, mapa 3mf, mapa topográfico 3d, llavero relieve, imán nevera mapa ciudad, regalo mapa personalizado, regalo de aniversario, mapa táctil, Bambu Studio, PrusaSlicer",
     "orgDescription": "Mapas 3D táctiles y llaveros con mapa de ciudad listos para imprimir.",
     "serviceName": "Mapas 3D de ciudades y llaveros por encargo",
@@ -224,8 +224,8 @@
     "keywords": "crear mapa 3d de ciudad, generador de mapas 3d online, descargar mapa 3mf, mapa stl para descargar, imprimir mapa ciudad 3d, mapa con alturas de edificios, imán mapa ciudad, mapa personalizado de mi ciudad, mapa 3d de Madrid, mapa 3d de Barcelona"
   },
   "keychainsMeta": {
-    "title": "Llavero con mapa de ciudad — grabado con tu texto, desde ≈3 €",
-    "description": "Llavero con mapa 55×30 mm a medida: calles y parques de tu barrio en relieve, texto grabado al dorso — nombre, fecha, coordenadas. Impresión 3D desde ≈3 €, envío en Ucrania.",
+    "title": "Llavero con mapa de ciudad — grabado con tu texto, desde ≈4 €",
+    "description": "Llavero con mapa 55×30 mm a medida: calles y parques de tu barrio en relieve, texto grabado al dorso — nombre, fecha, coordenadas. Impresión 3D desde ≈4 €, envío en Ucrania.",
     "keywords": "llavero mapa de ciudad, llavero mapa, llavero 3d personalizado, llavero con nombre, llavero grabado, llavero topográfico, llavero relieve montaña, llavero corazón mapa, llavero casa, regalo para él, regalo para ella, regalo de aniversario, llavero pareja"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "Mapa 3D de {city} — desde 6 €, listo en 2 min",
-    "description": "Mapa 3D de {city}: elige un barrio en el configurador — un modelo con calles y edificios en 2 minutos. Impresión desde ≈6 € con envío en Ucrania o archivo gratis para imprimir tú mismo.",
+    "description": "Mapa 3D de {city}: elige un barrio en el configurador — un modelo con calles y edificios en 2 minutos. Impresión desde ≈8 € con envío en Ucrania o archivo gratis para imprimir tú mismo.",
     "h1": "Mapa 3D de {city}",
     "p1": "El mapa 3D de {city} es un modelo tridimensional táctil de un barrio: calles, edificios con alturas reales, parques y ríos a partir de datos de OpenStreetMap. Elige cualquier barrio de {city} en el configurador — el modelo está listo en minutos como 3MF o STL para Bambu Studio o PrusaSlicer.",
     "p2": "¿No tienes impresora 3D? Imprimimos el mapa o el llavero de {city} en Eco PLA ecológico y enviamos dentro de Ucrania. Un regalo perfecto para quien ama su ciudad.",

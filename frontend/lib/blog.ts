@@ -10,6 +10,7 @@ import type { AppLocale } from "@/i18n/routing";
 import { GIFT_ARTICLES_2026 } from "@/lib/blogGifts";
 import { SEO_UA_ARTICLES_2026_A } from "@/lib/blogSeoUa2026a";
 import { SEO_UA_ARTICLES_2026_B } from "@/lib/blogSeoUa2026b";
+import { SEO_UA_ARTICLES_2026_C } from "@/lib/blogSeoUa2026c";
 
 export type BlogSection = { h2?: string; p: string[] };
 export type BlogArticleContent = {
@@ -121,7 +122,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Крок 2. Розмір і рельєф",
             p: [
-              "Оберіть розмір готової моделі: S (5,5 см) — компактний сувенір, M (8 см) — золота середина, L (11 см) та XL (15 см) — помітна річ на полиці. Ціна залежить від розміру — від 250 ₴.",
+              "Оберіть розмір готової моделі: S (5,5 см) — компактний сувенір, M (8 см) — золота середина, L (11 см) та XL (15 см) — помітна річ на полиці. Ціна залежить від розміру — від 350 ₴.",
               "Якщо місцевість горбиста (Київ, Львів, Карпати) — увімкніть рельєф: модель отримає справжні перепади висот, і пагорби буде видно й на дотик. Для рівнинних міст рельєф можна не вмикати.",
             ],
           },
@@ -162,7 +163,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Step 2. Size and relief",
             p: [
-              "Choose the final size: S (5.5 cm) is a compact souvenir, M (8 cm) is the sweet spot, L (11 cm) and XL (15 cm) stand out on a shelf. Price depends on size — from 250 ₴ (≈€6).",
+              "Choose the final size: S (5.5 cm) is a compact souvenir, M (8 cm) is the sweet spot, L (11 cm) and XL (15 cm) stand out on a shelf. Price depends on size — from 350 ₴ (≈€8).",
               "If the terrain is hilly (Kyiv, Lviv, the Carpathians) — enable relief: the model gets real elevation and the hills are visible and touchable.",
             ],
           },
@@ -202,7 +203,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Schritt 2. Größe und Relief",
             p: [
-              "Wähle die Endgröße: S (5,5 cm) ist ein kompaktes Souvenir, M (8 cm) die goldene Mitte, L (11 cm) und XL (15 cm) fallen im Regal auf. Der Preis richtet sich nach der Größe — ab ≈6 €.",
+              "Wähle die Endgröße: S (5,5 cm) ist ein kompaktes Souvenir, M (8 cm) die goldene Mitte, L (11 cm) und XL (15 cm) fallen im Regal auf. Der Preis richtet sich nach der Größe — ab ≈8 €.",
               "Ist die Gegend hügelig (Kyiv, Lwiw, die Karpaten), aktiviere das Relief: Das Modell erhält echte Höhenunterschiede, und die Hügel sind sichtbar und fühlbar. Für flache Städte kannst du es weglassen.",
             ],
           },
@@ -242,7 +243,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Krok 2. Rozmiar i rzeźba terenu",
             p: [
-              "Wybierz rozmiar końcowy: S (5,5 cm) to kompaktowa pamiątka, M (8 cm) złoty środek, L (11 cm) i XL (15 cm) wyróżniają się na półce. Cena zależy od rozmiaru — od ≈6 €.",
+              "Wybierz rozmiar końcowy: S (5,5 cm) to kompaktowa pamiątka, M (8 cm) złoty środek, L (11 cm) i XL (15 cm) wyróżniają się na półce. Cena zależy od rozmiaru — od ≈8 €.",
               "Jeśli teren jest pagórkowaty (Kijów, Lwów, Karpaty), włącz rzeźbę: model otrzyma prawdziwe różnice wysokości, a wzgórza będzie widać i można je wyczuć. Dla płaskich miast można ją pominąć.",
             ],
           },
@@ -282,7 +283,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Étape 2. Taille et relief",
             p: [
-              "Choisissez la taille finale : S (5,5 cm) est un souvenir compact, M (8 cm) le juste milieu, L (11 cm) et XL (15 cm) se remarquent sur une étagère. Le prix dépend de la taille — dès ≈6 €.",
+              "Choisissez la taille finale : S (5,5 cm) est un souvenir compact, M (8 cm) le juste milieu, L (11 cm) et XL (15 cm) se remarquent sur une étagère. Le prix dépend de la taille — dès ≈8 €.",
               "Si le terrain est vallonné (Kyiv, Lviv, les Carpates), activez le relief : le modèle obtient de vrais dénivelés et les collines se voient et se touchent. Pour les villes plates, vous pouvez l'omettre.",
             ],
           },
@@ -322,7 +323,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Paso 2. Tamaño y relieve",
             p: [
-              "Elige el tamaño final: S (5,5 cm) es un recuerdo compacto, M (8 cm) el punto justo, L (11 cm) y XL (15 cm) destacan en una estantería. El precio depende del tamaño — desde ≈6 €.",
+              "Elige el tamaño final: S (5,5 cm) es un recuerdo compacto, M (8 cm) el punto justo, L (11 cm) y XL (15 cm) destacan en una estantería. El precio depende del tamaño — desde ≈8 €.",
               "Si el terreno es montañoso (Kyiv, Leópolis, los Cárpatos), activa el relieve: el modelo obtiene desniveles reales y las colinas se ven y se tocan. Para ciudades llanas puedes omitirlo.",
             ],
           },
@@ -353,7 +354,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Що подарувати людині, в якої все є: персональна 3D-мапа",
         description:
-          "Ідея подарунка, якого точно ні в кого немає: 3D-мапа місця, що щось означає — рідний двір, місце знайомства, перше спільне житло. Від 250 ₴.",
+          "Ідея подарунка, якого точно ні в кого немає: 3D-мапа місця, що щось означає — рідний двір, місце знайомства, перше спільне житло. Від 350 ₴.",
         h1: "Що подарувати людині, в якої все є",
         intro:
           "Найскладніші подарунки — для тих, у кого «все є». Чергова свічка чи листівка забудуться за тиждень. Працює інше: подарунок, який щось означає саме для цієї людини. Персональна 3D-мапа — це шматочок міста, з яким пов'язана її історія: двір дитинства, вулиця першого побачення, дім, куди щойно переїхали.",
@@ -368,7 +369,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Формати під різний бюджет",
             p: [
-              "Брелок-мапа (від 120 ₴) — недорогий знак уваги: карта району з власним написом на звороті. Магніт на холодильник (150 ₴) — щоденне нагадування про місце. 3D-мапа на полицю (від 250 ₴ за 5,5 см до 550 ₴ за 15 см) — повноцінний інтер'єрний подарунок, з рельєфом місцевості за бажанням.",
+              "Брелок-мапа (від 170 ₴) — недорогий знак уваги: карта району з власним написом на звороті. Магніт на холодильник (210 ₴) — щоденне нагадування про місце. 3D-мапа на полицю (від 350 ₴ за 5,5 см до 770 ₴ за 15 см) — повноцінний інтер'єрний подарунок, з рельєфом місцевості за бажанням.",
             ],
           },
           {
@@ -385,7 +386,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "A gift for someone who has everything: a personal 3D map",
         description:
-          "A gift no one else has: a 3D map of a place that matters — a childhood street, where you met, your first home. From ≈€6.",
+          "A gift no one else has: a 3D map of a place that matters — a childhood street, where you met, your first home. From ≈€8.",
         h1: "A gift for someone who has everything",
         intro:
           "The hardest gifts are for people who «have everything». What works is meaning: a personal 3D map is a piece of the city tied to their story — the childhood backyard, the street of a first date, the home they just moved into.",
@@ -400,7 +401,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formats for any budget",
             p: [
-              "Map keychain (from 120 ₴ ≈ €3) — a small token with custom text on the back. Fridge magnet (150 ₴) — a daily reminder of a place. Shelf 3D map (250–550 ₴ ≈ €6–13 depending on size) — a real interior piece, with terrain relief if you like.",
+              "Map keychain (from 170 ₴ ≈ €4) — a small token with custom text on the back. Fridge magnet (210 ₴) — a daily reminder of a place. Shelf 3D map (350–770 ₴ ≈ €8–13 depending on size) — a real interior piece, with terrain relief if you like.",
             ],
           },
           {
@@ -417,7 +418,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Was schenkt man jemandem, der alles hat: eine persönliche 3D-Karte",
         description:
-          "Ein Geschenk, das niemand sonst hat: eine 3D-Karte eines Ortes mit Bedeutung — der Kindheitshof, der Ort des Kennenlernens, die erste gemeinsame Wohnung. Ab ≈6 €.",
+          "Ein Geschenk, das niemand sonst hat: eine 3D-Karte eines Ortes mit Bedeutung — der Kindheitshof, der Ort des Kennenlernens, die erste gemeinsame Wohnung. Ab ≈8 €.",
         h1: "Was schenkt man jemandem, der alles hat",
         intro:
           "Die schwierigsten Geschenke sind für Menschen, die «alles haben». Was wirkt, ist Bedeutung: eine persönliche 3D-Karte ist ein Stück Stadt, das mit ihrer Geschichte verbunden ist — der Hof der Kindheit, die Straße des ersten Dates, die Wohnung, in die sie gerade eingezogen sind.",
@@ -432,7 +433,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formate für jedes Budget",
             p: [
-              "Karten-Anhänger (ab ≈3 €) — eine kleine Aufmerksamkeit mit eigenem Text auf der Rückseite. Kühlschrankmagnet (≈4 €) — eine tägliche Erinnerung an einen Ort. 3D-Karte fürs Regal (≈6–13 € je nach Größe) — ein echtes Interieurstück, auf Wunsch mit Geländerelief.",
+              "Karten-Anhänger (ab ≈4 €) — eine kleine Aufmerksamkeit mit eigenem Text auf der Rückseite. Kühlschrankmagnet (≈4 €) — eine tägliche Erinnerung an einen Ort. 3D-Karte fürs Regal (≈8–13 € je nach Größe) — ein echtes Interieurstück, auf Wunsch mit Geländerelief.",
             ],
           },
           {
@@ -449,7 +450,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Co podarować komuś, kto ma wszystko: spersonalizowana mapa 3D",
         description:
-          "Prezent, którego nie ma nikt inny: mapa 3D miejsca, które coś znaczy — rodzinne podwórko, miejsce poznania, pierwsze wspólne mieszkanie. Od ≈6 €.",
+          "Prezent, którego nie ma nikt inny: mapa 3D miejsca, które coś znaczy — rodzinne podwórko, miejsce poznania, pierwsze wspólne mieszkanie. Od ≈8 €.",
         h1: "Co podarować komuś, kto ma wszystko",
         intro:
           "Najtrudniejsze prezenty są dla osób, które «mają wszystko». Działa znaczenie: spersonalizowana mapa 3D to kawałek miasta związany z ich historią — podwórko z dzieciństwa, ulica pierwszej randki, mieszkanie, do którego właśnie się wprowadzili.",
@@ -464,7 +465,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formaty na każdy budżet",
             p: [
-              "Brelok-mapa (od ≈3 €) — drobny gest z własnym napisem z tyłu. Magnes na lodówkę (≈4 €) — codzienne przypomnienie o miejscu. Mapa 3D na półkę (≈6–13 € zależnie od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.",
+              "Brelok-mapa (od ≈4 €) — drobny gest z własnym napisem z tyłu. Magnes na lodówkę (≈4 €) — codzienne przypomnienie o miejscu. Mapa 3D na półkę (≈8–13 € zależnie od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.",
             ],
           },
           {
@@ -481,7 +482,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Que offrir à quelqu'un qui a tout : une carte 3D personnalisée",
         description:
-          "Un cadeau que personne d'autre n'a : une carte 3D d'un lieu qui compte — la cour d'enfance, le lieu de la rencontre, le premier logement commun. Dès ≈6 €.",
+          "Un cadeau que personne d'autre n'a : une carte 3D d'un lieu qui compte — la cour d'enfance, le lieu de la rencontre, le premier logement commun. Dès ≈8 €.",
         h1: "Que offrir à quelqu'un qui a tout",
         intro:
           "Les cadeaux les plus difficiles sont pour ceux qui «ont tout». Ce qui marche, c'est le sens : une carte 3D personnalisée est un morceau de ville lié à leur histoire — la cour d'enfance, la rue d'un premier rendez-vous, le logement où ils viennent d'emménager.",
@@ -496,7 +497,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Des formats pour tous les budgets",
             p: [
-              "Porte-clés carte (dès ≈3 €) — une petite attention avec un texte au dos. Magnet de frigo (≈4 €) — un rappel quotidien d'un lieu. Carte 3D pour l'étagère (≈6–13 € selon la taille) — une vraie pièce d'intérieur, avec relief du terrain si vous voulez.",
+              "Porte-clés carte (dès ≈4 €) — une petite attention avec un texte au dos. Magnet de frigo (≈4 €) — un rappel quotidien d'un lieu. Carte 3D pour l'étagère (≈8–13 € selon la taille) — une vraie pièce d'intérieur, avec relief du terrain si vous voulez.",
             ],
           },
           {
@@ -513,7 +514,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Qué regalar a quien lo tiene todo: un mapa 3D personalizado",
         description:
-          "Un regalo que nadie más tiene: un mapa 3D de un lugar que significa algo — el patio de la infancia, el lugar donde os conocisteis, el primer hogar juntos. Desde ≈6 €.",
+          "Un regalo que nadie más tiene: un mapa 3D de un lugar que significa algo — el patio de la infancia, el lugar donde os conocisteis, el primer hogar juntos. Desde ≈8 €.",
         h1: "Qué regalar a quien lo tiene todo",
         intro:
           "Los regalos más difíciles son para quienes «lo tienen todo». Lo que funciona es el significado: un mapa 3D personalizado es un trozo de ciudad ligado a su historia — el patio de la infancia, la calle de una primera cita, la casa a la que acaban de mudarse.",
@@ -528,7 +529,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formatos para cada presupuesto",
             p: [
-              "Llavero-mapa (desde ≈3 €) — un pequeño detalle con texto propio al dorso. Imán de nevera (≈4 €) — un recordatorio diario de un lugar. Mapa 3D para la estantería (≈6–13 € según el tamaño) — una auténtica pieza de interior, con relieve del terreno si quieres.",
+              "Llavero-mapa (desde ≈4 €) — un pequeño detalle con texto propio al dorso. Imán de nevera (≈4 €) — un recordatorio diario de un lugar. Mapa 3D para la estantería (≈8–13 € según el tamaño) — una auténtica pieza de interior, con relieve del terreno si quieres.",
             ],
           },
           {
@@ -549,9 +550,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     date: "2026-07-08",
     content: {
       uk: {
-        title: "Брелок з картою міста: персональний аксесуар від 120 ₴",
+        title: "Брелок з картою міста: персональний аксесуар від 170 ₴",
         description:
-          "Брелок-мапа 55×30 мм: вулиці й парки вашого району рельєфом, власний напис на звороті. 3D-друк на замовлення від 120 ₴, доставка по Україні.",
+          "Брелок-мапа 55×30 мм: вулиці й парки вашого району рельєфом, власний напис на звороті. 3D-друк на замовлення від 170 ₴, доставка по Україні.",
         h1: "Брелок з картою міста — маленька мапа, що завжди з тобою",
         intro:
           "Брелок-мапа — це жетон 55×30 мм, на якому рельєфом надруковано карту обраного району: вулиці, парки, річки. На звороті — власний напис: назва міста, дата, ім'я чи координати. Це найдоступніший спосіб носити з собою місце, яке щось означає.",
@@ -572,7 +573,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна і терміни",
             p: [
-              "Брелок-мапа — від 120 ₴. Виготовлення 2–4 робочі дні, доставка Новою Пошта по Україні. Оплата карткою онлайн (LiqPay) або при отриманні.",
+              "Брелок-мапа — від 170 ₴. Виготовлення 2–4 робочі дні, доставка Новою Пошта по Україні. Оплата карткою онлайн (LiqPay) або при отриманні.",
             ],
           },
         ],
@@ -603,7 +604,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price and lead time",
             p: [
-              "Map keychain — from 120 ₴ (≈€3). Production 2–4 business days, delivery across Ukraine. Card payment online or on delivery.",
+              "Map keychain — from 170 ₴ (≈€4). Production 2–4 business days, delivery across Ukraine. Card payment online or on delivery.",
             ],
           },
         ],
@@ -611,9 +612,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/keychains",
       },
       de: {
-        title: "Schlüsselanhänger mit Stadtkarte: persönliches Accessoire ab ≈3 €",
+        title: "Schlüsselanhänger mit Stadtkarte: persönliches Accessoire ab ≈4 €",
         description:
-          "Karten-Anhänger 55×30 mm: Straßen und Parks deines Viertels als Relief, eigener Text auf der Rückseite. 3D-Druck auf Bestellung ab ≈3 €, Versand in der Ukraine.",
+          "Karten-Anhänger 55×30 mm: Straßen und Parks deines Viertels als Relief, eigener Text auf der Rückseite. 3D-Druck auf Bestellung ab ≈4 €, Versand in der Ukraine.",
         h1: "Schlüsselanhänger mit Stadtkarte — eine kleine Karte, die immer dabei ist",
         intro:
           "Der Karten-Anhänger ist ein 55×30-mm-Täfelchen, auf dem das gewählte Viertel als Relief gedruckt ist: Straßen, Parks, Flüsse. Auf der Rückseite dein Text: Stadtname, Datum, Name oder Koordinaten. Die günstigste Art, einen Ort bei sich zu tragen, der etwas bedeutet.",
@@ -634,7 +635,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis und Lieferzeit",
             p: [
-              "Karten-Anhänger — ab ≈3 €. Fertigung 2–4 Werktage, Versand mit Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
+              "Karten-Anhänger — ab ≈4 €. Fertigung 2–4 Werktage, Versand mit Nova Poshta in der Ukraine. Kartenzahlung online oder bei Lieferung.",
             ],
           },
         ],
@@ -642,9 +643,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/keychains",
       },
       pl: {
-        title: "Brelok z mapą miasta: osobiste akcesorium od ≈3 €",
+        title: "Brelok z mapą miasta: osobiste akcesorium od ≈4 €",
         description:
-          "Brelok-mapa 55×30 mm: ulice i parki Twojej dzielnicy w reliefie, własny napis z tyłu. Druk 3D na zamówienie od ≈3 €, wysyłka Ukraina.",
+          "Brelok-mapa 55×30 mm: ulice i parki Twojej dzielnicy w reliefie, własny napis z tyłu. Druk 3D na zamówienie od ≈4 €, wysyłka Ukraina.",
         h1: "Brelok z mapą miasta — mała mapa, która zawsze jest przy Tobie",
         intro:
           "Brelok-mapa to zawieszka 55×30 mm, na której wybraną dzielnicę wydrukowano reliefem: ulice, parki, rzeki. Z tyłu Twój napis: nazwa miasta, data, imię lub współrzędne. Najtańszy sposób, by nosić przy sobie miejsce, które coś znaczy.",
@@ -665,7 +666,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena i termin",
             p: [
-              "Brelok-mapa — od ≈3 €. Wykonanie 2–4 dni robocze, wysyłka Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
+              "Brelok-mapa — od ≈4 €. Wykonanie 2–4 dni robocze, wysyłka Nova Poshta na Ukrainie. Płatność kartą online lub przy odbiorze.",
             ],
           },
         ],
@@ -673,9 +674,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/keychains",
       },
       fr: {
-        title: "Porte-clés avec carte de ville : accessoire personnel dès ≈3 €",
+        title: "Porte-clés avec carte de ville : accessoire personnel dès ≈4 €",
         description:
-          "Porte-clés carte 55×30 mm : les rues et parcs de votre quartier en relief, texte personnel au dos. Impression 3D sur mesure dès ≈3 €, livraison en Ukraine.",
+          "Porte-clés carte 55×30 mm : les rues et parcs de votre quartier en relief, texte personnel au dos. Impression 3D sur mesure dès ≈4 €, livraison en Ukraine.",
         h1: "Porte-clés avec carte de ville — une petite carte toujours avec vous",
         intro:
           "Le porte-clés carte est une plaque de 55×30 mm sur laquelle le quartier choisi est imprimé en relief : rues, parcs, rivières. Au dos, votre texte : nom de ville, date, prénom ou coordonnées. La façon la plus abordable de porter sur soi un lieu qui compte.",
@@ -696,7 +697,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix et délai",
             p: [
-              "Porte-clés carte — dès ≈3 €. Fabrication 2–4 jours ouvrés, livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
+              "Porte-clés carte — dès ≈4 €. Fabrication 2–4 jours ouvrés, livraison par Nova Poshta en Ukraine. Paiement par carte en ligne ou à la livraison.",
             ],
           },
         ],
@@ -704,9 +705,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         ctaHref: "/keychains",
       },
       es: {
-        title: "Llavero con mapa de ciudad: accesorio personal desde ≈3 €",
+        title: "Llavero con mapa de ciudad: accesorio personal desde ≈4 €",
         description:
-          "Llavero-mapa 55×30 mm: las calles y parques de tu barrio en relieve, texto personal al dorso. Impresión 3D a medida desde ≈3 €, envío en Ucrania.",
+          "Llavero-mapa 55×30 mm: las calles y parques de tu barrio en relieve, texto personal al dorso. Impresión 3D a medida desde ≈4 €, envío en Ucrania.",
         h1: "Llavero con mapa de ciudad — un pequeño mapa que siempre te acompaña",
         intro:
           "El llavero-mapa es una placa de 55×30 mm en la que el barrio elegido está impreso en relieve: calles, parques, ríos. Al dorso, tu texto: nombre de la ciudad, fecha, nombre o coordenadas. La forma más asequible de llevar contigo un lugar que significa algo.",
@@ -727,7 +728,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio y plazo",
             p: [
-              "Llavero-mapa — desde ≈3 €. Fabricación 2–4 días hábiles, envío con Nova Poshta en Ucrania. Pago con tarjeta online o contra entrega.",
+              "Llavero-mapa — desde ≈4 €. Fabricación 2–4 días hábiles, envío con Nova Poshta en Ucrania. Pago con tarjeta online o contra entrega.",
             ],
           },
         ],
@@ -743,7 +744,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Брелок з GPX-маршрутом: увічни свій забіг, похід чи веломаршрут",
         description:
-          "Завантаж GPX-трек зі Strava чи Garmin — і отримай брелок з рельєфною лінією свого маршруту поверх карти району. Пам'ять про марафон чи похід від 120 ₴.",
+          "Завантаж GPX-трек зі Strava чи Garmin — і отримай брелок з рельєфною лінією свого маршруту поверх карти району. Пам'ять про марафон чи похід від 170 ₴.",
         h1: "Брелок з GPX-маршрутом: твій трек у пластику",
         intro:
           "Перший марафон, вело-сотка, похід на Говерлу — трек цих маршрутів лежить у Strava чи Garmin і його ніхто не бачить. Брелок з GPX-маршрутом перетворює трек на фізичну річ: рельєфна лінія маршруту проходить поверх карти району прямо на жетоні, який завжди з ключами.",
@@ -764,7 +765,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціна",
             p: [
-              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 120 ₴. Виготовлення 2–4 робочі дні, доставка по Україні.",
+              "Брелок з GPX-треком коштує як звичайний брелок-мапа — від 170 ₴. Виготовлення 2–4 робочі дні, доставка по Україні.",
             ],
           },
         ],
@@ -774,7 +775,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "GPX route keychain: your run, hike or ride in plastic",
         description:
-          "Upload a GPX track from Strava or Garmin — get a keychain with your route as a relief line over the district map. A marathon or hike memory from ≈€3.",
+          "Upload a GPX track from Strava or Garmin — get a keychain with your route as a relief line over the district map. A marathon or hike memory from ≈€4.",
         h1: "GPX route keychain: your track made physical",
         intro:
           "Your first marathon, a century ride, a Hoverla hike — those tracks sit invisible in Strava or Garmin. A GPX keychain turns the track into a physical object: the route runs in relief over the district map on a tag that lives on your keys.",
@@ -795,7 +796,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Price",
             p: [
-              "A GPX keychain costs the same as a regular map keychain — from 120 ₴ (≈€3). Production 2–4 business days, shipping to Ukraine.",
+              "A GPX keychain costs the same as a regular map keychain — from 170 ₴ (≈€4). Production 2–4 business days, shipping to Ukraine.",
             ],
           },
         ],
@@ -805,7 +806,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Schlüsselanhänger mit GPX-Route: verewige deinen Lauf, deine Wanderung oder Radtour",
         description:
-          "Lade einen GPX-Track aus Strava oder Garmin hoch — und erhalte einen Anhänger mit der Reliefline deiner Route über der Viertelkarte. Marathon- oder Wander-Andenken ab ≈3 €.",
+          "Lade einen GPX-Track aus Strava oder Garmin hoch — und erhalte einen Anhänger mit der Reliefline deiner Route über der Viertelkarte. Marathon- oder Wander-Andenken ab ≈4 €.",
         h1: "Schlüsselanhänger mit GPX-Route: dein Track in Plastik",
         intro:
           "Der erste Marathon, eine 100-km-Radtour, eine Hoverla-Wanderung — der Track dieser Routen liegt in Strava oder Garmin und niemand sieht ihn. Ein GPX-Anhänger macht den Track zu einem physischen Objekt: die Reliefline der Route verläuft über der Viertelkarte direkt auf dem Anhänger, der immer am Schlüssel ist.",
@@ -826,7 +827,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preis",
             p: [
-              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈3 €. Fertigung 2–4 Werktage, Versand in die Ukraine.",
+              "Ein GPX-Anhänger kostet so viel wie ein normaler Karten-Anhänger — ab ≈4 €. Fertigung 2–4 Werktage, Versand in die Ukraine.",
             ],
           },
         ],
@@ -836,7 +837,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Brelok z trasą GPX: uwiecznij swój bieg, wędrówkę lub trasę rowerową",
         description:
-          "Wgraj ślad GPX ze Stravy lub Garmina — i otrzymaj brelok z reliefową linią swojej trasy na mapie dzielnicy. Pamiątka z maratonu lub wędrówki od ≈3 €.",
+          "Wgraj ślad GPX ze Stravy lub Garmina — i otrzymaj brelok z reliefową linią swojej trasy na mapie dzielnicy. Pamiątka z maratonu lub wędrówki od ≈4 €.",
         h1: "Brelok z trasą GPX: Twój ślad w plastiku",
         intro:
           "Pierwszy maraton, setka na rowerze, wejście na Howerlę — ślad tych tras leży w Stravie lub Garminie i nikt go nie widzi. Brelok GPX zamienia ślad w fizyczną rzecz: reliefowa linia trasy biegnie po mapie dzielnicy prosto na zawieszce, która zawsze jest przy kluczach.",
@@ -857,7 +858,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cena",
             p: [
-              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈3 €. Wykonanie 2–4 dni robocze, wysyłka na Ukrainę.",
+              "Brelok ze śladem GPX kosztuje tyle co zwykły brelok-mapa — od ≈4 €. Wykonanie 2–4 dni robocze, wysyłka na Ukrainę.",
             ],
           },
         ],
@@ -867,7 +868,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Porte-clés avec trace GPX : immortalisez votre course, randonnée ou sortie vélo",
         description:
-          "Téléversez une trace GPX depuis Strava ou Garmin — et obtenez un porte-clés avec la ligne en relief de votre parcours sur la carte du quartier. Souvenir de marathon ou de rando dès ≈3 €.",
+          "Téléversez une trace GPX depuis Strava ou Garmin — et obtenez un porte-clés avec la ligne en relief de votre parcours sur la carte du quartier. Souvenir de marathon ou de rando dès ≈4 €.",
         h1: "Porte-clés avec trace GPX : votre parcours en plastique",
         intro:
           "Le premier marathon, une sortie de 100 km à vélo, une montée à la Hoverla — la trace de ces parcours dort dans Strava ou Garmin et personne ne la voit. Un porte-clés GPX transforme la trace en objet physique : la ligne en relief du parcours passe sur la carte du quartier, à même la plaque toujours sur vos clés.",
@@ -888,7 +889,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix",
             p: [
-              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈3 €. Fabrication 2–4 jours ouvrés, livraison en Ukraine.",
+              "Un porte-clés GPX coûte comme un porte-clés carte classique — dès ≈4 €. Fabrication 2–4 jours ouvrés, livraison en Ukraine.",
             ],
           },
         ],
@@ -898,7 +899,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Llavero con ruta GPX: inmortaliza tu carrera, senderismo o ruta en bici",
         description:
-          "Sube un track GPX de Strava o Garmin — y obtén un llavero con la línea en relieve de tu ruta sobre el mapa del barrio. Recuerdo de maratón o excursión desde ≈3 €.",
+          "Sube un track GPX de Strava o Garmin — y obtén un llavero con la línea en relieve de tu ruta sobre el mapa del barrio. Recuerdo de maratón o excursión desde ≈4 €.",
         h1: "Llavero con ruta GPX: tu track en plástico",
         intro:
           "El primer maratón, una ruta de 100 km en bici, una subida a la Hoverla — el track de esas rutas está en Strava o Garmin y nadie lo ve. Un llavero GPX convierte el track en un objeto físico: la línea en relieve de la ruta recorre el mapa del barrio en la propia placa que siempre llevas en las llaves.",
@@ -919,7 +920,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precio",
             p: [
-              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈3 €. Fabricación 2–4 días hábiles, envío a Ucrania.",
+              "Un llavero GPX cuesta lo mismo que un llavero-mapa normal — desde ≈4 €. Fabricación 2–4 días hábiles, envío a Ucrania.",
             ],
           },
         ],
@@ -935,7 +936,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "3D-мапа Києва: улюблений район на твоїй полиці",
         description:
-          "Поділ, Печерськ, Оболонь чи Русанівка — 3D-мапа будь-якого району Києва з реальними будинками і рельєфом дніпровських схилів. Друк від 250 ₴.",
+          "Поділ, Печерськ, Оболонь чи Русанівка — 3D-мапа будь-якого району Києва з реальними будинками і рельєфом дніпровських схилів. Друк від 350 ₴.",
         h1: "3D-мапа Києва: місто, яке можна потримати в руках",
         intro:
           "Київ — місто з характером у кожному районі: андріївські схили, річкова сітка Русанівки, радянський модернізм Оболоні, старий Поділ. 3D-мапа перетворює улюблений район на фізичну модель: будинки з реальними висотами, вулиці, парки, Дніпро — і навіть рельєф київських пагорбів.",
@@ -950,7 +951,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Розміри та ціни",
             p: [
-              "S 5,5 см — 250 ₴, M 8 см — 350 ₴, L 11 см — 450 ₴, XL 15 см — 550 ₴; рельєф +60 ₴. Також є брелок з районом Києва (від 120 ₴) і магніт на холодильник (150 ₴).",
+              "S 5,5 см — 350 ₴, M 8 см — 490 ₴, L 11 см — 630 ₴, XL 15 см — 770 ₴; рельєф +85 ₴. Також є брелок з районом Києва (від 170 ₴) і магніт на холодильник (210 ₴).",
             ],
           },
           {
@@ -966,7 +967,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "3D map of Kyiv: your favorite district on a shelf",
         description:
-          "Podil, Pechersk, Obolon or Rusanivka — a 3D map of any Kyiv district with real buildings and the relief of the Dnipro hills. Printed from ≈€6.",
+          "Podil, Pechersk, Obolon or Rusanivka — a 3D map of any Kyiv district with real buildings and the relief of the Dnipro hills. Printed from ≈€8.",
         h1: "3D map of Kyiv: a city you can hold",
         intro:
           "Kyiv has character in every district: the Andriivskyi slopes, Rusanivka's canal grid, Obolon's modernism, old Podil. A 3D map turns a favorite district into a physical model: buildings with real heights, streets, parks, the Dnipro — and the real relief of Kyiv's hills.",
@@ -981,7 +982,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Sizes and prices",
             p: [
-              "S 5.5 cm — 250 ₴, M 8 cm — 350 ₴, L 11 cm — 450 ₴, XL 15 cm — 550 ₴; relief +60 ₴. There's also a Kyiv district keychain (from 120 ₴) and a fridge magnet (150 ₴).",
+              "S 5.5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴; relief +85 ₴. There's also a Kyiv district keychain (from 170 ₴) and a fridge magnet (210 ₴).",
             ],
           },
           {
@@ -997,7 +998,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "3D-Karte von Kiew: dein Lieblingsviertel im Regal",
         description:
-          "Podil, Petschersk, Obolon oder Rusaniwka — eine 3D-Karte jedes Kiewer Viertels mit echten Gebäuden und dem Relief der Dnipro-Hänge. Druck ab ≈6 €.",
+          "Podil, Petschersk, Obolon oder Rusaniwka — eine 3D-Karte jedes Kiewer Viertels mit echten Gebäuden und dem Relief der Dnipro-Hänge. Druck ab ≈8 €.",
         h1: "3D-Karte von Kiew: eine Stadt, die man in der Hand halten kann",
         intro:
           "Kiew hat in jedem Viertel Charakter: die Andrijiwskyj-Hänge, das Kanalraster von Rusaniwka, der Modernismus von Obolon, das alte Podil. Eine 3D-Karte macht aus dem Lieblingsviertel ein physisches Modell: Gebäude mit echten Höhen, Straßen, Parks, der Dnipro — und das echte Relief der Kiewer Hügel.",
@@ -1012,7 +1013,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Größen und Preise",
             p: [
-              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; Relief +≈1,5 €. Es gibt auch einen Anhänger mit einem Kiewer Viertel (ab ≈3 €) und einen Kühlschrankmagneten (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; Relief +≈2 €. Es gibt auch einen Anhänger mit einem Kiewer Viertel (ab ≈4 €) und einen Kühlschrankmagneten (≈4 €).",
             ],
           },
           {
@@ -1028,7 +1029,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Mapa 3D Kijowa: ulubiona dzielnica na Twojej półce",
         description:
-          "Podół, Peczersk, Obołoń czy Rusaniwka — mapa 3D dowolnej dzielnicy Kijowa z prawdziwymi budynkami i rzeźbą dnieprzańskich zboczy. Druk od ≈6 €.",
+          "Podół, Peczersk, Obołoń czy Rusaniwka — mapa 3D dowolnej dzielnicy Kijowa z prawdziwymi budynkami i rzeźbą dnieprzańskich zboczy. Druk od ≈8 €.",
         h1: "Mapa 3D Kijowa: miasto, które można wziąć do ręki",
         intro:
           "Kijów ma charakter w każdej dzielnicy: zbocza Andrijiwskiego, kanałowa siatka Rusaniwki, modernizm Obołonia, stary Podół. Mapa 3D zamienia ulubioną dzielnicę w fizyczny model: budynki o prawdziwych wysokościach, ulice, parki, Dniepr — i prawdziwa rzeźba kijowskich wzgórz.",
@@ -1043,7 +1044,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Rozmiary i ceny",
             p: [
-              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; rzeźba +≈1,5 €. Jest też brelok z dzielnicą Kijowa (od ≈3 €) i magnes na lodówkę (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; rzeźba +≈2 €. Jest też brelok z dzielnicą Kijowa (od ≈4 €) i magnes na lodówkę (≈4 €).",
             ],
           },
           {
@@ -1059,7 +1060,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Carte 3D de Kyiv : votre quartier préféré sur l'étagère",
         description:
-          "Podil, Petchersk, Obolon ou Rusanivka — une carte 3D de n'importe quel quartier de Kyiv avec de vrais bâtiments et le relief des coteaux du Dnipro. Impression dès ≈6 €.",
+          "Podil, Petchersk, Obolon ou Rusanivka — une carte 3D de n'importe quel quartier de Kyiv avec de vrais bâtiments et le relief des coteaux du Dnipro. Impression dès ≈8 €.",
         h1: "Carte 3D de Kyiv : une ville qu'on peut tenir en main",
         intro:
           "Kyiv a du caractère dans chaque quartier : les coteaux d'Andriivskyi, la trame de canaux de Rusanivka, le modernisme d'Obolon, le vieux Podil. Une carte 3D transforme le quartier préféré en modèle physique : bâtiments aux hauteurs réelles, rues, parcs, le Dnipro — et le vrai relief des collines de Kyiv.",
@@ -1074,7 +1075,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Tailles et prix",
             p: [
-              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 € ; relief +≈1,5 €. Il existe aussi un porte-clés avec un quartier de Kyiv (dès ≈3 €) et un magnet de frigo (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 € ; relief +≈2 €. Il existe aussi un porte-clés avec un quartier de Kyiv (dès ≈4 €) et un magnet de frigo (≈4 €).",
             ],
           },
           {
@@ -1090,7 +1091,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Mapa 3D de Kyiv: tu barrio favorito en la estantería",
         description:
-          "Podil, Pechersk, Obolon o Rusanivka — un mapa 3D de cualquier barrio de Kyiv con edificios reales y el relieve de las laderas del Dnipró. Impresión desde ≈6 €.",
+          "Podil, Pechersk, Obolon o Rusanivka — un mapa 3D de cualquier barrio de Kyiv con edificios reales y el relieve de las laderas del Dnipró. Impresión desde ≈8 €.",
         h1: "Mapa 3D de Kyiv: una ciudad que puedes sostener en la mano",
         intro:
           "Kyiv tiene carácter en cada barrio: las laderas de Andriivskyi, la retícula de canales de Rusanivka, el modernismo de Obolon, el viejo Podil. Un mapa 3D convierte el barrio favorito en un modelo físico: edificios con alturas reales, calles, parques, el Dnipró — y el relieve auténtico de las colinas de Kyiv.",
@@ -1105,7 +1106,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Tamaños y precios",
             p: [
-              "S 5,5 cm — ≈6 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈13 €; relieve +≈1,5 €. También hay llavero con un barrio de Kyiv (desde ≈3 €) e imán de nevera (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; relieve +≈2 €. También hay llavero con un barrio de Kyiv (desde ≈4 €) e imán de nevera (≈4 €).",
             ],
           },
           {
@@ -1149,7 +1150,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Скільки це триває і скільки коштує",
             p: [
-              "Брелок друкується близько години, мапа 8 см — кілька годин, велика панель — до доби. Звідси й терміни виготовлення 2–4 робочі дні. Ціни: брелок від 120 ₴, мапа від 250 ₴ — дешевше за більшість «іменних» подарунків.",
+              "Брелок друкується близько години, мапа 8 см — кілька годин, велика панель — до доби. Звідси й терміни виготовлення 2–4 робочі дні. Ціни: брелок від 170 ₴, мапа від 350 ₴ — дешевше за більшість «іменних» подарунків.",
             ],
           },
         ],
@@ -1182,7 +1183,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How long and how much",
             p: [
-              "A keychain prints in about an hour, an 8 cm map in a few hours, a large panel up to a day. Hence the 2–4 business day lead time. Prices: keychain from ≈€3, map from ≈€6 — cheaper than most personalized gifts.",
+              "A keychain prints in about an hour, an 8 cm map in a few hours, a large panel up to a day. Hence the 2–4 business day lead time. Prices: keychain from ≈€4, map from ≈€8 — cheaper than most personalized gifts.",
             ],
           },
         ],
@@ -1215,7 +1216,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Wie lange es dauert und was es kostet",
             p: [
-              "Ein Anhänger druckt etwa eine Stunde, eine 8-cm-Karte einige Stunden, ein großes Panel bis zu einem Tag. Daher die Fertigungszeit von 2–4 Werktagen. Preise: Anhänger ab ≈3 €, Karte ab ≈6 € — günstiger als die meisten personalisierten Geschenke.",
+              "Ein Anhänger druckt etwa eine Stunde, eine 8-cm-Karte einige Stunden, ein großes Panel bis zu einem Tag. Daher die Fertigungszeit von 2–4 Werktagen. Preise: Anhänger ab ≈4 €, Karte ab ≈8 € — günstiger als die meisten personalisierten Geschenke.",
             ],
           },
         ],
@@ -1248,7 +1249,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ile to trwa i ile kosztuje",
             p: [
-              "Brelok drukuje się około godziny, mapa 8 cm — kilka godzin, duży panel — nawet dobę. Stąd terminy realizacji 2–4 dni robocze. Ceny: brelok od ≈3 €, mapa od ≈6 € — taniej niż większość «imiennych» prezentów.",
+              "Brelok drukuje się około godziny, mapa 8 cm — kilka godzin, duży panel — nawet dobę. Stąd terminy realizacji 2–4 dni robocze. Ceny: brelok od ≈4 €, mapa od ≈8 € — taniej niż większość «imiennych» prezentów.",
             ],
           },
         ],
@@ -1281,7 +1282,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Combien de temps et combien ça coûte",
             p: [
-              "Un porte-clés s'imprime en une heure environ, une carte de 8 cm en quelques heures, un grand panneau jusqu'à une journée. D'où le délai de fabrication de 2–4 jours ouvrés. Prix : porte-clés dès ≈3 €, carte dès ≈6 € — moins cher que la plupart des cadeaux personnalisés.",
+              "Un porte-clés s'imprime en une heure environ, une carte de 8 cm en quelques heures, un grand panneau jusqu'à une journée. D'où le délai de fabrication de 2–4 jours ouvrés. Prix : porte-clés dès ≈4 €, carte dès ≈8 € — moins cher que la plupart des cadeaux personnalisés.",
             ],
           },
         ],
@@ -1314,7 +1315,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cuánto tarda y cuánto cuesta",
             p: [
-              "Un llavero se imprime en cerca de una hora, un mapa de 8 cm en unas horas, un panel grande hasta un día. De ahí el plazo de 2–4 días hábiles. Precios: llavero desde ≈3 €, mapa desde ≈6 € — más barato que la mayoría de regalos personalizados.",
+              "Un llavero se imprime en cerca de una hora, un mapa de 8 cm en unas horas, un panel grande hasta un día. De ahí el plazo de 2–4 días hábiles. Precios: llavero desde ≈4 €, mapa desde ≈8 € — más barato que la mayoría de regalos personalizados.",
             ],
           },
         ],
@@ -1529,7 +1530,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "S, M, L чи XL: як обрати розмір 3D-мапи міста",
         description:
-          "Порівняння розмірів 3D-мапи: S 5,5 см (250 ₴), M 8 см (350 ₴), L 11 см (450 ₴), XL 15 см (550 ₴). Який розмір під яку ділянку, полицю і бюджет.",
+          "Порівняння розмірів 3D-мапи: S 5,5 см (350 ₴), M 8 см (490 ₴), L 11 см (630 ₴), XL 15 см (770 ₴). Який розмір під яку ділянку, полицю і бюджет.",
         h1: "Як обрати розмір 3D-мапи: чесне порівняння",
         intro:
           "Розмір — головне рішення при замовленні мапи: він визначає і ціну, і те, наскільки детально читатиметься район. Коротка версія: M (8 см) — найуніверсальніший; далі — нюанси, які варто знати до замовлення.",
@@ -1537,9 +1538,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Чотири розміри на прикладах",
             p: [
-              "S (5,5 см, 250 ₴) — компактний сувенір: добре для щільного центру з виразними кварталами, стоїть на робочому столі чи поличці з дрібницями. Дрібні провулки на S уже зливаються, тож обирайте невелику ділянку 300–500 м.",
-              "M (8 см, 350 ₴) — золота середина: ділянка 400–800 м читається повністю, модель помітна на полиці, але не претендує на пів кімнати. Найчастіший вибір для подарунка.",
-              "L (11 см, 450 ₴) і XL (15 см, 550 ₴) — інтер'єрні речі: видно і двори, і окремі будинки, можна брати ширшу ділянку до кілометра-півтора. XL особливо виграє з рельєфом — перепади висот на великій площі виглядають драматично.",
+              "S (5,5 см, 350 ₴) — компактний сувенір: добре для щільного центру з виразними кварталами, стоїть на робочому столі чи поличці з дрібницями. Дрібні провулки на S уже зливаються, тож обирайте невелику ділянку 300–500 м.",
+              "M (8 см, 490 ₴) — золота середина: ділянка 400–800 м читається повністю, модель помітна на полиці, але не претендує на пів кімнати. Найчастіший вибір для подарунка.",
+              "L (11 см, 630 ₴) і XL (15 см, 770 ₴) — інтер'єрні речі: видно і двори, і окремі будинки, можна брати ширшу ділянку до кілометра-півтора. XL особливо виграє з рельєфом — перепади висот на великій площі виглядають драматично.",
             ],
           },
           {
@@ -1551,7 +1552,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Рельєф і серії",
             p: [
-              "Рельєф місцевості (+60 ₴) додає мапі справжні перепади висот — обов'язково для Києва, Львова чи Карпат, необов'язково для рівнинних міст. А якщо хочеться охопити велику територію без втрати деталей — замовте серію з кількох панелей, що з'єднуються пазами в одне полотно.",
+              "Рельєф місцевості (+85 ₴) додає мапі справжні перепади висот — обов'язково для Києва, Львова чи Карпат, необов'язково для рівнинних міст. А якщо хочеться охопити велику територію без втрати деталей — замовте серію з кількох панелей, що з'єднуються пазами в одне полотно.",
             ],
           },
         ],
@@ -1593,7 +1594,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "S, M, L oder XL: die richtige Größe der 3D-Stadtkarte wählen",
         description:
-          "Größenvergleich der 3D-Karte: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Welche Größe zu welchem Bereich, Regal und Budget passt.",
+          "Größenvergleich der 3D-Karte: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Welche Größe zu welchem Bereich, Regal und Budget passt.",
         h1: "Wie man die Größe der 3D-Karte wählt: ein ehrlicher Vergleich",
         intro:
           "Die Größe ist die wichtigste Entscheidung beim Bestellen: Sie bestimmt den Preis und wie detailliert das Viertel lesbar bleibt. Kurzfassung: M (8 cm) ist am universellsten; darunter die Nuancen, die man vor der Bestellung kennen sollte.",
@@ -1601,9 +1602,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Vier Größen an Beispielen",
             p: [
-              "S (5,5 cm, ≈6 €) — ein kompaktes Souvenir: gut für ein dichtes Zentrum mit markanten Quartieren, passt auf den Schreibtisch. Kleine Gassen verschmelzen bei S bereits, also wähle einen kleinen Bereich von 300–500 m.",
+              "S (5,5 cm, ≈8 €) — ein kompaktes Souvenir: gut für ein dichtes Zentrum mit markanten Quartieren, passt auf den Schreibtisch. Kleine Gassen verschmelzen bei S bereits, also wähle einen kleinen Bereich von 300–500 m.",
               "M (8 cm, ≈8 €) — die goldene Mitte: ein Bereich von 400–800 m ist vollständig lesbar, das Modell fällt im Regal auf, ohne das halbe Zimmer zu beanspruchen. Die häufigste Wahl als Geschenk.",
-              "L (11 cm, ≈11 €) und XL (15 cm, ≈13 €) — Interieurstücke: Höfe und einzelne Gebäude sind sichtbar, man kann einen breiteren Bereich bis 1–1,5 km nehmen. XL gewinnt besonders mit Relief — Höhenunterschiede auf großer Fläche wirken dramatisch.",
+              "L (11 cm, ≈11 €) und XL (15 cm, ≈18 €) — Interieurstücke: Höfe und einzelne Gebäude sind sichtbar, man kann einen breiteren Bereich bis 1–1,5 km nehmen. XL gewinnt besonders mit Relief — Höhenunterschiede auf großer Fläche wirken dramatisch.",
             ],
           },
           {
@@ -1615,7 +1616,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relief und Serien",
             p: [
-              "Das Geländerelief (+≈1,5 €) gibt der Karte echte Höhenunterschiede — Pflicht für Kyiv, Lwiw oder die Karpaten, optional für flache Städte. Und wenn du ein großes Gebiet ohne Detailverlust abdecken willst — bestelle eine Serie aus mehreren Kacheln, die sich zu einem Panel verbinden.",
+              "Das Geländerelief (+≈2 €) gibt der Karte echte Höhenunterschiede — Pflicht für Kyiv, Lwiw oder die Karpaten, optional für flache Städte. Und wenn du ein großes Gebiet ohne Detailverlust abdecken willst — bestelle eine Serie aus mehreren Kacheln, die sich zu einem Panel verbinden.",
             ],
           },
         ],
@@ -1625,7 +1626,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "S, M, L czy XL: jak wybrać rozmiar mapy miasta 3D",
         description:
-          "Porównanie rozmiarów mapy 3D: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Jaki rozmiar do jakiego obszaru, półki i budżetu.",
+          "Porównanie rozmiarów mapy 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Jaki rozmiar do jakiego obszaru, półki i budżetu.",
         h1: "Jak wybrać rozmiar mapy 3D: uczciwe porównanie",
         intro:
           "Rozmiar to główna decyzja przy zamawianiu mapy: określa i cenę, i to, jak szczegółowo będzie czytelna dzielnica. Krótko: M (8 cm) jest najbardziej uniwersalny; poniżej niuanse, które warto znać przed zamówieniem.",
@@ -1633,9 +1634,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cztery rozmiary na przykładach",
             p: [
-              "S (5,5 cm, ≈6 €) — kompaktowa pamiątka: dobra dla gęstego centrum z wyrazistymi kwartałami, stoi na biurku. Małe uliczki przy S już się zlewają, więc wybierz niewielki obszar 300–500 m.",
+              "S (5,5 cm, ≈8 €) — kompaktowa pamiątka: dobra dla gęstego centrum z wyrazistymi kwartałami, stoi na biurku. Małe uliczki przy S już się zlewają, więc wybierz niewielki obszar 300–500 m.",
               "M (8 cm, ≈8 €) — złoty środek: obszar 400–800 m czyta się w całości, model jest widoczny na półce, ale nie zajmuje pół pokoju. Najczęstszy wybór na prezent.",
-              "L (11 cm, ≈11 €) i XL (15 cm, ≈13 €) — elementy wnętrza: widać podwórka i pojedyncze budynki, można wziąć szerszy obszar do 1–1,5 km. XL szczególnie zyskuje z rzeźbą terenu — różnice wysokości na dużej powierzchni wyglądają dramatycznie.",
+              "L (11 cm, ≈11 €) i XL (15 cm, ≈18 €) — elementy wnętrza: widać podwórka i pojedyncze budynki, można wziąć szerszy obszar do 1–1,5 km. XL szczególnie zyskuje z rzeźbą terenu — różnice wysokości na dużej powierzchni wyglądają dramatycznie.",
             ],
           },
           {
@@ -1647,7 +1648,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Rzeźba terenu i serie",
             p: [
-              "Rzeźba terenu (+≈1,5 €) dodaje mapie prawdziwe różnice wysokości — obowiązkowa dla Kijowa, Lwowa czy Karpat, opcjonalna dla płaskich miast. A jeśli chcesz objąć duży teren bez utraty detali — zamów serię kilku kafelków łączących się w jeden panel.",
+              "Rzeźba terenu (+≈2 €) dodaje mapie prawdziwe różnice wysokości — obowiązkowa dla Kijowa, Lwowa czy Karpat, opcjonalna dla płaskich miast. A jeśli chcesz objąć duży teren bez utraty detali — zamów serię kilku kafelków łączących się w jeden panel.",
             ],
           },
         ],
@@ -1657,7 +1658,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "S, M, L ou XL : comment choisir la taille de votre carte de ville 3D",
         description:
-          "Comparatif des tailles de carte 3D : S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Quelle taille pour quelle zone, quelle étagère et quel budget.",
+          "Comparatif des tailles de carte 3D : S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Quelle taille pour quelle zone, quelle étagère et quel budget.",
         h1: "Comment choisir la taille d'une carte 3D : un comparatif honnête",
         intro:
           "La taille est la décision principale : elle fixe le prix et le niveau de détail qui survit. Version courte : M (8 cm) est la plus universelle ; ci-dessous les nuances à connaître avant de commander.",
@@ -1665,9 +1666,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Quatre tailles en exemples",
             p: [
-              "S (5,5 cm, ≈6 €) — un souvenir compact : parfait pour un centre dense aux îlots marqués, tient sur un bureau. Les petites ruelles fusionnent déjà en S : choisissez une petite zone de 300–500 m.",
+              "S (5,5 cm, ≈8 €) — un souvenir compact : parfait pour un centre dense aux îlots marqués, tient sur un bureau. Les petites ruelles fusionnent déjà en S : choisissez une petite zone de 300–500 m.",
               "M (8 cm, ≈8 €) — le juste milieu : une zone de 400–800 m se lit entièrement, le modèle se remarque sur une étagère sans envahir la pièce. Le choix le plus fréquent pour un cadeau.",
-              "L (11 cm, ≈11 €) et XL (15 cm, ≈13 €) — des pièces d'intérieur : on voit les cours et les bâtiments individuels, et on peut prendre une zone plus large jusqu'à 1–1,5 km. XL brille surtout avec le relief — les dénivelés sur une grande surface sont spectaculaires.",
+              "L (11 cm, ≈11 €) et XL (15 cm, ≈18 €) — des pièces d'intérieur : on voit les cours et les bâtiments individuels, et on peut prendre une zone plus large jusqu'à 1–1,5 km. XL brille surtout avec le relief — les dénivelés sur une grande surface sont spectaculaires.",
             ],
           },
           {
@@ -1679,7 +1680,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relief et séries",
             p: [
-              "Le relief du terrain (+≈1,5 €) donne à la carte de vrais dénivelés — indispensable pour Kyiv, Lviv ou les Carpates, facultatif pour les villes plates. Et pour couvrir un grand territoire sans perdre le détail — commandez une série de tuiles qui s'assemblent en un panneau.",
+              "Le relief du terrain (+≈2 €) donne à la carte de vrais dénivelés — indispensable pour Kyiv, Lviv ou les Carpates, facultatif pour les villes plates. Et pour couvrir un grand territoire sans perdre le détail — commandez une série de tuiles qui s'assemblent en un panneau.",
             ],
           },
         ],
@@ -1689,7 +1690,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "S, M, L o XL: cómo elegir el tamaño de tu mapa de ciudad 3D",
         description:
-          "Comparativa de tamaños del mapa 3D: S 5,5 cm (≈6 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈13 €). Qué tamaño para qué zona, estantería y presupuesto.",
+          "Comparativa de tamaños del mapa 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Qué tamaño para qué zona, estantería y presupuesto.",
         h1: "Cómo elegir el tamaño de un mapa 3D: una comparativa honesta",
         intro:
           "El tamaño es la decisión principal al pedir un mapa: determina el precio y cuánto detalle del barrio sobrevive. Versión corta: M (8 cm) es el más universal; abajo, los matices que conviene saber antes de pedir.",
@@ -1697,9 +1698,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cuatro tamaños con ejemplos",
             p: [
-              "S (5,5 cm, ≈6 €) — un recuerdo compacto: va bien para un centro denso con manzanas marcadas, cabe en el escritorio. Las callejuelas pequeñas ya se funden en S, así que elige una zona pequeña de 300–500 m.",
+              "S (5,5 cm, ≈8 €) — un recuerdo compacto: va bien para un centro denso con manzanas marcadas, cabe en el escritorio. Las callejuelas pequeñas ya se funden en S, así que elige una zona pequeña de 300–500 m.",
               "M (8 cm, ≈8 €) — el punto justo: una zona de 400–800 m se lee entera, el modelo se nota en la estantería sin ocupar media habitación. La elección más común para regalo.",
-              "L (11 cm, ≈11 €) y XL (15 cm, ≈13 €) — piezas de interior: se ven patios y edificios individuales, y puedes tomar una zona más amplia de hasta 1–1,5 km. XL luce especialmente con relieve — los desniveles en gran superficie resultan espectaculares.",
+              "L (11 cm, ≈11 €) y XL (15 cm, ≈18 €) — piezas de interior: se ven patios y edificios individuales, y puedes tomar una zona más amplia de hasta 1–1,5 km. XL luce especialmente con relieve — los desniveles en gran superficie resultan espectaculares.",
             ],
           },
           {
@@ -1711,7 +1712,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relieve y series",
             p: [
-              "El relieve del terreno (+≈1,5 €) da al mapa desniveles reales — imprescindible para Kyiv, Leópolis o los Cárpatos, opcional para ciudades llanas. Y si quieres abarcar un territorio grande sin perder detalle — pide una serie de azulejos que se unen en un solo panel.",
+              "El relieve del terreno (+≈2 €) da al mapa desniveles reales — imprescindible para Kyiv, Leópolis o los Cárpatos, opcional para ciudades llanas. Y si quieres abarcar un territorio grande sin perder detalle — pide una serie de azulejos que se unen en un solo panel.",
             ],
           },
         ],
@@ -1727,10 +1728,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Рельєф на 3D-мапі: коли він потрібен, а коли ні",
         description:
-          "Опція «рельєф місцевості» (+60 ₴) додає мапі реальні перепади висот. Для яких міст рельєф обов'язковий, для яких зайвий, і як він друкується.",
+          "Опція «рельєф місцевості» (+85 ₴) додає мапі реальні перепади висот. Для яких міст рельєф обов'язковий, для яких зайвий, і як він друкується.",
         h1: "Рельєф на 3D-мапі: вмикати чи ні",
         intro:
-          "Рельєф — опція, що додає мапі третій вимір ландшафту: пагорби, схили й долини друкуються з реальних супутникових даних висот. Це +60 ₴ до ціни — і для одних міст це найкраща частина моделі, а для інших просто непомітна. Розберімося, коли воно того варте.",
+          "Рельєф — опція, що додає мапі третій вимір ландшафту: пагорби, схили й долини друкуються з реальних супутникових даних висот. Це +85 ₴ до ціни — і для одних міст це найкраща частина моделі, а для інших просто непомітна. Розберімося, коли воно того варте.",
         sections: [
           {
             h2: "Міста, де рельєф — обов'язковий",
@@ -1789,7 +1790,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Geländerelief auf der 3D-Karte: wann es sich lohnt und wann nicht",
         description:
-          "Die Option «Geländerelief» (+≈1,5 €) gibt der Karte echte Höhenunterschiede. Für welche Städte Relief Pflicht ist, wo es überflüssig ist und wie es gedruckt wird.",
+          "Die Option «Geländerelief» (+≈2 €) gibt der Karte echte Höhenunterschiede. Für welche Städte Relief Pflicht ist, wo es überflüssig ist und wie es gedruckt wird.",
         h1: "Geländerelief auf der 3D-Karte: an oder aus",
         intro:
           "Relief fügt der Karte die dritte Dimension der Landschaft hinzu: Hügel, Hänge und Täler werden aus echten Satelliten-Höhendaten gedruckt. Für manche Städte ist es der beste Teil des Modells, für andere schlicht unsichtbar. Klären wir, wann es sich lohnt.",
@@ -1820,7 +1821,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Rzeźba terenu na mapie 3D: kiedy jest potrzebna, a kiedy nie",
         description:
-          "Opcja «rzeźba terenu» (+≈1,5 €) dodaje mapie prawdziwe różnice wysokości. Dla których miast rzeźba jest obowiązkowa, gdzie zbędna i jak się drukuje.",
+          "Opcja «rzeźba terenu» (+≈2 €) dodaje mapie prawdziwe różnice wysokości. Dla których miast rzeźba jest obowiązkowa, gdzie zbędna i jak się drukuje.",
         h1: "Rzeźba terenu na mapie 3D: włączać czy nie",
         intro:
           "Rzeźba dodaje mapie trzeci wymiar krajobrazu: wzgórza, zbocza i doliny drukują się z prawdziwych satelitarnych danych wysokości. Dla jednych miast to najlepsza część modelu, dla innych po prostu niewidoczna. Rozłóżmy na czynniki, kiedy warto.",
@@ -1851,7 +1852,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Relief du terrain sur une carte 3D : quand il faut, quand il ne sert à rien",
         description:
-          "L'option «relief du terrain» (+≈1,5 €) ajoute de vrais dénivelés à la carte. Pour quelles villes le relief est indispensable, où il est inutile, et comment il s'imprime.",
+          "L'option «relief du terrain» (+≈2 €) ajoute de vrais dénivelés à la carte. Pour quelles villes le relief est indispensable, où il est inutile, et comment il s'imprime.",
         h1: "Relief du terrain sur une carte 3D : activer ou non",
         intro:
           "Le relief ajoute la troisième dimension du paysage : collines, pentes et vallées s'impriment à partir de vraies données satellites d'altitude. Pour certaines villes c'est la meilleure partie du modèle ; pour d'autres, c'est tout simplement invisible. Voyons quand ça vaut le coup.",
@@ -1882,7 +1883,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Relieve del terreno en un mapa 3D: cuándo hace falta y cuándo no",
         description:
-          "La opción «relieve del terreno» (+≈1,5 €) añade desniveles reales al mapa. Para qué ciudades el relieve es imprescindible, dónde sobra y cómo se imprime.",
+          "La opción «relieve del terreno» (+≈2 €) añade desniveles reales al mapa. Para qué ciudades el relieve es imprescindible, dónde sobra y cómo se imprime.",
         h1: "Relieve del terreno en un mapa 3D: activar o no",
         intro:
           "El relieve añade al mapa la tercera dimensión del paisaje: colinas, laderas y valles se imprimen a partir de datos satelitales de elevación reales. Para unas ciudades es la mejor parte del modelo; para otras, simplemente invisible. Veamos cuándo merece la pena.",
@@ -2111,7 +2112,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Магніт з картою міста на холодильник: сувенір, якого немає в кіосках",
         description:
-          "Магніт-мапа 6 см (150 ₴): рельєфна 3D-карта обраного району замість типового сувеніра. Своє місто, своя вулиця, свій двір — на холодильнику.",
+          "Магніт-мапа 6 см (210 ₴): рельєфна 3D-карта обраного району замість типового сувеніра. Своє місто, своя вулиця, свій двір — на холодильнику.",
         h1: "Магніт з картою міста: сувенір про ваше місце",
         intro:
           "Магніти з подорожей зазвичай однакові: Ейфелева вежа, герб міста, панорама з листівки. Магніт-мапа працює інакше — це рельєфна 3D-карта конкретного району, який обираєте ви: не «Київ узагалі», а саме ваш двір на Оболоні чи бабусина вулиця у Львові.",
@@ -2119,7 +2120,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Що це фізично",
             p: [
-              "Плаский жетон близько 6 см з надрукованою рельєфом картою: вулиці, будинки, парки, вода. На звороті — магнітна основа, що впевнено тримається на холодильнику чи будь-якій сталевій поверхні. Друк з біопластику Eco PLA, ціна — 150 ₴.",
+              "Плаский жетон близько 6 см з надрукованою рельєфом картою: вулиці, будинки, парки, вода. На звороті — магнітна основа, що впевнено тримається на холодильнику чи будь-якій сталевій поверхні. Друк з біопластику Eco PLA, ціна — 210 ₴.",
             ],
           },
           {
@@ -2303,7 +2304,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "3D-друк на замовлення: Київ, Львів, Вінниця та вся Україна",
         description:
-          "3D-друк мап, брелоків і панно на замовлення з доставкою в будь-яке місто України: Київ, Львів, Одесу, Дніпро, Вінницю. Eco PLA, 2–4 робочі дні, від 120 ₴.",
+          "3D-друк мап, брелоків і панно на замовлення з доставкою в будь-яке місто України: Київ, Львів, Одесу, Дніпро, Вінницю. Eco PLA, 2–4 робочі дні, від 170 ₴.",
         h1: "3D-друк на замовлення з доставкою по всій Україні",
         intro:
           "Шукаєте 3D-друк на замовлення у своєму місті? Ми спеціалізуємось на одному типі виробів — персональних 3D-мапах: карти районів, брелоки з маршрутами, настінні панно й магніти. Друкуємо у власній майстерні та надсилаємо Новою Поштою в будь-яке місто України за 2–4 робочі дні — тож не важливо, чи ви в Києві, Львові, Вінниці чи маленькому селищі: доставка працює однаково швидко.",
@@ -2311,7 +2312,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Що ми друкуємо",
             p: [
-              "3D-мапи міст (від 250 ₴): обираєте будь-який район — вулиці, будинки з реальними висотами, парки й річки друкуються об'ємною моделлю 5,5–15 см. Брелоки з картою чи GPX-маршрутом (від 120 ₴): жетон 55×30 мм з вашим районом і написом. Панно на стіну: великі мапи з кількох плиток. Магніти з районом міста (150 ₴).",
+              "3D-мапи міст (від 350 ₴): обираєте будь-який район — вулиці, будинки з реальними висотами, парки й річки друкуються об'ємною моделлю 5,5–15 см. Брелоки з картою чи GPX-маршрутом (від 170 ₴): жетон 55×30 мм з вашим районом і написом. Панно на стіну: великі мапи з кількох плиток. Магніти з районом міста (210 ₴).",
               "Ми не друкуємо чужі STL-файли, деталі чи фігурки — лише мапи. Зате мапи робимо краще за будь-кого: власний конструктор будує модель з даних OpenStreetMap за кілька хвилин, і ви бачите 3D-превʼю до оплати.",
             ],
           },
@@ -2325,7 +2326,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціни",
             p: [
-              "Брелок з картою або GPX-треком — від 120 ₴. Магніт на холодильник — 150 ₴. 3D-мапа міста: S (5,5 см) 250 ₴, M (8 см) 350 ₴, L (11 см) 450 ₴, XL (15 см) 550 ₴. Рельєф місцевості +60 ₴. Панно з плиток — ціна за кількість плиток, рахується у конструкторі одразу.",
+              "Брелок з картою або GPX-треком — від 170 ₴. Магніт на холодильник — 210 ₴. 3D-мапа міста: S (5,5 см) 350 ₴, M (8 см) 490 ₴, L (11 см) 630 ₴, XL (15 см) 770 ₴. Рельєф місцевості +85 ₴. Панно з плиток — ціна за кількість плиток, рахується у конструкторі одразу.",
             ],
           },
           {
@@ -2343,7 +2344,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "Custom 3D printing of maps — shipping across Ukraine",
         description:
-          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia. Eco PLA, 2–4 business days, from ≈€3.",
+          "Custom 3D-printed maps, keychains and wall panels shipped to any city: Kyiv, Lviv, Odesa, Dnipro, Vinnytsia. Eco PLA, 2–4 business days, from ≈€4.",
         h1: "Custom 3D printing of maps with delivery across Ukraine",
         intro:
           "Looking for custom 3D printing in your city? We specialise in one type of product — personal 3D maps: district maps, route keychains, wall panels and magnets. We print in our own workshop and ship to any city of Ukraine in 2–4 business days — so it doesn't matter whether you're in Kyiv, Lviv, Vinnytsia or a small town.",
@@ -2351,7 +2352,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "What we print",
             p: [
-              "3D city maps (from ≈€6): pick any district — streets, buildings with real heights, parks and rivers printed as a 5.5–15 cm model. Map or GPX-route keychains (from ≈€3): a 55×30 mm tag with your district and text. Wall panels assembled from tiles. Fridge magnets with a city district.",
+              "3D city maps (from ≈€8): pick any district — streets, buildings with real heights, parks and rivers printed as a 5.5–15 cm model. Map or GPX-route keychains (from ≈€4): a 55×30 mm tag with your district and text. Wall panels assembled from tiles. Fridge magnets with a city district.",
               "We don't print third-party STL files, parts or figurines — only maps. But we do maps better than anyone: our builder assembles the model from OpenStreetMap data in minutes, and you see a 3D preview before paying.",
             ],
           },
@@ -2365,7 +2366,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prices",
             p: [
-              "Map or GPX keychain — from ≈€3. Fridge magnet — ≈€4. 3D city map: S (5.5 cm) ≈€6, M (8 cm) ≈€8, L (11 cm) ≈€11, XL (15 cm) ≈€13. Terrain relief +≈€1.5. Tile panels are priced per tile, calculated live in the builder.",
+              "Map or GPX keychain — from ≈€4. Fridge magnet — ≈€4. 3D city map: S (5.5 cm) ≈€8, M (8 cm) ≈€8, L (11 cm) ≈€11, XL (15 cm) ≈€18. Terrain relief +≈€2. Tile panels are priced per tile, calculated live in the builder.",
             ],
           },
           {
@@ -2382,7 +2383,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "3D-Druck auf Bestellung: Karten mit Versand in die Ukraine",
         description:
-          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja. Eco PLA, 2–4 Werktage, ab ≈3 €.",
+          "3D-gedruckte Karten, Anhänger und Wandpanels auf Bestellung, Versand in jede Stadt: Kyiv, Lwiw, Odessa, Winnyzja. Eco PLA, 2–4 Werktage, ab ≈4 €.",
         h1: "3D-Druck auf Bestellung mit Versand in die Ukraine",
         intro:
           "Du suchst 3D-Druck auf Bestellung in deiner Stadt? Wir sind auf einen Produkttyp spezialisiert — persönliche 3D-Karten: Viertelkarten, Anhänger mit Routen, Wandpanels und Magnete. Wir drucken in der eigenen Werkstatt und versenden in jede Stadt der Ukraine in 2–4 Werktagen.",
@@ -2390,7 +2391,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Was wir drucken",
             p: [
-              "3D-Stadtkarten (ab ≈6 €): du wählst ein beliebiges Viertel — Straßen, Gebäude mit echten Höhen, Parks und Flüsse werden als 5,5–15-cm-Modell gedruckt. Anhänger mit Karte oder GPX-Route (ab ≈3 €): ein 55×30-mm-Täfelchen mit deinem Viertel und Text. Wandpanels aus mehreren Kacheln. Magnete mit einem Stadtviertel.",
+              "3D-Stadtkarten (ab ≈8 €): du wählst ein beliebiges Viertel — Straßen, Gebäude mit echten Höhen, Parks und Flüsse werden als 5,5–15-cm-Modell gedruckt. Anhänger mit Karte oder GPX-Route (ab ≈4 €): ein 55×30-mm-Täfelchen mit deinem Viertel und Text. Wandpanels aus mehreren Kacheln. Magnete mit einem Stadtviertel.",
               "Wir drucken keine fremden STL-Dateien, Bauteile oder Figuren — nur Karten. Dafür machen wir Karten besser als alle anderen: unser Konfigurator baut das Modell in Minuten aus OpenStreetMap-Daten, und du siehst die 3D-Vorschau vor der Zahlung.",
             ],
           },
@@ -2404,7 +2405,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preise",
             p: [
-              "Anhänger mit Karte oder GPX — ab ≈3 €. Kühlschrankmagnet — ≈4 €. 3D-Stadtkarte: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Geländerelief +≈1,5 €. Kachel-Panels werden pro Kachel berechnet, live im Konfigurator.",
+              "Anhänger mit Karte oder GPX — ab ≈4 €. Kühlschrankmagnet — ≈4 €. 3D-Stadtkarte: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Geländerelief +≈2 €. Kachel-Panels werden pro Kachel berechnet, live im Konfigurator.",
             ],
           },
           {
@@ -2421,7 +2422,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Druk 3D na zamówienie: mapy z wysyłką na Ukrainę",
         description:
-          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica. Eco PLA, 2–4 dni robocze, od ≈3 €.",
+          "Drukowane w 3D mapy, breloki i panele ścienne na zamówienie, z wysyłką do każdego miasta: Kijów, Lwów, Odessa, Winnica. Eco PLA, 2–4 dni robocze, od ≈4 €.",
         h1: "Druk 3D na zamówienie z wysyłką na Ukrainę",
         intro:
           "Szukasz druku 3D na zamówienie w swoim mieście? Specjalizujemy się w jednym typie wyrobów — spersonalizowanych mapach 3D: mapy dzielnic, breloki z trasami, panele ścienne i magnesy. Drukujemy we własnej pracowni i wysyłamy do każdego miasta Ukrainy w 2–4 dni robocze.",
@@ -2429,7 +2430,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Co drukujemy",
             p: [
-              "Mapy miast 3D (od ≈6 €): wybierasz dowolną dzielnicę — ulice, budynki o prawdziwych wysokościach, parki i rzeki drukują się jako model 5,5–15 cm. Breloki z mapą lub trasą GPX (od ≈3 €): zawieszka 55×30 mm z Twoją dzielnicą i napisem. Panele ścienne z kilku kafelków. Magnesy z dzielnicą miasta.",
+              "Mapy miast 3D (od ≈8 €): wybierasz dowolną dzielnicę — ulice, budynki o prawdziwych wysokościach, parki i rzeki drukują się jako model 5,5–15 cm. Breloki z mapą lub trasą GPX (od ≈4 €): zawieszka 55×30 mm z Twoją dzielnicą i napisem. Panele ścienne z kilku kafelków. Magnesy z dzielnicą miasta.",
               "Nie drukujemy cudzych plików STL, części ani figurek — tylko mapy. Za to mapy robimy lepiej niż ktokolwiek: własny kreator buduje model z danych OpenStreetMap w kilka minut, a Ty widzisz podgląd 3D przed płatnością.",
             ],
           },
@@ -2443,7 +2444,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ceny",
             p: [
-              "Brelok z mapą lub śladem GPX — od ≈3 €. Magnes na lodówkę — ≈4 €. Mapa miasta 3D: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Rzeźba terenu +≈1,5 €. Panele z kafelków wyceniane za kafelek, liczone na bieżąco w kreatorze.",
+              "Brelok z mapą lub śladem GPX — od ≈4 €. Magnes na lodówkę — ≈4 €. Mapa miasta 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Rzeźba terenu +≈2 €. Panele z kafelków wyceniane za kafelek, liczone na bieżąco w kreatorze.",
             ],
           },
           {
@@ -2460,7 +2461,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Impression 3D sur mesure : cartes livrées en Ukraine",
         description:
-          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia. Eco PLA, 2–4 jours ouvrés, dès ≈3 €.",
+          "Cartes, porte-clés et panneaux muraux imprimés en 3D sur mesure, livrés dans toute ville : Kyiv, Lviv, Odessa, Vinnytsia. Eco PLA, 2–4 jours ouvrés, dès ≈4 €.",
         h1: "Impression 3D sur mesure avec livraison en Ukraine",
         intro:
           "Vous cherchez de l'impression 3D sur mesure dans votre ville ? Nous sommes spécialisés dans un seul type de produit — les cartes 3D personnelles : cartes de quartier, porte-clés d'itinéraire, panneaux muraux et magnets. Nous imprimons dans notre propre atelier et livrons dans toute ville d'Ukraine en 2–4 jours ouvrés.",
@@ -2468,7 +2469,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ce que nous imprimons",
             p: [
-              "Cartes de ville 3D (dès ≈6 €) : vous choisissez n'importe quel quartier — rues, bâtiments aux hauteurs réelles, parcs et rivières s'impriment en modèle de 5,5–15 cm. Porte-clés avec carte ou trace GPX (dès ≈3 €) : une plaque de 55×30 mm avec votre quartier et un texte. Panneaux muraux en plusieurs tuiles. Magnets avec un quartier de ville.",
+              "Cartes de ville 3D (dès ≈8 €) : vous choisissez n'importe quel quartier — rues, bâtiments aux hauteurs réelles, parcs et rivières s'impriment en modèle de 5,5–15 cm. Porte-clés avec carte ou trace GPX (dès ≈4 €) : une plaque de 55×30 mm avec votre quartier et un texte. Panneaux muraux en plusieurs tuiles. Magnets avec un quartier de ville.",
               "Nous n'imprimons pas de fichiers STL tiers, de pièces ou de figurines — uniquement des cartes. En revanche, les cartes, nous les faisons mieux que quiconque : notre configurateur assemble le modèle à partir des données OpenStreetMap en quelques minutes, et vous voyez l'aperçu 3D avant de payer.",
             ],
           },
@@ -2482,7 +2483,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix",
             p: [
-              "Porte-clés avec carte ou GPX — dès ≈3 €. Magnet de frigo — ≈4 €. Carte de ville 3D : S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Relief du terrain +≈1,5 €. Les panneaux en tuiles sont facturés à la tuile, calculés en direct dans le configurateur.",
+              "Porte-clés avec carte ou GPX — dès ≈4 €. Magnet de frigo — ≈4 €. Carte de ville 3D : S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Relief du terrain +≈2 €. Les panneaux en tuiles sont facturés à la tuile, calculés en direct dans le configurateur.",
             ],
           },
           {
@@ -2499,7 +2500,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Impresión 3D a medida: mapas con envío a Ucrania",
         description:
-          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia. Eco PLA, 2–4 días hábiles, desde ≈3 €.",
+          "Mapas, llaveros y paneles de pared impresos en 3D a medida, con envío a cualquier ciudad: Kyiv, Leópolis, Odesa, Vinnytsia. Eco PLA, 2–4 días hábiles, desde ≈4 €.",
         h1: "Impresión 3D a medida con envío a Ucrania",
         intro:
           "¿Buscas impresión 3D a medida en tu ciudad? Nos especializamos en un solo tipo de producto — mapas 3D personales: mapas de barrio, llaveros con rutas, paneles de pared e imanes. Imprimimos en nuestro propio taller y enviamos a cualquier ciudad de Ucrania en 2–4 días hábiles.",
@@ -2507,7 +2508,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Qué imprimimos",
             p: [
-              "Mapas de ciudad 3D (desde ≈6 €): eliges cualquier barrio — calles, edificios con alturas reales, parques y ríos se imprimen como modelo de 5,5–15 cm. Llaveros con mapa o ruta GPX (desde ≈3 €): una placa de 55×30 mm con tu barrio y un texto. Paneles de pared de varios azulejos. Imanes con un barrio de la ciudad.",
+              "Mapas de ciudad 3D (desde ≈8 €): eliges cualquier barrio — calles, edificios con alturas reales, parques y ríos se imprimen como modelo de 5,5–15 cm. Llaveros con mapa o ruta GPX (desde ≈4 €): una placa de 55×30 mm con tu barrio y un texto. Paneles de pared de varios azulejos. Imanes con un barrio de la ciudad.",
               "No imprimimos archivos STL ajenos, piezas ni figuras — solo mapas. Pero los mapas los hacemos mejor que nadie: nuestro configurador construye el modelo a partir de datos de OpenStreetMap en minutos, y ves la vista previa 3D antes de pagar.",
             ],
           },
@@ -2521,7 +2522,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precios",
             p: [
-              "Llavero con mapa o GPX — desde ≈3 €. Imán de nevera — ≈4 €. Mapa de ciudad 3D: S (5,5 cm) ≈6 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈13 €. Relieve del terreno +≈1,5 €. Los paneles de azulejos se cobran por azulejo, calculado al momento en el configurador.",
+              "Llavero con mapa o GPX — desde ≈4 €. Imán de nevera — ≈4 €. Mapa de ciudad 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Relieve del terreno +≈2 €. Los paneles de azulejos se cobran por azulejo, calculado al momento en el configurador.",
             ],
           },
           {
@@ -2544,7 +2545,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Подарунок військовому: мапа місця, за яке він стоїть",
         description:
-          "Ідея подарунка військовому — чоловіку, хлопцю, побратиму: 3D-мапа рідного міста чи брелок з домом, який завжди в кишені. Особисте, не банальне, від 120 ₴.",
+          "Ідея подарунка військовому — чоловіку, хлопцю, побратиму: 3D-мапа рідного міста чи брелок з домом, який завжди в кишені. Особисте, не банальне, від 170 ₴.",
         h1: "Подарунок військовому: шматочок дому, який можна тримати в руках",
         intro:
           "Браслети виживання й термокружки вже подаровані по три рази. Якщо шукаєте подарунок військовому — чоловіку, синові, побратиму — подумайте не про спорядження, а про те, чого на службі бракує найбільше: дім. 3D-мапа рідного району чи брелок з вулицею, де на нього чекають — маленька фізична річ, яка нагадує, за що все це.",
@@ -2559,7 +2560,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Що обирають найчастіше",
             p: [
-              "Брелок з рідним районом (від 120 ₴) — найпрактичніше: легкий, міцний Eco PLA, витримує щоденне носіння. Мапа рідного міста 8–11 см (від 350 ₴) — на полицю чи в бліндаж. Брелоки-«серця» для пари — половинка з її районом, половинка з його: з'єднуються як пазл.",
+              "Брелок з рідним районом (від 170 ₴) — найпрактичніше: легкий, міцний Eco PLA, витримує щоденне носіння. Мапа рідного міста 8–11 см (від 490 ₴) — на полицю чи в бліндаж. Брелоки-«серця» для пари — половинка з її районом, половинка з його: з'єднуються як пазл.",
             ],
           },
           {
@@ -2576,7 +2577,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "A gift for a soldier: the map of the place they stand for",
         description:
-          "A gift idea for a serviceman — husband, boyfriend, brother-in-arms: a 3D map of the home city or a keychain with the home street, always in a pocket. From ≈€3.",
+          "A gift idea for a serviceman — husband, boyfriend, brother-in-arms: a 3D map of the home city or a keychain with the home street, always in a pocket. From ≈€4.",
         h1: "A gift for a soldier: a piece of home you can hold",
         intro:
           "Survival bracelets and thermal mugs have been gifted three times over. If you're looking for a gift for a serviceman — husband, son, brother-in-arms — think not about gear but about what's scarcest on duty: home. A 3D map of the home district or a keychain with the street where they're awaited — a small physical thing that reminds what it's all for.",
@@ -2591,7 +2592,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "What people choose most",
             p: [
-              "A keychain with the home district (from ≈€3) — the most practical: light, sturdy Eco PLA, survives daily carry. A home-city map 8–11 cm (from ≈€8) — for a shelf. Heart-pair keychains — one half with her district, one with his: they connect like a puzzle.",
+              "A keychain with the home district (from ≈€4) — the most practical: light, sturdy Eco PLA, survives daily carry. A home-city map 8–11 cm (from ≈€8) — for a shelf. Heart-pair keychains — one half with her district, one with his: they connect like a puzzle.",
             ],
           },
           {
@@ -2608,7 +2609,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Ein Geschenk für einen Soldaten: die Karte des Ortes, für den er steht",
         description:
-          "Geschenkidee für einen Militärangehörigen — Mann, Freund, Kamerad: eine 3D-Karte der Heimatstadt oder ein Anhänger mit dem Zuhause, das immer in der Tasche ist. Persönlich, nicht banal, ab ≈3 €.",
+          "Geschenkidee für einen Militärangehörigen — Mann, Freund, Kamerad: eine 3D-Karte der Heimatstadt oder ein Anhänger mit dem Zuhause, das immer in der Tasche ist. Persönlich, nicht banal, ab ≈4 €.",
         h1: "Ein Geschenk für einen Soldaten: ein Stück Zuhause zum Anfassen",
         intro:
           "Survival-Armbänder und Thermobecher sind schon dreimal verschenkt. Wenn du ein Geschenk für einen Militärangehörigen suchst — Mann, Sohn, Kameraden — denk nicht an Ausrüstung, sondern an das, was im Dienst am meisten fehlt: Zuhause. Eine 3D-Karte des Heimatviertels oder ein Anhänger mit der Straße, in der man auf ihn wartet — ein kleines physisches Ding, das daran erinnert, wofür das alles ist.",
@@ -2623,7 +2624,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Was am häufigsten gewählt wird",
             p: [
-              "Ein Anhänger mit dem Heimatviertel (ab ≈3 €) — am praktischsten: leichtes, robustes Eco PLA, hält den täglichen Gebrauch aus. Eine Karte der Heimatstadt 8–11 cm (ab ≈8 €) — fürs Regal. «Herz»-Anhänger für ein Paar — eine Hälfte mit ihrem Viertel, eine mit seinem: sie fügen sich wie ein Puzzle.",
+              "Ein Anhänger mit dem Heimatviertel (ab ≈4 €) — am praktischsten: leichtes, robustes Eco PLA, hält den täglichen Gebrauch aus. Eine Karte der Heimatstadt 8–11 cm (ab ≈8 €) — fürs Regal. «Herz»-Anhänger für ein Paar — eine Hälfte mit ihrem Viertel, eine mit seinem: sie fügen sich wie ein Puzzle.",
             ],
           },
           {
@@ -2640,7 +2641,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Prezent dla żołnierza: mapa miejsca, za które stoi",
         description:
-          "Pomysł na prezent dla wojskowego — męża, chłopaka, pobratymca: mapa 3D rodzinnego miasta lub brelok z domem, który zawsze jest w kieszeni. Osobisty, nie banalny, od ≈3 €.",
+          "Pomysł na prezent dla wojskowego — męża, chłopaka, pobratymca: mapa 3D rodzinnego miasta lub brelok z domem, który zawsze jest w kieszeni. Osobisty, nie banalny, od ≈4 €.",
         h1: "Prezent dla żołnierza: kawałek domu, który można trzymać w rękach",
         intro:
           "Bransoletki survivalowe i kubki termiczne zostały już podarowane po trzy razy. Jeśli szukasz prezentu dla wojskowego — męża, syna, pobratymca — pomyśl nie o wyposażeniu, ale o tym, czego na służbie brakuje najbardziej: o domu. Mapa 3D rodzinnej dzielnicy albo brelok z ulicą, przy której na niego czekają — mała fizyczna rzecz, która przypomina, po co to wszystko.",
@@ -2655,7 +2656,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Co wybierają najczęściej",
             p: [
-              "Brelok z rodzinną dzielnicą (od ≈3 €) — najbardziej praktyczny: lekki, wytrzymały Eco PLA, znosi codzienne noszenie. Mapa rodzinnego miasta 8–11 cm (od ≈8 €) — na półkę. Breloki-«serca» dla pary — połówka z jej dzielnicą, połówka z jego: łączą się jak puzzle.",
+              "Brelok z rodzinną dzielnicą (od ≈4 €) — najbardziej praktyczny: lekki, wytrzymały Eco PLA, znosi codzienne noszenie. Mapa rodzinnego miasta 8–11 cm (od ≈8 €) — na półkę. Breloki-«serca» dla pary — połówka z jej dzielnicą, połówka z jego: łączą się jak puzzle.",
             ],
           },
           {
@@ -2672,7 +2673,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Un cadeau pour un soldat : la carte du lieu qu'il défend",
         description:
-          "Idée de cadeau pour un militaire — mari, petit ami, frère d'armes : une carte 3D de sa ville natale ou un porte-clés avec sa maison, toujours dans la poche. Personnel, pas banal, dès ≈3 €.",
+          "Idée de cadeau pour un militaire — mari, petit ami, frère d'armes : une carte 3D de sa ville natale ou un porte-clés avec sa maison, toujours dans la poche. Personnel, pas banal, dès ≈4 €.",
         h1: "Un cadeau pour un soldat : un morceau de chez soi qu'on peut tenir",
         intro:
           "Les bracelets de survie et les mugs thermos ont déjà été offerts trois fois. Si vous cherchez un cadeau pour un militaire — mari, fils, frère d'armes — pensez non pas à l'équipement, mais à ce qui manque le plus au service : la maison. Une carte 3D du quartier natal ou un porte-clés avec la rue où on l'attend — une petite chose physique qui rappelle pourquoi tout cela.",
@@ -2687,7 +2688,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ce qu'on choisit le plus souvent",
             p: [
-              "Un porte-clés avec le quartier natal (dès ≈3 €) — le plus pratique : Eco PLA léger et solide, supporte le port quotidien. Une carte de la ville natale 8–11 cm (dès ≈8 €) — pour l'étagère. Des porte-clés «cœur» pour un couple — une moitié avec son quartier à elle, l'autre avec le sien : ils s'emboîtent comme un puzzle.",
+              "Un porte-clés avec le quartier natal (dès ≈4 €) — le plus pratique : Eco PLA léger et solide, supporte le port quotidien. Une carte de la ville natale 8–11 cm (dès ≈8 €) — pour l'étagère. Des porte-clés «cœur» pour un couple — une moitié avec son quartier à elle, l'autre avec le sien : ils s'emboîtent comme un puzzle.",
             ],
           },
           {
@@ -2704,7 +2705,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Un regalo para un soldado: el mapa del lugar por el que está de pie",
         description:
-          "Idea de regalo para un militar — marido, novio, compañero de armas: un mapa 3D de su ciudad natal o un llavero con su casa, siempre en el bolsillo. Personal, no banal, desde ≈3 €.",
+          "Idea de regalo para un militar — marido, novio, compañero de armas: un mapa 3D de su ciudad natal o un llavero con su casa, siempre en el bolsillo. Personal, no banal, desde ≈4 €.",
         h1: "Un regalo para un soldado: un trozo de casa que se puede sostener",
         intro:
           "Las pulseras de supervivencia y las tazas térmicas ya se han regalado tres veces. Si buscas un regalo para un militar — marido, hijo, compañero de armas — piensa no en el equipo, sino en lo que más falta en el servicio: la casa. Un mapa 3D del barrio natal o un llavero con la calle donde lo esperan — una pequeña cosa física que recuerda para qué es todo esto.",
@@ -2719,7 +2720,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Qué eligen más a menudo",
             p: [
-              "Un llavero con el barrio natal (desde ≈3 €) — lo más práctico: Eco PLA ligero y resistente, aguanta el uso diario. Un mapa de la ciudad natal de 8–11 cm (desde ≈8 €) — para la estantería. Llaveros «corazón» para una pareja — una mitad con el barrio de ella, otra con el de él: encajan como un puzle.",
+              "Un llavero con el barrio natal (desde ≈4 €) — lo más práctico: Eco PLA ligero y resistente, aguanta el uso diario. Un mapa de la ciudad natal de 8–11 cm (desde ≈8 €) — para la estantería. Llaveros «corazón» para una pareja — una mitad con el barrio de ella, otra con el de él: encajan como un puzle.",
             ],
           },
           {
@@ -2742,7 +2743,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Подарунок бігуну: його маршрут, надрукований у пластику",
         description:
-          "Що подарувати бігуну, в якого вже все є: брелок з GPX-треком першого марафону чи улюбленого кола. Завантажуємо трек зі Strava — друкуємо рельєфом. Від 120 ₴.",
+          "Що подарувати бігуну, в якого вже все є: брелок з GPX-треком першого марафону чи улюбленого кола. Завантажуємо трек зі Strava — друкуємо рельєфом. Від 170 ₴.",
         h1: "Подарунок бігуну, який неможливо купити готовим",
         intro:
           "У бігуна вже є годинник, гелі, пояс і треті кросівки. Але є річ, якої немає в жодному магазині: його власний маршрут. Перший марафон, ранкове коло парком, стометрівка набережною — усе це лежить треками у Strava. Ми перетворюємо трек на фізичну річ: рельєфна лінія маршруту поверх карти району на брелку чи мапі.",
@@ -2763,7 +2764,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Як замовити",
             p: [
-              "Експортуйте GPX зі Strava, Garmin Connect чи Komoot (у Strava: активність → три крапки → «Експорт GPX»). Завантажте файл у конструктор — сервіс сам знайде місце, підбере масштаб і покаже превʼю. Від 120 ₴, виготовлення 2–4 робочі дні.",
+              "Експортуйте GPX зі Strava, Garmin Connect чи Komoot (у Strava: активність → три крапки → «Експорт GPX»). Завантажте файл у конструктор — сервіс сам знайде місце, підбере масштаб і покаже превʼю. Від 170 ₴, виготовлення 2–4 робочі дні.",
             ],
           },
         ],
@@ -2774,7 +2775,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "A gift for a runner: their route, printed in plastic",
         description:
-          "What to give a runner who has everything: a keychain with the GPX track of their first marathon or favourite loop. Upload from Strava — we print it in relief. From ≈€3.",
+          "What to give a runner who has everything: a keychain with the GPX track of their first marathon or favourite loop. Upload from Strava — we print it in relief. From ≈€4.",
         h1: "A gift for a runner that can't be bought off the shelf",
         intro:
           "A runner already owns the watch, the gels, the belt and a third pair of shoes. But there's one thing no store has: their own route. The first marathon, the morning park loop — it all sits as tracks in Strava. We turn a track into a physical object: a relief route line over the district map on a keychain or a full map.",
@@ -2795,7 +2796,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "How to order",
             p: [
-              "Export a GPX from Strava, Garmin Connect or Komoot (in Strava: activity → three dots → «Export GPX»). Upload it in the builder — the service locates the route, scales the map and shows a preview. From ≈€3, made in 2–4 business days.",
+              "Export a GPX from Strava, Garmin Connect or Komoot (in Strava: activity → three dots → «Export GPX»). Upload it in the builder — the service locates the route, scales the map and shows a preview. From ≈€4, made in 2–4 business days.",
             ],
           },
         ],
@@ -2806,7 +2807,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Ein Geschenk für Läufer: seine Route, in Kunststoff gedruckt",
         description:
-          "Was man einem Läufer schenkt, der schon alles hat: einen Anhänger mit dem GPX-Track des ersten Marathons oder der Lieblingsrunde. Wir laden den Track aus Strava — und drucken ihn als Relief. Ab ≈3 €.",
+          "Was man einem Läufer schenkt, der schon alles hat: einen Anhänger mit dem GPX-Track des ersten Marathons oder der Lieblingsrunde. Wir laden den Track aus Strava — und drucken ihn als Relief. Ab ≈4 €.",
         h1: "Ein Läufer-Geschenk, das man nicht fertig kaufen kann",
         intro:
           "Ein Läufer hat schon die Uhr, die Gels, den Gürtel und das dritte Paar Schuhe. Aber es gibt eine Sache, die es in keinem Laden gibt: seine eigene Route. Der erste Marathon, die Morgenrunde durch den Park, die Strecke an der Uferpromenade — all das liegt als Track in Strava. Wir machen aus dem Track ein physisches Ding: eine Reliefline der Route über der Viertelkarte, auf einem Anhänger oder einer Karte.",
@@ -2827,7 +2828,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "So bestellst du",
             p: [
-              "Exportiere GPX aus Strava, Garmin Connect oder Komoot (in Strava: Aktivität → drei Punkte → «GPX exportieren»). Lade die Datei in den Konfigurator — der Dienst findet den Ort, wählt den Maßstab und zeigt die Vorschau. Ab ≈3 €, Fertigung 2–4 Werktage.",
+              "Exportiere GPX aus Strava, Garmin Connect oder Komoot (in Strava: Aktivität → drei Punkte → «GPX exportieren»). Lade die Datei in den Konfigurator — der Dienst findet den Ort, wählt den Maßstab und zeigt die Vorschau. Ab ≈4 €, Fertigung 2–4 Werktage.",
             ],
           },
         ],
@@ -2838,7 +2839,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Prezent dla biegacza: jego trasa wydrukowana w plastiku",
         description:
-          "Co podarować biegaczowi, który ma już wszystko: brelok ze śladem GPX pierwszego maratonu lub ulubionej pętli. Wgrywamy ślad ze Stravy — drukujemy reliefem. Od ≈3 €.",
+          "Co podarować biegaczowi, który ma już wszystko: brelok ze śladem GPX pierwszego maratonu lub ulubionej pętli. Wgrywamy ślad ze Stravy — drukujemy reliefem. Od ≈4 €.",
         h1: "Prezent dla biegacza, którego nie da się kupić gotowego",
         intro:
           "Biegacz ma już zegarek, żele, pas i trzecią parę butów. Ale jest rzecz, której nie ma w żadnym sklepie: jego własna trasa. Pierwszy maraton, poranna pętla po parku, odcinek nad rzeką — wszystko to leży w Stravie jako ślady. Zamieniamy ślad w fizyczną rzecz: reliefowa linia trasy na mapie dzielnicy, na breloku lub mapie.",
@@ -2859,7 +2860,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Jak zamówić",
             p: [
-              "Wyeksportuj GPX ze Stravy, Garmin Connect lub Komoot (w Stravie: aktywność → trzy kropki → «Eksportuj GPX»). Wgraj plik do kreatora — serwis sam znajdzie miejsce, dobierze skalę i pokaże podgląd. Od ≈3 €, wykonanie 2–4 dni robocze.",
+              "Wyeksportuj GPX ze Stravy, Garmin Connect lub Komoot (w Stravie: aktywność → trzy kropki → «Eksportuj GPX»). Wgraj plik do kreatora — serwis sam znajdzie miejsce, dobierze skalę i pokaże podgląd. Od ≈4 €, wykonanie 2–4 dni robocze.",
             ],
           },
         ],
@@ -2870,7 +2871,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Un cadeau pour un coureur : son parcours imprimé en plastique",
         description:
-          "Que offrir à un coureur qui a déjà tout : un porte-clés avec la trace GPX de son premier marathon ou de sa boucle préférée. On importe la trace depuis Strava — on l'imprime en relief. Dès ≈3 €.",
+          "Que offrir à un coureur qui a déjà tout : un porte-clés avec la trace GPX de son premier marathon ou de sa boucle préférée. On importe la trace depuis Strava — on l'imprime en relief. Dès ≈4 €.",
         h1: "Un cadeau pour un coureur qu'on ne peut pas acheter tout fait",
         intro:
           "Un coureur a déjà la montre, les gels, la ceinture et une troisième paire de chaussures. Mais il y a une chose qu'aucun magasin ne vend : son propre parcours. Le premier marathon, la boucle matinale dans le parc, la ligne droite sur les quais — tout cela dort dans Strava sous forme de traces. Nous transformons la trace en objet physique : une ligne en relief du parcours sur la carte du quartier, sur un porte-clés ou une carte.",
@@ -2891,7 +2892,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Comment commander",
             p: [
-              "Exportez le GPX depuis Strava, Garmin Connect ou Komoot (dans Strava : activité → trois points → «Exporter en GPX»). Téléversez le fichier dans le configurateur — le service trouve le lieu, choisit l'échelle et montre l'aperçu. Dès ≈3 €, fabrication 2–4 jours ouvrés.",
+              "Exportez le GPX depuis Strava, Garmin Connect ou Komoot (dans Strava : activité → trois points → «Exporter en GPX»). Téléversez le fichier dans le configurateur — le service trouve le lieu, choisit l'échelle et montre l'aperçu. Dès ≈4 €, fabrication 2–4 jours ouvrés.",
             ],
           },
         ],
@@ -2902,7 +2903,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Un regalo para un corredor: su ruta impresa en plástico",
         description:
-          "Qué regalar a un corredor que ya lo tiene todo: un llavero con el track GPX de su primer maratón o su vuelta favorita. Subimos el track de Strava — lo imprimimos en relieve. Desde ≈3 €.",
+          "Qué regalar a un corredor que ya lo tiene todo: un llavero con el track GPX de su primer maratón o su vuelta favorita. Subimos el track de Strava — lo imprimimos en relieve. Desde ≈4 €.",
         h1: "Un regalo para un corredor que no se puede comprar hecho",
         intro:
           "Un corredor ya tiene el reloj, los geles, el cinturón y el tercer par de zapatillas. Pero hay una cosa que no está en ninguna tienda: su propia ruta. El primer maratón, la vuelta matinal por el parque, el tramo junto al río — todo eso está en Strava en forma de tracks. Convertimos el track en un objeto físico: una línea en relieve de la ruta sobre el mapa del barrio, en un llavero o un mapa.",
@@ -2923,7 +2924,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Cómo pedirlo",
             p: [
-              "Exporta el GPX desde Strava, Garmin Connect o Komoot (en Strava: actividad → tres puntos → «Exportar GPX»). Sube el archivo al configurador — el servicio localiza el lugar, elige la escala y muestra la vista previa. Desde ≈3 €, fabricación 2–4 días hábiles.",
+              "Exporta el GPX desde Strava, Garmin Connect o Komoot (en Strava: actividad → tres puntos → «Exportar GPX»). Sube el archivo al configurador — el servicio localiza el lugar, elige la escala y muestra la vista previa. Desde ≈4 €, fabricación 2–4 días hábiles.",
             ],
           },
         ],
@@ -2940,7 +2941,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Подарунок переселенцю: рідне місто, яке завжди поруч",
         description:
-          "Що подарувати людині, яка виїхала з рідного міста: 3D-мапа рідного району чи брелок з домом. Подарунок переселенцю, друзям за кордоном, рідним. Від 120 ₴, доставка по Україні.",
+          "Що подарувати людині, яка виїхала з рідного міста: 3D-мапа рідного району чи брелок з домом. Подарунок переселенцю, друзям за кордоном, рідним. Від 170 ₴, доставка по Україні.",
         h1: "Подарунок переселенцю: шматочок рідного міста",
         intro:
           "Мільйони людей зараз живуть не там, де виросли. Комусь довелось виїхати від війни, хтось переїхав за роботою чи навчанням — але рідний двір пам'ятають усі. 3D-мапа рідного району — подарунок, який працює сильніше за будь-які слова: ось твоя вулиця, твоя школа, твій парк. Вони на місці. Вони чекають.",
@@ -2955,7 +2956,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Формати",
             p: [
-              "Мапа рідного району 8–15 см (від 350 ₴) — на полицю. Брелок з двором дитинства (від 120 ₴) — щоб дім був у кишені. Магніт (150 ₴) — на холодильник нової кухні. Панно з кількох плиток — коли хочеться повісити на стіну ціле місто.",
+              "Мапа рідного району 8–15 см (від 490 ₴) — на полицю. Брелок з двором дитинства (від 170 ₴) — щоб дім був у кишені. Магніт (210 ₴) — на холодильник нової кухні. Панно з кількох плиток — коли хочеться повісити на стіну ціле місто.",
               "На звороті брелока — напис: назва міста, «додому повернемось», координати дому чи ім'я.",
             ],
           },
@@ -2973,7 +2974,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       en: {
         title: "A gift for someone far from home: their hometown, always near",
         description:
-          "What to give a person who left their home city: a 3D map of the home district or a keychain with the home street. For refugees, friends abroad, family. From ≈€3, delivery across Ukraine.",
+          "What to give a person who left their home city: a 3D map of the home district or a keychain with the home street. For refugees, friends abroad, family. From ≈€4, delivery across Ukraine.",
         h1: "A gift for someone far from home: a piece of their city",
         intro:
           "Millions of people now live away from where they grew up — displaced by war, moved for work or study. But everyone remembers their home yard. A 3D map of the home district is a gift that speaks louder than words: here is your street, your school, your park. They're still there. They're waiting.",
@@ -2988,7 +2989,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formats",
             p: [
-              "A home-district map 8–15 cm (from ≈€8) for a shelf. A childhood-yard keychain (from ≈€3) so home fits in a pocket. A fridge magnet (≈€4) for the new kitchen. A multi-tile panel when you want a whole city on the wall.",
+              "A home-district map 8–15 cm (from ≈€8) for a shelf. A childhood-yard keychain (from ≈€4) so home fits in a pocket. A fridge magnet (≈€4) for the new kitchen. A multi-tile panel when you want a whole city on the wall.",
               "On the keychain's back — an inscription: the city name, coordinates of home, or a name.",
             ],
           },
@@ -3006,7 +3007,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Ein Geschenk für Vertriebene: die Heimatstadt, die immer nah ist",
         description:
-          "Was man jemandem schenkt, der seine Heimatstadt verlassen musste: eine 3D-Karte des Heimatviertels oder ein Anhänger mit dem Zuhause. Für Geflüchtete, Freunde im Ausland, Familie. Ab ≈3 €, Versand innerhalb der Ukraine.",
+          "Was man jemandem schenkt, der seine Heimatstadt verlassen musste: eine 3D-Karte des Heimatviertels oder ein Anhänger mit dem Zuhause. Für Geflüchtete, Freunde im Ausland, Familie. Ab ≈4 €, Versand innerhalb der Ukraine.",
         h1: "Ein Geschenk für Vertriebene: ein Stück der Heimatstadt",
         intro:
           "Millionen Menschen leben heute nicht dort, wo sie aufgewachsen sind. Manche mussten vor dem Krieg fliehen, andere sind für Arbeit oder Studium umgezogen — aber an den heimischen Hof erinnern sich alle. Eine 3D-Karte des Heimatviertels ist ein Geschenk, das stärker wirkt als alle Worte: hier ist deine Straße, deine Schule, dein Park. Sie stehen noch. Sie warten.",
@@ -3021,7 +3022,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formate",
             p: [
-              "Karte des Heimatviertels 8–15 cm (ab ≈8 €) — fürs Regal. Anhänger mit dem Hof der Kindheit (ab ≈3 €) — damit das Zuhause in die Tasche passt. Magnet (≈4 €) — an den Kühlschrank der neuen Küche. Ein Panel aus mehreren Kacheln — wenn man eine ganze Stadt an die Wand hängen will.",
+              "Karte des Heimatviertels 8–15 cm (ab ≈8 €) — fürs Regal. Anhänger mit dem Hof der Kindheit (ab ≈4 €) — damit das Zuhause in die Tasche passt. Magnet (≈4 €) — an den Kühlschrank der neuen Küche. Ein Panel aus mehreren Kacheln — wenn man eine ganze Stadt an die Wand hängen will.",
               "Auf der Rückseite des Anhängers eine Gravur: der Stadtname, «wir kehren heim», die Koordinaten des Zuhauses oder ein Name.",
             ],
           },
@@ -3039,7 +3040,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Prezent dla przesiedleńca: rodzinne miasto, które zawsze jest blisko",
         description:
-          "Co podarować osobie, która wyjechała z rodzinnego miasta: mapa 3D rodzinnej dzielnicy lub brelok z domem. Dla uchodźców, przyjaciół za granicą, bliskich. Od ≈3 €, wysyłka po Ukrainie.",
+          "Co podarować osobie, która wyjechała z rodzinnego miasta: mapa 3D rodzinnej dzielnicy lub brelok z domem. Dla uchodźców, przyjaciół za granicą, bliskich. Od ≈4 €, wysyłka po Ukrainie.",
         h1: "Prezent dla przesiedleńca: kawałek rodzinnego miasta",
         intro:
           "Miliony ludzi żyją dziś nie tam, gdzie dorastali. Ktoś musiał wyjechać przed wojną, ktoś przeprowadził się za pracą czy nauką — ale rodzinne podwórko pamiętają wszyscy. Mapa 3D rodzinnej dzielnicy to prezent, który działa mocniej niż jakiekolwiek słowa: oto twoja ulica, twoja szkoła, twój park. Są na miejscu. Czekają.",
@@ -3054,7 +3055,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formaty",
             p: [
-              "Mapa rodzinnej dzielnicy 8–15 cm (od ≈8 €) — na półkę. Brelok z podwórkiem dzieciństwa (od ≈3 €) — by dom był w kieszeni. Magnes (≈4 €) — na lodówkę nowej kuchni. Panel z kilku kafelków — gdy chce się powiesić na ścianie całe miasto.",
+              "Mapa rodzinnej dzielnicy 8–15 cm (od ≈8 €) — na półkę. Brelok z podwórkiem dzieciństwa (od ≈4 €) — by dom był w kieszeni. Magnes (≈4 €) — na lodówkę nowej kuchni. Panel z kilku kafelków — gdy chce się powiesić na ścianie całe miasto.",
               "Z tyłu breloka napis: nazwa miasta, «wrócimy do domu», współrzędne domu lub imię.",
             ],
           },
@@ -3072,7 +3073,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Un cadeau pour un déplacé : sa ville natale, toujours près de lui",
         description:
-          "Que offrir à une personne qui a quitté sa ville natale : une carte 3D du quartier natal ou un porte-clés avec sa maison. Pour les réfugiés, les amis à l'étranger, la famille. Dès ≈3 €, livraison en Ukraine.",
+          "Que offrir à une personne qui a quitté sa ville natale : une carte 3D du quartier natal ou un porte-clés avec sa maison. Pour les réfugiés, les amis à l'étranger, la famille. Dès ≈4 €, livraison en Ukraine.",
         h1: "Un cadeau pour un déplacé : un morceau de sa ville natale",
         intro:
           "Des millions de personnes vivent aujourd'hui loin de là où elles ont grandi. Certains ont dû fuir la guerre, d'autres ont déménagé pour le travail ou les études — mais tout le monde se souvient de la cour de son enfance. Une carte 3D du quartier natal est un cadeau qui parle plus fort que les mots : voici ta rue, ton école, ton parc. Ils sont là. Ils attendent.",
@@ -3087,7 +3088,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formats",
             p: [
-              "Carte du quartier natal 8–15 cm (dès ≈8 €) — pour l'étagère. Porte-clés avec la cour d'enfance (dès ≈3 €) — pour que la maison tienne dans la poche. Magnet (≈4 €) — sur le frigo de la nouvelle cuisine. Un panneau de plusieurs tuiles — quand on veut accrocher une ville entière au mur.",
+              "Carte du quartier natal 8–15 cm (dès ≈8 €) — pour l'étagère. Porte-clés avec la cour d'enfance (dès ≈4 €) — pour que la maison tienne dans la poche. Magnet (≈4 €) — sur le frigo de la nouvelle cuisine. Un panneau de plusieurs tuiles — quand on veut accrocher une ville entière au mur.",
               "Au dos du porte-clés, une gravure : le nom de la ville, «nous rentrerons», les coordonnées de la maison ou un prénom.",
             ],
           },
@@ -3105,7 +3106,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Un regalo para un desplazado: su ciudad natal, siempre cerca",
         description:
-          "Qué regalar a alguien que dejó su ciudad natal: un mapa 3D del barrio natal o un llavero con su casa. Para refugiados, amigos en el extranjero, familia. Desde ≈3 €, envío dentro de Ucrania.",
+          "Qué regalar a alguien que dejó su ciudad natal: un mapa 3D del barrio natal o un llavero con su casa. Para refugiados, amigos en el extranjero, familia. Desde ≈4 €, envío dentro de Ucrania.",
         h1: "Un regalo para un desplazado: un trozo de su ciudad natal",
         intro:
           "Millones de personas viven hoy lejos de donde crecieron. Algunos tuvieron que huir de la guerra, otros se mudaron por trabajo o estudios — pero todos recuerdan el patio de su casa. Un mapa 3D del barrio natal es un regalo que habla más fuerte que las palabras: aquí está tu calle, tu escuela, tu parque. Siguen ahí. Esperan.",
@@ -3120,7 +3121,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formatos",
             p: [
-              "Mapa del barrio natal 8–15 cm (desde ≈8 €) — para la estantería. Llavero con el patio de la infancia (desde ≈3 €) — para que la casa quepa en el bolsillo. Imán (≈4 €) — en la nevera de la cocina nueva. Un panel de varios azulejos — cuando se quiere colgar una ciudad entera en la pared.",
+              "Mapa del barrio natal 8–15 cm (desde ≈8 €) — para la estantería. Llavero con el patio de la infancia (desde ≈4 €) — para que la casa quepa en el bolsillo. Imán (≈4 €) — en la nevera de la cocina nueva. Un panel de varios azulejos — cuando se quiere colgar una ciudad entera en la pared.",
               "Al dorso del llavero, un grabado: el nombre de la ciudad, «volveremos a casa», las coordenadas del hogar o un nombre.",
             ],
           },
@@ -3163,7 +3164,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Як це працює",
             p: [
               "Відкрий конструктор, знайди місто, пересунь рамку на потрібний район — жива 3D-модель збереться за дві хвилини. Далі два шляхи: замовити друк з екологічного Eco PLA з доставкою по Україні, або завантажити файл 3MF/STL і надрукувати самостійно на Bambu Lab чи Prusa.",
-              "Розміри — від магніта 6 см до панно на стіну. Ціна моделі для власного друку — від кількох євро, готовий друк — від ≈6 €.",
+              "Розміри — від магніта 6 см до панно на стіну. Ціна моделі для власного друку — від кількох євро, готовий друк — від ≈8 €.",
             ],
           },
           {
@@ -3196,7 +3197,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "How it works",
             p: [
               "Open the builder, find the city, move the frame over the district — a live 3D model assembles in two minutes. Then two paths: order an Eco PLA print shipped by Nova Poshta across Ukraine, or download the 3MF/STL and print it yourself on a Bambu Lab or Prusa.",
-              "Sizes range from a 6 cm fridge magnet to a wall panel. A file for self-printing costs a few euros; a finished print starts at ≈€6.",
+              "Sizes range from a 6 cm fridge magnet to a wall panel. A file for self-printing costs a few euros; a finished print starts at ≈€8.",
             ],
           },
           {
@@ -3229,7 +3230,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "So funktioniert es",
             p: [
               "Konfigurator öffnen, Stadt suchen, den Rahmen über das Viertel ziehen — in zwei Minuten entsteht ein lebendiges 3D-Modell. Danach zwei Wege: den Druck aus umweltfreundlichem Eco PLA bestellen (Versand innerhalb der Ukraine) oder die 3MF/STL-Datei laden und selbst auf einem Bambu Lab oder Prusa drucken.",
-              "Größen vom 6-cm-Kühlschrankmagneten bis zum Wandpaneel. Eine Datei zum Selbstdrucken kostet wenige Euro, ein fertiger Druck beginnt bei ≈6 €.",
+              "Größen vom 6-cm-Kühlschrankmagneten bis zum Wandpaneel. Eine Datei zum Selbstdrucken kostet wenige Euro, ein fertiger Druck beginnt bei ≈8 €.",
             ],
           },
           {
@@ -3268,7 +3269,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Як це працює",
             p: [
               "Обери район у конструкторі — жива 3D-модель за дві хвилини. Далі: замовити друк з Eco PLA з доставкою по Україні, або завантажити 3MF/STL для власного друку.",
-              "Від магніта 6 см до настінного панно. Файл — кілька євро, готовий друк — від ≈6 €. Оплата карткою онлайн.",
+              "Від магніта 6 см до настінного панно. Файл — кілька євро, готовий друк — від ≈8 €. Оплата карткою онлайн.",
             ],
           },
           {
@@ -3301,7 +3302,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "How it works",
             p: [
               "Pick a district in the builder — a live 3D model in two minutes. Then order an Eco PLA print shipped within Ukraine, or download the 3MF/STL to print yourself.",
-              "From a 6 cm magnet to a wall panel. A file costs a few euros; a finished print starts at ≈€6. Card payment online.",
+              "From a 6 cm magnet to a wall panel. A file costs a few euros; a finished print starts at ≈€8. Card payment online.",
             ],
           },
           {
@@ -3334,7 +3335,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Jak to działa",
             p: [
               "Otwórz kreator, znajdź miasto, przesuń ramkę na dzielnicę — żywy model 3D powstaje w dwie minuty. Potem dwie drogi: zamów druk z ekologicznego Eco PLA z wysyłką Nova Post do Polski, albo pobierz plik 3MF/STL i wydrukuj samodzielnie na Bambu Lab czy Prusie.",
-              "Rozmiary od magnesu 6 cm na lodówkę po panel na ścianę. Plik do własnego druku kosztuje kilka euro, gotowy wydruk — od ≈6 €. Płatność kartą online.",
+              "Rozmiary od magnesu 6 cm na lodówkę po panel na ścianę. Plik do własnego druku kosztuje kilka euro, gotowy wydruk — od ≈8 €. Płatność kartą online.",
             ],
           },
           {
@@ -3355,6 +3356,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   // Статті під реальні uk-запити (2026-09-07, хвиля «немає продажів»; S-6 у plans/03).
   ...SEO_UA_ARTICLES_2026_A,
   ...SEO_UA_ARTICLES_2026_B,
+  ...SEO_UA_ARTICLES_2026_C,
 ];
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(

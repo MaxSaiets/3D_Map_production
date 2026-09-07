@@ -1118,7 +1118,7 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     p = _load_pricing()
     sym = p.get("currency_symbol", "₴")
     if product == "keychain":
-        price = int(p.get("keychain", {}).get("base", 120))
+        price = int(p.get("keychain", {}).get("base", 170))
     elif product == "floorplan":
         fp = p.get("floorplan", {}) or {}
         fp_sizes = {float(k): int(v) for k, v in (fp.get("sizes_mm", {}) or {}).items()}
@@ -1185,9 +1185,9 @@ def _compute_authoritative_amount(
             except Exception:  # noqa: BLE001
                 fp_size = None
         if fp_size is None or not fp_sizes:
-            amount = float(fp_cfg.get("from", 590) or 590)
+            amount = float(fp_cfg.get("from", 830) or 830)
         else:
-            amount = float(_nearest_map_price(fp_sizes, fp_size) or fp_cfg.get("from", 590))
+            amount = float(_nearest_map_price(fp_sizes, fp_size) or fp_cfg.get("from", 830))
         return round(amount, 2), currency
 
     # ── map / magnet ────────────────────────────────────────────────────────

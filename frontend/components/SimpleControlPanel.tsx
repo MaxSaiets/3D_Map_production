@@ -398,7 +398,7 @@ export function SimpleControlPanel({
     const relief = reliefMode;  // окремий перемикач «Рельєф» — джерело правди
     // Магніт — окремий продукт із фіксованою ціною (ключ розміру 60 = 180₴), а
     // НЕ звичайна мапа за вибраним S/M/L/XL. Без цього у формі показувалась ціна
-    // мапи (напр. 250₴ замість 180₴). Генерація теж форсує modelSizeMm=60.
+    // мапи (напр. 350₴ замість 180₴). Генерація теж форсує modelSizeMm=60.
     fetchQuote("map", magnetMode ? 60 : modelSizeMm, magnetMode ? false : relief).then((q) => { if (alive) setQuote(q); });
     return () => { alive = false; };
   }, [modelSizeMm, styleId, magnetMode, reliefMode]);

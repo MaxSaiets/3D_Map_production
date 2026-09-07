@@ -106,37 +106,37 @@ export function occasionFaq(cl: ContentLocale): FaqItem[] {
       { q: "Скільки триває виготовлення подарунка?", a: "2–4 робочі дні на виготовлення плюс доставка Новою Поштою. Якщо подарунок терміновий — брелок друкується найшвидше." },
       { q: "Не знаю, яку ділянку обрати — що робити?", a: "Напишіть нам у чат — підкажемо, як виглядатиме обраний район, і зберемо безкоштовне превʼю перед замовленням." },
       { q: "Чи можна додати особистий напис?", a: "Так — ім'я, дату, координати чи коротку фразу можна додати на звороті брелока або на підставці мапи." },
-      { q: "Скільки це коштує?", a: "Брелок — від 120 ₴, магніт — 150 ₴, 3D-мапа на полицю — від 250 до 550 ₴ залежно від розміру." },
+      { q: "Скільки це коштує?", a: "Брелок — від 170 ₴, магніт — 210 ₴, 3D-мапа на полицю — від 350 до 770 ₴ залежно від розміру." },
     ],
     en: [
       { q: "How long does a gift take to make?", a: "1–3 business days plus delivery. If the gift is urgent, a keychain prints fastest." },
       { q: "I'm not sure which area to pick — what do I do?", a: "Message us — we'll help and build a free preview before you order." },
       { q: "Can I add a personal message?", a: "Yes — a name, date, coordinates or short phrase can go on the back of a keychain or the base of a map." },
-      { q: "How much does it cost?", a: "A keychain from ≈€3, a magnet, a shelf 3D map from ≈€6 to €13 depending on size." },
+      { q: "How much does it cost?", a: "A keychain from ≈€4, a magnet, a shelf 3D map from ≈€8 to €13 depending on size." },
     ],
     de: [
       { q: "Wie lange dauert die Herstellung eines Geschenks?", a: "1–3 Werktage Herstellung plus Versand per Nova Poshta. Ist das Geschenk eilig, druckt ein Anhänger am schnellsten." },
       { q: "Ich weiß nicht, welchen Bereich ich wählen soll — was tun?", a: "Schreib uns im Chat — wir helfen und bauen vor der Bestellung eine kostenlose Vorschau." },
       { q: "Kann ich eine persönliche Widmung hinzufügen?", a: "Ja — ein Name, ein Datum, Koordinaten oder ein kurzer Satz können auf die Rückseite eines Anhängers oder den Sockel einer Karte." },
-      { q: "Was kostet das?", a: "Ein Anhänger ab ≈3 €, ein Magnet, eine 3D-Karte fürs Regal von ≈6 bis 13 € je nach Größe." },
+      { q: "Was kostet das?", a: "Ein Anhänger ab ≈4 €, ein Magnet, eine 3D-Karte fürs Regal von ≈8 bis 13 € je nach Größe." },
     ],
     pl: [
       { q: "Ile trwa wykonanie prezentu?", a: "1–3 dni robocze na wykonanie plus dostawa Nova Poshta. Jeśli prezent jest pilny, brelok drukuje się najszybciej." },
       { q: "Nie wiem, który obszar wybrać — co robić?", a: "Napisz do nas na czacie — podpowiemy i przed zamówieniem zrobimy darmowy podgląd." },
       { q: "Czy można dodać osobisty napis?", a: "Tak — imię, datę, współrzędne lub krótką frazę można dodać z tyłu breloka lub na podstawie mapy." },
-      { q: "Ile to kosztuje?", a: "Brelok od ≈3 €, magnes, mapa 3D na półkę od ≈6 do 13 € w zależności od rozmiaru." },
+      { q: "Ile to kosztuje?", a: "Brelok od ≈4 €, magnes, mapa 3D na półkę od ≈8 do 13 € w zależności od rozmiaru." },
     ],
     fr: [
       { q: "Combien de temps prend un cadeau ?", a: "1 à 3 jours ouvrés de fabrication plus la livraison via Nova Poshta. Si le cadeau est urgent, un porte-clés s'imprime le plus vite." },
       { q: "Je ne sais pas quel quartier choisir — que faire ?", a: "Écrivez-nous dans le chat — nous aidons et créons un aperçu gratuit avant la commande." },
       { q: "Puis-je ajouter un message personnel ?", a: "Oui — un nom, une date, des coordonnées ou une courte phrase peuvent aller au dos d'un porte-clés ou sur le socle d'une carte." },
-      { q: "Combien ça coûte ?", a: "Un porte-clés à partir de ≈3 €, un magnet, une carte 3D d'étagère de ≈6 à 13 € selon la taille." },
+      { q: "Combien ça coûte ?", a: "Un porte-clés à partir de ≈4 €, un magnet, une carte 3D d'étagère de ≈8 à 13 € selon la taille." },
     ],
     es: [
       { q: "¿Cuánto tarda un regalo?", a: "1–3 días hábiles de fabricación más el envío por Nova Poshta. Si el regalo es urgente, un llavero se imprime más rápido." },
       { q: "No sé qué zona elegir — ¿qué hago?", a: "Escríbenos en el chat — te ayudamos y hacemos una vista previa gratis antes de pedir." },
       { q: "¿Puedo añadir un mensaje personal?", a: "Sí — un nombre, una fecha, coordenadas o una frase corta pueden ir en el reverso de un llavero o en la base de un mapa." },
-      { q: "¿Cuánto cuesta?", a: "Un llavero desde ≈3 €, un imán, un mapa 3D de estante de ≈6 a 13 € según el tamaño." },
+      { q: "¿Cuánto cuesta?", a: "Un llavero desde ≈4 €, un imán, un mapa 3D de estante de ≈8 a 13 € según el tamaño." },
     ],
   };
   return builders[cl] ?? builders.en!;
@@ -153,8 +153,8 @@ export function brelokCityCopy(
   const river = facts?.river.latin, landmark = facts?.landmark.latin;
   const builders: Partial<Record<AppLocale, () => CityLandingCopy>> = {
     uk: () => ({
-      title: `Брелок з картою міста — ${name} | 3D-друк від 120 ₴`,
-      description: `Брелок-мапа 55×30 мм з районом міста (${name}): вулиці й парки рельєфом, власний напис на звороті. 3D-друк з Eco PLA від 120 ₴, доставка по Україні.`,
+      title: `Брелок з картою міста — ${name} | 3D-друк від 170 ₴`,
+      description: `Брелок-мапа 55×30 мм з районом міста (${name}): вулиці й парки рельєфом, власний напис на звороті. 3D-друк з Eco PLA від 170 ₴, доставка по Україні.`,
       h1: `Брелок з картою міста — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -181,7 +181,7 @@ export function brelokCityCopy(
       ],
     }),
     en: () => ({
-      title: `City map keychain — ${name} | 3D-printed from ≈€3`,
+      title: `City map keychain — ${name} | 3D-printed from ≈€4`,
       description: `55×30 mm map keychain with a ${name} district: streets and parks in relief, custom text on the back. Eco PLA 3D print, shipping to Ukraine & EU.`,
       h1: `City map keychain — ${name}`,
       intro: [
@@ -209,7 +209,7 @@ export function brelokCityCopy(
       ],
     }),
     de: () => ({
-      title: `Schlüsselanhänger mit Stadtkarte — ${name} | 3D-Druck ab ≈3 €`,
+      title: `Schlüsselanhänger mit Stadtkarte — ${name} | 3D-Druck ab ≈4 €`,
       description: `55×30-mm-Karten-Anhänger mit einem Viertel von ${name}: Straßen und Parks in Relief, eigener Text auf der Rückseite. Eco-PLA-3D-Druck, Versand Ukraine & EU.`,
       h1: `Schlüsselanhänger mit Stadtkarte — ${name}`,
       intro: [
@@ -236,7 +236,7 @@ export function brelokCityCopy(
       ],
     }),
     pl: () => ({
-      title: `Brelok z mapą miasta — ${name} | druk 3D od ≈3 €`,
+      title: `Brelok z mapą miasta — ${name} | druk 3D od ≈4 €`,
       description: `Brelok-mapa 55×30 mm z dzielnicą miasta ${name}: ulice i parki w reliefie, własny napis z tyłu. Druk 3D z Eco PLA, wysyłka Ukraina i UE.`,
       h1: `Brelok z mapą miasta — ${name}`,
       intro: [
@@ -263,7 +263,7 @@ export function brelokCityCopy(
       ],
     }),
     fr: () => ({
-      title: `Porte-clés avec carte de ville — ${name} | impression 3D dès ≈3 €`,
+      title: `Porte-clés avec carte de ville — ${name} | impression 3D dès ≈4 €`,
       description: `Porte-clés carte 55×30 mm avec un quartier de ${name} : rues et parcs en relief, texte personnel au dos. Impression 3D en Eco PLA, livraison Ukraine et UE.`,
       h1: `Porte-clés avec carte de ville — ${name}`,
       intro: [
@@ -290,7 +290,7 @@ export function brelokCityCopy(
       ],
     }),
     es: () => ({
-      title: `Llavero con mapa de ciudad — ${name} | impresión 3D desde ≈3 €`,
+      title: `Llavero con mapa de ciudad — ${name} | impresión 3D desde ≈4 €`,
       description: `Llavero mapa 55×30 mm con un distrito de ${name}: calles y parques en relieve, texto personal al reverso. Impresión 3D en Eco PLA, envío Ucrania y UE.`,
       h1: `Llavero con mapa de ciudad — ${name}`,
       intro: [
@@ -333,8 +333,8 @@ export function giftCityCopy(
   const landmark = facts?.landmark.latin;
   const builders: Partial<Record<AppLocale, () => CityLandingCopy>> = {
     uk: () => ({
-      title: `Подарунок з міста ${name}: персональна 3D-мапа від 120 ₴`,
-      description: `Ідея подарунка (${name}): 3D-мапа району від 250 ₴, брелок-мапа від 120 ₴, магніт 150 ₴. Річниця, новосілля, день народження. Виготовлення 1–3 дні.`,
+      title: `Подарунок з міста ${name}: персональна 3D-мапа від 170 ₴`,
+      description: `Ідея подарунка (${name}): 3D-мапа району від 350 ₴, брелок-мапа від 170 ₴, магніт 210 ₴. Річниця, новосілля, день народження. Виготовлення 1–3 дні.`,
       h1: `Подарунок з міста — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -352,7 +352,7 @@ export function giftCityCopy(
           "Не знаєте, яку ділянку обрати? Напишіть нам — підкажемо, як виглядатиме район, і зберемо превʼю безкоштовно.",
         ] },
         { h2: "Формати під різний бюджет", p: [
-          `Брелок-мапа (від 120 ₴) — недорогий знак уваги з написом на звороті. Магніт на холодильник (150 ₴) — щоденне нагадування про місто (${name}). 3D-мапа на полицю (від 250 ₴ за 5,5 см до 550 ₴ за 15 см) — повноцінний інтер'єрний подарунок; за бажанням — з рельєфом місцевості (+60 ₴).`,
+          `Брелок-мапа (від 170 ₴) — недорогий знак уваги з написом на звороті. Магніт на холодильник (210 ₴) — щоденне нагадування про місто (${name}). 3D-мапа на полицю (від 350 ₴ за 5,5 см до 770 ₴ за 15 см) — повноцінний інтер'єрний подарунок; за бажанням — з рельєфом місцевості (+85 ₴).`,
         ] },
         { h2: "Як замовити за 5 хвилин", p: [
           `Оберіть ділянку на карті в конструкторі — сервіс збере модель автоматично за 2–4 хвилини. Друкуємо з біопластику Eco PLA і надсилаємо Новою Поштою; можна замовити й цифровий файл для власного друку. Виготовлення 2–4 робочі дні — встигнути до дати легко.`,
@@ -360,8 +360,8 @@ export function giftCityCopy(
       ],
     }),
     en: () => ({
-      title: `A gift from ${name}: a personal 3D map from ≈€3`,
-      description: `Gift ideas from ${name}: district 3D map from ≈€6, map keychain from ≈€3, fridge magnet. Anniversary, housewarming, birthday. Made in 1–3 days.`,
+      title: `A gift from ${name}: a personal 3D map from ≈€4`,
+      description: `Gift ideas from ${name}: district 3D map from ≈€8, map keychain from ≈€4, fridge magnet. Anniversary, housewarming, birthday. Made in 1–3 days.`,
       h1: `A gift from the city — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -379,7 +379,7 @@ export function giftCityCopy(
           "Not sure which area to pick? Message us — we'll help and build a free preview.",
         ] },
         { h2: "Formats for any budget", p: [
-          `Map keychain (from ≈€3) — a small token with text on the back. Fridge magnet — a daily reminder of ${name}. Shelf 3D map (≈€6–13 depending on size) — a real interior piece, with terrain relief if you like.`,
+          `Map keychain (from ≈€4) — a small token with text on the back. Fridge magnet — a daily reminder of ${name}. Shelf 3D map (≈€8–13 depending on size) — a real interior piece, with terrain relief if you like.`,
         ] },
         { h2: "Order in 5 minutes", p: [
           "Pick the area in the builder — the model is assembled automatically in 2–4 minutes. We print in Eco PLA and ship across Ukraine; a digital file for self-printing is also available. Production takes 1–3 business days.",
@@ -387,8 +387,8 @@ export function giftCityCopy(
       ],
     }),
     de: () => ({
-      title: `Geschenk aus ${name}: eine persönliche 3D-Karte ab ≈3 €`,
-      description: `Geschenkidee aus ${name}: 3D-Viertelkarte ab ≈6 €, Karten-Anhänger ab ≈3 €, Kühlschrankmagnet. Jahrestag, Einzug, Geburtstag. Fertigung in 1–3 Tagen.`,
+      title: `Geschenk aus ${name}: eine persönliche 3D-Karte ab ≈4 €`,
+      description: `Geschenkidee aus ${name}: 3D-Viertelkarte ab ≈8 €, Karten-Anhänger ab ≈4 €, Kühlschrankmagnet. Jahrestag, Einzug, Geburtstag. Fertigung in 1–3 Tagen.`,
       h1: `Ein Geschenk aus der Stadt — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -405,7 +405,7 @@ export function giftCityCopy(
           "Unsicher, welchen Bereich wählen? Schreib uns — wir helfen und erstellen kostenlos eine Vorschau.",
         ] },
         { h2: "Formate für jedes Budget", p: [
-          `Karten-Anhänger (ab ≈3 €) — eine kleine Aufmerksamkeit mit Text auf der Rückseite. Kühlschrankmagnet — eine tägliche Erinnerung an ${name}. 3D-Karte fürs Regal (≈6–13 € je nach Größe) — ein echtes Interieurstück, auf Wunsch mit Geländerelief.`,
+          `Karten-Anhänger (ab ≈4 €) — eine kleine Aufmerksamkeit mit Text auf der Rückseite. Kühlschrankmagnet — eine tägliche Erinnerung an ${name}. 3D-Karte fürs Regal (≈8–13 € je nach Größe) — ein echtes Interieurstück, auf Wunsch mit Geländerelief.`,
         ] },
         { h2: "In 5 Minuten bestellen", p: [
           "Wähle den Bereich im Konfigurator — das Modell wird in 2–4 Minuten automatisch erstellt. Wir drucken in Eco PLA und versenden in die Ukraine und die EU; eine Digitaldatei zum Selbstdrucken gibt es auch. Fertigung dauert 1–3 Werktage.",
@@ -413,8 +413,8 @@ export function giftCityCopy(
       ],
     }),
     pl: () => ({
-      title: `Prezent z miasta ${name}: osobista mapa 3D od ≈3 €`,
-      description: `Pomysł na prezent (${name}): mapa 3D dzielnicy od ≈6 €, brelok-mapa od ≈3 €, magnes na lodówkę. Rocznica, parapetówka, urodziny. Wykonanie w 1–3 dni.`,
+      title: `Prezent z miasta ${name}: osobista mapa 3D od ≈4 €`,
+      description: `Pomysł na prezent (${name}): mapa 3D dzielnicy od ≈8 €, brelok-mapa od ≈4 €, magnes na lodówkę. Rocznica, parapetówka, urodziny. Wykonanie w 1–3 dni.`,
       h1: `Prezent z miasta — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -431,7 +431,7 @@ export function giftCityCopy(
           "Nie wiesz, który obszar wybrać? Napisz do nas — podpowiemy i zrobimy podgląd za darmo.",
         ] },
         { h2: "Formaty na różny budżet", p: [
-          `Brelok-mapa (od ≈3 €) — niedrogi drobiazg z napisem z tyłu. Magnes na lodówkę — codzienne przypomnienie o mieście ${name}. Mapa 3D na półkę (≈6–13 € w zależności od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.`,
+          `Brelok-mapa (od ≈4 €) — niedrogi drobiazg z napisem z tyłu. Magnes na lodówkę — codzienne przypomnienie o mieście ${name}. Mapa 3D na półkę (≈8–13 € w zależności od rozmiaru) — pełnoprawny element wnętrza, opcjonalnie z rzeźbą terenu.`,
         ] },
         { h2: "Jak zamówić w 5 minut", p: [
           "Wybierz obszar w kreatorze — model powstanie automatycznie w 2–4 minuty. Drukujemy z Eco PLA i wysyłamy na Ukrainę; dostępny jest też plik cyfrowy do własnego druku. Wykonanie trwa 1–3 dni robocze.",
@@ -439,8 +439,8 @@ export function giftCityCopy(
       ],
     }),
     fr: () => ({
-      title: `Un cadeau de ${name} : une carte 3D personnelle dès ≈3 €`,
-      description: `Idée cadeau (${name}) : carte 3D d'un quartier dès ≈6 €, porte-clés carte dès ≈3 €, magnet. Anniversaire, pendaison de crémaillère, fête. Fabrication en 1–3 jours.`,
+      title: `Un cadeau de ${name} : une carte 3D personnelle dès ≈4 €`,
+      description: `Idée cadeau (${name}) : carte 3D d'un quartier dès ≈8 €, porte-clés carte dès ≈4 €, magnet. Anniversaire, pendaison de crémaillère, fête. Fabrication en 1–3 jours.`,
       h1: `Un cadeau de la ville — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -457,7 +457,7 @@ export function giftCityCopy(
           "Vous ne savez pas quelle zone choisir ? Écrivez-nous — nous aidons et créons un aperçu gratuit.",
         ] },
         { h2: "Des formats pour tous les budgets", p: [
-          `Porte-clés carte (dès ≈3 €) — une petite attention avec du texte au dos. Magnet de frigo — un rappel quotidien de ${name}. Carte 3D d'étagère (≈6–13 € selon la taille) — une vraie pièce déco, avec relief du terrain si vous le souhaitez.`,
+          `Porte-clés carte (dès ≈4 €) — une petite attention avec du texte au dos. Magnet de frigo — un rappel quotidien de ${name}. Carte 3D d'étagère (≈8–13 € selon la taille) — une vraie pièce déco, avec relief du terrain si vous le souhaitez.`,
         ] },
         { h2: "Commander en 5 minutes", p: [
           "Choisissez la zone dans le configurateur — le modèle est assemblé automatiquement en 2 à 4 minutes. Nous imprimons en Eco PLA et expédions en Ukraine ; un fichier numérique pour l'impression maison est aussi disponible. Fabrication en 1 à 3 jours ouvrés.",
@@ -465,8 +465,8 @@ export function giftCityCopy(
       ],
     }),
     es: () => ({
-      title: `Un regalo de ${name}: un mapa 3D personal desde ≈3 €`,
-      description: `Idea de regalo (${name}): mapa 3D de un distrito desde ≈6 €, llavero mapa desde ≈3 €, imán de nevera. Aniversario, mudanza, cumpleaños. Fabricación en 1–3 días.`,
+      title: `Un regalo de ${name}: un mapa 3D personal desde ≈4 €`,
+      description: `Idea de regalo (${name}): mapa 3D de un distrito desde ≈8 €, llavero mapa desde ≈4 €, imán de nevera. Aniversario, mudanza, cumpleaños. Fabricación en 1–3 días.`,
       h1: `Un regalo de la ciudad — ${name}`,
       intro: [
         pickVariant(slug, [
@@ -483,7 +483,7 @@ export function giftCityCopy(
           "¿No sabes qué zona elegir? Escríbenos — te ayudamos y hacemos una vista previa gratis.",
         ] },
         { h2: "Formatos para cualquier presupuesto", p: [
-          `Llavero mapa (desde ≈3 €) — un detalle económico con texto al reverso. Imán de nevera — un recordatorio diario de ${name}. Mapa 3D de estante (≈6–13 € según el tamaño) — una pieza de interior de verdad, con relieve del terreno si quieres.`,
+          `Llavero mapa (desde ≈4 €) — un detalle económico con texto al reverso. Imán de nevera — un recordatorio diario de ${name}. Mapa 3D de estante (≈8–13 € según el tamaño) — una pieza de interior de verdad, con relieve del terreno si quieres.`,
         ] },
         { h2: "Pide en 5 minutos", p: [
           "Elige la zona en el configurador — el modelo se arma automáticamente en 2–4 minutos. Imprimimos en Eco PLA y enviamos dentro de Ucrania; también hay un archivo digital para imprimir tú mismo. Fabricación en 1–3 días hábiles.",
@@ -509,7 +509,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       uk: {
         title: "Подарунок на річницю: 3D-мапа місця, де все почалось",
         description:
-          "Ідея подарунка на річницю стосунків чи весілля: 3D-мапа району, де ви познайомились, або пара брелоків-сердець, що з'єднуються як пазл. Від 120 ₴.",
+          "Ідея подарунка на річницю стосунків чи весілля: 3D-мапа району, де ви познайомились, або пара брелоків-сердець, що з'єднуються як пазл. Від 170 ₴.",
         h1: "Подарунок на річницю: мапа місця, де все почалось",
         intro: [
           "У кожної пари є свої координати: лавка в парку, кав'ярня на розі, зупинка, де вперше зустрілись. Подарунок на річницю, який працює найкраще, — не річ з полиці, а пам'ять місця: 3D-мапа району, де почалась ваша історія.",
@@ -519,8 +519,8 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Два формати для пари",
             p: [
-              "3D-мапа на полицю (від 250 ₴) — район першого побачення чи першої спільної квартири, за бажанням з рельєфом. Можна замовити з підписаною датою.",
-              "Пара брелоків-«сердець» (від 120 ₴ за штуку) — два райони двох людей, які з'єднуються в одне серце, як пазл. Працює особливо зворушливо для пар з різних міст.",
+              "3D-мапа на полицю (від 350 ₴) — район першого побачення чи першої спільної квартири, за бажанням з рельєфом. Можна замовити з підписаною датою.",
+              "Пара брелоків-«сердець» (від 170 ₴ за штуку) — два райони двох людей, які з'єднуються в одне серце, як пазл. Працює особливо зворушливо для пар з різних міст.",
             ],
           },
           {
@@ -534,7 +534,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       en: {
         title: "Anniversary gift: a 3D map of where it all began",
         description:
-          "An anniversary gift idea: a 3D map of the district where you met, or a pair of heart keychains that connect like a puzzle. From ≈€3.",
+          "An anniversary gift idea: a 3D map of the district where you met, or a pair of heart keychains that connect like a puzzle. From ≈€4.",
         h1: "Anniversary gift: a map of where it all began",
         intro: [
           "Every couple has its coordinates: a bench in the park, a corner café, the stop where you first met. The anniversary gift that works best isn't an off-the-shelf object — it's the memory of a place: a 3D map of the district where your story began.",
@@ -544,8 +544,8 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Two formats for a couple",
             p: [
-              "A shelf 3D map (from ≈€6) — the district of a first date or a first shared flat, with terrain relief if you like.",
-              "A pair of heart keychains (from ≈€3 each) — two districts of two people that connect into one heart, like a puzzle. Especially touching for couples from different cities.",
+              "A shelf 3D map (from ≈€8) — the district of a first date or a first shared flat, with terrain relief if you like.",
+              "A pair of heart keychains (from ≈€4 each) — two districts of two people that connect into one heart, like a puzzle. Especially touching for couples from different cities.",
             ],
           },
           {
@@ -565,7 +565,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       uk: {
         title: "Подарунок на день народження: персональна 3D-мапа",
         description:
-          "Що подарувати на день народження людині, в якої все є: 3D-мапа рідного району, брелок з маршрутом чи магніт з улюбленим містом. Від 120 ₴, 1–3 дні.",
+          "Що подарувати на день народження людині, в якої все є: 3D-мапа рідного району, брелок з маршрутом чи магніт з улюбленим містом. Від 170 ₴, 1–3 дні.",
         h1: "Подарунок на день народження, якого ні в кого немає",
         intro: [
           "Найскладніше — дарувати людям, у яких «все є». Чергова свічка забудеться за тиждень; працює те, що має особисте значення. Персональна 3D-мапа — це шматочок міста, з яким пов'язана історія іменинника: двір дитинства, район першої квартири, місто, куди мріє повернутись.",
@@ -580,7 +580,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Бюджет і терміни",
             p: [
-              "Брелок-мапа — від 120 ₴, магніт — 150 ₴, 3D-мапа на полицю — від 250 до 550 ₴ залежно від розміру. Виготовлення 2–4 робочі дні, доставка Новою Поштою по Україні.",
+              "Брелок-мапа — від 170 ₴, магніт — 210 ₴, 3D-мапа на полицю — від 350 до 770 ₴ залежно від розміру. Виготовлення 2–4 робочі дні, доставка Новою Поштою по Україні.",
             ],
           },
         ],
@@ -588,7 +588,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       en: {
         title: "Birthday gift: a personal 3D city map",
         description:
-          "What to give someone who has everything: a 3D map of their home district, a route keychain or a city magnet. From ≈€3, made in 1–3 days.",
+          "What to give someone who has everything: a 3D map of their home district, a route keychain or a city magnet. From ≈€4, made in 1–3 days.",
         h1: "A birthday gift no one else has",
         intro: [
           "The hardest gifts are for people who «have everything». What works is personal meaning: a 3D map is a piece of the city tied to the birthday person's story — a childhood backyard, the first flat's district, the city they dream of returning to.",
@@ -603,7 +603,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Budget and lead time",
             p: [
-              "Map keychain from ≈€3, magnet, shelf 3D map ≈€6–13 depending on size. Production 1–3 business days, delivery across Ukraine.",
+              "Map keychain from ≈€4, magnet, shelf 3D map ≈€8–13 depending on size. Production 1–3 business days, delivery across Ukraine.",
             ],
           },
         ],
@@ -617,7 +617,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       uk: {
         title: "Подарунок на новосілля: 3D-мапа нового району",
         description:
-          "Оригінальний подарунок на новосілля: 3D-мапа району, куди щойно переїхали друзі — з реальними будинками й вулицями. Від 250 ₴, виготовлення 1–3 дні.",
+          "Оригінальний подарунок на новосілля: 3D-мапа району, куди щойно переїхали друзі — з реальними будинками й вулицями. Від 350 ₴, виготовлення 1–3 дні.",
         h1: "Подарунок на новосілля: новий район на полиці",
         intro: [
           "Новосілля — це початок нової глави, і найкращий подарунок — той, що цю главу відкриває. 3D-мапа нового району показує дім у контексті: вулиці, парки поруч, річку за квартал. Господарі щодня бачитимуть свій новий світ на полиці — і власний будинок на ньому.",
@@ -633,7 +633,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Формат і терміни",
             p: [
-              "Найпопулярніший розмір для подарунка — M (8 см, 350 ₴) або L (11 см, 450 ₴). Виготовлення 2–4 робочі дні; якщо новосілля вже скоро — замовте брелок (від 120 ₴), він друкується найшвидше.",
+              "Найпопулярніший розмір для подарунка — M (8 см, 490 ₴) або L (11 см, 630 ₴). Виготовлення 2–4 робочі дні; якщо новосілля вже скоро — замовте брелок (від 170 ₴), він друкується найшвидше.",
             ],
           },
         ],
@@ -641,7 +641,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       en: {
         title: "Housewarming gift: a 3D map of the new neighborhood",
         description:
-          "An original housewarming gift: a 3D map of the district your friends just moved to — real buildings and streets. From ≈€6, made in 1–3 days.",
+          "An original housewarming gift: a 3D map of the district your friends just moved to — real buildings and streets. From ≈€8, made in 1–3 days.",
         h1: "Housewarming gift: the new neighborhood on a shelf",
         intro: [
           "A housewarming is the start of a new chapter, and the best gift opens that chapter. A 3D map of the new district shows the home in context: the streets, the parks nearby, the river a block away — with their own house on it.",
@@ -657,7 +657,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Format and lead time",
             p: [
-              "The most popular gift sizes are M (8 cm) and L (11 cm). Production 1–3 business days; if the party is very soon, a keychain (from ≈€3) prints fastest.",
+              "The most popular gift sizes are M (8 cm) and L (11 cm). Production 1–3 business days; if the party is very soon, a keychain (from ≈€4) prints fastest.",
             ],
           },
         ],
@@ -671,7 +671,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       uk: {
         title: "Подарунок для пари: брелоки-серця з районами двох людей",
         description:
-          "Пара брелоків-«сердець», що з'єднуються як пазл: район одного + район іншої. Подарунок для пари на річницю чи День закоханих. Від 120 ₴ за брелок.",
+          "Пара брелоків-«сердець», що з'єднуються як пазл: район одного + район іншої. Подарунок для пари на річницю чи День закоханих. Від 170 ₴ за брелок.",
         h1: "Подарунок для пари: два райони — одне серце",
         intro: [
           "Пара брелоків-«сердець» — це дві половинки, що з'єднуються в одне серце, як пазл. На одній половинці — район одного, на другій — район іншої. Разом вони складаються у спільну історію: два міста, дві вулиці, одна пара.",
@@ -690,7 +690,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
       en: {
         title: "Couple gift: heart keychains with two people's districts",
         description:
-          "A pair of heart keychains that connect like a puzzle: one person's district + the other's. An anniversary or Valentine's gift. From ≈€3 per keychain.",
+          "A pair of heart keychains that connect like a puzzle: one person's district + the other's. An anniversary or Valentine's gift. From ≈€4 per keychain.",
         h1: "A couple's gift: two districts — one heart",
         intro: [
           "A pair of heart keychains is two halves that connect into one heart, like a puzzle. One half carries one person's district, the other — the partner's. Together they tell a shared story: two cities, two streets, one couple.",
@@ -701,7 +701,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
             h2: "How to order",
             p: [
               "In the keychain builder pick the «heart pair» template, then the first area and the second area. Each half takes a custom text on the back — a name, a date, coordinates.",
-              "Production 1–3 business days, from ≈€6 per pair. Delivery across Ukraine.",
+              "Production 1–3 business days, from ≈€8 per pair. Delivery across Ukraine.",
             ],
           },
         ],
@@ -724,7 +724,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Сценарії для бізнесу",
             p: [
-              "Команді — брелоки з районом офісу (від 120 ₴/шт., однаковий макет — швидший друк). Колезі, що йде, — мапа району офісу з підписаною датою. Партнерам з інших міст — мапа вашого міста як фірмовий сувенір. Релокованій команді — мапи рідних міст кожного.",
+              "Команді — брелоки з районом офісу (від 170 ₴/шт., однаковий макет — швидший друк). Колезі, що йде, — мапа району офісу з підписаною датою. Партнерам з інших міст — мапа вашого міста як фірмовий сувенір. Релокованій команді — мапи рідних міст кожного.",
             ],
           },
           {
@@ -747,7 +747,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
           {
             h2: "Business scenarios",
             p: [
-              "For the team — office-district keychains (from ≈€3 each, same layout prints faster). For a leaving colleague — the office district with a date. For out-of-town partners — your city as a branded souvenir. For a relocated team — each person's hometown.",
+              "For the team — office-district keychains (from ≈€4 each, same layout prints faster). For a leaving colleague — the office district with a date. For out-of-town partners — your city as a branded souvenir. For a relocated team — each person's hometown.",
             ],
           },
           {
@@ -786,7 +786,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Подолу (Київ): Андріївський узвіз рельєфом",
-        description: "3D-мапа Подолу — старого серця Києва: звивисті вулиці, Андріївський узвіз, Контрактова площа. Готовий шаблон, від 250 ₴.",
+        description: "3D-мапа Подолу — старого серця Києва: звивисті вулиці, Андріївський узвіз, Контрактова площа. Готовий шаблон, від 350 ₴.",
         h1: "3D-мапа Подолу",
         intro: [
           "Поділ — найстаріший район Києва, де вулиці досі йдуть так, як пролягали century тому: криво, вузько, з підйомом до Андріївського узвозу. На 3D-мапі ця щільна історична забудова виглядає особливо ефектно — кожен будинок читається окремо.",
@@ -801,7 +801,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of Podil (Kyiv): the Andriivskyi Descent in relief",
-        description: "A 3D map of Podil, Kyiv's oldest district: winding streets, the Andriivskyi Descent, Kontraktova Square. Ready template, from ≈€6.",
+        description: "A 3D map of Podil, Kyiv's oldest district: winding streets, the Andriivskyi Descent, Kontraktova Square. Ready template, from ≈€8.",
         h1: "3D map of Podil",
         intro: [
           "Podil is Kyiv's oldest district, where streets still run as they did centuries ago: crooked, narrow, climbing toward the Andriivskyi Descent. On a 3D map this dense historic fabric looks especially striking — every building reads on its own.",
@@ -821,7 +821,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Печерська (Київ) з рельєфом лаврських пагорбів",
-        description: "3D-мапа Печерська: Лавра, Маріїнський парк, парадні проспекти — з реальним рельєфом дніпровських схилів. Розмір 11 см, від 450 ₴.",
+        description: "3D-мапа Печерська: Лавра, Маріїнський парк, парадні проспекти — з реальним рельєфом дніпровських схилів. Розмір 11 см, від 630 ₴.",
         h1: "3D-мапа Печерська",
         intro: [
           "Печерськ — це пагорби. Лаврські схили, Маріїнський парк над кручею, урядові проспекти нагорі — перепад висот тут один з найпомітніших у Києві. Тому шаблон району одразу йде з увімкненим рельєфом і розміром 11 см, щоб перепади читались пальцями.",
@@ -853,7 +853,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Хрещатика та Майдану Незалежності (Київ)",
-        description: "3D-мапа центральної вулиці Києва — Хрещатика і Майдану Незалежності. Готовий шаблон, стиль «повна деталізація», від 250 ₴.",
+        description: "3D-мапа центральної вулиці Києва — Хрещатика і Майдану Незалежності. Готовий шаблон, стиль «повна деталізація», від 350 ₴.",
         h1: "3D-мапа Хрещатика",
         intro: [
           "Хрещатик — головна вісь Києва: від Бессарабки до Європейської площі, з Майданом Незалежності посередині. На 3D-мапі впізнається одразу — характерна форма вулиці й площі не сплутати ні з чим.",
@@ -865,7 +865,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of Khreshchatyk and Independence Square (Kyiv)",
-        description: "A 3D map of Kyiv's main street — Khreshchatyk and Independence Square. Ready template, 'full detail' style, from ≈€6.",
+        description: "A 3D map of Kyiv's main street — Khreshchatyk and Independence Square. Ready template, 'full detail' style, from ≈€8.",
         h1: "3D map of Khreshchatyk",
         intro: [
           "Khreshchatyk is Kyiv's main axis, from Bessarabska to European Square, with Independence Square in the middle. On a 3D map it's instantly recognizable — the street's and square's shape can't be mistaken for anywhere else.",
@@ -885,7 +885,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа площі Ринок (Львів): ратуша й бруківка",
-        description: "3D-мапа площі Ринок у Львові — ратуша, бруківка, щільна сітка кварталів старого міста. Бестселер, від 250 ₴.",
+        description: "3D-мапа площі Ринок у Львові — ратуша, бруківка, щільна сітка кварталів старого міста. Бестселер, від 350 ₴.",
         h1: "3D-мапа площі Ринок",
         intro: [
           "Площа Ринок — серце старого Львова: ратуша посередині, кам'яниці по периметру, вузькі вулички навсібіч. Це найпопулярніший шаблон району в конструкторі — щільна середньовічна забудова робить модель візуально насиченою навіть у компактному розмірі.",
@@ -897,7 +897,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of Rynok Square (Lviv): the town hall and cobblestones",
-        description: "A 3D map of Lviv's Rynok Square — the town hall, cobblestones, dense old-town blocks. A bestseller, from ≈€6.",
+        description: "A 3D map of Lviv's Rynok Square — the town hall, cobblestones, dense old-town blocks. A bestseller, from ≈€8.",
         h1: "3D map of Rynok Square",
         intro: [
           "Rynok Square is the heart of old Lviv: the town hall in the middle, townhouses around the perimeter, narrow lanes radiating out. It's the most popular district template in the builder — the dense medieval fabric makes the model visually rich even at a compact size.",
@@ -917,7 +917,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Цитаделі (Львів) з рельєфом пагорба",
-        description: "3D-мапа району Цитадель у Львові: пагорб з парком, серпантин історичних вулиць, рельєф увімкнено. Від 250 ₴.",
+        description: "3D-мапа району Цитадель у Львові: пагорб з парком, серпантин історичних вулиць, рельєф увімкнено. Від 350 ₴.",
         h1: "3D-мапа Цитаделі",
         intro: [
           "Цитадель — пагорб над центром Львова, обвитий серпантином вулиць і накритий парком. Рельєф тут не опція, а суть району: без нього зникає сама причина, чому ця ділянка цікава.",
@@ -929,7 +929,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of the Citadel (Lviv) with hill relief",
-        description: "A 3D map of Lviv's Citadel district: a park-covered hill, winding historic streets, relief on. From ≈€6.",
+        description: "A 3D map of Lviv's Citadel district: a park-covered hill, winding historic streets, relief on. From ≈€8.",
         h1: "3D map of the Citadel",
         intro: [
           "The Citadel is a hill over central Lviv, wrapped in winding streets and topped with a park. Relief here isn't an option — it's the point of the district; without it, the reason this area is interesting disappears.",
@@ -949,7 +949,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Дерибасівської (Одеса): серце міста",
-        description: "3D-мапа Дерибасівської вулиці в Одесі — Міський сад, бульвари, серце міста. Бестселер, від 250 ₴.",
+        description: "3D-мапа Дерибасівської вулиці в Одесі — Міський сад, бульвари, серце міста. Бестселер, від 350 ₴.",
         h1: "3D-мапа Дерибасівської",
         intro: [
           "Дерибасівська — вулиця, з якою асоціюється вся Одеса: Міський сад, кав'ярні під платанами, бульварна забудова. Шаблон району охоплює саме цю пішохідну частину міста.",
@@ -961,7 +961,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of Deribasivska Street (Odesa): the city's heart",
-        description: "A 3D map of Odesa's Deribasivska Street — the City Garden, boulevards, the heart of the city. A bestseller, from ≈€6.",
+        description: "A 3D map of Odesa's Deribasivska Street — the City Garden, boulevards, the heart of the city. A bestseller, from ≈€8.",
         h1: "3D map of Deribasivska Street",
         intro: [
           "Deribasivska is the street Odesa is known for: the City Garden, cafés under plane trees, boulevard architecture. The district template covers exactly this pedestrian part of the city.",
@@ -981,7 +981,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Приморського району (Одеса): сходи й порт",
-        description: "3D-мапа Приморського району Одеси: Дюк, схил до Потьомкінських сходів, морський фасад. Рельєф увімкнено, від 250 ₴.",
+        description: "3D-мапа Приморського району Одеси: Дюк, схил до Потьомкінських сходів, морський фасад. Рельєф увімкнено, від 350 ₴.",
         h1: "3D-мапа Приморського району",
         intro: [
           "Приморський бульвар з пам'ятником Дюку, схил до Потьомкінських сходів і порту внизу — ділянка, де рельєф справді щось показує: перепад від бульвару до моря.",
@@ -993,7 +993,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of the Prymorskyi District (Odesa): the stairs and the port",
-        description: "A 3D map of Odesa's Prymorskyi District: the Duke statue, the slope to the Potemkin Stairs, the sea facade. Relief on, from ≈€6.",
+        description: "A 3D map of Odesa's Prymorskyi District: the Duke statue, the slope to the Potemkin Stairs, the sea facade. Relief on, from ≈€8.",
         h1: "3D map of the Prymorskyi District",
         intro: [
           "The Prymorskyi Boulevard with the Duke statue, the slope down to the Potemkin Stairs and the port below — an area where relief genuinely shows something: the drop from boulevard to sea.",
@@ -1013,7 +1013,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа площі Свободи (Харків): Держпром і проспекти",
-        description: "3D-мапа площі Свободи в Харкові: Держпром і промениста сітка проспектів центру. Розмір 11 см, від 450 ₴.",
+        description: "3D-мапа площі Свободи в Харкові: Держпром і промениста сітка проспектів центру. Розмір 11 см, від 630 ₴.",
         h1: "3D-мапа площі Свободи",
         intro: [
           "Площа Свободи — одна з найбільших міських площ Європи, а Держпром на ній — символ конструктивізму, який неможливо сплутати ні з чим іншим. Промениста сітка проспектів навколо робить модель геометрично видовищною.",
@@ -1077,7 +1077,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Резиденції митрополитів (Чернівці)",
-        description: "3D-мапа району Резиденції в Чернівцях: кам'яні фасади навколо історичної будівлі, від 250 ₴.",
+        description: "3D-мапа району Резиденції в Чернівцях: кам'яні фасади навколо історичної будівлі, від 350 ₴.",
         h1: "3D-мапа Резиденції митрополитів",
         intro: [
           "Резиденція буковинських митрополитів — будівля зі списку ЮНЕСКО, а навколо неї — щільна кам'яна забудова центру Чернівців. Ділянка компактна й деталізована навіть у розмірі 8 см.",
@@ -1089,7 +1089,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of the Metropolitans' Residence (Chernivtsi)",
-        description: "A 3D map of the Residence district in Chernivtsi: stone facades around a historic UNESCO building, from ≈€6.",
+        description: "A 3D map of the Residence district in Chernivtsi: stone facades around a historic UNESCO building, from ≈€8.",
         h1: "3D map of the Metropolitans' Residence",
         intro: [
           "The Residence of Bukovinian Metropolitans is a UNESCO-listed building, surrounded by dense stone architecture of central Chernivtsi. The area is compact and detailed even at 8 cm.",
@@ -1109,7 +1109,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Стометрівки (Івано-Франківськ): пішохідний центр",
-        description: "3D-мапа пішохідного центру Івано-Франківська — Стометрівка і ратуша на площі Ринок, від 250 ₴.",
+        description: "3D-мапа пішохідного центру Івано-Франківська — Стометрівка і ратуша на площі Ринок, від 350 ₴.",
         h1: "3D-мапа Стометрівки",
         intro: [
           "Стометрівка — головна пішохідна вулиця Івано-Франківська, що веде до площі Ринок з ратушею. Компактний, щільний і впізнаваний центр міста.",
@@ -1121,7 +1121,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of Stometrivka (Ivano-Frankivsk): the pedestrian center",
-        description: "A 3D map of Ivano-Frankivsk's pedestrian center — Stometrivka Street and the town hall on Rynok Square, from ≈€6.",
+        description: "A 3D map of Ivano-Frankivsk's pedestrian center — Stometrivka Street and the town hall on Rynok Square, from ≈€8.",
         h1: "3D map of Stometrivka",
         intro: [
           "Stometrivka is Ivano-Frankivsk's main pedestrian street, leading to Rynok Square and its town hall. A compact, dense, recognizable city center.",
@@ -1141,7 +1141,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
     content: {
       uk: {
         title: "3D-мапа Старого міста (Ужгород): замок і липова алея",
-        description: "3D-мапа старого Ужгорода: набережна Ужа, замок і найдовша липова алея Європи. Стиль «природа», від 250 ₴.",
+        description: "3D-мапа старого Ужгорода: набережна Ужа, замок і найдовша липова алея Європи. Стиль «природа», від 350 ₴.",
         h1: "3D-мапа Старого міста",
         intro: [
           "Набережна річки Уж, Ужгородський замок на пагорбі й найдовша безперервна липова алея Європи — ця ділянка про воду й зелень так само, як про історичну забудову.",
@@ -1153,7 +1153,7 @@ export const DISTRICT_PAGES: DistrictPage[] = [
       },
       en: {
         title: "3D map of the Old Town (Uzhhorod): the castle and the linden alley",
-        description: "A 3D map of old Uzhhorod: the Uzh embankment, the castle, Europe's longest linden alley. 'Nature' style, from ≈€6.",
+        description: "A 3D map of old Uzhhorod: the Uzh embankment, the castle, Europe's longest linden alley. 'Nature' style, from ≈€8.",
         h1: "3D map of the Old Town",
         intro: [
           "The Uzh river embankment, Uzhhorod Castle on a hill, and Europe's longest continuous linden alley — this area is as much about water and greenery as about historic architecture.",

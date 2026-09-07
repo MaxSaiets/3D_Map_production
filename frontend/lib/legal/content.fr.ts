@@ -132,9 +132,9 @@ export const fr: LegalSet = {
       { h: "Produits et prix", blocks: [
         { p: "Prix des produits (la livraison est facturée séparément selon le tarif du transporteur) :" },
         { ul: [
-          "Porte-clés-carte — à partir de 120 ₴ (≈ 3 €).",
-          "Carte 3D d'un quartier : S 5,5 cm — 250 ₴, M 8 cm — 350 ₴, L 11 cm — 450 ₴, XL 15 cm — 550 ₴ (cartes — à partir de 6 €).",
-          "Magnet de réfrigérateur (carte) — 150 ₴.",
+          "Porte-clés-carte — à partir de 170 ₴ (≈ 4 €).",
+          "Carte 3D d'un quartier : S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (cartes — à partir de 8 €).",
+          "Magnet de réfrigérateur (carte) — 210 ₴.",
           "Téléchargement du fichier fini 3MF/STL pour une impression autonome — gratuit dans la limite du compte.",
         ] },
       ] },

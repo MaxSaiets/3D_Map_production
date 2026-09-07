@@ -232,7 +232,7 @@ export function OrderDialog({
         let currency = raw.includes("€") ? "EUR" : "UAH";
         // Фолбек: якщо quote ще не завантажився (priceText порожній), конверсія без
         // value марна для Smart Bidding. Беремо мінімальну ціну продукту в ₴,
-        // щоб КОЖНА конверсія несла суму. (KEYCHAIN 120 / MAP S=250 ₴.)
+        // щоб КОЖНА конверсія несла суму. (KEYCHAIN 120 / MAP S=350 ₴.)
         if (value === undefined) {
           value = productType === "keychain" ? KEYCHAIN_PRICE_UAH : MAP_SIZE_PRICES_UAH[55];
           currency = "UAH";

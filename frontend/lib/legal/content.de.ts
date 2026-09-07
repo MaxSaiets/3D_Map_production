@@ -132,9 +132,9 @@ export const de: LegalSet = {
       { h: "Produkte und Preise", blocks: [
         { p: "Produktpreise (Lieferung wird separat nach Tarif des Zustellers berechnet):" },
         { ul: [
-          "Schlüsselanhänger-Karte — ab 120 ₴ (≈ 3 €).",
-          "3D-Karte eines Stadtviertels: S 5,5 cm — 250 ₴, M 8 cm — 350 ₴, L 11 cm — 450 ₴, XL 15 cm — 550 ₴ (Karten — ab 6 €).",
-          "Kühlschrankmagnet (Karte) — 150 ₴.",
+          "Schlüsselanhänger-Karte — ab 170 ₴ (≈ 4 €).",
+          "3D-Karte eines Stadtviertels: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (Karten — ab 8 €).",
+          "Kühlschrankmagnet (Karte) — 210 ₴.",
           "Download der fertigen 3MF-/STL-Datei zum Selbstdrucken — kostenlos im Rahmen des Kontolimits.",
         ] },
       ] },

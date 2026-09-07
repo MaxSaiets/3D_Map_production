@@ -100,7 +100,7 @@ export default async function GiftSlugPage({
   const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
 
   const range = mapPriceRange(locale);
-  // Сторінка подарунка рекламує «від 120 ₴» (брелок — найдешевший SKU), тож
+  // Сторінка подарунка рекламує «від 170 ₴» (брелок — найдешевший SKU), тож
   // AggregateOffer.lowPrice МУСИТЬ = ціні брелка, а не мапи (250) — інакше
   // structured-data суперечить видимій ціні → Google Merchant price-mismatch.
   const giftLowPrice = locale === "uk" ? String(KEYCHAIN_PRICE_UAH) : String(mapPriceEur(KEYCHAIN_PRICE_UAH));

@@ -2,7 +2,7 @@
   "start": {
     "title": "3D-Karte deiner Stadt",
     "line": "Viertel auf der Karte wählen — wir drucken 3D-Karte, Anhänger oder Magnet",
-    "price": "ab 120 ₴ · Druck 2–4 Tage · Ukraine",
+    "price": "ab 170 ₴ · Druck 2–4 Tage · Ukraine",
     "cta1": "Karte meines Viertels erstellen",
     "cta2": "Karten-Anhänger erstellen",
     "cta3": "Preise ansehen",
@@ -13,7 +13,7 @@
     "homeTitle": "3D-Stadtkarte nach Maß — ein Geschenk mit deinem Viertel | Monadruk",
     "homeDescription": "Viertel auf der Karte wählen — wir drucken eine 3D-Karte, einen Anhänger oder Magneten. Jede Stadt der Welt, kostenlose 3D-Vorschau in 1–2 Minuten.",
     "ogTitle": "3D-Karte deines Viertels — ein Geschenk, das sonst niemand hat",
-    "ogDescription": "Ort auf der Karte wählen — wir drucken 3D-Karte, Anhänger oder Magnet. Ab 120 ₴.",
+    "ogDescription": "Ort auf der Karte wählen — wir drucken 3D-Karte, Anhänger oder Magnet. Ab 170 ₴.",
     "keywords": "3D Stadtkarte, Stadtplan 3D Druck, Stadtkarte drucken, Schlüsselanhänger Stadtkarte, personalisierter Schlüsselanhänger Karte, STL Stadtplan, 3MF Karte, topografische Karte 3D, Reliefkarte Druck, Kühlschrankmagnet Stadtkarte, personalisiertes Geschenk Karte, Jahrestagsgeschenk Karte, taktile Karte, Bambu Studio, PrusaSlicer",
     "orgDescription": "Taktile 3D-Karten und Schlüsselanhänger mit Stadtkarte zum Drucken.",
     "serviceName": "3D-Stadtkarten und Schlüsselanhänger auf Bestellung",
@@ -224,8 +224,8 @@
     "keywords": "3D Stadtkarte erstellen, Stadtkarten Generator online, 3MF Karte herunterladen, STL Stadtplan Download, Stadtkarte 3D drucken, Karte mit Gebäudehöhen, Stadtkarte Magnet, eigene Stadtkarte erstellen, 3D Karte Berlin, 3D Karte München"
   },
   "keychainsMeta": {
-    "title": "Karten-Schlüsselanhänger — mit Gravur und Text, ab ≈3 €",
-    "description": "Schlüsselanhänger mit Karte 55×30 mm nach Maß: Straßen und Parks Ihres Viertels im Relief, Gravurtext auf der Rückseite. 3D-Druck ab ≈3 €, Versand in der Ukraine.",
+    "title": "Karten-Schlüsselanhänger — mit Gravur und Text, ab ≈4 €",
+    "description": "Schlüsselanhänger mit Karte 55×30 mm nach Maß: Straßen und Parks Ihres Viertels im Relief, Gravurtext auf der Rückseite. 3D-Druck ab ≈4 €, Versand in der Ukraine.",
     "keywords": "Schlüsselanhänger Stadtkarte, Karten Schlüsselanhänger, 3D Schlüsselanhänger personalisiert, Schlüsselanhänger mit Namen, Schlüsselanhänger Gravur, topografischer Schlüsselanhänger, Gebirgsrelief Anhänger, Herz Schlüsselanhänger Karte, Geschenk für ihn, Geschenk für sie, Jahrestagsgeschenk, Pärchen Geschenk"
   },
   "showcaseMeta": {
@@ -634,7 +634,7 @@
   },
   "cityPages": {
     "title": "3D-Karte von {city} — ab 6 €, in 2 Min. fertig",
-    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten ein Modell mit Straßen und Häusern. Druck ab ≈6 € mit Versand in der Ukraine oder Datei zum Selbstdrucken.",
+    "description": "3D-Karte von {city}: Viertel im Konfigurator wählen — in 2 Minuten ein Modell mit Straßen und Häusern. Druck ab ≈8 € mit Versand in der Ukraine oder Datei zum Selbstdrucken.",
     "h1": "3D-Karte von {city}",
     "p1": "Die 3D-Karte von {city} ist ein taktiles dreidimensionales Modell eines Viertels: Straßen, Gebäude mit echten Höhen, Parks und Flüsse aus OpenStreetMap-Daten. Wähle ein beliebiges Viertel von {city} im Konfigurator — das Modell ist in Minuten fertig, als 3MF oder STL für Bambu Studio oder PrusaSlicer.",
     "p2": "Kein 3D-Drucker? Wir drucken die Karte oder den {city}-Schlüsselanhänger in Eco PLA und liefern innerhalb der Ukraine. Ein perfektes Geschenk für alle, die ihre Stadt lieben.",

@@ -153,7 +153,7 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await page.goto("/uk/create?product=relief");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow.getByText("Крок 2 із 2")).toBeVisible();
-    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("410 ₴");
+    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("575 ₴");
   });
 
   test("A-4: CTA активна без жодної дії, бейдж каже «Центр Києва (за замовчуванням)»", async ({ page }) => {

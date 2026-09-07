@@ -13,7 +13,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       uk: {
         title: "Подарунок чоловіку на річницю весілля: 3D-мапа вашого міста",
         description:
-          "Ідея подарунка чоловіку на річницю весілля: 3D-мапа місця зустрічі чи весілля, або брелок з написом-датою. Від 120 ₴, друк 2–4 дні по Україні.",
+          "Ідея подарунка чоловіку на річницю весілля: 3D-мапа місця зустрічі чи весілля, або брелок з написом-датою. Від 170 ₴, друк 2–4 дні по Україні.",
         h1: "На річницю весілля: подарунок чоловіку, який не забудеться за тиждень",
         intro:
           "Краватку він і сам собі купить, а «сертифікат на масаж» пролежить у шухляді. Спрацьовує інше — річ, у якій закодоване ваше місце: квартал, де ви вперше зустрілись, вулиця біля РАГСу або будинок, куди ви переїхали разом. Обʼємна 3D-мапа цього місця з реальними будинками й напис-дата на звороті брелока — подарунок, який стоїть на столі, а не в шафі, і не потребує пояснень, чому саме він.",
@@ -35,9 +35,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Три варіанти під різний бюджет",
             p: [
-              "Брелок з мапою вашого кварталу (від 120 ₴) — носить із собою щодня, на звороті можна додати дату весілля або координати.",
-              "Магніт на холодильник (150 ₴) — компактна мапа 6 см, якщо хочеться символічний, але недорогий жест.",
-              "Обʼємна 3D-мапа (від 250 ₴, розміри 5,5–15 см) — головний подарунок: будинки з реальними висотами, вулиці, парк чи набережна, де ви гуляли.",
+              "Брелок з мапою вашого кварталу (від 170 ₴) — носить із собою щодня, на звороті можна додати дату весілля або координати.",
+              "Магніт на холодильник (210 ₴) — компактна мапа 6 см, якщо хочеться символічний, але недорогий жест.",
+              "Обʼємна 3D-мапа (від 350 ₴, розміри 5,5–15 см) — головний подарунок: будинки з реальними висотами, вулиці, парк чи набережна, де ви гуляли.",
             ],
           },
           {
@@ -70,7 +70,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       en: {
         title: "Wedding anniversary gift for husband: a 3D map of your city",
         description:
-          "A wedding anniversary gift idea for him: a 3D map of the place you met or married, or a keychain with the date engraved. From 120 ₴, printed in 2–4 days across Ukraine.",
+          "A wedding anniversary gift idea for him: a 3D map of the place you met or married, or a keychain with the date engraved. From 170 ₴, printed in 2–4 days across Ukraine.",
         h1: "Wedding anniversary gift for him that won't be forgotten in a week",
         intro:
           "He can buy himself a tie, and a “massage voucher” will sit in a drawer. What works instead is a thing that encodes your place: the block where you first met, the street by the registry office, or the building you moved into together. A 3D map of that place with real buildings, and a date engraved on the back of a keychain — a gift that sits on the desk, not in the closet, and needs no explanation for why it was chosen.",
@@ -92,9 +92,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Three options for any budget",
             p: [
-              "A keychain with a map of your block (from 120 ₴) — carried every day, with the wedding date or coordinates engraved on the back.",
-              "A fridge magnet (150 ₴) — a compact 6 cm map, a symbolic but inexpensive gesture.",
-              "A 3D map (from 250 ₴, 5.5–15 cm) — the main gift: buildings with real heights, streets, the park or embankment where you used to walk.",
+              "A keychain with a map of your block (from 170 ₴) — carried every day, with the wedding date or coordinates engraved on the back.",
+              "A fridge magnet (210 ₴) — a compact 6 cm map, a symbolic but inexpensive gesture.",
+              "A 3D map (from 350 ₴, 5.5–15 cm) — the main gift: buildings with real heights, streets, the park or embankment where you used to walk.",
             ],
           },
           {
@@ -133,7 +133,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       uk: {
         title: "Що подарувати тату на день народження: мапа рідного міста",
         description:
-          "Ідея подарунка тату на день народження: обʼємна 3D-мапа міста чи села, де він виріс. Від 120 ₴ брелок, від 250 ₴ мапа, друк 2–4 дні по Україні.",
+          "Ідея подарунка тату на день народження: обʼємна 3D-мапа міста чи села, де він виріс. Від 170 ₴ брелок, від 350 ₴ мапа, друк 2–4 дні по Україні.",
         h1: "День народження тата: подарунок, у якому є місце, звідки він родом",
         intro:
           "Батькам складно вибирати подарунок — «усе є», а чергова сорочка чи інструмент не викликають емоцій. Спрацьовує пам'ять: обʼємна мапа міста чи села, де тато виріс, з вулицею, якою він ходив до школи, і річкою чи парком, які він упізнає одразу, навіть якщо не був там роками.",
@@ -163,9 +163,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Три формати під бюджет",
             p: [
-              "Брелок з мапою рідної вулиці (від 120 ₴) — щодня в кишені, можна додати рік народження на звороті.",
-              "Магніт (150 ₴) — на кухню, де тато щоранку пʼє каву перед роботою.",
-              "Обʼємна 3D-мапа (від 250 ₴) — головний подарунок для полиці: будинки, дороги, парк чи ліс поруч, за бажанням із рельєфом місцевості. Для ювілею всією родиною підійде панно з кількох плиток на стіну (/panno, від 890 ₴) — більший формат, якщо кілька дітей хочуть скинутися разом.",
+              "Брелок з мапою рідної вулиці (від 170 ₴) — щодня в кишені, можна додати рік народження на звороті.",
+              "Магніт (210 ₴) — на кухню, де тато щоранку пʼє каву перед роботою.",
+              "Обʼємна 3D-мапа (від 350 ₴) — головний подарунок для полиці: будинки, дороги, парк чи ліс поруч, за бажанням із рельєфом місцевості. Для ювілею всією родиною підійде панно з кількох плиток на стіну (/panno, від 1250 ₴) — більший формат, якщо кілька дітей хочуть скинутися разом.",
             ],
           },
           {
@@ -191,7 +191,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       en: {
         title: "Birthday gift for dad: a 3D map of his hometown",
         description:
-          "A birthday gift idea for dad: a 3D map of the city or village where he grew up. From 120 ₴ for a keychain, 250 ₴ for a map, printed in 2–4 days across Ukraine.",
+          "A birthday gift idea for dad: a 3D map of the city or village where he grew up. From 170 ₴ for a keychain, 350 ₴ for a map, printed in 2–4 days across Ukraine.",
         h1: "Dad's birthday: a gift that carries the place he's from",
         intro:
           "Parents are hard to shop for — they “have everything”, and yet another shirt or tool doesn't spark much. Memory works instead: a 3D map of the city or village where dad grew up, with the street he walked to school and the river or park he recognises instantly, even after years away.",
@@ -221,9 +221,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Three formats for any budget",
             p: [
-              "A keychain with a map of his home street (from 120 ₴) — in his pocket every day, with the birth year engraved on the back.",
-              "A magnet (150 ₴) — for the kitchen where he has his morning coffee.",
-              "A 3D map (from 250 ₴) — the main shelf gift: buildings, roads, the park or forest nearby, with optional terrain relief. For a jubilee celebrated by the whole family, a multi-tile wall panel (/panno, from 890 ₴) works well if several children want to chip in together.",
+              "A keychain with a map of his home street (from 170 ₴) — in his pocket every day, with the birth year engraved on the back.",
+              "A magnet (210 ₴) — for the kitchen where he has his morning coffee.",
+              "A 3D map (from 350 ₴) — the main shelf gift: buildings, roads, the park or forest nearby, with optional terrain relief. For a jubilee celebrated by the whole family, a multi-tile wall panel (/panno, from 1250 ₴) works well if several children want to chip in together.",
             ],
           },
           {
@@ -255,7 +255,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       uk: {
         title: "Подарунок колезі на звільнення чи переїзд: мапа їхнього міста",
         description:
-          "Що подарувати колезі, який звільняється чи переїжджає: 3D-мапа району офісу або нового міста. Варіант скинутися командою на брелоки чи магніти. Від 120 ₴.",
+          "Що подарувати колезі, який звільняється чи переїжджає: 3D-мапа району офісу або нового міста. Варіант скинутися командою на брелоки чи магніти. Від 170 ₴.",
         h1: "Колега їде: подарунок від команди, який не загубиться в шухляді",
         intro:
           "Листівка з підписами всього офісу зазвичай опиняється в шухляді. Працює інше — річ, повʼязана з конкретним місцем: районом, де стояв офіс і де ви разом обідали, або новим містом, куди переїжджає колега. Такий подарунок легше вибрати всією командою, ніж одну абстрактну річ на всіх.",
@@ -272,7 +272,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
             h2: "Варіант скинутися командою",
             p: [
               "Замість однієї великої мапи «на всіх» команда може скинутися на набір: кожному по брелоку чи магніту з тим самим районом, а колезі, що йде — обʼємну мапу як головний подарунок.",
-              "Такий формат зручний фінансово: брелок коштує від 120 ₴, магніт — 150 ₴, тож набір на 5–10 людей не виходить дорогим навіть з окремою обʼємною мапою для головного адресата.",
+              "Такий формат зручний фінансово: брелок коштує від 170 ₴, магніт — 210 ₴, тож набір на 5–10 людей не виходить дорогим навіть з окремою обʼємною мапою для головного адресата.",
               "Наприклад, для команди з 8 людей набір брелоків обійдеться приблизно як один хороший букет, а колега отримає ще й обʼємну мапу — предмет, який лишиться на новому робочому столі надовго.",
             ],
           },
@@ -313,7 +313,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       en: {
         title: "Farewell gift for a colleague leaving or moving: a city map",
         description:
-          "What to give a colleague who's quitting or moving: a 3D map of the office district or their new city. Option to chip in as a team for keychains or magnets. From 120 ₴.",
+          "What to give a colleague who's quitting or moving: a 3D map of the office district or their new city. Option to chip in as a team for keychains or magnets. From 170 ₴.",
         h1: "A colleague is leaving: a team gift that won't end up in a drawer",
         intro:
           "A card signed by the whole office usually ends up in a drawer. What works instead is something tied to a specific place: the district where the office stood and where you had lunch together, or the new city the colleague is moving to. A gift like this is also easier for the whole team to agree on than one abstract item for everyone.",
@@ -330,7 +330,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
             h2: "The chip-in option",
             p: [
               "Instead of one big map “for everyone”, the team can pool money for a set: a keychain or magnet with the same district for each person, and a 3D map as the main gift for the person leaving.",
-              "This is budget-friendly: a keychain starts at 120 ₴, a magnet at 150 ₴, so a set for 5–10 people stays affordable even alongside a separate 3D map for the main recipient.",
+              "This is budget-friendly: a keychain starts at 170 ₴, a magnet at 210 ₴, so a set for 5–10 people stays affordable even alongside a separate 3D map for the main recipient.",
               "For a team of 8, for example, a set of keychains costs roughly as much as one decent bouquet, and the colleague also gets a 3D map — something that stays on the new desk for a long time.",
             ],
           },
@@ -377,7 +377,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
       uk: {
         title: "Сувенір з Києва чи Львова: 3D-мапа центру міста на памʼять",
         description:
-          "Ідея сувеніра з Києва або Львова: 3D-мапа центру чи брелок з вулицею. Доставка лише по Україні; за кордон — безкоштовний файл для самодруку. Від 120 ₴.",
+          "Ідея сувеніра з Києва або Львова: 3D-мапа центру чи брелок з вулицею. Доставка лише по Україні; за кордон — безкоштовний файл для самодруку. Від 170 ₴.",
         h1: "Сувенір з Києва або Львова, який не поламається в валізі",
         intro:
           "Магніт із написом «Київ» чи мініатюрна вежа — типовий сувенір, який купують, бо нема кращого. Альтернатива — обʼємна 3D-мапа центру міста з реальними будинками й вулицями або брелок з тим самим кварталом: сувенір, що показує саме те місце, де людина була, а не загальну листівку.",
@@ -408,9 +408,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Формати сувеніра",
             p: [
-              "Брелок з мапою вулиці (від 120 ₴) — легкий, компактний, зручно везти в ручній поклажі.",
-              "Магніт (150 ₴) — класичний сувенірний формат, тільки з реальною мапою замість малюнка.",
-              "Обʼємна 3D-мапа центру (від 250 ₴) — для тих, хто хоче предмет на полицю, а не дрібничку в кишені. Розмір можна підібрати під валізу: найменша модель займає менше місця, ніж стандартний магніт у коробці.",
+              "Брелок з мапою вулиці (від 170 ₴) — легкий, компактний, зручно везти в ручній поклажі.",
+              "Магніт (210 ₴) — класичний сувенірний формат, тільки з реальною мапою замість малюнка.",
+              "Обʼємна 3D-мапа центру (від 350 ₴) — для тих, хто хоче предмет на полицю, а не дрібничку в кишені. Розмір можна підібрати під валізу: найменша модель займає менше місця, ніж стандартний магніт у коробці.",
             ],
           },
           {
@@ -431,12 +431,12 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
         ctaLabel: "Створити мапу міста",
         ctaHref: "/create?product=map3d",
         outro:
-          "Панно з кількох плиток на стіну (/panno, від 890 ₴) підійде, якщо хочеться великого сувеніра для офісу чи вітальні, а не мініатюри на полицю — такий формат добре працює як подарунок компанії чи родині одразу, а не одній людині.",
+          "Панно з кількох плиток на стіну (/panno, від 1250 ₴) підійде, якщо хочеться великого сувеніра для офісу чи вітальні, а не мініатюри на полицю — такий формат добре працює як подарунок компанії чи родині одразу, а не одній людині.",
       },
       en: {
         title: "Souvenir from Kyiv or Lviv: a 3D map of the city centre",
         description:
-          "A souvenir idea from Kyiv or Lviv: a 3D map of the centre, or a keychain with a street. Delivery within Ukraine only; abroad — a free self-print file. From 120 ₴.",
+          "A souvenir idea from Kyiv or Lviv: a 3D map of the centre, or a keychain with a street. Delivery within Ukraine only; abroad — a free self-print file. From 170 ₴.",
         h1: "A souvenir from Kyiv or Lviv that won't break in a suitcase",
         intro:
           "A magnet that says “Kyiv” or a miniature tower is a generic souvenir bought only because nothing better is on offer. The alternative is a 3D map of the city centre with real buildings and streets, or a keychain with the same block: a souvenir that shows the exact place someone visited, not a generic postcard.",
@@ -467,9 +467,9 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
           {
             h2: "Souvenir formats",
             p: [
-              "A keychain with a street map (from 120 ₴) — light, compact, easy to carry in hand luggage.",
-              "A magnet (150 ₴) — the classic souvenir format, only with a real map instead of a drawing.",
-              "A 3D map of the centre (from 250 ₴) — for those who want a shelf piece rather than a small trinket. The size can be matched to a suitcase: the smallest model takes up less room than a standard boxed magnet.",
+              "A keychain with a street map (from 170 ₴) — light, compact, easy to carry in hand luggage.",
+              "A magnet (210 ₴) — the classic souvenir format, only with a real map instead of a drawing.",
+              "A 3D map of the centre (from 350 ₴) — for those who want a shelf piece rather than a small trinket. The size can be matched to a suitcase: the smallest model takes up less room than a standard boxed magnet.",
             ],
           },
           {
@@ -490,7 +490,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
         ctaLabel: "Create a city map",
         ctaHref: "/create?product=map3d",
         outro:
-          "A multi-tile wall panel (/panno, from 890 ₴) suits those who want a larger souvenir for an office or living room rather than a shelf miniature — a format that works well as a gift for a whole company or family at once, not just one person.",
+          "A multi-tile wall panel (/panno, from 1250 ₴) suits those who want a larger souvenir for an office or living room rather than a shelf miniature — a format that works well as a gift for a whole company or family at once, not just one person.",
       },
     },
   },
