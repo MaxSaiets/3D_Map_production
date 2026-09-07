@@ -1690,7 +1690,13 @@
     "shape_crater": "Crater",
     "shape_rolling": "Hills",
     "shape_volcano": "Volcano",
-    "shape_archipelago": "Archipelago"
+    "shape_archipelago": "Archipelago",
+    "orderTitle": "Want this world printed?",
+    "orderSub": "Message us — we'll quote it for your size and material. We copy the model description, just paste it into the chat.",
+    "msgCopied": "Description copied ✓ Paste it into the chat.",
+    "shareLink": "Share 3D",
+    "shareCopied": "Link copied ✓",
+    "msgPrefill": "Hi! I'd like this world printed: {shape}, size {size} mm. Model: {link}"
   },
   "worldsMeta": {
     "title": "AI 3D world generator",

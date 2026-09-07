@@ -1690,7 +1690,13 @@
     "shape_crater": "Krater",
     "shape_rolling": "Wzgórza",
     "shape_volcano": "Wulkan",
-    "shape_archipelago": "Archipelag"
+    "shape_archipelago": "Archipelag",
+    "orderTitle": "Chcesz wydrukować ten świat?",
+    "orderSub": "Napisz do nas — wycenimy pod Twój rozmiar i materiał. Opis modelu skopiujemy, po prostu wklej go w czacie.",
+    "msgCopied": "Opis skopiowany ✓ Wklej go w czacie.",
+    "shareLink": "Udostępnij 3D",
+    "shareCopied": "Link skopiowany ✓",
+    "msgPrefill": "Cześć! Chcę wydrukować ten świat: {shape}, rozmiar {size} mm. Model: {link}"
   },
   "worldsMeta": {
     "title": "Generator światów 3D z AI",

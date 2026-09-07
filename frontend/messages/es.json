@@ -1690,7 +1690,13 @@
     "shape_crater": "Cráter",
     "shape_rolling": "Colinas",
     "shape_volcano": "Volcán",
-    "shape_archipelago": "Archipiélago"
+    "shape_archipelago": "Archipiélago",
+    "orderTitle": "¿Quieres imprimir este mundo?",
+    "orderSub": "Escríbenos: lo presupuestamos según tamaño y material. Copiamos la descripción del modelo, solo pégala en el chat.",
+    "msgCopied": "Descripción copiada ✓ Pégala en el chat.",
+    "shareLink": "Compartir 3D",
+    "shareCopied": "Enlace copiado ✓",
+    "msgPrefill": "¡Hola! Quiero imprimir este mundo: {shape}, tamaño {size} mm. Modelo: {link}"
   },
   "worldsMeta": {
     "title": "Generador de mundos 3D con IA",

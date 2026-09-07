@@ -53,6 +53,12 @@ test.describe("Світи (/worlds)", () => {
     await expect(page.getByTestId("world-built")).toContainText("вулкан", { timeout: 15_000 });
     await expect(page.getByTestId("world-reroll")).toBeVisible();
     await expect(page.locator("a[href*='e2e.3mf']")).toBeVisible();
+    // Шлях до замовлення: до 08.09 його не було зовсім (глухий кут воронки).
+    const order = page.getByTestId("world-order");
+    await expect(order).toContainText("надрукувати цей світ");
+    await expect(order.getByTestId("world-msg-tg")).toBeVisible();
+    await expect(order.getByTestId("world-msg-ig")).toBeVisible();
+    await expect(order.getByTestId("world-share")).toBeVisible();
   });
 
   test("макет (/maket) теж має смугу «тестовий режим»", async ({ page }) => {

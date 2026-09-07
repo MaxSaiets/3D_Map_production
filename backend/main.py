@@ -3039,7 +3039,10 @@ async def share_info(
     task = tasks.get(task_id)
     if task is not None:
         try:
-            if bool(getattr(task.request, "keychain_mode", False)):
+            # Світи («опиши світ») теж шеряться — раніше вони приходили як "map".
+            if getattr(task, "world_spec", None):
+                product = "world"
+            elif bool(getattr(task.request, "keychain_mode", False)):
                 product = "keychain"
             else:
                 product = "map"

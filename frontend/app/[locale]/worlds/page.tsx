@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import { Send, Instagram, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { BetaBanner } from "@/components/BetaBanner";
@@ -44,6 +45,30 @@ export default function WorldsPage() {
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticksRef = useRef(0);
+
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  // Опис для чату + посилання на 3D-сцену: t.me/ig.me не вміють prefill для
+  // звичайних акаунтів, тож кладемо текст у буфер і відкриваємо чат (той самий
+  // прийом, що в SalesAlternatives для мап і брелоків).
+  const shareUrl = () => (taskId && typeof window !== "undefined" ? `${window.location.origin}/share/${taskId}` : "");
+  const openChat = async (channel: "tg" | "ig") => {
+    import("@/lib/analytics").then((m) => m.track("messenger_order", { channel, product: "world" })).catch(() => {});
+    const text = t("msgPrefill", { shape: builtShape || "", size: sizeMm, link: shareUrl() });
+    try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
+    window.open(channel === "tg" ? "https://t.me/monadruk" : "https://ig.me/m/monadruk", "_blank", "noopener");
+  };
+  const doShare = async () => {
+    const url = shareUrl();
+    if (!url) return;
+    import("@/lib/analytics").then((m) => m.track("guided_share", { product: "world" })).catch(() => {});
+    try {
+      if (typeof navigator.share === "function") { await navigator.share({ url, title: "Monadruk" }); }
+      else { await navigator.clipboard.writeText(url); }
+      setShared(true);
+    } catch { /* користувач скасував — нічого не показуємо */ }
+  };
 
   const stopPolling = () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   useEffect(() => () => stopPolling(), []);
@@ -200,6 +225,33 @@ export default function WorldsPage() {
                       {t("downloadPrint")}
                     </a>
                   )}
+                </div>
+
+                {/* Шлях до замовлення. До 08.09 його НЕ БУЛО ЗОВСІМ: смуга режиму
+                    казала «напишіть нам», а писати не було куди — глухий кут
+                    воронки (у /maket форма є, у /worlds не було). Ціни фіксованої
+                    нема (світ друкується під розмір), тож ведемо в чат із готовим
+                    описом і посиланням на 3D-сцену. */}
+                <div className="mt-3 rounded-2xl border border-[var(--surface-border)] bg-white/70 p-3" data-testid="world-order">
+                  <p className="text-[13.5px] font-semibold text-[var(--text-primary)]">{t("orderTitle")}</p>
+                  <p className="mt-1 text-[12px] leading-snug text-[var(--text-secondary)]">{t("orderSub")}</p>
+                  <div className="mt-2.5 grid grid-cols-2 gap-2">
+                    <button type="button" data-testid="world-msg-tg" onClick={() => openChat("tg")}
+                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3 text-[12.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)]">
+                      <Send size={14} className="text-[#2AABEE]" /> Telegram
+                    </button>
+                    <button type="button" data-testid="world-msg-ig" onClick={() => openChat("ig")}
+                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3 text-[12.5px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)]">
+                      <Instagram size={14} className="text-[#E1306C]" /> Instagram
+                    </button>
+                  </div>
+                  <button type="button" data-testid="world-share" onClick={doShare}
+                    className="mx-auto mt-2 flex min-h-10 items-center gap-1.5 text-[12px] font-semibold text-[var(--accent-strong)] underline underline-offset-2">
+                    <Share2 size={13} /> {shared ? t("shareCopied") : t("shareLink")}
+                  </button>
+                  <p className="mt-1 text-center text-[11.5px] leading-snug text-[var(--text-secondary)]" aria-live="polite">
+                    {copied ? t("msgCopied") : ""}
+                  </p>
                 </div>
               </>
             ) : (

@@ -1690,7 +1690,13 @@
     "shape_crater": "Krater",
     "shape_rolling": "Hügel",
     "shape_volcano": "Vulkan",
-    "shape_archipelago": "Archipel"
+    "shape_archipelago": "Archipel",
+    "orderTitle": "Diese Welt drucken lassen?",
+    "orderSub": "Schreiben Sie uns — wir kalkulieren nach Größe und Material. Die Modellbeschreibung kopieren wir, einfach in den Chat einfügen.",
+    "msgCopied": "Beschreibung kopiert ✓ In den Chat einfügen.",
+    "shareLink": "3D teilen",
+    "shareCopied": "Link kopiert ✓",
+    "msgPrefill": "Hallo! Ich möchte diese Welt drucken lassen: {shape}, Größe {size} mm. Modell: {link}"
   },
   "worldsMeta": {
     "title": "KI-3D-Weltgenerator",
