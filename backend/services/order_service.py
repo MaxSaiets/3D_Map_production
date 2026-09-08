@@ -398,6 +398,72 @@ def set_order_status(order_number: str, status: str) -> bool:
     return True
 
 
+def attach_payment(order_number: str, payment: Dict[str, Any]) -> bool:
+    """Дописує у ЗАПИС замовлення посилання на оплату й суму.
+
+    ⭐Навіщо (знайдено 08.09.2026): чек LiqPay будувався ПІСЛЯ create_order і жив
+    лише у HTTP-відповіді браузеру. Клієнт закрив вкладку — посилання втрачено
+    назавжди: він не може доплатити, а оператор не має що йому надіслати. При
+    цьому статус стартує як `pending_payment` (бо LiqPay налаштований), тож
+    замовлення просто зависає. На проді так висіли два серпневі замовлення.
+
+    Пише лише відомі поля (url/amount/currency) — жодних ключів/підписів."""
+    if not order_number or not isinstance(payment, dict):
+        return False
+    # LiqPay віддає ФОРМУ для POST (action_url + data + signature), а не готове
+    # посилання. Щоб оператор міг переслати оплату клієнту, збираємо стандартне
+    # GET-посилання чекауту: <action_url>?data=…&signature=…
+    url = str(payment.get("url") or payment.get("checkout_url") or "").strip()
+    if not url:
+        action = str(payment.get("action_url") or "").strip()
+        data = str(payment.get("data") or "").strip()
+        sig = str(payment.get("signature") or "").strip()
+        if action and data and sig:
+            from urllib.parse import urlencode
+            url = f"{action}?{urlencode({'data': data, 'signature': sig})}"
+    if not url:
+        return False
+    patch = {
+        "payment_url": url,
+        "payment_amount": payment.get("amount"),
+        "payment_currency": payment.get("currency"),
+        "payment_link_at": datetime.now().isoformat(),
+    }
+    if not ORDERS_LOG.exists():
+        return False
+    try:
+        lines = ORDERS_LOG.read_text(encoding="utf-8").splitlines()
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] attach_payment read failed: {e}")
+        return False
+    found = False
+    out: List[str] = []
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            rec = json.loads(line)
+        except Exception:  # noqa: BLE001
+            out.append(line)
+            continue
+        if rec.get("type") != "payment" and str(rec.get("order_number")) == str(order_number):
+            rec.update(patch)
+            found = True
+            out.append(json.dumps(rec, ensure_ascii=False))
+        else:
+            out.append(line)
+    if not found:
+        return False
+    try:
+        tmp = ORDERS_LOG.with_suffix(".jsonl.tmp")
+        tmp.write_text("\n".join(out) + "\n", encoding="utf-8")
+        tmp.replace(ORDERS_LOG)
+    except Exception as e:  # noqa: BLE001
+        print(f"[ORDER] attach_payment write failed: {e}")
+        return False
+    return True
+
+
 def _order_already_paid(order_id: str) -> bool:
     """True, якщо замовлення вже має статус paid АБО зафіксовану успішну оплату —
     щоб повторні перевірки статусу не дублювали подій/нотифікацій."""

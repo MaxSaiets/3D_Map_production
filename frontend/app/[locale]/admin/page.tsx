@@ -332,6 +332,18 @@ export default function AdminPage() {
                     {o.comment && <div className="mt-1 text-[13px] text-ink-3">💬 {o.comment}</div>}
                     <div className="mt-1 text-[12px] text-ink-3">
                       💳 {o.payment_url ? ta("payShown") : ta("payManual")}
+                      {/* Посилання на оплату тепер зберігається в записі (08.09.2026):
+                          клієнт закрив вкладку — оператор може переслати його у чат.
+                          Раніше чек жив лише в одній відповіді браузеру. */}
+                      {o.payment_url && (
+                        <button
+                          type="button"
+                          onClick={() => { void navigator.clipboard.writeText(String(o.payment_url)); }}
+                          className="ml-2 rounded-full border border-line bg-paper px-2 py-0.5 text-[11px] text-ink-2 hover:border-ink-3"
+                        >
+                          Скопіювати посилання{o.payment_amount ? ` · ${o.payment_amount} ₴` : ""}
+                        </button>
+                      )}
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">

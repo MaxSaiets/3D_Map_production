@@ -1585,6 +1585,16 @@ async def create_order_endpoint(
                 if checkout:
                     result["payment"] = {**checkout, "amount": amount, "currency": currency,
                                          "label": pay.get("label_uk") or "Оплатити зараз"}
+                    # ⭐08.09.2026: чек жив ЛИШЕ у цій відповіді. Клієнт закрив вкладку —
+                    # доплатити нема як, а оператор не має що надіслати (замовлення
+                    # стартує як pending_payment, бо LiqPay налаштований). Зберігаємо
+                    # посилання й суму в самому записі замовлення.
+                    try:
+                        from services.order_service import attach_payment
+                        attach_payment(str(result.get("order_number") or ""),
+                                       {**checkout, "amount": amount, "currency": currency})
+                    except Exception as _ae:  # noqa: BLE001
+                        print(f"[liqpay] attach_payment skipped: {_ae}")
         except Exception as _pe:  # noqa: BLE001
             print(f"[liqpay] checkout build failed: {_pe}")
         if "payment" not in result and pay_url:
