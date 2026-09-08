@@ -14,6 +14,7 @@ const base = {
   progress: 40,
   kind: "map" as const,
   title: "Готуємо",
+  note: "Це триває 1–3 хв",
   stages: { data: "Дані", terrain: "Рельєф", detail: "Деталі", file: "Файл" },
 };
 

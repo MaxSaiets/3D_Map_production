@@ -331,7 +331,7 @@ export default async function PannoPage({ params }: { params: { locale: string }
       <p className="mt-3 max-w-[680px] text-[15px] leading-relaxed text-ink-2">{c.introB}</p>
 
       <section className="mt-8 flex flex-wrap gap-3">
-        <Link href="/create" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+        <Link href="/create?series=1" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
           {c.cta}
         </Link>
         <Link href="/showcase" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] border border-line-soft bg-white/80 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-[var(--accent)]">
@@ -414,7 +414,7 @@ export default async function PannoPage({ params }: { params: { locale: string }
       </section>
 
       <section className="mt-10">
-        <Link href="/create" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+        <Link href="/create?series=1" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
           {c.cta}
         </Link>
       </section>

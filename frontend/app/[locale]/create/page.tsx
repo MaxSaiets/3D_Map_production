@@ -178,6 +178,15 @@ export default function Home() {
       // рамку на місті/районі. Повний режим лишається для ?grid (збережена сітка)
       // і ?capture (службовий рендер).
       // A-6 (2026-09-03): ?mode=pro — єдина адреса розширеного режиму.
+      // ?series=1 — вхід із /panno і з чіпа «Панно на стіну»: одразу повний режим
+      // із УВІМКНЕНОЮ сіткою зон. Доти панно (найдорожчий продукт, від 1250 ₴) вело
+      // на /create → крок 1 → чіп «Панно» → назад на /panno, тобто в замкнене коло,
+      // а сітка лишалась захованою в розширеному режимі.
+      if (p.get("series") === "1") {
+        setGuidedState(false);
+        useGenerationStore.getState().setShowHexGrid(true);
+        return;
+      }
       if (p.get("grid") || isCaptureAuthorized(p) || p.get("mode") === "pro") {
         setGuidedState(false);
         return;

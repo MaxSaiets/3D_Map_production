@@ -328,3 +328,34 @@ test.describe("Конструктор мап /create", () => {
     await expect(dialog.getByRole("radio", { name: /Укрпошта/ })).toBeVisible();
   });
 });
+
+/**
+ * Панно (найдорожчий продукт, від 1250 ₴) вело в замкнене коло: /panno → CTA
+ * «Створити» → /create крок 1 → чіп «Панно на стіну» → назад /panno, а сітка
+ * зон лишалась захованою в розширеному режимі. `?series=1` відкриває повний
+ * конструктор із увімкненою сіткою одразу.
+ */
+test.describe("Панно: вхід у режим серії зон", () => {
+  test("?series=1 відкриває повний конструктор із сіткою, а не guided-крок 1", async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_create_v1", "1");
+        localStorage.setItem("onb_create_v1", "1");
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+    await page.goto("/uk/create?series=1");
+    // guided-флоу НЕ показується
+    await expect(page.getByTestId("scenario-flow")).toHaveCount(0);
+    // і режим сітки увімкнено (з'єднувачі серії видно лише в ньому)
+    await expect(page.getByText("З'єднувачі серії").or(page.getByText("Серія зон")).first())
+      .toBeVisible({ timeout: 20_000 });
+  });
+
+  test("сторінка /panno і чіп «Панно» ведуть у конструктор серії, а не по колу", async ({ page }) => {
+    await page.goto("/uk/panno");
+    const cta = page.locator("a[href*='/create?series=1']").first();
+    await expect(cta).toBeVisible();
+  });
+});

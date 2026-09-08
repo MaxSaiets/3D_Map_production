@@ -529,7 +529,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
               <div className="mt-2 flex flex-wrap gap-1.5" data-testid="scenario-more">
                 <Link href="/keychains" className={moreLinkCls}>{t("keychainTitle")} · {t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}</Link>
-                <Link href="/panno" className={moreLinkCls}>{t("pannoTitle")}</Link>
+                <Link href="/create?series=1" className={moreLinkCls}>{t("pannoTitle")}</Link>
                 <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
                 <Link href="/worlds" className={moreLinkCls}>{t("worldsTitle")}</Link>
                 <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
