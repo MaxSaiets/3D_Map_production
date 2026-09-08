@@ -663,9 +663,13 @@ def _fetch_preview_source_data(
     )
 
     def fetch_features(label: str, tags: dict[str, Any]) -> gpd.GeoDataFrame:
-        original_timeout = int(getattr(ox.settings, "timeout", 180) or 180)
+        # ⭐08.09.2026: у встановленій osmnx налаштування зветься `requests_timeout`.
+        # Раніше тут писалось у `ox.settings.timeout` — неіснуючий атрибут, тож
+        # «швидке превʼю» насправді чекало дефолтні 180 с замість 25.
+        _TO_ATTR = "requests_timeout" if hasattr(ox.settings, "requests_timeout") else "timeout"
+        original_timeout = int(getattr(ox.settings, _TO_ATTR, 180) or 180)
         try:
-            ox.settings.timeout = min(original_timeout, 25)
+            setattr(ox.settings, _TO_ATTR, min(original_timeout, 25))
             try:
                 gdf = ox.features_from_bbox(bbox=preview_bbox, tags=tags)
             except TypeError:
@@ -680,7 +684,7 @@ def _fetch_preview_source_data(
             print(f"[WARN] {zone_prefix} Preview {label} fetch failed: {exc}")
             return gpd.GeoDataFrame()
         finally:
-            ox.settings.timeout = original_timeout
+            setattr(ox.settings, _TO_ATTR, original_timeout)
 
         if gdf is None or gdf.empty:
             return gpd.GeoDataFrame()

@@ -78,3 +78,19 @@ def test_real_osmnx_setting_names_are_known():
     цей тест, а не мовчазний фолбек на один-єдиний хост."""
     assert hasattr(ox.settings, "overpass_url") or hasattr(ox.settings, "overpass_endpoint")
     assert hasattr(ox.settings, "requests_timeout") or hasattr(ox.settings, "timeout")
+
+
+def test_site_preview_uses_the_real_timeout_setting():
+    """`site_preview` навмисно ставить КОРОТКИЙ таймаут (25 с) для швидкого
+    превʼю, але писав у `ox.settings.timeout` — неіснуючий атрибут у поточній
+    osmnx, тож фактично чекав дефолтні 180 с.
+
+    Модуль читаємо ТЕКСТОМ, а не імпортом: `site_preview` наразі не імпортується
+    взагалі (тягне `run_canonical_preview_pipeline`, якого немає у
+    `full_generation_pipeline`) і ніде в застосунку не підключений — мертвий код.
+    Тест тримає саме правило про ім'я налаштування."""
+    from pathlib import Path
+
+    src = (Path(__file__).resolve().parents[1] / "services" / "site_preview.py").read_text(encoding="utf-8")
+    assert "requests_timeout" in src, "site_preview має знати реальне ім'я налаштування"
+    assert "ox.settings.timeout =" not in src, "лишилось присвоєння у неіснуючий атрибут"
