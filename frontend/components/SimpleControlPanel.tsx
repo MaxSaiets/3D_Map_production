@@ -424,8 +424,17 @@ export function SimpleControlPanel({
     return dispPrice(unit * orderTiles);
   })();
 
+  // ⭐ЗАХИСТ ВІД ПОВТОРНИХ КЛІКІВ (08.09.2026). Прод-випадок: користувач натиснув
+  // «Завантажити» 31 раз за 5 хвилин (паузи 0–13 с) — guided-кнопка не блокувалась,
+  // а слухач викликав цю функцію без жодної перевірки, тож КОЖЕН клік запускав нову
+  // повну генерацію друку (35 штук на 2-ядерній VM за 5 хв). Ref, а не state: стан
+  // оновлюється асинхронно і не встигав за чергою кліків.
+  const dlInFlightRef = useRef(false);
   const doGatedDownload = async () => {
+    if (dlInFlightRef.current) return;
+    dlInFlightRef.current = true;
     setDlBusy(true);
+    useGenerationStore.getState().setDownloadBusy(true);
     setError(null);
     try {
       let dlTaskId = taskGroupId;
@@ -438,14 +447,14 @@ export function SimpleControlPanel({
         // вичерпав ліміт — перевіряємо ПЕРЕД генерацією, щоб не змусити чекати намарно.
         const token = await getIdToken().catch(() => null);
         // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
-        if (!token) { openLogin(() => { void doGatedDownload(); }); setDlBusy(false); return; }
+        if (!token) { openLogin(() => { void doGatedDownload(); }); dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return; }
         if (quota && !quota.isAdmin && quota.remaining <= 0) {
           // A-7 (2026-09-03): вичерпана квота → не глухий кут у Telegram-чат, а
           // пояснення + одразу форма замовлення друку (ми надрукуємо і надішлемо).
           import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map" })).catch(() => {});
           window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("quotaExhausted") } }));
           orderNowRef.current();
-          setDlBusy(false); return;
+          dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return;
         }
         // A-9: «завантажити» = друга генерація 1–3 хв — рахуємо, скільки людей у це впирається.
         import("@/lib/analytics").then((m) => m.track("download_wait", { product: "map" })).catch(() => {});
@@ -454,7 +463,7 @@ export function SimpleControlPanel({
         const print = await generatePrint3mf((p) => { setPrintPrep(p); useGenerationStore.getState().setPrintPrep(p); });
         setPrintPrep(null);
         useGenerationStore.getState().setPrintPrep(null);
-        if (!print) { setError(t("errGen")); setDlBusy(false); return; }
+        if (!print) { setError(t("errGen")); dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return; }
         dlTaskId = print.taskId;
         dlUrl = print.url;
       }
@@ -490,7 +499,7 @@ export function SimpleControlPanel({
       }
     } finally {
       setPrintPrep(null);
-      setDlBusy(false);
+      dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false);
     }
   };
 

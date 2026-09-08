@@ -20,6 +20,12 @@ interface GenerationState {
   queued: boolean;
   genError: string | null;
   printPrep: number | null;
+  /** Іде завантаження друк-файлу (клік «Завантажити» → друга генерація 1–3 хв).
+   *  ⭐08.09.2026: без цього прапорця guided-кнопка лишалась активною й КОЖЕН клік
+   *  запускав НОВУ повну генерацію — реальний випадок із проду: 31 клік за 5 хв
+   *  → 35 генерацій на 2-ядерній VM. Тримаємо в сторі, бо кнопка живе в
+   *  ScenarioFlow, а завантаження виконує SimpleControlPanel. */
+  downloadBusy: boolean;
   taskRestored: boolean;
   /** D-3: guided-режим активний → прогрес живе в панелі, сцена його не дублює. */
   guidedMode: boolean;
@@ -185,6 +191,7 @@ interface GenerationState {
   setQueued: (queued: boolean) => void;
   setGenError: (genError: string | null) => void;
   setPrintPrep: (printPrep: number | null) => void;
+  setDownloadBusy: (downloadBusy: boolean) => void;
   setTaskRestored: (taskRestored: boolean) => void;
   setGuidedMode: (guidedMode: boolean) => void;
   setPendingGenerate: (pendingGenerate: boolean) => void;
@@ -236,6 +243,7 @@ const initialState = {
   queued: false,
   genError: null,
   printPrep: null,
+  downloadBusy: false,
   taskRestored: false,
   guidedMode: false,
   pendingGenerate: false,
@@ -432,6 +440,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setQueued: (queued) => set({ queued }),
   setGenError: (genError) => set({ genError }),
   setPrintPrep: (printPrep) => set({ printPrep }),
+  setDownloadBusy: (downloadBusy) => set({ downloadBusy }),
   setTaskRestored: (taskRestored) => set({ taskRestored }),
   setGuidedMode: (guidedMode) => set({ guidedMode }),
   setPendingGenerate: (pendingGenerate) => set({ pendingGenerate }),

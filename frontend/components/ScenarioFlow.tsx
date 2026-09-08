@@ -113,6 +113,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // сторінка, що й повна панель (SimpleControlPanel.doShare), без картинки-прев'ю
   // (це best-effort деталь повної панелі, тут досить самого лінку).
   const [shareCopied, setShareCopied] = useState(false);
+  // Прапорець «іде завантаження друк-файлу» зі стора: кнопка живе тут, а саме
+  // завантаження виконує SimpleControlPanel (через window-подію).
+  const dlBusy = useGenerationStore((st) => st.downloadBusy);
   const doShareGuided = async () => {
     if (!s.taskGroupId) return;
     import("@/lib/analytics").then((m) => m.track("guided_share", { product: "map" })).catch(() => {});
@@ -589,6 +592,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   variant="secondary"
                   size="lg"
                   data-testid="guided-download"
+                  // ⭐08.09.2026: кнопка не блокувалась і кожен клік запускав НОВУ
+                  // повну генерацію друку (прод: 31 клік за 5 хв → 35 генерацій).
+                  disabled={dlBusy}
+                  busy={dlBusy}
                   onClick={() => {
                     import("@/lib/analytics").then((m) => m.track("guided_download", { product: "map" })).catch(() => {});
                     window.dispatchEvent(new Event("monadruk:guided-download"));
