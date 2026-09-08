@@ -213,3 +213,30 @@ def test_why_not_order_and_messenger_counted_in_choices():
     ch = agg["guided"]["choices"]
     assert ch["whyNotOrder"] == [["price", 2], ["abroad", 1]] or ch["whyNotOrder"] == [("price", 2), ("abroad", 1)]
     assert sorted(tuple(x) for x in ch["messenger"]) == [("ig", 1), ("tg", 1)]
+
+
+def test_period_filter_applies_to_all_aggregates_not_only_guided():
+    """⭐Регрес 08.09.2026: `days` застосовувався лише до guided-блоку, а
+    totals/topPaths/byCountry/funnel/recentVisitors рахувались ЗА ВЕСЬ ЧАС.
+    Тижневий дайджест через це показував 254 «відвідувачі за 7 днів» замість
+    реальних 35, а перемикач періоду в адмінці майже нічого не міняв."""
+    old_day = "2020-01-01"
+    old_ts = "2020-01-01T00:00:00+00:00"
+    lines = [
+        # старе — має бути ВІДКИНУТЕ повністю
+        _line("pageview", path="/old", visitor="old1", day=old_day, ts=old_ts, cc="PL"),
+        _line("pageview", path="/old", visitor="old2", day=old_day, ts=old_ts, cc="PL"),
+        _line("funnel", props={"step": "view"}, visitor="old1", day=old_day, ts=old_ts),
+        # свіже
+        _line("pageview", path="/create", visitor="new1"),
+        _line("funnel", props={"step": "view"}, visitor="new1"),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    assert agg["totals"]["uniqueVisitors"] == 1, "старі відвідувачі потрапили в підсумок"
+    assert agg["totals"]["pageviews"] == 1
+    paths = dict(agg["topPaths"])
+    assert "/old" not in paths and paths.get("/create") == 1
+    assert "PL" not in dict(agg["byCountry"])
+    funnel = {s["step"]: s["count"] for s in agg["funnel"]}
+    assert funnel.get("view") == 1
+    assert all(v["id"] != "old1" for v in agg["recentVisitors"])

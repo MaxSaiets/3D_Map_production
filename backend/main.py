@@ -1835,6 +1835,14 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                 r = json.loads(line)
             except Exception:  # noqa: BLE001
                 continue
+            # ⭐ПАСТКА 08.09.2026: період `days` застосовувався ЛИШЕ до guided-блоку
+            # й A/B, а totals/topPaths/byCountry/topRefs/funnel/recentVisitors
+            # рахувались ЗА ВЕСЬ ЧАС. Через це перемикач періоду в адмінці майже
+            # нічого не міняв, а тижневий дайджест писав «за 7 дн.» під цифрами за
+            # весь лог (254 «відвідувачі» замість реальних 35). Один фільтр на весь
+            # прохід — усі агрегати тепер означають те саме.
+            if str(r.get("day", "")) < _cutoff_day:
+                continue
             ev = r.get("event", "")
             # «ping» = серцебиття присутності (вимір часу на сайті), НЕ дія
             # користувача → НЕ рахуємо його ні в «усього подій», ні в топ-подіях
@@ -1846,7 +1854,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                     ev_counter[ev] += 1
             props = r.get("props") or {}
             path = r.get("path", "")
-            if props and str(r.get("day", "")) >= _cutoff_day:
+            if props:  # день уже відфільтровано вище
                 _vis_ab = r.get("visitor", "")
                 if _vis_ab:
                     for _pk, _pv in props.items():
