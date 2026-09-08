@@ -1803,7 +1803,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_gen_default = 0                  # генерації на дефолтному місці
     g_mode: Counter = Counter()        # "from→to" → к-сть перемикань у розширений
     g_quota: Counter = Counter()       # місце блокування квотою ("download"/"—")
-    g_wait = 0                         # скільки разів бачили довге очікування
+    g_wait = 0                         # скільки разів бачили довге очікування
+    g_reclick = 0                      # повторні кліки «Завантажити», проігноровані захистом
     g_funnel: Counter = Counter()      # класичні кроки, але В МЕЖАХ періоду
     # ── Guided-вибори (для адмінки: «що конкретно клікнув/обрав користувач») ──
     g_sizes: Counter = Counter()       # обраний розмір (sizeMm) → к-сть
@@ -1827,7 +1828,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
         "guided_pick", "guided_step", "guided_generate", "mode_switch",
         "quota_block", "download_wait", "guided_size", "guided_place",
         "guided_home", "guided_share", "guided_download", "download_model",
-        "guided_order_click", "guided_result",
+        "guided_order_click", "guided_result", "download_reclick",
     )
     try:
         for line in lines:
@@ -1926,6 +1927,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                         g_quota[str(props.get("at") or "generate")] += 1
                     elif ev == "download_wait":
                         g_wait += 1
+                    elif ev == "download_reclick":
+                        g_reclick += 1
                     elif ev == "guided_size":
                         _size = props.get("sizeMm")
                         if _size:
@@ -2045,7 +2048,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
         "generate": {"total": _g_gen_total, "placePicked": g_gen_picked, "placeDefault": g_gen_default},
         "modeSwitch": g_mode.most_common(8),
         "quotaBlock": {"total": sum(g_quota.values()), "byAt": g_quota.most_common(5)},
-        "downloadWait": g_wait,
+        "downloadWait": g_wait,
+        "downloadReclicks": g_reclick,
         # Розбивки по пристрою НЕМАЄ: /api/track не зберігає ні User-Agent, ні
         # прапорець mobile/desktop (лише денний хеш) → фронт ховає цей рядок.
         "byDevice": None,

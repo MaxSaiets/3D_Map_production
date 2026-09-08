@@ -431,7 +431,14 @@ export function SimpleControlPanel({
   // оновлюється асинхронно і не встигав за чергою кліків.
   const dlInFlightRef = useRef(false);
   const doGatedDownload = async () => {
-    if (dlInFlightRef.current) return;
+    if (dlInFlightRef.current) {
+      // Клік проігноровано, бо завантаження вже йде. Лишаємо слід: відтворити
+      // залогінений rage-click у тесті нема як (нема тестових Google-кредів),
+      // тож нехай реальність перевіряє фікс — у дайджесті буде видно, чи
+      // лишились десятки повторів на одного відвідувача.
+      import("@/lib/analytics").then((m) => m.track("download_reclick", { product: "map" })).catch(() => {});
+      return;
+    }
     dlInFlightRef.current = true;
     setDlBusy(true);
     useGenerationStore.getState().setDownloadBusy(true);

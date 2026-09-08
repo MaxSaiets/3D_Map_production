@@ -76,6 +76,11 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     lines.append(f"🧩 Генерації: {gen_total}" + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
     lines.append(f"🛒 Клік «Замовити»: {order_clicks} · надіслані замовлення: {orders_week}")
     lines.append(f"⬇️ Завантажили файл: {downloads} · у месенджер: {messenger}")
+    # Повторні кліки «Завантажити» — сигнал, що людина не бачить реакції інтерфейсу
+    # (прод 07.09: один відвідувач дав 31 клік → 35 генерацій друку).
+    reclicks = int((guided.get("downloadReclicks") or 0))
+    if reclicks:
+        lines.append(f"🔁 Повторні кліки «Завантажити»: {reclicks} — інтерфейс не показує реакції")
     if reasons:
         lines.append("❓ Чому не замовляють: " + ", ".join(f"{_REASON_LABELS.get(k, k)} {v}" for k, v in reasons))
     if leads_total:

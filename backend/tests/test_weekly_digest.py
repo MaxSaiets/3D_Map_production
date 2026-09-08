@@ -79,3 +79,11 @@ def test_digest_hides_empty_result_counters():
     agg["guided"]["choices"]["results"] = {"ok": 5, "fail": 1}
     text2 = wd.build_digest(agg, orders_week=0, leads_total=0)
     assert "Генерації: 6 (✓5 / ✗1)" in text2
+
+
+def test_digest_reports_download_reclicks():
+    agg = {"totals": {}, "guided": {"downloadReclicks": 7, "choices": {}}}
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "Повторні кліки «Завантажити»: 7" in text
+    # без повторів рядка немає
+    assert "Повторні кліки" not in wd.build_digest({"totals": {}, "guided": {}}, 0, 0)

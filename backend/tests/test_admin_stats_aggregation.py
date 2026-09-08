@@ -240,3 +240,17 @@ def test_period_filter_applies_to_all_aggregates_not_only_guided():
     funnel = {s["step"]: s["count"] for s in agg["funnel"]}
     assert funnel.get("view") == 1
     assert all(v["id"] != "old1" for v in agg["recentVisitors"])
+
+
+def test_download_reclick_counted():
+    """`download_reclick` = клік «Завантажити», який захист від rage-click
+    проігнорував. Прод 07.09: один відвідувач дав 31 клік → 35 генерацій; після
+    фіксу ці кліки мають з'являтись саме тут, а не як нові генерації."""
+    lines = [
+        _line("download_reclick", props={"product": "map"}),
+        _line("download_reclick", props={"product": "map"}, visitor="v2"),
+        _line("download_wait", props={"product": "map"}),
+    ]
+    agg = app_main._aggregate_analytics(lines, 30)
+    assert agg["guided"]["downloadReclicks"] == 2
+    assert agg["guided"]["downloadWait"] == 1

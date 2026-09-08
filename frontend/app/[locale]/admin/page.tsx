@@ -613,6 +613,9 @@ function GuidedFunnel({ g }: { g: any }) {
             {quotaAt.length > 0 && <span className="ml-1">({quotaAt.map(([k, n]) => `${k}: ${n}`).join(", ")})</span>}
           </div>
           <div className="text-ink-3">Довге очікування файлу: <b className="text-ink">{dash(g.downloadWait || 0)}</b></div>
+          {/* Повторні кліки «Завантажити», які захист відкинув. Прод 07.09: один
+              відвідувач дав 31 клік → 35 генерацій друку. Тут видно, чи тримає фікс. */}
+          <div className="text-ink-3">Повторні кліки «Завантажити»: <b className="text-ink">{dash(g.downloadReclicks || 0)}</b></div>
           <div className="text-ink-3">Перейшли в розширений режим: <b className="text-ink">{dash(modes.reduce((a, m) => a + m[1], 0))}</b></div>
         </div>
       </div>
