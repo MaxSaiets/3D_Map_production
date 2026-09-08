@@ -70,3 +70,39 @@ test.describe("Замовлення без входу", () => {
     expect(String(ordered.phone)).toContain("380931234567");
   });
 });
+
+/**
+ * ⭐08.09.2026: чек LiqPay жив ЛИШЕ у стані OrderDialog. Клієнт ішов на LiqPay,
+ * не завершував оплату і повертався на /order-success — там був статус «очікує
+ * оплати» і ЖОДНОЇ кнопки заплатити. Тепер OrderDialog зберігає чек локально
+ * (`mnd_pay_<номер>`), а сторінка подяки дає ним доплатити.
+ */
+test.describe("Сторінка подяки: доплатити пізніше", () => {
+  test("у стані «очікує оплати» є кнопка оплати зі збереженого чека", async ({ page }) => {
+    await page.route("**/api/liqpay/status/**", (r) =>
+      r.fulfill({ json: { configured: true, paid: false, status: "pending" } }));
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem("mnd_pay_4242", JSON.stringify({
+          provider: "liqpay", action_url: "https://www.liqpay.ua/api/3/checkout",
+          data: "ZGF0YQ==", signature: "sig", amount: 490, ts: Date.now(),
+        }));
+        document.cookie = "mnd_consent=denied;path=/";
+      } catch { /* ignore */ }
+    });
+    await page.goto("/uk/order-success?order=4242");
+    await expect(page.getByTestId("pay-again")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Посилання на оплату збережено у цьому браузері.")).toBeVisible();
+  });
+
+  test("без збереженого чека кнопки немає (нема що показувати)", async ({ page }) => {
+    await page.route("**/api/liqpay/status/**", (r) =>
+      r.fulfill({ json: { configured: true, paid: false, status: "pending" } }));
+    await page.addInitScript(() => {
+      try { document.cookie = "mnd_consent=denied;path=/"; } catch { /* ignore */ }
+    });
+    await page.goto("/uk/order-success?order=9999");
+    await expect(page.getByText("#9999")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("pay-again")).toHaveCount(0);
+  });
+});

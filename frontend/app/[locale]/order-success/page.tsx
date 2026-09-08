@@ -18,11 +18,18 @@ export default function OrderSuccessPage() {
   const [order, setOrder] = useState<string>("");
   const [state, setState] = useState<PayState>("checking");
   const [copied, setCopied] = useState(false);
+  // Чек, збережений OrderDialog у цьому браузері (mnd_pay_<номер>): дає змогу
+  // доплатити, якщо людина пішла на LiqPay і не завершила оплату.
+  const [savedPay, setSavedPay] = useState<any>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ord = (params.get("order") || "").trim();
     setOrder(ord);
+    try {
+      const raw = ord ? localStorage.getItem(`mnd_pay_${ord}`) : null;
+      if (raw) setSavedPay(JSON.parse(raw));
+    } catch { /* приватний режим */ }
     track("view", { id: "order_success", order: ord });
     if (!ord) { setState("unknown"); return; }
 
@@ -92,6 +99,25 @@ export default function OrderSuccessPage() {
       <p className="mt-4 max-w-[520px] text-[15px] leading-relaxed text-ink-2">
         {isChecking ? t("checkingBody") : isPaid ? t("paidBody") : t("pendingBody")}
       </p>
+
+      {state === "pending" && savedPay && (
+        <div className="mt-5 flex flex-col items-center gap-1">
+          {savedPay.provider === "liqpay" && savedPay.data && savedPay.signature ? (
+            <form action={savedPay.action_url} method="POST" acceptCharset="utf-8" target="_blank">
+              <input type="hidden" name="data" value={savedPay.data} />
+              <input type="hidden" name="signature" value={savedPay.signature} />
+              <button type="submit" data-testid="pay-again" className={buttonClasses("primary", "sm")}>
+                {t("payAgain")}
+              </button>
+            </form>
+          ) : savedPay.url ? (
+            <a href={savedPay.url} target="_blank" rel="noopener noreferrer" data-testid="pay-again" className={buttonClasses("primary", "sm")}>
+              {t("payAgain")}
+            </a>
+          ) : null}
+          <span className="text-[12px] text-ink-3">{t("payAgainHint")}</span>
+        </div>
+      )}
 
       {(isPaid || state === "pending") && (
         <ul className="mt-6 flex max-w-[460px] flex-col gap-2 text-left">

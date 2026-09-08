@@ -221,6 +221,23 @@ export function OrderDialog({
       const data = await res.json();
       setOrderNumber(String(data.order_number));
       setPayment(data.payment || null);
+      // ⭐08.09.2026: зберігаємо чек ЛОКАЛЬНО, щоб клієнт міг доплатити пізніше.
+      // Досі форма оплати жила лише у стані цього діалогу: пішов на LiqPay, не
+      // завершив і повернувся на /order-success — там була лише «очікує оплати»
+      // без жодної кнопки. Ключ — номер замовлення; чистимо записи старші 14 днів.
+      try {
+        if (data.order_number && data.payment) {
+          const now = Date.now();
+          for (const k of Object.keys(localStorage)) {
+            if (!k.startsWith("mnd_pay_")) continue;
+            try {
+              const old = JSON.parse(localStorage.getItem(k) || "{}");
+              if (!old.ts || now - old.ts > 14 * 24 * 3600 * 1000) localStorage.removeItem(k);
+            } catch { localStorage.removeItem(k); }
+          }
+          localStorage.setItem(`mnd_pay_${data.order_number}`, JSON.stringify({ ...data.payment, ts: now }));
+        }
+      } catch { /* приватний режим — просто без збереження */ }
       // Google Ads / GA4 conversion — головна ціль реклами (надіслане замовлення = лід).
       try {
         const { trackConversion, trackFunnel } = await import("@/lib/analytics");

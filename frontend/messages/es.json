@@ -1778,7 +1778,9 @@
     "toAccount": "Mi cuenta",
     "makeAnother": "Crear otro",
     "toHome": "Inicio",
-    "support": "¿Tienes preguntas? Contáctanos — los datos están al pie de la página."
+    "support": "¿Tienes preguntas? Contáctanos — los datos están al pie de la página.",
+    "payAgain": "Pagar ahora",
+    "payAgainHint": "El enlace de pago está guardado en este navegador."
   },
   "scenario": {
     "stepOf": "Paso {step} de 2",

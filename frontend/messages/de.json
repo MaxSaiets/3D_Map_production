@@ -1778,7 +1778,9 @@
     "toAccount": "Mein Konto",
     "makeAnother": "Weitere erstellen",
     "toHome": "Startseite",
-    "support": "Fragen? Kontaktiere uns — die Angaben findest du am Seitenende."
+    "support": "Fragen? Kontaktiere uns — die Angaben findest du am Seitenende.",
+    "payAgain": "Jetzt bezahlen",
+    "payAgainHint": "Der Zahlungslink ist in diesem Browser gespeichert."
   },
   "scenario": {
     "stepOf": "Schritt {step} von 2",

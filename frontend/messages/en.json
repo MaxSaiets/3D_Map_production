@@ -1778,7 +1778,9 @@
     "toAccount": "My account",
     "makeAnother": "Make another",
     "toHome": "Home",
-    "support": "Questions? Contact us — details at the bottom of the page."
+    "support": "Questions? Contact us — details at the bottom of the page.",
+    "payAgain": "Pay now",
+    "payAgainHint": "The payment link is saved in this browser."
   },
   "scenario": {
     "stepOf": "Step {step} of 2",
