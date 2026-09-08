@@ -52,7 +52,8 @@ def _pairs(rows: Optional[Sequence[Any]], limit: int = 5) -> List[Tuple[str, int
     return out
 
 
-def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: int = DIGEST_DAYS) -> str:
+def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: int = DIGEST_DAYS,
+                 pending: Tuple[int, int] = (0, 0)) -> str:
     """Текст дайджесту з результату main._aggregate_analytics(days=7) + к-сть
     замовлень за тиждень + к-сть лідів. Ніяких e-mail-ів у повідомленні."""
     totals = agg.get("totals") or {}
@@ -75,6 +76,12 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     # «(✓0 / ✗0)» поруч із «Генерації: 6» читалось як «усе зламано».
     lines.append(f"🧩 Генерації: {gen_total}" + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
     lines.append(f"🛒 Клік «Замовити»: {order_clicks} · надіслані замовлення: {orders_week}")
+    # Зависли на оплаті — гроші, які вже майже прийшли. Посилання на оплату є в
+    # картці замовлення в адмінці (кнопка «Скопіювати посилання»).
+    _pend_n, _pend_days = (pending or (0, 0))
+    if _pend_n:
+        _age = f", найстарішому {_pend_days} дн." if _pend_days else ""
+        lines.append(f"⏳ Чекають оплати: {_pend_n}{_age} — посилання в картці замовлення")
     lines.append(f"⬇️ Завантажили файл: {downloads} · у месенджер: {messenger}")
     # Повторні кліки «Завантажити» — сигнал, що людина не бачить реакції інтерфейсу
     # (прод 07.09: один відвідувач дав 31 клік → 35 генерацій друку).
@@ -94,6 +101,53 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     if orders_week == 0:
         lines.append("⚠️ Замовлень за тиждень немає.")
     return "\n".join(lines)
+
+
+def count_pending_payment(lines: Sequence[str]) -> Tuple[int, int]:
+    """(скільки замовлень висять неоплаченими, вік найстарішого в днях).
+
+    ⭐Навіщо: замовлення з онлайн-оплатою стартує як `pending_payment`, і якщо
+    клієнт не завершив оплату — воно просто лежить у журналі. Оператор отримав
+    Telegram при оформленні, але через тиждень про нього вже ніхто не памʼятає.
+    Реальний випадок: замовлення #1141 (10.08) висіло МІСЯЦЬ, і власник вважав,
+    що продажів немає взагалі. Тепер про такі нагадує тижневий дайджест."""
+    import json
+    from datetime import datetime as _dt
+    latest: Dict[str, Dict[str, Any]] = {}
+    paid_ids = set()
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except Exception:  # noqa: BLE001
+            continue
+        onum = str(rec.get("order_number") or "")
+        if not onum:
+            continue
+        if rec.get("type") == "payment":
+            if rec.get("paid"):
+                paid_ids.add(onum)
+            continue
+        cur = latest.get(onum) or {}
+        cur.update(rec)
+        latest[onum] = cur
+
+    oldest_days = 0
+    count = 0
+    now = _dt.now()
+    for onum, rec in latest.items():
+        if onum in paid_ids or str(rec.get("status") or "") != "pending_payment":
+            continue
+        count += 1
+        created = str(rec.get("created_at") or "")
+        try:
+            age = (now - _dt.fromisoformat(created)).days
+        except Exception:  # noqa: BLE001
+            age = 0
+        oldest_days = max(oldest_days, age)
+    return count, oldest_days
 
 
 def count_orders_since(lines: Sequence[str], since_iso: str) -> int:

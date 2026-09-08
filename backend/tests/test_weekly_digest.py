@@ -87,3 +87,28 @@ def test_digest_reports_download_reclicks():
     assert "Повторні кліки «Завантажити»: 7" in text
     # без повторів рядка немає
     assert "Повторні кліки" not in wd.build_digest({"totals": {}, "guided": {}}, 0, 0)
+
+
+def test_pending_payment_orders_are_reported():
+    """Реальний випадок: #1141 (10.08) висіло МІСЯЦЬ неоплаченим, і власник
+    вважав, що продажів немає. Дайджест має про такі нагадувати."""
+    import json
+    from datetime import datetime, timedelta
+    old = (datetime.now() - timedelta(days=29)).isoformat()
+    recent = (datetime.now() - timedelta(days=2)).isoformat()
+    lines = [
+        json.dumps({"order_number": "1141", "status": "pending_payment", "created_at": old}),
+        json.dumps({"order_number": "6960", "status": "pending_payment", "created_at": recent}),
+        json.dumps({"order_number": "6799", "status": "pending_payment", "created_at": old}),
+        json.dumps({"type": "payment", "order_number": "6799", "paid": True}),   # оплачене — не рахуємо
+        json.dumps({"order_number": "8001", "status": "new", "created_at": recent}),
+        "not json",
+    ]
+    n, days = wd.count_pending_payment(lines)
+    assert n == 2, f"очікували 2 завислих, отримали {n}"
+    assert 28 <= days <= 30
+
+    text = wd.build_digest({"totals": {}, "guided": {}}, orders_week=0, leads_total=0, pending=(n, days))
+    assert "Чекають оплати: 2" in text and "найстарішому" in text
+    # немає зависших → рядка немає
+    assert "Чекають оплати" not in wd.build_digest({"totals": {}, "guided": {}}, 0, 0, pending=(0, 0))

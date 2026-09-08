@@ -615,15 +615,18 @@ def _build_weekly_digest_text() -> str:
     agg = _aggregate_analytics(lines, _wd.DIGEST_DAYS)
     since = (_dtm.utcnow() - _td(days=_wd.DIGEST_DAYS)).isoformat()
     orders_week = 0
+    pending = (0, 0)
     if _OL.exists():
-        orders_week = _wd.count_orders_since(_OL.read_text(encoding="utf-8").splitlines(), since)
+        _order_lines = _OL.read_text(encoding="utf-8").splitlines()
+        orders_week = _wd.count_orders_since(_order_lines, since)
+        pending = _wd.count_pending_payment(_order_lines)
     leads = 0
     try:
         from services import user_store as _us
         leads = sum(1 for u in _us.list_all_users() if int(u.get("downloads") or 0) > 0)
     except Exception:  # noqa: BLE001
         pass
-    return _wd.build_digest(agg, orders_week, leads)
+    return _wd.build_digest(agg, orders_week, leads, pending=pending)
 
 
 def _run_template_warm_once() -> None:
