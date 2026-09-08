@@ -99,15 +99,23 @@ def _overpass_endpoints() -> list[str]:
 
 
 def _run_overpass_with_retries(label: str, fetch_fn):
-    original_endpoint = getattr(ox.settings, "overpass_endpoint", "https://overpass-api.de/api")
-    original_timeout = int(getattr(ox.settings, "timeout", 180) or 180)
+    # ⭐08.09.2026: у встановленій osmnx налаштування звуться `overpass_url` і
+    # `requests_timeout`. Раніше код писав у `overpass_endpoint`/`timeout` —
+    # неіснуючі атрибути, тож ПЕРЕМИКАННЯ НА ЗАПАСНІ ДЗЕРКАЛА НЕ ПРАЦЮВАЛО:
+    # у логах було «via <дзеркало>», а помилка приходила від overpass-api.de.
+    # Визначаємо реальні імена один раз і працюємо з ними (сумісно зі старими
+    # версіями, де імена інші).
+    _EP_ATTR = "overpass_url" if hasattr(ox.settings, "overpass_url") else "overpass_endpoint"
+    _TO_ATTR = "requests_timeout" if hasattr(ox.settings, "requests_timeout") else "timeout"
+    original_endpoint = getattr(ox.settings, _EP_ATTR, "https://overpass-api.de/api")
+    original_timeout = int(getattr(ox.settings, _TO_ATTR, 180) or 180)
     last_error: Optional[Exception] = None
     endpoints = _overpass_endpoints()
     try:
         for attempt_index, endpoint in enumerate(endpoints, start=1):
             try:
-                ox.settings.overpass_endpoint = endpoint
-                ox.settings.timeout = max(original_timeout, 180)
+                setattr(ox.settings, _EP_ATTR, endpoint)
+                setattr(ox.settings, _TO_ATTR, max(original_timeout, 180))
                 result = fetch_fn()
                 if result is None:
                     raise InsufficientResponseError(f"{label}: empty result from {endpoint}")
@@ -128,8 +136,8 @@ def _run_overpass_with_retries(label: str, fetch_fn):
             if attempt_index < len(endpoints):
                 time.sleep(min(attempt_index, 2))
     finally:
-        ox.settings.overpass_endpoint = original_endpoint
-        ox.settings.timeout = original_timeout
+        setattr(ox.settings, _EP_ATTR, original_endpoint)
+        setattr(ox.settings, _TO_ATTR, original_timeout)
 
     if last_error is not None:
         raise last_error
