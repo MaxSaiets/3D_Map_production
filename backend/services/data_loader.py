@@ -78,8 +78,16 @@ def _mark_rail_tiles_empty(tiles, empty: bool) -> None:
         print(f"[RAILWAY] tile cache write skipped: {exc}", flush=True)
 # v3: у графі доріг зʼявились ребра highway='railway' — старий кеш без колій
 #     інакше жив би вічно і залізниця не показалась би на вже згенерованих зонах.
+# Перевірено з ПРОД-сервера 08.09.2026 (POST /interpreter, реальний запит):
+#   overpass-api.de        → 200, але HTML-сторінка помилки замість JSON (деградує)
+#   overpass.kumi.systems  → 200 + валідний JSON  ← робочий резерв
+#   overpass.private.coffee→ 000 (недосяжний із цього сервера)
+#   overpass.osm.jp        → 000
+# Порядок: канонічний перший, РОБОЧИЙ резерв другий, недосяжний — останній (щоб
+# не палити на ньому цілий таймаут). Перевизначається env OSM_OVERPASS_ENDPOINTS.
 _OVERPASS_ENDPOINTS_DEFAULT = (
     "https://overpass-api.de/api",
+    "https://overpass.kumi.systems/api",
     "https://overpass.private.coffee/api",
 )
 

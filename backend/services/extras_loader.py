@@ -25,8 +25,16 @@ from services.osm_source import resolve_osm_source
 
 _CACHE_DIR = Path(os.getenv("OSM_DATA_CACHE_DIR") or "cache/osm/overpass_cache/extras")
 _CACHE_VERSION = "v1"
+# Перевірено з ПРОД-сервера 08.09.2026 (POST /interpreter, реальний запит):
+#   overpass-api.de        → 200, але HTML-сторінка помилки замість JSON (деградує)
+#   overpass.kumi.systems  → 200 + валідний JSON  ← робочий резерв
+#   overpass.private.coffee→ 000 (недосяжний із цього сервера)
+#   overpass.osm.jp        → 000
+# Порядок: канонічний перший, РОБОЧИЙ резерв другий, недосяжний — останній (щоб
+# не палити на ньому цілий таймаут). Перевизначається env OSM_OVERPASS_ENDPOINTS.
 _OVERPASS_ENDPOINTS_DEFAULT = (
     "https://overpass-api.de/api",
+    "https://overpass.kumi.systems/api",
     "https://overpass.private.coffee/api",
 )
 

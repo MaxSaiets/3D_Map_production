@@ -94,3 +94,18 @@ def test_site_preview_uses_the_real_timeout_setting():
     src = (Path(__file__).resolve().parents[1] / "services" / "site_preview.py").read_text(encoding="utf-8")
     assert "requests_timeout" in src, "site_preview має знати реальне ім'я налаштування"
     assert "ox.settings.timeout =" not in src, "лишилось присвоєння у неіснуючий атрибут"
+
+
+def test_default_mirrors_include_a_verified_working_one():
+    """Перевірено з прод-сервера 08.09.2026: `overpass.private.coffee` НЕДОСЯЖНИЙ
+    (000), а основний `overpass-api.de` віддавав HTML-помилку замість JSON. Тобто
+    навіть після фіксу перемикання (G-1) резерву фактично не було. Список має
+    містити перевірено робоче дзеркало, і недосяжне не має стояти перед ним —
+    інакше на ньому згорає цілий таймаут."""
+    for mod in (data_loader, extras_loader):
+        eps = list(mod._OVERPASS_ENDPOINTS_DEFAULT)
+        assert any("kumi.systems" in e for e in eps), f"{mod.__name__}: немає перевіреного резерву"
+        if any("private.coffee" in e for e in eps):
+            assert eps.index(next(e for e in eps if "kumi.systems" in e)) < \
+                   eps.index(next(e for e in eps if "private.coffee" in e)), \
+                   f"{mod.__name__}: недосяжне дзеркало стоїть перед робочим"
