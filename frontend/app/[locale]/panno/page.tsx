@@ -21,7 +21,7 @@ type PannoCopy = {
   faq: { q: string; a: string }[]; cta: string; ctaSecondary: string; photosAlt: string;
 };
 
-const M = MAP_SIZE_PRICES_UAH; // {55:250, 80:350, 110:450, 150:550}
+const M = MAP_SIZE_PRICES_UAH; // з 08.09.2026: {55:350, 80:490, 110:630, 150:770}
 const eur = (uah: number) => mapPriceEur(uah);
 
 const COPY: Record<AppLocale, PannoCopy> = {

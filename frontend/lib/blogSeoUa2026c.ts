@@ -189,7 +189,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
             p: [
               "Брелок з мапою — від 170 ₴, магніт на холодильник — 210 ₴.",
               "Настільна 3D-мапа: розмір S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴. Опція рельєфу місцевості — додатково 85 ₴.",
-              "Панно з плиток для великих мап — від 1250 ₴.",
+              "Панно з плиток для великих мап — від 1400 ₴.",
             ],
           },
           {
@@ -229,7 +229,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
         sections: [
           { h2: "What we actually print in Kyiv", p: ["Desktop 3D maps of districts — Pechersk, Podil, Obolon, Troieshchyna, the centre with Khreshchatyk and Maidan Nezalezhnosti, or any other address you request.", "Keychains and magnets with the map of a specific street or building — a popular gift format for Kyiv residents or city guests.", "Tile wall panels for larger interior maps — for example, an office overlooking the district it sits in."] },
           { h2: "What we don't do", p: ["We don't print spare parts, prototypes, repair components or household items — that's not our profile. If that's what you need, an industrial 3D printing shop is the right place to look.", "This is a deliberate choice: by focusing on maps, we keep tight control over geometry, terrain and engraving quality on every product."] },
-          { h2: "Prices for 3D map printing in Kyiv", p: ["A map keychain — from 170 ₴, a fridge magnet — 210 ₴.", "Desktop 3D map: size S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴. The terrain relief option costs an extra 85 ₴.", "A tile wall panel for larger maps — from 1250 ₴."] },
+          { h2: "Prices for 3D map printing in Kyiv", p: ["A map keychain — from 170 ₴, a fridge magnet — 210 ₴.", "Desktop 3D map: size S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴. The terrain relief option costs an extra 85 ₴.", "A tile wall panel for larger maps — from 1400 ₴."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product — keychain, magnet or 3D map, find the address in Kyiv on the map, check the free 3D preview (1–2 minutes), and submit a print order.", "If you want to print it yourself on your own printer, the 3MF file is free after signing in with Google."] },
           { h2: "Delivery and material", p: ["We print in eco-PLA, and the map data comes from OpenStreetMap — real buildings, roads, water and parks of the district at the time of generation.", "Delivery is within Ukraine only, via Nova Poshta, 2–4 business days after printing. Payment is online."] },
           { h2: "Who this suits", p: ["Kyiv residents who moved to another city or country and want a map of their district as a keepsake. Visitors to the capital who liked a specific block and want a souvenir of that place rather than a generic city silhouette.", "Companies that give clients or partners a map of the district their office sits in — for that kind of volume, contact us directly to agree on details for the batch.", "This also works for a graduation or a Kyiv wedding: a map of the park or embankment where a group photo was taken stays as a keepsake longer than any postcard."] },
@@ -271,7 +271,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
             p: [
               "Брелок з мапою — від 170 ₴, магніт — 210 ₴.",
               "Настільна 3D-мапа: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, опція рельєфу — +85 ₴.",
-              "Панно з плиток для великих мап — від 1250 ₴, підходить для мапи всього історичного центру на стіну.",
+              "Панно з плиток для великих мап — від 1400 ₴, підходить для мапи всього історичного центру на стіну.",
             ],
           },
           {
@@ -312,7 +312,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
         sections: [
           { h2: "What you can print as a map of Lviv", p: ["A desktop map of the centre with the Market Square and the town hall — a popular souvenir or gift for city guests.", "A map of the Castle Hill area with its distinctive slope — this is where the terrain relief option really pays off.", "Stryiskyi Park or any residential district — a keychain or magnet with the specific street someone lives on."] },
           { h2: "What we don't print", p: ["We don't take on spare parts, prototypes or any technical components — only maps and map-based objects. It's a deliberate narrowing that keeps geometry and engraving quality consistently high."] },
-          { h2: "Prices", p: ["A map keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief option — +85 ₴.", "A tile wall panel for larger maps — from 1250 ₴, suitable for a wall map of the whole historic centre."] },
+          { h2: "Prices", p: ["A map keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief option — +85 ₴.", "A tile wall panel for larger maps — from 1400 ₴, suitable for a wall map of the whole historic centre."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product, find the place in Lviv on the map (Market Square, Castle Hill, Stryiskyi Park or your own street), check the free 3D preview in 1–2 minutes, and submit an order.", "The 3MF file for self-printing is free, available after signing in with Google."] },
           { h2: "Terrain and delivery", p: ["Lviv is a city of hills, so for Castle Hill or the surrounding slopes, the terrain relief option (+85 ₴) gives the map real depth rather than a flat layout.", "Map data comes from OpenStreetMap. We print in eco-PLA. Delivery is within Ukraine only, via Nova Poshta, 2–4 business days after printing. Payment is online."] },
           { h2: "Who this suits", p: ["Lviv natives abroad or in another city who want a map of their district or street as a keepsake. Visitors who remember one specific corner — the Market Square, Lychakiv, or the cemetery nearby.", "Hotels and cafés in the centre can order a tile panel with a map of the block for their interior — for that kind of volume, contact us directly.", "Students studying in Lviv also find a keychain with a map of their dorm district or favourite street a fitting, affordable, but personal gift for themselves or a friend.", "For those planning a wedding in Lviv, a map of the Market Square or Castle Hill — the place of the ceremony or photo shoot — stays a keepsake of that particular day longer than any postcard."] },
@@ -354,7 +354,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
             p: [
               "Брелок — від 170 ₴, магніт — 210 ₴.",
               "Настільна 3D-мапа: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, рельєф місцевості — +85 ₴.",
-              "Панно з плиток — від 1250 ₴, підходить для великої мапи набережної чи центру на стіну.",
+              "Панно з плиток — від 1400 ₴, підходить для великої мапи набережної чи центру на стіну.",
             ],
           },
           {
@@ -396,7 +396,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
         sections: [
           { h2: "What you can print as a map of Odesa", p: ["A map of the centre with Derybasivska Street and Prymorskyi Boulevard — a recognisable souvenir for city guests, or a gift for an Odesa native now living elsewhere.", "Lanzheron and the seafront — a district that opens onto the sea, and looks good with the terrain option for the coastal slopes.", "Arkadia or any residential district — a keychain or magnet with a specific street."] },
           { h2: "What we don't print", p: ["Technical parts, spare components, prototypes — not our profile. We focus solely on maps and map-based objects, which keeps print quality consistent."] },
-          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel — from 1250 ₴, suitable for a large wall map of the seafront or centre."] },
+          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel — from 1400 ₴, suitable for a large wall map of the seafront or centre."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product, find the place in Odesa on the map (Derybasivska, Lanzheron, Arkadia or your own street), check the free 3D preview in 1–2 minutes, and submit a print order.", "The 3MF file for self-printing is free, available after signing in with Google.", "The terrain relief option (+85 ₴) is especially fitting for Lanzheron, where the coastline turns into a slope — without it, the map stays a flat layout with no real elevation change."] },
           { h2: "Material and delivery", p: ["Map data comes from OpenStreetMap: real buildings, roads, water and parks. We print in eco-PLA.", "Delivery is within Ukraine only, via Nova Poshta, 2–4 business days after printing. Payment is online."] },
           { h2: "Who this suits", p: ["Odesa natives now far from the sea who want a map of the seafront or their old yard as a keepsake. Visitors for whom Derybasivska or Arkadia is a specific memory, not just a name.", "Venues on the seafront can order a tile panel for their interior — for that kind of volume, contact us directly to agree on the batch and design.", "For couples who marry or celebrate an anniversary specifically in Odesa, a map with Lanzheron or Arkadia becomes a reminder of that particular day, not just of the city in general.", "If you're unsure which corner to pick for the map, go with the place someone actually spends time in now rather than a tourist postcard view — the gift lands more precisely that way."] },
@@ -438,7 +438,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
             p: [
               "Брелок — від 170 ₴, магніт — 210 ₴.",
               "Настільна 3D-мапа: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, рельєф місцевості — +85 ₴.",
-              "Панно з плиток для великих мап — від 1250 ₴.",
+              "Панно з плиток для великих мап — від 1400 ₴.",
             ],
           },
           {
@@ -481,7 +481,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
         sections: [
           { h2: "What you can print as a map of Dnipro", p: ["The Dnipro embankment with its bridges and river view — a popular choice for a map of the city centre.", "Monastyrskyi Island — a compact, recognisable spot, good as a standalone desktop map or keychain.", "A residential district or a specific street — a keychain or magnet with the address someone lives at."] },
           { h2: "What we don't print", p: ["Spare parts, prototypes, technical components — not our profile. We print only maps and map-based objects, which keeps geometry and engraving quality under control."] },
-          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel for larger maps — from 1250 ₴."] },
+          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel for larger maps — from 1400 ₴."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product, find the place in Dnipro on the map (the embankment, Monastyrskyi Island or your own street), check the free 3D preview in 1–2 minutes, and submit a print order.", "The 3MF file for self-printing is free, available after signing in with Google.", "For the Dnipro embankment with its bridges, it's worth picking size M or L so the map fits enough surrounding layout, rather than just a narrow strip along the water."] },
           { h2: "Material and delivery", p: ["Map data comes from OpenStreetMap: real buildings, roads, water and parks around the chosen address. We print in eco-PLA.", "Delivery is within Ukraine only, via Nova Poshta, 2–4 business days after printing. Payment is online."] },
           { h2: "Who this suits", p: ["Dnipro residents who moved to another city and want a map of the embankment or their old district as a keepsake. Visitors who remember a specific view of the island or the embankment.", "Offices and cafés near the embankment can order a tile panel with a map of the block for their interior — for that kind of volume, contact us directly.", "For families who grew up in one of Dnipro's districts and later scattered across different cities, a keychain or magnet with a map of the old yard stays a simple way to keep a piece of home close.", "For a birthday of someone now living in another city, a map of their home yard in Dnipro often means more than an abstract souvenir with no tie to a specific place.", "If you're unsure whether your own street will show up clearly enough, the free 3D preview lets you check that before placing the order."] },
@@ -523,7 +523,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
             p: [
               "Брелок — від 170 ₴, магніт — 210 ₴.",
               "Настільна 3D-мапа: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, рельєф місцевості — +85 ₴.",
-              "Панно з плиток для великих мап — від 1250 ₴.",
+              "Панно з плиток для великих мап — від 1400 ₴.",
             ],
           },
           {
@@ -566,7 +566,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
         sections: [
           { h2: "What you can print as a map of Kharkiv", p: ["Shevchenko Gardens with its alleys and greenery — a recognisable spot for a desktop map or a gift for a Kharkiv resident.", "Freedom Square — one of the largest squares in Europe, and looks good as a standalone map of the centre.", "A residential district or a specific street — a keychain or magnet with the address someone lives at."] },
           { h2: "What we don't print", p: ["Spare parts, prototypes, technical components — not our profile. We focus only on maps and map-based objects."] },
-          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel for larger maps — from 1250 ₴."] },
+          { h2: "Prices", p: ["A keychain — from 170 ₴, a magnet — 210 ₴.", "Desktop 3D map: S — 350 ₴, M — 490 ₴, L — 630 ₴, XL — 770 ₴, terrain relief — +85 ₴.", "A tile wall panel for larger maps — from 1400 ₴."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product, find the place in Kharkiv on the map (Shevchenko Gardens, Freedom Square or your own street), check the free 3D preview in 1–2 minutes, and submit a print order.", "The 3MF file for self-printing is free, available after signing in with Google.", "Freedom Square is so large that size L or XL suits it well — that way the map shows the surrounding buildings too, not just the square's outline."] },
           { h2: "Material and delivery", p: ["Map data comes from OpenStreetMap: real buildings, roads, water and parks around the chosen address. We print in eco-PLA.", "Delivery is within Ukraine only, via Nova Poshta, 2–4 business days after printing. Payment is online."] },
           { h2: "Who this suits", p: ["Kharkiv natives in another city or abroad who want a map of their district as a keepsake. People for whom Shevchenko Gardens or Freedom Square is a specific place with a story, not just a name on a map.", "Offices in the centre can order a tile panel with a map of the block for a meeting room — for that kind of volume, contact us directly.", "For graduates of Kharkiv universities, a keychain or magnet with a map of the campus or dorm district also works as a graduation gift — a small, recognisable detail of their student years.", "For relatives and friends currently far from Kharkiv, a map of a familiar street or park can be a simple, wordless reminder of home.", "Before ordering a print, it's worth checking the free 3D preview — it immediately shows whether enough of the surrounding layout fits into the chosen map size."] },
@@ -602,7 +602,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
               "Брелок з мапою (від 170 ₴) — компактний подарунок, можна додати напис з іменем чи датою.",
               "Магніт на холодильник (210 ₴) — легкий варіант для дальніх родичів чи колег, зручно передати поштою.",
               "Настільна 3D-мапа розміром S, M, L чи XL (350–770 ₴) — для основного подарунка близькій людині, з опцією рельєфу місцевості за 85 ₴.",
-              "Панно з плиток (від 1250 ₴) — для великого сімейного подарунка чи мапи на стіну в новій квартирі.",
+              "Панно з плиток (від 1400 ₴) — для великого сімейного подарунка чи мапи на стіну в новій квартирі.",
             ],
           },
           {
@@ -641,7 +641,7 @@ export const SEO_UA_ARTICLES_2026_C: BlogArticle[] = [
           "Every year before New Year comes the same question: what to give someone who already has everything. Cosmetics, sweets, another candle — options that work but say nothing about that particular person. A map or keychain with a specific address — a yard, a street, a city — is a gift that can't be mistaken for anyone else's, because it's made for one specific person and one specific place.",
         sections: [
           { h2: "Why a map beats a typical souvenir", p: ["A map doesn't try to guess someone's taste — colour, style, size. It shows a place the recipient knows and recognises instantly: their home yard, their childhood street, the city they live in now.", "It's also a gift that explains itself in one sentence: “this is where you were born” or “this is where we met” — nothing more needs to be added."] },
-          { h2: "Formats for any budget", p: ["A map keychain (from 170 ₴) — a compact gift, a name or date engraving can be added.", "A fridge magnet (210 ₴) — a light option for distant relatives or colleagues, easy to send by post.", "A desktop 3D map, size S, M, L or XL (350–770 ₴) — for a main gift to someone close, with a terrain relief option for 85 ₴.", "A tile wall panel (from 1250 ₴) — for a large family gift or a wall map in a new flat."] },
+          { h2: "Formats for any budget", p: ["A map keychain (from 170 ₴) — a compact gift, a name or date engraving can be added.", "A fridge magnet (210 ₴) — a light option for distant relatives or colleagues, easy to send by post.", "A desktop 3D map, size S, M, L or XL (350–770 ₴) — for a main gift to someone close, with a terrain relief option for 85 ₴.", "A tile wall panel (from 1400 ₴) — for a large family gift or a wall map in a new flat."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product — keychain, magnet or 3D map, find the address or city on the map, check the free 3D preview (1–2 minutes), and add an engraving if needed.", "Then order a print delivered via Nova Poshta within Ukraine.", "If you don't know the exact address, the district name or a landmark — a school, a park, a metro station — is enough; the map search will find the place."] },
           { h2: "When to order", p: ["Printing and Nova Poshta delivery take 2–4 business days after printing, but demand rises before the holidays, so for a gift under the tree it's best to place the order by mid-December — especially for several items for different family members."] },
           { h2: "Several gifts at once", p: ["If you need to greet several people, it's convenient to order a batch of keychains or magnets with a different address for each — the price per item stays the same.", "The material is eco-PLA, and the map data comes from OpenStreetMap: real buildings, roads, water and parks around the chosen place, not a generic illustration.", "If you're unsure which gift fits a particular person, let the budget guide you: a keychain or magnet for colleagues and distant relatives, a desktop map for close family, a tile panel for a shared gift from the whole family."] },

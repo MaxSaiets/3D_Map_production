@@ -165,7 +165,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
             p: [
               "Брелок з мапою рідної вулиці (від 170 ₴) — щодня в кишені, можна додати рік народження на звороті.",
               "Магніт (210 ₴) — на кухню, де тато щоранку пʼє каву перед роботою.",
-              "Обʼємна 3D-мапа (від 350 ₴) — головний подарунок для полиці: будинки, дороги, парк чи ліс поруч, за бажанням із рельєфом місцевості. Для ювілею всією родиною підійде панно з кількох плиток на стіну (/panno, від 1250 ₴) — більший формат, якщо кілька дітей хочуть скинутися разом.",
+              "Обʼємна 3D-мапа (від 350 ₴) — головний подарунок для полиці: будинки, дороги, парк чи ліс поруч, за бажанням із рельєфом місцевості. Для ювілею всією родиною підійде панно з кількох плиток на стіну (/panno, від 1400 ₴) — більший формат, якщо кілька дітей хочуть скинутися разом.",
             ],
           },
           {
@@ -223,7 +223,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
             p: [
               "A keychain with a map of his home street (from 170 ₴) — in his pocket every day, with the birth year engraved on the back.",
               "A magnet (210 ₴) — for the kitchen where he has his morning coffee.",
-              "A 3D map (from 350 ₴) — the main shelf gift: buildings, roads, the park or forest nearby, with optional terrain relief. For a jubilee celebrated by the whole family, a multi-tile wall panel (/panno, from 1250 ₴) works well if several children want to chip in together.",
+              "A 3D map (from 350 ₴) — the main shelf gift: buildings, roads, the park or forest nearby, with optional terrain relief. For a jubilee celebrated by the whole family, a multi-tile wall panel (/panno, from 1400 ₴) works well if several children want to chip in together.",
             ],
           },
           {
@@ -431,7 +431,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
         ctaLabel: "Створити мапу міста",
         ctaHref: "/create?product=map3d",
         outro:
-          "Панно з кількох плиток на стіну (/panno, від 1250 ₴) підійде, якщо хочеться великого сувеніра для офісу чи вітальні, а не мініатюри на полицю — такий формат добре працює як подарунок компанії чи родині одразу, а не одній людині.",
+          "Панно з кількох плиток на стіну (/panno, від 1400 ₴) підійде, якщо хочеться великого сувеніра для офісу чи вітальні, а не мініатюри на полицю — такий формат добре працює як подарунок компанії чи родині одразу, а не одній людині.",
       },
       en: {
         title: "Souvenir from Kyiv or Lviv: a 3D map of the city centre",
@@ -490,7 +490,7 @@ export const SEO_UA_ARTICLES_2026_A: BlogArticle[] = [
         ctaLabel: "Create a city map",
         ctaHref: "/create?product=map3d",
         outro:
-          "A multi-tile wall panel (/panno, from 1250 ₴) suits those who want a larger souvenir for an office or living room rather than a shelf miniature — a format that works well as a gift for a whole company or family at once, not just one person.",
+          "A multi-tile wall panel (/panno, from 1400 ₴) suits those who want a larger souvenir for an office or living room rather than a shelf miniature — a format that works well as a gift for a whole company or family at once, not just one person.",
       },
     },
   },

@@ -31,7 +31,7 @@ export const SEO_UA_ARTICLES_2026_B: BlogArticle[] = [
               "Брелоки з мапою (від 170 ₴ за штуку) — зручні для наборів на 10, 20, 50 співробітників чи клієнтів, кожному можна додати підпис або дату.",
               "Магніти на холодильник (210 ₴) — легкий подарунок для великої розсилки клієнтам поштою чи кур'єром.",
               "Обʼємна 3D-мапа району (від 350 ₴) — на стіл керівнику чи ключовому партнеру, з реальними будинками й вулицями навколо офісу.",
-              "Панно з плиток (від 1250 ₴) — для переговорної кімнати: велика мапа міста чи району на стіні як частина інтер'єру.",
+              "Панно з плиток (від 1400 ₴) — для переговорної кімнати: велика мапа міста чи району на стіні як частина інтер'єру.",
             ],
           },
           {
@@ -44,7 +44,7 @@ export const SEO_UA_ARTICLES_2026_B: BlogArticle[] = [
           {
             h2: "Ціна і терміни для корпоративних замовлень",
             p: [
-              "Базові ціни ті самі, що й для приватних замовлень: брелок від 170 ₴, магніт 210 ₴, настільна мапа від 350 ₴, панно від 1250 ₴. Для великих наказів ціна узгоджується індивідуально — залежить від кількості й побажань до дизайну.",
+              "Базові ціни ті самі, що й для приватних замовлень: брелок від 170 ₴, магніт 210 ₴, настільна мапа від 350 ₴, панно від 1400 ₴. Для великих наказів ціна узгоджується індивідуально — залежить від кількості й побажань до дизайну.",
               "Друк займає час, тож для новорічного дедлайну краще подати заявку до початку грудня — це дає запас на узгодження макета, друк усього накладу та доставку Новою Поштою по Україні.",
             ],
           },
@@ -69,9 +69,9 @@ export const SEO_UA_ARTICLES_2026_B: BlogArticle[] = [
           "Branded calendars and pens end up in a drawer on the first working day. A gift works when it holds something recognisable to the recipient — the block your office sits in, or the city your client works in. It is not a generic souvenir but an object people put on their desk and show colleagues. This matters even more when a company gives the same set to every client or partner: among a dozen similar gifts, the one made for the recipient's own address or city wins.",
         sections: [
           { h2: "Why a map of the office or the client's city", p: ["A keychain or map with the office district is instantly recognisable to the team — everyone walks these streets daily. For clients, a different option works: a map of their city or the block their business sits in.", "Unlike typical branded merch, this avoids the “another logo gift” feeling — it is an object tied to specific geography that means something to that person or company."] },
-          { h2: "Formats for any budget and scale", p: ["Map keychains (from 170 ₴ each) — convenient for sets of 10, 20 or 50 employees or clients, each can get a name or a date.", "Fridge magnets (210 ₴) — a light gift for a large mailing to clients by post or courier.", "3D district map (from 350 ₴) — for a manager's desk or a key partner, with real buildings and streets around the office.", "Tile wall panel (from 1250 ₴) — for a meeting room: a large city or district map on the wall as part of the interior."] },
+          { h2: "Formats for any budget and scale", p: ["Map keychains (from 170 ₴ each) — convenient for sets of 10, 20 or 50 employees or clients, each can get a name or a date.", "Fridge magnets (210 ₴) — a light gift for a large mailing to clients by post or courier.", "3D district map (from 350 ₴) — for a manager's desk or a key partner, with real buildings and streets around the office.", "Tile wall panel (from 1400 ₴) — for a meeting room: a large city or district map on the wall as part of the interior."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product — keychain, magnet or 3D map, find the office address on the map, confirm the 3D preview (free, 1–2 minutes) and submit a print request.", "For batches of 10 or more with a shared design or a logo on the back, contact us directly — we will confirm details and price for your volume."] },
-          { h2: "Price and timing for corporate orders", p: ["Base prices are the same as for private orders: keychain from 170 ₴, magnet 210 ₴, desk map from 350 ₴, tile panel from 1250 ₴. For large batches the price is agreed individually depending on quantity and design requests.", "Printing takes time, so for the New Year deadline it is best to submit the request before the start of December — this leaves room for design approval, printing the whole batch and delivery via Nova Poshta within Ukraine."] },
+          { h2: "Price and timing for corporate orders", p: ["Base prices are the same as for private orders: keychain from 170 ₴, magnet 210 ₴, desk map from 350 ₴, tile panel from 1400 ₴. For large batches the price is agreed individually depending on quantity and design requests.", "Printing takes time, so for the New Year deadline it is best to submit the request before the start of December — this leaves room for design approval, printing the whole batch and delivery via Nova Poshta within Ukraine."] },
           { h2: "Map data and material", p: ["The map is built from OpenStreetMap data: real buildings, roads, water and parks around the chosen address — not an illustration but the actual layout of the block at the time of generation.", "The product is printed in eco-PLA, so it works both as a client gift and as an object for office space. For a large batch with a shared engraving or a logo on the back, it is simplest to agree on the design with us directly rather than through the automatic builder."] },
         ],
         ctaLabel: "Discuss a corporate order",
@@ -260,7 +260,7 @@ export const SEO_UA_ARTICLES_2026_B: BlogArticle[] = [
             h2: "Скільки коштує і формат під бюджет",
             p: [
               "Брелок з мапою — від 170 ₴, пара брелоків — просто два вироби. Магніт на холодильник — 210 ₴, зручний як маленький додаток до основного подарунка. Настільна 3D-мапа — від 490 ₴ (розмір S) до 770 ₴ (розмір XL), залежно від того, наскільки велику ділянку міста хочеться показати.",
-              "Панно з плиток (від 1250 ₴) підійде, якщо весілля велике й кілька гостей хочуть об'єднатися на один спільний подарунок для нової квартири молодят.",
+              "Панно з плиток (від 1400 ₴) підійде, якщо весілля велике й кілька гостей хочуть об'єднатися на один спільний подарунок для нової квартири молодят.",
             ],
           },
           {
@@ -293,7 +293,7 @@ export const SEO_UA_ARTICLES_2026_B: BlogArticle[] = [
         sections: [
           { h2: "Two ideas that work", p: ["A 3D map of the block where they met or the wedding city — real buildings, streets and a park, sitting on a shelf in the new flat. The couple will instantly recognise the place and tell the story to guests who ask “what is this”.", "A matching pair of keychains: one with the groom's district, the other with the bride's, each engraved with the wedding date on the back.", "The two ideas combine easily: give the shelf map as the main gift and add the pair of keychains as a smaller companion piece."] },
           { h2: "A date engraving that makes it unique", p: ["The wedding date, names, or the coordinates of where the couple met can be added directly in the builder — on a flat map, a magnet, or the back of a keychain. It's the detail that sets this gift apart from a standard wedding set.", "The engraving can be short — just the date — or fuller, with both names; what matters is that it still reads clearly years from now."] },
-          { h2: "Price and formats for any budget", p: ["A map keychain is from 170 ₴; a matching pair is simply two items. A fridge magnet is 210 ₴, a nice small addition to the main gift. A desktop 3D map runs from 490 ₴ (size S) to 770 ₴ (size XL), depending on how much of the city you want to show.", "A tile wall panel (from 1250 ₴) works well when the wedding is big and several guests want to combine into one shared gift for the couple's new flat."] },
+          { h2: "Price and formats for any budget", p: ["A map keychain is from 170 ₴; a matching pair is simply two items. A fridge magnet is 210 ₴, a nice small addition to the main gift. A desktop 3D map runs from 490 ₴ (size S) to 770 ₴ (size XL), depending on how much of the city you want to show.", "A tile wall panel (from 1400 ₴) works well when the wedding is big and several guests want to combine into one shared gift for the couple's new flat."] },
           { h2: "How to make it in 5 minutes", p: ["Choose a product — map or keychain, find the couple's meeting place or the wedding city on the map, confirm the free 3D preview (1–2 minutes), and add a date engraving.", "Then order a print delivered via Nova Poshta within Ukraine, or download the 3MF file if you want to print the gift yourself."] },
           { h2: "When several guests chip in together", p: ["A few friends or relatives can pool money for a larger desktop map (L or XL) or a tile wall panel — then the gift feels like a shared contribution rather than a standard cash envelope.", "The map is built from OpenStreetMap data: the real buildings, streets, water and parks of the place you choose, not a generic illustration of a city.", "If the wedding takes place in a different city from where the couple lives, you can cover both places — order a map of the wedding city as a keepsake for yourself, and a keychain with their future home district as the gift."] },
         ],
