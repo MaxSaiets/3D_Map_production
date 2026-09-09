@@ -1974,6 +1974,7 @@
     "queuedNote": "Ton tour dans quelques minutes. Tu peux fermer la page — le modèle sera conservé.",
     "queuedEta": "Votre tour dans environ {left}. Vous pouvez fermer la page : le modèle sera conservé.",
     "queuedEtaSoon": "C'est bientôt votre tour. Vous pouvez fermer la page : le modèle sera conservé.",
+    "uaOnly": "Impression et livraison uniquement en Ukraine. Le fichier pour impression personnelle est gratuit pour tous.",
     "reconnecting": "Connexion au serveur perdue — nous patientons, elle revient d'ici une minute. Gardez la page ouverte : rien n'est perdu.",
     "cancelGen": "Annuler la génération",
     "printPrepLine": "Préparation du fichier d'impression —",

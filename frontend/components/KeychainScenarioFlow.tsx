@@ -790,6 +790,17 @@ export function KeychainScenarioFlow({
                   {t("printFromLine", { price: disp(priceUah) })}
                 </p>
               )}
+              {/* ⭐09.09.2026: те саме, що в мапах — дві третини тих, хто створює
+                  модель, не з України, а про «доставка лише по Україні» дізнавались
+                  аж на екрані «готово». Кажемо це ДО кнопки. */}
+              {!successView && locale !== "uk" && (
+                <p
+                  className="mt-1.5 text-center text-[11.5px] leading-snug text-[var(--text-secondary)]"
+                  data-testid="ua-only-early"
+                >
+                  {t("uaOnly")}
+                </p>
+              )}
               </>
             )}
             {/* A-6: єдиний вихід у розширений режим — стан зберігається. */}

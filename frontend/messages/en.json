@@ -1974,6 +1974,7 @@
     "queuedNote": "Your turn comes in a few minutes. You can close the page — the model will be saved.",
     "queuedEta": "Your turn in about {left}. You can close the page — the model will be saved.",
     "queuedEtaSoon": "Your turn is coming up. You can close the page — the model will be saved.",
+    "uaOnly": "Printing and delivery are available in Ukraine only. The file for self-printing is free for everyone.",
     "reconnecting": "Lost contact with the server — waiting, it should be back within a minute. Keep the page open: your work isn't lost.",
     "cancelGen": "Cancel generation",
     "printPrepLine": "Preparing the print file —",
