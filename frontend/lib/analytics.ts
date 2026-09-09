@@ -142,24 +142,101 @@ export function trackFunnel(step: FunnelStep, props?: Record<string, unknown>) {
   track("funnel", { step, ...(props || {}) });
 }
 
-/** Читабельний підпис елемента, по якому клікнули (для теплокарти/топ-кліків). */
+// ── Звіти про JS-помилки ─────────────────────────────────────────────────────
+// ⭐09.09.2026, за всім прод-логом рівно 19 помилок, і дві третини з них
+// непридатні до дії:
+//    8×  unhandledrejection: TypeError: Cannot read properties of undefined (reading 'map')
+//    6×  unhandledrejection: TypeError: Failed to fetch
+//    4×  unhandledrejection: i: Failed to connect to MetaMask      ← чуже розширення
+//    1×  CompileError: Wasm code generation disallowed by embedder
+// У ЖОДНОЇ з них немає `src`: обробник `unhandledrejection` викликав звіт без
+// другого аргументу, тож стек губився повністю. «Cannot read … (reading 'map')»
+// вісім разів — це справжня наша помилка, але локалізувати її нічим.
+
+/** Кадр стека, придатний до показу: файл:рядок без довгого хосту. */
+export function stackHint(reason: unknown, max = 120): string {
+  const stack = (reason as { stack?: unknown } | null)?.stack;
+  if (typeof stack !== "string") return "";
+  for (const raw of stack.split("\n")) {
+    const line = raw.trim();
+    // Перший рядок — це зазвичай повтор повідомлення, а не кадр.
+    if (!line || !/:\d+:\d+/.test(line)) continue;
+    return line.replace(/^at\s+/, "").replace(/https?:\/\/[^/]+/g, "").slice(0, max);
+  }
+  return "";
+}
+
+/** Помилка з розширення браузера (гаманці тощо) — не наша і не діагностична. */
+export function isExtensionNoise(msg: string, stack = ""): boolean {
+  const blob = `${msg} ${stack}`;
+  return /-extension:\/\/|\bMetaMask\b|\bethereum\b.*\bprovider\b|Extension context invalidated/i.test(blob);
+}
+
+/** Відомі нешкідливі помилки браузера/Firebase — не засмічуємо ними /admin. */
+export const BENIGN_ERROR = /Indexed Database|IndexedDB|ResizeObserver loop|Script error\.?$|Load failed/i;
+
+/** Чи варто взагалі надсилати цей звіт. */
+export function shouldReportError(msg: string, stack = ""): boolean {
+  const text = String(msg || "");
+  if (!text) return false;
+  if (BENIGN_ERROR.test(text)) return false;
+  if (isExtensionNoise(text, stack)) return false;
+  return true;
+}
+
+/** Ролі, які людина сприймає як кнопку, хоч тег і не `button`. */
+const INTERACTIVE_ROLES = new Set([
+  "button", "link", "radio", "tab", "option", "menuitem", "switch", "checkbox",
+]);
+const INTERACTIVE_TAGS = new Set(["button", "a", "label", "summary", "select", "option"]);
+
+/**
+ * Читабельний підпис елемента, по якому клікнули (для теплокарти/топ-кліків).
+ *
+ * ⭐09.09.2026, перевірено на реальному логу: з ~2400 кліків на /create **73 %**
+ * приходили як `div` (971), `path` (527), `canvas` (215), `a` (23), `select` (28)
+ * — тобто без жодної інформації про те, куди саме людина натиснула. Три причини:
+ *   1) перша ж гілка шукала `data-track`, якого в проєкті **НЕМАЄ ЖОДНОГО** —
+ *      мертва перевірка (0 входжень у components/ та app/);
+ *   2) підйом лише на 4 рівні — у React-розмітці іконка всередині кнопки часто
+ *      глибша, тож обхід закінчувався на службовому `div`;
+ *   3) текст брався лише з `button`/`a` — усі `label`, `role="radio"`,
+ *      `summary`, `select` лишались безіменними, хоч саме ними зроблені картки
+ *      вибору в guided-сценарії.
+ * Тепер додано `data-testid` (109 штук у розмітці, ті самі, що в e2e), ролі та
+ * глибший підйом: клік по `<canvas>` усередині `data-testid="preview-3d"`
+ * приходить як «preview-3d», а не як «canvas».
+ */
 export function clickLabel(target: EventTarget | null): string {
+  const trim = (s: string) => s.trim().replace(/\s+/g, " ").slice(0, 40);
   let n = target as HTMLElement | null;
-  for (let i = 0; i < 4 && n; i++) {
-    const dt = (n as HTMLElement).dataset?.track;
-    if (dt) return dt;
+
+  for (let i = 0; i < 8 && n; i++) {
+    const dt = n.dataset?.track;
+    if (dt) return trim(dt);
+
+    const testId = n.dataset?.testid || n.getAttribute?.("data-testid") || "";
+    if (testId) return trim(testId);
+
     const aria = n.getAttribute?.("aria-label");
-    if (aria) return aria;
-    const tag = n.tagName?.toLowerCase();
-    if (tag === "button" || tag === "a") {
+    if (aria) return trim(aria);
+
+    const tag = n.tagName?.toLowerCase?.() || "";
+    const role = n.getAttribute?.("role") || "";
+    if (INTERACTIVE_TAGS.has(tag) || INTERACTIVE_ROLES.has(role)) {
       const txt = (n.innerText || n.textContent || "").trim().replace(/\s+/g, " ");
-      if (txt) return txt.slice(0, 40);
-      return n.getAttribute("title") || tag;
+      if (txt) return trim(txt);
+      const title = n.getAttribute?.("title");
+      if (title) return trim(title);
+      return tag || role;
     }
+
     n = n.parentElement;
   }
+
+  // Нічого впізнаваного за вісім рівнів — лишається сам тег.
   const el = target as HTMLElement | null;
-  return (el?.tagName || "?").toLowerCase();
+  return el?.tagName?.toLowerCase?.() || "?";
 }
 
 // Meta standard-event mapping (Purchase/Lead have built-in Ads-optimisation value

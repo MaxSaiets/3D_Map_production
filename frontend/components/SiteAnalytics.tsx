@@ -5,12 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GA_ID, GADS_ID, GTAG_ON, META_PIXEL_ID, getConsent, setConsent, track, trackPing, isOwnerOptOut, gtagConsentUpdate, clickLabel, campaignParams } from "@/lib/analytics";
+import { GA_ID, GADS_ID, GTAG_ON, META_PIXEL_ID, getConsent, setConsent, track, trackPing, isOwnerOptOut, gtagConsentUpdate, clickLabel, campaignParams, shouldReportError, stackHint } from "@/lib/analytics";
 
-// Відомі НЕшкідливі помилки браузера/Firebase — не засмічуємо ними /admin.
+// Що вважати шумом і як витягти кадр стека — у lib/analytics.ts (там же тести).
 // «Connection to Indexed Database server lost» = Firebase Auth persistence у
 // Safari/приватному режимі/кількох вкладках; на роботу сайту не впливає.
-const BENIGN_ERR = /Indexed Database|IndexedDB|ResizeObserver loop|Script error\.?$|Load failed/i;
 
 /**
  * GDPR-friendly analytics: shows a localized consent banner; Google Analytics
@@ -125,7 +124,7 @@ export default function SiteAnalytics() {
     const report = (msg: string, src?: string) => {
       if (sent >= 10) return;
       if (isOwnerOptOut()) return;           // не логуємо помилки власника
-      if (BENIGN_ERR.test(String(msg))) return; // відомий нешкідливий шум
+      if (!shouldReportError(String(msg), String(src || ""))) return;
       sent++;
       try {
         const body = JSON.stringify({ event: "js_error", path: location.pathname, locale: document.documentElement.lang || "", props: { msg: String(msg).slice(0, 200), src: String(src || "").slice(0, 120) } });
@@ -134,7 +133,11 @@ export default function SiteAnalytics() {
       } catch { /* ignore */ }
     };
     const onErr = (e: ErrorEvent) => report(e.message, `${e.filename}:${e.lineno}`);
-    const onRej = (e: PromiseRejectionEvent) => report(`unhandledrejection: ${e.reason}`);
+    // ⭐09.09: раніше тут не передавали ДРУГИЙ аргумент — усі 19 помилок у логу
+    // прийшли з порожнім `src`, тож найчастішу («reading 'map'», 8 разів)
+    // не було де шукати. Тепер беремо перший кадр стека самої причини.
+    const onRej = (e: PromiseRejectionEvent) =>
+      report(`unhandledrejection: ${e.reason}`, stackHint(e.reason));
     window.addEventListener("error", onErr);
     window.addEventListener("unhandledrejection", onRej);
     return () => { window.removeEventListener("error", onErr); window.removeEventListener("unhandledrejection", onRej); };
