@@ -38,14 +38,23 @@ export function SalesAlternatives({
   const locale = useLocale();
   const [copied, setCopied] = useState<"tg" | "ig" | null>(null);
   const [surveyOpen, setSurveyOpen] = useState(false);
-  const [answered, setAnswered] = useState(false);
+  const [answered, setAnswered] = useState<(typeof REASONS)[number] | true | null>(null);
   const orderClickedRef = useRef(false);
   const surveyKey = `mnd_why_${taskId || "na"}`;
 
   // Опитування: після «Завантажити» одразу, інакше через 30 с без «Замовити».
   useEffect(() => {
     if (!taskId) return;
-    try { if (localStorage.getItem(surveyKey)) { setAnswered(true); return; } } catch { /* приватний режим */ }
+    try {
+      const saved = localStorage.getItem(surveyKey);
+      if (saved) {
+        // Зберігали саму причину — відновлюємо персональну відповідь, а не
+        // загальне «дякуємо»: людина вже бачила її і має побачити ту саму.
+        setAnswered((REASONS as readonly string[]).includes(saved) ? (saved as (typeof REASONS)[number]) : true);
+        setSurveyOpen(true);
+        return;
+      }
+    } catch { /* приватний режим */ }
     const onOrder = () => { orderClickedRef.current = true; };
     const onDownload = () => setSurveyOpen(true);
     window.addEventListener("monadruk:open-order", onOrder);
@@ -83,7 +92,7 @@ export function SalesAlternatives({
   const answer = (reason: (typeof REASONS)[number]) => {
     import("@/lib/analytics").then((m) => m.track("why_not_order", { reason, product, locale })).catch(() => {});
     try { localStorage.setItem(surveyKey, reason); } catch { /* ignore */ }
-    setAnswered(true);
+    setAnswered(reason);
   };
 
   return (
@@ -140,7 +149,17 @@ export function SalesAlternatives({
         </div>
       )}
       {surveyOpen && answered && (
-        <p className="text-center text-[11px] text-[var(--text-secondary)]" data-testid="why-thanks">{t("whyThanks")}</p>
+        // ⭐09.09.2026: раніше тут був глухий кут — «Дякуємо» і все. Це єдиний
+        // прямий зворотний звʼязок, який сайт збирає, і людина, яка щойно
+        // пояснила, ЧОМУ не замовляє, заслуговує на відповідь по суті:
+        // «надрукую сам» → файл уже готовий, «дорого» → що входить у ціну,
+        // «не в Україні» → куди возимо. Без тиску: вона вже сказала «ні».
+        <p
+          className="text-center text-[11px] leading-snug text-[var(--text-secondary)]"
+          data-testid={answered === true ? "why-thanks" : `why-reply-${answered}`}
+        >
+          {answered === true ? t("whyThanks") : t(`whyReply_${answered}`)}
+        </p>
       )}
     </div>
   );

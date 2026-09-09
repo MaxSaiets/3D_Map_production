@@ -111,9 +111,13 @@ def format_lead(rec: Dict[str, Any], *, site_url: str = "") -> str:
     task_id = str(props.get("taskId") or "").strip()
 
     lines = ["🔥 <b>Гарячий лід</b> — натиснули «замовити в месенджері»"]
-    what = _PRODUCT_UK.get(product, product or "модель")
+    label = _PRODUCT_UK.get(product, product or "модель")
+    # Рекап із фронта вже починається з назви товару («3D-мапа · M · Київ»),
+    # тож дописувати її вдруге не треба — виходило «3D-мапа · 3D-мапа · M · Київ».
     if summary:
-        what = f"{what} · {summary}"
+        what = summary if summary.casefold().startswith(label.casefold()) else f"{label} · {summary}"
+    else:
+        what = label
     lines.append(f"🧩 {_esc(what)}")
     if price:
         lines.append(f"💰 {_esc(price)} ₴")

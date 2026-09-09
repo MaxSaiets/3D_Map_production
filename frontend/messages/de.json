@@ -1895,6 +1895,11 @@
     "why_abroad": "Ich bin nicht in der Ukraine",
     "why_other": "Anderes",
     "whyThanks": "Danke – das hilft uns, besser zu werden.",
+    "whyReply_self": "Sehr gut — die Datei ist druckfertig. Falls kein Drucker zur Hand ist: wir drucken und versenden innerhalb der Ukraine.",
+    "whyReply_price": "Im Preis stecken Druck, Material und Versand mit Nova Poshta. Die Datei zum Selbstdrucken ist kostenlos.",
+    "whyReply_look": "Lassen Sie sich Zeit. Größe, Relief und Ebenen sind änderbar — das Generieren ist kostenlos.",
+    "whyReply_abroad": "Druck und Versand vorerst nur innerhalb der Ukraine. Die Datei können Sie überall herunterladen und lokal drucken.",
+    "whyReply_other": "Schreiben Sie uns auf Telegram oder Instagram, was nicht passt — so lässt es sich am schnellsten beheben.",
     "waitOfferTitle": "Während die Datei vorbereitet wird",
     "waitOfferSub": "Keine Lust auf Drucker, Filament und Einstellungen? Wir drucken und versenden in 2–4 Werktagen."
   },

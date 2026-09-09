@@ -1895,6 +1895,11 @@
     "why_abroad": "Je ne suis pas en Ukraine",
     "why_other": "Autre",
     "whyThanks": "Merci — cela nous aide à nous améliorer.",
+    "whyReply_self": "Parfait — le fichier est prêt à imprimer. Sans imprimante sous la main, nous imprimons et expédions en Ukraine.",
+    "whyReply_price": "Le prix couvre l'impression, la matière et la livraison Nova Poshta. Le fichier pour imprimer soi-même est gratuit.",
+    "whyReply_look": "Prenez votre temps. Taille, relief et calques sont modifiables — la génération est gratuite.",
+    "whyReply_abroad": "Impression et livraison uniquement en Ukraine pour l'instant. Le fichier se télécharge partout, à imprimer localement.",
+    "whyReply_other": "Dites-nous ce qui ne va pas sur Telegram ou Instagram — c'est le plus rapide pour corriger.",
     "waitOfferTitle": "Pendant la préparation du fichier",
     "waitOfferSub": "Pas envie de gérer imprimante, filament et réglages ? Nous imprimons et expédions en 2–4 jours ouvrés."
   },

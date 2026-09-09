@@ -75,6 +75,21 @@ def test_message_is_actionable():
         assert must in text, f"у сповіщенні немає «{must}» — власник не зможе діяти"
 
 
+def test_product_name_is_not_repeated():
+    """Рекап із фронта вже починається з назви товару. Перша прод-перевірка
+    09.09 показала «3D-мапа · 3D-мапа · M · Київ»."""
+    text = hot_lead.format_lead(_rec(), site_url="https://monadruk.com")
+    assert text.count("3D-мапа") == 1, text
+    assert "3D-мапа · M · Київ" in text
+
+
+def test_product_name_is_added_when_recap_lacks_it():
+    rec = _rec()
+    rec["props"] = dict(rec["props"], summary="M · Київ")
+    text = hot_lead.format_lead(rec)
+    assert "3D-мапа · M · Київ" in text
+
+
 def test_message_survives_missing_fields():
     """Стара версія фронта ще шле подію без taskId/summary — сповіщення має
     лишитись коректним, а не впасти чи показати «None»."""

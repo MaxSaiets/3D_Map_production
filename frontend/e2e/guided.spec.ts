@@ -195,7 +195,13 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     // Подія download відкриває модалку входу поверх усього — закриваємо її перед кліком по чипу.
     await page.keyboard.press("Escape");
     await alt.getByTestId("why-look").click({ force: true });
-    await expect(alt.getByTestId("why-thanks")).toBeVisible();
+    // ⭐09.09.2026: замість глухого «Дякуємо» — відповідь на конкретну причину
+    // («дивлюсь» → що саме можна змінити). Загальний why-thanks лишився тільки
+    // для невідомої причини зі старого localStorage.
+    const reply = alt.getByTestId("why-reply-look");
+    await expect(reply).toBeVisible();
+    await expect(reply).toContainText("генерація безкоштовна");
+    await expect(alt.getByTestId("why-thanks")).toHaveCount(0);
     await expect(success.getByText("Підлаштувати деталі")).toHaveCount(0);
     await expect(success.getByText("Створити ще одну")).toHaveCount(0);
     // Нічого не міняли → кнопки «Оновити превʼю» нема (sticky-бар — лише <lg, див. мобільний describe)
