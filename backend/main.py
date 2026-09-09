@@ -1633,6 +1633,82 @@ async def create_order_endpoint(
         raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
 
 
+class FileCheckoutRequest(BaseModel):
+    """Купівля друк-файлу конкретної моделі. Ніякої доставки: файл не возять."""
+
+    task_id: str = Field(min_length=4, max_length=128)
+    email: str = Field(max_length=160)
+    locale: str = Field(default="uk", max_length=8)
+
+
+@app.post("/api/file/checkout")
+async def file_checkout(
+    req: FileCheckoutRequest,
+    _rl: None = Depends(rate_limit("file_checkout", [(10, 3600.0)])),
+):
+    """Чек на друк-файл (рішення власника 09.09.2026: 149 ₴).
+
+    Чому окремо від /api/order: там обовʼязкові телефон і відділення Нової Пошти,
+    бо там ВЕЗУТЬ виріб. Файл нікуди не везуть — потрібна лише пошта, щоб було
+    куди надіслати посилання й кому відкрити доступ. Саме ця різниця й робить
+    файл продаваним за межі України, де друк недоступний."""
+    from services import file_access as _fa
+    from services.liqpay import is_configured, build_checkout
+    from services.order_service import attach_payment, create_order
+
+    email = (req.email or "").strip().lower()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=422, detail="Вкажіть коректну пошту — на неї прийде файл")
+    task_id = (req.task_id or "").strip()
+
+    # Уже оплачено (людина повернулась за посиланням) — не беремо грошей удруге.
+    if _fa.has_access(task_id):
+        return {"alreadyPaid": True, "taskId": task_id}
+
+    if not is_configured():
+        raise HTTPException(status_code=503, detail="Онлайн-оплата тимчасово недоступна")
+
+    price = _fa.file_price_uah()
+    order = create_order({
+        "name": email.split("@")[0][:80] or "Покупець файлу",
+        "phone": "",
+        "email": email,
+        "product_type": "file",
+        "task_id": task_id,
+        "comment": "Друк-файл (3MF), без доставки",
+        "est_price": f"{price} ₴",
+        "summary": {"product": "file", "priceUah": price, "locale": req.locale},
+    })
+    order_number = str(order.get("order_number") or "")
+
+    site = (os.getenv("PUBLIC_SITE_URL") or "https://monadruk.com").rstrip("/")
+    checkout = build_checkout(
+        amount=float(price), currency="UAH",
+        description=f"Monadruk #{order_number} · друк-файл",
+        order_id=order_number,
+        result_url=f"{site}/order-success?order={order_number}&file=1",
+        server_url=f"{site}/api/liqpay/callback",
+    )
+    if not checkout:
+        raise HTTPException(status_code=503, detail="Не вдалося сформувати платіж")
+
+    try:
+        attach_payment(order_number, {**checkout, "amount": price, "currency": "UAH"})
+    except Exception as exc:  # noqa: BLE001
+        print(f"[FILE] attach_payment skipped: {exc}")
+
+    return {"alreadyPaid": False, "orderNumber": order_number,
+            "priceUah": price, "currency": "UAH", "payment": checkout}
+
+
+@app.get("/api/file/access/{task_id}")
+async def file_access_status(task_id: str):
+    """Чи вже оплачено файл цієї моделі + скільки він коштує. Публічний і
+    дешевий: фронт питає його, щоб показати «Купити файл — N ₴» або «Завантажити»."""
+    from services import file_access as _fa
+    return {"paid": _fa.has_access(task_id), "priceUah": _fa.file_price_uah(), "currency": "UAH"}
+
+
 @app.post("/api/liqpay/callback")
 async def liqpay_callback(data: str = Form(default=""), signature: str = Form(default="")):
     """LiqPay server-callback (webhook): підтвердження статусу оплати. Перевіряємо підпис
@@ -2525,6 +2601,23 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     path = _resolve_model_path(req)
     if path is None:
         raise HTTPException(status_code=404, detail="Файл моделі не знайдено")
+    # ⭐09.09.2026: ОПЛАЧЕНИЙ файл — окремий, самостійний шлях доступу. Він не
+    # чіпає безкоштовну квоту: людина заплатила саме за цю модель, тож і віддаємо
+    # саме її, скільки б разів вона не повернулась (файл можна загубити, диск
+    # може вмерти). Порядок навмисний: спершу перевіряємо оплату, і лише потім
+    # списуємо безкоштовне завантаження — інакше покупець платив би двічі.
+    from services import file_access as _fa
+    _paid_file = _fa.has_access(req.task_id or "")
+    if _paid_file:
+        add_model(u["uid"], u.get("email") or "", {
+            "task_id": req.task_id, "title": req.title, "city": req.city,
+            "product_type": req.product_type, "download_url": req.download_url,
+            "preview": (req.preview or "")[:200000], "params": req.params,
+        })
+        return FileResponse(
+            str(path), media_type="model/3mf", filename=path.name,
+            headers={"X-Paid-File": "1"},
+        )
     res = register_download(u["uid"], u.get("email") or "", u["is_admin"], req.task_id or "")
     if not res["ok"]:
         raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")

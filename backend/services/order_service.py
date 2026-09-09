@@ -464,6 +464,33 @@ def attach_payment(order_number: str, payment: Dict[str, Any]) -> bool:
     return True
 
 
+def find_order_record(order_number: str) -> Optional[Dict[str, Any]]:
+    """Останній запис САМОГО замовлення (не подію оплати) за номером.
+
+    Потрібен, щоб знати `task_id` і пошту оплаченого замовлення — за ними
+    відкривається доступ до друк-файлу. Беремо ОСТАННІЙ відповідний рядок, бо
+    журнал дописуваний: `set_order_status` / `attach_payment` перезаписують
+    запис, і актуальний — найновіший."""
+    if not ORDERS_LOG.exists():
+        return None
+    found: Optional[Dict[str, Any]] = None
+    try:
+        for line in ORDERS_LOG.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except Exception:  # noqa: BLE001
+                continue
+            if rec.get("type") == "payment":
+                continue
+            if str(rec.get("order_number")) == str(order_number):
+                found = rec
+    except Exception:  # noqa: BLE001
+        return found
+    return found
+
+
 def _order_already_paid(order_id: str) -> bool:
     """True, якщо замовлення вже має статус paid АБО зафіксовану успішну оплату —
     щоб повторні перевірки статусу не дублювали подій/нотифікацій."""
@@ -516,6 +543,20 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
     # the order's status to "paid" so the admin board reflects it (без окремого
     # ручного кліку). Best-effort — лог-подія вже записана вище.
     if paid:
+        # ⭐09.09.2026: оплата = доступ до друк-файлу цієї моделі. Хук саме тут,
+        # бо `mark_order_paid` — ЄДИНА точка підтвердження: її кличуть і
+        # server-callback LiqPay, і опитування статусу зі сторінки-подяки.
+        # Доступ даємо будь-якому оплаченому замовленню з `task_id`: людина, яка
+        # заплатила за друк, тим паче має право на свій файл.
+        try:
+            from services import file_access as _fa
+            _rec = find_order_record(str(order_id))
+            _tid = str((_rec or {}).get("task_id") or "")
+            if _tid:
+                _fa.grant(_tid, order_number=str(order_id),
+                          email=str((_rec or {}).get("email") or ""), amount=amount)
+        except Exception as e:  # noqa: BLE001
+            print(f"[ORDER] file access grant skipped: {e}")
         try:
             set_order_status(str(order_id), "paid")
         except Exception as e:  # noqa: BLE001
