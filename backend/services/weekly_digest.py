@@ -87,6 +87,20 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     # «(✓0 / ✗0)» поруч із «Генерації: 6» читалось як «усе зламано».
     lines.append(f"🧩 Генерації: {_with_people(gen_total, 'generatePeople')}"
                  + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
+    # ⭐09.09.2026: за 30 днів модель створили 23 людини, з них лише 8 з України.
+    # Друк і доставка — лише по Україні, тобто дві третини будівників не можуть
+    # нічого купити. Це найважливіше число тижня, і воно має бути тут, а не в
+    # сирому лозі. Показуємо, тільки коли закордонні реально є.
+    # ВАЖЛИВО: рядок малюємо, лише коли поле про країну СПРАВДІ є. Інакше
+    # старий агрегат (без `generatePeopleUA`) дав би «з України: 0 · з-за
+    # кордону: усі» — тобто вигадану цифру. Власний тест це й спіймав.
+    _gen_people = int(choices.get("generatePeople") or 0)
+    _has_geo = choices.get("generatePeopleUA") is not None
+    _gen_ua = int(choices.get("generatePeopleUA") or 0)
+    _gen_abroad = max(0, _gen_people - _gen_ua)
+    if _has_geo and _gen_people and _gen_abroad:
+        lines.append(f"🌍 З них з України: {_gen_ua} · з-за кордону: {_gen_abroad}"
+                     " — закордонним ми можемо продати лише файл")
     lines.append(f"🛒 Клік «Замовити»: {_with_people(order_clicks, 'orderClickPeople')}"
                  f" · надіслані замовлення: {orders_week}")
     # Зависли на оплаті — гроші, які вже майже прийшли. Посилання на оплату є в

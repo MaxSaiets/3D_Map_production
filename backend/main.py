@@ -1867,6 +1867,12 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     # я вже зробив 08.09 усно; тепер він не може повторитись у звіті.
     g_download_people: set = set()
     g_gen_people: set = set()
+    # ⭐09.09.2026: розріз «звідки той, хто СТВОРИВ модель». За 30 днів це були
+    # 23 людини, і лише 8 з України — решта FR/ES/DE/AT/IT/MX/CH. Друк і доставка
+    # лише по Україні, тобто дві третини будівників не можуть нічого купити.
+    # Це головний бізнес-факт, і власник має бачити його щотижня сам, а не тоді,
+    # коли хтось полізе в сирий лог.
+    g_gen_people_ua: set = set()
     g_messenger_people: set = set()
     g_order_click_people: set = set()
     # S-2 (2026-09-07): «що заважає замовити» + замовлення через месенджер — у межах періоду.
@@ -1975,6 +1981,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                             g_gen_default += 1
                         if r.get("visitor"):
                             g_gen_people.add(r["visitor"])
+                            if str(r.get("cc", "")).upper() == "UA":
+                                g_gen_people_ua.add(r["visitor"])
                         _size = props.get("sizeMm")
                         if _size:
                             g_sizes[str(_size)] += 1
@@ -2129,6 +2137,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
             "orderClicks": g_order_clicks,
             "orderClickPeople": len(g_order_click_people),
             "generatePeople": len(g_gen_people),
+            "generatePeopleUA": len(g_gen_people_ua),
             "messengerPeople": len(g_messenger_people),
             "results": {"ok": g_results_ok, "fail": g_results_fail},
             "whyNotOrder": g_reasons.most_common(6),

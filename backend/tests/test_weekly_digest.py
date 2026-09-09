@@ -147,3 +147,35 @@ def test_no_people_data_keeps_the_old_plain_line():
     text = wd.build_digest(agg, orders_week=0, leads_total=0)
     assert "Завантажили файл: 9 ·" in text, text
     assert "людей" not in text, text
+
+def test_shows_where_the_builders_are_from():
+    """⭐Головний бізнес-факт 09.09: за 30 днів модель створили 23 людини, з них
+    лише 8 з України. Друк і доставка — тільки по Україні. Власник має бачити це
+    щотижня, а не тоді, коли хтось полізе в сирий лог."""
+    agg = {
+        "totals": {"uniqueVisitors": 149, "pageviews": 300},
+        "guided": {"generate": {"total": 27},
+                   "choices": {"generatePeople": 23, "generatePeopleUA": 8, "results": {}}},
+    }
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "З них з України: 8 · з-за кордону: 15" in text, text
+
+
+def test_no_foreign_builders_no_extra_line():
+    """Коли всі свої — зайвого рядка не додаємо."""
+    agg = {
+        "totals": {"uniqueVisitors": 10, "pageviews": 20},
+        "guided": {"generate": {"total": 5},
+                   "choices": {"generatePeople": 5, "generatePeopleUA": 5, "results": {}}},
+    }
+    assert "з-за кордону" not in wd.build_digest(agg, orders_week=0, leads_total=0)
+
+
+def test_missing_country_data_does_not_invent_a_split():
+    """Старий агрегат без generatePeopleUA не має малювати «усі закордонні»."""
+    agg = {
+        "totals": {"uniqueVisitors": 10, "pageviews": 20},
+        "guided": {"generate": {"total": 5}, "choices": {"generatePeople": 5, "results": {}}},
+    }
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "З них з України: 0" not in text
