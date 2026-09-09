@@ -1123,6 +1123,18 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     sym = p.get("currency_symbol", "₴")
     if product == "keychain":
         price = int(p.get("keychain", {}).get("base", 170))
+    elif product == "magnet":
+        # ⭐09.09.2026: магніт — виріб ФІКСОВАНОГО розміру (у прайсі він живе як
+        # запис «60» у таблиці мап). Без цієї гілки `product=magnet` падав у
+        # мапну гілку і відповідав за НАЙБЛИЖЧИМ розміром:
+        #     40 мм → 350 ₴,  50 мм → 350 ₴,  60 мм → 210 ₴,  80 мм → 490 ₴
+        # тобто 60-мм магніт виходив ДЕШЕВШИМ за 40-мм, а запит без розміру
+        # повертав 350 ₴ — хоча прайс-сторінка й усі статті обіцяють 210 ₴.
+        # Guided-флоу цього не показував (він питає `map` + 60 мм), але API
+        # суперечив опублікованій ціні — і це чекало на першого, хто повірить
+        # назві параметра.
+        _map_sizes = {float(k): int(v) for k, v in (p.get("map", {}).get("sizes_mm", {}) or {}).items()}
+        price = int(_map_sizes.get(60.0, 210))
     elif product == "floorplan":
         fp = p.get("floorplan", {}) or {}
         fp_sizes = {float(k): int(v) for k, v in (fp.get("sizes_mm", {}) or {}).items()}
