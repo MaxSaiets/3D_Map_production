@@ -112,3 +112,38 @@ def test_pending_payment_orders_are_reported():
     assert "Чекають оплати: 2" in text and "найстарішому" in text
     # немає зависших → рядка немає
     assert "Чекають оплати" not in wd.build_digest({"totals": {}, "guided": {}}, 0, 0, pending=(0, 0))
+
+def test_events_and_people_are_told_apart():
+    """⭐Знайдено на перевірці ЖИВОГО дайджеста 09.09, перед першою розсилкою:
+    «Завантажили файл: 32» — це був 31 клік ОДНІЄЇ людини плюс один чужий.
+    Власник прочитав би 32 покупці. Саме так я сам помилився 08.09."""
+    agg = {
+        "totals": {"uniqueVisitors": 31, "pageviews": 58},
+        "guided": {
+            "generate": {"total": 6},
+            "choices": {
+                "downloads": 32, "downloadPeople": 2,
+                "orderClicks": 0, "orderClickPeople": 0,
+                "generatePeople": 3,
+                "messenger": [["tg", 1]], "messengerPeople": 1,
+                "results": {"ok": 0, "fail": 0},
+            },
+        },
+    }
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "Завантажили файл: 32 (людей: 2)" in text, text
+    assert "Генерації: 6 (людей: 3)" in text, text
+    # там, де числа збігаються, зайвого «(людей: 1)» не додаємо
+    assert "у месенджер: 1" in text and "у месенджер: 1 (людей" not in text, text
+
+
+def test_no_people_data_keeps_the_old_plain_line():
+    """Старий агрегат без *People полів не має ламати дайджест."""
+    agg = {
+        "totals": {"uniqueVisitors": 10, "pageviews": 20},
+        "guided": {"generate": {"total": 4},
+                   "choices": {"downloads": 9, "orderClicks": 1, "results": {}}},
+    }
+    text = wd.build_digest(agg, orders_week=0, leads_total=0)
+    assert "Завантажили файл: 9 ·" in text, text
+    assert "людей" not in text, text

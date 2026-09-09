@@ -1849,6 +1849,14 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_shares = 0                       # guided_share
     g_downloads = 0                    # guided_download + download_model
     g_order_clicks = 0                 # guided_order_click
+    # ⭐09.09.2026: рахуємо ще й ЛЮДЕЙ, а не лише події. Перевірка дайджеста на
+    # живих даних: «Завантажили файл: 32» — це були 31 клік ОДНІЄЇ людини плюс
+    # один чужий. Власник прочитав би це як «32 покупці». Той самий клас помилки
+    # я вже зробив 08.09 усно; тепер він не може повторитись у звіті.
+    g_download_people: set = set()
+    g_gen_people: set = set()
+    g_messenger_people: set = set()
+    g_order_click_people: set = set()
     # S-2 (2026-09-07): «що заважає замовити» + замовлення через месенджер — у межах періоду.
     g_reasons: Counter = Counter()     # why_not_order.reason → к-сть
     g_messenger: Counter = Counter()   # messenger_order.channel → к-сть
@@ -1937,6 +1945,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                         g_reasons[str(props.get("reason") or "other")] += 1
                     else:
                         g_messenger[str(props.get("channel") or "tg")] += 1
+                        if r.get("visitor"):
+                            g_messenger_people.add(r["visitor"])
             elif ev in _GUIDED_EVENTS:
                 # той самий один прохід по логу — без окремого читання файлу
                 if str(r.get("day", "")) >= _cutoff_day:
@@ -1951,6 +1961,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                             g_gen_picked += 1
                         else:
                             g_gen_default += 1
+                        if r.get("visitor"):
+                            g_gen_people.add(r["visitor"])
                         _size = props.get("sizeMm")
                         if _size:
                             g_sizes[str(_size)] += 1
@@ -1980,8 +1992,12 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                         g_shares += 1
                     elif ev in ("guided_download", "download_model"):
                         g_downloads += 1
+                        if r.get("visitor"):
+                            g_download_people.add(r["visitor"])
                     elif ev == "guided_order_click":
                         g_order_clicks += 1
+                        if r.get("visitor"):
+                            g_order_click_people.add(r["visitor"])
                     else:  # guided_result
                         if str(props.get("ok") or "").lower() in _TRUE:
                             g_results_ok += 1
@@ -2097,7 +2113,11 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
             "homeMarked": g_home_marked,
             "shares": g_shares,
             "downloads": g_downloads,
+            "downloadPeople": len(g_download_people),
             "orderClicks": g_order_clicks,
+            "orderClickPeople": len(g_order_click_people),
+            "generatePeople": len(g_gen_people),
+            "messengerPeople": len(g_messenger_people),
             "results": {"ok": g_results_ok, "fail": g_results_fail},
             "whyNotOrder": g_reasons.most_common(6),
             "messenger": g_messenger.most_common(4),

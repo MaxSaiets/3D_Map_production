@@ -69,20 +69,34 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     messenger = sum(v for _, v in _pairs(choices.get("messenger")))
     reasons = _pairs(choices.get("whyNotOrder"))
 
+    # ⭐09.09.2026, знайдено на перевірці ЖИВОГО дайджеста перед першою розсилкою:
+    # рядок «Завантажили файл: 32» насправді означав 31 клік ОДНІЄЇ людини плюс
+    # один чужий. Власник прочитав би це як «32 покупці» — саме так я сам
+    # помилився 08.09. Тому поруч із подіями показуємо ЛЮДЕЙ, і лише тоді, коли
+    # числа розходяться (інакше «(людей: 3)» біля «3» — зайвий шум).
+    def _with_people(count: int, people_key: str) -> str:
+        people = int(choices.get(people_key) or 0)
+        if people and people != count:
+            return f"{count} (людей: {people})"
+        return str(count)
+
     lines = [f"📊 Monadruk за {days} дн."]
     lines.append(f"👥 Відвідувачі: {visitors} · перегляди: {pageviews}")
     _ok, _fail = int(results.get("ok") or 0), int(results.get("fail") or 0)
     # Показуємо ✓/✗ лише коли подія результату реально приходила: порожнє
     # «(✓0 / ✗0)» поруч із «Генерації: 6» читалось як «усе зламано».
-    lines.append(f"🧩 Генерації: {gen_total}" + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
-    lines.append(f"🛒 Клік «Замовити»: {order_clicks} · надіслані замовлення: {orders_week}")
+    lines.append(f"🧩 Генерації: {_with_people(gen_total, 'generatePeople')}"
+                 + (f" (✓{_ok} / ✗{_fail})" if (_ok or _fail) else ""))
+    lines.append(f"🛒 Клік «Замовити»: {_with_people(order_clicks, 'orderClickPeople')}"
+                 f" · надіслані замовлення: {orders_week}")
     # Зависли на оплаті — гроші, які вже майже прийшли. Посилання на оплату є в
     # картці замовлення в адмінці (кнопка «Скопіювати посилання»).
     _pend_n, _pend_days = (pending or (0, 0))
     if _pend_n:
         _age = f", найстарішому {_pend_days} дн." if _pend_days else ""
         lines.append(f"⏳ Чекають оплати: {_pend_n}{_age} — посилання в картці замовлення")
-    lines.append(f"⬇️ Завантажили файл: {downloads} · у месенджер: {messenger}")
+    lines.append(f"⬇️ Завантажили файл: {_with_people(downloads, 'downloadPeople')}"
+                 f" · у месенджер: {_with_people(messenger, 'messengerPeople')}")
     # Повторні кліки «Завантажити» — сигнал, що людина не бачить реакції інтерфейсу
     # (прод 07.09: один відвідувач дав 31 клік → 35 генерацій друку).
     reclicks = int((guided.get("downloadReclicks") or 0))
