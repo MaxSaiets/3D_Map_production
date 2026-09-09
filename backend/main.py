@@ -1816,7 +1816,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_gen_default = 0                  # генерації на дефолтному місці
     g_mode: Counter = Counter()        # "from→to" → к-сть перемикань у розширений
     g_quota: Counter = Counter()       # місце блокування квотою ("download"/"—")
-    g_wait = 0                         # скільки разів бачили довге очікування
+    g_wait = 0                         # скільки разів бачили довге очікування
     g_reclick = 0                      # повторні кліки «Завантажити», проігноровані захистом
     g_funnel: Counter = Counter()      # класичні кроки, але В МЕЖАХ періоду
     # ── Guided-вибори (для адмінки: «що конкретно клікнув/обрав користувач») ──
@@ -2061,7 +2061,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
         "generate": {"total": _g_gen_total, "placePicked": g_gen_picked, "placeDefault": g_gen_default},
         "modeSwitch": g_mode.most_common(8),
         "quotaBlock": {"total": sum(g_quota.values()), "byAt": g_quota.most_common(5)},
-        "downloadWait": g_wait,
+        "downloadWait": g_wait,
         "downloadReclicks": g_reclick,
         # Розбивки по пристрою НЕМАЄ: /api/track не зберігає ні User-Agent, ні
         # прапорець mobile/desktop (лише денний хеш) → фронт ховає цей рядок.
@@ -4545,6 +4545,12 @@ def _friendly_generation_error(exc: Exception) -> str:
     Покупець не повинен бачити Python-трейс/назву винятку. Підбираємо людську
     підказку за ключовими словами; сирий текст уже залогований у консоль вище.
     """
+    # Наш власний виняток уже несе готове українське повідомлення і точнішу
+    # причину. Пропускаємо його як є: інакше він потрапив би під загальне
+    # правило нижче, бо слово «OpenStreetMap» містить «osm».
+    if type(exc).__name__ == "OverpassUnavailableError":
+        return str(getattr(exc, "user_message", "") or exc)
+
     raw = str(exc or "").lower()
 
     def _has(*subs: str) -> bool:

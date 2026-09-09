@@ -20,6 +20,8 @@ import pandas as pd
 
 import geopandas as gpd
 import osmnx as ox
+
+from services import overpass_health
 from services.osm_source import resolve_osm_source
 
 
@@ -73,6 +75,11 @@ def _run_overpass_with_retries(label: str, fetch_fn):
     original_timeout = int(getattr(ox.settings, _TO_ATTR, 180) or 180)
     last_error: Exception | None = None
     endpoints = _overpass_endpoints()
+
+    # ⭐09.09.2026: спільний запобіжник із data_loader — див. services/overpass_health.py.
+    if overpass_health.outage_active():
+        raise overpass_health.OverpassUnavailableError(overpass_health.outage_reason())
+
     try:
         for attempt_index, endpoint in enumerate(endpoints, start=1):
             try:
@@ -85,10 +92,14 @@ def _run_overpass_with_retries(label: str, fetch_fn):
                     raise RuntimeError(f"{label}: empty result from {endpoint}")
                 if attempt_index > 1:
                     print(f"[INFO] Overpass retry succeeded for {label} via {endpoint}")
+                overpass_health.note_success()
                 return result
             except Exception as exc:
                 last_error = exc
                 print(f"[WARN] Overpass request failed for {label} via {endpoint}: {exc}")
+                overpass_health.note_failure(exc)
+                if overpass_health.outage_active():
+                    raise overpass_health.OverpassUnavailableError(str(exc)[:200]) from exc
                 if attempt_index < len(endpoints):
                     time.sleep(min(attempt_index, 2))
     finally:

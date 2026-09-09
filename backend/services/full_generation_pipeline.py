@@ -16,6 +16,7 @@ from services.bridge_water_pipeline import prepare_bridge_water_geometries
 from services.building_supports import union_mesh_collection
 from services.canonical_mask_bundle import load_canonical_mask_bundle
 from services.data_fetch_pipeline import fetch_generation_data
+from services import overpass_health
 from services.debug_bundle_pipeline import create_debug_bundle
 from services.detail_layer_pipeline import process_detail_layers
 from services.export_pipeline import export_generation_outputs
@@ -620,6 +621,7 @@ def _validate_source_stage(
     *,
     source: SourceDataResult,
     zone_prefix: str,
+    request: Any = None,
 ) -> None:
     building_count = len(source.gdf_buildings) if getattr(source.gdf_buildings, "empty", True) is False else 0
     water_count = len(source.gdf_water) if getattr(source.gdf_water, "empty", True) is False else 0
@@ -635,6 +637,21 @@ def _validate_source_stage(
             road_count = len(source.G_roads)
 
     if road_count == 0 and building_count == 0:
+        # ⭐09.09.2026: «порожньо» має ДВІ різні причини, і плутати їх дорого.
+        #   а) у рамці справді нічого немає (поле, ліс, вода) — це нормальний
+        #      розріджений режим, модель має сенс;
+        #   б) джерело даних лежало і не віддало НІЧОГО — тоді ми чесно нічого
+        #      не знаємо про це місце, а користувач отримує порожню пластину.
+        # На проді 08.09 саме випадок (б): мадридська генерація прочекала 471 с
+        # на «Connection refused» і мовчки віддала порожню пластину. Тепер це
+        # зрозуміла помилка, а не мовчазний брак.
+        everything_empty = water_count == 0 and green_count == 0
+        if (
+            everything_empty
+            and not bool(getattr(request, "terrain_only", False))
+            and overpass_health.outage_active()
+        ):
+            raise overpass_health.OverpassUnavailableError(overpass_health.outage_reason())
         print(
             f"[WARN] {zone_prefix}Source data is sparse after API fetch; continuing in sparse-zone mode "
             f"(roads={road_count}, buildings={building_count}, water={water_count}, green={green_count})"
@@ -1036,7 +1053,7 @@ def run_full_generation_pipeline(
         global_center=global_center,
         zone_prefix=zone_prefix,
     )
-    _validate_source_stage(source=source, zone_prefix=zone_prefix)
+    _validate_source_stage(source=source, zone_prefix=zone_prefix, request=request)
     _log_stage("fetch_source", stage_start)
 
     task.update_status("processing", 15, "Завантажую дані OSM (дороги, будівлі, вода)...")

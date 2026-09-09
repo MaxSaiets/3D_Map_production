@@ -17,6 +17,7 @@ from pathlib import Path
 from osmnx._errors import InsufficientResponseError
 import networkx as nx
 from services.osm_source import resolve_osm_source
+from services import overpass_health
 
 # Придушення deprecation warnings від pandas/geopandas
 warnings.filterwarnings('ignore', category=DeprecationWarning, module='pandas')
@@ -123,6 +124,14 @@ def _run_overpass_with_retries(label: str, fetch_fn):
     original_timeout = int(getattr(ox.settings, _TO_ATTR, 180) or 180)
     last_error: Optional[Exception] = None
     endpoints = _overpass_endpoints()
+
+    # ⭐09.09.2026: якщо хост щойно відмовив у зʼєднанні — не чекаємо ще одну
+    # пару таймаутів заради того самого «Connection refused». Мадридська
+    # генерація на проді через це коштувала користувачу 471 с і закінчилась
+    # порожньою пластиною (див. services/overpass_health.py).
+    if overpass_health.outage_active():
+        raise overpass_health.OverpassUnavailableError(overpass_health.outage_reason())
+
     try:
         for attempt_index, endpoint in enumerate(endpoints, start=1):
             try:
@@ -137,6 +146,7 @@ def _run_overpass_with_retries(label: str, fetch_fn):
                     raise InsufficientResponseError(f"{label}: empty road graph from {endpoint}")
                 if attempt_index > 1:
                     print(f"[INFO] Overpass retry succeeded for {label} via {endpoint}")
+                overpass_health.note_success()
                 return result
             except InsufficientResponseError as exc:
                 last_error = exc
@@ -144,6 +154,11 @@ def _run_overpass_with_retries(label: str, fetch_fn):
             except Exception as exc:
                 last_error = exc
                 print(f"[WARN] Overpass request failed for {label} via {endpoint}: {exc}")
+                # Помилка ЗʼЄДНАННЯ (а не порожня відповідь) означає, що хост
+                # лежить: решта шарів чекатимуть намарно.
+                overpass_health.note_failure(exc)
+                if overpass_health.outage_active():
+                    raise overpass_health.OverpassUnavailableError(str(exc)[:200]) from exc
 
             if attempt_index < len(endpoints):
                 time.sleep(min(attempt_index, 2))
