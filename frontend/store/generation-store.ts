@@ -18,6 +18,8 @@ interface GenerationState {
   /** C-series (2026-09-03): хід створення моделі — чергa, помилка з причиною,
    *  підготовка друк-файлу і ознака відновленої з localStorage задачі. */
   queued: boolean;
+  /** Скільки ще секунд стояти В ЧЕРЗІ (не тривалість самої генерації). */
+  queueEta: number | null;
   genError: string | null;
   printPrep: number | null;
   /** Іде завантаження друк-файлу (клік «Завантажити» → друга генерація 1–3 хв).
@@ -188,7 +190,7 @@ interface GenerationState {
   updateProgress: (progress: number, status: string) => void;
   /** perf-2026-09-03: чесний ETA з бекенду (медіана реальних прогонів) + скільки вже минуло. */
   setEta: (etaS: number | null, elapsedS: number | null) => void;
-  setQueued: (queued: boolean) => void;
+  setQueued: (queued: boolean, queueEta?: number | null) => void;
   setGenError: (genError: string | null) => void;
   setPrintPrep: (printPrep: number | null) => void;
   setDownloadBusy: (downloadBusy: boolean) => void;
@@ -241,6 +243,7 @@ const initialState = {
   etaS: null,
   elapsedS: null,
   queued: false,
+  queueEta: null,
   genError: null,
   printPrep: null,
   downloadBusy: false,
@@ -437,7 +440,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setBatchZoneMetaByTaskId: (batchZoneMetaByTaskId) => set({ batchZoneMetaByTaskId }),
   updateProgress: (progress, status) => set({ progress, status }),
   setEta: (etaS, elapsedS) => set({ etaS, elapsedS }),
-  setQueued: (queued) => set({ queued }),
+  setQueued: (queued, queueEta = null) => set({ queued, queueEta: queued ? queueEta : null }),
   setGenError: (genError) => set({ genError }),
   setPrintPrep: (printPrep) => set({ printPrep }),
   setDownloadBusy: (downloadBusy) => set({ downloadBusy }),

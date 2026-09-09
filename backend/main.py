@@ -2963,6 +2963,9 @@ async def get_status(task_id: str):
         "message": task.message,
         "eta_s": getattr(task, "eta_s", None),
         "elapsed_s": _elapsed,
+        # Скільки ще чекати В ЧЕРЗІ (не тривалість самої генерації). None —
+        # коли задача вже рахується або оцінити нічим.
+        "queue_eta_s": getattr(task, "queue_eta_s", None),
         "cached": bool(getattr(task, "from_cache", False)),
         "foreign": bool(getattr(task, "foreign", False)),
         "download_url": main_download_url,
@@ -4766,10 +4769,30 @@ def generate_model_task(
         # to kill in-flight generations.
         from services import gen_queue
         _gen_weight = gen_queue.weight_for_request(request)
+        try:
+            from services import result_cache as _rc_q
+            _queue_bucket = _rc_q.eta_bucket(request)
+        except Exception:  # noqa: BLE001
+            _queue_bucket = ""
+
+        # ⭐09.09.2026: поки людина стоїть у черзі, оновлюємо оцінку очікування.
+        # Прод 08.09: п'ять задач print:150 підряд, останній чекав 2609 с (43 хв)
+        # під незмінним написом «Ваша черга настане за кілька хвилин». Тепер
+        # фронт отримує `queue_eta_s` і показує чесне число, яке зменшується.
+        def _on_queue_tick(waited_s: float, eta_free: "Optional[int]") -> None:
+            try:
+                task.queue_eta_s = int(eta_free) if eta_free is not None else None
+                task.update_status("queued", 0, "У черзі на генерацію — сервер зараз зайнятий…")
+            except Exception:  # noqa: BLE001
+                pass
+
         if gen_queue.would_block(_gen_weight):
+            task.queue_eta_s = gen_queue.eta_free_s()
             task.update_status("queued", 0, "У черзі на генерацію — сервер зараз зайнятий…")
-            print(f"[QUEUE] {zone_prefix}Task {task_id} queued (weight={_gen_weight}, {gen_queue.stats()})")
-        _gen_wait = gen_queue.acquire(_gen_weight)
+            print(f"[QUEUE] {zone_prefix}Task {task_id} queued (weight={_gen_weight}, "
+                  f"eta_free={task.queue_eta_s}s, {gen_queue.stats()})")
+        _gen_wait = gen_queue.acquire(_gen_weight, bucket=_queue_bucket, on_wait=_on_queue_tick)
+        task.queue_eta_s = None
         if _gen_wait > 0.5:
             print(f"[QUEUE] {zone_prefix}Task {task_id} started after {_gen_wait:.0f}s wait ({gen_queue.stats()})")
         try:

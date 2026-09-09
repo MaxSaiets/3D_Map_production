@@ -831,7 +831,7 @@ export function KeychainControlPanel({
         useGenerationStore.getState().setEta(typeof (resp as any)?.eta_s === "number" ? (resp as any).eta_s : null, typeof (resp as any)?.elapsed_s === "number" ? (resp as any).elapsed_s : null);
         const task = resp as any;
         // C-4: «у черзі» — окремий стан для guided-прогресу.
-        useGenerationStore.getState().setQueued(task.status === "queued");
+        useGenerationStore.getState().setQueued(task.status === "queued", typeof (task as any).queue_eta_s === "number" ? (task as any).queue_eta_s : null);
         pollFailRef.current = 0;
         setTaskStatuses({ [task.task_id]: task });
         updateProgress(task.progress, task.message);

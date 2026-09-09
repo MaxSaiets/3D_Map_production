@@ -246,7 +246,38 @@ test.describe("Guided /create — хід створення (2026-09-03)", () =>
     await expect(stages).toBeVisible({ timeout: 15_000 });
     await expect(stages.getByTestId("gen-queued")).toBeVisible();
     await expect(stages).toContainText("У черзі");
+    // Без queue_eta_s лишається старий загальний текст — числа не вигадуємо.
+    await expect(stages.getByTestId("gen-queued")).toContainText("за кілька хвилин");
     await expect(stages.getByTestId("gen-cancel")).toBeVisible();
+  });
+
+  test("C-4b: коли сервер знає, скільки чекати — показує число, а не «кілька хвилин»", async ({ page }) => {
+    // ⭐09.09.2026: прод 08.09 показав очікування 546…2609 с (43 хв) під незмінним
+    // написом «за кілька хвилин». Тепер бекенд віддає queue_eta_s.
+    await page.route("**/api/generate", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q2", status: "processing", eta_s: 90 }) }));
+    await page.route("**/api/status/t-q2", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q2", status: "queued", progress: 0, message: "У черзі",
+        eta_s: 90, elapsed_s: 3, queue_eta_s: 780 }) }));
+    await page.goto("/uk/create?product=map3d");
+    await page.getByTestId("scenario-create").click();
+    const queued = page.getByTestId("generation-stages").getByTestId("gen-queued");
+    await expect(queued).toBeVisible({ timeout: 15_000 });
+    await expect(queued).toContainText("13 хв");
+    await expect(queued).not.toContainText("за кілька хвилин");
+  });
+
+  test("C-4c: менше хвилини очікування — окремий текст без числа", async ({ page }) => {
+    await page.route("**/api/generate", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q3", status: "processing", eta_s: 90 }) }));
+    await page.route("**/api/status/t-q3", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-q3", status: "queued", progress: 0, message: "У черзі",
+        eta_s: 90, elapsed_s: 3, queue_eta_s: 35 }) }));
+    await page.goto("/uk/create?product=map3d");
+    await page.getByTestId("scenario-create").click();
+    const queued = page.getByTestId("generation-stages").getByTestId("gen-queued");
+    await expect(queued).toBeVisible({ timeout: 15_000 });
+    await expect(queued).toContainText("ось-ось");
   });
 
   test("C-3: помилка показує причину з бекенду і дії", async ({ page }) => {

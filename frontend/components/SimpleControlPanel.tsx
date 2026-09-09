@@ -531,7 +531,7 @@ export function SimpleControlPanel({
         const _st = useGenerationStore.getState();
         _st.setEta(typeof r.eta_s === "number" ? r.eta_s : null, typeof r.elapsed_s === "number" ? r.elapsed_s : null);
         // C-4: «у черзі» — окремий стан, не «генеруємо 0 %» (сервер зайнятий іншою задачею).
-        _st.setQueued(r.status === "queued");
+        _st.setQueued(r.status === "queued", typeof r.queue_eta_s === "number" ? r.queue_eta_s : null);
         pollFails = 0;
         setTaskStatuses({ [r.task_id]: r });
         // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,

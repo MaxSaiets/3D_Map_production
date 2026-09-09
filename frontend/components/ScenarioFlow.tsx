@@ -82,6 +82,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     etaS: st.etaS,
     elapsedS: st.elapsedS,
     queued: st.queued,
+    queueEta: st.queueEta,
     genError: st.genError,
     printPrep: st.printPrep,
     taskRestored: st.taskRestored,
@@ -657,7 +658,16 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 eta={etaText}
                 queued={s.queued}
                 queuedTitle={t("queuedTitle")}
-                queuedNote={t("queuedNote")}
+                queuedNote={
+                  // ⭐09.09.2026: «за кілька хвилин» було неправдою — прод 08.09
+                  // показав очікування до 43 хв під цим самим написом. Коли
+                  // сервер знає оцінку, показуємо число, яке справді зменшується.
+                  s.queueEta == null
+                    ? t("queuedNote")
+                    : s.queueEta < 60
+                      ? t("queuedEtaSoon")
+                      : t("queuedEta", { left: t("etaLeft", { min: Math.round(s.queueEta / 60) }) })
+                }
                 printPrep={s.printPrep}
                 printPrepLabel={t("printPrepLine")}
                 printPrepOffer={

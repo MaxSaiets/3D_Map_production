@@ -32,6 +32,10 @@ class GenerationTask:
     # JSON-body запиту, як він прийшов на /api/generate, ДО будь-яких мутацій у
     # пайплайні (preview-режим тощо) — потрібен незайманим, щоб нічний прогрів
     # (main._template_warm_loop) міг повторно надіслати ІДЕНТИЧНИЙ запит.
+    # ⭐09.09.2026: скільки ще секунд стояти В ЧЕРЗІ (не тривалість генерації).
+    # Живе, поки статус "queued"; далі None. Прод 08.09 показав очікування до
+    # 43 хв під написом «кілька хвилин» — тепер фронт має чесне число.
+    queue_eta_s: Optional[int] = None
     template_id: Optional[str] = None
     template_body: Optional[Dict] = None
 
