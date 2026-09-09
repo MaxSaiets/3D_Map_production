@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
+import { BuyFileDialog } from "@/components/BuyFileDialog";
 import { isTransientStatusError, POLL_FAILS_GONE, POLL_FAILS_TRANSIENT, POLL_FAILS_NOTICE } from "@/lib/poll";
 import { useShallow } from "zustand/react/shallow";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
@@ -367,6 +368,11 @@ export function SimpleControlPanel({
   const [orderOpen, setOrderOpen] = useState(false);
   // Свіже замикання orderNow для слухача події (ефект нижче має [] deps).
   const orderNowRef = useRef<() => void>(() => {});
+  // ⭐09.09.2026: діалог купівлі друк-файлу. `buyFileTaskRef` тримає задачу, яку
+  // саме намагались завантажити — вона може відрізнятись від taskGroupId, коли
+  // друк-3MF згенерувався окремою задачею.
+  const [buyFileOpen, setBuyFileOpen] = useState(false);
+  const buyFileTaskRef = useRef<string | null>(null);
   const [dlBusy, setDlBusy] = useState(false);
   // Прогрес фонової генерації друкарського 3MF при завантаженні стандартної карти
   // (на екрані — швидкий GLB-прев'ю; друкарський файл готуємо на вимогу). null = не йде.
@@ -485,9 +491,13 @@ export function SimpleControlPanel({
         params: dlParams,
         getIdToken, openLogin: () => openLogin(() => { void doGatedDownload(); }),
         onLimit: () => {
+          // ⭐09.09.2026: раніше тут відкривалась форма ЗАМОВЛЕННЯ ДРУКУ. Для двох
+          // третин тих, хто створює модель, це глухий кут — друк і доставка лише
+          // по Україні (заміряно: з 23 будівників за 30 днів лише 8 українців).
+          // Правильна пропозиція для них — купити сам файл: він не має логістики.
           import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map", at: "download" })).catch(() => {});
-          window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("quotaExhausted") } }));
-          orderNowRef.current();
+          buyFileTaskRef.current = dlTaskId;
+          setBuyFileOpen(true);
         },
       });
       // Q-2 (аналітика 06.09): відвідувач тиснув «Download 3MF» 16 разів за 10 с —
@@ -1835,6 +1845,12 @@ export function SimpleControlPanel({
           />
         </>
       )}
+      <BuyFileDialog
+        taskId={buyFileOpen ? buyFileTaskRef.current : null}
+        open={buyFileOpen}
+        onClose={() => setBuyFileOpen(false)}
+        onAlreadyPaid={() => { setBuyFileOpen(false); void doGatedDownload(); }}
+      />
     </div>
   );
 }
