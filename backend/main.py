@@ -1656,8 +1656,15 @@ async def file_checkout(
     from services.liqpay import is_configured, build_checkout
     from services.order_service import attach_payment, create_order
 
+    # Перевірка навмисно проста, але без дірок: «@example.com» (порожня частина
+    # до собаки) проходило попередню версію і доходило до створення замовлення —
+    # спіймав власний тест. Повної RFC-валідації тут не треба: справжня перевірка
+    # пошти — це лист, який на неї прийде.
     email = (req.email or "").strip().lower()
-    if "@" not in email or "." not in email.split("@")[-1]:
+    _local, _, _domain = email.partition("@")
+    _labels = _domain.split(".")
+    if (not _local or not _domain or len(_labels) < 2
+            or not all(_labels) or " " in email or email.count("@") != 1):
         raise HTTPException(status_code=422, detail="Вкажіть коректну пошту — на неї прийде файл")
     task_id = (req.task_id or "").strip()
 

@@ -177,9 +177,12 @@ def test_checkout_rejects_a_broken_email():
     import main
 
     c = TestClient(main.app)
-    for bad in ("", "не пошта", "a@b", "@example.com"):
+    # «@example.com» проходило першу версію перевірки й доходило до створення
+    # замовлення — саме цей рядок і зловив діру.
+    for bad in ("", "   ", "не пошта", "a@b", "@example.com", "a@.com",
+                "a@example.", "a b@example.com", "a@@example.com"):
         r = c.post("/api/file/checkout", json={"task_id": "task-1", "email": bad})
-        assert r.status_code in (422,), (bad, r.status_code)
+        assert r.status_code == 422, (bad, r.status_code, r.text[:120])
 
 
 def test_checkout_does_not_charge_twice():
