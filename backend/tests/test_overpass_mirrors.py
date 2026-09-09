@@ -96,16 +96,20 @@ def test_site_preview_uses_the_real_timeout_setting():
     assert "ox.settings.timeout =" not in src, "лишилось присвоєння у неіснуючий атрибут"
 
 
-def test_default_mirrors_include_a_verified_working_one():
-    """Перевірено з прод-сервера 08.09.2026: `overpass.private.coffee` НЕДОСЯЖНИЙ
-    (000), а основний `overpass-api.de` віддавав HTML-помилку замість JSON. Тобто
-    навіть після фіксу перемикання (G-1) резерву фактично не було. Список має
-    містити перевірено робоче дзеркало, і недосяжне не має стояти перед ним —
-    інакше на ньому згорає цілий таймаут."""
+def test_default_endpoints_contain_only_measured_working_ones():
+    """⭐САМОВИПРАВЛЕННЯ 09.09.2026. Спершу я заміряв дзеркала curl-ом і додав
+    `overpass.kumi.systems` як «робоче». Перевірка ТИМ САМИМ КЛІЄНТОМ (osmnx) з
+    прод-сервера показала протилежне: працює ЛИШЕ `overpass-api.de` (67 обʼєктів
+    за 3.1 с), а kumi/private.coffee/osm.ch/osm.jp/mail.ru відвалюються за 57–151 с.
+    Мертве дзеркало у списку нічого не рятує — воно лише додає користувачу
+    хвилину очікування перед тим самим провалом.
+
+    Правило: у дефолтному списку тільки ЗАМІРЯНО робочі адреси; нові додаються
+    через env OSM_OVERPASS_ENDPOINTS після заміру саме osmnx, а не curl."""
+    known_dead = ("kumi.systems", "private.coffee", "osm.ch", "osm.jp", "mail.ru")
     for mod in (data_loader, extras_loader):
         eps = list(mod._OVERPASS_ENDPOINTS_DEFAULT)
-        assert any("kumi.systems" in e for e in eps), f"{mod.__name__}: немає перевіреного резерву"
-        if any("private.coffee" in e for e in eps):
-            assert eps.index(next(e for e in eps if "kumi.systems" in e)) < \
-                   eps.index(next(e for e in eps if "private.coffee" in e)), \
-                   f"{mod.__name__}: недосяжне дзеркало стоїть перед робочим"
+        assert eps, f"{mod.__name__}: список не може бути порожнім"
+        assert any("overpass-api.de" in e for e in eps), f"{mod.__name__}: немає робочого джерела"
+        for dead in known_dead:
+            assert not any(dead in e for e in eps),                 f"{mod.__name__}: {dead} заміряно як неробоче — у дефолті йому не місце"

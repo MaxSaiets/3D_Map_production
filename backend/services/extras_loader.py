@@ -25,17 +25,21 @@ from services.osm_source import resolve_osm_source
 
 _CACHE_DIR = Path(os.getenv("OSM_DATA_CACHE_DIR") or "cache/osm/overpass_cache/extras")
 _CACHE_VERSION = "v1"
-# Перевірено з ПРОД-сервера 08.09.2026 (POST /interpreter, реальний запит):
-#   overpass-api.de        → 200, але HTML-сторінка помилки замість JSON (деградує)
-#   overpass.kumi.systems  → 200 + валідний JSON  ← робочий резерв
-#   overpass.private.coffee→ 000 (недосяжний із цього сервера)
-#   overpass.osm.jp        → 000
-# Порядок: канонічний перший, РОБОЧИЙ резерв другий, недосяжний — останній (щоб
-# не палити на ньому цілий таймаут). Перевизначається env OSM_OVERPASS_ENDPOINTS.
+# ⭐ЗАМІРЯНО З ПРОД-СЕРВЕРА 09.09.2026 ТИМ САМИМ КЛІЄНТОМ (osmnx.features_from_bbox,
+# крихітний bbox у Відні) — а не curl-ом, бо curl бреше: сирий POST повертав із
+# overpass-api.de HTML-сторінку, хоча osmnx працює з ним нормально.
+#   overpass-api.de        → OK, 67 обʼєктів за 3.1 с   ← ЄДИНЕ РОБОЧЕ
+#   overpass.kumi.systems  → ReadTimeout 61 с
+#   overpass.private.coffee→ ReadTimeout 57 с
+#   overpass.osm.ch        → InsufficientResponse 61 с
+#   overpass.osm.jp        → SSLError 62 с
+#   maps.mail.ru/.../api   → ConnectTimeout 151 с
+# Тому список = ЛИШЕ основне джерело: мертві дзеркала не рятують, а лише додають
+# по хвилині очікування користувачу перед тим самим провалом. Робоче дзеркало,
+# якщо знайдеться, додається без релізу через env OSM_OVERPASS_ENDPOINTS.
+# Механізм перемикання полагоджено окремо (див. _run_overpass_with_retries).
 _OVERPASS_ENDPOINTS_DEFAULT = (
     "https://overpass-api.de/api",
-    "https://overpass.kumi.systems/api",
-    "https://overpass.private.coffee/api",
 )
 
 
