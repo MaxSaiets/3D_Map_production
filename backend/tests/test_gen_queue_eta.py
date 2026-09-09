@@ -127,3 +127,15 @@ def test_on_wait_failure_never_blocks_the_queue(monkeypatch):
             gen_queue._cond.notify_all()
     gen_queue.release(gen_queue.CAPACITY)
     assert passed.wait(timeout=10), "падіння колбека заблокувало чергу"
+
+
+def test_stats_exposes_running_count_for_deploy():
+    """`/api/health` віддає `checks.queue`, щоб скрипт деплою міг дочекатись
+    `running == 0` і не рестартувати бекенд посеред чужої генерації.
+    За тиждень у логах Caddy 377 відповідей 502 — і всі у вікна рестартів."""
+    assert gen_queue.stats()["running"] == 0
+    gen_queue.acquire(gen_queue.CAPACITY, bucket="print:150")
+    s = gen_queue.stats()
+    assert s["running"] == 1 and s["free"] == 0
+    gen_queue.release(gen_queue.CAPACITY)
+    assert gen_queue.stats()["running"] == 0

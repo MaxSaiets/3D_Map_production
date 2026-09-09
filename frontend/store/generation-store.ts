@@ -18,6 +18,8 @@ interface GenerationState {
   /** C-series (2026-09-03): хід створення моделі — чергa, помилка з причиною,
    *  підготовка друк-файлу і ознака відновленої з localStorage задачі. */
   queued: boolean;
+  /** Бекенд не відповідає, але ми ще чекаємо (рестарт/перевантаження). */
+  reconnecting: boolean;
   /** Скільки ще секунд стояти В ЧЕРЗІ (не тривалість самої генерації). */
   queueEta: number | null;
   genError: string | null;
@@ -191,6 +193,7 @@ interface GenerationState {
   /** perf-2026-09-03: чесний ETA з бекенду (медіана реальних прогонів) + скільки вже минуло. */
   setEta: (etaS: number | null, elapsedS: number | null) => void;
   setQueued: (queued: boolean, queueEta?: number | null) => void;
+  setReconnecting: (v: boolean) => void;
   setGenError: (genError: string | null) => void;
   setPrintPrep: (printPrep: number | null) => void;
   setDownloadBusy: (downloadBusy: boolean) => void;
@@ -244,6 +247,7 @@ const initialState = {
   elapsedS: null,
   queued: false,
   queueEta: null,
+  reconnecting: false,
   genError: null,
   printPrep: null,
   downloadBusy: false,
@@ -441,6 +445,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   updateProgress: (progress, status) => set({ progress, status }),
   setEta: (etaS, elapsedS) => set({ etaS, elapsedS }),
   setQueued: (queued, queueEta = null) => set({ queued, queueEta: queued ? queueEta : null }),
+  setReconnecting: (v) => set({ reconnecting: v }),
   setGenError: (genError) => set({ genError }),
   setPrintPrep: (printPrep) => set({ printPrep }),
   setDownloadBusy: (downloadBusy) => set({ downloadBusy }),

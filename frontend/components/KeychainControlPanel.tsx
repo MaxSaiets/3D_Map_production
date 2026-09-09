@@ -12,6 +12,7 @@ import { fetchQuote, type Quote } from "@/lib/pricing";
 import { mapPriceEur } from "@/lib/mapPrices";
 import { getKeychainDesignerSvg, svgToPngDataUrl } from "@/lib/capturePreview";
 import { api } from "@/lib/api";
+import { isTransientStatusError, POLL_FAILS_GONE, POLL_FAILS_TRANSIENT, POLL_FAILS_NOTICE } from "@/lib/poll";
 import { useGenerationStore } from "@/store/generation-store";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -833,6 +834,7 @@ export function KeychainControlPanel({
         // C-4: «у черзі» — окремий стан для guided-прогресу.
         useGenerationStore.getState().setQueued(task.status === "queued", typeof (task as any).queue_eta_s === "number" ? (task as any).queue_eta_s : null);
         pollFailRef.current = 0;
+        useGenerationStore.getState().setReconnecting(false);
         setTaskStatuses({ [task.task_id]: task });
         updateProgress(task.progress, task.message);
         if (task.status === "completed") {
@@ -853,7 +855,16 @@ export function KeychainControlPanel({
         // розблоковуємо UI, щоб юзер міг повторити (як у SimpleControlPanel).
         pollFailRef.current += 1;
         console.error("[Keychain] status error", pollError);
-        if (pollFailRef.current >= 4) {
+        // ⭐09.09.2026: 502 під час рестарту бекенду — це НЕ «задачі немає».
+        // Логи Caddy: 80 таких поспіль на одну задачу, поки сервер піднімався.
+        // `/api/status` уміє віддати готову модель із диска після рестарту,
+        // тож здаватись через 10 с означало оголошувати втрату там, де файл
+        // лежав готовий. 404 — інша річ, там чекати справді нема чого.
+        const transient = isTransientStatusError(pollError);
+        const limit = transient ? POLL_FAILS_TRANSIENT : POLL_FAILS_GONE;
+        useGenerationStore.getState().setReconnecting(transient && pollFailRef.current >= POLL_FAILS_NOTICE);
+        if (pollFailRef.current >= limit) {
+          useGenerationStore.getState().setReconnecting(false);
           setGenerating(false);
           setError(t("error.generateFailed"));
         }

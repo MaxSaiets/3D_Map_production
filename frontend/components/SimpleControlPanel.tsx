@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { Loader2, Play, Download, MapPin, Check, Sparkles, ShoppingBag, ChevronDown, Sliders } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useGenerationStore } from "@/store/generation-store";
+import { isTransientStatusError, POLL_FAILS_GONE, POLL_FAILS_TRANSIENT, POLL_FAILS_NOTICE } from "@/lib/poll";
 import { useShallow } from "zustand/react/shallow";
 import { MAP_TEMPLATES, MAP_STYLE_PRESETS } from "@/lib/templates";
 import { buildMapRequest, SIMPLE_SIZES, GPX_MAX_M_PER_MM, runZoneGeneration } from "@/lib/generation";
@@ -533,6 +534,7 @@ export function SimpleControlPanel({
         // C-4: «у черзі» — окремий стан, не «генеруємо 0 %» (сервер зайнятий іншою задачею).
         _st.setQueued(r.status === "queued", typeof r.queue_eta_s === "number" ? r.queue_eta_s : null);
         pollFails = 0;
+        useGenerationStore.getState().setReconnecting(false);
         setTaskStatuses({ [r.task_id]: r });
         // D3 ПАННО: batch-статус — агрегуємо прогрес плиток; коли всі готові,
         // даємо посилання на zip-архів з усіма плитками + layout.png
@@ -585,11 +587,18 @@ export function SimpleControlPanel({
           }
           clearInterval(iv);
         }
-      } catch {
-        // 404/мережа: 4 поспіль (~10с) = задача зникла (рестарт сервера) —
-        // розблоковуємо UI замість вічного спінера
+      } catch (pollError) {
+        // ⭐09.09.2026: 502 під час рестарту бекенду — це НЕ «задачі немає».
+        // Логи Caddy: 80 таких поспіль на одну задачу, поки сервер піднімався.
+        // `/api/status` уміє віддати готову модель із диска після рестарту,
+        // тож здаватись через 10 с означало оголошувати втрату там, де файл
+        // лежав готовий. 404 — інша річ, там чекати справді нема чого.
         pollFails += 1;
-        if (pollFails >= 4 && !stop) {
+        const transient = isTransientStatusError(pollError);
+        const limit = transient ? POLL_FAILS_TRANSIENT : POLL_FAILS_GONE;
+        useGenerationStore.getState().setReconnecting(transient && pollFails >= POLL_FAILS_NOTICE);
+        if (pollFails >= limit && !stop) {
+          useGenerationStore.getState().setReconnecting(false);
           setGenerating(false);
           setError(t("errStale"));
           useGenerationStore.getState().setGenError(t("errStale"));

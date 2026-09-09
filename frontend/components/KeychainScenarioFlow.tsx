@@ -99,6 +99,7 @@ export function KeychainScenarioFlow({
     elapsedS: st.elapsedS,
     queued: st.queued,
     queueEta: st.queueEta,
+    reconnecting: st.reconnecting,
     genError: st.genError,
     printPrep: st.printPrep,
     taskRestored: st.taskRestored,
@@ -535,7 +536,12 @@ export function KeychainScenarioFlow({
                 progress={s.progress || 0}
                 kind="flat"
                 title={t("generating")}
-                note={t("etaNote")}
+                note={
+                  // ⭐09.09: під час рестарту бекенду опитувач раніше мовчав
+                  // ~10 с і оголошував «модель застаріла». Тепер чекаємо довше
+                  // і чесно кажемо, що відбувається.
+                  s.reconnecting ? t("reconnecting") : t("etaNote")
+                }
                 eta={etaText}
                 queued={s.queued}
                 queuedTitle={t("queuedTitle")}
