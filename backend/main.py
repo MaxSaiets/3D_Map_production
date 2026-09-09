@@ -58,6 +58,7 @@ ox.settings.log_console = False # Reduce noise
 
 
 from services.full_generation_pipeline import run_full_generation_pipeline
+from services import hot_lead
 from services.generation_runtime_context import prepare_generation_runtime_context
 
 from services.generation_task import GenerationTask
@@ -1748,6 +1749,17 @@ async def track_event(
             pass
         with ANALYTICS_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+        # ⭐09.09.2026: клік «замовити в месенджері» — найтепліший контакт, який
+        # взагалі буває на цьому сайті, і водночас найлегший для втрати: текст
+        # копіюється в буфер, чат відкривається, а надішле людина чи ні — вже не
+        # наша справа. 07.09 такий лід був і зник (за 37 с людина відповіла в
+        # опитуванні «надрукую сам»). Тепер власник дізнається про нього одразу.
+        try:
+            if hot_lead.should_notify(rec["event"], rec.get("visitor", "")):
+                hot_lead.notify_in_background(rec)
+        except Exception:  # noqa: BLE001
+            pass
     except Exception:  # noqa: BLE001
         pass
     return {"status": "ok"}

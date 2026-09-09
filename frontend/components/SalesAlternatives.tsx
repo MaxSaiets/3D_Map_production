@@ -68,7 +68,12 @@ export function SalesAlternatives({
   };
 
   const openMessenger = async (channel: "tg" | "ig") => {
-    import("@/lib/analytics").then((m) => m.track("messenger_order", { channel, product, priceUah })).catch(() => {});
+    // taskId + рекап їдуть у подію навмисно: бекенд одразу шле власнику
+    // сповіщення про гарячий лід, і без них воно було б непридатне до дії —
+    // «хтось щось хотів» замість «мапа M, Київ, 770 ₴, ось модель».
+    import("@/lib/analytics")
+      .then((m) => m.track("messenger_order", { channel, product, priceUah, taskId: taskId || "", summary }))
+      .catch(() => {});
     const text = prefill();
     try { await navigator.clipboard.writeText(text); setCopied(channel); } catch { setCopied(null); }
     // Відкриваємо ПІСЛЯ копіювання — інакше Safari губить дозвіл на буфер.
