@@ -6,7 +6,7 @@ import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
-import { mapPriceRange, KEYCHAIN_PRICE_UAH, mapPriceEur } from "@/lib/mapPrices";
+import { mapPriceRange, KEYCHAIN_PRICE_UAH, mapPriceEur, MAP_MAGNET_PRICE_UAH, MAP_SIZE_PRICES_UAH } from "@/lib/mapPrices";
 import {
   giftCityCopy,
   contentLocale,
@@ -180,11 +180,20 @@ export default async function GiftSlugPage({
     : [];
   const otherOccasions = OCCASION_PAGES.filter((o) => o.slug !== params.slug);
 
+  // Найдешевша 3D-мапа (S). Беремо з таблиці, а не числом — щоб не розʼїхалось
+  // із pricing.json при наступній зміні цін.
+  const MAP_FROM_UAH = Math.min(...Object.values(MAP_SIZE_PRICES_UAH));
+
   const ui = isUA
     ? {
         breadcrumb: "Подарунки",
         ctaMap: "Створити 3D-мапу",
         ctaKeychain: "Створити брелок",
+        facts: [
+          `Брелок ${KEYCHAIN_PRICE_UAH} ₴ · магніт ${MAP_MAGNET_PRICE_UAH} ₴ · 3D-мапа від ${MAP_FROM_UAH} ₴`,
+          "Друк і відправка 2–4 дні · Нова Пошта по Україні",
+          "3D-файл для самодруку — безкоштовно",
+        ],
         othersCity: "Подарунки з інших міст",
         occasions: "Подарунки під нагоду",
         cityLinks: city ? { map: `3D-мапа міста — ${r.cityName}`, brelok: `Брелок з картою — ${r.cityName}` } : null,
@@ -193,6 +202,11 @@ export default async function GiftSlugPage({
         breadcrumb: "Gifts",
         ctaMap: "Create a 3D map",
         ctaKeychain: "Create a keychain",
+        facts: [
+          `Keychain ${KEYCHAIN_PRICE_UAH} ₴ · magnet ${MAP_MAGNET_PRICE_UAH} ₴ · 3D map from ${MAP_FROM_UAH} ₴`,
+          "Printed and dispatched in 2–4 days · Nova Poshta, within Ukraine",
+          "3D file for self-printing — free",
+        ],
         othersCity: "Gifts from other cities",
         occasions: "Gifts by occasion",
         cityLinks: city ? { map: `3D city map — ${r.cityName}`, brelok: `Map keychain — ${r.cityName}` } : null,
@@ -211,6 +225,19 @@ export default async function GiftSlugPage({
         <span className="text-ink">{r.cityName ?? c.h1}</span>
       </nav>
       <h1 className="mt-5 text-[clamp(28px,4vw,46px)] leading-tight">{c.h1}</h1>
+      {/* ⭐09.09.2026: ці сторінки — посадкові для подарункових запитів (саме там
+          є реальний попит: «що подарувати на новосілля» — 10 підказок Google,
+          тоді як «подарунок з картою» — 0). Людина з реклами вирішує за секунди,
+          а ціну доводилось шукати прокруткою. Тепер ціна, строк і доставка —
+          одразу під заголовком. */}
+      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-ink-2" data-testid="gift-facts">
+        {ui.facts.map((f, i) => (
+          <li key={i} className="flex items-center gap-1.5">
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" />
+            {f}
+          </li>
+        ))}
+      </ul>
       {c.intro.map((p, i) => (
         <p key={i} className={`${i === 0 ? "mt-5" : "mt-3"} text-[15px] leading-relaxed text-ink-2`}>{p}</p>
       ))}
