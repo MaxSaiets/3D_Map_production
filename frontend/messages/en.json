@@ -1769,6 +1769,8 @@
     "checkingBody": "Please wait a few seconds while we confirm your payment.",
     "paidTitle": "Thank you! Payment received",
     "paidBody": "Your order is paid and sent to production. We will print it and ship it with the carrier.",
+    "fileDownload": "Download the print file",
+    "fileKeepLink": "Keep this link: the file stays available here later, from any device.",
     "pendingTitle": "Order received",
     "pendingBody": "If you have just paid, the status will update within a few minutes. If the payment didn't complete, we will contact you to confirm.",
     "orderLabel": "Order",

@@ -21,6 +21,10 @@ export default function OrderSuccessPage() {
   // Чек, збережений OrderDialog у цьому браузері (mnd_pay_<номер>): дає змогу
   // доплатити, якщо людина пішла на LiqPay і не завершила оплату.
   const [savedPay, setSavedPay] = useState<any>(null);
+  // ⭐10.09.2026: покупка ФАЙЛУ. Оплата йде БЕЗ входу в акаунт (чек просить лише
+  // пошту), тож повернувшись сюди людина мусить отримати файл просто тут —
+  // інакше вона заплатила й лишилась ні з чим.
+  const [fileTaskId, setFileTaskId] = useState<string>("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,7 +47,12 @@ export default function OrderSuccessPage() {
         const r = await fetch(`${API_BASE}/api/liqpay/status/${encodeURIComponent(ord)}`, { cache: "no-store" });
         const d = await r.json();
         if (cancelled) return;
-        if (d?.paid) { setState("paid"); track("order_paid_confirmed", { order: ord }); return; }
+        if (d?.paid) {
+          setState("paid");
+          if (d?.task_id) setFileTaskId(String(d.task_id));
+          track("order_paid_confirmed", { order: ord });
+          return;
+        }
         if (tries < 5) { setTimeout(poll, 2000); return; }
         setState(d?.configured === false ? "unknown" : "pending");
       } catch {
@@ -99,6 +108,26 @@ export default function OrderSuccessPage() {
       <p className="mt-4 max-w-[520px] text-[15px] leading-relaxed text-ink-2">
         {isChecking ? t("checkingBody") : isPaid ? t("paidBody") : t("pendingBody")}
       </p>
+
+      {/* ⭐10.09.2026: оплачений ФАЙЛ віддаємо просто тут. Покупець платив без
+          акаунта (чек просить лише пошту), а звичайне завантаження вимагає
+          входу з підтвердженою поштою — тобто після оплати він упирався б у
+          стіну. Посилання лишається робочим і потім: доступ прив'язаний до
+          моделі, а не до сесії. */}
+      {isPaid && fileTaskId && (
+        <div className="mt-6 flex flex-col items-center gap-2" data-testid="paid-file">
+          <a
+            href={`${API_BASE}/api/file/download/${encodeURIComponent(fileTaskId)}`}
+            className={buttonClasses("primary", "md")}
+            data-testid="paid-file-download"
+          >
+            {t("fileDownload")}
+          </a>
+          <p className="max-w-[420px] text-center text-[12.5px] leading-snug text-ink-2">
+            {t("fileKeepLink")}
+          </p>
+        </div>
+      )}
 
       {state === "pending" && savedPay && (
         <div className="mt-5 flex flex-col items-center gap-1">

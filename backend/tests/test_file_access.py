@@ -195,3 +195,51 @@ def test_checkout_does_not_charge_twice():
     r = c.post("/api/file/checkout", json={"task_id": "task-paid-2", "email": "a@example.com"})
     assert r.status_code == 200
     assert r.json() == {"alreadyPaid": True, "taskId": "task-paid-2"}
+
+def test_unpaid_file_is_not_served():
+    """Головний замок: без оплати файл не віддається, і це 402 — зрозумілий код,
+    на який фронт покаже пропозицію купити, а не «щось пішло не так»."""
+    from fastapi.testclient import TestClient
+    import main
+
+    c = TestClient(main.app)
+    r = c.get("/api/file/download/task-unpaid")
+    assert r.status_code == 402, r.status_code
+
+
+def test_paid_but_missing_file_says_so_honestly():
+    """Оплата є, файлу на диску немає — це НАШ борг. Покупець має побачити, що
+    робити далі, а не голе 404."""
+    from fastapi.testclient import TestClient
+    import main
+
+    fa.grant("task-paid-no-file", order_number="9")
+    c = TestClient(main.app)
+    r = c.get("/api/file/download/task-paid-no-file")
+    assert r.status_code == 404
+    assert "оплачено" in r.json()["detail"].lower()
+
+
+def test_payment_status_returns_the_task_to_download(monkeypatch, tmp_path):
+    """Сторінка-подяка мусить знати, ЩО качати після оплати файлу."""
+    from fastapi.testclient import TestClient
+    import main
+    from services import order_service as os_mod, liqpay as lp
+
+    log = tmp_path / "orders.jsonl"
+    log.write_text(
+        json.dumps({"order_number": "7100", "status": "pending_payment",
+                    "task_id": "task-7100"}, ensure_ascii=False) + chr(10),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(os_mod, "ORDERS_LOG", log)
+    monkeypatch.setattr(os_mod, "telegram_configured", lambda: False)
+    monkeypatch.setattr(lp, "is_configured", lambda: True)
+    monkeypatch.setattr(lp, "query_status", lambda oid: {"status": "success", "amount": 149, "currency": "UAH"})
+
+    c = TestClient(main.app)
+    body = c.get("/api/liqpay/status/7100").json()
+    assert body["paid"] is True
+    assert body["task_id"] == "task-7100", body
+    # і оплата справді відкрила доступ
+    assert fa.has_access("task-7100") is True

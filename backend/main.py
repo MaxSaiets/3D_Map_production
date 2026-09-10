@@ -1708,6 +1708,44 @@ async def file_checkout(
             "priceUah": price, "currency": "UAH", "payment": checkout}
 
 
+@app.get("/api/file/download/{task_id}")
+async def file_download(
+    task_id: str,
+    _rl: None = Depends(rate_limit("file_dl", [(30, 60.0), (300, 3600.0)])),
+):
+    """Віддає друк-файл, ЯКЩО він оплачений. Без логіну — і це навмисно.
+
+    Покупець платить, вказавши лише пошту (див. /api/file/checkout): акаунта в
+    нього може не бути взагалі. Вимагати вхід із підтвердженою поштою після
+    оплати означало б продати файл і не віддати його. Ключ доступу — сам
+    `task_id`: він непередбачуваний (UUID) і відкривається лише після
+    підтвердженої оплати, тобто працює як персональне посилання на покупку."""
+    from services import file_access as _fa
+    tid = (task_id or "").strip()
+    if not _fa.has_access(tid):
+        raise HTTPException(status_code=402, detail="Файл не оплачено")
+
+    path = None
+    t = tasks.get(tid)
+    if t is not None:
+        files = getattr(t, "output_files", {}) or {}
+        cand = files.get("3mf") or files.get("stl")
+        if not cand:
+            _of = getattr(t, "output_file", None)
+            if _of and str(_of).lower().endswith((".3mf", ".stl")):
+                cand = _of
+        if cand and Path(cand).exists():
+            path = Path(cand)
+    if path is None:
+        path = _find_file_on_disk_by_task_id(tid, "3mf")
+    if path is None:
+        # Оплата є, а файл не знайшовся — це НАШ борг, а не провина покупця.
+        print(f"[FILE] ОПЛАЧЕНО, але файл не знайдено: task={tid}", flush=True)
+        raise HTTPException(status_code=404,
+                            detail="Файл оплачено, але тимчасово недоступний. Напишіть нам — надішлемо вручну.")
+    return FileResponse(str(path), media_type="model/3mf", filename=Path(path).name)
+
+
 @app.get("/api/file/access/{task_id}")
 async def file_access_status(task_id: str):
     """Чи вже оплачено файл цієї моделі + скільки він коштує. Публічний і
@@ -1755,7 +1793,15 @@ async def liqpay_status(order_id: str):
             mark_order_paid(str(order_id), info)
         except Exception as exc:  # noqa: BLE001
             print(f"[liqpay] status mark_paid error: {exc}")
-    return {"configured": True, "paid": paid, "status": status,
+    # ⭐10.09.2026: віддаємо ще й task_id. Сторінка-подяка після оплати ФАЙЛУ має
+    # знати, що саме завантажувати — інакше людина заплатила й лишилась ні з чим.
+    _task_id = ""
+    try:
+        from services.order_service import find_order_record
+        _task_id = str((find_order_record(str(order_id)) or {}).get("task_id") or "")
+    except Exception:  # noqa: BLE001
+        pass
+    return {"configured": True, "paid": paid, "status": status, "task_id": _task_id,
             "amount": info.get("amount"), "currency": info.get("currency")}
 
 

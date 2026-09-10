@@ -1769,6 +1769,8 @@
     "checkingBody": "Proszę poczekać kilka sekund, aż potwierdzimy Twoją płatność.",
     "paidTitle": "Dziękujemy! Płatność otrzymana",
     "paidBody": "Twoje zamówienie zostało opłacone i przekazane do produkcji. Wydrukujemy je i wyślemy za pośrednictwem przewoźnika.",
+    "fileDownload": "Pobierz plik do druku",
+    "fileKeepLink": "Zachowaj ten link: plik pozostaje pod nim dostępny także później, z dowolnego urządzenia.",
     "pendingTitle": "Zamówienie przyjęte",
     "pendingBody": "Jeśli płatność została właśnie dokonana, status zaktualizuje się w ciągu kilku minut. Jeśli płatność się nie powiodła, skontaktujemy się z Tobą w celu potwierdzenia.",
     "orderLabel": "Zamówienie",

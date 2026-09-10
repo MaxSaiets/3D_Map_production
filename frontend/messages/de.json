@@ -1769,6 +1769,8 @@
     "checkingBody": "Bitte warte einen Moment, während wir deine Zahlung bestätigen.",
     "paidTitle": "Vielen Dank! Zahlung erhalten",
     "paidBody": "Deine Bestellung ist bezahlt und in Produktion gegeben. Wir drucken sie und versenden sie mit dem Zusteller.",
+    "fileDownload": "Druckdatei herunterladen",
+    "fileKeepLink": "Bewahren Sie diesen Link auf: die Datei bleibt hier verfügbar, auch später und auf jedem Gerät.",
     "pendingTitle": "Bestellung eingegangen",
     "pendingBody": "Wenn du soeben bezahlt hast, wird der Status innerhalb weniger Minuten aktualisiert. Falls die Zahlung nicht abgeschlossen wurde, melden wir uns bei dir zur Bestätigung.",
     "orderLabel": "Bestellung",

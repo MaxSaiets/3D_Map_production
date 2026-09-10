@@ -1769,6 +1769,8 @@
     "checkingBody": "Espera unos segundos mientras confirmamos tu pago.",
     "paidTitle": "¡Gracias! Pago recibido",
     "paidBody": "Tu pedido está pagado y enviado a producción. Lo imprimiremos y lo enviaremos con el transportista.",
+    "fileDownload": "Descargar el archivo de impresión",
+    "fileKeepLink": "Guarda este enlace: el archivo sigue disponible ahí después, desde cualquier dispositivo.",
     "pendingTitle": "Pedido recibido",
     "pendingBody": "Si acabas de pagar, el estado se actualizará en unos minutos. Si el pago no se completó, nos pondremos en contacto contigo para confirmarlo.",
     "orderLabel": "Pedido",

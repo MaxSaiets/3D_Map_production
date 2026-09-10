@@ -1769,6 +1769,8 @@
     "checkingBody": "Patiente quelques secondes pendant que nous confirmons ton paiement.",
     "paidTitle": "Merci ! Paiement reçu",
     "paidBody": "Ta commande est payée et envoyée en production. Nous l'imprimerons et l'expédierons avec le transporteur.",
+    "fileDownload": "Télécharger le fichier d'impression",
+    "fileKeepLink": "Gardez ce lien : le fichier y reste disponible plus tard, depuis n'importe quel appareil.",
     "pendingTitle": "Commande reçue",
     "pendingBody": "Si tu viens de payer, le statut sera mis à jour dans quelques minutes. Si le paiement n'a pas abouti, nous te contacterons pour confirmation.",
     "orderLabel": "Commande",
