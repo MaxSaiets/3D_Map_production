@@ -243,3 +243,27 @@ def test_payment_status_returns_the_task_to_download(monkeypatch, tmp_path):
     assert body["task_id"] == "task-7100", body
     # і оплата справді відкрила доступ
     assert fa.has_access("task-7100") is True
+
+def test_buyer_email_survives_to_the_grant(tmp_path, monkeypatch):
+    """Наскрізна перевірка на СПРАВЖНЬОМУ `create_order` виявила розрив: запис
+    замовлення зберігає поле `user_email`, а чек слав `email` — пошта покупця
+    губилась, і знайти, ХТО купив файл, не було чим. Виявилось би лише після
+    першої реальної продажі, коли людина загубила б посилання."""
+    from services import order_service as os_mod
+
+    log = tmp_path / "orders.jsonl"
+    monkeypatch.setattr(os_mod, "ORDERS_LOG", log)
+    monkeypatch.setattr(os_mod, "telegram_configured", lambda: False)
+
+    order = os_mod.create_order({
+        "name": "buyer", "phone": "", "email": "buyer@example.com",
+        "user_email": "buyer@example.com", "product_type": "file",
+        "task_id": "task-mail", "summary": {},
+    })
+    num = str(order["order_number"])
+    os_mod.mark_order_paid(num, {"status": "success", "amount": 149, "currency": "UAH"})
+
+    assert fa.has_access("task-mail") is True
+    assert fa.list_for_email("buyer@example.com") == ["task-mail"], (
+        "пошта покупця не дійшла до запису доступу"
+    )

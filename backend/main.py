@@ -1680,6 +1680,9 @@ async def file_checkout(
         "name": email.split("@")[0][:80] or "Покупець файлу",
         "phone": "",
         "email": email,
+        # create_order зберігає саме `user_email` — без цього поля пошта
+        # покупця нікуди не потрапляє, і знайти, ХТО купив, стає нічим.
+        "user_email": email,
         "product_type": "file",
         "task_id": task_id,
         "comment": "Друк-файл (3MF), без доставки",

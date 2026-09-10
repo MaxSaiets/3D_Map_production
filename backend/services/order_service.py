@@ -554,7 +554,8 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
             _tid = str((_rec or {}).get("task_id") or "")
             if _tid:
                 _fa.grant(_tid, order_number=str(order_id),
-                          email=str((_rec or {}).get("email") or ""), amount=amount)
+                          email=str((_rec or {}).get("user_email") or (_rec or {}).get("email") or ""),
+                          amount=amount)
         except Exception as e:  # noqa: BLE001
             print(f"[ORDER] file access grant skipped: {e}")
         try:
