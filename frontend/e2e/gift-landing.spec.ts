@@ -19,7 +19,7 @@ test.describe("Подарункова посадкова сторінка", () =
     await expect(facts).toContainText("210 ₴");
     await expect(facts).toContainText("350 ₴");
     await expect(facts).toContainText("Нова Пошта");
-    await expect(facts).toContainText("безкоштовно");
+    await expect(facts).toContainText("149 ₴");   // файл платний з 10.09
 
     // саме «без прокрутки»: блок має бути в межах першого екрана
     const box = await facts.boundingBox();
@@ -33,7 +33,7 @@ test.describe("Подарункова посадкова сторінка", () =
     const facts = page.getByTestId("gift-facts");
     await expect(facts).toBeVisible();
     await expect(facts).toContainText("within Ukraine");
-    await expect(facts).toContainText("free");
+    await expect(facts).toContainText("149 ₴");
   });
 
   test("кнопка веде в конструктор", async ({ page }) => {

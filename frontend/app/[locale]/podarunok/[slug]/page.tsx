@@ -192,7 +192,7 @@ export default async function GiftSlugPage({
         facts: [
           `Брелок ${KEYCHAIN_PRICE_UAH} ₴ · магніт ${MAP_MAGNET_PRICE_UAH} ₴ · 3D-мапа від ${MAP_FROM_UAH} ₴`,
           "Друк і відправка 2–4 дні · Нова Пошта по Україні",
-          "3D-файл для самодруку — безкоштовно",
+          "3D-файл для самодруку — 149 ₴, друкуйте будь-де",
         ],
         othersCity: "Подарунки з інших міст",
         occasions: "Подарунки під нагоду",
@@ -205,7 +205,7 @@ export default async function GiftSlugPage({
         facts: [
           `Keychain ${KEYCHAIN_PRICE_UAH} ₴ · magnet ${MAP_MAGNET_PRICE_UAH} ₴ · 3D map from ${MAP_FROM_UAH} ₴`,
           "Printed and dispatched in 2–4 days · Nova Poshta, within Ukraine",
-          "3D file for self-printing — free",
+          "3D file for self-printing — 149 ₴, print anywhere",
         ],
         othersCity: "Gifts from other cities",
         occasions: "Gifts by occasion",
