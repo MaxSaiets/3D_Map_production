@@ -27,14 +27,17 @@ bbox справді може лічитись хвилину. Запобіжни
 from __future__ import annotations
 
 import os
+import socket
 import threading
 import time
+from urllib.parse import urlsplit
 
 __all__ = [
     "OverpassUnavailableError",
     "is_connection_error",
     "note_failure",
     "note_success",
+    "preflight",
     "outage_active",
     "outage_reason",
     "reset",
@@ -112,6 +115,38 @@ def is_connection_error(exc: BaseException | None) -> bool:
             return True
         node = node.__cause__ or node.__context__
     return False
+
+
+def preflight(endpoint: str) -> BaseException | None:
+    """Швидка TCP-перевірка хоста Overpass ПЕРЕД викликом osmnx.
+
+    Навіщо: osmnx перед кожним запитом питає `/status`, і коли хост лежить,
+    мовчки спить 60 с (default_pause) — лише потім приходить «Connection
+    refused». На проді 11.09.2026 це виглядало так: 14:59:59 green →
+    15:00:57 building_parts → 15:01:58 bridges — рівно по хвилині на шар
+    заради відмови, яка насправді миттєва. Зʼєднуємось самі з таймаутом
+    3 с: повертаємо None (хост слухає) або помилку рівня зʼєднання, яку
+    запобіжник зарахує так само, як справжню відмову.
+
+    Вимкнути: OVERPASS_PREFLIGHT=0 (напр. у тестах з фейковим fetch_fn).
+    """
+    if (os.getenv("OVERPASS_PREFLIGHT", "1") or "1").lower() in ("0", "false", "no"):
+        return None
+    try:
+        parts = urlsplit(endpoint if "://" in endpoint else f"https://{endpoint}")
+        host = parts.hostname or ""
+        port = parts.port or (443 if parts.scheme == "https" else 80)
+        if not host or host in ("localhost", "127.0.0.1", "::1"):
+            return None
+        timeout = max(0.5, float(os.getenv("OVERPASS_PREFLIGHT_TIMEOUT_S", "3")))
+    except Exception:
+        return None
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return None
+    except OSError as exc:
+        # текст містить маркер рівня зʼєднання → is_connection_error() = True
+        return ConnectionError(f"preflight {host}:{port} — connection refused/unreachable: {exc}")
 
 
 def note_failure(exc: BaseException | None) -> bool:

@@ -137,6 +137,11 @@ def _run_overpass_with_retries(label: str, fetch_fn):
             try:
                 setattr(ox.settings, _EP_ATTR, endpoint)
                 setattr(ox.settings, _TO_ATTR, max(original_timeout, 180))
+                # 12.09.2026: хост, що лежить, коштував по 60 с на шар (osmnx
+                # спить перед /status) — перевіряємо зʼєднання самі за 3 с.
+                _pre = overpass_health.preflight(endpoint)
+                if _pre is not None:
+                    raise _pre
                 result = fetch_fn()
                 if result is None:
                     raise InsufficientResponseError(f"{label}: empty result from {endpoint}")

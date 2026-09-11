@@ -126,27 +126,58 @@ class TerrariumTileProvider:
         self._mem[key] = elev
         return elev
 
+    def prefetch(self, keys: "list[TileKey]", workers: int = 8) -> None:
+        """Паралельно тягне відсутні тайли (диск/памʼять — миттєво)."""
+        missing = [k for k in keys if k not in self._mem and not self._tile_path(k).exists()]
+        if len(missing) < 2:
+            return
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=max(1, min(workers, len(missing)))) as pool:
+            list(pool.map(self._fetch_tile_png, missing))
+
     def sample_points(self, lats: np.ndarray, lons: np.ndarray, z: int) -> Optional[np.ndarray]:
+        """Білінійна вибірка висот для масиву точок.
+
+        12.09.2026: було — Python-цикл по кожній точці (для сітки рельєфу це
+        ~500 тис. ітерацій: 24.6 с «Отримання з API» на проді, з них саме
+        завантаження — секунди). Тепер numpy по тайлах + паралельне
+        завантаження. Формула та сама, що в `_bilinear_sample`.
+        """
+        lats = np.asarray(lats, dtype=np.float64).ravel()
+        lons = np.asarray(lons, dtype=np.float64).ravel()
+        out = np.full(lats.shape, np.nan, dtype=np.float32)
         if lats.size == 0:
-            return np.array([])
+            return out
 
-        out = np.empty_like(lats, dtype=np.float32)
-        out.fill(np.nan)
+        n = 256.0 * (2 ** z)
+        lat_c = np.clip(lats, -85.05112878, 85.05112878)
+        gx = (lons + 180.0) / 360.0 * n
+        lat_rad = np.radians(lat_c)
+        gy = (1.0 - np.log(np.tan(lat_rad) + 1.0 / np.cos(lat_rad)) / math.pi) / 2.0 * n
+        tx = np.floor(gx / 256.0).astype(np.int64)
+        ty = np.floor(gy / 256.0).astype(np.int64)
+        px = gx - tx * 256.0
+        py = gy - ty * 256.0
 
-        # group points by tile for efficiency
-        by_tile: Dict[TileKey, list[tuple[int, float, float]]] = {}
-        for i in range(lats.size):
-            gx, gy = _latlon_to_global_pixel(float(lons[i]), float(lats[i]), z)
-            tx, ty, px, py = _global_pixel_to_tile(gx, gy)
-            key = TileKey(z=z, x=tx, y=ty)
-            by_tile.setdefault(key, []).append((i, px, py))
+        pair = tx * (1 << 32) + ty
+        uniq, inverse = np.unique(pair, return_inverse=True)
+        keys = [TileKey(z=z, x=int(u >> 32), y=int(u & 0xFFFFFFFF)) for u in uniq]
+        self.prefetch(keys)
 
-        for key, pts in by_tile.items():
+        for j, key in enumerate(keys):
             tile = self.get_tile(key)
             if tile is None:
                 continue
-            for idx, px, py in pts:
-                out[idx] = _bilinear_sample(tile, px, py)
+            sel = np.nonzero(inverse == j)[0]
+            h, w = tile.shape
+            x = np.clip(px[sel], 0.0, w - 1.0)
+            y = np.clip(py[sel], 0.0, h - 1.0)
+            x0 = np.floor(x).astype(np.int64); y0 = np.floor(y).astype(np.int64)
+            x1 = np.minimum(x0 + 1, w - 1); y1 = np.minimum(y0 + 1, h - 1)
+            dx = x - x0; dy = y - y0
+            v = ((tile[y0, x0] * (1 - dx) + tile[y0, x1] * dx) * (1 - dy)
+                 + (tile[y1, x0] * (1 - dx) + tile[y1, x1] * dx) * dy)
+            out[sel] = v.astype(np.float32)
 
         return out
 

@@ -9,6 +9,10 @@ from pathlib import Path
 # Додаємо корінь проекту до шляху
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Тести з фейковим fetch_fn не мають ходити до overpass-api.de (передполітна
+# TCP-перевірка, services/overpass_health.preflight).
+os.environ.setdefault("OVERPASS_PREFLIGHT", "0")
+
 # ── Карантин застарілих тестів ───────────────────────────────────────────────
 # Ці 5 файлів (закомічені 2026-05-10/02-01) посилаються на ВИДАЛЕНІ під час
 # рефакторингу символи/модулі і ВЖЕ тижнями не збираються — а помилка collection
