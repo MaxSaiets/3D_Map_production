@@ -134,6 +134,8 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
         {/* Спрощено: лише чіткі ПУНКТИ ПРИЗНАЧЕННЯ (без home-якорів #how/#templates,
             що захаращували глобальне меню). Галерея · Ціни · Брелоки. */}
         <nav className="hidden items-center gap-8 text-sm text-ink-2 lg:flex">
+          {/* Головний виріб — першим у меню, а не лише кнопкою справа (власник, 11.09). */}
+          <Link href="/create" className="hover:text-ink">{t("maps")}</Link>
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
           <Link href="/prices" className="hover:text-ink">{t("prices")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
@@ -190,6 +192,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
         <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur lg:hidden">
           <ul className="flex flex-col">
             {[
+              { href: "/create", label: t("maps") },
               { href: "/showcase", label: t("gallery") },
               { href: "/prices", label: t("prices") },
               { href: "/keychains", label: t("keychains") },
