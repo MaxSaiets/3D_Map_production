@@ -19,6 +19,15 @@ import re
 import threading
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# Людські дати/час у Telegram — за Києвом. Сервер живе в UTC, і без цього бот
+# показував час на 3 години раніше (власник помітив 11.09.2026).
+KYIV = ZoneInfo("Europe/Kyiv")
+
+
+def _kyiv_now() -> datetime:
+    return datetime.now(KYIV)
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -206,7 +215,7 @@ def send_contact(name: str, phone: str, message: str, source: str = "") -> bool:
     if not telegram_configured():
         print("[CONTACT] Telegram not configured.")
         return False
-    now = datetime.now().strftime("%d.%m.%Y %H:%M")
+    now = _kyiv_now().strftime("%d.%m.%Y %H:%M")
     lines = [
         "📨 <b>НОВЕ ЗВЕРНЕННЯ</b>",
         f"🗓 {now}",
@@ -224,7 +233,7 @@ def send_contact(name: str, phone: str, message: str, source: str = "") -> bool:
 def create_order(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Process an order: notify Telegram CRM with data + file + screenshots."""
     order_number = _new_order_number()
-    now = datetime.now()
+    now = _kyiv_now()
     date_str = now.strftime("%Y-%m-%d")
 
     name = (payload.get("name") or "").strip() or "Без імені"
