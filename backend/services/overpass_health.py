@@ -49,7 +49,7 @@ class OverpassUnavailableError(RuntimeError):
 
     #: Готовий текст для покупця. Технічна причина живе окремо в `detail` і йде
     #: лише в лог — у фронт віддаємо тільки цей рядок.
-    user_message = "Джерело карт (OpenStreetMap) тимчасово недоступне. Спробуйте за кілька хвилин."
+    user_message = "Джерело карт (OpenStreetMap) тимчасово недоступне. Спробуйте ще раз за пів хвилини."
 
     def __init__(self, detail: str = "") -> None:
         super().__init__(f"{self.user_message} [{detail}]" if detail else self.user_message)
@@ -65,9 +65,13 @@ def _threshold() -> int:
 
 def _cooldown_s() -> float:
     try:
-        return max(5.0, float(os.getenv("OVERPASS_BREAKER_COOLDOWN_S", "120")))
+        # 11.09.2026: було 120 с. Власник тиснув «Спробувати ще раз» пʼять разів за
+        # дві хвилини і щоразу отримував ту саму відмову, хоча OpenStreetMap уже
+        # ожив. 30 с досить, щоб не добивати хост, який щойно відмовив, і замало,
+        # щоб людина встигла зневіритись у кнопці.
+        return max(5.0, float(os.getenv("OVERPASS_BREAKER_COOLDOWN_S", "30")))
     except Exception:
-        return 120.0
+        return 30.0
 
 
 # Маркери помилок РІВНЯ ЗʼЄДНАННЯ. Перевіряємо і клас, і текст: requests/urllib3
