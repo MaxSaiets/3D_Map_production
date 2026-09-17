@@ -22,6 +22,9 @@ interface GenerationState {
   reconnecting: boolean;
   /** Скільки ще секунд стояти В ЧЕРЗІ (не тривалість самої генерації). */
   queueEta: number | null;
+  /** 16.09.2026: джерело карт (OpenStreetMap) лягло, бекенд ЧЕКАЄ на нього —
+   *  за скільки секунд наступна спроба. null — не чекаємо. */
+  sourceWaitS: number | null;
   genError: string | null;
   printPrep: number | null;
   /** Іде завантаження друк-файлу (клік «Завантажити» → друга генерація 1–3 хв).
@@ -193,6 +196,7 @@ interface GenerationState {
   /** perf-2026-09-03: чесний ETA з бекенду (медіана реальних прогонів) + скільки вже минуло. */
   setEta: (etaS: number | null, elapsedS: number | null) => void;
   setQueued: (queued: boolean, queueEta?: number | null) => void;
+  setSourceWait: (s: number | null) => void;
   setReconnecting: (v: boolean) => void;
   setGenError: (genError: string | null) => void;
   setPrintPrep: (printPrep: number | null) => void;
@@ -247,6 +251,7 @@ const initialState = {
   elapsedS: null,
   queued: false,
   queueEta: null,
+  sourceWaitS: null,
   reconnecting: false,
   genError: null,
   printPrep: null,
@@ -445,6 +450,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   updateProgress: (progress, status) => set({ progress, status }),
   setEta: (etaS, elapsedS) => set({ etaS, elapsedS }),
   setQueued: (queued, queueEta = null) => set({ queued, queueEta: queued ? queueEta : null }),
+  setSourceWait: (sourceWaitS) => set({ sourceWaitS }),
   setReconnecting: (v) => set({ reconnecting: v }),
   setGenError: (genError) => set({ genError }),
   setPrintPrep: (printPrep) => set({ printPrep }),

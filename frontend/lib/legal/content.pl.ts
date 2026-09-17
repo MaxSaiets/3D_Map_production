@@ -36,7 +36,7 @@ export const pl: LegalSet = {
       { h: "4. Cena i płatność", blocks: [
         { p: "Ceny w Serwisie podane są w hrywnach (dla zamówień na terenie Ukrainy) oraz w euro (orientacyjnie). Ostateczną wartość zamówienia Kupujący widzi na etapie składania zamówienia, przed dokonaniem płatności. Koszt dostawy nie jest wliczony w cenę Towaru i jest opłacany osobno według taryf przewoźnika." },
         { p: "Płatność odbywa się online za pośrednictwem serwisu płatniczego LiqPay (JSC CB „PrivatBank”): kartą bankową Visa/Mastercard oraz innymi metodami dostępnymi w LiqPay. Dane karty płatniczej są przetwarzane po stronie systemu płatności; Sprzedawca ich nie otrzymuje i nie przechowuje." },
-        { p: "Po uzgodnieniu z operatorem możliwa jest płatność w inny uzgodniony sposób. Pobranie gotowej Treści cyfrowej w ramach bezpłatnego limitu konta jest bezpłatne." },
+        { p: "Po uzgodnieniu z operatorem możliwa jest płatność w inny uzgodniony sposób. Treść cyfrowa (plik do druku) jest opłacana online przed udostępnieniem; podgląd 3D modelu na stronie jest bezpłatny." },
         { p: "Towar jest opłacany w całości przed przekazaniem do produkcji, chyba że strony uzgodniły inaczej. Szczegóły — na stronie [delivery:„Płatność i dostawa”]." },
       ] },
       { h: "5. Terminy realizacji", blocks: [
@@ -135,11 +135,11 @@ export const pl: LegalSet = {
           "Brelok-mapa — od 170 ₴ (≈ 4 €).",
           "Mapa 3D dzielnicy: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapy — od 8 €).",
           "Magnes na lodówkę (mapa) — 210 ₴.",
-          "Pobranie gotowego pliku 3MF/STL do samodzielnego druku — bezpłatnie w ramach limitu konta.",
+          "Plik 3MF do samodzielnego druku — 149 ₴ (cena widoczna w kreatorze), dostęp przez link po opłacie; podgląd 3D jest bezpłatny.",
         ] },
       ] },
       { h: "Płatność", blocks: [
-        { p: "Płatność online kartą bankową Visa / Mastercard za pośrednictwem bezpiecznego serwisu LiqPay. Dane karty są przetwarzane po stronie systemu płatniczego — nie przechowujemy ich. Możliwa jest również płatność po uzgodnieniu z operatorem. Plik cyfrowy w ramach bezpłatnego limitu jest udostępniany bez opłaty." },
+        { p: "Płatność online kartą bankową Visa / Mastercard za pośrednictwem bezpiecznego serwisu LiqPay. Dane karty są przetwarzane po stronie systemu płatniczego — nie przechowujemy ich. Możliwa jest również płatność po uzgodnieniu z operatorem. Dostęp do pliku cyfrowego jest otwierany po potwierdzeniu płatności; do zakupu pliku nie jest potrzebne konto — wystarczy adres e-mail." },
       ] },
       { h: "Wytworzenie", blocks: [
         { p: "Wyroby są drukowane na zamówienie z bioplastiku Eco PLA. Orientacyjny czas wytworzenia — 2–4 dni robocze po potwierdzeniu zamówienia (w zależności od obciążenia i złożoności)." },
@@ -184,7 +184,7 @@ export const pl: LegalSet = {
         ] },
       ] },
       { h: "Co sprzedajemy", blocks: [
-        { p: "{storeName} — to modele 3D map miast i breloków-map na zamówienie. Możesz pobrać gotowy plik do druku (3MF/STL) w ramach bezpłatnego limitu lub zamówić druk wyrobu z bioplastiku Eco PLA z dostawą. Ceny orientacyjne są wskazane w kreatorze oraz na stronie [delivery:„Płatność i dostawa”]." },
+        { p: "{storeName} — to modele 3D map miast i breloków-map na zamówienie. Możesz kupić gotowy plik do druku (3MF) lub zamówić druk wyrobu z bioplastiku Eco PLA z dostawą na terenie Ukrainy. Ceny orientacyjne są wskazane w kreatorze oraz na stronie [delivery:„Płatność i dostawa”]." },
       ] },
       { h: "Dokumenty", blocks: [
         { ul: [
@@ -277,8 +277,8 @@ export const pl: LegalSet = {
       { h: "O serwisie", blocks: [
         { p: "{storeName} pozwala stworzyć model 3D fragmentu miasta lub breloka z mapą na podstawie otwartych danych OpenStreetMap i pobrać gotowy plik do druku 3D (3MF/STL) lub zamówić druk." },
       ] },
-      { h: "Konto i bezpłatne pobrania", blocks: [
-        { p: "Do pobrania pełnego modelu wymagane jest konto. Każdy użytkownik ma dostęp do 5 bezpłatnych pobrań. Dalej — po uzgodnieniu (druk/płatność), kontakt przez stronę." },
+      { h: "Konto i pobrania", blocks: [
+        { p: "Konto (logowanie Google) przechowuje historię twoich modeli; zakup pliku do druku nie wymaga konta — wystarczy e-mail i link otrzymany po opłacie. Jeśli administrator serwisu przyznaje zarejestrowanym użytkownikom bezpłatne pobrania, ich pozostała liczba jest widoczna w koncie." },
       ] },
       { h: "Przechowywanie modeli", blocks: [
         { p: "Wygenerowane pliki przechowywane są 90 dni, po czym są automatycznie usuwane (modele, do których złożono zamówienie, usuwane są razem z zamówieniem). Wpis w historii panelu pozostaje; model można wygenerować ponownie. Link „Udostępnij w 3D” jest dostępny dla każdego, kto go ma, i działa, dopóki przechowywany jest plik. W każdej chwili możesz usunąć konto razem ze wszystkimi modelami w panelu. Szczegóły — w [privacy:Polityce prywatności]." },

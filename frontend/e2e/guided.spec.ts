@@ -399,3 +399,54 @@ test.describe("Guided /create — тап до готовності карти (H
     expect(gen).toBe(1);
   });
 });
+
+test.describe("Guided /create — купівля файлу без акаунта (2026-09-16)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.clear();
+        localStorage.setItem("intro_create_v1", "1");
+        localStorage.setItem("onb_create_v1", "1");
+      } catch { /* ignore */ }
+    });
+  });
+
+  test("гість без безкоштовних завантажень: «Завантажити» → друк-файл → діалог оплати 149 ₴ (без входу)", async ({ page }) => {
+    let gen = 0;
+    await page.route("**/api/generate", (route) => {
+      gen += 1;
+      route.fulfill({
+        status: 200, contentType: "application/json",
+        body: JSON.stringify({ task_id: gen === 1 ? "t-e2e-1" : "t-e2e-2", status: "processing", message: "ok", eta_s: 50 }),
+      });
+    });
+    await page.route("**/api/status/t-e2e-1", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e2e-1", status: "completed", progress: 100, message: "done", download_url: "/files/e2e.glb", eta_s: 50, elapsed_s: 49 }),
+    }));
+    await page.route("**/api/status/t-e2e-2", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ task_id: "t-e2e-2", status: "completed", progress: 100, message: "done", download_url: "/files/e2e.3mf", download_url_3mf: "/files/e2e.3mf" }),
+    }));
+    // FREE_DOWNLOADS=0 на проді: файл лише за гроші, акаунт для купівлі не потрібен
+    await page.route("**/api/file/access/**", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ paid: false, priceUah: 149, currency: "UAH", freeLimit: 0, approx: { EUR: 3.1 } }),
+    }));
+    await page.goto("/uk/create?product=map3d");
+    const flow = page.getByTestId("scenario-flow");
+    await flow.getByRole("button", { name: "Львів", exact: true }).click();
+    await page.waitForTimeout(1800);
+    await page.getByTestId("scenario-create").click();
+    const success = flow.getByTestId("guided-success");
+    await expect(success).toBeVisible({ timeout: 15_000 });
+    await success.getByTestId("guided-download").click();
+    // діалог купівлі, а не модалка входу і не форма замовлення друку
+    const pay = page.getByTestId("buy-file-pay");
+    await expect(pay).toBeVisible({ timeout: 20_000 });
+    await expect(pay).toContainText("149");
+    await expect(page.locator("#login-dialog-title")).toHaveCount(0);
+    await expect(page.locator("#order-name")).toHaveCount(0);
+    expect(gen).toBe(2);
+  });
+});

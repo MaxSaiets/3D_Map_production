@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { createPortal } from "react-dom";
 import { X, FileDown, Loader2 } from "lucide-react";
 
 /**
@@ -19,7 +20,7 @@ import { X, FileDown, Loader2 } from "lucide-react";
  */
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
-type Access = { paid: boolean; priceUah: number; currency: string };
+type Access = { paid: boolean; priceUah: number; currency: string; approx?: Record<string, number> };
 type Checkout = {
   alreadyPaid: boolean;
   orderNumber?: string;
@@ -42,6 +43,7 @@ export function BuyFileDialog({
   onAlreadyPaid?: () => void;
 }) {
   const t = useTranslations("scenario");
+  const locale = useLocale();
   const [access, setAccess] = useState<Access | null>(null);
   const [email, setEmail] = useState(defaultEmail);
   const [busy, setBusy] = useState(false);
@@ -66,9 +68,15 @@ export function BuyFileDialog({
   useEffect(() => { if (pay) formRef.current?.submit(); }, [pay]);
 
   if (!open) return null;
+  // 16.09.2026: портал у body — як OrderDialog. Панель у guided-режимі живе в
+  // прихованій копії (display:none), і без порталу діалог рендерився невидимим.
+  if (typeof document === "undefined") return null;
 
   const price = access?.priceUah ?? 0;
   const priceLabel = price > 0 ? String(price) : "…";
+  // 16.09.2026: іноземцю «149 ₴» ні про що не говорить — поруч «≈ 3 €» (курси з
+  // pricing.json/fx на беку, приблизно). Списання — завжди в гривні.
+  const approxEur = locale !== "uk" && access?.approx?.EUR ? access.approx.EUR : null;
 
   const buy = async () => {
     if (!taskId || busy) return;
@@ -101,7 +109,7 @@ export function BuyFileDialog({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[120] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
       role="dialog"
@@ -161,6 +169,11 @@ export function BuyFileDialog({
               {busy && <Loader2 size={16} className="animate-spin" />}
               {t("buyFilePay", { price: priceLabel })}
             </button>
+            {approxEur != null && (
+              <p className="mt-1.5 text-center text-[12px] font-medium text-[var(--text-secondary)]" data-testid="buy-file-approx">
+                {t("buyFileApprox", { eur: approxEur.toFixed(approxEur < 10 ? 1 : 0) })}
+              </p>
+            )}
             <p className="mt-2 text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">
               {t("buyFileNote")}
             </p>
@@ -175,7 +188,8 @@ export function BuyFileDialog({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

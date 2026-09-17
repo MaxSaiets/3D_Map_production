@@ -12,32 +12,32 @@ const CREATE: Record<string, SeoProse> = {
   uk: {
     h2: "Онлайн-конструктор 3D-мапи міста",
     p1: "Monadruk перетворює будь-яку точку світу на друковану 3D-модель: оберіть район на карті — і за кілька хвилин отримаєте тривимірну мапу з реальними висотами будинків, вулицями, парками й річками за даними OpenStreetMap. Для горбистих міст можна ввімкнути рельєф місцевості, а серію сусідніх плиток — з'єднати у настінне панно.",
-    p2: "Готову модель друкуємо з екологічного біопластику Eco PLA у розмірах від 5,5 до 15 см (ціна від 350 ₴) і надсилаємо Новою Поштою по Україні. Якщо у вас є власний 3D-принтер — завантажте готовий файл 3MF/STL і надрукуйте вдома.",
+    p2: "Готову модель друкуємо з екологічного біопластику Eco PLA у розмірах від 5,5 до 15 см (ціна від 350 ₴) і надсилаємо Новою Поштою по Україні. Якщо у вас є власний 3D-принтер — купіть готовий файл 3MF (149 ₴) і надрукуйте вдома; 3D-превʼю перед покупкою безкоштовне.",
   },
   en: {
     h2: "Online 3D city map builder",
     p1: "Monadruk turns any point on Earth into a printable 3D model: pick a district on the map and in minutes get a three-dimensional map with real building heights, streets, parks and rivers from OpenStreetMap data. Hilly cities can be rendered with true terrain relief, and adjacent tiles can be joined into a wall panel.",
-    p2: "We print the finished model in eco-friendly Eco PLA in sizes from 5.5 to 15 cm (from ≈€8) and ship across Ukraine. Have your own 3D printer? Download the ready 3MF/STL file and print at home.",
+    p2: "We print the finished model in eco-friendly Eco PLA in sizes from 5.5 to 15 cm (from ≈€8) and ship across Ukraine. Have your own 3D printer? Buy the print-ready 3MF file (149 ₴ ≈ €3, works worldwide) and print at home — the 3D preview is free.",
   },
   de: {
     h2: "Online-Konfigurator für 3D-Stadtkarten",
     p1: "Monadruk verwandelt jeden Punkt der Erde in ein druckbares 3D-Modell: Wähle ein Viertel auf der Karte und erhalte in wenigen Minuten eine dreidimensionale Karte mit echten Gebäudehöhen, Straßen, Parks und Flüssen aus OpenStreetMap-Daten. Für hügelige Städte lässt sich das Geländerelief aktivieren, und benachbarte Kacheln können zu einem Wandpanel zusammengefügt werden.",
-    p2: "Das fertige Modell drucken wir aus umweltfreundlichem Eco PLA in Größen von 5,5 bis 15 cm (ab ≈8 €) und versenden es innerhalb der Ukraine. Du hast einen eigenen 3D-Drucker? Lade die fertige 3MF/STL-Datei herunter und drucke zu Hause.",
+    p2: "Das fertige Modell drucken wir aus umweltfreundlichem Eco PLA in Größen von 5,5 bis 15 cm (ab ≈8 €) und versenden es innerhalb der Ukraine. Du hast einen eigenen 3D-Drucker? Kauf die druckfertige 3MF-Datei (149 ₴ ≈ 3 €, weltweit) und drucke zu Hause — die 3D-Vorschau ist kostenlos.",
   },
   pl: {
     h2: "Kreator mapy miasta 3D online",
     p1: "Monadruk zamienia dowolny punkt na Ziemi w drukowalny model 3D: wybierz dzielnicę na mapie, a w kilka minut otrzymasz trójwymiarową mapę z rzeczywistymi wysokościami budynków, ulicami, parkami i rzekami na podstawie danych OpenStreetMap. Dla pagórkowatych miast można włączyć rzeźbę terenu, a sąsiednie kafle połączyć w panel ścienny.",
-    p2: "Gotowy model drukujemy z ekologicznego bioplastiku Eco PLA w rozmiarach od 5,5 do 15 cm (od ≈8 €) i wysyłamy na Ukrainę. Masz własną drukarkę 3D? Pobierz gotowy plik 3MF/STL i wydrukuj w domu.",
+    p2: "Gotowy model drukujemy z ekologicznego bioplastiku Eco PLA w rozmiarach od 5,5 do 15 cm (od ≈8 €) i wysyłamy na Ukrainę. Masz własną drukarkę 3D? Kup gotowy plik 3MF (149 ₴ ≈ 3 €, dostępny na całym świecie) i wydrukuj w domu — podgląd 3D jest bezpłatny.",
   },
   fr: {
     h2: "Configurateur de carte de ville 3D en ligne",
     p1: "Monadruk transforme n'importe quel point du globe en un modèle 3D imprimable : choisissez un quartier sur la carte et obtenez en quelques minutes une carte tridimensionnelle avec les hauteurs réelles des bâtiments, les rues, les parcs et les rivières d'après les données OpenStreetMap. Pour les villes vallonnées, le relief du terrain peut être activé, et des tuiles voisines assemblées en un panneau mural.",
-    p2: "Nous imprimons le modèle fini en Eco PLA écologique, en tailles de 5,5 à 15 cm (à partir de ≈8 €), et l'expédions en Ukraine. Vous avez votre propre imprimante 3D ? Téléchargez le fichier 3MF/STL prêt et imprimez chez vous.",
+    p2: "Nous imprimons le modèle fini en Eco PLA écologique, en tailles de 5,5 à 15 cm (à partir de ≈8 €), et l'expédions en Ukraine. Vous avez votre propre imprimante 3D ? Achetez le fichier 3MF prêt à imprimer (149 ₴ ≈ 3 €, partout dans le monde) et imprimez chez vous — l'aperçu 3D est gratuit.",
   },
   es: {
     h2: "Configurador de mapa de ciudad 3D en línea",
     p1: "Monadruk convierte cualquier punto de la Tierra en un modelo 3D imprimible: elige un distrito en el mapa y en minutos obtén un mapa tridimensional con alturas reales de edificios, calles, parques y ríos a partir de datos de OpenStreetMap. Para ciudades con colinas se puede activar el relieve del terreno, y unir baldosas vecinas en un panel de pared.",
-    p2: "Imprimimos el modelo terminado en Eco PLA ecológico, en tamaños de 5,5 a 15 cm (desde ≈8 €), y lo enviamos dentro de Ucrania. ¿Tienes tu propia impresora 3D? Descarga el archivo 3MF/STL listo e imprime en casa.",
+    p2: "Imprimimos el modelo terminado en Eco PLA ecológico, en tamaños de 5,5 a 15 cm (desde ≈8 €), y lo enviamos dentro de Ucrania. ¿Tienes tu propia impresora 3D? Compra el archivo 3MF listo para imprimir (149 ₴ ≈ 3 €, en todo el mundo) e imprímelo en casa — la vista previa 3D es gratis.",
   },
 };
 
@@ -119,37 +119,37 @@ const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
     { q: "Скільки коштує 3D-мапа?", a: "3D-мапа — від 350 ₴ за розмір S (5,5 см) до 770 ₴ за XL (15 см), рельєф місцевості +85 ₴. Магніт на холодильник — 210 ₴, брелок — від 170 ₴." },
     { q: "Яку ділянку краще обрати?", a: "Ділянку 400–800 метрів зі змішаною забудовою: трохи вулиць, парк або вода — так район впізнається з першого погляду." },
     { q: "Скільки триває виготовлення?", a: "2–4 робочі дні на друк, потім доставка Новою Поштою по Україні." },
-    { q: "Чи можна надрукувати самому?", a: "Так — завантажте готовий файл 3MF або STL, він одразу відкривається в Bambu Studio чи PrusaSlicer." },
+    { q: "Чи можна надрукувати самому?", a: "Так — файл 3MF для друку коштує 149 ₴ (3D-превʼю безкоштовне) і одразу відкривається в Bambu Studio чи PrusaSlicer." },
   ],
   en: [
     { q: "How much does a 3D map cost?", a: "A 3D map is from ≈€8 for size S (5.5 cm) to ≈€18 for XL (15 cm), terrain relief +≈€2. A fridge magnet is ≈€5, a keychain from ≈€4." },
     { q: "Which area should I pick?", a: "A 400–800 m area with mixed content: some streets, a park or water — the district stays recognizable at first glance." },
     { q: "How long does production take?", a: "1–3 business days to print, then shipping across Ukraine." },
-    { q: "Can I print it myself?", a: "Yes — download the ready 3MF or STL file, it opens directly in Bambu Studio or PrusaSlicer." },
+    { q: "Can I print it myself?", a: "Yes — the print-ready 3MF file costs 149 ₴ (≈ €3; the 3D preview is free) and opens directly in Bambu Studio or PrusaSlicer. Sold worldwide." },
   ],
   de: [
     { q: "Was kostet eine 3D-Karte?", a: "Eine 3D-Karte kostet von ≈8 € (Größe S, 5,5 cm) bis ≈18 € (XL, 15 cm), Geländerelief +≈2 €. Kühlschrankmagnet ≈5 €, Anhänger ab ≈4 €." },
     { q: "Welchen Bereich soll ich wählen?", a: "Einen Bereich von 400–800 m mit gemischtem Inhalt: ein paar Straßen, ein Park oder Wasser — so bleibt das Viertel auf den ersten Blick erkennbar." },
     { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druck, dann Versand in die Ukraine." },
-    { q: "Kann ich es selbst drucken?", a: "Ja — lade die fertige 3MF- oder STL-Datei herunter, sie öffnet direkt in Bambu Studio oder PrusaSlicer." },
+    { q: "Kann ich es selbst drucken?", a: "Ja — die druckfertige 3MF-Datei kostet 149 ₴ (≈ 3 €; die 3D-Vorschau ist kostenlos) und öffnet direkt in Bambu Studio oder PrusaSlicer. Weltweit erhältlich." },
   ],
   pl: [
     { q: "Ile kosztuje mapa 3D?", a: "Mapa 3D kosztuje od ≈8 € (rozmiar S, 5,5 cm) do ≈18 € (XL, 15 cm), rzeźba terenu +≈2 €. Magnes na lodówkę ≈5 €, brelok od ≈4 €." },
     { q: "Jaki obszar najlepiej wybrać?", a: "Obszar 400–800 m z mieszaną zabudową: trochę ulic, park lub woda — dzielnica pozostaje rozpoznawalna od pierwszego spojrzenia." },
     { q: "Ile trwa wykonanie?", a: "1–3 dni robocze na druk, potem wysyłka na Ukrainę." },
-    { q: "Czy mogę wydrukować sam?", a: "Tak — pobierz gotowy plik 3MF lub STL, otwiera się od razu w Bambu Studio lub PrusaSlicer." },
+    { q: "Czy mogę wydrukować sam?", a: "Tak — gotowy plik 3MF kosztuje 149 ₴ (≈ 3 €; podgląd 3D jest bezpłatny) i otwiera się od razu w Bambu Studio lub PrusaSlicer. Dostępny na całym świecie." },
   ],
   fr: [
     { q: "Combien coûte une carte 3D ?", a: "Une carte 3D coûte de ≈8 € (taille S, 5,5 cm) à ≈18 € (XL, 15 cm), relief du terrain +≈2 €. Magnet de frigo ≈5 €, porte-clés dès ≈4 €." },
     { q: "Quelle zone choisir ?", a: "Une zone de 400 à 800 m au contenu varié : quelques rues, un parc ou de l'eau — le quartier reste reconnaissable au premier coup d'œil." },
     { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés pour l'impression, puis livraison en Ukraine." },
-    { q: "Puis-je l'imprimer moi-même ?", a: "Oui — téléchargez le fichier 3MF ou STL prêt, il s'ouvre directement dans Bambu Studio ou PrusaSlicer." },
+    { q: "Puis-je l'imprimer moi-même ?", a: "Oui — le fichier 3MF prêt à imprimer coûte 149 ₴ (≈ 3 € ; l'aperçu 3D est gratuit) et s'ouvre directement dans Bambu Studio ou PrusaSlicer. Vendu partout dans le monde." },
   ],
   es: [
     { q: "¿Cuánto cuesta un mapa 3D?", a: "Un mapa 3D cuesta desde ≈8 € (tamaño S, 5,5 cm) hasta ≈18 € (XL, 15 cm), relieve del terreno +≈2 €. Imán de nevera ≈5 €, llavero desde ≈4 €." },
     { q: "¿Qué zona conviene elegir?", a: "Una zona de 400–800 m con contenido variado: algunas calles, un parque o agua — el distrito sigue siendo reconocible a primera vista." },
     { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío a Ucrania." },
-    { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — descarga el archivo 3MF o STL listo, se abre directamente en Bambu Studio o PrusaSlicer." },
+    { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — el archivo 3MF listo para imprimir cuesta 149 ₴ (≈ 3 €; la vista previa 3D es gratis) y se abre directamente en Bambu Studio o PrusaSlicer. Se vende en todo el mundo." },
   ],
 };
 

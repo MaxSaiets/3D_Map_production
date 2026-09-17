@@ -36,7 +36,7 @@ export const de: LegalSet = {
       { h: "4. Preis und Zahlung", blocks: [
         { p: "Die Preise auf der Website sind in Hrywnja (für Bestellungen innerhalb der Ukraine) und in Euro (Richtwert) angegeben. Den endgültigen Bestellwert sieht der Käufer im Bestellschritt vor der Zahlung. Die Versandkosten sind nicht im Warenpreis enthalten und werden gesondert nach den Tarifen des Transportdienstleisters bezahlt." },
         { p: "Die Zahlung erfolgt online über den Zahlungsdienst LiqPay (JSC CB „PrivatBank“): mit Visa-/Mastercard-Bankkarte und über andere in LiqPay verfügbare Methoden. Die Daten der Zahlungskarte werden auf Seiten des Zahlungssystems verarbeitet; der Verkäufer erhält und speichert sie nicht." },
-        { p: "Nach Vereinbarung mit dem Operator ist die Zahlung auf eine andere abgestimmte Weise möglich. Der Download des fertigen Digitalen Inhalts im Rahmen des kostenlosen Kontolimits ist kostenlos." },
+        { p: "Nach Vereinbarung mit dem Operator ist die Zahlung auf eine andere abgestimmte Weise möglich. Digitaler Inhalt (die Druckdatei) wird online bezahlt, bevor der Zugriff freigeschaltet wird; die 3D-Vorschau des Modells auf der Website ist kostenlos." },
         { p: "Die Ware wird vor der Übergabe in die Produktion vollständig bezahlt, sofern die Parteien nichts anderes vereinbart haben. Details finden Sie auf der Seite [delivery:„Zahlung und Lieferung“]." },
       ] },
       { h: "5. Fertigungsfristen", blocks: [
@@ -135,11 +135,11 @@ export const de: LegalSet = {
           "Schlüsselanhänger-Karte — ab 170 ₴ (≈ 4 €).",
           "3D-Karte eines Stadtviertels: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (Karten — ab 8 €).",
           "Kühlschrankmagnet (Karte) — 210 ₴.",
-          "Download der fertigen 3MF-/STL-Datei zum Selbstdrucken — kostenlos im Rahmen des Kontolimits.",
+          "3MF-Datei zum Selbstdrucken — 149 ₴ (der Preis wird im Konfigurator angezeigt), Zugriff per Link nach der Zahlung; die 3D-Vorschau ist kostenlos.",
         ] },
       ] },
       { h: "Zahlung", blocks: [
-        { p: "Online-Zahlung mit Visa-/Mastercard-Bankkarte über den sicheren Dienst LiqPay. Die Kartendaten werden auf der Seite des Zahlungssystems verarbeitet — wir speichern sie nicht. Eine Zahlung nach Absprache mit dem Operator ist ebenfalls möglich. Die digitale Datei wird im Rahmen des kostenlosen Limits ohne Bezahlung bereitgestellt." },
+        { p: "Online-Zahlung mit Visa-/Mastercard-Bankkarte über den sicheren Dienst LiqPay. Die Kartendaten werden auf der Seite des Zahlungssystems verarbeitet — wir speichern sie nicht. Eine Zahlung nach Absprache mit dem Operator ist ebenfalls möglich. Der Zugriff auf die digitale Datei wird nach Zahlungsbestätigung freigeschaltet; für den Kauf der Datei ist kein Konto nötig — nur eine E-Mail-Adresse." },
       ] },
       { h: "Herstellung", blocks: [
         { p: "Die Produkte werden auf Bestellung aus dem Biokunststoff Eco PLA gedruckt. Die voraussichtliche Herstellungszeit beträgt 2–4 Werktage nach Bestätigung der Bestellung (je nach Auslastung und Komplexität)." },
@@ -184,7 +184,7 @@ export const de: LegalSet = {
         ] },
       ] },
       { h: "Was wir verkaufen", blocks: [
-        { p: "{storeName} — das sind 3D-Modelle von Stadtkarten und Schlüsselanhänger-Karten auf Bestellung. Du kannst die fertige Datei zum Drucken (3MF/STL) im Rahmen des kostenlosen Limits herunterladen oder den Druck eines Produkts aus dem Biokunststoff Eco PLA mit Lieferung bestellen. Die Richtpreise findest du im Konfigurator und auf der Seite [delivery:„Zahlung und Lieferung“]." },
+        { p: "{storeName} — das sind 3D-Modelle von Stadtkarten und Schlüsselanhänger-Karten auf Bestellung. Du kannst die fertige Druckdatei (3MF) kaufen oder den Druck eines Produkts aus dem Biokunststoff Eco PLA mit Lieferung innerhalb der Ukraine bestellen. Die Richtpreise findest du im Konfigurator und auf der Seite [delivery:„Zahlung und Lieferung“]." },
       ] },
       { h: "Dokumente", blocks: [
         { ul: [
@@ -277,8 +277,8 @@ export const de: LegalSet = {
       { h: "Über den Dienst", blocks: [
         { p: "{storeName} ermöglicht es dir, ein 3D-Modell eines Stadtausschnitts oder eines Schlüsselanhängers mit einer Karte auf Basis der offenen Daten von OpenStreetMap zu erstellen und die fertige Datei für den 3D-Druck (3MF/STL) herunterzuladen oder den Druck zu bestellen." },
       ] },
-      { h: "Konto und kostenlose Downloads", blocks: [
-        { p: "Für den Download des vollständigen Modells ist ein Konto erforderlich. Jedem Nutzer stehen 5 kostenlose Downloads zur Verfügung. Danach — nach Absprache (Druck/Zahlung), Kontakt über die Website." },
+      { h: "Konto und Downloads", blocks: [
+        { p: "Ein Konto (Google-Anmeldung) bewahrt die Historie deiner Modelle; der Kauf der Druckdatei braucht kein Konto — nur eine E-Mail und den Link nach der Zahlung. Gewährt der Betreiber registrierten Nutzern kostenlose Downloads, wird die verbleibende Anzahl im Konto angezeigt." },
       ] },
       { h: "Speicherung von Modellen", blocks: [
         { p: "Generierte Dateien werden 90 Tage aufbewahrt und danach automatisch gelöscht (Modelle, zu denen eine Bestellung vorliegt, werden zusammen mit der Bestellung gelöscht). Der Eintrag im Kontoverlauf bleibt bestehen; das Modell kann erneut generiert werden. Der Link „In 3D teilen“ ist für jeden zugänglich, der ihn hat, und funktioniert, solange die Datei gespeichert ist. Du kannst dein Konto jederzeit zusammen mit allen Modellen im Konto löschen. Details — in der [privacy:Datenschutzerklärung]." },

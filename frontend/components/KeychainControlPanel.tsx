@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { AlignCenter, AlertTriangle, CheckCircle2, Download, KeyRound, Loader2, Map as MapIcon, Play, RotateCcw, ShoppingBag, SlidersHorizontal, Type } from "lucide-react";
 import { OrderDialog } from "@/components/OrderDialog";
+import { BuyFileDialog } from "@/components/BuyFileDialog";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
@@ -465,6 +466,10 @@ export function KeychainControlPanel({
   const [orderOpen, setOrderOpen] = useState(false);
   const { getIdToken, openLogin } = useAuth();
   const [quota, setQuota] = useState<{ remaining: number; limit: number; isAdmin?: boolean } | null>(null);
+  // 16.09.2026: діалог купівлі друк-файлу брелка (для мап був з 09.09, тут — ні:
+  // брелок за кордон продати було нічим). `buyFileTaskRef` — задача, яку купують.
+  const [buyFileOpen, setBuyFileOpen] = useState(false);
+  const buyFileTaskRef = useRef<string | null>(null);
   const pollingInFlightRef = useRef(false);
   const pollFailRef = useRef(0);
 
@@ -833,6 +838,7 @@ export function KeychainControlPanel({
         const task = resp as any;
         // C-4: «у черзі» — окремий стан для guided-прогресу.
         useGenerationStore.getState().setQueued(task.status === "queued", typeof (task as any).queue_eta_s === "number" ? (task as any).queue_eta_s : null);
+        useGenerationStore.getState().setSourceWait(task.status === "processing" && typeof (task as any).source_wait_s === "number" ? (task as any).source_wait_s : null);
         pollFailRef.current = 0;
         useGenerationStore.getState().setReconnecting(false);
         setTaskStatuses({ [task.task_id]: task });
@@ -1046,6 +1052,23 @@ export function KeychainControlPanel({
 
   const handleDownload = async () => {
     if (!downloadUrl) return;
+    const dlTaskId = taskGroupId || activeTaskId;
+    // 16.09.2026: купівля файлу не потребує акаунта; коли безкоштовних завантажень
+    // сервіс не дає (FREE_DOWNLOADS=0) — гостя не женемо у Google, а одразу
+    // відкриваємо оплату (або віддаємо вже оплачений файл). Раніше після входу
+    // квота 0 вела у форму замовлення друку (лише Україна) — глухий кут.
+    const token = await getIdToken().catch(() => null);
+    const quotaGone = !!quota && !quota.isAdmin && quota.remaining <= 0;
+    if (dlTaskId && (!token || quotaGone)) {
+      const { fetchFileAccess, downloadPaidFile } = await import("@/lib/download");
+      const access = await fetchFileAccess(dlTaskId);
+      if (access && (token || access.freeLimit === 0)) {
+        if (quotaGone) import("@/lib/analytics").then((m) => m.track("quota_block", { product: "keychain" })).catch(() => {});
+        if (access.paid) downloadPaidFile(dlTaskId);
+        else { buyFileTaskRef.current = dlTaskId; setBuyFileOpen(true); }
+        return;
+      }
+    }
     // Невелике превʼю того, що згенеровано — зберігається у кабінет (картка моделі).
     let preview = "";
     const svg = getKeychainDesignerSvg();
@@ -1060,9 +1083,11 @@ export function KeychainControlPanel({
       // A-7 (2026-09-03): вичерпана квота → пояснення + форма замовлення друку,
       // а не глухий кут у Telegram-чат.
       onLimit: () => {
+        // 402 з бекенду = безкоштовні вичерпано → купівля файлу (не форма друку:
+        // дві третини тих, хто робить модель, не з України).
         import("@/lib/analytics").then((m) => m.track("quota_block", { product: "keychain", at: "download" })).catch(() => {});
-        window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("error.limitContact") } }));
-        orderNow();
+        if (dlTaskId) { buyFileTaskRef.current = dlTaskId; setBuyFileOpen(true); }
+        else orderNow();
       },
     });
     if (res.status === "error") setError(t("error.downloadFailed"));
@@ -1749,6 +1774,12 @@ export function KeychainControlPanel({
           </div>
         </section>
 
+        <BuyFileDialog
+          taskId={buyFileOpen ? buyFileTaskRef.current : null}
+          open={buyFileOpen}
+          onClose={() => setBuyFileOpen(false)}
+          onAlreadyPaid={() => { setBuyFileOpen(false); void handleDownload(); }}
+        />
         <OrderDialog
           open={orderOpen}
           onClose={() => setOrderOpen(false)}

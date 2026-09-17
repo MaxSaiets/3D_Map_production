@@ -19,6 +19,42 @@ export interface GatedDownloadOpts {
 
 export type GatedResult = { status: "ok" | "login" | "limit" | "error"; quota?: any; message?: string };
 
+export type FileAccess = { paid: boolean; priceUah: number; freeLimit: number; approx?: Record<string, number> };
+
+/**
+ * 16.09.2026: стан друк-файлу задачі — оплачено? скільки безкоштовних
+ * завантажень дає сервіс? (0 → файл лише за гроші, і акаунт для купівлі не
+ * потрібен). null — бекенд не відповів.
+ */
+export async function fetchFileAccess(taskId: string | null | undefined): Promise<FileAccess | null> {
+  if (!taskId) return null;
+  try {
+    const r = await fetch(`${API_BASE}/api/file/access/${encodeURIComponent(taskId)}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return {
+      paid: !!d?.paid,
+      priceUah: Number(d?.priceUah) || 0,
+      freeLimit: typeof d?.freeLimit === "number" ? d.freeLimit : 0,
+      approx: d?.approx && typeof d.approx === "object" ? d.approx : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Оплачений файл — віддаємо без логіну (ключ доступу = task_id, як і посилання з чека). */
+export function downloadPaidFile(taskId: string): void {
+  const a = document.createElement("a");
+  a.href = `${API_BASE}/api/file/download/${encodeURIComponent(taskId)}`;
+  a.download = "";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  import("./analytics").then((m) => m.track("download_model", { paid: true })).catch(() => {});
+}
+
 export async function gatedDownload(opts: GatedDownloadOpts): Promise<GatedResult> {
   const token = await opts.getIdToken();
   if (!token) { opts.openLogin(); return { status: "login" }; }

@@ -61,7 +61,7 @@ from services.full_generation_pipeline import run_full_generation_pipeline
 from services import hot_lead
 from services.generation_runtime_context import prepare_generation_runtime_context
 
-from services.generation_task import GenerationTask
+from services.generation_task import GenerationTask, GenerationCancelled as _GenerationCancelled
 from services import result_cache as _rc  # perf-2026-09-03: кеш результатів + ETA
 from services.firebase_service import FirebaseService
 from services.global_center import set_global_center, get_global_center, GlobalCenter
@@ -1081,6 +1081,39 @@ class GenerationResponse(BaseModel):
     eta_s: Optional[int] = None
     cached: bool = False
     foreign: bool = False
+    # 16.09.2026: True, коли повернуто ВЖЕ ЖИВУ задачу з тими самими параметрами
+    # (повторний клік «Створити» під час генерації) — нова не створювалась.
+    deduplicated: bool = False
+
+
+def _task_cache_key(task_id: str) -> str:
+    """cache_key задачі з реєстру (порожньо, якщо задачі в памʼяті нема)."""
+    try:
+        return str(getattr(tasks.get(str(task_id or "")), "cache_key", "") or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _find_inflight_task(cache_key: str, *, exclude_task_id: str = "", max_age_s: float = 1800.0):
+    """Жива (pending/processing/queued, не скасована, не старша за max_age_s)
+    задача з тим самим ключем запиту — або None.
+
+    Вік обмежено: задача, що «зависла» в processing після рестарту, не має
+    вічно перехоплювати нові запити з тими самими параметрами.
+    """
+    if not cache_key:
+        return None
+    now = _dtm.utcnow()
+    for t in list(tasks.values()):
+        if t.task_id == exclude_task_id or getattr(t, "cache_key", None) != cache_key:
+            continue
+        if t.status not in ("pending", "processing", "queued") or getattr(t, "cancelled", False):
+            continue
+        created = getattr(t, "created_at", None)
+        if created is not None and (now - created).total_seconds() > max_age_s:
+            continue
+        return t
+    return None
 
 
 @app.get("/")
@@ -1668,8 +1701,9 @@ async def file_checkout(
         raise HTTPException(status_code=422, detail="Вкажіть коректну пошту — на неї прийде файл")
     task_id = (req.task_id or "").strip()
 
-    # Уже оплачено (людина повернулась за посиланням) — не беремо грошей удруге.
-    if _fa.has_access(task_id):
+    # Уже оплачено (людина повернулась за посиланням, або ті самі параметри під
+    # новим task_id після повторної генерації) — не беремо грошей удруге.
+    if _fa.has_access(task_id, _task_cache_key(task_id)):
         return {"alreadyPaid": True, "taskId": task_id}
 
     if not is_configured():
@@ -1725,7 +1759,7 @@ async def file_download(
     підтвердженої оплати, тобто працює як персональне посилання на покупку."""
     from services import file_access as _fa
     tid = (task_id or "").strip()
-    if not _fa.has_access(tid):
+    if not _fa.has_access(tid, _task_cache_key(tid)):
         raise HTTPException(status_code=402, detail="Файл не оплачено")
 
     path = None
@@ -1754,7 +1788,20 @@ async def file_access_status(task_id: str):
     """Чи вже оплачено файл цієї моделі + скільки він коштує. Публічний і
     дешевий: фронт питає його, щоб показати «Купити файл — N ₴» або «Завантажити»."""
     from services import file_access as _fa
-    return {"paid": _fa.has_access(task_id), "priceUah": _fa.file_price_uah(), "currency": "UAH"}
+    from services.user_store import FREE_DOWNLOADS as _free_limit
+    _price = _fa.file_price_uah()
+    return {
+        "paid": _fa.has_access(task_id, _task_cache_key(task_id)),
+        "priceUah": _price,
+        "currency": "UAH",
+        # 16.09.2026: скільки безкоштовних завантажень дає сервіс (0 = файл лише за
+        # гроші). Фронт за цим вирішує, чи просити вхід через Google перед купівлею:
+        # покупка файлу не потребує акаунта, лише пошту.
+        "freeLimit": int(_free_limit),
+        # 16.09.2026: приблизний еквівалент для іноземців (дві третини тих, хто
+        # генерує) — «149 ₴» їм ні про що не говорить. Списання — завжди в UAH.
+        "approx": _fa.file_price_hints(_price),
+    }
 
 
 @app.post("/api/liqpay/callback")
@@ -2663,7 +2710,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     # може вмерти). Порядок навмисний: спершу перевіряємо оплату, і лише потім
     # списуємо безкоштовне завантаження — інакше покупець платив би двічі.
     from services import file_access as _fa
-    _paid_file = _fa.has_access(req.task_id or "")
+    _paid_file = _fa.has_access(req.task_id or "", _task_cache_key(req.task_id or ""))
     if _paid_file:
         add_model(u["uid"], u.get("email") or "", {
             "task_id": req.task_id, "title": req.title, "city": req.city,
@@ -2903,6 +2950,23 @@ async def generate_model(
             _rc.apply_cached(task, _cached)
             print(f"[RESULT_CACHE] HIT {task_id} ← {_cached.get('task_id')} ({Path(_cached['output_file']).name})")
             return GenerationResponse(task_id=task_id, status="completed", message=task.message, eta_s=0, cached=True)
+
+        # 16.09.2026: той самий запит уже виконується → віддаємо ЙОГО, а не плодимо
+        # копії. Прод 11.09: людина у розширеному режимі натиснула «Створити»
+        # шість разів за сім секунд → шість однакових задач у черзі на 2 ядрах
+        # (guided-кнопка має гард на фронті, повний конструктор — не мав).
+        _dup = _find_inflight_task(_ckey, exclude_task_id=task_id)
+        if _dup is not None:
+            tasks.pop(task_id, None)
+            print(f"[DEDUPE] запит = задача {_dup.task_id} ({_dup.status}) — нову не створюємо")
+            return GenerationResponse(
+                task_id=_dup.task_id,
+                status=_dup.status if _dup.status in ("processing", "queued") else "processing",
+                message=_dup.message or "Задача вже виконується",
+                eta_s=getattr(_dup, "eta_s", None),
+                foreign=bool(getattr(_dup, "foreign", False)),
+                deduplicated=True,
+            )
 
         # perf-2026-09-03 (B-2): чесний час. За межами покриття ukraine.duckdb дані
         # тягнуться з Overpass (~4 хв на проді) — кажемо це одразу, а не «1–2 хвилини».
@@ -3167,6 +3231,9 @@ async def get_status(task_id: str):
         # Скільки ще чекати В ЧЕРЗІ (не тривалість самої генерації). None —
         # коли задача вже рахується або оцінити нічим.
         "queue_eta_s": getattr(task, "queue_eta_s", None),
+        # 16.09.2026: джерело карт (Overpass) лягло, і ми ЧЕКАЄМО на нього — за
+        # скільки секунд наступна спроба. None — не чекаємо.
+        "source_wait_s": getattr(task, "source_wait_s", None),
         "cached": bool(getattr(task, "from_cache", False)),
         "foreign": bool(getattr(task, "foreign", False)),
         "download_url": main_download_url,
@@ -3413,14 +3480,27 @@ def _task_owner(task: "GenerationTask") -> Optional[str]:
 
 @app.delete("/api/task/{task_id}")
 async def cancel_task(task_id: str, authorization: Optional[str] = Header(default=None)):
-    """Cancel a generation task or batch. БЕЗПЕКА: змінює стан → потрібен валідний
-    токен. Якщо задача привʼязана до власника — лише власник/адмін може скасувати
-    (інакше будь-хто міг убивати чужі генерації за вгаданим task_id)."""
-    u = _require_user(authorization)
+    """Cancel a generation task or batch.
+
+    БЕЗПЕКА: задача, привʼязана до власника, скасовується лише власником/адміном.
+    Анонімну задачу (owner немає) може скасувати той, хто знає її task_id — це
+    UUID4, і він відомий лише тій вкладці, що її створила.
+
+    16.09.2026: раніше БУДЬ-ЯКЕ скасування вимагало входу → для гостя (а це
+    майже всі) кнопка «Скасувати» мовчки отримувала 401, фронт скидав UI, а
+    генерація далі крутила 2 ядра VM; повторний «Створити» ставав у чергу за
+    «скасованою» і людина чекала подвійно (прод 13.09: 449 с замість ~120).
+    """
+    from services.auth_service import verify_token
+    u = verify_token(authorization or "") if authorization else None
 
     def _can_cancel(t: "GenerationTask") -> bool:
         owner = _task_owner(t)
-        return owner is None or owner == u["uid"] or u.get("is_admin", False)
+        if owner is None:
+            return True
+        if not u:
+            raise HTTPException(status_code=401, detail="Потрібен вхід")
+        return owner == u["uid"] or bool(u.get("is_admin", False))
 
     if task_id.startswith("batch_"):
         task_ids_list = multiple_tasks_map.get(task_id, [])
@@ -3430,14 +3510,14 @@ async def cancel_task(task_id: str, authorization: Optional[str] = Header(defaul
         if not all(_can_cancel(t) for t in live):
             raise HTTPException(status_code=403, detail="Це не ваша генерація")
         count = sum(1 for t in live if (t.cancel() or True))
-        print(f"[INFO] Cancelled batch {task_id} ({count} sub-tasks) by {u.get('email')}")
+        print(f"[INFO] Cancelled batch {task_id} ({count} sub-tasks) by {(u or {}).get('email') or 'гість'}")
         return {"cancelled": True, "count": count}
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
     if not _can_cancel(tasks[task_id]):
         raise HTTPException(status_code=403, detail="Це не ваша генерація")
     tasks[task_id].cancel()
-    print(f"[INFO] Cancelled task {task_id} by {u.get('email')}")
+    print(f"[INFO] Cancelled task {task_id} by {(u or {}).get('email') or 'гість'}")
     return {"cancelled": True}
 
 
@@ -5064,6 +5144,10 @@ def generate_model_task(
             print(f"[RESULT_CACHE] post-success hook failed (ignored): {_rce}")
         
         
+    except _GenerationCancelled as _gc:
+        # Прапорець «скасовано» вже стоїть (task.cancel()); статус не чіпаємо.
+        print(f"[INFO] {zone_prefix}Task {task_id} зупинено після етапу «{_gc}» — скасовано користувачем")
+        return
     except Exception as e:
         print(f"[ERROR] === РџРћРњРР›РљРђ Р“Р•РќР•Р РђР¦Р†Р‡ РњРћР”Р•Р›Р† === Task ID: {task_id}, Zone ID: {zone_id}, Error: {e}")
         import traceback

@@ -36,7 +36,7 @@ export const fr: LegalSet = {
       { h: "4. Prix et modalités de paiement", blocks: [
         { p: "Les prix sur le Site sont indiqués en hryvnias (pour les commandes en Ukraine) et en euros (à titre indicatif). L'Acheteur voit le coût définitif de la commande à l'étape de finalisation, avant le paiement. Les frais de livraison ne sont pas inclus dans le prix du Produit et sont payés séparément selon les tarifs du transporteur." },
         { p: "Le paiement s'effectue en ligne via le service de paiement LiqPay (JSC CB « PrivatBank ») : par carte bancaire Visa/Mastercard et par d'autres moyens disponibles dans LiqPay. Les données de la carte de paiement sont traitées du côté du système de paiement ; le Vendeur ne les reçoit pas et ne les conserve pas." },
-        { p: "Sur accord avec l'opérateur, un autre mode de paiement convenu est possible. Le téléchargement du Contenu numérique fini dans la limite gratuite du compte est gratuit." },
+        { p: "Sur accord avec l'opérateur, un autre mode de paiement convenu est possible. Le Contenu numérique (le fichier d'impression) est payé en ligne avant l'ouverture de l'accès ; l'aperçu 3D du modèle sur le site est gratuit." },
         { p: "Le Produit est payé intégralement avant sa mise en production, sauf accord contraire des parties. Détails sur la page [delivery:« Paiement et livraison »]." },
       ] },
       { h: "5. Délais de fabrication", blocks: [
@@ -135,11 +135,11 @@ export const fr: LegalSet = {
           "Porte-clés-carte — à partir de 170 ₴ (≈ 4 €).",
           "Carte 3D d'un quartier : S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (cartes — à partir de 8 €).",
           "Magnet de réfrigérateur (carte) — 210 ₴.",
-          "Téléchargement du fichier fini 3MF/STL pour une impression autonome — gratuit dans la limite du compte.",
+          "Fichier 3MF pour impression autonome — 149 ₴ (le prix est affiché dans le configurateur), accès par lien après paiement ; l'aperçu 3D est gratuit.",
         ] },
       ] },
       { h: "Paiement", blocks: [
-        { p: "Paiement en ligne par carte bancaire Visa / Mastercard via le service sécurisé LiqPay. Les données de la carte sont traitées du côté du système de paiement — nous ne les conservons pas. Le paiement par accord avec un opérateur est également possible. Le fichier numérique dans la limite gratuite est fourni sans paiement." },
+        { p: "Paiement en ligne par carte bancaire Visa / Mastercard via le service sécurisé LiqPay. Les données de la carte sont traitées du côté du système de paiement — nous ne les conservons pas. Le paiement par accord avec un opérateur est également possible. L'accès au fichier numérique est ouvert après confirmation du paiement ; aucun compte n'est nécessaire pour acheter le fichier — seulement une adresse e-mail." },
       ] },
       { h: "Fabrication", blocks: [
         { p: "Les produits sont imprimés sur commande en bioplastique Eco PLA. Délai de fabrication indicatif — 2–4 jours ouvrés après la confirmation de la commande (selon la charge et la complexité)." },
@@ -184,7 +184,7 @@ export const fr: LegalSet = {
         ] },
       ] },
       { h: "Ce que nous vendons", blocks: [
-        { p: "{storeName} — ce sont des modèles 3D de cartes de villes et de porte-clés-cartes sur commande. Tu peux télécharger un fichier prêt à imprimer (3MF/STL) dans la limite gratuite ou commander l'impression d'un produit en bioplastique Eco PLA avec livraison. Les prix indicatifs sont indiqués dans le configurateur et sur la page [delivery:« Paiement et livraison »]." },
+        { p: "{storeName} — ce sont des modèles 3D de cartes de villes et de porte-clés-cartes sur commande. Tu peux acheter le fichier prêt à imprimer (3MF) ou commander l'impression d'un produit en bioplastique Eco PLA avec livraison en Ukraine. Les prix indicatifs sont indiqués dans le configurateur et sur la page [delivery:« Paiement et livraison »]." },
       ] },
       { h: "Documents", blocks: [
         { ul: [
@@ -277,8 +277,8 @@ export const fr: LegalSet = {
       { h: "À propos du service", blocks: [
         { p: "{storeName} te permet de créer un modèle 3D d'une zone urbaine ou d'un porte-clés avec une carte à partir des données ouvertes d'OpenStreetMap et de télécharger un fichier prêt pour l'impression 3D (3MF/STL) ou de commander une impression." },
       ] },
-      { h: "Compte et téléchargements gratuits", blocks: [
-        { p: "Le téléchargement du modèle complet nécessite un compte. Chaque utilisateur dispose de 5 téléchargements gratuits. Au-delà — par accord (impression / paiement), contact via le site." },
+      { h: "Compte et téléchargements", blocks: [
+        { p: "Le compte (connexion Google) conserve l'historique de tes modèles ; l'achat du fichier d'impression ne nécessite pas de compte — seulement un e-mail et le lien reçu après paiement. Si l'administrateur du service accorde des téléchargements gratuits aux utilisateurs inscrits, le nombre restant est affiché dans le compte." },
       ] },
       { h: "Conservation des modèles", blocks: [
         { p: "Les fichiers générés sont conservés 90 jours, puis automatiquement supprimés (les modèles ayant fait l'objet d'une commande le sont avec la commande). L'entrée dans l'historique de l'espace client reste ; le modèle peut être généré à nouveau. Le lien « Partager en 3D » est accessible à quiconque le possède et reste actif tant que le fichier est conservé. Tu peux supprimer ton compte à tout moment, avec tous les modèles de ton espace client. Détails dans la [privacy:Politique de confidentialité]." },

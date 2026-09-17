@@ -201,3 +201,17 @@ def test_is_meshopt_enabled_default_and_toggle(monkeypatch):
 
     monkeypatch.setenv("PREVIEW_MESHOPT", "1")
     assert glb_pack.is_meshopt_enabled() is True
+
+
+def test_child_memory_guard_limits_data_not_address_space():
+    """16.09.2026: RLIMIT_AS валив КОЖЕН запуск wasm-gltfpack («Cannot allocate Wasm
+    memory» — V8 резервує гігабайти віртуальних guard-сторінок), тож превʼю
+    їхали нестиснуті. Ліміт має бути на реальну записувану памʼять (RLIMIT_DATA)."""
+    import inspect
+    from services import glb_pack
+
+    src = inspect.getsource(glb_pack.pack_glb_inplace)
+    assert 'getattr(_res, "RLIMIT_DATA", None)' in src
+    assert "setrlimit(_kind" in src
+    # стеля розміру файлу: 2 МБ-шлюз відсікав майже кожне превʼю (2–3.3 МБ)
+    assert 'os.environ.get("GLB_PACK_MAX_MB", "40")' in src

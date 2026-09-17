@@ -1030,6 +1030,11 @@ def run_full_generation_pipeline(
         elapsed = time.perf_counter() - started_at
         total = time.perf_counter() - pipeline_start
         print(f"[TIMING] {zone_prefix}{name}: {elapsed:.2f}s (total {total:.2f}s)")
+        # Межа етапу — єдине безпечне місце зупинитись після «Скасувати»:
+        # далі лише марна робота на 2 ядрах, а наступна задача людини стоїть у черзі.
+        if getattr(task, "cancelled", False):
+            from services.generation_task import GenerationCancelled
+            raise GenerationCancelled(name)
 
     stage_start = time.perf_counter()
     zone = _prepare_zone_stage(

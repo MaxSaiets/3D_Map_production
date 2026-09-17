@@ -176,6 +176,37 @@ export function isExtensionNoise(msg: string, stack = ""): boolean {
 export const BENIGN_ERROR = /Indexed Database|IndexedDB|ResizeObserver loop|Script error\.?$|Load failed/i;
 
 /** Чи варто взагалі надсилати цей звіт. */
+/**
+ * 16.09.2026: «Cannot read properties of undefined (reading 'call')» ×3 на
+ * /keychains 11.09 13:31 — вкладка, відкрита ДО деплою, підвантажила чанк нового
+ * білда (старі хеші 404 → webpack кличе неіснуючу фабрику модуля). Людина бачить
+ * мертву кнопку. Це не наш баг у коді, а стан вкладки — лікується одним
+ * перезавантаженням. Розпізнаємо саме такі помилки, щоб зробити його за людину.
+ */
+export function isStaleChunkError(msg: string, src = ""): boolean {
+  const m = String(msg || "");
+  if (/ChunkLoadError|Loading chunk [\w-]+ failed|Loading CSS chunk/i.test(m)) return true;
+  if (/Failed to fetch dynamically imported module/i.test(m)) return true;
+  // webpack: `undefined.call` = модуль з іншого білда
+  if (/reading 'call'|undefined is not a function/i.test(m) && /_next\/static|webpack/i.test(src || m)) return true;
+  if (/Cannot read properties of undefined \(reading 'call'\)/i.test(m)) return true;
+  return false;
+}
+
+/** Одне авто-перезавантаження на 5 хв на вкладку (sessionStorage) — щоб не зациклити. */
+export function reloadOnceForStaleChunk(): boolean {
+  try {
+    const key = "monadruk:chunk-reload-at";
+    const last = Number(sessionStorage.getItem(key) || 0);
+    if (Date.now() - last < 5 * 60_000) return false;
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch {
+    return false;
+  }
+  try { window.location.reload(); } catch { return false; }
+  return true;
+}
+
 export function shouldReportError(msg: string, stack = ""): boolean {
   const text = String(msg || "");
   if (!text) return false;

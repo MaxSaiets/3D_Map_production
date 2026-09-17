@@ -220,7 +220,8 @@ def fetch_extras(
     south: float,
     east: float,
     west: float,
-    target_crs: str | None = None
+    target_crs: str | None = None,
+    bundle: object | None = None,  # services.overpass_bundle.LazyBundle — спільний з data_loader пакет
 ) -> gpd.GeoDataFrame:
     # Перевіряємо чи є preloaded дані (пріоритет)
     try:
@@ -323,7 +324,18 @@ def fetch_extras(
                 except TypeError:
                     return ox.features_from_bbox(bbox[3], bbox[1], bbox[2], bbox[0], tags=tags_green)
 
-        gdf_green = _run_overpass_with_retries("green", _load_green_once)
+        gdf_green = None
+        if bundle is not None:
+            # Зелень із того самого пакета, що й будівлі/дороги (один запит на
+            # всю генерацію, див. services/overpass_bundle.py).
+            from services.overpass_bundle import BundleMiss
+            try:
+                gdf_green = bundle.features(tags_green, ox.utils_geo.bbox_to_poly(bbox))
+            except BundleMiss as exc:  # пакет не має цього шару → як раніше, окремим запитом
+                print(f"[BUNDLE] green: {exc} → окремий запит", flush=True)
+                gdf_green = None
+        if gdf_green is None:
+            gdf_green = _run_overpass_with_retries("green", _load_green_once)
         if not gdf_green.empty:
             gdf_green = gdf_green[gdf_green.geometry.notna()]
             with warnings.catch_warnings():

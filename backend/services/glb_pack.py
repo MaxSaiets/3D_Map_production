@@ -148,13 +148,21 @@ def pack_glb_inplace(path: Union[str, Path], timeout_s: float = 40.0) -> dict:
         # ІНЦИДЕНТ 06.09.2026 (×3): wasm-gltfpack у node на ~3 МБ GLB (Львів M) роздував
         # памʼять, 6.4 ГБ VM ішла у своп, mem_guard вбивав бекенд, а сирота-node далі
         # душив VM → тунель мовчав ~25 хв. Два запобіжники: (1) не пакуємо файли більші за
-        # GLB_PACK_MAX_MB (дефолт 2.0 — Одеса 1 МБ проходила, Львів 3 МБ валив);
-        # (2) на Linux — RLIMIT_AS для дочірнього процесу (GLB_PACK_MEM_MB, дефолт 1200):
-        # при перевищенні gltfpack падає сам, оригінал лишається (Caddy віддасть gzip).
+        # GLB_PACK_MAX_MB; (2) на Linux — ліміт памʼяті дочірнього процесу
+        # (GLB_PACK_MEM_MB, дефолт 1200): при перевищенні gltfpack падає сам, оригінал
+        # лишається (Caddy віддасть gzip).
+        #
+        # ⭐16.09.2026: ліміт був RLIMIT_AS (віртуальний адресний простір) — а V8
+        # резервує під wasm-памʼять гігабайти ВІРТУАЛЬНИХ guard-сторінок, тож КОЖЕН
+        # запуск падав з «Cannot allocate Wasm memory» (прод-лог: 31 fail / 1 ok), і
+        # превʼю їхали через тунель нестиснуті (2 МБ ≈ 15 с при 130 КБ/с). Заміряно на
+        # VM: RLIMIT_DATA той самий 1200 МБ → 2.0 МБ → 0.29 МБ за 0.45 с (RSS 67 МБ);
+        # 26 МБ → 1.6 МБ за 2.9 с (RSS 156 МБ). RLIMIT_DATA рахує лише реально
+        # записувану памʼять — саме її ми й хочемо обмежити. Стеля файлу піднята до 40 МБ.
         try:
-            _max_mb = float(os.environ.get("GLB_PACK_MAX_MB", "2.0") or 2.0)
+            _max_mb = float(os.environ.get("GLB_PACK_MAX_MB", "40") or 40)
         except ValueError:
-            _max_mb = 2.0
+            _max_mb = 40.0
         if _max_mb > 0 and before > _max_mb * 1048576:
             result["error"] = f"skipped: {before/1048576:.2f} MB > GLB_PACK_MAX_MB={_max_mb}"
             print(f"[GLB_PACK] {result['error']} path={path}")
@@ -165,9 +173,10 @@ def pack_glb_inplace(path: Union[str, Path], timeout_s: float = 40.0) -> dict:
                 _mem_mb = int(os.environ.get("GLB_PACK_MEM_MB", "1200") or 1200)
                 import resource as _res
                 _lim = _mem_mb * 1048576
+                _kind = getattr(_res, "RLIMIT_DATA", None) or _res.RLIMIT_AS
                 def _preexec():  # noqa: E306
                     try:
-                        _res.setrlimit(_res.RLIMIT_AS, (_lim, _lim))
+                        _res.setrlimit(_kind, (_lim, _lim))
                     except Exception:
                         pass
             except Exception:

@@ -267,3 +267,29 @@ def test_buyer_email_survives_to_the_grant(tmp_path, monkeypatch):
     assert fa.list_for_email("buyer@example.com") == ["task-mail"], (
         "пошта покупця не дійшла до запису доступу"
     )
+
+
+def test_price_hints_from_pricing_json(tmp_path, monkeypatch):
+    """«149 ₴» іноземцю ні про що не говорить — поруч має бути «≈ 3 €» (курси з pricing.json/fx)."""
+    from services import file_access as fa
+
+    p = tmp_path / "pricing.json"
+    p.write_text('{"file": {"price": 149}, "fx": {"uah_per_eur": 48.0, "uah_per_usd": 41.5}}', encoding="utf-8")
+    monkeypatch.setattr(fa, "PRICING_PATH", p)
+    monkeypatch.delenv("FILE_PRICE_UAH", raising=False)
+    assert fa.file_price_hints() == {"EUR": 3.1, "USD": 3.6}
+    p.write_text('{"file": {"price": 149}}', encoding="utf-8")
+    assert fa.file_price_hints() == {}, "без курсів — без підказки, а не 0 €"
+
+
+def test_access_follows_cache_key_after_regeneration(tmp_path, monkeypatch):
+    """Оплачений файл під новим task_id (кеш результатів віддав той самий файл) —
+    досі оплачений; покупець не платить двічі."""
+    from services import file_access as fa
+
+    monkeypatch.setattr(fa, "ACCESS_LOG", tmp_path / "file_access.jsonl")
+    assert fa.grant("task-A", order_number="1", email="a@b.co", amount=149, cache_key="ck-1")
+    assert fa.has_access("task-A")
+    assert fa.has_access("task-B", "ck-1"), "ті самі параметри → той самий файл → доступ є"
+    assert not fa.has_access("task-B"), "без cache_key чужий task_id не проходить"
+    assert not fa.has_access("task-C", "ck-2")

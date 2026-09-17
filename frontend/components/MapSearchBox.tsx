@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Search, Loader2, LocateFixed, X } from "lucide-react";
-import { geocodeSearch, reverseGeocode, type GeoResult } from "@/lib/geocode";
+import { geocodeSearch, reverseGeocode, isGeocodeUnavailable, type GeoResult } from "@/lib/geocode";
 
 /**
  * Пошук локації над картою (обидва конструктори). Знаходить будь-яке місто/
@@ -21,6 +21,9 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 16.09.2026: порожній список ≠ мовчання. «none» — пошук відбувся і нічого нема;
+  // «error» — геокодер не відповів. Раніше обидва виглядали як «нічого не сталося».
+  const [note, setNote] = useState<"none" | "error" | null>(null);
   const [geoBusy, setGeoBusy] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
@@ -38,26 +41,54 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
     };
   }, []);
 
-  const runSearch = (value: string) => {
-    setQ(value);
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    if (value.trim().length < 3) { setResults([]); setOpen(false); return; }
-    debounceRef.current = window.setTimeout(async () => {
-      abortRef.current?.abort();
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
-      setBusy(true);
+  const search = async (value: string) => {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setBusy(true);
+    setNote(null);
+    try {
       const res = await geocodeSearch(value, ctrl.signal, locale);
-      setBusy(false);
+      if (ctrl.signal.aborted) return;
       setResults(res);
       setOpen(res.length > 0);
-    }, 450);
+      setNote(res.length === 0 ? "none" : null);
+    } catch (err) {
+      if (ctrl.signal.aborted) return;
+      setResults([]);
+      setOpen(false);
+      setNote(isGeocodeUnavailable(err) ? "error" : "none");
+    } finally {
+      if (!ctrl.signal.aborted) setBusy(false);
+    }
+  };
+
+  const runSearch = (value: string) => {
+    setQ(value);
+    setNote(null);
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (value.trim().length < 3) { setResults([]); setOpen(false); return; }
+    debounceRef.current = window.setTimeout(() => { void search(value); }, 450);
   };
 
   const goto = (lat: number, lon: number, label: string) => {
     setOpen(false);
+    setNote(null);
     setQ(label);
     window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat, lon, label } }));
+  };
+
+  // Enter — перший результат (або негайний пошук, якщо ще чекаємо дебаунс);
+  // Escape — закрити список. Раніше Enter не робив НІЧОГО.
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") { setOpen(false); return; }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (results.length > 0) { const r = results[0]; goto(r.lat, r.lon, r.label); return; }
+    if (q.trim().length >= 3 && !busy) {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+      void search(q);
+    }
   };
 
   const useMyLocation = () => {
@@ -95,6 +126,8 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
           value={q}
           onChange={(e) => runSearch(e.target.value)}
           onFocus={() => { if (results.length) setOpen(true); }}
+          onKeyDown={onKeyDown}
+          enterKeyHint="search"
           placeholder={t("placeholder")}
           role="combobox"
           aria-expanded={open && results.length > 0}
@@ -123,6 +156,17 @@ export function MapSearchBox({ variant = "map" }: { variant?: "map" | "panel" } 
           {geoBusy ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} />}
         </button>
       </div>
+      {note && !busy && q.trim().length >= 3 && (
+        <p
+          role="status"
+          data-testid="map-search-note"
+          className={isPanel
+            ? "mt-1 px-2 text-[11.5px] leading-snug text-[var(--text-secondary)]"
+            : "mt-1 rounded-xl bg-[#0a1020]/90 px-3 py-1.5 text-[11.5px] leading-snug text-white/80"}
+        >
+          {note === "error" ? t("unavailable") : t("noResults")}
+        </p>
+      )}
       {open && results.length > 0 && (
         <ul id="map-search-results" role="listbox" className={isPanel
           ? "absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-2xl border border-[var(--surface-border)] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"

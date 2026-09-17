@@ -36,7 +36,7 @@ export const es: LegalSet = {
       { h: "4. Precio y forma de pago", blocks: [
         { p: "Los precios del Sitio se indican en grivnas (para pedidos dentro de Ucrania) y en euros (orientativos). El Comprador ve el coste final del pedido en el paso de formalización, antes del pago. Los gastos de envío no están incluidos en el precio del Producto y se abonan por separado según las tarifas del transportista." },
         { p: "El pago se realiza en línea a través del servicio de pago LiqPay (JSC CB «PrivatBank»): con tarjeta bancaria Visa/Mastercard y otros métodos disponibles en LiqPay. Los datos de la tarjeta de pago se procesan en el lado del sistema de pago; el Vendedor no los recibe ni los almacena." },
-        { p: "Previo acuerdo con el operador, es posible el pago por otro método convenido. La descarga del Contenido digital terminado dentro del límite gratuito de la cuenta es gratuita." },
+        { p: "Previo acuerdo con el operador, es posible el pago por otro método convenido. El Contenido digital (el archivo de impresión) se paga en línea antes de conceder el acceso; la vista previa 3D del modelo en el sitio es gratuita." },
         { p: "El Producto se paga íntegramente antes de su puesta en producción, salvo acuerdo en contrario de las partes. Más detalles en la página [delivery:«Pago y entrega»]." },
       ] },
       { h: "5. Plazos de fabricación", blocks: [
@@ -135,11 +135,11 @@ export const es: LegalSet = {
           "Llavero-mapa: desde 170 ₴ (≈ 4 €).",
           "Mapa 3D de barrio: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapas: desde 8 €).",
           "Imán de nevera (mapa): 210 ₴.",
-          "Descarga del archivo terminado 3MF/STL para imprimirlo por tu cuenta: gratuita dentro del límite de la cuenta.",
+          "Archivo 3MF para imprimir por tu cuenta: 149 ₴ (el precio se muestra en el configurador), acceso mediante enlace tras el pago; la vista previa 3D es gratuita.",
         ] },
       ] },
       { h: "Pago", blocks: [
-        { p: "Pago en línea con tarjeta bancaria Visa / Mastercard a través del servicio seguro LiqPay. Los datos de la tarjeta se procesan en el lado del sistema de pago; nosotros no los almacenamos. También es posible pagar por acuerdo con el operador. El archivo digital dentro del límite gratuito se facilita sin coste." },
+        { p: "Pago en línea con tarjeta bancaria Visa / Mastercard a través del servicio seguro LiqPay. Los datos de la tarjeta se procesan en el lado del sistema de pago; nosotros no los almacenamos. También es posible pagar por acuerdo con el operador. El acceso al archivo digital se abre una vez confirmado el pago; para comprar el archivo no hace falta cuenta, solo una dirección de correo electrónico." },
       ] },
       { h: "Fabricación", blocks: [
         { p: "Los productos se imprimen bajo pedido en bioplástico Eco PLA. Plazo orientativo de fabricación: 2–4 días laborables tras la confirmación del pedido (según la carga de trabajo y la complejidad)." },
@@ -184,7 +184,7 @@ export const es: LegalSet = {
         ] },
       ] },
       { h: "Qué vendemos", blocks: [
-        { p: "{storeName} ofrece modelos 3D de mapas de ciudades y llaveros-mapa bajo pedido. Puedes descargar el archivo terminado para imprimir (3MF/STL) dentro del límite gratuito o encargar la impresión de un producto de bioplástico Eco PLA con envío. Los precios orientativos se indican en el configurador y en la página [delivery:«Pago y entrega»]." },
+        { p: "{storeName} ofrece modelos 3D de mapas de ciudades y llaveros-mapa bajo pedido. Puedes comprar el archivo listo para imprimir (3MF) o encargar la impresión de un producto de bioplástico Eco PLA con envío dentro de Ucrania. Los precios orientativos se indican en el configurador y en la página [delivery:«Pago y entrega»]." },
       ] },
       { h: "Documentos", blocks: [
         { ul: [
@@ -277,8 +277,8 @@ export const es: LegalSet = {
       { h: "Sobre el servicio", blocks: [
         { p: "{storeName} te permite crear un modelo 3D de una zona de la ciudad o de un llavero-mapa a partir de los datos abiertos de OpenStreetMap y descargar el archivo terminado para impresión 3D (3MF/STL) o encargar la impresión." },
       ] },
-      { h: "Cuenta y descargas gratuitas", blocks: [
-        { p: "Para descargar el modelo completo se necesita una cuenta. Cada usuario dispone de 5 descargas gratuitas. A partir de ahí, por acuerdo (impresión/pago), con contacto a través del sitio." },
+      { h: "Cuenta y descargas", blocks: [
+        { p: "La cuenta (inicio de sesión con Google) guarda el historial de tus modelos; comprar el archivo de impresión no requiere cuenta: solo un correo electrónico y el enlace que recibes tras el pago. Si el administrador del servicio concede descargas gratuitas a los usuarios registrados, el número restante se muestra en la cuenta." },
       ] },
       { h: "Conservación de los modelos", blocks: [
         { p: "Los archivos generados se conservan 90 días, tras lo cual se eliminan automáticamente (los modelos con un pedido asociado, junto con el pedido). El registro en el historial de la cuenta permanece; el modelo puede generarse de nuevo. El enlace «Compartir en 3D» está accesible para cualquiera que lo tenga y funciona mientras se conserve el archivo. Puedes eliminar tu cuenta en cualquier momento junto con todos los modelos de tu área personal. Más detalles en la [privacy:Política de privacidad]." },

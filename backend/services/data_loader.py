@@ -111,6 +111,13 @@ def _overpass_endpoints() -> list[str]:
     return [item.rstrip("/") for item in _OVERPASS_ENDPOINTS_DEFAULT]
 
 
+def _bundle_miss_types():
+    """Клас винятку «пакет не може віддати шар» (лінивий імпорт — модуль
+    пакета сам імпортує `_run_overpass_with_retries` звідси)."""
+    from services.overpass_bundle import BundleMiss
+    return BundleMiss
+
+
 def _run_overpass_with_retries(label: str, fetch_fn):
     # ⭐08.09.2026: у встановленій osmnx налаштування звуться `overpass_url` і
     # `requests_timeout`. Раніше код писав у `overpass_endpoint`/`timeout` —
@@ -443,6 +450,7 @@ def fetch_city_data(
     padding: float = 0.002,  # Буфер для коректної обробки країв (~200 метрів)
     target_crs: Optional[str] = None,  # Цільова система координат (UTM zone)
     include_building_parts: bool = True,
+    bundle: Optional[object] = None,  # services.overpass_bundle.LazyBundle — один Overpass-запит на всі шари
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, object]:
     """
     Завантажує дані OSM для вказаної області з буферизацією для коректної обробки країв
@@ -469,10 +477,28 @@ def fetch_city_data(
     # Створюємо target_bbox в WGS84 (для обрізки до проекції)
     from shapely.geometry import box as shapely_box
     target_bbox_wgs84 = shapely_box(target_west, target_south, target_east, target_north)
-    
+
+    # Розширені координати для завантаження — потрібні і кеш-гілці (мости), і
+    # Overpass-гілці нижче. Раніше визначались лише після перевірки кешу, і
+    # довантаження мостів при кеш-хіті мовчки падало на NameError.
+    padded_bbox = (padded_west, padded_south, padded_east, padded_north)  # osmnx 2.x: (left, bottom, right, top)
+    _padded_poly = ox.utils_geo.bbox_to_poly(padded_bbox)
+
+    def _features_layer(label: str, tags: dict, load_network_fn):
+        """Шар із пакета (один Overpass-запит на всю генерацію, див.
+        services/overpass_bundle.py) або, як раніше, окремим запитом через
+        `_run_overpass_with_retries`. Порожній шар в обох випадках —
+        `InsufficientResponseError`, як в osmnx."""
+        if bundle is not None:
+            try:
+                return bundle.features(tags, _padded_poly)
+            except _bundle_miss_types() as exc:
+                print(f"[BUNDLE] {label}: {exc} → окремий запит", flush=True)
+        return _run_overpass_with_retries(label, load_network_fn)
+
     # Визначаємо джерело даних (потрібно для перевірки кешу та збереження)
     source = resolve_osm_source()
-    
+
     # Перевіряємо кеш (для Overpass режиму)
     # PBF режим має власний кеш в pbf_loader
     if source not in ("pbf", "geofabrik", "local"):
@@ -516,12 +542,16 @@ def fetch_city_data(
                     try:
                         print("[CACHE] Bridges не зберігаються в кеші — довантажую окремо...")
                         tags_bridges = {'bridge': True}
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", DeprecationWarning)
-                            try:
-                                gdf_br = ox.features_from_bbox(bbox=padded_bbox, tags=tags_bridges)
-                            except TypeError:
-                                gdf_br = ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_bridges)
+
+                        def _load_cached_bridges_once():
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", DeprecationWarning)
+                                try:
+                                    return ox.features_from_bbox(bbox=padded_bbox, tags=tags_bridges)
+                                except TypeError:
+                                    return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_bridges)
+
+                        gdf_br = _features_layer("bridges", tags_bridges, _load_cached_bridges_once)
                         if gdf_br is not None and not gdf_br.empty:
                             gdf_br = gdf_br[gdf_br.geometry.notna()]
                             gdf_br = gdf_br[gdf_br.geom_type.isin(["LineString", "MultiLineString"])]
@@ -628,8 +658,7 @@ def fetch_city_data(
         
         return buildings, water, roads_edges
 
-    # Використовуємо розширені координати для завантаження
-    padded_bbox = (padded_west, padded_south, padded_east, padded_north)  # osmnx 2.x: (left, bottom, right, top)
+    # Використовуємо розширені координати для завантаження (padded_bbox — вище)
     bbox = (target_west, target_south, target_east, target_north)  # Для обрізки
     
     # Реальне джерело оголошується нижче: локальна DuckDB (548) або Overpass-гілка.
@@ -708,7 +737,7 @@ def fetch_city_data(
                         gdf_base = ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_buildings)
                 return gdf_base
 
-            gdf_b = _run_overpass_with_retries("buildings", _load_buildings_once)
+            gdf_b = _features_layer("buildings", tags_buildings, _load_buildings_once)
             if include_building_parts:
                 try:
                     def _load_building_parts_once():
@@ -718,7 +747,7 @@ def fetch_city_data(
                                 return ox.features_from_bbox(bbox=padded_bbox, tags=tags_building_parts)
                             except TypeError:
                                 return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_building_parts)
-                    gdf_p = _run_overpass_with_retries("building_parts", _load_building_parts_once)
+                    gdf_p = _features_layer("building_parts", tags_building_parts, _load_building_parts_once)
                 except Exception:
                     gdf_p = gpd.GeoDataFrame()
             else:
@@ -812,7 +841,7 @@ def fetch_city_data(
                         return ox.features_from_bbox(bbox=padded_bbox, tags=tags_bridges)
                     except TypeError:
                         return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_bridges)
-            gdf_br = _run_overpass_with_retries("bridges", _load_bridges_once)
+            gdf_br = _features_layer("bridges", tags_bridges, _load_bridges_once)
             if gdf_br is None or gdf_br.empty:
                 return gpd.GeoDataFrame()
             gdf_br = gdf_br[gdf_br.geometry.notna()]
@@ -865,7 +894,7 @@ def fetch_city_data(
                     except TypeError:
                         return ox.features_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], tags=tags_water)
 
-            gdf_w = _run_overpass_with_retries("water", _load_water_once)
+            gdf_w = _features_layer("water", tags_water, _load_water_once)
             if not gdf_w.empty:
                 gdf_w = gdf_w[gdf_w.geometry.notna()]
                 # ОБРІЗКА ДО ПРОЕКЦІЇ (в WGS84 координатах)
@@ -943,20 +972,33 @@ def fetch_city_data(
         _rail_tags = {"railway": ["rail", "light_rail", "narrow_gauge",
                                   "tram", "subway", "funicular"]}
         _prev_timeout = getattr(ox.settings, "requests_timeout", None)
-        try:
+        gdf_rail = None
+        if bundle is not None:
+            # Колії вже приїхали в пакеті разом з рештою шарів — без окремого
+            # запиту й без його таймауту.
             try:
-                ox.settings.requests_timeout = RAILWAY_FETCH_TIMEOUT_S
-            except Exception:
-                pass
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
+                gdf_rail = bundle.features(_rail_tags, _padded_poly)
+            except _bundle_miss_types() as exc:
+                print(f"[BUNDLE] railway: {exc} → окремий запит", flush=True)
+                gdf_rail = None
+            except InsufficientResponseError:
+                _mark_rail_tiles_empty(_tiles, True)
+                return G
+        try:
+            if gdf_rail is None:
                 try:
-                    gdf_rail = ox.features_from_bbox(bbox=padded_bbox, tags=_rail_tags)
-                except TypeError:
-                    gdf_rail = ox.features_from_bbox(
-                        padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3],
-                        tags=_rail_tags,
-                    )
+                    ox.settings.requests_timeout = RAILWAY_FETCH_TIMEOUT_S
+                except Exception:
+                    pass
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    try:
+                        gdf_rail = ox.features_from_bbox(bbox=padded_bbox, tags=_rail_tags)
+                    except TypeError:
+                        gdf_rail = ox.features_from_bbox(
+                            padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3],
+                            tags=_rail_tags,
+                        )
         except InsufficientResponseError:
             return G
         except Exception as exc:
@@ -1031,7 +1073,17 @@ def fetch_city_data(
                     except TypeError:
                         return ox.graph_from_bbox(padded_bbox[0], padded_bbox[1], padded_bbox[2], padded_bbox[3], network_type='all', simplify=True, retain_all=True)
 
-            G = _run_overpass_with_retries("roads", _load_roads_once)
+            G = None
+            if bundle is not None:
+                # Граф із пакета: ті самі кроки, що в ox.graph_from_bbox (буфер
+                # 500 м → обрізка → спрощення → обрізка), лише без мережі.
+                try:
+                    G = bundle.graph(_padded_poly, simplify=True, retain_all=True)
+                except _bundle_miss_types() as exc:
+                    print(f"[BUNDLE] roads: {exc} → окремий запит", flush=True)
+                    G = None
+            if G is None:
+                G = _run_overpass_with_retries("roads", _load_roads_once)
 
             if G is None or not hasattr(G, 'edges') or len(list(G.edges())) == 0:
                 center_point = (

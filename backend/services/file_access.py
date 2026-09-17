@@ -57,8 +57,36 @@ def file_price_uah() -> int:
     return DEFAULT_FILE_PRICE_UAH
 
 
-def grant(task_id: str, *, order_number: str = "", email: str = "", amount: Any = None) -> bool:
+def file_price_hints(price_uah: int | None = None) -> dict:
+    """Приблизний еквівалент ціни в EUR/USD за курсами з pricing.json («fx»).
+
+    Лише підказка для іноземця («≈ 3 €»); порожній dict, якщо курсів немає —
+    фронт тоді просто не показує рядок."""
+    price = int(price_uah if price_uah is not None else file_price_uah())
+    try:
+        with PRICING_PATH.open("r", encoding="utf-8") as fh:
+            fx = (json.load(fh) or {}).get("fx") or {}
+    except Exception:  # noqa: BLE001
+        return {}
+    out: dict = {}
+    for code, key in (("EUR", "uah_per_eur"), ("USD", "uah_per_usd")):
+        try:
+            rate = float(fx.get(key) or 0)
+        except (TypeError, ValueError):
+            rate = 0.0
+        if rate > 0:
+            out[code] = round(price / rate, 1)
+    return out
+
+
+def grant(task_id: str, *, order_number: str = "", email: str = "", amount: Any = None,
+          cache_key: str = "") -> bool:
     """Відкриває доступ до файлу задачі. Ідемпотентно: повторний виклик не дублює.
+
+    `cache_key` (sha1 параметрів запиту, див. result_cache) — щоб оплачена
+    модель лишалась оплаченою і після ПОВТОРНОЇ генерації тих самих параметрів:
+    кеш результатів віддає той самий файл під НОВИМ task_id, і без цього
+    покупець платив би вдруге за той самий файл.
 
     Повертає True, якщо доступ записано щойно; False — якщо вже був або немає
     `task_id` (без нього відкривати нема чого)."""
@@ -75,6 +103,8 @@ def grant(task_id: str, *, order_number: str = "", email: str = "", amount: Any 
             "amount": amount,
             "ts": int(time.time()),
         }
+        if cache_key:
+            rec["cache_key"] = str(cache_key)
         try:
             ACCESS_LOG.parent.mkdir(parents=True, exist_ok=True)
             with ACCESS_LOG.open("a", encoding="utf-8") as fh:
@@ -105,14 +135,20 @@ def _records() -> List[Dict[str, Any]]:
         return []
 
 
-def _has_access_unlocked(task_id: str) -> bool:
+def _has_access_unlocked(task_id: str, cache_key: str = "") -> bool:
     tid = str(task_id or "").strip()
-    return bool(tid) and any(str(r.get("task_id") or "") == tid for r in _records())
+    ck = str(cache_key or "").strip()
+    for r in _records():
+        if tid and str(r.get("task_id") or "") == tid:
+            return True
+        if ck and str(r.get("cache_key") or "") == ck:
+            return True
+    return False
 
 
-def has_access(task_id: Optional[str]) -> bool:
-    """Чи оплачено файл цієї задачі."""
-    return _has_access_unlocked(str(task_id or ""))
+def has_access(task_id: Optional[str], cache_key: Optional[str] = None) -> bool:
+    """Чи оплачено файл цієї задачі (або ті самі параметри під іншим task_id)."""
+    return _has_access_unlocked(str(task_id or ""), str(cache_key or ""))
 
 
 def list_for_email(email: str) -> List[str]:

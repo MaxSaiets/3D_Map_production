@@ -90,3 +90,17 @@ describe("shouldReportError · що доходить до /admin", () => {
     }
   });
 });
+
+describe("isStaleChunkError — вкладка пережила деплой", () => {
+  const { isStaleChunkError } = jest.requireActual("@/lib/analytics") as typeof import("@/lib/analytics");
+  it("розпізнає ChunkLoadError і undefined.call з webpack", () => {
+    expect(isStaleChunkError("ChunkLoadError: Loading chunk 4212 failed.")).toBe(true);
+    expect(isStaleChunkError("unhandledrejection: TypeError: Cannot read properties of undefined (reading 'call')")).toBe(true);
+    expect(isStaleChunkError("Failed to fetch dynamically imported module: https://monadruk.com/_next/static/chunks/x.js")).toBe(true);
+  });
+  it("не чіпає звичайні помилки", () => {
+    expect(isStaleChunkError("unhandledrejection: TypeError: Cannot read properties of undefined (reading 'map')")).toBe(false);
+    expect(isStaleChunkError("unhandledrejection: i: Failed to connect to MetaMask")).toBe(false);
+    expect(isStaleChunkError("TypeError: Failed to fetch")).toBe(false);
+  });
+});

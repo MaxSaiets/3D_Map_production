@@ -460,15 +460,24 @@ export function SimpleControlPanel({
         // Не запускаємо дорогу 3MF-генерацію (1-3 хв), якщо юзер не залогінений або
         // вичерпав ліміт — перевіряємо ПЕРЕД генерацією, щоб не змусити чекати намарно.
         const token = await getIdToken().catch(() => null);
-        // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
-        if (!token) { openLogin(() => { void doGatedDownload(); }); dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return; }
-        if (quota && !quota.isAdmin && quota.remaining <= 0) {
-          // A-7 (2026-09-03): вичерпана квота → не глухий кут у Telegram-чат, а
-          // пояснення + одразу форма замовлення друку (ми надрукуємо і надішлемо).
+        // 16.09.2026: ⭐купівля файлу НЕ потребує акаунта (чек просить лише пошту),
+        // а на проді безкоштовних завантажень 0 (FREE_DOWNLOADS=0 з 10.09). Раніше
+        // гість мусив увійти через Google, а після входу квота 0 → тост «безкоштовні
+        // вичерпано» + ФОРМА ЗАМОВЛЕННЯ ДРУКУ (лише Україна) — діалог купівлі не
+        // відкривався НІКОМУ. Тепер: без безкоштовних завантажень — одразу готуємо
+        // друк-файл і відкриваємо оплату (або віддаємо, якщо вже оплачено).
+        let buyWithoutAccount = false;
+        if (!token) {
+          const { fetchFileAccess } = await import("@/lib/download");
+          const access = await fetchFileAccess(taskGroupId);
+          if (!access || access.freeLimit > 0) {
+            // Після входу ПРОДОВЖУЄМО завантаження (раніше дія губилась).
+            openLogin(() => { void doGatedDownload(); }); dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return;
+          }
+          buyWithoutAccount = true;
+        } else if (quota && !quota.isAdmin && quota.remaining <= 0) {
           import("@/lib/analytics").then((m) => m.track("quota_block", { product: "map" })).catch(() => {});
-          window.dispatchEvent(new CustomEvent("monadruk:toast", { detail: { type: "info", message: t("quotaExhausted") } }));
-          orderNowRef.current();
-          dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return;
+          buyWithoutAccount = true;
         }
         // A-9: «завантажити» = друга генерація 1–3 хв — рахуємо, скільки людей у це впирається.
         import("@/lib/analytics").then((m) => m.track("download_wait", { product: "map" })).catch(() => {});
@@ -480,6 +489,17 @@ export function SimpleControlPanel({
         if (!print) { setError(t("errGen")); dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return; }
         dlTaskId = print.taskId;
         dlUrl = print.url;
+        if (buyWithoutAccount && dlTaskId) {
+          const { fetchFileAccess, downloadPaidFile } = await import("@/lib/download");
+          const access = await fetchFileAccess(dlTaskId);
+          if (access?.paid) {
+            downloadPaidFile(dlTaskId);
+          } else {
+            buyFileTaskRef.current = dlTaskId;
+            setBuyFileOpen(true);
+          }
+          dlInFlightRef.current = false; useGenerationStore.getState().setDownloadBusy(false); setDlBusy(false); return;
+        }
       }
       // S-2: параметри для «Створити знову» в кабінеті (центр рамки, розмір, сценарій).
       const _c = selectedArea?.getCenter?.();
@@ -543,6 +563,8 @@ export function SimpleControlPanel({
         _st.setEta(typeof r.eta_s === "number" ? r.eta_s : null, typeof r.elapsed_s === "number" ? r.elapsed_s : null);
         // C-4: «у черзі» — окремий стан, не «генеруємо 0 %» (сервер зайнятий іншою задачею).
         _st.setQueued(r.status === "queued", typeof r.queue_eta_s === "number" ? r.queue_eta_s : null);
+        // 16.09: джерело карт лягло — бекенд чекає на нього і каже, за скільки спроба.
+        _st.setSourceWait(r.status === "processing" && typeof r.source_wait_s === "number" ? r.source_wait_s : null);
         pollFails = 0;
         useGenerationStore.getState().setReconnecting(false);
         setTaskStatuses({ [r.task_id]: r });

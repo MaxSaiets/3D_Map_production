@@ -6,6 +6,14 @@ from typing import Optional, Dict
 from datetime import datetime
 
 
+class GenerationCancelled(Exception):
+    """Кинуто на межі етапу пайплайну, коли користувач уже натиснув «Скасувати».
+
+    16.09.2026: раніше скасування лише ставило прапорець, а важка геометрія
+    крутила VM до кінця; повторний «Створити» ставав у чергу ЗА нею.
+    """
+
+
 @dataclass
 class GenerationTask:
     """Задача генерації 3D моделі"""

@@ -105,3 +105,23 @@ describe("BuyFileDialog · купівля друк-файлу", () => {
     expect(sc.buyFilePay).toContain("{price}");   // ціна підставляється, не зашита
   });
 });
+
+describe("BuyFileDialog · підказка в євро для іноземців", () => {
+  const intl = jest.requireMock("next-intl") as { useLocale: () => string };
+  const original = intl.useLocale;
+  afterEach(() => { intl.useLocale = original; });
+
+  it("en: показує «≈ €3.1» поруч із ціною в гривні", async () => {
+    intl.useLocale = () => "en";
+    global.fetch = mockFetch({ access: { paid: false, priceUah: PRICE, currency: "UAH", approx: { EUR: 3.1, USD: 3.6 } } }) as never;
+    render(<BuyFileDialog taskId="t1" open onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId("buy-file-approx")).toHaveTextContent("3.1"));
+  });
+
+  it("uk: підказки немає — гривня рідна", async () => {
+    global.fetch = mockFetch({ access: { paid: false, priceUah: PRICE, currency: "UAH", approx: { EUR: 3.1 } } }) as never;
+    render(<BuyFileDialog taskId="t1" open onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId("buy-file-pay")).toHaveTextContent(String(PRICE)));
+    expect(screen.queryByTestId("buy-file-approx")).toBeNull();
+  });
+});

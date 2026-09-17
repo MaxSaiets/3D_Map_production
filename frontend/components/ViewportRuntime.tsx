@@ -19,8 +19,19 @@ import { useEffect, useRef, useState, type RefObject } from "react";
  */
 export function AppViewportHeight() {
   useEffect(() => {
+    // 16.09.2026: вкладка, що змонтувалась НЕ на екрані (фонова/прихована
+    // панель, prerender), має innerHeight 0 → `--app-vh: 0px` → карта
+    // конструктора висотою 0 px і порожній крок 2. Нереалістичне значення не
+    // записуємо (лишається CSS-фолбек 100dvh) і чекаємо resize, коли вікно
+    // отримає справжній розмір.
+    const MIN_SANE_PX = 200;
+    let applied = false;
     const apply = () => {
-      document.documentElement.style.setProperty("--app-vh", `${window.innerHeight}px`);
+      const h = window.innerHeight;
+      if (!(h >= MIN_SANE_PX)) return false;
+      document.documentElement.style.setProperty("--app-vh", `${h}px`);
+      applied = true;
+      return true;
     };
     apply();
     // iOS повідомляє orientationchange ДО того, як innerHeight оновиться —
@@ -29,8 +40,22 @@ export function AppViewportHeight() {
       apply();
       window.setTimeout(apply, 300);
     };
+    // На пристроях без тачу resize — це справжня зміна вікна (не URL-бар):
+    // стежимо за ним завжди; на тачі — лише поки не отримали перше чесне значення.
+    const finePointer = typeof window.matchMedia === "function" && window.matchMedia("(pointer: fine)").matches && !("ontouchstart" in window);
+    let timer: number | undefined;
+    const onResize = () => {
+      if (applied && !finePointer) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(apply, 120);
+    };
     window.addEventListener("orientationchange", onOrientation);
-    return () => window.removeEventListener("orientationchange", onOrientation);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("orientationchange", onOrientation);
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(timer);
+    };
   }, []);
   return null;
 }

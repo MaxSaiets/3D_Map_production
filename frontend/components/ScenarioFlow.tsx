@@ -18,6 +18,7 @@ import { SIMPLE_SIZES } from "@/lib/generation";
 import { fetchQuote, type Quote } from "@/lib/pricing";
 import { CITIES, MAP_TEMPLATES } from "@/lib/templates";
 import { WORLD_CITIES } from "@/lib/worldCities";
+import { CITY_PAGES } from "@/lib/cityPages";
 import {
   KEYCHAIN_PRICE_UAH,
   MAP_MAGNET_PRICE_UAH,
@@ -82,6 +83,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     etaS: st.etaS,
     elapsedS: st.elapsedS,
     queued: st.queued,
+    sourceWaitS: st.sourceWaitS,
     queueEta: st.queueEta,
     reconnecting: st.reconnecting,
     genError: st.genError,
@@ -327,8 +329,17 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       const tpl = tplId ? MAP_TEMPLATES.find((x) => x.id === tplId) : undefined;
       if (tpl) { center = tpl.center; label = tpl.district; }
       else if (cityKey) {
-        const c = CITIES.find((x) => x.key === cityKey) || WORLD_CITIES.find((x) => x.key === cityKey);
-        if (c) { center = c.center; label = ("label" in c ? c.label : c.names?.uk) || ""; }
+        // Назва — мовою інтерфейсу: 11.09.2026 віденець із /de/maps/vienna бачив
+        // «Ort ausgewählt: Відень». Для міст України беремо назви зі сторінок /maps.
+        const wc = WORLD_CITIES.find((x) => x.key === cityKey);
+        const uc = CITIES.find((x) => x.key === cityKey);
+        const loc = locale as keyof (typeof WORLD_CITIES)[number]["names"];
+        if (wc) { center = wc.center; label = wc.names?.[loc] || wc.names?.en || wc.names?.uk || ""; }
+        else if (uc) {
+          center = uc.center;
+          const page = CITY_PAGES.find((x) => x.key === cityKey);
+          label = page?.names?.[loc] || uc.label || "";
+        }
       } else if (hasLatLon) {
         center = [latParam, lonParam];
       }
@@ -608,7 +619,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 </Button>
                 <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
-                {dlQuota && !dlQuota.isAdmin && (
+                {dlQuota && !dlQuota.isAdmin && dlQuota.limit > 0 && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
                 )}
                 {/* S-1/S-2: месенджер-замовлення + «що заважає» (див. SalesAlternatives). */}
@@ -659,7 +670,11 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   // ⭐09.09: під час рестарту бекенду опитувач раніше мовчав
                   // ~10 с і оголошував «модель застаріла». Тепер чекаємо довше
                   // і чесно кажемо, що відбувається.
-                  s.reconnecting ? t("reconnecting") : t("etaNote")
+                  s.reconnecting
+                    ? t("reconnecting")
+                    : s.sourceWaitS != null
+                      ? t("sourceWait", { s: s.sourceWaitS })
+                      : t("etaNote")
                 }
                 eta={etaText}
                 queued={s.queued}

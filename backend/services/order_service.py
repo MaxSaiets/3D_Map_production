@@ -562,9 +562,15 @@ def mark_order_paid(order_id: str, info: Dict[str, Any]) -> None:
             _rec = find_order_record(str(order_id))
             _tid = str((_rec or {}).get("task_id") or "")
             if _tid:
+                _ck = ""
+                try:
+                    import main as _main  # noqa: PLC0415 — реєстр задач живе в main
+                    _ck = str(getattr(_main.tasks.get(_tid), "cache_key", "") or "")
+                except Exception:  # noqa: BLE001
+                    _ck = ""
                 _fa.grant(_tid, order_number=str(order_id),
                           email=str((_rec or {}).get("user_email") or (_rec or {}).get("email") or ""),
-                          amount=amount)
+                          amount=amount, cache_key=_ck)
         except Exception as e:  # noqa: BLE001
             print(f"[ORDER] file access grant skipped: {e}")
         try:

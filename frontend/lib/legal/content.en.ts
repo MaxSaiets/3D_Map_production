@@ -36,7 +36,7 @@ export const en: LegalSet = {
       { h: "4. Price and Payment", blocks: [
         { p: "Prices on the Website are shown in hryvnia (for orders within Ukraine) and in euros (indicative). The Buyer sees the final cost of the order at the checkout step, before payment. Delivery costs are not included in the price of the Goods and are paid separately at the carrier's tariffs." },
         { p: "Payment is made online via the LiqPay payment service (JSC CB \"PrivatBank\"): by Visa/Mastercard bank card and other methods available in LiqPay. Payment card data is processed on the payment system's side; the Seller does not receive or store it." },
-        { p: "By arrangement with an operator, payment by another agreed method is possible. Downloading finished Digital content within the account's free limit is free of charge." },
+        { p: "By arrangement with an operator, payment by another agreed method is possible. Digital content (the print file) is paid for online before access is granted; the 3D preview of the model on the website is free." },
         { p: "The Goods are paid for in full before being sent to production, unless otherwise agreed by the parties. Details are on the [delivery:\"Payment and Delivery\"] page." },
       ] },
       { h: "5. Production Time", blocks: [
@@ -135,11 +135,11 @@ export const en: LegalSet = {
           "Map keychain — from 170 ₴ (≈ 4 €).",
           "3D district map: S 5.5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (maps — from 8 €).",
           "Fridge magnet (map) — 210 ₴.",
-          "Downloading the finished 3MF/STL file for self-printing — free within your account limit.",
+          "3MF file for self-printing — 149 ₴ (the price is shown in the designer), access via a link after payment; the 3D preview is free.",
         ] },
       ] },
       { h: "Payment", blocks: [
-        { p: "Online payment by Visa / Mastercard bank card through the secure LiqPay service. Card data is processed on the payment system's side — we do not store it. Payment by arrangement with an operator is also possible. The digital file within the free limit is provided at no charge." },
+        { p: "Online payment by Visa / Mastercard bank card through the secure LiqPay service. Card data is processed on the payment system's side — we do not store it. Payment by arrangement with an operator is also possible. Access to the digital file is opened once payment is confirmed; no account is needed to buy the file — only an e-mail address." },
       ] },
       { h: "Manufacture", blocks: [
         { p: "Products are printed to order from Eco PLA bioplastic. The estimated production time is 2–4 business days after the order is confirmed (depending on workload and complexity)." },
@@ -184,7 +184,7 @@ export const en: LegalSet = {
         ] },
       ] },
       { h: "What We Sell", blocks: [
-        { p: "{storeName} offers 3D models of city maps and map keychains made to order. You can download a ready-to-print file (3MF/STL) within the free limit, or order a product printed from Eco PLA bioplastic with delivery. Indicative prices are shown in the designer and on the [delivery:\"Payment and Delivery\"] page." },
+        { p: "{storeName} offers 3D models of city maps and map keychains made to order. You can buy a ready-to-print file (3MF), or order a product printed from Eco PLA bioplastic with delivery within Ukraine. Indicative prices are shown in the designer and on the [delivery:\"Payment and Delivery\"] page." },
       ] },
       { h: "Documents", blocks: [
         { ul: [
@@ -277,8 +277,8 @@ export const en: LegalSet = {
       { h: "About the Service", blocks: [
         { p: "{storeName} lets you create a 3D model of a city area or a map keychain based on open OpenStreetMap data and download a ready-to-print file (3MF/STL) or order a print." },
       ] },
-      { h: "Account and Free Downloads", blocks: [
-        { p: "An account is required to download the full model. Each user gets 5 free downloads. Beyond that — by arrangement (printing/payment), get in touch via the website." },
+      { h: "Account and Downloads", blocks: [
+        { p: "An account (Google sign-in) keeps the history of your models; buying the print file needs no account — just an e-mail and the link you receive after payment. If the service administrator grants registered users free downloads, the remaining number is shown in the account." },
       ] },
       { h: "Storage of Models", blocks: [
         { p: "Generated files are stored for 90 days, after which they are automatically deleted (models tied to an order are deleted together with the order). The record stays in your account history; you can generate the model again. The \"Share in 3D\" link is open to anyone who has it and works for as long as the file is stored. You can delete your account together with all models in your account at any time. Details — in the [privacy:Privacy Policy]." },

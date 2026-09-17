@@ -12,6 +12,18 @@ export interface GeoResult {
   full: string;       // повна адреса (display_name)
 }
 
+/** Кидається, коли геокодер НЕ ВІДПОВІВ (мережа, 429, 5xx) — це не «нічого не
+ *  знайдено», і UI мусить сказати людині різне. Раніше обидва випадки давали
+ *  порожній список, і поле мовчало (віденець 11.09 клацав по ньому вісім разів). */
+export class GeocodeUnavailableError extends Error {
+  readonly code = "geocode_unavailable";
+}
+
+/** Розпізнає збій геокодера без instanceof (класи можуть відрізнятись між бандлами). */
+export function isGeocodeUnavailable(err: unknown): boolean {
+  return !!err && typeof err === "object" && (err as { code?: string }).code === "geocode_unavailable";
+}
+
 export async function geocodeSearch(query: string, signal?: AbortSignal, lang = "uk"): Promise<GeoResult[]> {
   const q = query.trim();
   if (q.length < 3) return [];
@@ -23,7 +35,7 @@ export async function geocodeSearch(query: string, signal?: AbortSignal, lang = 
       encodeURIComponent(lang) + "&q=" +
       encodeURIComponent(q);
     const r = await fetch(url, { signal, headers: { Accept: "application/json" } });
-    if (!r.ok) return [];
+    if (!r.ok) throw new GeocodeUnavailableError(`nominatim ${r.status}`);
     const data = (await r.json()) as Array<{
       lat: string; lon: string; name?: string; display_name: string;
     }>;
@@ -37,8 +49,10 @@ export async function geocodeSearch(query: string, signal?: AbortSignal, lang = 
         return { lat, lon, label, full } as GeoResult;
       })
       .filter(Boolean) as GeoResult[];
-  } catch {
-    return [];
+  } catch (err) {
+    // скасований запит (новий ввід) — не помилка, просто нічого не показуємо
+    if ((err as { name?: string })?.name === "AbortError") return [];
+    throw err instanceof GeocodeUnavailableError ? err : new GeocodeUnavailableError(String(err));
   }
 }
 

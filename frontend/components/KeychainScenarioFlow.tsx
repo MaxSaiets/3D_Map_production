@@ -99,6 +99,7 @@ export function KeychainScenarioFlow({
     elapsedS: st.elapsedS,
     queued: st.queued,
     queueEta: st.queueEta,
+    sourceWaitS: st.sourceWaitS,
     reconnecting: st.reconnecting,
     genError: st.genError,
     printPrep: st.printPrep,
@@ -490,7 +491,7 @@ export function KeychainScenarioFlow({
                 </Button>
                 <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
-                {dlQuota && !dlQuota.isAdmin && (
+                {dlQuota && !dlQuota.isAdmin && dlQuota.limit > 0 && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>
                 )}
                 {/* S-1/S-2: месенджер-замовлення + «що заважає» (див. SalesAlternatives). */}
@@ -540,7 +541,11 @@ export function KeychainScenarioFlow({
                   // ⭐09.09: під час рестарту бекенду опитувач раніше мовчав
                   // ~10 с і оголошував «модель застаріла». Тепер чекаємо довше
                   // і чесно кажемо, що відбувається.
-                  s.reconnecting ? t("reconnecting") : t("etaNote")
+                  s.reconnecting
+                    ? t("reconnecting")
+                    : s.sourceWaitS != null
+                      ? t("sourceWait", { s: s.sourceWaitS })
+                      : t("etaNote")
                 }
                 eta={etaText}
                 queued={s.queued}
