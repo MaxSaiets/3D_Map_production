@@ -43,6 +43,7 @@ NATURAL_PARK = frozenset({"wood", "grassland", "scrub", "heath"})
 BATCH_SIZE = 200_000
 
 MONUMENT_HISTORIC = {"monument", "memorial"}
+MONUMENT_POINT_RADIUS_M = 7.0  # footprint для монумент-точок (Ø14 м ≈ 1.4 мм на мапі 150 мм; Ø10 давав голку)
 MONUMENT_MAN_MADE = {"monument", "obelisk", "tower"}
 
 
@@ -109,9 +110,33 @@ class FastHandler(osmium.SimpleHandler):
         if h <= 0:
             return
         try:
-            self.monument_pts.append((float(n.location.lon), float(n.location.lat), h))
+            self.monument_pts.append((int(n.id), float(n.location.lon), float(n.location.lat), h))
         except Exception:
             pass
+
+    def emit_monument_points(self):
+        """Монументи-ТОЧКИ з висотою → синтетичний footprint-«будівля» (восьмикутник
+        R=MONUMENT_POINT_RADIUS_M) з висотою точки і landmark='historic'. Так
+        Батьківщина-Мати (node height=102 без полігона) стає стрункою вежею на
+        мапі, а не витягує цілий музей під собою на 102 м (перевірено — силос).
+        id = −node_id, щоб не перетинатись із way/relation-id."""
+        import math
+        n_added = 0
+        for nid, lon, lat, h in self.monument_pts:
+            r_lat = MONUMENT_POINT_RADIUS_M / 111320.0
+            r_lon = r_lat / max(math.cos(math.radians(lat)), 1e-6)
+            ring = []
+            for k in range(8):
+                a = 2.0 * math.pi * k / 8.0
+                ring.append(f"{lon + r_lon * math.cos(a):.7f} {lat + r_lat * math.sin(a):.7f}")
+            ring.append(ring[0])
+            wkt = "MULTIPOLYGON(((" + ",".join(ring) + ")))"
+            self.buildings.append((-int(nid), 0, float(h), "historic", wkt,
+                                   lon - r_lon, lat - r_lat, lon + r_lon, lat + r_lat))
+            n_added += 1
+        if self.buildings:
+            self._flush()
+        print(f"  monument points → synthetic landmark footprints: {n_added}", flush=True)
 
     def area(self, a):
         """Зібрана area — закритий way АБО multipolygon relation.
@@ -168,11 +193,6 @@ class FastHandler(osmium.SimpleHandler):
             # Явна висота у метрах (OSM height / building:height; "20", "20 m", "65 ft").
             # Точніша за levels×3 — використовується першочергово у get_building_height.
             height = _parse_height(tags)
-            if is_monument and height <= 0.0 and self.monument_pts:
-                # Полігон постаменту без висоти → висота монумент-точки всередині.
-                for plon, plat, ph in self.monument_pts:
-                    if minlon <= plon <= maxlon and minlat <= plat <= maxlat:
-                        height = max(height, ph)
             # Орієнтир (визначне місце): церква/вежа/історична/пам'ятка → окрема
             # категорія для кольору + збереження навіть малих footprint у генерації.
             bt = tags.get("building") or ""
@@ -360,6 +380,7 @@ def main():
     # locations=True використовує дефолтний sparse_mem_array — швидкий і ОК для України
     handler.apply_file(str(pbf_path), locations=True)
     handler._flush()
+    handler.emit_monument_points()
     elapsed = time.time() - t0
     print(f"Parsing done in {elapsed/60:.1f}m", flush=True)
     print(f"Final totals: {handler.tot}", flush=True)

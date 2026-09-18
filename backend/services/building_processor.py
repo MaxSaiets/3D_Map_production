@@ -454,12 +454,30 @@ def process_buildings(
                 # Орієнтир (визначне місце) з OSM-тегу landmark; "" = звичайний будинок.
                 # Вимкнено власником → завжди "" (жоден будинок не виділяється кольором).
                 landmark_category = ""
+                # 18.09.2026: тег landmark читаємо ЗАВЖДИ — він потрібен, щоб орієнтир
+                # (монумент Ø10 м, дзвіниця) НЕ відкидався порогом мінімальної ширини
+                # як «кіоск». Колір лишається вимкненим (LANDMARK_RENDERING_ENABLED):
+                # у мешу landmark_category = "" → звичайний будинок.
+                _landmark_tag = ""
+                try:
+                    _lm = row.get("landmark", "") if hasattr(row, "get") else getattr(row, "landmark", "")
+                    _landmark_tag = str(_lm).strip() if _lm is not None else ""
+                    if _landmark_tag.lower() in ("nan", "none"):
+                        _landmark_tag = ""
+                except Exception:
+                    _landmark_tag = ""
+                # Виняток з порогу — лише орієнтир із ЯВНОЮ висотою в OSM (монумент,
+                # вежа з height=…): маленька капличка без висоти й далі фільтрується
+                # як раніше, щоб не повернути «будинки-голки».
+                try:
+                    _lm_h = row.get("height", 0) if hasattr(row, "get") else getattr(row, "height", 0)
+                    _lm_h = float(_lm_h) if _lm_h is not None and str(_lm_h).strip() not in ("", "nan", "None") else 0.0
+                except Exception:
+                    _lm_h = 0.0
+                if not (_lm_h > 0.0):
+                    _landmark_tag = ""
                 if LANDMARK_RENDERING_ENABLED:
-                    try:
-                        _lm = row.get("landmark", "") if hasattr(row, "get") else getattr(row, "landmark", "")
-                        landmark_category = str(_lm).strip() if _lm is not None else ""
-                    except Exception:
-                        landmark_category = ""
+                    landmark_category = _landmark_tag
 
                 # Пропускаємо невалідні геометрії
                 if geom is None:
@@ -481,7 +499,7 @@ def process_buildings(
                     print(f"  [WARN] Помилка перевірки геометрії будівлі {idx}: {e}")
                     continue
 
-                geom = _clip_building_geometry(geom, landmark_category=landmark_category)
+                geom = _clip_building_geometry(geom, landmark_category=_landmark_tag)
                 if geom is None or getattr(geom, "is_empty", True):
                     continue
                 

@@ -331,10 +331,18 @@ def process_water_surface(
                     _drop_m = max(0.35 * float(depth_meters or 0.0), 0.0005)
                     if scale_factor and float(scale_factor) > 0:
                         _drop_m = min(_drop_m, 0.18 / float(scale_factor))
+                    # 18.09.2026: було min(flat, orig − drop): у СЕРЕДИНІ пласкої водойми
+                    # (orig ≈ flat) рівень = flat − drop, а біля берега, де 30-м DEM
+                    # «затікає» на воду (orig = flat + 2…8 м), рівень = flat → вода
+                    # ПІДІЙМАЛАСЬ до берега на drop (1.9 м ≈ 0.18 мм) і кожен DEM-горб
+                    # біля берега ставав синім клинцем (Дніпро/Печерськ, скрін власника;
+                    # локально: 10 582 вершини вище рівня). Тепер drop віднімається від
+                    # min(flat, orig): пласка водойма — один рівень до самого берега;
+                    # похила ріка так само спускається за тереном (min бере orig).
                     base_water_level = np.minimum(
                         flat_level,
-                        np.asarray(original_ground, dtype=float) - _drop_m,
-                    ) + offset_below_m
+                        np.asarray(original_ground, dtype=float),
+                    ) - _drop_m + offset_below_m
 
                     # 4. Apply Noise (only to top surface)
                     # IMPORTANT: Use GLOBAL (UTM) coordinates for noise so adjacent zones stitch seamlessly.
@@ -375,6 +383,23 @@ def process_water_surface(
                          # Disable clamp for bridges (set limit extremely low)
                          clamp_limit = np.where(is_bridge_or_building, -1e9, clamp_limit)
                     
+                    # 18.09.2026: кламп «вода не нижче дна» ПІДІЙМАВ поверхню до дна там,
+                    # де дно біля берега вище рівня води (край маски carve інтерполюється
+                    # з ВИСОКИМ берегом 30-м DEM: +8 м ≈ +0.8 мм моделі) → сині «скалки»
+                    # уздовж усього берега Дніпра (скрін власника, Печерськ). Терен у
+                    # полігоні води все одно вирізається ванною до дна води (unified
+                    # cutter: полігон → cut_bottom), тож піднімати поверхню не треба.
+                    # Кап підйому над рівнем водойми (env WATER_CLAMP_LIFT_MM, дефолт
+                    # 0.02 мм моделі). Перевірено локально (Печерськ 150 мм): без капу
+                    # max +0.78 мм, кап 0.25 мм — помітні клинці, 0.05 — ледь помітні
+                    # контури, 0.02 — чисто (0 вершин вище рівня). Мости/будівлі
+                    # (clamp −1e9) не зачеплено.
+                    try:
+                        _lift_cap_mm = float(os.environ.get("WATER_CLAMP_LIFT_MM", "0.02") or 0.02)
+                    except Exception:
+                        _lift_cap_mm = 0.02
+                    _lift_cap_m = (_lift_cap_mm / float(scale_factor)) if (scale_factor and float(scale_factor) > 0) else _lift_cap_mm * 10.0
+                    clamp_limit = np.minimum(clamp_limit, base_water_level + _lift_cap_m)
                     top_z = np.maximum(top_z, clamp_limit)
                     
                     # For Bottom vertices:
