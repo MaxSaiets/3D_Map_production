@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getVariant } from "@/lib/ab";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
@@ -24,6 +24,7 @@ import {
   MAP_MAGNET_PRICE_UAH,
   MAP_RELIEF_ADDON_UAH,
   mapPriceEur,
+  mapPriceForSizeUah,
 } from "@/lib/mapPrices";
 import { GenerationStages } from "@/components/GenerationStages";
 import { SalesAlternatives } from "@/components/SalesAlternatives";
@@ -41,6 +42,82 @@ const QUICK_CITIES: Array<{ uk: string; en: string; lat: number; lon: number }> 
   { uk: "Одеса", en: "Odesa", lat: 46.4825, lon: 30.7233 },
   { uk: "Харків", en: "Kharkiv", lat: 49.9935, lon: 36.2304 },
 ];
+
+/** Guided-розмір: будь-яке ребро 50–200 мм (стіл P1 = 256 мм; більше — у розширеному режимі). */
+const SIZE_MIN_MM = 50;
+const SIZE_MAX_MM = 200;
+/** Висота рельєфу (terrain_z_scale) і будинків (building_height_multiplier) — три зрозумілі кроки. */
+const RELIEF_Z_OPTIONS = [{ v: 1, key: "reliefNatural" }, { v: 1.6, key: "reliefBold" }, { v: 2.5, key: "reliefDramatic" }] as const;
+const BUILDING_H_OPTIONS = [{ v: 1.2, key: "bhLow" }, { v: 1.8, key: "bhNormal" }, { v: 2.6, key: "bhHigh" }] as const;
+
+/** Пронумерована секція кроку 2 — власник (19.09.2026): «не зрозуміло, що де». */
+function Section({ n, title, hint, children }: { n: number; title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-[18px] border border-[var(--surface-border)] bg-white/55 p-3" data-testid={`guided-sec-${n}`}>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-strong)] text-[12px] font-bold text-white">{n}</span>
+        <h3 className="font-title text-[16px] font-semibold leading-tight text-[var(--text-primary)]">{title}</h3>
+      </div>
+      {hint && <p className="text-[11.5px] leading-snug text-[var(--text-secondary)]">{hint}</p>}
+      {children}
+    </section>
+  );
+}
+
+/** Ряд пігулок-радіо (одне значення з кількох). */
+function ChipGroup({ label, value, options, onPick, testId }: {
+  label: string; value: number; options: Array<{ v: number; label: string; sub?: string }>; onPick: (v: number) => void; testId: string;
+}) {
+  return (
+    <div data-testid={testId}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{label}</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
+        {options.map((o) => {
+          const active = Math.abs(o.v - value) < 1e-6;
+          return (
+            <button
+              key={o.v}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onPick(o.v)}
+              className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] font-semibold transition ${
+                active
+                  ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--text-primary)]"
+                  : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.35)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {o.label}
+              {o.sub && <span className={`text-[11px] ${active ? "text-[var(--accent-strong)]" : "opacity-70"}`}>{o.sub}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Пігулка-перемикач (увімк/вимк) з підказкою під нею. */
+function ToggleChip({ on, label, hint, onToggle, testId }: { on: boolean; label: string; hint?: string; onToggle: () => void; testId: string }) {
+  return (
+    <div>
+      <button
+        type="button"
+        aria-pressed={on}
+        onClick={onToggle}
+        data-testid={testId}
+        className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition ${
+          on
+            ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
+            : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
+        }`}
+      >
+        <span aria-hidden className="w-3 text-[var(--accent-strong)]">{on ? "✓" : ""}</span> {label}
+      </button>
+      {on && hint && <p className="mt-1.5 text-[12px] leading-snug text-[var(--text-secondary)]">{hint}</p>}
+    </div>
+  );
+}
 
 /** Сценарії, що лишаються всередині guided-флоу (брелок = лінк, повний = вихід). */
 type ScenarioId = "map3d" | "relief" | "flat" | "magnet";
@@ -112,6 +189,15 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     suggestedMapLabel: st.suggestedMapLabel,
     simpleConnector: st.simpleConnector,
     setSimpleConnector: st.setSimpleConnector,
+    // Вигляд (19.09.2026): лише те, що реально міняє модель у guided-сценаріях.
+    terrainZScale: st.terrainZScale,
+    setTerrainZScale: st.setTerrainZScale,
+    buildingHeightMultiplier: st.buildingHeightMultiplier,
+    setBuildingHeightMultiplier: st.setBuildingHeightMultiplier,
+    simpleFlatBuildings: st.simpleFlatBuildings,
+    setSimpleFlatBuildings: st.setSimpleFlatBuildings,
+    simpleFrame: st.simpleFrame,
+    setSimpleFrame: st.setSimpleFrame,
   })));
 
   // T-2.1: текстовий лінк «Поділитись» у ГОТОВО-банері — та сама /share/{taskId}
@@ -185,9 +271,12 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     if (!scenario) return;
     let alive = true;
     const magnet = scenario === "magnet";
-    fetchQuote("map", magnet ? 60 : s.modelSizeMm, magnet ? false : scenario === "relief")
-      .then((q) => { if (alive) setQuote(q); });
-    return () => { alive = false; };
+    // Повзунок розміру шле десятки значень за секунду — питаємо ціну з паузою.
+    const h = setTimeout(() => {
+      fetchQuote("map", magnet ? 60 : s.modelSizeMm, magnet ? false : scenario === "relief")
+        .then((q) => { if (alive) setQuote(q); });
+    }, 200);
+    return () => { alive = false; clearTimeout(h); };
   }, [scenario, s.modelSizeMm]);
 
   // АВТО-ЗОНА після пошуку. MapSearchBox шле `monadruk:map-goto` {lat,lon,label};
@@ -347,8 +436,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       pick(prodId ?? (tpl && tpl.style === "relief" ? "relief" : "map3d"), "url");
       if (tpl?.sizeMm) s.setModelSizeMm(tpl.sizeMm);
       const sizeParam = Number(p.get("size"));
-      if (Number.isFinite(sizeParam) && SIMPLE_SIZES.some((z) => z.mm === sizeParam)) {
-        s.setModelSizeMm(sizeParam);
+      if (Number.isFinite(sizeParam) && sizeParam >= SIZE_MIN_MM && sizeParam <= SIZE_MAX_MM) {
+        const mm = Math.round(sizeParam / 5) * 5;
+        s.setModelSizeMm(mm);
+        // Чернетка конструктора (SimpleControlPanel, monadruk:draft:create) відновлює
+        // свій modelSizeMm на маунті й перебивала явний ?size= з посилання —
+        // повторюємо після її ефекту.
+        window.setTimeout(() => useGenerationStore.getState().setModelSizeMm(mm), 150);
       }
       // Nightly cache warming: тегуємо задачу id шаблону з ?template=<id>, щоб
       // /api/generate передав template_id — нічний прогрів кешує саме ці прев'ю.
@@ -363,6 +457,46 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── РОЗМІР (19.09.2026): будь-яке значення 50–200 мм, не лише S/M/L/XL ──
+  const track = (ev: string, props: Record<string, unknown>) =>
+    import("@/lib/analytics").then((m) => m.track(ev, { product: "map", ...props })).catch(() => {});
+  /** «8 см» / «9.5 см» — без toLocaleString (локаль браузера ≠ локаль сайту в тестах). */
+  const sizeCm = (mm: number) => `${Math.round(mm) / 10} см`;
+  /** «M · 8 см» для пресету, «9.5 см» для довільного розміру — рекап, sticky-бар, месенджер. */
+  const sizeLabel = (mm: number) => {
+    const z = SIMPLE_SIZES.find((x) => x.mm === Math.round(mm));
+    return z ? `${z.label} · ${z.cm}` : sizeCm(mm);
+  };
+  const isCustomSize = !SIMPLE_SIZES.some((z) => z.mm === s.modelSizeMm);
+  // Текст числового поля живе окремо: інакше набір «1» → «12» → «120» клампився б
+  // на кожній літері. Синхронізуємо зі стором, коли розмір змінили не з поля.
+  const [sizeText, setSizeText] = useState(String(s.modelSizeMm));
+  useEffect(() => { setSizeText(String(s.modelSizeMm)); }, [s.modelSizeMm]);
+  const zoneSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо поточного центру з масштабом
+   *  під нову плитку — інакше S зі старою 800-м зоною ловила червоне «завелика»,
+   *  а XL марнувала деталізацію. Лише коли місце вже ОБРАНЕ (інакше ресайзили б
+   *  дефолтну київську рамку, якої юзер не торкався). */
+  const syncZoneToSize = (mm: number) => {
+    if (zoneSyncRef.current) { clearTimeout(zoneSyncRef.current); zoneSyncRef.current = null; }
+    const c = placePicked ? s.selectedArea?.getCenter?.() : null;
+    if (!c) return;
+    window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(mm) } }));
+  };
+  /** Єдиний вхід зміни розміру (пресет / повзунок / поле). `live` = під час
+   *  тягнення повзунка: стор оновлюємо одразу (ціна, підпис), зону — з паузою. */
+  const applySize = (raw: number, source: string, live = false) => {
+    const mm = Math.round(Math.min(SIZE_MAX_MM, Math.max(SIZE_MIN_MM, raw)) / 5) * 5;
+    if (mm !== s.modelSizeMm) s.setModelSizeMm(mm);
+    if (!live) {
+      track("guided_size", { sizeMm: mm, label: SIMPLE_SIZES.find((z) => z.mm === mm)?.label ?? "custom", source });
+      syncZoneToSize(mm);
+    } else {
+      if (zoneSyncRef.current) clearTimeout(zoneSyncRef.current);
+      zoneSyncRef.current = setTimeout(() => syncZoneToSize(mm), 350);
+    }
+  };
+
   // A-3: «Оновити превʼю» лише коли щось РЕАЛЬНО змінилось після генерації —
   // знімок параметрів у момент старту; поки він збігається, на екрані «готово»
   // рівно дві дії (замовити / завантажити).
@@ -375,6 +509,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const paramsKey = JSON.stringify({
     scenario, size: s.modelSizeMm, area: areaKey, label: s.simpleMapLabel,
     hl: s.highlightPoints.length, conn: s.simpleConnector,
+    zs: s.terrainZScale, bh: s.buildingHeightMultiplier, fb: s.simpleFlatBuildings, fr: s.simpleFrame,
   });
   const [snapshotKey, setSnapshotKey] = useState<string | null>(null);
 
@@ -409,13 +544,10 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const basePrice = SIMPLE_SIZES[0].price;
   const reliefAddon = scenario === "relief" ? MAP_RELIEF_ADDON_UAH : 0;
   // Ціна на CTA: живий quote; fallback — канонічна таблиця mapPrices (без хардкоду).
-  const fallbackSize = SIMPLE_SIZES.reduce(
-    (best, z) => (Math.abs(z.mm - s.modelSizeMm) < Math.abs(best.mm - s.modelSizeMm) ? z : best),
-    SIMPLE_SIZES[0],
-  );
+  // Проміжні розміри (повзунок) — лінійно між тарифами, як і на бекенді.
   const ctaPriceUah = scenario === "magnet"
     ? (quote?.price ?? MAP_MAGNET_PRICE_UAH)
-    : (quote?.price ?? fallbackSize.price + reliefAddon);
+    : (quote?.price ?? mapPriceForSizeUah(s.modelSizeMm) + reliefAddon);
 
   // 18.09.2026 (власник: «мало карток і реальні фото — бред»): картки = РЕНДЕРИ моделей
   // (public/showcase/card-r-*, render_product.py з реальних 3MF Львова), а не фото; крок 1 показує
@@ -583,7 +715,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 {/* Рекап: що саме готове (сценарій · розмір · місце) + підказка. */}
                 <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]">
                   <b className="text-[var(--text-primary)]">
-                    {scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${fallbackSize.label} · ${fallbackSize.cm}`}
+                    {scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${sizeLabel(s.modelSizeMm)}`}
                     {placeLabel ? ` · ${placeLabel}` : ""}
                   </b>
                   {" — "}{t("readyHint")}
@@ -638,7 +770,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <SalesAlternatives
                   product="map"
                   taskId={s.taskGroupId}
-                  summary={`${scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${fallbackSize.label} · ${fallbackSize.cm}`}${placeLabel ? ` · ${placeLabel}` : ""}`}
+                  summary={`${scenario === "magnet" ? t("magnetTitle") : `${cards.find((c) => c.id === scenario)?.title ?? ""} · ${sizeLabel(s.modelSizeMm)}`}${placeLabel ? ` · ${placeLabel}` : ""}`}
                   priceUah={ctaPriceUah}
                 />
                 {/* T-2.1: текстовий лінк, НЕ третя кнопка — банер лишається з рівно
@@ -726,7 +858,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 stages={{ data: t("stageData"), terrain: t("stageTerrain"), detail: t("stageDetail"), file: t("stageFile") }}
               />
             )}
-            <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
+            <Section n={1} title={t("step2Title")}>
             {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}
             {!successView && !generatingView && (
               <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("howItWorks")}</p>
@@ -765,12 +897,144 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <span className="truncate">{t("placeChosen")}{placeLabel ? `: ${placeLabel}` : `: ${t("customPlace")}`}</span>
               </div>
             )}
+            </Section>
+            {/* ── 2. РОЗМІР (19.09.2026, власник: «розмірів повноцінно не можна
+                вибрати») — 4 звичні пресети + БУДЬ-ЯКИЙ розмір 50–200 мм повзунком/
+                полем. Ціна жива з /api/quote (бекенд рахує проміжні розміри лінійно
+                між тарифами; fallback — та сама формула mapPriceForSizeUah). Магніт
+                фіксований 60 мм. */}
+            {scenario === "magnet" ? (
+              <Section n={2} title={t("sizeTitle")}>
+                <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                  {t("magnetFixedNote", { price: disp(quote?.price ?? MAP_MAGNET_PRICE_UAH) })}
+                </p>
+              </Section>
+            ) : (
+              <Section n={2} title={t("sizeTitle")} hint={t("sizeHint")}>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={t("sizeTitle")}>
+                  {SIMPLE_SIZES.map((z) => (
+                    <button
+                      key={z.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={s.modelSizeMm === z.mm}
+                      onClick={() => applySize(z.mm, z.label)}
+                      className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-1.5 py-2 transition ${
+                        s.modelSizeMm === z.mm
+                          ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
+                          : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                      }`}
+                    >
+                      <span className="text-[14px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
+                      <span className="text-[12.5px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
+                      {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
+                      <span className="text-center text-[10.5px] leading-tight text-[var(--text-secondary)]">
+                        {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div
+                  className={`rounded-[16px] border px-3 py-2.5 transition ${
+                    isCustomSize ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.08)]" : "border-dashed border-[var(--surface-border)] bg-white/60"
+                  }`}
+                  data-testid="custom-size"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-semibold text-[var(--text-primary)]">{t("customSize")}</span>
+                    <span className="text-[13px] font-bold text-[var(--accent-strong)]" data-testid="custom-size-price">{disp(ctaPriceUah)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={SIZE_MIN_MM}
+                      max={SIZE_MAX_MM}
+                      step={5}
+                      value={Math.min(SIZE_MAX_MM, Math.max(SIZE_MIN_MM, s.modelSizeMm))}
+                      onChange={(e) => applySize(Number(e.target.value), "slider", true)}
+                      onPointerUp={() => syncZoneToSize(s.modelSizeMm)}
+                      onKeyUp={() => syncZoneToSize(s.modelSizeMm)}
+                      aria-label={t("customSize")}
+                      className="h-2 flex-1 cursor-pointer accent-[var(--accent-strong)]"
+                      data-testid="size-slider"
+                    />
+                    <label className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/90 px-2.5 py-1.5 focus-within:border-[rgba(11,92,87,0.45)]">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={SIZE_MIN_MM}
+                        max={SIZE_MAX_MM}
+                        step={5}
+                        value={sizeText}
+                        onChange={(e) => {
+                          setSizeText(e.target.value);
+                          const v = Number(e.target.value);
+                          if (Number.isFinite(v) && v >= SIZE_MIN_MM && v <= SIZE_MAX_MM) applySize(v, "input", true);
+                        }}
+                        onBlur={() => { const v = Number(sizeText); applySize(Number.isFinite(v) && v > 0 ? v : s.modelSizeMm, "input"); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                        aria-label={t("customSizeMm")}
+                        className="w-12 bg-transparent text-right text-[13px] font-semibold text-[var(--text-primary)] focus:outline-none"
+                        data-testid="size-input"
+                      />
+                      <span className="text-[12px] text-[var(--text-secondary)]">{t("mm")}</span>
+                    </label>
+                  </div>
+                  <p className="mt-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]">
+                    {t("customSizeHint", { cm: sizeCm(s.modelSizeMm), zone: zoneForSizeM(s.modelSizeMm), min: SIZE_MIN_MM / 10, max: SIZE_MAX_MM / 10 })}
+                  </p>
+                </div>
+              </Section>
+            )}
+            {/* ── 3. ВИГЛЯД — лише ті налаштування, що РЕАЛЬНО міняють модель у цьому
+                сценарії (перевірено по buildSingleMapReq/бекенду): висота рельєфу
+                (terrain_z_scale), висота будинків (building_height_multiplier), пласкі
+                будинки й рамка з компасом для плоских. Шари (дороги/вода/парки)
+                СВІДОМО не тут — на бекенді вони керують лише роздільними
+                превʼю-частинами, не самою моделлю (був би «мовчазний» перемикач). */}
+            <Section n={3} title={t("lookTitle")} hint={t("lookHint")}>
+              {scenario === "relief" && (
+                <ChipGroup
+                  label={t("reliefHeight")}
+                  value={s.terrainZScale}
+                  options={RELIEF_Z_OPTIONS.map((o) => ({ v: o.v, label: t(o.key as "reliefNatural" | "reliefBold" | "reliefDramatic"), sub: `×${o.v}` }))}
+                  onPick={(v) => { s.setTerrainZScale(v); track("guided_look", { setting: "relief_z", value: v }); }}
+                  testId="relief-z"
+                />
+              )}
+              {(scenario === "map3d" || scenario === "relief") && (
+                <ChipGroup
+                  label={t("buildingHeight")}
+                  value={s.buildingHeightMultiplier}
+                  options={BUILDING_H_OPTIONS.map((o) => ({ v: o.v, label: t(o.key as "bhLow" | "bhNormal" | "bhHigh"), sub: `×${o.v}` }))}
+                  onPick={(v) => { s.setBuildingHeightMultiplier(v); track("guided_look", { setting: "building_h", value: v }); }}
+                  testId="building-h"
+                />
+              )}
+              {(scenario === "flat" || scenario === "magnet") && (
+                <ChipGroup
+                  label={t("flatBuildings")}
+                  value={s.simpleFlatBuildings ? 1 : 0}
+                  options={[{ v: 0, label: t("fbVolumetric") }, { v: 1, label: t("fbFlat") }]}
+                  onPick={(v) => { s.setSimpleFlatBuildings(v === 1); track("guided_look", { setting: "flat_buildings", value: v }); }}
+                  testId="flat-buildings"
+                />
+              )}
+              {scenario === "flat" && (
+                <ToggleChip
+                  on={s.simpleFrame}
+                  label={t("frameCompass")}
+                  hint={t("frameCompassHint")}
+                  onToggle={() => { s.setSimpleFrame(!s.simpleFrame); track("guided_look", { setting: "frame", value: !s.simpleFrame }); }}
+                  testId="frame-toggle"
+                />
+              )}
+            </Section>
             {/* ПЕРСОНАЛІЗАЦІЯ (v2, юзер: «немає легких доступів»): мій дім +
                 напис — емоційне ядро продукту, тепер на видноті. Обидва
                 контроли пишуть у ті САМІ поля стору, що й повний конструктор. */}
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("personalizeTitle")}</p>
-              <div className="mt-2 flex flex-col gap-2">
+            <Section n={4} title={t("personalizeTitle")} hint={t("personalizeHint")}>
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -873,55 +1137,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <p className="text-[12px] leading-snug text-[var(--text-secondary)]">{t("connectorsHint")}</p>
                 )}
               </div>
-            </div>
-            {/* Розмір: одразу тут (без окремого кроку). Магніт — фіксований. */}
-            {scenario === "magnet" ? (
-              <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
-                {t("magnetFixedNote", { price: disp(quote?.price ?? MAP_MAGNET_PRICE_UAH) })}
-              </p>
-            ) : (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">{t("sizeTitle")}</p>
-                <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("sizeTitle")}>
-                  {SIMPLE_SIZES.map((z) => (
-                    <button
-                      key={z.key}
-                      type="button"
-                      role="radio"
-                      aria-checked={s.modelSizeMm === z.mm}
-                      onClick={() => {
-                        s.setModelSizeMm(z.mm);
-                        import("@/lib/analytics").then((m) => m.track("guided_size", { product: "map", sizeMm: z.mm, label: z.label })).catch(() => {});
-                        // Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо
-                        // поточного центру з масштабом під нову плитку —
-                        // інакше S зі старою 800м-зоною ловила червоне
-                        // «завелика», а XL марнувала деталізацію.
-                        // Лише коли місце вже ОБРАНЕ: інакше ресайзили б
-                        // дефолтну київську рамку, якої юзер не торкався.
-                        const c = placePicked ? s.selectedArea?.getCenter?.() : null;
-                        if (c) {
-                          window.dispatchEvent(new CustomEvent("monadruk:map-goto", {
-                            detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(z.mm) },
-                          }));
-                        }
-                      }}
-                      className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-2 py-2 transition ${
-                        s.modelSizeMm === z.mm
-                          ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
-                          : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
-                      }`}
-                    >
-                      <span className="text-[15px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
-                      <span className="text-[13px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
-                      {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
-                      <span className="text-[11.5px] leading-tight text-[var(--text-secondary)]">
-                        {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            </Section>
             {/* C-3: помилка з ПРИЧИНОЮ і діями. Раніше — один загальний рядок
                 «Не вдалося згенерувати», хоча бекенд віддає зрозумілий текст
                 (замало даних / зона завелика / сервер зайнятий). */}
@@ -934,7 +1150,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     size="sm"
                     onClick={create}
                     data-testid="guided-retry"
-                    className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
+                    className="rounded-full border !border-red-300 !bg-white px-3 py-1.5 text-[12px] font-semibold !text-red-800 transition hover:!bg-red-100"
                   >
                     {t("tryAgain")}
                   </Button>
@@ -951,7 +1167,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                           detail: { lat: c.lat, lon: c.lng, widthM: Math.round(zoneForSizeM(s.modelSizeMm) * 0.7) },
                         }));
                       }}
-                      className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-800 transition hover:bg-red-100"
+                      className="rounded-full border !border-red-300 !bg-white px-3 py-1.5 text-[12px] font-semibold !text-red-800 transition hover:!bg-red-100"
                     >
                       {t("shrinkZone")}
                     </Button>
@@ -960,7 +1176,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     variant="bronze"
                     size="sm"
                     onClick={() => window.dispatchEvent(new CustomEvent("monadruk:open-contact", { detail: { message: `${t("genFailed")} ${s.genError || ""}`.trim() } }))}
-                    className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-red-800 underline underline-offset-2"
+                    className="rounded-full !bg-transparent px-3 py-1.5 text-[12px] font-semibold !text-red-800 underline underline-offset-2"
                   >
                     {t("contactUs")}
                   </Button>
@@ -1025,7 +1241,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       {/* F-04: на мобільному ціна + головна дія стану завжди внизу екрана (портал). */}
       <GuidedStickyBar
         visible={displayStep === 2}
-        label={scenario === "magnet" ? t("magnetTitle") : `${fallbackSize.label} · ${fallbackSize.cm}`}
+        label={scenario === "magnet" ? t("magnetTitle") : sizeLabel(s.modelSizeMm)}
         price={disp(ctaPriceUah)}
         busy={generatingView}
         tone={successView && !dirty ? "bronze" : "primary"}

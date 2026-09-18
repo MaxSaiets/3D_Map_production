@@ -23,6 +23,30 @@ export const MAP_SIZE_PRICES_UAH = {
 
 export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
 
+/** Ціна для БУДЬ-ЯКОГО розміру (guided-повзунок 50–200 мм, «Профі» до 500):
+ *  лінійно між сусідніми тарифами, нижче S = S, вище XL — продовжуємо нахил
+ *  останнього відрізка (110→150 = 3.5 ₴/мм); округлення до 10 ₴. ДЗЕРКАЛО
+ *  backend main.py `_map_price_for_size` (жива ціна йде з /api/quote; це fallback). */
+export function mapPriceForSizeUah(sizeMm: number): number {
+  const pts = (Object.keys(MAP_SIZE_PRICES_UAH).map(Number) as MapSizeMm[]).sort((a, b) => a - b);
+  const price = (mm: MapSizeMm) => MAP_SIZE_PRICES_UAH[mm];
+  if (!Number.isFinite(sizeMm) || sizeMm <= pts[0]) return price(pts[0]);
+  const last = pts[pts.length - 1];
+  if (sizeMm >= last) {
+    const prev = pts[pts.length - 2];
+    const slope = (price(last) - price(prev)) / (last - prev);
+    return Math.round((price(last) + slope * (sizeMm - last)) / 10) * 10;
+  }
+  for (let i = 1; i < pts.length; i++) {
+    if (sizeMm <= pts[i]) {
+      const a = pts[i - 1], b = pts[i];
+      const k = (sizeMm - a) / (b - a);
+      return Math.round((price(a) + k * (price(b) - price(a))) / 10) * 10;
+    }
+  }
+  return price(last);
+}
+
 /** Магніт-мапа (60мм) — окремий SKU. UAH. Дзеркало pricing.json map.sizes_mm["60"]. */
 export const MAP_MAGNET_PRICE_UAH = 210;
 

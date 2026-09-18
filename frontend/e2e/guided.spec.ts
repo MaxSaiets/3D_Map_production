@@ -214,6 +214,38 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await expect(page.getByTestId("scenario-create")).toHaveText(/Оновити превʼю/);
   });
 
+  test("19.09: крок 2 = 4 пронумеровані секції; свій розмір 50–200 мм з живою ціною; секція «Вигляд» за сценарієм", async ({ page }) => {
+    await page.goto("/uk/create?product=relief");
+    const flow = page.getByTestId("scenario-flow");
+    for (const n of [1, 2, 3, 4]) await expect(flow.getByTestId(`guided-sec-${n}`)).toBeVisible();
+    await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота рельєфу");
+    await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота будинків");
+    // Довільний розмір: 125 мм → ціна лінійно між L(630) і XL(770) = 680 + рельєф 85 = 765
+    const input = flow.getByTestId("size-input");
+    await input.fill("125");
+    await input.press("Enter");
+    await expect(flow.getByTestId("custom-size-price")).toHaveText("765 ₴");
+    await expect(flow.getByTestId("custom-size")).toContainText("12.5 см · ділянка ≈875 м");
+    await expect(flow.getByText(/Друк 765 ₴/)).toBeVisible();
+    // Пресет повертає поле до 80
+    await flow.getByRole("radio", { name: /M · 8 см/ }).click();
+    await expect(input).toHaveValue("80");
+    // Поза межами → кламп до 200
+    await input.fill("999");
+    await input.press("Enter");
+    await expect(input).toHaveValue("200");
+    // Вигляд: вибір висоти рельєфу
+    await flow.getByRole("radio", { name: /Виразна/ }).click();
+    await expect(flow.getByRole("radio", { name: /Виразна/ })).toHaveAttribute("aria-checked", "true");
+    // ?size= приймає будь-яке значення 50–200; map3d — без «Висота рельєфу», flat — «Будинки»/рамка
+    await page.goto("/uk/create?product=map3d&size=125");
+    await expect(page.getByTestId("scenario-flow").getByTestId("size-input")).toHaveValue("125");
+    await expect(page.getByTestId("scenario-flow").getByTestId("guided-sec-3")).not.toContainText("Висота рельєфу");
+    await page.goto("/uk/create?product=flat");
+    await expect(page.getByTestId("scenario-flow").getByTestId("flat-buildings")).toBeVisible();
+    await expect(page.getByTestId("scenario-flow").getByTestId("frame-toggle")).toBeVisible();
+  });
+
   test("A-6: єдиний вихід «Розширений режим»; ?mode=pro відкриває його одразу", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");

@@ -1189,8 +1189,8 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
     else:
         sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 250}).items()}
         if size_mm:
-            nearest = min(sizes.keys(), key=lambda k: abs(k - float(size_mm)))
-            price = sizes[nearest]
+            # 19.09.2026: проміжні розміри (guided-повзунок) — лінійно між тарифами.
+            price = _map_price_for_size(sizes, float(size_mm))
         else:
             price = int(p.get("map", {}).get("from", min(sizes.values())))
         if relief:
@@ -1210,6 +1210,36 @@ def _nearest_map_price(sizes: Dict[float, int], size_mm: Optional[float]) -> int
         return min(sizes.values())
     nearest = min(sizes.keys(), key=lambda k: abs(k - float(size_mm)))
     return int(sizes[nearest])
+
+
+def _map_price_for_size(sizes: Dict[float, int], size_mm: Optional[float]) -> int:
+    """Ціна мапи для БУДЬ-ЯКОГО розміру (19.09.2026, guided-повзунок 50–200 мм):
+    точні тарифи S/M/L/XL — як у прайсі; проміжні — лінійно між сусідніми; нижче
+    S = S; вище XL — продовжуємо нахил останнього відрізка (110→150 = 3.5 ₴/мм),
+    бо «найближчий» давав 500-мм плитку за ціною XL. Округлення до 10 ₴.
+    Ключ 60 (магніт, окремий SKU) з кривої виключаємо. Дзеркало: frontend
+    lib/mapPrices.ts `mapPriceForSizeUah`."""
+    curve = {k: v for k, v in sizes.items() if k != 60.0} or dict(sizes)
+    if not curve:
+        return 0
+    if size_mm is None:
+        return min(curve.values())
+    pts = sorted(curve.keys())
+    x = float(size_mm)
+    if x <= pts[0]:
+        return int(curve[pts[0]])
+    if x >= pts[-1]:
+        if len(pts) < 2:
+            return int(curve[pts[-1]])
+        a, b = pts[-2], pts[-1]
+        slope = (curve[b] - curve[a]) / (b - a)
+        return int(round((curve[b] + slope * (x - b)) / 10.0) * 10)
+    for i in range(1, len(pts)):
+        if x <= pts[i]:
+            a, b = pts[i - 1], pts[i]
+            k = (x - a) / (b - a)
+            return int(round((curve[a] + k * (curve[b] - curve[a])) / 10.0) * 10)
+    return int(curve[pts[-1]])
 
 
 def _compute_authoritative_amount(
@@ -1282,7 +1312,7 @@ def _compute_authoritative_amount(
     if size_mm is None:
         base = float(map_cfg.get("from", 150) or 150)
     else:
-        base = float(_nearest_map_price(sizes, size_mm) or map_cfg.get("from", 150))
+        base = float(_map_price_for_size(sizes, size_mm) or map_cfg.get("from", 150))
     if relief:
         base += float(map_cfg.get("relief_addon", 0) or 0)
 
