@@ -108,8 +108,9 @@ export default function WorldsPage() {
           // щоразу, коли бекенд міняв іменування файлів).
           const glb = s.download_url_glb || `/api/files/custom_${taskId.slice(0, 8)}.glb`;
           setGlbUrl(glb.startsWith("http") ? glb : `${API_BASE}${glb}`);
-          const p3 = s.download_url_3mf || s.download_url;
-          setPrintUrl(p3 ? (p3.startsWith("http") ? p3 : `${API_BASE}${p3}`) : null);
+          // 18.09.2026: /files/*.3mf на проді закритий SafeStatic (task #70) → кнопка «друк-файл»
+          // мовчки давала 404. Друк-файл — через /api/download/<task>?format=3mf.
+          setPrintUrl(s.download_url_3mf || s.download_url ? `${API_BASE}/api/download/${taskId}?format=3mf` : null);
           setBuiltShape(s.world_spec?.shapeUk || s.world_spec?.shape || null);
           setBusy(false);
         } else if (s.status === "failed" || s.status === "error") {

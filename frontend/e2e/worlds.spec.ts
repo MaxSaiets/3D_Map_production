@@ -52,7 +52,8 @@ test.describe("Світи (/worlds)", () => {
     await page.getByTestId("world-generate").click();
     await expect(page.getByTestId("world-built")).toContainText("вулкан", { timeout: 15_000 });
     await expect(page.getByTestId("world-reroll")).toBeVisible();
-    await expect(page.locator("a[href*='e2e.3mf']")).toBeVisible();
+    // друк-файл — через /api/download/<task>?format=3mf (/files/*.3mf закритий на проді)
+    await expect(page.locator("a[href*='/api/download/'][href*='format=3mf']")).toBeVisible();
     // Шлях до замовлення: до 08.09 його не було зовсім (глухий кут воронки).
     const order = page.getByTestId("world-order");
     await expect(order).toContainText("надрукувати цей світ");

@@ -114,7 +114,9 @@ export default function MountainStudio() {
         setProgress(Number(s.progress) || 0); setStatusMsg(s.message || "");
         if (s.status === "completed") {
           stop(); setBusy(false);
-          setResult({ glb: abs(s.download_url_glb) || "", print: abs(s.download_url_3mf || s.download_url), spec: (s.world_spec as MountainResultSpec) || null });
+          // /files/*.3mf на проді закритий SafeStatic (друк-файли не віддаються за іменем, task #70) —
+          // друк-файл беремо через /api/download/<task>?format=3mf (стрімить локальний файл задачі).
+          setResult({ glb: abs(s.download_url_glb) || "", print: `${API_BASE}/api/download/${taskId}?format=3mf`, spec: (s.world_spec as MountainResultSpec) || null });
           setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
         } else if (s.status === "failed" || s.status === "error") { stop(); setBusy(false); setError(s.message || t("genFailed")); }
       } catch { /* повторимо наступним тіком */ }

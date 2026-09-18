@@ -53,7 +53,7 @@ test.describe("Гори (/mountains)", () => {
     await expect(page.getByTestId("mnt-frame-none")).toHaveAttribute("aria-checked", "true");
     await page.getByTestId("mnt-generate").click();
     await expect(page.getByTestId("mnt-built")).toContainText("Говерла · 1:43 215 · 51 мм");
-    await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Друк-файл 3MF/ })).toHaveAttribute("href", /mountain_mnttest1_print\.3mf/);
+    await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Друк-файл 3MF/ })).toHaveAttribute("href", /api\/download\/mnt-test-1\?format=3mf/);
     await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Гайд розпису/ })).toBeVisible();
     await expect(page.getByTestId("mnt-order")).toBeVisible();
   });
