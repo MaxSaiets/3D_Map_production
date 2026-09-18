@@ -137,40 +137,25 @@ def _rule_based_spec(prompt: str, size_mm: float, seed_extra: int = 0) -> dict:
 
 
 def _llm_spec(prompt: str, size_mm: float, seed_extra: int = 0) -> dict | None:
-    """Claude → spec. None якщо ключа/пакета нема або помилка (→ fallback на rules)."""
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
+    """Gemini/Claude → spec (спільний шар services/mountains/llm.py). None → rules."""
     try:
-        import anthropic  # type: ignore
+        from services.mountains.llm import complete_json
     except Exception:
         return None
-    try:
-        client = anthropic.Anthropic()
-        sys_prompt = (
-            "Ти — інженер 3D-друку. Перетвори опис користувача на ДРУКОВАНИЙ рельєфний спек. "
-            "Поверни ЛИШЕ JSON з ключами: shape (одне з: " + ", ".join(SHAPES) + "), "
-            "max_height_mm (4-38), roughness (0-1), erosion (0-1), base_thickness_mm (1-8). "
-            "Без пояснень, лише JSON."
-        )
-        msg = client.messages.create(
-            model=os.getenv("WORLDS_LLM_MODEL", "claude-opus-4-8"),
-            max_tokens=300,
-            system=sys_prompt,
-            messages=[{"role": "user", "content": prompt[:2000]}],
-        )
-        import json
-        txt = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        start, end = txt.find("{"), txt.rfind("}")
-        if start < 0 or end < 0:
-            return None
-        spec = json.loads(txt[start:end + 1])
-        spec["width_mm"] = float(size_mm)
-        spec["seed"] = (_seed_from(prompt) + int(seed_extra)) & 0x7FFFFFFF
-        spec["label"] = (prompt or "")[:40]
-        return spec
-    except Exception as exc:  # noqa: BLE001
-        print(f"[LLM] orchestrate failed (fallback to rules): {exc}", flush=True)
+    sys_prompt = (
+        "Ти — інженер 3D-друку. Перетвори опис користувача на ДРУКОВАНИЙ рельєфний спек. "
+        "Поверни ЛИШЕ JSON з ключами: shape, max_height_mm (4-38), roughness (0-1), erosion (0-1), base_thickness_mm (1-8). "
+        "shape — рівно одне з: mountain (гори, піки, ХРЕБЕТ, скелі, Альпи), volcano (вулкан, кальдера, лава), island (один острів у морі), "
+        "archipelago (кілька островів), valley (каньйон, долина, ущелина, річка, фіорд), plateau (плато, столова гора), "
+        "crater (кратер, метеорит), ridges (ДЮНИ, пустеля, бархани, брижі піску), rolling (мʼякі пагорби, луки, степ). Без пояснень, лише JSON."
+    )
+    spec, _prov = complete_json(sys_prompt, prompt or "", max_tokens=300)
+    if not spec or spec.get("shape") not in SHAPES:
         return None
+    spec["width_mm"] = float(size_mm)
+    spec["seed"] = (_seed_from(prompt) + int(seed_extra)) & 0x7FFFFFFF
+    spec["label"] = (prompt or "")[:40]
+    return spec
 
 
 def prompt_to_spec(

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -52,9 +53,24 @@ def _cop_name(lat_floor: int, lon_floor: int) -> str:
     return f"Copernicus_DSM_COG_10_{ns}{abs(lat_floor):02d}_00_{ew}{abs(lon_floor):03d}_00_DEM"
 
 
+_dl_locks: dict[str, threading.Lock] = {}
+_dl_guard = threading.Lock()
+
+
 def _download(url: str, dest: Path, timeout: float = 300.0, attempts: int = 3) -> bool:
+    """Один тайл качає лише один потік (превʼю і генерація йшли одночасно → «.part → tif» падав
+    у другого з ENOENT). Лок на шлях + унікальний tmp; після чекання просто перевіряємо файл."""
+    with _dl_guard:
+        lock = _dl_locks.setdefault(str(dest), threading.Lock())
+    with lock:
+        if dest.exists():
+            return True
+        return _download_locked(url, dest, timeout, attempts)
+
+
+def _download_locked(url: str, dest: Path, timeout: float, attempts: int) -> bool:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dest.with_suffix(dest.suffix + ".part")
+    tmp = dest.with_suffix(dest.suffix + f".{os.getpid()}.{threading.get_ident()}.part")
     for a in range(attempts):
         try:
             with requests.get(url, headers=UA, stream=True, timeout=timeout) as r:
@@ -64,12 +80,16 @@ def _download(url: str, dest: Path, timeout: float = 300.0, attempts: int = 3) -
                 with open(tmp, "wb") as f:
                     for chunk in r.iter_content(1 << 20):
                         f.write(chunk)
-            tmp.replace(dest)
+            if dest.exists():
+                tmp.unlink(missing_ok=True)
+            else:
+                tmp.replace(dest)
             return True
-        except requests.RequestException as exc:  # noqa: PERF203
+        except (requests.RequestException, OSError) as exc:  # noqa: PERF203
             print(f"[DEM] download retry {a+1}/{attempts} {url}: {exc}", flush=True)
             time.sleep(2 * (a + 1))
-    return False
+    tmp.unlink(missing_ok=True)
+    return dest.exists()
 
 
 def sample_copernicus(lats: np.ndarray, lons: np.ndarray) -> Optional[np.ndarray]:

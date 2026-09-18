@@ -256,50 +256,42 @@ def rule_parse(text: str) -> tuple[dict, list[str]]:
 
 # ── Claude ───────────────────────────────────────────────────────────────────
 def _llm_parse(text: str, locale: str) -> Optional[dict]:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return None
-    try:
-        import anthropic  # type: ignore
-    except Exception:
-        return None
+    """Gemini/Claude → JSON за схемою (services/mountains/llm.py). None → правила."""
+    from .llm import complete_json
     figs = ", ".join(f"{f['id']} ({f['name']['uk']}, kind={f['kind']})" for f in figure_library())
     presets = ", ".join(f"{p['id']}={p['name']['uk']}" for p in P.PRESETS)
     sys_prompt = (
-        "Ти — інженер 3D-друку рельєфних моделей гір. Перетвори опис на JSON (лише JSON, без тексту):\n"
-        '{"place": {"name": str, "preset_id": str|null, "query": str|null}, "area_km": number|null, "size_mm": number, '
-        '"height_mm": number|null, "frame": {"style": "none|flat|rounded", "width_mm": number, "height_mm": number}, '
-        '"sides": "vertical|rock|slope", "texture": "satellite|none", '
+        "Ти — інженер 3D-друку рельєфних моделей гір. Перетвори опис користувача на JSON (лише JSON, без тексту):\n"
+        '{"place": {"name": str, "preset_id": str|null, "query": str|null}, "area_km": number|null, "size_mm": number|null, '
+        '"height_mm": number|null, "frame": {"style": "none|flat|rounded", "width_mm": number|null, "height_mm": number|null}|null, '
+        '"sides": "vertical|rock|slope"|null, "texture": "satellite|none"|null, '
         '"figures": [{"id": str, "where": "summit|steepest|slope|point", "height_mm": number|null, "fx": number|null, "fy": number|null}], '
         '"notes": str}\n'
-        f"Пресети: {presets}. Якщо місце не з пресетів — дай query для геокодера (назва вершини латиницею або мовою оригіналу). "
-        f"Фігурки: {figs}. where=steepest для скелелазів, summit для тих, хто стоїть/махає, slope для хатини. "
-        "Одиниці: см→мм. Розмір плити 60–400 мм, висота 20–300 мм (якщо не сказано — null). "
-        "Ободок за замовчуванням rounded 10×25 мм; «без ободка/основи» → none. Боки за замовчуванням slope. "
-        "Нічого не вигадуй: якщо параметра немає в тексті — лиши дефолт/null."
+        f"Пресети: {presets}. Якщо місце не з пресетів — дай query для геокодера OpenStreetMap (назва вершини латиницею або мовою оригіналу). "
+        f"Фігурки: {figs}. where=steepest для скелелазів, summit для тих, хто стоїть/махає, slope для хатини; «N людей» → N фігурок hiker_wave. "
+        "Одиниці: см→мм; «20x20 см» = size_mm 200. Розмір плити 60–400 мм, висота 20–300 мм. "
+        "«без ободка/рамки/основи» → frame.style none; «заокруглений» → rounded; «плаский/фаска» → flat. "
+        "«похилі/скіс» → sides slope; «скельні стінки/фактура» → rock; «рівний зріз/вертикальні» → vertical. "
+        "НІЧОГО не вигадуй: параметра нема в тексті → null (форма підставить свої значення)."
     )
-    try:
-        client = anthropic.Anthropic()
-        msg = client.messages.create(model=os.getenv("MOUNTAINS_LLM_MODEL", "claude-sonnet-5"), max_tokens=600, system=sys_prompt,
-                                     messages=[{"role": "user", "content": text[:2000]}])
-        txt = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        a, b = txt.find("{"), txt.rfind("}")
-        if a < 0:
-            return None
-        d = json.loads(txt[a:b + 1])
-        pl = d.get("place") or {}
-        place = None
-        if pl.get("preset_id"):
-            p = next((x for x in P.PRESETS if x["id"] == pl["preset_id"]), None)
-            if p:
-                place = {"name": p["name"]["uk"], "lat": p["lat"], "lon": p["lon"], "source": "preset", "preset_id": p["id"], "area_km": p["area_km"], "elev": p["elev"]}
-        if place is None and (pl.get("query") or pl.get("name")):
-            place = geocode(str(pl.get("query") or pl.get("name")))
-        d["place"] = place
-        if d.get("area_km") is None and place and place.get("area_km"):
-            d["area_km"] = place["area_km"]
-        return d
-    except Exception as exc:  # noqa: BLE001
-        print(f"[AGENT] llm failed → rules: {exc}", flush=True); return None
+    d, prov = complete_json(sys_prompt, text)
+    if not d:
+        return None
+    pl = d.get("place") or {}
+    place = None
+    if pl.get("preset_id"):
+        p = next((x for x in P.PRESETS if x["id"] == pl["preset_id"]), None)
+        if p:
+            place = {"name": p["name"]["uk"], "lat": p["lat"], "lon": p["lon"], "source": "preset", "preset_id": p["id"], "area_km": p["area_km"], "elev": p["elev"]}
+    if place is None and (pl.get("query") or pl.get("name")):
+        place = geocode(str(pl.get("query") or pl.get("name")))
+    d["place"] = place
+    if d.get("area_km") is None and place and place.get("area_km"):
+        d["area_km"] = place["area_km"]
+    if isinstance(d.get("frame"), dict):
+        d["frame"] = {k: v for k, v in d["frame"].items() if v is not None}
+    d["_provider"] = prov
+    return d
 
 
 # ── пояснення ────────────────────────────────────────────────────────────────
@@ -338,7 +330,7 @@ def understand(text: str, locale: str = "uk", base: Optional[dict] = None) -> di
     """Головний вхід агента. base — поточний spec із форми (агент доповнює, а не стирає)."""
     t = (text or "").strip()
     raw = _llm_parse(t, locale) if t else None
-    source = "llm" if raw else "rules"
+    source = str(raw.pop("_provider", "llm")) if raw else "rules"
     if raw is None:
         raw, notes = rule_parse(t)
     else:
@@ -355,7 +347,7 @@ def understand(text: str, locale: str = "uk", base: Optional[dict] = None) -> di
     questions = []
     if not spec.get("place"):
         questions.append("Яку гору робимо? Назвіть її або поставте точку на мапі.")
-    conf = 0.9 if source == "llm" else 0.7
+    conf = 0.9 if source != "rules" else 0.7
     if not spec.get("place"):
         conf -= 0.3
     return {"spec": spec, "understood": explain(spec), "warnings": warn + notes, "questions": questions, "confidence": round(max(conf, 0.1), 2), "source": source}
