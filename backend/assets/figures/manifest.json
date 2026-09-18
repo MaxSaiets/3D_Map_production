@@ -1,0 +1,48 @@
+{
+  "_note": "Фігурки для режиму «Гори». Усі STL нормалізовані: центр XY у нулі, дно z=0, висота 100 (масштабується до height_mm). Перед моделі = −Y.",
+  "figures": [
+    {
+      "id": "hiker_wave",
+      "name": {"uk": "Альпініст махає рукою", "en": "Mountaineer waving"},
+      "file": "hiker_wave.stl",
+      "kind": "standing",
+      "default_height_mm": 15,
+      "min_height_mm": 8, "max_height_mm": 40,
+      "source": "Hi3D image-to-3D (згенеровано власником, 13.09.2026)",
+      "license": "owner"
+    },
+    {
+      "id": "climber_rope",
+      "name": {"uk": "Скелелаз на канаті", "en": "Rope climber"},
+      "file": "climber_rope.stl",
+      "kind": "climbing",
+      "default_height_mm": 15,
+      "min_height_mm": 8, "max_height_mm": 40,
+      "rope": true,
+      "source": "Hi3D image-to-3D (згенеровано власником, 13.09.2026)",
+      "license": "owner"
+    },
+    {
+      "id": "rope_climber_sculpt",
+      "name": {"uk": "Скелелаз (скульптура)", "en": "Rope climber (sculpture)"},
+      "file": "rope_climber_sculpt.stl",
+      "kind": "climbing",
+      "default_height_mm": 15,
+      "min_height_mm": 8, "max_height_mm": 40,
+      "rope": true,
+      "source": "Printables 1561623 «Rope Climber Sculpture», Tirth Dekivadiya",
+      "license": "Public Domain (CC0)"
+    },
+    {
+      "id": "alpine_hut",
+      "name": {"uk": "Альпійська хатина", "en": "Alpine hut"},
+      "file": "alpine_hut.stl",
+      "kind": "building",
+      "default_height_mm": 20,
+      "min_height_mm": 10, "max_height_mm": 50,
+      "plinth_frac": 0.10,
+      "source": "Hi3D image-to-3D (згенеровано власником, 13.09.2026)",
+      "license": "owner"
+    }
+  ]
+}

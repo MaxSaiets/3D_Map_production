@@ -33,6 +33,7 @@ export function SiteFooter() {
             <Link href="/maket" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maket")}</Link>
             <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("blog")}</Link>
             <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("gallery")}</Link>
+            <Link href="/mountains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("mountains")}</Link>
             <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("worlds3d")}</Link>
             <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
             <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>

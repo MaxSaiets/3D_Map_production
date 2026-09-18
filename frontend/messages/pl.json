@@ -38,7 +38,8 @@
     "closeMenu": "Zamknij menu",
     "language": "Język",
     "worlds": "Światy",
-    "maket": "Makieta"
+    "maket": "Makieta",
+    "mountains": "Góry"
   },
   "home": {
     "occasions": {
@@ -1649,7 +1650,8 @@
   "beta": {
     "title": "Tryb testowy.",
     "worlds": "Rzeźba terenu powstaje proceduralnie z Twojego opisu. Kształt można wybrać ręcznie. W sprawie druku lub zamówienia napisz do nas — wycenimy osobno.",
-    "maket": "Rozpoznawanie planu wciąż się uczy: przed zamówieniem sprawdź ściany i skalę. Cena makiety liczona osobno."
+    "maket": "Rozpoznawanie planu wciąż się uczy: przed zamówieniem sprawdź ściany i skalę. Cena makiety liczona osobno.",
+    "mountains": "Prawdziwy teren ze swissALTI3D / Copernicus; figurki w skali pamiątkowej. Druk lub zamówienie — napisz do nas."
   },
   "worlds": {
     "badge": "Generowanie AI",
@@ -1699,7 +1701,9 @@
     "msgCopied": "Opis skopiowany ✓ Wklej go w czacie.",
     "shareLink": "Udostępnij 3D",
     "shareCopied": "Link skopiowany ✓",
-    "msgPrefill": "Cześć! Chcę wydrukować ten świat: {shape}, rozmiar {size} mm. Model: {link}"
+    "msgPrefill": "Cześć! Chcę wydrukować ten świat: {shape}, rozmiar {size} mm. Model: {link}",
+    "agentPlaceholder": "Opisz świat — powiem, jaki kształt i wysokość zbuduję",
+    "agentApplied": "Kształt i rozmiar z opisu"
   },
   "worldsMeta": {
     "title": "Generator światów 3D z AI",
@@ -1920,7 +1924,9 @@
     "whyReply_abroad": "Druk i wysyłka na razie tylko na terenie Ukrainy. Plik do druku (149 ₴ ≈ 3 €) sprzedajemy wszędzie — wydrukujesz lokalnie.",
     "whyReply_other": "Napisz na Telegramie lub Instagramie, co jest nie tak — to najszybszy sposób, żeby to poprawić.",
     "waitOfferTitle": "Zanim plik będzie gotowy",
-    "waitOfferSub": "Nie chcesz męczyć się z drukarką, filamentem i ustawieniami? Wydrukujemy i wyślemy w 2–4 dni robocze."
+    "waitOfferSub": "Nie chcesz męczyć się z drukarką, filamentem i ustawieniami? Wydrukujemy i wyślemy w 2–4 dni robocze.",
+    "mountainsTitle": "Model 3D góry",
+    "mountainsDesc": "Matterhorn, Howerla lub Twój szczyt z prawdziwego terenu"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -2082,5 +2088,101 @@
     "seoH2": "Makieta domu według Twojego własnego rzutu",
     "seoP1": "Zamieniamy zwykły rysunek — skan, PDF od dewelopera albo nawet zdjęcie papierowego planu — w bryłę, którą można wziąć do ręki. Ściany rozpoznajemy automatycznie, a Ty tylko sprawdzasz wynik i potwierdzasz wymiary. Właśnie dlatego makieta wychodzi w prawidłowej skali, a nie jedynie podobna.",
     "seoP2": "Taka makieta to prezent na parapetówkę, praktyczna pomoc przy remoncie albo pamiątka po domu. Drukujemy z PLA na drukarce FDM, w rozmiarach 10, 15, 20 i 25 cm wzdłuż dłuższego boku. Model można też pobrać w formacie 3MF lub STL i wydrukować samodzielnie."
+  },
+  "mountains": {
+    "badge": "Prawdziwe góry · beta",
+    "title": "Model 3D dowolnej góry świata",
+    "subtitle": "Wybierz szczyt lub punkt na mapie — otrzymasz model do druku z prawdziwych danych wysokości (lidar 2 m Szwajcaria, Copernicus 30 m świat) z obrzeżem, skalnymi bokami i figurkami.",
+    "tabsAria": "Modes",
+    "tabPresets": "Znane szczyty",
+    "tabMap": "Wybierz na mapie",
+    "tabWorlds": "Światy z opisu",
+    "agentPlaceholder": "E.g. “Matterhorn 25 cm, rounded rim, a climber on the wall and a hut”",
+    "agentEx1": "Matterhorn 25 cm with a rounded rim and a person on the summit",
+    "agentEx2": "Hoverla 15×15 cm, no rim, sloped sides, a hut",
+    "agentEx3": "Mont Blanc 30 cm, 12 cm tall, rocky sides, 2 people",
+    "step1": "1 · Miejsce",
+    "mapHint": "Click the map to set the model centre. Drag the marker to adjust. The square is the area.",
+    "areaLabel": "Obszar",
+    "areaHint": "3–6 km for a single peak; 8–20 km for a massif. Smaller area → steeper, taller mountain.",
+    "sizeLabel": "Rozmiar płyty",
+    "sizeCustom": "other",
+    "sizeOne": "Prints as one piece.",
+    "sizeTiles": "Larger than the {bed} mm bed — split into tiles that join seamlessly.",
+    "heightLabel": "Wysokość modelu",
+    "heightAuto": "naturalna",
+    "heightInfo": "Relief {relief} m = {natural} mm at 1:{scale}",
+    "zexag": "vertical ×{k}",
+    "frameLabel": "Obrzeże",
+    "frame_none": "bez obrzeża",
+    "frame_flat": "płaskie z fazą",
+    "frame_rounded": "zaokrąglone",
+    "frameWidth": "Szerokość",
+    "frameHeight": "Wysokość",
+    "sidesLabel": "Boki",
+    "sides_slope": "pochyła skała",
+    "sides_rock": "ściany skalne",
+    "sides_vertical": "gładkie cięcie",
+    "sidesHint_slope": "Terrain descends to the rim as a real slope with scree — no supports.",
+    "sidesHint_rock": "Vertical walls with ribs and gullies up to 6 mm deep — like a rock cross-section.",
+    "sidesHint_vertical": "Smooth vertical cut, as in classic relief maps.",
+    "figuresLabel": "Figurki",
+    "figuresHint": "Figures are not to mountain scale (a person would be 0.2 mm) — they are souvenirs: ~8 % of plate width. The climber finds the steepest wall near the summit by itself.",
+    "where_summit": "on the summit",
+    "where_steepest": "on a steep wall",
+    "where_slope": "on a gentle slope",
+    "where_point": "at a point",
+    "pickPoint": "pick on preview",
+    "pickPointHint": "Click the preview where the figure should stand",
+    "figHeight": "height",
+    "remove": "Remove",
+    "textureLabel": "Satellite texture for preview and paint guide",
+    "generateButton": "Wygeneruj górę",
+    "generating": "Generowanie…",
+    "starting": "Starting…",
+    "needPlace": "Najpierw wybierz szczyt lub punkt na mapie.",
+    "hint": "The model is watertight and prints without supports. Elevation: swissALTI3D 2 m (Switzerland), Copernicus GLO-30 (world). Imagery: Esri World Imagery.",
+    "previewTitle": "Podgląd",
+    "previewAlt": "Hillshade of the selected area",
+    "previewEmpty": "Pick a summit or a map point — the terrain preview appears here instantly.",
+    "previewFailed": "Could not fetch elevation for this area.",
+    "previewStats": "{min}–{max} m · 1:{scale}",
+    "builtAs": "{place} · 1:{scale} · {height} mm · vertical ×{zexag}",
+    "tilesCount": "{n} tiles",
+    "downloadPrint": "Plik do druku 3MF",
+    "downloadTiles": "Bed tiles (ZIP)",
+    "photoTop": "Top photo",
+    "paintGuide": "Paint guide",
+    "downloadGlb": "GLB to view",
+    "editAgain": "Zmień ustawienia",
+    "orderTitle": "Zamów wydruk tej góry",
+    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "shareLink": "Share link",
+    "shareCopied": "Link copied",
+    "msgCopied": "Description copied — paste it into the chat.",
+    "msgPrefill": "Hi! I'd like a 3D print of a mountain: {place}, plate {size} mm. 3D view: {link}",
+    "genFailed": "Generation failed. Try a smaller area or another place."
+  },
+  "agent": {
+    "title": "Agent: opisz słowami",
+    "hint": "Przeanalizuję opis, pokażę jak go rozumiem i wypełnię formularz dopiero po „Zastosuj”. Generowanie uruchamiasz Ty.",
+    "understand": "Zrozum",
+    "thinking": "Analizuję…",
+    "understood": "Jak to zrozumiałem",
+    "confidence": "pewność {pct} %",
+    "srcRules": "po słowach kluczowych",
+    "srcUser": "Twój wybór",
+    "apply": "Zastosuj do formularza",
+    "applied": "Zastosowano ✓",
+    "applyHint": "Sprawdź wartości i naciśnij „Generuj”.",
+    "failed": "Agent nie odpowiedział. Wypełnij formularz ręcznie."
+  },
+  "mountainsMeta": {
+    "title": "Model 3D góry z prawdziwego terenu — Matterhorn, Howerla, dowolny szczyt",
+    "description": "Wybierz szczyt lub punkt na mapie: model 3D góry do druku z prawdziwych wysokości (lidar 2 m, Copernicus 30 m) z obrzeżem, skalnymi bokami i figurkami wspinaczy.",
+    "keywords": "3D mountain model, relief model, Matterhorn 3D, topographic model, 3D print mountain",
+    "proseH2": "How the mountain model is made",
+    "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
+    "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
   }
 }

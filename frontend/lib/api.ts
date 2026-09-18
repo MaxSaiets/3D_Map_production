@@ -267,6 +267,34 @@ export interface BatchTaskStatusResponse {
 
 export type StatusResponse = TaskStatus | BatchTaskStatusResponse;
 
+// ── Режим «Гори» ─────────────────────────────────────────────────────────────
+export interface MountainPreset { id: string; lat: number; lon: number; elev: number; area_km: number; name: string; country: string; photo: string }
+export interface MountainFigure { id: string; name: string; kind: "standing" | "climbing" | "building"; default_height_mm: number; min_height_mm: number; max_height_mm: number; license?: string; source?: string; thumb: string }
+export interface MountainFigureSpec { id: string; where: "summit" | "steepest" | "slope" | "point"; height_mm?: number | null; fx?: number; fy?: number }
+export interface MountainSpec {
+  place: { name: string; lat: number; lon: number; source?: string; preset_id?: string; area_km?: number; elev?: number } | null;
+  area_km: number | null;
+  size_mm: number;
+  height_mm: number | null;
+  frame: { style: "none" | "flat" | "rounded"; width_mm: number; height_mm: number };
+  sides: "vertical" | "rock" | "slope";
+  base_mm?: number;
+  figures: MountainFigureSpec[];
+  texture: "satellite" | "none";
+  bed_mm?: number;
+  notes?: string;
+}
+export interface AgentAnswer<T> { spec: T; understood: string[]; warnings: string[]; questions: string[]; confidence: number; source: "llm" | "rules" | "user" }
+export interface WorldAgentSpec { shape: string; shapeUk: string; size_mm: number; max_height_mm?: number; roughness?: number; erosion?: number; seed?: number }
+export interface MountainPreview { png: string; elev_min: number; elev_max: number; relief_m: number; scale: number; relief_mm_natural: number; zexag_for_height: number | null; sources: string[] }
+export interface MountainResultSpec {
+  mode: "mountain"; place: string; scale: number; zexag: number; height_mm: number; size_mm: number; sources: string[];
+  tiles: { name: string; size_mm: number[]; faces: number; watertight: boolean; figures?: number }[];
+  figures: { id: string; x_mm: number; y_mm: number; height_mm: number }[];
+  tiles_zip: string | null; preview_png: string | null; paint_jpg: string | null; seconds: number; watertight: boolean;
+}
+
+
 export const api = {
   async generateModel(request: GenerationRequest): Promise<GenerationResponse> {
     // Nightly cache warming: якщо задача прийшла з ?template=<id> (ScenarioFlow)
@@ -294,6 +322,26 @@ export const api = {
       { prompt, size_mm: sizeMm, shape: opts?.shape, variant: opts?.variant ?? 0 }
     );
     return response.data;
+  },
+
+  // ── Режим «Гори» (18.09.2026): реальні гори світу + агент. Бекенд: services/mountains/api.py ──
+  async mountainsPresets(locale = "uk"): Promise<{ presets: MountainPreset[] }> {
+    return (await axios.get(`${API_BASE_URL}/api/mountains/presets`, { params: { locale } })).data;
+  },
+  async mountainsFigures(locale = "uk"): Promise<{ figures: MountainFigure[] }> {
+    return (await axios.get(`${API_BASE_URL}/api/mountains/figures`, { params: { locale } })).data;
+  },
+  async mountainsAgent(text: string, locale = "uk", base?: MountainSpec | null): Promise<AgentAnswer<MountainSpec>> {
+    return (await axios.post(`${API_BASE_URL}/api/mountains/agent`, { text, locale, base: base ?? undefined })).data;
+  },
+  async worldsAgent(text: string, sizeMm = 120, shape?: string): Promise<AgentAnswer<WorldAgentSpec>> {
+    return (await axios.post(`${API_BASE_URL}/api/worlds/agent`, { text, size_mm: sizeMm, shape })).data;
+  },
+  async mountainsPreview(q: { lat: number; lon: number; area_km: number; size_mm: number; height_mm?: number | null; satellite?: boolean }): Promise<MountainPreview> {
+    return (await axios.post(`${API_BASE_URL}/api/mountains/preview`, q)).data;
+  },
+  async mountainsGenerate(spec: MountainSpec): Promise<GenerationResponse & { warnings?: string[]; spec?: MountainSpec }> {
+    return (await axios.post(`${API_BASE_URL}/api/mountains/generate`, { spec })).data;
   },
 
   async getStatus(taskId: string): Promise<StatusResponse> {

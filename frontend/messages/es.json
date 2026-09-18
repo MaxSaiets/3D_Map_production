@@ -38,7 +38,8 @@
     "closeMenu": "Cerrar menú",
     "language": "Idioma",
     "worlds": "Mundos",
-    "maket": "Maqueta"
+    "maket": "Maqueta",
+    "mountains": "Montañas"
   },
   "home": {
     "occasions": {
@@ -1649,7 +1650,8 @@
   "beta": {
     "title": "Modo de prueba.",
     "worlds": "El relieve se genera de forma procedural a partir de tu descripción. La forma se puede elegir manualmente. Para imprimir o pedir, escríbenos: lo presupuestamos aparte.",
-    "maket": "El reconocimiento del plano aún está aprendiendo: revisa las paredes y la escala antes de pedir. La maqueta se presupuesta aparte."
+    "maket": "El reconocimiento del plano aún está aprendiendo: revisa las paredes y la escala antes de pedir. La maqueta se presupuesta aparte.",
+    "mountains": "Relieve real de swissALTI3D / Copernicus; figuras a escala de recuerdo. Para imprimir o pedir, escríbenos."
   },
   "worlds": {
     "badge": "Generación IA",
@@ -1699,7 +1701,9 @@
     "msgCopied": "Descripción copiada ✓ Pégala en el chat.",
     "shareLink": "Compartir 3D",
     "shareCopied": "Enlace copiado ✓",
-    "msgPrefill": "¡Hola! Quiero imprimir este mundo: {shape}, tamaño {size} mm. Modelo: {link}"
+    "msgPrefill": "¡Hola! Quiero imprimir este mundo: {shape}, tamaño {size} mm. Modelo: {link}",
+    "agentPlaceholder": "Describe el mundo — te diré la forma y la altura",
+    "agentApplied": "Forma y tamaño tomados de la descripción"
   },
   "worldsMeta": {
     "title": "Generador de mundos 3D con IA",
@@ -1920,7 +1924,9 @@
     "whyReply_abroad": "Impresión y envío solo dentro de Ucrania por ahora. El archivo de impresión (149 ₴ ≈ 3 €) se vende en todo el mundo — imprímelo localmente.",
     "whyReply_other": "Cuéntanos qué falla por Telegram o Instagram: es la vía más rápida para arreglarlo.",
     "waitOfferTitle": "Mientras se prepara tu archivo",
-    "waitOfferSub": "¿No quieres lidiar con impresora, filamento y ajustes? Lo imprimimos y enviamos en 2–4 días laborables."
+    "waitOfferSub": "¿No quieres lidiar con impresora, filamento y ajustes? Lo imprimimos y enviamos en 2–4 días laborables.",
+    "mountainsTitle": "Modelo 3D de montaña",
+    "mountainsDesc": "Cervino, Hoverla o tu cima con relieve real"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",
@@ -2082,5 +2088,101 @@
     "seoH2": "Una maqueta de tu casa según tu propio plano",
     "seoP1": "Convertimos un dibujo corriente — un escaneo, un PDF de la promotora o incluso una foto de un plano en papel — en un volumen que se puede sostener. Los muros se detectan automáticamente y tú solo revisas el resultado y confirmas las medidas: justo por eso la maqueta sale a la escala correcta, y no meramente parecida.",
     "seoP2": "Una maqueta así sirve de regalo de inauguración, de apoyo tangible durante una reforma o de recuerdo de una casa. Se imprime en PLA con tecnología FDM, en tamaños de 10, 15, 20 y 25 cm por el lado más largo. También puedes descargar el archivo 3MF o STL e imprimirlo tú mismo."
+  },
+  "mountains": {
+    "badge": "Montañas reales · beta",
+    "title": "Modelo 3D de cualquier montaña del mundo",
+    "subtitle": "Elige una cima o un punto en el mapa: modelo imprimible con altitudes reales (lidar 2 m Suiza, Copernicus 30 m mundial) con borde, laderas rocosas y figuras.",
+    "tabsAria": "Modes",
+    "tabPresets": "Cimas famosas",
+    "tabMap": "Elegir en el mapa",
+    "tabWorlds": "Mundos por descripción",
+    "agentPlaceholder": "E.g. “Matterhorn 25 cm, rounded rim, a climber on the wall and a hut”",
+    "agentEx1": "Matterhorn 25 cm with a rounded rim and a person on the summit",
+    "agentEx2": "Hoverla 15×15 cm, no rim, sloped sides, a hut",
+    "agentEx3": "Mont Blanc 30 cm, 12 cm tall, rocky sides, 2 people",
+    "step1": "1 · Lugar",
+    "mapHint": "Click the map to set the model centre. Drag the marker to adjust. The square is the area.",
+    "areaLabel": "Zona",
+    "areaHint": "3–6 km for a single peak; 8–20 km for a massif. Smaller area → steeper, taller mountain.",
+    "sizeLabel": "Tamaño de la placa",
+    "sizeCustom": "other",
+    "sizeOne": "Prints as one piece.",
+    "sizeTiles": "Larger than the {bed} mm bed — split into tiles that join seamlessly.",
+    "heightLabel": "Altura del modelo",
+    "heightAuto": "natural",
+    "heightInfo": "Relief {relief} m = {natural} mm at 1:{scale}",
+    "zexag": "vertical ×{k}",
+    "frameLabel": "Borde",
+    "frame_none": "sin borde",
+    "frame_flat": "plano con chaflán",
+    "frame_rounded": "redondeado",
+    "frameWidth": "Ancho",
+    "frameHeight": "Alto",
+    "sidesLabel": "Lados",
+    "sides_slope": "roca inclinada",
+    "sides_rock": "paredes rocosas",
+    "sides_vertical": "corte liso",
+    "sidesHint_slope": "Terrain descends to the rim as a real slope with scree — no supports.",
+    "sidesHint_rock": "Vertical walls with ribs and gullies up to 6 mm deep — like a rock cross-section.",
+    "sidesHint_vertical": "Smooth vertical cut, as in classic relief maps.",
+    "figuresLabel": "Figuras",
+    "figuresHint": "Figures are not to mountain scale (a person would be 0.2 mm) — they are souvenirs: ~8 % of plate width. The climber finds the steepest wall near the summit by itself.",
+    "where_summit": "on the summit",
+    "where_steepest": "on a steep wall",
+    "where_slope": "on a gentle slope",
+    "where_point": "at a point",
+    "pickPoint": "pick on preview",
+    "pickPointHint": "Click the preview where the figure should stand",
+    "figHeight": "height",
+    "remove": "Remove",
+    "textureLabel": "Satellite texture for preview and paint guide",
+    "generateButton": "Generar montaña",
+    "generating": "Generando…",
+    "starting": "Starting…",
+    "needPlace": "Elige primero una cima o un punto.",
+    "hint": "The model is watertight and prints without supports. Elevation: swissALTI3D 2 m (Switzerland), Copernicus GLO-30 (world). Imagery: Esri World Imagery.",
+    "previewTitle": "Vista previa",
+    "previewAlt": "Hillshade of the selected area",
+    "previewEmpty": "Pick a summit or a map point — the terrain preview appears here instantly.",
+    "previewFailed": "Could not fetch elevation for this area.",
+    "previewStats": "{min}–{max} m · 1:{scale}",
+    "builtAs": "{place} · 1:{scale} · {height} mm · vertical ×{zexag}",
+    "tilesCount": "{n} tiles",
+    "downloadPrint": "Archivo 3MF",
+    "downloadTiles": "Bed tiles (ZIP)",
+    "photoTop": "Top photo",
+    "paintGuide": "Paint guide",
+    "downloadGlb": "GLB to view",
+    "editAgain": "Cambiar ajustes",
+    "orderTitle": "Pedir la impresión",
+    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "shareLink": "Share link",
+    "shareCopied": "Link copied",
+    "msgCopied": "Description copied — paste it into the chat.",
+    "msgPrefill": "Hi! I'd like a 3D print of a mountain: {place}, plate {size} mm. 3D view: {link}",
+    "genFailed": "Generation failed. Try a smaller area or another place."
+  },
+  "agent": {
+    "title": "Agente: descríbelo con palabras",
+    "hint": "Analizo la descripción, muestro cómo la entendí y relleno el formulario solo tras «Aplicar». Tú inicias la generación.",
+    "understand": "Entender",
+    "thinking": "Analizando…",
+    "understood": "Cómo lo entendí",
+    "confidence": "confianza {pct} %",
+    "srcRules": "por palabras clave",
+    "srcUser": "tu elección",
+    "apply": "Aplicar al formulario",
+    "applied": "Aplicado ✓",
+    "applyHint": "Revisa los valores y pulsa «Generar».",
+    "failed": "El agente no respondió. Rellena el formulario a mano."
+  },
+  "mountainsMeta": {
+    "title": "Modelo 3D de montaña con relieve real — Cervino, Hoverla, cualquier cima",
+    "description": "Elige una cima o un punto del mapa: modelo 3D imprimible con altitudes reales (lidar 2 m, Copernicus 30 m) con borde, laderas rocosas y figuras de alpinistas.",
+    "keywords": "3D mountain model, relief model, Matterhorn 3D, topographic model, 3D print mountain",
+    "proseH2": "How the mountain model is made",
+    "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
+    "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
   }
 }

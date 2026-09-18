@@ -6,6 +6,8 @@ import { Send, Instagram, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { BetaBanner } from "@/components/BetaBanner";
+import { AgentBox } from "@/components/AgentBox";
+import type { WorldAgentSpec } from "@/lib/api";
 
 const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), { ssr: false });
 
@@ -135,6 +137,20 @@ export default function WorldsPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(0,1.1fr)]">
           {/* Ввід */}
           <section className="rounded-[28px] border border-[var(--surface-border)] bg-[var(--surface-panel)] p-5 shadow-[0_18px_60px_rgba(15,23,42,0.07)]">
+            {/* Агент (18.09.2026): пояснює, ЯК саме буде розібрано опис (форма, висота, seed),
+                і після «Застосувати» переносить форму/розмір у контроли. Генерацію запускає людина. */}
+            <div className="mb-4">
+              <AgentBox<WorldAgentSpec>
+                testId="world-agent"
+                placeholder={t("agentPlaceholder")}
+                ask={(text) => { setPrompt(text); return api.worldsAgent(text, sizeMm, shape === "auto" ? undefined : shape); }}
+                onApply={(s) => {
+                  if (s.shape && (SHAPES as readonly string[]).includes(s.shape)) setShape(s.shape as Shape);
+                  const near = SIZES.reduce((a, b) => (Math.abs(b.mm - s.size_mm) < Math.abs(a.mm - s.size_mm) ? b : a));
+                  setSizeMm(near.mm);
+                }}
+              />
+            </div>
             <label htmlFor="world-prompt" className="block text-sm font-semibold text-[var(--text-primary)]">{t("inputLabel")}</label>
             <textarea
               id="world-prompt"

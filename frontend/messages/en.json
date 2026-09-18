@@ -38,7 +38,8 @@
     "closeMenu": "Close menu",
     "language": "Language",
     "worlds": "Worlds",
-    "maket": "Floor plan"
+    "maket": "Floor plan",
+    "mountains": "Mountains"
   },
   "home": {
     "occasions": {
@@ -1649,7 +1650,8 @@
   "beta": {
     "title": "Test mode.",
     "worlds": "The terrain is generated procedurally from your description. You can pick the shape manually. For printing or an order, message us — we quote it separately.",
-    "maket": "Plan recognition is still learning: always check the walls and the scale before ordering. The model is quoted separately."
+    "maket": "Plan recognition is still learning: always check the walls and the scale before ordering. The model is quoted separately.",
+    "mountains": "Real terrain from swissALTI3D / Copernicus; figures are souvenir-scale. For printing or ordering, message us — we quote separately."
   },
   "worlds": {
     "badge": "AI generation",
@@ -1699,7 +1701,9 @@
     "msgCopied": "Description copied ✓ Paste it into the chat.",
     "shareLink": "Share 3D",
     "shareCopied": "Link copied ✓",
-    "msgPrefill": "Hi! I'd like this world printed: {shape}, size {size} mm. Model: {link}"
+    "msgPrefill": "Hi! I'd like this world printed: {shape}, size {size} mm. Model: {link}",
+    "agentPlaceholder": "Describe the world — I'll tell you the shape and height I'll build",
+    "agentApplied": "Shape and size taken from the description"
   },
   "worldsMeta": {
     "title": "AI 3D world generator",
@@ -1920,7 +1924,9 @@
     "whyReply_abroad": "Printing and delivery are Ukraine-only for now. The print file (149 ₴ ≈ €3) is sold worldwide — print it locally.",
     "whyReply_other": "Tell us what's wrong on Telegram or Instagram — that's the fastest way to fix it.",
     "waitOfferTitle": "While your file is being prepared",
-    "waitOfferSub": "Don't want to deal with a printer, filament and settings? We'll print it and ship it in 2–4 business days."
+    "waitOfferSub": "Don't want to deal with a printer, filament and settings? We'll print it and ship it in 2–4 business days.",
+    "mountainsTitle": "3D mountain model",
+    "mountainsDesc": "Matterhorn, Hoverla or your peak from real terrain"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -2082,5 +2088,101 @@
     "seoH2": "A model of your home, from your own plan",
     "seoP1": "We turn an ordinary drawing — a scan, a developer's PDF or even a phone photo of a paper plan — into a solid model you can hold. Walls are detected automatically, and you simply review the result and confirm the dimensions, which is exactly why the model comes out at the correct scale rather than merely looking similar.",
     "seoP2": "It makes a housewarming gift, a tangible reference during a renovation, or a keepsake of a home. Printed in PLA on an FDM printer, in 10, 15, 20 and 25 cm sizes along the longer side. You can also download the 3MF or STL file and print it yourself."
+  },
+  "mountains": {
+    "badge": "Real mountains · beta",
+    "title": "3D model of any mountain on Earth",
+    "subtitle": "Pick a summit or a point on the map and get a printable model from real elevation data (2 m lidar for Switzerland, Copernicus 30 m worldwide) with a rim, rocky sides and figures.",
+    "tabsAria": "Modes",
+    "tabPresets": "Famous peaks",
+    "tabMap": "Pick on the map",
+    "tabWorlds": "Worlds from a description",
+    "agentPlaceholder": "E.g. “Matterhorn 25 cm, rounded rim, a climber on the wall and a hut”",
+    "agentEx1": "Matterhorn 25 cm with a rounded rim and a person on the summit",
+    "agentEx2": "Hoverla 15×15 cm, no rim, sloped sides, a hut",
+    "agentEx3": "Mont Blanc 30 cm, 12 cm tall, rocky sides, 2 people",
+    "step1": "1 · Place",
+    "mapHint": "Click the map to set the model centre. Drag the marker to adjust. The square is the area.",
+    "areaLabel": "Area",
+    "areaHint": "3–6 km for a single peak; 8–20 km for a massif. Smaller area → steeper, taller mountain.",
+    "sizeLabel": "Plate size",
+    "sizeCustom": "other",
+    "sizeOne": "Prints as one piece.",
+    "sizeTiles": "Larger than the {bed} mm bed — split into tiles that join seamlessly.",
+    "heightLabel": "Model height",
+    "heightAuto": "natural",
+    "heightInfo": "Relief {relief} m = {natural} mm at 1:{scale}",
+    "zexag": "vertical ×{k}",
+    "frameLabel": "Rim",
+    "frame_none": "no rim",
+    "frame_flat": "flat with chamfer",
+    "frame_rounded": "rounded",
+    "frameWidth": "Width",
+    "frameHeight": "Height",
+    "sidesLabel": "Sides",
+    "sides_slope": "sloped rock",
+    "sides_rock": "rock walls",
+    "sides_vertical": "flat cut",
+    "sidesHint_slope": "Terrain descends to the rim as a real slope with scree — no supports.",
+    "sidesHint_rock": "Vertical walls with ribs and gullies up to 6 mm deep — like a rock cross-section.",
+    "sidesHint_vertical": "Smooth vertical cut, as in classic relief maps.",
+    "figuresLabel": "Figures",
+    "figuresHint": "Figures are not to mountain scale (a person would be 0.2 mm) — they are souvenirs: ~8 % of plate width. The climber finds the steepest wall near the summit by itself.",
+    "where_summit": "on the summit",
+    "where_steepest": "on a steep wall",
+    "where_slope": "on a gentle slope",
+    "where_point": "at a point",
+    "pickPoint": "pick on preview",
+    "pickPointHint": "Click the preview where the figure should stand",
+    "figHeight": "height",
+    "remove": "Remove",
+    "textureLabel": "Satellite texture for preview and paint guide",
+    "generateButton": "Generate mountain",
+    "generating": "Generating…",
+    "starting": "Starting…",
+    "needPlace": "Pick a summit or a map point first.",
+    "hint": "The model is watertight and prints without supports. Elevation: swissALTI3D 2 m (Switzerland), Copernicus GLO-30 (world). Imagery: Esri World Imagery.",
+    "previewTitle": "Area preview",
+    "previewAlt": "Hillshade of the selected area",
+    "previewEmpty": "Pick a summit or a map point — the terrain preview appears here instantly.",
+    "previewFailed": "Could not fetch elevation for this area.",
+    "previewStats": "{min}–{max} m · 1:{scale}",
+    "builtAs": "{place} · 1:{scale} · {height} mm · vertical ×{zexag}",
+    "tilesCount": "{n} tiles",
+    "downloadPrint": "Print file 3MF",
+    "downloadTiles": "Bed tiles (ZIP)",
+    "photoTop": "Top photo",
+    "paintGuide": "Paint guide",
+    "downloadGlb": "GLB to view",
+    "editAgain": "Change settings",
+    "orderTitle": "Order a print of this mountain",
+    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "shareLink": "Share link",
+    "shareCopied": "Link copied",
+    "msgCopied": "Description copied — paste it into the chat.",
+    "msgPrefill": "Hi! I'd like a 3D print of a mountain: {place}, plate {size} mm. 3D view: {link}",
+    "genFailed": "Generation failed. Try a smaller area or another place."
+  },
+  "agent": {
+    "title": "Agent: describe it in words",
+    "hint": "I parse the description, show how I understood it, and fill the form only after you click Apply. You start the generation.",
+    "understand": "Understand",
+    "thinking": "Parsing…",
+    "understood": "How I understood it",
+    "confidence": "confidence {pct} %",
+    "srcRules": "by keywords",
+    "srcUser": "your choice",
+    "apply": "Apply to form",
+    "applied": "Applied ✓",
+    "applyHint": "Check the values in the form and press Generate.",
+    "failed": "The agent did not respond. Fill the form manually."
+  },
+  "mountainsMeta": {
+    "title": "3D mountain model from real terrain — Matterhorn, Hoverla, any peak",
+    "description": "Pick a summit or a map point: a printable 3D mountain from real elevation (2 m lidar, Copernicus 30 m) with a rim, rocky sides and climber figures.",
+    "keywords": "3D mountain model, relief model, Matterhorn 3D, topographic model, 3D print mountain",
+    "proseH2": "How the mountain model is made",
+    "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
+    "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
   }
 }

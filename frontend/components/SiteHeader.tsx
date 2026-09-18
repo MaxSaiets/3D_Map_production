@@ -139,6 +139,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
           <Link href="/prices" className="hover:text-ink">{t("prices")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
+          <Link href="/mountains" className="hover:text-ink">{t("mountains")}</Link>
           <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
           <Link href="/maket" className="hover:text-ink">{t("maket")}</Link>
         </nav>
@@ -196,6 +197,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
               { href: "/showcase", label: t("gallery") },
               { href: "/prices", label: t("prices") },
               { href: "/keychains", label: t("keychains") },
+              { href: "/mountains", label: t("mountains") },
               { href: "/worlds", label: t("worlds") },
               { href: "/maket", label: t("maket") },
               { href: "/account", label: configured && user ? t("account") : t("login") },

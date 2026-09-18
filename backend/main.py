@@ -512,6 +512,16 @@ class SafeStatic(StaticFiles):
 app.mount("/files", SafeStatic(directory=OUTPUT_DIR), name="files")
 app.mount("/api/files", SafeStatic(directory=OUTPUT_DIR), name="api_files")
 
+# ── Режим «Гори» (18.09.2026): реальні гори світу з ободком/боками/фігурками + агент.
+# Окремий роутер (services/mountains/api.py), щоб не роздувати main.py; ділить tasks/статус
+# з рештою режимів, тож /api/status/{task_id} і /files працюють без змін.
+try:
+    from services.mountains.api import router as _mountains_router, bind as _mountains_bind
+    _mountains_bind(tasks, GenerationTask, OUTPUT_DIR, rate_limit, release=lambda tag: _release_memory_after_task(tag))
+    app.include_router(_mountains_router, dependencies=[Depends(rate_limit("mountains", [(40, 60.0), (400, 3600.0)]))])
+except Exception as _mnt_exc:  # noqa: BLE001 - режим не має класти весь бекенд
+    print(f"[MNT] router disabled: {_mnt_exc}", flush=True)
+
 
 class VideoStatic(StaticFiles):
     """Публічна роздача відео + обкладинок (Instagram/Threads/Pinterest тягнуть з URL)."""

@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
  * модель і думає замовляти. Закрити не можна свідомо: це не реклама, а
  * попередження про якість результату.
  */
-export function BetaBanner({ mode }: { mode: "worlds" | "maket" }) {
+export function BetaBanner({ mode }: { mode: "worlds" | "maket" | "mountains" }) {
   const t = useTranslations("beta");
   return (
     <div
