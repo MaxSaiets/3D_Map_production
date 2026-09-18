@@ -17,20 +17,23 @@ test.describe("Guided /create (простий режим)", () => {
     });
   });
 
-  test("крок 1: 4 картки-продукти + видимий список «Що ще ми вміємо»", async ({ page }) => {
+  test("крок 1: 8 карток-рендерів (4 мапи + гора/панно/брелок/світ) + список «Що ще ми вміємо»", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow).toBeVisible();
     await expect(flow.getByText("Що створюємо?")).toBeVisible();
-    // Рівно 4 картки-продукти з фото (решта можливостей — список нижче)
-    await expect(flow.locator("img")).toHaveCount(4);
+    // 18.09.2026: 8 карток — РЕНДЕРИ моделей (card-r-*), а не фото; 4 сценарії мап + 4 переходи
+    await expect(flow.locator("img")).toHaveCount(8);
+    await expect(flow.locator("img").first()).toHaveAttribute("src", /card-r-/);
+    await expect(flow.getByTestId("scenario-card-mountain")).toHaveAttribute("href", /\/mountains/);
+    await expect(flow.getByTestId("scenario-card-keychain")).toHaveAttribute("href", /\/keychains/);
     // Власник: «не зрозуміло, які взагалі можливості» → список має бути ВИДИМИЙ
     // і перелічувати всі інші продукти, а не ховатись у трьох дрібних лінках.
     await expect(flow.getByText("Що ще ми вміємо")).toBeVisible();
     const more = flow.getByTestId("scenario-more");
     await expect(more).toBeVisible();
-    await expect(more.locator("> *")).toHaveCount(6);
-    for (const label of ["Брелок з моїм місцем", "Панно на стіну", "Макет квартири з плану", "3D-світ за описом", "Готові моделі"]) {
+    await expect(more.locator("> *")).toHaveCount(3);
+    for (const label of ["Макет квартири з плану", "Готові моделі"]) {
       await expect(more.getByText(label, { exact: false })).toBeVisible();
     }
     await expect(flow.getByTestId("scenario-full")).toBeVisible();
@@ -214,7 +217,7 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
   test("A-6: єдиний вихід «Розширений режим»; ?mode=pro відкриває його одразу", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
-    await expect(flow.getByTestId("scenario-full")).toHaveText("Розширений режим");
+    await expect(flow.getByTestId("scenario-full")).toContainText("Розширений режим");
     await expect(flow.getByText("Повний конструктор")).toHaveCount(0);
     await page.goto("/uk/create?mode=pro");
     await expect(page.getByTestId("scenario-flow")).toHaveCount(0);

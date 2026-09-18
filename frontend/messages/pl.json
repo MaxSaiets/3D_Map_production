@@ -1926,7 +1926,8 @@
     "waitOfferTitle": "Zanim plik będzie gotowy",
     "waitOfferSub": "Nie chcesz męczyć się z drukarką, filamentem i ustawieniami? Wydrukujemy i wyślemy w 2–4 dni robocze.",
     "mountainsTitle": "Model 3D góry",
-    "mountainsDesc": "Matterhorn, Howerla lub Twój szczyt z prawdziwego terenu"
+    "mountainsDesc": "Matterhorn, Howerla lub Twój szczyt z prawdziwego terenu",
+    "priceOnRequest": "cena na zapytanie"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -2008,7 +2009,15 @@
     "shareCopied": "Skopiowano link",
     "mapLoadingWait": "Mapa jeszcze się ładuje — zaczniemy, gdy będzie gotowa",
     "previewPromise": "Podgląd powstaje z tych samych danych co plik do druku — bez zaślepek i „mniej więcej tak”",
-    "qrHint": "Otwórz tę scenę 3D na telefonie"
+    "qrHint": "Otwórz tę scenę 3D na telefonie",
+    "cardHouseTitle": "Domek HOME",
+    "cardHouseDesc": "Sylwetka domu z mapą Twojej dzielnicy i napisem",
+    "cardPuzzleTitle": "Puzzle dla dwojga",
+    "cardPuzzleDesc": "Dwie połówki puzzli: Twoje miasto i miasto bliskiej osoby",
+    "cardCapsuleTitle": "Kapsuła ze szczeliną",
+    "cardCapsuleDesc": "Owalny brelok 55×35 z szerokim pasem na napis",
+    "cardTagTitle": "Pionowy tag",
+    "cardTagDesc": "Smukły tag 35×55 z wystającym oczkiem"
   },
   "maket": {
     "backHome": "Strona główna",

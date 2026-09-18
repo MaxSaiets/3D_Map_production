@@ -1926,7 +1926,8 @@
     "waitOfferTitle": "Mientras se prepara tu archivo",
     "waitOfferSub": "¿No quieres lidiar con impresora, filamento y ajustes? Lo imprimimos y enviamos en 2–4 días laborables.",
     "mountainsTitle": "Modelo 3D de montaña",
-    "mountainsDesc": "Cervino, Hoverla o tu cima con relieve real"
+    "mountainsDesc": "Cervino, Hoverla o tu cima con relieve real",
+    "priceOnRequest": "precio a consultar"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",
@@ -2008,7 +2009,15 @@
     "shareCopied": "Enlace copiado",
     "mapLoadingWait": "El mapa aún se está cargando: empezamos en cuanto esté listo",
     "previewPromise": "La vista previa se construye con los mismos datos que el archivo de impresión: sin relleno ni «más o menos así»",
-    "qrHint": "Abrir esta escena 3D en tu móvil"
+    "qrHint": "Abrir esta escena 3D en tu móvil",
+    "cardHouseTitle": "Casita HOME",
+    "cardHouseDesc": "Silueta de casa con el mapa de tu barrio y un texto",
+    "cardPuzzleTitle": "Puzle para dos",
+    "cardPuzzleDesc": "Dos mitades de puzle: tu ciudad y la de alguien querido",
+    "cardCapsuleTitle": "Cápsula con ranura",
+    "cardCapsuleDesc": "Llavero ovalado 55×35 con banda ancha para texto",
+    "cardTagTitle": "Etiqueta vertical",
+    "cardTagDesc": "Etiqueta fina 35×55 con anilla saliente"
   },
   "maket": {
     "backHome": "Inicio",

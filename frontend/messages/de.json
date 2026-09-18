@@ -1926,7 +1926,8 @@
     "waitOfferTitle": "Während die Datei vorbereitet wird",
     "waitOfferSub": "Keine Lust auf Drucker, Filament und Einstellungen? Wir drucken und versenden in 2–4 Werktagen.",
     "mountainsTitle": "3D-Bergmodell",
-    "mountainsDesc": "Matterhorn, Hoverla oder dein Gipfel aus echtem Gelände"
+    "mountainsDesc": "Matterhorn, Hoverla oder dein Gipfel aus echtem Gelände",
+    "priceOnRequest": "Preis auf Anfrage"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",
@@ -2008,7 +2009,15 @@
     "shareCopied": "Link kopiert",
     "mapLoadingWait": "Die Karte lädt noch — wir starten, sobald sie bereit ist",
     "previewPromise": "Die Vorschau entsteht aus denselben Daten wie die Druckdatei — keine Platzhalter, kein „ungefähr so“",
-    "qrHint": "Diese 3D-Szene auf dem Handy öffnen"
+    "qrHint": "Diese 3D-Szene auf dem Handy öffnen",
+    "cardHouseTitle": "Häuschen HOME",
+    "cardHouseDesc": "Haus-Silhouette mit Karte deines Viertels und Schriftzug",
+    "cardPuzzleTitle": "Puzzle für zwei",
+    "cardPuzzleDesc": "Zwei Puzzlehälften: deine Stadt und die eines lieben Menschen",
+    "cardCapsuleTitle": "Kapsel mit Schlitz",
+    "cardCapsuleDesc": "Ovaler 55×35-Anhänger mit breitem Schriftband",
+    "cardTagTitle": "Vertikaler Tag",
+    "cardTagDesc": "Schlanker 35×55-Tag mit vorstehender Öse"
   },
   "maket": {
     "backHome": "Startseite",

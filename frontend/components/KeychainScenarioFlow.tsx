@@ -34,10 +34,15 @@ const QUICK_CITIES: Array<{ uk: string; en: string; text: string; lat: number; l
  *  реальній генерації — Text 0.8мм³ проти 17мм³ у серця). Для них напис
  *  лишаємо порожнім/ручним — користувач бачить розміщення в живому макеті. */
 const CARD_DEFS: Array<{ tplId: string; img: string; titleKey: string; descKey: string; autoLabel?: boolean }> = [
-  { tplId: "heart-46", img: "card-kc-heart", titleKey: "cardHeartTitle", descKey: "cardHeartDesc" },
-  { tplId: "heart-pair-left", img: "card-kc-heartpair", titleKey: "cardHeartPairTitle", descKey: "cardHeartPairDesc", autoLabel: false },
-  { tplId: "token-55", img: "card-kc-token", titleKey: "cardTokenTitle", descKey: "cardTokenDesc" },
-  { tplId: "classic-wide", img: "card-kc-rect", titleKey: "cardRectTitle", descKey: "cardRectDesc" },
+  // 18.09.2026: картки = рендери реальних моделей (card-r-kc-*), 8 форм замість 4.
+  { tplId: "heart-46", img: "card-r-kc-heart", titleKey: "cardHeartTitle", descKey: "cardHeartDesc" },
+  { tplId: "classic-wide", img: "card-r-kc-rect", titleKey: "cardRectTitle", descKey: "cardRectDesc" },
+  { tplId: "token-55", img: "card-r-kc-token", titleKey: "cardTokenTitle", descKey: "cardTokenDesc" },
+  { tplId: "house-44", img: "card-r-kc-house", titleKey: "cardHouseTitle", descKey: "cardHouseDesc" },
+  { tplId: "heart-pair-left", img: "card-r-kc-heartpair", titleKey: "cardHeartPairTitle", descKey: "cardHeartPairDesc", autoLabel: false },
+  { tplId: "puzzle-left", img: "card-r-kc-puzzle", titleKey: "cardPuzzleTitle", descKey: "cardPuzzleDesc", autoLabel: false },
+  { tplId: "soft-capsule", img: "card-r-kc-capsule", titleKey: "cardCapsuleTitle", descKey: "cardCapsuleDesc" },
+  { tplId: "vertical-tag", img: "card-r-kc-tag", titleKey: "cardTagTitle", descKey: "cardTagDesc" },
 ];
 
 /**

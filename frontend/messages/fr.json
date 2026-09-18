@@ -1926,7 +1926,8 @@
     "waitOfferTitle": "Pendant la préparation du fichier",
     "waitOfferSub": "Pas envie de gérer imprimante, filament et réglages ? Nous imprimons et expédions en 2–4 jours ouvrés.",
     "mountainsTitle": "Modèle 3D de montagne",
-    "mountainsDesc": "Cervin, Hoverla ou votre sommet à partir du vrai relief"
+    "mountainsDesc": "Cervin, Hoverla ou votre sommet à partir du vrai relief",
+    "priceOnRequest": "prix sur demande"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",
@@ -2008,7 +2009,15 @@
     "shareCopied": "Lien copié",
     "mapLoadingWait": "La carte charge encore — on démarre dès qu'elle est prête",
     "previewPromise": "L'aperçu est construit à partir des mêmes données que le fichier d'impression — pas de simulacre, pas d'« à peu près »",
-    "qrHint": "Ouvrir cette scène 3D sur ton téléphone"
+    "qrHint": "Ouvrir cette scène 3D sur ton téléphone",
+    "cardHouseTitle": "Maisonnette HOME",
+    "cardHouseDesc": "Silhouette de maison avec la carte de votre quartier et un texte",
+    "cardPuzzleTitle": "Puzzle pour deux",
+    "cardPuzzleDesc": "Deux moitiés de puzzle : votre ville et celle d'un proche",
+    "cardCapsuleTitle": "Capsule à fente",
+    "cardCapsuleDesc": "Porte-clés ovale 55×35 avec large bande de texte",
+    "cardTagTitle": "Tag vertical",
+    "cardTagDesc": "Tag fin 35×55 avec anneau saillant"
   },
   "maket": {
     "backHome": "Accueil",

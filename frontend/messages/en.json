@@ -1926,7 +1926,8 @@
     "waitOfferTitle": "While your file is being prepared",
     "waitOfferSub": "Don't want to deal with a printer, filament and settings? We'll print it and ship it in 2–4 business days.",
     "mountainsTitle": "3D mountain model",
-    "mountainsDesc": "Matterhorn, Hoverla or your peak from real terrain"
+    "mountainsDesc": "Matterhorn, Hoverla or your peak from real terrain",
+    "priceOnRequest": "price on request"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -2008,7 +2009,15 @@
     "shareCopied": "Link copied",
     "mapLoadingWait": "The map is still loading — we'll start as soon as it's ready",
     "previewPromise": "The preview is built from the same data as the print file — no placeholders, no “roughly like this”",
-    "qrHint": "Open this 3D scene on your phone"
+    "qrHint": "Open this 3D scene on your phone",
+    "cardHouseTitle": "HOME house",
+    "cardHouseDesc": "House silhouette with your district map and a label",
+    "cardPuzzleTitle": "Puzzle for two",
+    "cardPuzzleDesc": "Two puzzle halves: your city and a loved one's city",
+    "cardCapsuleTitle": "Capsule with slot",
+    "cardCapsuleDesc": "Oval 55×35 keychain with a wide label band",
+    "cardTagTitle": "Vertical tag",
+    "cardTagDesc": "Slim 35×55 tag with a protruding loop"
   },
   "maket": {
     "backHome": "Home",

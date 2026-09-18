@@ -417,17 +417,25 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     ? (quote?.price ?? MAP_MAGNET_PRICE_UAH)
     : (quote?.price ?? fallbackSize.price + reliefAddon);
 
+  // 18.09.2026 (власник: «мало карток і реальні фото — бред»): картки = РЕНДЕРИ моделей
+  // (public/showcase/card-r-*, render_product.py з реальних 3MF Львова), а не фото; крок 1 показує
+  // ВСІ продукти сайту: 4 мапи (вибір сценарію тут) + гора/панно/світ/брелок (перехід на свій режим).
   const cards: Array<{
-    id: ScenarioId;
+    id: ScenarioId | "mountain" | "panno" | "world" | "keychain";
     img: string;
     title: string;
     desc: string;
     price: string;
+    href?: string;
   }> = [
-    { id: "map3d", img: "card-map3d", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "relief", img: "card-relief", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
-    { id: "flat", img: "card-flat", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
-    { id: "magnet", img: "card-magnet", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
+    { id: "map3d", img: "card-r-map3d", title: t("map3dTitle"), desc: t("map3dDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "relief", img: "card-r-relief", title: t("reliefTitle"), desc: t("reliefDesc"), price: t("from", { price: disp(basePrice + MAP_RELIEF_ADDON_UAH) }) },
+    { id: "flat", img: "card-r-flat", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
+    { id: "magnet", img: "card-r-magnet", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
+    { id: "mountain", img: "card-r-mountain", title: t("mountainsTitle"), desc: t("mountainsDesc"), price: t("priceOnRequest"), href: "/mountains" },
+    { id: "panno", img: "card-r-panno", title: t("pannoTitle"), desc: t("pannoDesc"), price: t("from", { price: disp(basePrice * 4) }), href: "/create?series=1" },
+    { id: "keychain", img: "card-r-keychain", title: t("keychainTitle"), desc: t("keychainDesc"), price: t("from", { price: disp(KEYCHAIN_PRICE_UAH) }), href: "/keychains" },
+    { id: "world", img: "card-r-world", title: t("worldsTitle"), desc: t("worldsDesc"), price: t("priceOnRequest"), href: "/worlds" },
   ];
 
   // F-10: «не вдалося» показуємо лише якщо генерація СПРАВДІ стартувала (isGenerating
@@ -519,8 +527,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
           <div>
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step1Title")}</h2>
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2">
-              {cards.map((c, i) => (
-                <button key={c.id} type="button" onClick={() => pick(c.id)} className={cardBtnCls}>
+              {cards.map((c, i) => {
+                const inner = (<>
                   {/* N-3 (перф): картка 640×480 показується ~150–300 px → 400w за 1×, 640 за 2×
                       (489→189 КБ на 12 файлів). Перші дві картки — над згином і є LCP-елементом
                       на /create → eager, решта lazy. eslint-disable-next-line @next/next/no-img-element */}
@@ -536,8 +544,11 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     <span className="text-[12px] font-semibold text-[var(--accent-strong)]">{c.price}</span>
                     <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{c.desc}</span>
                   </span>
-                </button>
-              ))}
+                </>);
+                return c.href
+                  ? <Link key={c.id} href={c.href} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</Link>
+                  : <button key={c.id} type="button" onClick={() => pick(c.id as ScenarioId)} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</button>;
+              })}
             </div>
             {/* A-2: крок 1 = вибір ТОВАРУ. Решта можливостей сайту — один компактний
                 рядок лінків (повний блок з описами живе на головній, T-D.6), щоб
@@ -545,14 +556,14 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
             <div className="mt-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
               <div className="mt-2 flex flex-wrap gap-1.5" data-testid="scenario-more">
-                <Link href="/keychains" className={moreLinkCls}>{t("keychainTitle")} · {t("from", { price: disp(KEYCHAIN_PRICE_UAH) })}</Link>
-                <Link href="/create?series=1" className={moreLinkCls}>{t("pannoTitle")}</Link>
                 <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
-                <Link href="/worlds" className={moreLinkCls}>{t("worldsTitle")}</Link>
                 <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
-                <Button variant="bronze" size="sm" onClick={() => exitGuided("step1")} data-testid="scenario-full" className={moreLinkCls}>
-                  {t("fullTitle")}
-                </Button>
+                {/* ПАСТКА: variant="bronze" давав білий текст на білому тлі через className-override →
+                    пігулка виглядала ПОРОЖНЬОЮ (скрін власника 18.09). Тепер явні кольори. */}
+                <button type="button" onClick={() => exitGuided("step1")} data-testid="scenario-full"
+                  className={`${moreLinkCls} !bg-[var(--bronze,#8E6B3D)] !text-white !border-transparent`}>
+                  {t("fullTitle")} · {t("fullDescLong")}
+                </button>
               </div>
             </div>
           </div>
