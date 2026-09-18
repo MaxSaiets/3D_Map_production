@@ -3637,13 +3637,16 @@ def process_roads(
                     _road_area = float(getattr(merged_roads, "area", 0.0) or 0.0)
                     # допуск 0.1 % площі доріг: сліверні залишки unary_union трикутників
                     _tol = max(1e-6, 1e-3 * _road_area)
-                    # Емпірика 06.09 (4 прогони): _clip_mesh_to_road_footprint = manifold-
-                    # intersection з footprint-призмами; manifold нормалізує перекриті
-                    # оболонки concat за winding-числами, тож clipped(concat) ≡ clipped(union)
-                    # (однакові 6561 граней), а union коштував 20–47 с. Тому «auto» = union
-                    # не будуємо, якщо clip concat дав непорожній меш. Перевірка парності —
-                    # golden-check на проді; відкат: ROADS_UNION_CANDIDATE=always.
-                    _concat_perfect = True
+                    # 18.09.2026: раніше тут стояло безумовне `_concat_perfect = True` —
+                    # проба обчислювалась і ІГНОРУВАЛАСЬ. На проді кожна рельєфна
+                    # генерація з 06.09 писала «gap=87840 outside=1072 watertight=0
+                    # volume=0 → skip_union=True»: дороги = concat перекритих призм без
+                    # обʼєму, з дірками між сегментами. Union пропускаємо ЛИШЕ коли проба
+                    # справді чиста — так, як обіцяє коментар вище.
+                    _concat_perfect = bool(
+                        (-_ps[0]) <= _tol and (-_ps[1]) <= _tol
+                        and int(_ps[2]) == 1 and int(_ps[3]) == 1
+                    )
                     print(f"[ROAD] concat probe: gap={-_ps[0]:.4f} outside={-_ps[1]:.4f} watertight={_ps[2]} volume={_ps[3]} road_area={_road_area:.1f} tol={_tol:.3f} faces={len(_probe.faces)} → skip_union={_concat_perfect}")
             except Exception:
                 _concat_perfect = False

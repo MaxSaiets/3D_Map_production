@@ -236,6 +236,7 @@ export function SimpleControlPanel({
     simpleFrameStyle: st.simpleFrameStyle,
     simpleMagnetMode: st.simpleMagnetMode,
     simpleMapLabel: st.simpleMapLabel,
+    suggestedMapLabel: st.suggestedMapLabel,
     simplePanelMode: st.simplePanelMode,
     simpleRelief: st.simpleRelief,
     simpleSeriesConnectors: st.simpleSeriesConnectors,

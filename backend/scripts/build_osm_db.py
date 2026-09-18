@@ -42,6 +42,32 @@ NATURAL_PARK = frozenset({"wood", "grassland", "scrub", "heath"})
 # Великий batch — DataFrame bulk insert у 100× швидше за executemany
 BATCH_SIZE = 200_000
 
+MONUMENT_HISTORIC = {"monument", "memorial"}
+MONUMENT_MAN_MADE = {"monument", "obelisk", "tower"}
+
+
+def _parse_height(tags) -> float:
+    """Явна висота у метрах з OSM height / building:height ("20", "20 m", "65 ft")."""
+    import re as _re
+    height = 0.0
+    for hk in ("height", "building:height"):
+        hv = tags.get(hk)
+        if not hv:
+            continue
+        m = _re.search(r"[-+]?\d+(?:\.\d+)?", str(hv).replace(",", "."))
+        if not m:
+            continue
+        try:
+            h = float(m.group(0))
+            sl = str(hv).lower()
+            if "ft" in sl or "feet" in sl or "'" in sl:
+                h *= 0.3048
+            height = max(height, h)
+        except Exception:
+            pass
+    return height
+
+
 BUILDING_COLS = ["id", "levels", "height", "landmark", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 ROAD_COLS = ["id", "highway", "bridge", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
 BRIDGE_COLS = ["id", "highway", "wkt", "minlon", "minlat", "maxlon", "maxlat"]
@@ -64,11 +90,28 @@ class FastHandler(osmium.SimpleHandler):
         self.bridges = []
         self.water = []
         self.parks = []
+        # 18.09.2026: монументи-ТОЧКИ з висотою (Батьківщина-Мати = node
+        # historic=monument height=102, а полігон постаменту поруч висоти не має).
+        # Osmium віддає nodes ДО ways/areas, тож у area() ці точки вже зібрані і
+        # монумент-полігон отримує висоту точки всередині свого bbox.
+        self.monument_pts = []  # (lon, lat, height_m)
         self.tot = {"buildings": 0, "roads": 0, "bridges": 0, "water": 0, "parks": 0}
         self.last_log = time.time()
         self.start = time.time()
         self.way_count = 0
         self.area_count = 0
+
+    def node(self, n):
+        tags = n.tags
+        if not tags or tags.get("historic") not in MONUMENT_HISTORIC:
+            return
+        h = _parse_height(tags)
+        if h <= 0:
+            return
+        try:
+            self.monument_pts.append((float(n.location.lon), float(n.location.lat), h))
+        except Exception:
+            pass
 
     def area(self, a):
         """Зібрана area — закритий way АБО multipolygon relation.
@@ -78,7 +121,13 @@ class FastHandler(osmium.SimpleHandler):
         tags = a.tags
         if not tags:
             return
-        is_building = "building" in tags
+        # Монументи/меморіали/обеліски/вежі як «будівлі»-орієнтири (landmark=historic),
+        # інакше Батьківщина-Мати, Мотрин-Мати тощо ніколи не потрапляють у модель.
+        is_monument = (
+            tags.get("historic") in MONUMENT_HISTORIC
+            or tags.get("man_made") in MONUMENT_MAN_MADE
+        )
+        is_building = "building" in tags or is_monument
         nat = tags.get("natural")
         wway = tags.get("waterway")
         lu = tags.get("landuse")
@@ -118,26 +167,16 @@ class FastHandler(osmium.SimpleHandler):
                 levels = 0
             # Явна висота у метрах (OSM height / building:height; "20", "20 m", "65 ft").
             # Точніша за levels×3 — використовується першочергово у get_building_height.
-            height = 0.0
-            for hk in ("height", "building:height"):
-                hv = tags.get(hk)
-                if not hv:
-                    continue
-                m = re.search(r"[-+]?\d+(?:\.\d+)?", str(hv).replace(",", "."))
-                if not m:
-                    continue
-                try:
-                    h = float(m.group(0))
-                    sl = str(hv).lower()
-                    if "ft" in sl or "feet" in sl or "'" in sl:
-                        h *= 0.3048
-                    height = max(height, h)
-                except Exception:
-                    pass
+            height = _parse_height(tags)
+            if is_monument and height <= 0.0 and self.monument_pts:
+                # Полігон постаменту без висоти → висота монумент-точки всередині.
+                for plon, plat, ph in self.monument_pts:
+                    if minlon <= plon <= maxlon and minlat <= plat <= maxlat:
+                        height = max(height, ph)
             # Орієнтир (визначне місце): церква/вежа/історична/пам'ятка → окрема
             # категорія для кольору + збереження навіть малих footprint у генерації.
             bt = tags.get("building") or ""
-            if tags.get("historic"):
+            if tags.get("historic") or is_monument:
                 landmark = "historic"
             elif tags.get("man_made") == "tower" or bt == "tower":
                 landmark = "tower"

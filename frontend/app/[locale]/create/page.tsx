@@ -240,11 +240,17 @@ export default function Home() {
   // «щоб назви правильно брались для міст»). Перезаписуємо лише АВТО-значення:
   // порожнє поле або назву якогось міста зі списку. Власний підпис користувача
   // (напр. «ROMA ❤️») не збігається з жодною назвою → лишається недоторканим.
+  // 18.09.2026: порожнє поле БІЛЬШЕ НЕ заповнюємо автоматично — інакше назва
+  // міста йшла у map_label кожної мапи, хоча чіп «додати напис» був вимкнений
+  // (власник: «чому кожен раз текст створюється, адже це не брелок?»). Підказка
+  // зберігається окремо і підставляється, коли юзер сам вмикає напис/магніт.
   useEffect(() => {
     const store = useGenerationStore.getState();
+    const suggested = cityKeychainText(currentCityKey);
+    store.setSuggestedMapLabel(suggested);
     const cur = (store.simpleMapLabel || "").trim();
-    const isAuto = !cur || Object.keys(CITIES).some((k) => cityKeychainText(k) === cur);
-    if (isAuto) store.setSimpleMapLabel(cityKeychainText(currentCityKey));
+    const isAutoCity = !!cur && Object.keys(CITIES).some((k) => cityKeychainText(k) === cur);
+    if (isAutoCity) store.setSimpleMapLabel(suggested);
   }, [currentCityKey]);
 
   // useShallow: без селектора ця top-level сторінка ре-рендерилась на КОЖЕН store.set()

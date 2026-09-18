@@ -109,6 +109,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     clearHighlights: st.clearHighlights,
     simpleMapLabel: st.simpleMapLabel,
     setSimpleMapLabel: st.setSimpleMapLabel,
+    suggestedMapLabel: st.suggestedMapLabel,
     simpleConnector: st.simpleConnector,
     setSimpleConnector: st.setSimpleConnector,
   })));
@@ -811,7 +812,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 {(!labelOn ? (
                   <button
                     type="button"
-                    onClick={() => setLabelOn(true)}
+                    onClick={() => { if (!s.simpleMapLabel.trim() && s.suggestedMapLabel) s.setSimpleMapLabel(s.suggestedMapLabel); setLabelOn(true); }}
                     className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--surface-border)] bg-white/80 px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] transition hover:border-[rgba(11,92,87,0.35)]"
                   >
                     <PenLine size={15} className="text-[var(--accent-strong)]" /> {t("addLabel")}

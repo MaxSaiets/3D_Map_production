@@ -83,6 +83,10 @@ interface GenerationState {
   simplePanelMode: 0 | 2 | 3;
   simpleMagnetMode: boolean;
   simpleMapLabel: string;
+  // Автопідказка напису (назва обраного міста). НЕ надсилається сама по собі —
+  // лише підставляється у поле, коли користувач вмикає напис/магніт (18.09.2026:
+  // раніше назва міста потрапляла в map_label КОЖНОЇ мапи без відома юзера).
+  suggestedMapLabel: string;
   // styleId + активний шаблон теж спільні (панель монтується двічі) — інакше
   // вибраний стиль/шаблон розсинхронізується між desktop/mobile копіями і при
   // ресайзі або генерації з іншої копії застосовувався б старий стиль.
@@ -162,6 +166,7 @@ interface GenerationState {
   setSimplePanelMode: (mode: 0 | 2 | 3) => void;
   setSimpleMagnetMode: (on: boolean) => void;
   setSimpleMapLabel: (label: string) => void;
+  setSuggestedMapLabel: (label: string) => void;
   setSimpleStyleId: (id: string) => void;
   setSimpleTemplate: (id: string | null) => void;
   setSimpleFormat: (f: GenerationState["simpleFormat"]) => void;
@@ -293,6 +298,7 @@ const initialState = {
   simplePanelMode: 0 as const,
   simpleMagnetMode: false,
   simpleMapLabel: "",
+  suggestedMapLabel: "",
   simpleStyleId: "full",
   simpleTemplate: null,
   // Дефолт = «Об'ємна 3D» = сьогоднішній стан з усіма спецрежимами ВИМКНЕНО.
@@ -345,6 +351,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setSimplePanelMode: (mode) => set({ simplePanelMode: mode }),
   setSimpleMagnetMode: (on) => set({ simpleMagnetMode: on }),
   setSimpleMapLabel: (label) => set({ simpleMapLabel: label }),
+  setSuggestedMapLabel: (label) => set({ suggestedMapLabel: label }),
   setSimpleStyleId: (id) => set({ simpleStyleId: id }),
   setSimpleTemplate: (id) => set({ simpleTemplate: id }),
   // ВЗАЄМОВИКЛЮЧНИЙ формат: один set() похідно синхронізує УСІ легасі-булеві, щоб
@@ -360,6 +367,11 @@ export const useGenerationStore = create<GenerationState>((set) => ({
     simpleFormat: f,
     simplePanelMode: f === "panno" ? (st.simplePanelMode > 0 ? st.simplePanelMode : 2) : 0,
     simpleMagnetMode: f === "magnet",
+    // Магніт = гравійований напис; якщо поле порожнє — підставляємо назву міста
+    // (18.09.2026: замість глобального автозаповнення для всіх мап).
+    ...((f === "magnet" && !st.simpleMapLabel.trim() && st.suggestedMapLabel)
+      ? { simpleMapLabel: st.suggestedMapLabel }
+      : {}),
     // flat: лишаємо поточний flat-AMS (його окремо вмикає чип «Плоска» / тумблер
     // flat-ams); інші формати — гасимо. flat-AMS це лише ОДИН зі способів плоскої
     // карти, тож конектор/рамка/дім самі вмикають flat_plate навіть без flat-AMS.
