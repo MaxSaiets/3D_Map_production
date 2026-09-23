@@ -50,17 +50,17 @@ const KEYCHAINS: Record<string, SeoProse> = {
   en: {
     h2: "Custom city map keychain",
     p1: "The map keychain is a 55×30 mm tag with a relief map of your chosen district: streets, parks and rivers you can feel with your fingers. Add custom text on the back — a city name, a date or coordinates. There's a mountain-relief topo mode and a keychain with your GPX route from Strava or Garmin.",
-    p2: "Printed in Eco PLA within 1–3 business days, from ≈€4. Shipping across Ukraine and to EU countries. A pair of «heart» keychains with two people's districts joins like a puzzle — a popular couple's gift.",
+    p2: "Printed in Eco PLA within 2–4 business days, from ≈€4. Shipping across Ukraine and to EU countries. A pair of «heart» keychains with two people's districts joins like a puzzle — a popular couple's gift.",
   },
   de: {
     h2: "Individueller Schlüsselanhänger mit Stadtkarte",
     p1: "Der Karten-Anhänger ist eine 55×30-mm-Plakette mit einer Reliefkarte deines gewählten Viertels: Straßen, Parks und Flüsse, die man mit den Fingern erfühlen kann. Füge auf der Rückseite eigenen Text hinzu — einen Stadtnamen, ein Datum oder Koordinaten. Es gibt einen Gebirgsrelief-Modus (Topo-Anhänger) und einen Anhänger mit deiner GPX-Route aus Strava oder Garmin.",
-    p2: "Gedruckt aus Eco PLA in 1–3 Werktagen, ab ≈4 €. Versand innerhalb der Ukraine. Ein Paar «Herz»-Anhänger mit den Vierteln zweier Menschen fügt sich wie ein Puzzle zusammen — ein beliebtes Geschenk für Paare.",
+    p2: "Gedruckt aus Eco PLA in 2–4 Werktagen, ab ≈4 €. Versand innerhalb der Ukraine. Ein Paar «Herz»-Anhänger mit den Vierteln zweier Menschen fügt sich wie ein Puzzle zusammen — ein beliebtes Geschenk für Paare.",
   },
   pl: {
     h2: "Brelok z mapą miasta na zamówienie",
     p1: "Brelok-mapa to zawieszka 55×30 mm z reliefową mapą wybranej dzielnicy: ulice, parki i rzeki, które można poczuć palcami. Dodaj własny napis z tyłu — nazwę miasta, datę lub współrzędne. Jest tryb reliefu górskiego (brelok topo) i brelok z Twoją trasą GPX ze Strava lub Garmin.",
-    p2: "Drukujemy z Eco PLA w 1–3 dni robocze, od ≈4 €. Wysyłka na Ukrainę. Para breloków-«serc» z dzielnicami dwóch osób łączy się jak puzzle — popularny prezent dla par.",
+    p2: "Drukujemy z Eco PLA w 2–4 dni robocze, od ≈4 €. Wysyłka na Ukrainę. Para breloków-«serc» z dzielnicami dwóch osób łączy się jak puzzle — popularny prezent dla par.",
   },
   fr: {
     h2: "Porte-clés personnalisé avec carte de ville",
@@ -70,7 +70,7 @@ const KEYCHAINS: Record<string, SeoProse> = {
   es: {
     h2: "Llavero personalizado con mapa de ciudad",
     p1: "El llavero mapa es una placa de 55×30 mm con un mapa en relieve del distrito elegido: calles, parques y ríos que se pueden sentir con los dedos. Añade tu propio texto en el reverso — el nombre de una ciudad, una fecha o coordenadas. Hay un modo de relieve montañoso (llavero topo) y un llavero con tu ruta GPX de Strava o Garmin.",
-    p2: "Impreso en Eco PLA en 1–3 días hábiles, desde ≈4 €. Envío dentro de Ucrania. Un par de llaveros «corazón» con los distritos de dos personas encaja como un rompecabezas — un regalo popular para parejas.",
+    p2: "Impreso en Eco PLA en 2–4 días hábiles, desde ≈4 €. Envío dentro de Ucrania. Un par de llaveros «corazón» con los distritos de dos personas encaja como un rompecabezas — un regalo popular para parejas.",
   },
 };
 
@@ -124,19 +124,19 @@ const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
   en: [
     { q: "How much does a 3D map cost?", a: "A 3D map is from ≈€8 for size S (5.5 cm) to ≈€18 for XL (15 cm), terrain relief +≈€2. A fridge magnet is ≈€5, a keychain from ≈€4." },
     { q: "Which area should I pick?", a: "A 400–800 m area with mixed content: some streets, a park or water — the district stays recognizable at first glance." },
-    { q: "How long does production take?", a: "1–3 business days to print, then shipping across Ukraine." },
+    { q: "How long does production take?", a: "2–4 business days to print, then shipping across Ukraine." },
     { q: "Can I print it myself?", a: "Yes — the print-ready 3MF file costs 149 ₴ (≈ €3; the 3D preview is free) and opens directly in Bambu Studio or PrusaSlicer. Sold worldwide." },
   ],
   de: [
     { q: "Was kostet eine 3D-Karte?", a: "Eine 3D-Karte kostet von ≈8 € (Größe S, 5,5 cm) bis ≈18 € (XL, 15 cm), Geländerelief +≈2 €. Kühlschrankmagnet ≈5 €, Anhänger ab ≈4 €." },
     { q: "Welchen Bereich soll ich wählen?", a: "Einen Bereich von 400–800 m mit gemischtem Inhalt: ein paar Straßen, ein Park oder Wasser — so bleibt das Viertel auf den ersten Blick erkennbar." },
-    { q: "Wie lange dauert die Herstellung?", a: "1–3 Werktage Druck, dann Versand in die Ukraine." },
+    { q: "Wie lange dauert die Herstellung?", a: "2–4 Werktage Druck, dann Versand in die Ukraine." },
     { q: "Kann ich es selbst drucken?", a: "Ja — die druckfertige 3MF-Datei kostet 149 ₴ (≈ 3 €; die 3D-Vorschau ist kostenlos) und öffnet direkt in Bambu Studio oder PrusaSlicer. Weltweit erhältlich." },
   ],
   pl: [
     { q: "Ile kosztuje mapa 3D?", a: "Mapa 3D kosztuje od ≈8 € (rozmiar S, 5,5 cm) do ≈18 € (XL, 15 cm), rzeźba terenu +≈2 €. Magnes na lodówkę ≈5 €, brelok od ≈4 €." },
     { q: "Jaki obszar najlepiej wybrać?", a: "Obszar 400–800 m z mieszaną zabudową: trochę ulic, park lub woda — dzielnica pozostaje rozpoznawalna od pierwszego spojrzenia." },
-    { q: "Ile trwa wykonanie?", a: "1–3 dni robocze na druk, potem wysyłka na Ukrainę." },
+    { q: "Ile trwa wykonanie?", a: "2–4 dni robocze na druk, potem wysyłka na Ukrainę." },
     { q: "Czy mogę wydrukować sam?", a: "Tak — gotowy plik 3MF kosztuje 149 ₴ (≈ 3 €; podgląd 3D jest bezpłatny) i otwiera się od razu w Bambu Studio lub PrusaSlicer. Dostępny na całym świecie." },
   ],
   fr: [
@@ -148,7 +148,7 @@ const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
   es: [
     { q: "¿Cuánto cuesta un mapa 3D?", a: "Un mapa 3D cuesta desde ≈8 € (tamaño S, 5,5 cm) hasta ≈18 € (XL, 15 cm), relieve del terreno +≈2 €. Imán de nevera ≈5 €, llavero desde ≈4 €." },
     { q: "¿Qué zona conviene elegir?", a: "Una zona de 400–800 m con contenido variado: algunas calles, un parque o agua — el distrito sigue siendo reconocible a primera vista." },
-    { q: "¿Cuánto tarda la fabricación?", a: "1–3 días hábiles de impresión, luego envío a Ucrania." },
+    { q: "¿Cuánto tarda la fabricación?", a: "2–4 días hábiles de impresión, luego envío a Ucrania." },
     { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — el archivo 3MF listo para imprimir cuesta 149 ₴ (≈ 3 €; la vista previa 3D es gratis) y se abre directamente en Bambu Studio o PrusaSlicer. Se vende en todo el mundo." },
   ],
 };
