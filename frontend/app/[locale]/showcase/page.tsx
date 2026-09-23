@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ModelModal, { type ModalModel } from "@/components/ModelModal";
-import { GALLERY_ITEMS } from "@/lib/gallery";
+import { GALLERY_ITEMS, type GalleryLocale } from "@/lib/gallery";
 
 // src → опис фото (той самий, що на /foto/[slug]) — унікальні alt для Google Картинок.
 const ALT_BY_SRC = Object.fromEntries(GALLERY_ITEMS.map((g) => [g.src, g.alt]));
@@ -24,7 +24,7 @@ const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 export default function ShowcasePage() {
   const t = useTranslations("showcase");
-  const altL = useLocale() === "uk" ? "uk" : "en";
+  const altL = useLocale() as GalleryLocale;
   const [filter, setFilter] = useState<"all" | "key" | "map">("all");
   const [modal, setModal] = useState<ModalModel | null>(null);
 

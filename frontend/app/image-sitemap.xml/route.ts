@@ -1,4 +1,4 @@
-import { GALLERY_ITEMS } from "@/lib/gallery";
+import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 
 /**
  * Image sitemap для Google Картинок (Next 14.2 MetadataRoute.Sitemap не вміє
@@ -15,8 +15,9 @@ export function GET() {
   const img = (src: string) => `<image:image><image:loc>${esc(BASE + src)}</image:loc></image:image>`;
   const urls = [
     `<url><loc>${BASE}/showcase</loc>${GALLERY_ITEMS.map((g) => img(g.src)).join("")}</url>`,
-    ...GALLERY_ITEMS.map((g) => `<url><loc>${esc(`${BASE}/foto/${g.slug}`)}</loc>${img(g.src)}</url>`),
-    ...GALLERY_ITEMS.map((g) => `<url><loc>${esc(`${BASE}/en/foto/${g.slug}`)}</loc>${img(g.src)}</url>`),
+    ...GALLERY_LOCALES.flatMap((l) =>
+      GALLERY_ITEMS.map((g) => `<url><loc>${esc(`${BASE}${l === "uk" ? "" : `/${l}`}/foto/${g.slug}`)}</loc>${img(g.src)}</url>`),
+    ),
   ];
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>\n` +

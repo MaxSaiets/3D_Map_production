@@ -4,7 +4,7 @@ import { pageMetadata, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { proseFaq } from "@/lib/seoProse";
 import { Link } from "@/i18n/navigation";
-import { GALLERY_ITEMS } from "@/lib/gallery";
+import { GALLERY_ITEMS, type GalleryLocale } from "@/lib/gallery";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   return pageMetadata({ locale: params.locale, path: "/showcase", ns: "showcaseMeta" });
@@ -24,6 +24,7 @@ export default async function ShowcaseLayout({
   const nav = await getTranslations({ locale, namespace: "nav" });
   const faq = proseFaq("showcase", locale);
   const isUA = locale === "uk";
+  const gl = locale as GalleryLocale;
 
   // CollectionPage (галерея) + BreadcrumbList для rich results.
   const ld = {
@@ -37,8 +38,8 @@ export default async function ShowcaseLayout({
         hasPart: GALLERY_ITEMS.map((g) => ({
           "@type": "ImageObject",
           contentUrl: `https://monadruk.com${g.src}`,
-          name: isUA ? g.title.uk : g.title.en,
-          url: localeUrl(locale === "uk" ? "uk" : "en", `/foto/${g.slug}`),
+          name: g.title[gl],
+          url: localeUrl(locale, `/foto/${g.slug}`),
         })),
       },
       {
@@ -67,7 +68,14 @@ export default async function ShowcaseLayout({
           лінки + унікальні alt; client-галерея вище відкриває лише модалку). */}
       <section className="mx-auto max-w-[1280px] px-5 pb-4 pt-10 lg:px-8">
         <h2 className="text-center font-serif text-[clamp(22px,2.6vw,32px)] text-ink">
-          {isUA ? "Усі фото й моделі — з описом" : "All photos and models — with descriptions"}
+          {({
+            uk: "Усі фото й моделі — з описом",
+            en: "All photos and models — with descriptions",
+            de: "Alle Fotos und Modelle — mit Beschreibung",
+            pl: "Wszystkie zdjęcia i modele — z opisem",
+            fr: "Toutes les photos et maquettes — avec description",
+            es: "Todas las fotos y modelos — con descripción",
+          } as Record<GalleryLocale, string>)[gl]}
         </h2>
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           {GALLERY_ITEMS.map((g) => (
@@ -75,9 +83,9 @@ export default async function ShowcaseLayout({
               <Link href={`/foto/${g.slug}`} className="group block overflow-hidden rounded-[16px] border border-line bg-paper">
                 <div className="aspect-square overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={g.src} alt={isUA ? g.alt.uk : g.alt.en} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+                  <img src={g.src} alt={g.alt[gl]} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
                 </div>
-                <span className="block px-2.5 py-2 text-[12px] font-medium leading-snug text-ink-2">{isUA ? g.title.uk : g.title.en}</span>
+                <span className="block px-2.5 py-2 text-[12px] font-medium leading-snug text-ink-2">{g.title[gl]}</span>
               </Link>
             </li>
           ))}

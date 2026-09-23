@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
-import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
+import { routing, defaultLocale, localeMeta, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { GALLERY_ITEMS, GALLERY_BY_SLUG, relatedGallery, type GalleryItem, type GalleryKind } from "@/lib/gallery";
+import { GALLERY_ITEMS, GALLERY_BY_SLUG, GALLERY_LOCALES, relatedGallery, type GalleryItem, type GalleryKind, type GalleryLocale } from "@/lib/gallery";
 import { CITY_PAGES } from "@/lib/cityPages";
-import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH, MAP_RELIEF_ADDON_UAH, mapPriceEur } from "@/lib/mapPrices";
+import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH, mapPriceEur } from "@/lib/mapPrices";
 
 /**
  * Окрема сторінка на кожне фото галереї (/foto/[slug]) — Google Картинки +
- * довгий хвіст. Контент — lib/gallery.ts (uk/en). de/pl/fr/es рендеряться
- * англійською з noindex і canonical на en (не плодимо дублі, фокус — UA).
+ * довгий хвіст. Контент — lib/gallery.ts (uk/en) + lib/galleryI18n.ts (de/pl/fr/es);
+ * усі 6 мов — справжні переклади, індексуються.
  */
 export function generateStaticParams() {
   return GALLERY_ITEMS.map((g) => ({ slug: g.slug }));
@@ -23,7 +23,41 @@ function resolveLocale(raw: string): AppLocale {
   return ((routing.locales as readonly string[]).includes(raw) ? raw : defaultLocale) as AppLocale;
 }
 
-const indexable = (l: AppLocale) => l === "uk" || l === "en";
+type L = GalleryLocale;
+type KindKey = "key" | "panno" | "map";
+const kindKey = (k: GalleryKind): KindKey => (k === "panno" ? "panno" : k === "map" ? "map" : "key");
+
+// Інтерфейс сторінки шістьма мовами. Ціни: ₴ для uk, ≈€ для решти (друк — доставка лише по Україні).
+const UI: Record<L, {
+  gallery: string; real: string; render: string; related: string; cities: string; allPhotos: string; brand: string;
+  kind: Record<KindKey, string>; buy: Record<KindKey, string>; what: Record<KindKey, string>;
+  city: Record<KindKey, string>; lbl: string[]; from: string; lead: string; material: string;
+}> = {
+  uk: { gallery: "Галерея", real: "Фото реального друку", render: "Рендер моделі з конструктора (до друку)", related: "Схожі фото", cities: "Оберіть своє місто", allPhotos: "Усі фото галереї", brand: "Галерея Monadruk",
+    kind: { key: "Брелок з картою", panno: "Панно з плиток", map: "3D-мапа міста" }, buy: { key: "Створити такий брелок", panno: "Зібрати своє панно", map: "Створити таку мапу" },
+    what: { key: "Про такий брелок", panno: "Про панно з плиток", map: "Про 3D-мапу" }, city: { key: "Брелок", panno: "3D-мапа", map: "3D-мапа" },
+    lbl: ["Виріб", "Ціна", "Файл для самодруку", "Матеріал", "Терміни"], from: "від", lead: "2–4 робочі дні + доставка Новою Поштою", material: "пластик Eco PLA" },
+  en: { gallery: "Gallery", real: "Photo of a real print", render: "Builder render (before printing)", related: "Similar photos", cities: "Pick your city", allPhotos: "All gallery photos", brand: "Monadruk gallery",
+    kind: { key: "Map keychain", panno: "Map tile panel", map: "3D city map" }, buy: { key: "Create a keychain like this", panno: "Design a panel", map: "Create a map like this" },
+    what: { key: "About this keychain", panno: "About the tile panel", map: "About the 3D map" }, city: { key: "Keychain", panno: "3D map", map: "3D map" },
+    lbl: ["Product", "Price", "File to print yourself", "Material", "Lead time"], from: "from", lead: "2–4 business days, delivery within Ukraine", material: "Eco PLA plastic" },
+  de: { gallery: "Galerie", real: "Foto eines echten Drucks", render: "Rendering aus dem Konfigurator (vor dem Druck)", related: "Ähnliche Fotos", cities: "Wähle deine Stadt", allPhotos: "Alle Fotos der Galerie", brand: "Monadruk Galerie",
+    kind: { key: "Karten-Anhänger", panno: "Kachelbild mit Karte", map: "3D-Stadtkarte" }, buy: { key: "So einen Anhänger erstellen", panno: "Eigenes Kachelbild gestalten", map: "So eine Karte erstellen" },
+    what: { key: "Über diesen Anhänger", panno: "Über das Kachelbild", map: "Über die 3D-Karte" }, city: { key: "Anhänger", panno: "3D-Karte", map: "3D-Karte" },
+    lbl: ["Produkt", "Preis", "Datei zum Selbstdrucken", "Material", "Lieferzeit"], from: "ab", lead: "2–4 Werktage, Versand innerhalb der Ukraine", material: "Eco-PLA-Kunststoff" },
+  pl: { gallery: "Galeria", real: "Zdjęcie prawdziwego wydruku", render: "Render z kreatora (przed drukiem)", related: "Podobne zdjęcia", cities: "Wybierz swoje miasto", allPhotos: "Wszystkie zdjęcia galerii", brand: "Galeria Monadruk",
+    kind: { key: "Brelok z mapą", panno: "Panel z płytek z mapą", map: "Mapa 3D miasta" }, buy: { key: "Stwórz taki brelok", panno: "Zaprojektuj swój panel", map: "Stwórz taką mapę" },
+    what: { key: "O takim breloku", panno: "O panelu z płytek", map: "O mapie 3D" }, city: { key: "Brelok", panno: "Mapa 3D", map: "Mapa 3D" },
+    lbl: ["Produkt", "Cena", "Plik do własnego druku", "Materiał", "Czas realizacji"], from: "od", lead: "2–4 dni robocze, wysyłka na terenie Ukrainy", material: "tworzywo Eco PLA" },
+  fr: { gallery: "Galerie", real: "Photo d'une impression réelle", render: "Rendu du configurateur (avant impression)", related: "Photos similaires", cities: "Choisis ta ville", allPhotos: "Toutes les photos de la galerie", brand: "Galerie Monadruk",
+    kind: { key: "Porte-clés carte", panno: "Tableau de tuiles carte", map: "Carte 3D de ville" }, buy: { key: "Créer un porte-clés comme celui-ci", panno: "Composer ton tableau", map: "Créer une carte comme celle-ci" },
+    what: { key: "À propos de ce porte-clés", panno: "À propos du tableau de tuiles", map: "À propos de la carte 3D" }, city: { key: "Porte-clés", panno: "Carte 3D", map: "Carte 3D" },
+    lbl: ["Produit", "Prix", "Fichier à imprimer soi-même", "Matière", "Délai"], from: "dès", lead: "2–4 jours ouvrés, livraison en Ukraine", material: "plastique Eco PLA" },
+  es: { gallery: "Galería", real: "Foto de una impresión real", render: "Render del configurador (antes de imprimir)", related: "Fotos similares", cities: "Elige tu ciudad", allPhotos: "Todas las fotos de la galería", brand: "Galería Monadruk",
+    kind: { key: "Llavero con mapa", panno: "Panel de baldosas con mapa", map: "Mapa 3D de ciudad" }, buy: { key: "Crear un llavero así", panno: "Diseñar tu panel", map: "Crear un mapa así" },
+    what: { key: "Sobre este llavero", panno: "Sobre el panel de baldosas", map: "Sobre el mapa 3D" }, city: { key: "Llavero", panno: "Mapa 3D", map: "Mapa 3D" },
+    lbl: ["Producto", "Precio", "Archivo para imprimir tú", "Material", "Plazo"], from: "desde", lead: "2–4 días hábiles, envío dentro de Ucrania", material: "plástico Eco PLA" },
+};
 
 type Copy = {
   gallery: string; real: string; render: string; buy: string; landing: string; price: string;
@@ -31,56 +65,29 @@ type Copy = {
   kindName: string; cityHref: (slug: string) => string; cityLabel: (name: string) => string;
 };
 
-function copy(kind: GalleryKind, en: boolean): Copy {
-  const M = MAP_SIZE_PRICES_UAH;
-  const key = kind === "keychain" || kind === "heart" || kind === "group";
-  const eur = (uah: number) => `≈€${mapPriceEur(uah)}`;
-  const base = en
-    ? { gallery: "Gallery", real: "Photo of a real print", render: "Builder render (before printing)", related: "Similar photos", cities: "Pick your city", allPhotos: "All gallery photos" }
-    : { gallery: "Галерея", real: "Фото реального друку", render: "Рендер моделі з конструктора (до друку)", related: "Схожі фото", cities: "Оберіть своє місто", allPhotos: "Усі фото галереї" };
+const FILE_UAH = 149; // друк-файл 3MF (памʼять file-sale-149)
 
-  if (key) {
-    return {
-      ...base,
-      kindName: en ? "Map keychain" : "Брелок з картою",
-      buy: en ? "Create a keychain like this" : "Створити такий брелок",
-      landing: "/brelok",
-      price: en ? `from ${eur(KEYCHAIN_PRICE_UAH)}` : `від ${KEYCHAIN_PRICE_UAH} ₴`,
-      what: en ? "About this keychain" : "Про такий брелок",
-      facts: en
-        ? [["Product", "3D-printed keychain with a map of your place"], ["Price", `from ${eur(KEYCHAIN_PRICE_UAH)}`], ["Shapes", "rectangle, oval, capsule, tag, heart and more"], ["Text", "HOME, LOVE, a name or a date"], ["Material", "Eco PLA plastic"], ["Lead time", "2–4 business days + Nova Poshta delivery"]]
-        : [["Виріб", "3D-друкований брелок з картою вашого місця"], ["Ціна", `від ${KEYCHAIN_PRICE_UAH} ₴`], ["Форми", "прямокутник, овал, капсула, жетон, серце та інші"], ["Напис", "HOME, LOVE, ім'я чи дата"], ["Матеріал", "пластик Eco PLA"], ["Терміни", "2–4 робочі дні + доставка Новою Поштою"]],
-      cityHref: (s) => `/brelok/${s}`,
-      cityLabel: (n) => (en ? `Keychain — ${n}` : `Брелок — ${n}`),
-    };
-  }
-  if (kind === "panno") {
-    return {
-      ...base,
-      kindName: en ? "Map tile panel" : "Панно з плиток",
-      buy: en ? "Design a panel" : "Зібрати своє панно",
-      landing: "/panno",
-      price: en ? `from ${eur(M[80] * 4)} for 2×2` : `від ${M[80] * 4} ₴ за 2×2`,
-      what: en ? "About the tile panel" : "Про панно з плиток",
-      facts: en
-        ? [["Product", "wall panel of 3D-printed hexagonal map tiles"], ["Price", `from ${eur(M[80] * 4)} (2×2 of 8 cm tiles)`], ["Tiles", "8 or 11 cm, streets match across seams"], ["Relief", `optional terrain relief +${MAP_RELIEF_ADDON_UAH} UAH`], ["Material", "Eco PLA plastic"], ["Lead time", "2–4 business days + Nova Poshta delivery"]]
-        : [["Виріб", "панно на стіну з 3D-друкованих шестикутних плиток"], ["Ціна", `від ${M[80] * 4} ₴ (2×2 плитки по 8 см)`], ["Плитки", "8 або 11 см, вулиці збігаються на стиках"], ["Рельєф", `за бажанням, +${MAP_RELIEF_ADDON_UAH} ₴`], ["Матеріал", "пластик Eco PLA"], ["Терміни", "2–4 робочі дні + доставка Новою Поштою"]],
-      cityHref: (s) => `/maps/${s}`,
-      cityLabel: (n) => (en ? `3D map — ${n}` : `3D-мапа — ${n}`),
-    };
-  }
+function copy(kind: GalleryKind, l: L): Copy {
+  const u = UI[l];
+  const k = kindKey(kind);
+  const M = MAP_SIZE_PRICES_UAH;
+  const money = (uah: number) => (l === "uk" ? `${uah} ₴` : `≈${mapPriceEur(uah)} €`);
+  const priceUah = k === "key" ? KEYCHAIN_PRICE_UAH : k === "panno" ? M[80] * 4 : M[55];
+  const price = `${u.from} ${money(priceUah)}${k === "panno" ? " (2×2)" : ""}`;
   return {
-    ...base,
-    kindName: en ? "3D city map" : "3D-мапа міста",
-    buy: en ? "Create a map like this" : "Створити таку мапу",
-    landing: "/maps",
-    price: en ? `from ${eur(M[55])}` : `від ${M[55]} ₴`,
-    what: en ? "About the 3D map" : "Про 3D-мапу",
-    facts: en
-      ? [["Product", "3D-printed map of any area on OpenStreetMap"], ["Sizes and prices", `5.5 cm ${eur(M[55])} · 8 cm ${eur(M[80])} · 11 cm ${eur(M[110])} · 15 cm ${eur(M[150])}`], ["My home", "a red marker on your building"], ["Relief", `optional terrain relief +${MAP_RELIEF_ADDON_UAH} UAH`], ["Material", "Eco PLA plastic"], ["Lead time", "2–4 business days + Nova Poshta delivery"]]
-      : [["Виріб", "3D-друкована мапа будь-якої ділянки з OpenStreetMap"], ["Розміри і ціни", `5,5 см ${M[55]} ₴ · 8 см ${M[80]} ₴ · 11 см ${M[110]} ₴ · 15 см ${M[150]} ₴`], ["Мій дім", "червона позначка на вашому будинку"], ["Рельєф", `за бажанням, +${MAP_RELIEF_ADDON_UAH} ₴`], ["Матеріал", "пластик Eco PLA"], ["Терміни", "2–4 робочі дні + доставка Новою Поштою"]],
-    cityHref: (s) => `/maps/${s}`,
-    cityLabel: (n) => (en ? `3D map — ${n}` : `3D-мапа — ${n}`),
+    gallery: u.gallery, real: u.real, render: u.render, related: u.related, cities: u.cities, allPhotos: u.allPhotos,
+    kindName: u.kind[k], buy: u.buy[k], what: u.what[k],
+    landing: k === "key" ? "/brelok" : k === "panno" ? "/panno" : "/maps",
+    price,
+    facts: [
+      [u.lbl[0], u.kind[k]],
+      [u.lbl[1], price],
+      [u.lbl[2], `3MF, ${FILE_UAH} ₴${l === "uk" ? "" : ` (≈${mapPriceEur(FILE_UAH)} €)`}`],
+      [u.lbl[3], u.material],
+      [u.lbl[4], u.lead],
+    ],
+    cityHref: (s) => (k === "key" ? `/brelok/${s}` : `/maps/${s}`),
+    cityLabel: (n) => `${u.city[k]} — ${n}`,
   };
 }
 
@@ -90,36 +97,37 @@ function ctaHref(kind: GalleryKind) {
   return "/create";
 }
 
-function pageTitle(g: GalleryItem, en: boolean) {
-  const t = en ? g.title.en : g.title.uk;
-  return `${t} | ${en ? "Monadruk gallery" : "Галерея Monadruk"}`;
+function pageTitle(g: GalleryItem, l: L) {
+  return `${g.title[l]} | ${UI[l].brand}`;
 }
 
 export async function generateMetadata({ params }: { params: { locale: string; slug: string } }): Promise<Metadata> {
   const g = GALLERY_BY_SLUG[params.slug];
   if (!g) return {};
   const locale = resolveLocale(params.locale);
-  const en = locale !== "uk";
+  const l = locale as L;
   const path = `/foto/${g.slug}`;
-  const title = pageTitle(g, en);
-  const full = en ? g.desc.en : g.desc.uk;
+  const title = pageTitle(g, l);
+  const full = g.desc[l];
   const description = full.length <= 158 ? full : `${full.slice(0, 155).replace(/\s+\S*$/, "")}…`;
   const img = `${BASE}${g.src}`;
   return {
     title: { absolute: title },
     description,
     alternates: {
-      canonical: indexable(locale) ? localeUrl(locale, path) : localeUrl("en", path),
-      languages: { uk: localeUrl("uk", path), en: localeUrl("en", path), "x-default": localeUrl("uk", path) },
+      canonical: localeUrl(locale, path),
+      languages: {
+        ...Object.fromEntries(GALLERY_LOCALES.map((x) => [localeMeta[x].htmlLang, localeUrl(x, path)])),
+        "x-default": localeUrl("uk", path),
+      },
     },
-    robots: indexable(locale) ? undefined : { index: false, follow: true },
     openGraph: {
       title,
       description,
       url: localeUrl(locale, path),
       siteName: "Monadruk",
       type: "article",
-      images: [{ url: img, width: g.w, height: g.h, alt: en ? g.alt.en : g.alt.uk }],
+      images: [{ url: img, width: g.w, height: g.h, alt: g.alt[l] }],
     },
     twitter: { card: "summary_large_image", title, description, images: [img] },
   };
@@ -130,9 +138,8 @@ export default function FotoPage({ params }: { params: { locale: string; slug: s
   if (!g) notFound();
   const locale = resolveLocale(params.locale);
   setRequestLocale(locale);
-  const en = locale !== "uk";
-  const L = en ? "en" : "uk";
-  const c = copy(g.kind, en);
+  const L = locale as GalleryLocale;
+  const c = copy(g.kind, L);
   const path = `/foto/${g.slug}`;
   const related = relatedGallery(g.slug, 6);
 

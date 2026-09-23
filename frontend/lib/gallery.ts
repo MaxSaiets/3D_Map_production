@@ -10,12 +10,14 @@
 //    (так і підписано на сторінці — не видаємо рендер за фото).
 //  - кожен запис має унікальні title/alt/опис; спільні абзаци (матеріал,
 //    ціна, терміни) — лише доповнення за типом виробу.
-// uk + en повні; інші локалі не генеруються (фокус SEO — Україна, дубль-en
-// сторінки de/pl/fr/es Google схлопував — памʼять gsc-indexing-diagnosis).
+// uk + en тут; de/pl/fr/es — справжні переклади в lib/galleryI18n.ts (НЕ en-фолбек:
+// en-дублі під чужою мовою Google схлопує — GSC «Копія», 24.09.2026).
 // ──────────────────────────────────────────────────────────────────────────
 
+import { GALLERY_I18N } from "@/lib/galleryI18n";
+
 export type GalleryKind = "keychain" | "heart" | "group" | "map" | "panno";
-export type GalleryLocale = "uk" | "en";
+export type GalleryLocale = "uk" | "en" | "de" | "pl" | "fr" | "es";
 
 export type GalleryItem = {
   slug: string;
@@ -466,19 +468,21 @@ const RAW: Raw[] = [
   },
 ];
 
-export const GALLERY_ITEMS: GalleryItem[] = RAW.map(({ t, a, d, ...rest }) => ({
-  ...rest,
-  title: { uk: t[0], en: t[1] },
-  alt: { uk: a[0], en: a[1] },
-  desc: { uk: d[0], en: d[1] },
-}));
+export const GALLERY_ITEMS: GalleryItem[] = RAW.map(({ t, a, d, ...rest }) => {
+  const x = GALLERY_I18N[rest.slug];
+  if (!x) throw new Error(`gallery: немає перекладу de/pl/fr/es для ${rest.slug}`);
+  const pick = (i: 0 | 1 | 2, uk: string, en: string) => ({
+    uk, en, de: x.de[i], pl: x.pl[i], fr: x.fr[i], es: x.es[i],
+  });
+  return { ...rest, title: pick(0, t[0], t[1]), alt: pick(1, a[0], a[1]), desc: pick(2, d[0], d[1]) };
+});
 
 export const GALLERY_BY_SLUG: Record<string, GalleryItem> = Object.fromEntries(
   GALLERY_ITEMS.map((g) => [g.slug, g]),
 );
 
-/** Локалі, для яких генеруються /foto-сторінки. */
-export const GALLERY_LOCALES: readonly GalleryLocale[] = ["uk", "en"];
+/** Локалі /foto-сторінок — усі 6 (de/pl/fr/es — lib/galleryI18n.ts). */
+export const GALLERY_LOCALES: readonly GalleryLocale[] = ["uk", "en", "de", "pl", "fr", "es"];
 
 /** Схожі фото: спершу того ж типу, далі решта — детерміновано (SSG-стабільно). */
 export function relatedGallery(slug: string, n = 6): GalleryItem[] {
