@@ -4,6 +4,7 @@ import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES } from "@/lib/cityLanding";
+import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 
 const BASE = "https://monadruk.com";
 // Дата контенту хвилі city×product/occasion сторінок (2026-07-13) — окремо від
@@ -11,6 +12,8 @@ const BASE = "https://monadruk.com";
 const WAVE2_LASTMOD = new Date("2026-07-13");
 // Хвиля 4: міста Європи (нові сторінки під de/pl/fr/es).
 const WAVE4_LASTMOD = new Date("2026-07-29");
+// Хвиля 5 (2026-09-24): окрема сторінка на кожне фото галереї (/foto/[slug]), лише uk+en.
+const GALLERY_LASTMOD = new Date("2026-09-24");
 const LEGAL_LASTMOD = new Date(BUSINESS.updated); // до PATHS — інакше TDZ
 const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date }[] = [
   { path: "", changeFrequency: "weekly", priority: 1.0 },
@@ -110,6 +113,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: DYNAMIC_PATHS.has(path) ? now : lastmod ?? STATIC_LASTMOD,
         changeFrequency,
         priority: l === defaultLocale ? priority : Math.max(0.1, priority - 0.1),
+        alternates: { languages },
+      });
+    }
+  }
+  // /foto/[slug]: лише uk+en (інші локалі noindex → не в сайтмапі).
+  for (const g of GALLERY_ITEMS) {
+    const path = `/foto/${g.slug}`;
+    const languages: Record<string, string> = { "x-default": url(defaultLocale, path) };
+    for (const l of GALLERY_LOCALES) languages[localeMeta[l].htmlLang] = url(l, path);
+    for (const l of GALLERY_LOCALES) {
+      entries.push({
+        url: url(l, path),
+        lastModified: GALLERY_LASTMOD,
+        changeFrequency: "monthly",
+        priority: l === defaultLocale ? 0.55 : 0.45,
         alternates: { languages },
       });
     }

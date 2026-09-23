@@ -4,9 +4,13 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import dynamicImport from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ModelModal, { type ModalModel } from "@/components/ModelModal";
+import { GALLERY_ITEMS } from "@/lib/gallery";
+
+// src → опис фото (той самий, що на /foto/[slug]) — унікальні alt для Google Картинок.
+const ALT_BY_SRC = Object.fromEntries(GALLERY_ITEMS.map((g) => [g.src, g.alt]));
 
 const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), {
   ssr: false,
@@ -20,6 +24,7 @@ const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 export default function ShowcasePage() {
   const t = useTranslations("showcase");
+  const altL = useLocale() === "uk" ? "uk" : "en";
   const [filter, setFilter] = useState<"all" | "key" | "map">("all");
   const [modal, setModal] = useState<ModalModel | null>(null);
 
@@ -135,7 +140,7 @@ export default function ShowcasePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/showcase/real-${n}.webp`}
-                  alt={`${t("realAlt")} ${n}`}
+                  alt={ALT_BY_SRC[`/showcase/real-${n}.webp`]?.[altL] ?? `${t("realAlt")} ${n}`}
                   loading="lazy"
                   className="h-full w-full object-cover transition duration-500 hover:scale-[1.06]"
                 />
@@ -151,7 +156,7 @@ export default function ShowcasePage() {
           <button key={it.src} onClick={() => openItem(it)} className="group overflow-hidden rounded-[20px] border border-line bg-paper text-left" title={t("rotate3d")}>
             <div className="relative aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.src} alt={`${it.kind === "key" ? t("keyItem") : t("mapItem")} — ${t("printedSampleAlt")} ${it.n}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
+              <img src={it.src} alt={ALT_BY_SRC[it.src]?.[altL] ?? `${it.kind === "key" ? t("keyItem") : t("mapItem")} — ${t("printedSampleAlt")} ${it.n}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
                 <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">{t("rotate3d")} ↻</span>
               </span>

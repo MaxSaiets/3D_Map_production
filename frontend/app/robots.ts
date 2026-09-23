@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/account", "/admin", "/*/account", "/*/admin", "/capture", "/*/capture", "/share/", "/*/share/"],
       },
     ],
-    sitemap: "https://monadruk.com/sitemap.xml",
+    sitemap: ["https://monadruk.com/sitemap.xml", "https://monadruk.com/image-sitemap.xml"],
     host: "https://monadruk.com",
   };
 }
