@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { BUSINESS } from "@/lib/legal";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
-import { BLOG_ARTICLES } from "@/lib/blog";
+import { BLOG_ARTICLES, blogLocales } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES } from "@/lib/cityLanding";
 import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 
@@ -15,7 +15,7 @@ const WAVE4_LASTMOD = new Date("2026-07-29");
 // Хвиля 5 (2026-09-24): окрема сторінка на кожне фото галереї (/foto/[slug]), лише uk+en.
 const GALLERY_LASTMOD = new Date("2026-09-24");
 const LEGAL_LASTMOD = new Date(BUSINESS.updated); // до PATHS — інакше TDZ
-const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date }[] = [
+const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number; lastmod?: Date; only?: readonly string[] }[] = [
   { path: "", changeFrequency: "weekly", priority: 1.0 },
   { path: "/create", changeFrequency: "monthly", priority: 0.9 },
   { path: "/keychains", changeFrequency: "monthly", priority: 0.9 },
@@ -37,6 +37,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
     changeFrequency: "monthly" as const,
     priority: 0.6,
     lastmod: new Date(a.date), // дата публікації статті — точніша за глобальний STATIC_LASTMOD
+    only: blogLocales(a), // лише локалі зі справжнім перекладом (решта noindex)
   })),
   // Programmatic SEO: сторінка під кожне місто (23 × 6 локалей). lastmod=WAVE2 —
   // сторінки допрацьовано 2026-07-13 (FAQ+факти+блог-лінки), не чіпаний June STATIC_LASTMOD.
@@ -103,11 +104,12 @@ const DYNAMIC_PATHS = new Set(["", "/create", "/keychains", "/showcase"]);
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];
-  for (const { path, changeFrequency, priority, lastmod } of PATHS) {
+  for (const { path, changeFrequency, priority, lastmod, only } of PATHS) {
+    const ls = only ? locales.filter((l) => only.includes(l)) : locales;
     const languages: Record<string, string> = {};
-    for (const l of locales) languages[localeMeta[l].htmlLang] = url(l, path);
+    for (const l of ls) languages[localeMeta[l].htmlLang] = url(l, path);
     languages["x-default"] = url(defaultLocale, path); // консистентно з per-page hreflang
-    for (const l of locales) {
+    for (const l of ls) {
       entries.push({
         url: url(l, path),
         lastModified: DYNAMIC_PATHS.has(path) ? now : lastmod ?? STATIC_LASTMOD,

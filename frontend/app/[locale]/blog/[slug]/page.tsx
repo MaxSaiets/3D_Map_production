@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta } from "@/lib/blog";
+import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta, blogLocales } from "@/lib/blog";
 import { MAP_CITY_PAGES, MAP_CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 
 // Тематичні міста для гео-таргетованих статей (ЄС-хвиля): чипи ведуть на
@@ -37,13 +37,17 @@ export async function generateMetadata({
     : defaultLocale) as AppLocale;
   const c = blogContent(article, locale);
   const path = `/blog/${article.slug}`;
+  const translated = blogLocales(article);
+  const isTranslated = translated.includes(locale);
   const languages: Record<string, string> = {};
-  for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
+  for (const l of locales) if (translated.includes(l)) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
   languages["x-default"] = localeUrl(defaultLocale, path);
   return {
     title: c.title,
     description: c.description,
-    alternates: { canonical: localeUrl(locale, path), languages },
+    // Неперекладена локаль = en-текст → не індексуємо, канонічна — en-версія.
+    alternates: { canonical: localeUrl(isTranslated ? locale : "en", path), languages },
+    robots: isTranslated ? undefined : { index: false, follow: true },
     openGraph: {
       title: c.title,
       description: c.description,

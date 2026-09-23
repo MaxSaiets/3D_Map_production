@@ -36,6 +36,13 @@ export function blogContent(article: BlogArticle, locale: string): BlogArticleCo
   return article.content[locale as AppLocale] ?? article.content.en;
 }
 
+/** Локалі зі СПРАВЖНІМ перекладом статті (uk, en + ті de/es/fr/pl, що є).
+ *  Решта локалей показують en-фолбек → noindex + canonical на en (інакше GSC
+ *  «Копія, Google вибрав іншу канонічну» — 59 URL станом на 24.09.2026). */
+export function blogLocales(article: BlogArticle): AppLocale[] {
+  return (["uk", "en", "de", "pl", "fr", "es"] as AppLocale[]).filter((l) => !!article.content[l]);
+}
+
 type BlogIndexMeta = { title: string; description: string; h1: string; intro: string; readLabel: string };
 
 export const BLOG_INDEX_META: Partial<Record<AppLocale, BlogIndexMeta>> = {
