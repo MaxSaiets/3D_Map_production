@@ -82,6 +82,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
     changeFrequency: "monthly" as const,
     priority: 0.7,
     lastmod: WAVE2_LASTMOD,
+    only: districtLocales(o), // лише справжні переклади нагоди
   })),
   { path: "/delivery", changeFrequency: "monthly", priority: 0.4 },
   { path: "/contacts", changeFrequency: "yearly", priority: 0.3 },

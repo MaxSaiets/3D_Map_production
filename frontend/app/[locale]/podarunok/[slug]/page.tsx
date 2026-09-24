@@ -16,6 +16,7 @@ import {
   OCCASION_BY_SLUG,
   landingCopy,
   type CityLandingCopy,
+  districtLocales,
 } from "@/lib/cityLanding";
 import { BLOG_ARTICLES, blogContent } from "@/lib/blog";
 
@@ -73,13 +74,19 @@ export async function generateMetadata({
   const r = resolveCopy(params.slug, locale);
   if (!r) return {};
   const path = `/podarunok/${params.slug}`;
+  // Нагоди без перекладу de/pl/fr/es показують en-текст → noindex + canonical на en
+  // (аудит 24.09.2026: 20 дублів title). Міські подарунки перекладені для всіх мов.
+  const occ = OCCASION_BY_SLUG[params.slug];
+  const translated = occ ? districtLocales(occ) : [...locales];
+  const isTranslated = translated.includes(locale);
   const languages: Record<string, string> = {};
-  for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
+  for (const l of locales) if (translated.includes(l)) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
   languages["x-default"] = localeUrl(defaultLocale, path);
   return {
     title: seoTitle(r.c.title),
     description: r.c.description,
-    alternates: { canonical: localeUrl(locale, path), languages },
+    alternates: { canonical: localeUrl(isTranslated ? locale : "en", path), languages },
+    robots: isTranslated ? undefined : { index: false, follow: true },
     openGraph: {
       title: seoTitle(r.c.title),
       description: r.c.description,
