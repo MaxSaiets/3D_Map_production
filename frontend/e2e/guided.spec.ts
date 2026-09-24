@@ -55,11 +55,12 @@ test.describe("Guided /create (простий режим)", () => {
     await expect(cta).toHaveText(/Показати (3D-превʼю|мою 3D-мапу) · безкоштовно/);
     await expect(cta).not.toHaveText(/₴/);
     await expect(flow.getByText(/Друк \d+ ₴ · доставка Новою Поштою по Україні/)).toBeVisible();
-    // F-31: плитки розміру з побутовим порівнянням і ділянкою
-    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("як банківська картка");
-    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("≈560 м");
-    // Орієнтир «як це працює» — щоб було зрозуміло, що робить рамка на карті
-    await expect(flow.getByText(/рамка на карті = що надрукуємо/)).toBeVisible();
+    // F-31 (24.09: компактний рядок): обраний розмір — з побутовим порівнянням і ділянкою
+    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toHaveAttribute("aria-checked", "true");
+    await expect(flow.getByTestId("size-summary")).toContainText("як банківська картка");
+    await expect(flow.getByTestId("size-summary")).toContainText("≈560 м");
+    // Що робить рамка на карті — підказка під вибором форми
+    await expect(flow.getByText(/Контур одразу видно на карті/)).toBeVisible();
   });
 
   test("deep-link ?city=Lviv лишає простий режим і одразу ставить місце", async ({ page }) => {
@@ -221,29 +222,52 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота рельєфу");
     await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота будинків");
     // Довільний розмір: 125 мм → ціна лінійно між L(630) і XL(770) = 680 + рельєф 85 = 765
+    // 24.09: поле «Свій» — у САНТИМЕТРАХ, одразу поруч із пресетами.
     const input = flow.getByTestId("size-input");
-    await input.fill("125");
+    await input.fill("12.5");
     await input.press("Enter");
     await expect(flow.getByTestId("custom-size-price")).toHaveText("765 ₴");
-    await expect(flow.getByTestId("custom-size")).toContainText("12.5 см · ділянка ≈875 м");
+    await expect(flow.getByTestId("size-summary")).toContainText("ділянка на карті ≈875 м");
     await expect(flow.getByText(/Друк 765 ₴/)).toBeVisible();
-    // Пресет повертає поле до 80
+    // Пресет повертає поле до 8 см
     await flow.getByRole("radio", { name: /M · 8 см/ }).click();
-    await expect(input).toHaveValue("80");
-    // Поза межами → кламп до 200
+    await expect(input).toHaveValue("8");
+    // Поза межами → кламп до 20 см
     await input.fill("999");
     await input.press("Enter");
-    await expect(input).toHaveValue("200");
+    await expect(input).toHaveValue("20");
     // Вигляд: вибір висоти рельєфу
     await flow.getByRole("radio", { name: /Виразна/ }).click();
     await expect(flow.getByRole("radio", { name: /Виразна/ })).toHaveAttribute("aria-checked", "true");
     // ?size= приймає будь-яке значення 50–200; map3d — без «Висота рельєфу», flat — «Будинки»/рамка
     await page.goto("/uk/create?product=map3d&size=125");
-    await expect(page.getByTestId("scenario-flow").getByTestId("size-input")).toHaveValue("125");
+    await expect(page.getByTestId("scenario-flow").getByTestId("size-input")).toHaveValue("12.5");
     await expect(page.getByTestId("scenario-flow").getByTestId("guided-sec-3")).not.toContainText("Висота рельєфу");
     await page.goto("/uk/create?product=flat");
     await expect(page.getByTestId("scenario-flow").getByTestId("flat-buildings")).toBeVisible();
     await expect(page.getByTestId("scenario-flow").getByTestId("frame-toggle")).toBeVisible();
+  });
+
+  test("24.09: форма (коло/шестикутник/серце) і частини (панно 2×2 із замками) прямо в кроці 2", async ({ page }) => {
+    await page.goto("/uk/create?product=map3d");
+    const flow = page.getByTestId("scenario-flow");
+    await expect(flow.getByTestId("guided-sec-2")).toContainText("Форма і розмір");
+    // Форма: коло → у рекапі/sticky-підписі зʼявляється «Коло»
+    await flow.getByTestId("shape-circle").click();
+    await expect(flow.getByTestId("shape-circle")).toHaveAttribute("aria-checked", "true");
+    // Одна модель: замки по краях доступні поруч із «Частинами»
+    await expect(flow.getByTestId("single-connectors")).toBeVisible();
+    // Панно 2×2: лише квадрат, ціна = 4 плитки, замки між плитками увімкнено перемикачем
+    await flow.getByTestId("parts-2").click();
+    await expect(flow.getByTestId("shape-rounded")).toHaveAttribute("aria-checked", "true");
+    await expect(flow.getByTestId("shape-circle")).toBeDisabled();
+    await expect(flow.getByTestId("parts-total")).toContainText("Разом ≈16×16 см · 4 × 490 ₴ = 1960 ₴");
+    await expect(flow.getByTestId("parts-connectors")).toBeVisible();
+    await expect(flow.getByTestId("personalize-panno-note")).toBeVisible();
+    // Картка «Панно на стіну» на кроці 1 веде в цей самий guided з 2×2
+    await page.goto("/uk/create");
+    await page.getByTestId("scenario-card-panno").click();
+    await expect(page.getByTestId("scenario-flow").getByTestId("parts-2")).toHaveAttribute("aria-checked", "true");
   });
 
   test("A-6: єдиний вихід «Розширений режим»; ?mode=pro відкриває його одразу", async ({ page }) => {

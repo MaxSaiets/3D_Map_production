@@ -591,7 +591,13 @@ export function SimpleControlPanel({
           );
           if (subTasks.some((st) => st.status === "failed")) {
             setGenerating(false);
-            setError(t("errGen"));
+            // 24.09.2026: і в СТОР — guided показує помилку звідти. Раніше впала одна
+            // плитка панно (напр. Overpass недоступний) → guided мовчки показував
+            // часткове панно без жодного пояснення. Причина — з бекенду для плитки.
+            const failedMsg = subTasks.find((st) => st.status === "failed")?.message;
+            const msg = failedMsg || t("errGen");
+            setError(msg);
+            useGenerationStore.getState().setGenError(msg);
             clearInterval(iv);
           } else if (total > 0 && done === total) {
             setDownloadUrl(`/api/zones/${taskGroupId}/download_all`);

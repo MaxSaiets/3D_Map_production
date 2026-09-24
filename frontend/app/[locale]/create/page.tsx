@@ -280,10 +280,16 @@ export default function Home() {
     { id: "capsule", label: tc("shapeCapsule") },
     { id: "heart", label: tc("shapeHeart") },
   ] as const;
-  const [figureShape, setFigureShape] = useState<string>("rounded");
+  // Форма — у СТОРІ (не useState): її обирає і guided-флоу (ScenarioFlow), і повний UI.
   // Прямокутник за замовчуванням — ГОСТРІ кути 90° (фідбек власника). Тумблер
   // вмикає заокруглення (лише для прямокутника; решта форм заокруглені своєю суттю).
-  const [roundCorners, setRoundCorners] = useState(false);
+  // Панно N×N з guided: рамка = ЗАГАЛЬНА ширина (N плиток × розмір плитки).
+  const panelG = useGenerationStore((st) => st.simplePanelMode) || 1;
+  const figureShape = useGenerationStore((st) => st.figureShape);
+  const setFigureShape = useGenerationStore((st) => st.setFigureShape);
+  const roundCorners = useGenerationStore((st) => st.roundCorners);
+  const setRoundCornersStore = useGenerationStore((st) => st.setRoundCorners);
+  const setRoundCorners = (fn: (v: boolean) => boolean) => setRoundCornersStore(fn(useGenerationStore.getState().roundCorners));
   // GPX: коли трек завантажено, дозволяємо зоні розширюватись понад 1:10000
   // (до GPX_MAX_M_PER_MM) — інакше довгий маршрут фізично не влазив і юзер
   // не міг збільшити зону.
@@ -291,9 +297,12 @@ export default function Home() {
   const mapCrop = useMemo(() => (showHexGrid ? undefined : {
     aspectRatio: 1,
     maxMetersPerMm: gpxLoaded ? GPX_MAX_M_PER_MM : 10,
-    targetMetersPerMm: 6,
-    mapWidthMm: modelSizeMm || 80,
-    mapHeightMm: modelSizeMm || 80,
+    // Guided: 7 м/мм — ТА САМА формула, що zoneForSizeM у ScenarioFlow (картки
+    // розміру «≈560 м» для M). Було 6 → на старті рамка 480 м, а картка писала
+    // 560 м — два різні числа на одному екрані (аудит UX 24.09.2026).
+    targetMetersPerMm: guided ? 7 : 6,
+    mapWidthMm: (modelSizeMm || 80) * panelG,
+    mapHeightMm: (modelSizeMm || 80) * panelG,
     baseShape: figureShape as any,
     cornerRadiusMm: figureShape === "rounded" && roundCorners ? 6 : 0,
     cropToShape: true,
@@ -301,7 +310,7 @@ export default function Home() {
     rotationDeg: cropRotationDeg,
     onRotationChange: handleMapRotation,
     onPolygonChange: (poly: Array<[number, number]>) => setZonePolygonCoords(poly),
-  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape, roundCorners, gpxLoaded]);
+  }), [showHexGrid, modelSizeMm, cropRotationDeg, handleMapRotation, setZonePolygonCoords, figureShape, roundCorners, gpxLoaded, guided, panelG]);
 
   // Clear the rotated polygon when switching INTO grid mode (grid has its own
   // zone logic) so a stale figure crop can't leak into grid generation.

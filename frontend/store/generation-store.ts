@@ -70,6 +70,11 @@ interface GenerationState {
   // sent to the backend as zone_polygon_coords so OSM is cropped to the figure.
   zonePolygonCoords: Array<[number, number]> | null;
   cropRotationDeg: number;
+  // Форма одиночної мапи (прямокутник/коло/шестикутник/серце…) — спільна для
+  // guided-флоу і повного конструктора (раніше жила в useState сторінки й guided
+  // її не бачив: «не все можна вибрати», 24.09.2026). Рамка карти ріже по ній полігон.
+  figureShape: string;
+  roundCorners: boolean;
 
   // D4 GPX: bbox+точки завантаженого треку. Overlay карти центрує зону на
   // треку і малює полілінію; зберігається в store (не event), бо overlay
@@ -191,6 +196,8 @@ interface GenerationState {
   setHexSizeM: (m: number) => void;
   setGridRotationDeg: (d: number) => void;
   setCropRotationDeg: (deg: number) => void;
+  setFigureShape: (shape: string) => void;
+  setRoundCorners: (on: boolean) => void;
   setGenerating: (isGenerating: boolean) => void;
   setTaskGroup: (groupId: string | null, taskIds?: string[], productType?: "map" | "keychain") => void;
   setActiveTaskId: (taskId: string | null) => void;
@@ -294,6 +301,8 @@ const initialState = {
   modelSizeMm: 80.0, // 80мм = 8см за замовчуванням
   zonePolygonCoords: null,
   cropRotationDeg: 0,
+  figureShape: "rounded",
+  roundCorners: false,
   gpxFocus: null,
   simplePanelMode: 0 as const,
   simpleMagnetMode: false,
@@ -423,6 +432,8 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   setHexSizeM: (m) => set({ hexSizeM: m }),
   setGridRotationDeg: (d) => set({ gridRotationDeg: ((d % 360) + 360) % 360 }),
   setCropRotationDeg: (deg) => set({ cropRotationDeg: deg }),
+  setFigureShape: (figureShape) => set({ figureShape }),
+  setRoundCorners: (roundCorners) => set({ roundCorners }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setTaskGroup: (taskGroupId, taskIds, productType = "map") =>
     set((s) => {

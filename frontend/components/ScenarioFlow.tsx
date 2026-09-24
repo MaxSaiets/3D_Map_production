@@ -43,6 +43,17 @@ const QUICK_CITIES: Array<{ uk: string; en: string; lat: number; lon: number }> 
   { uk: "Харків", en: "Kharkiv", lat: 49.9935, lon: 36.2304 },
 ];
 
+/** ФОРМА мапи в guided (24.09.2026, власник: «не повністю все можна вибрати»).
+ *  id = baseShape рамки MapSelector (та сама, що в повному конструкторі) — рамка
+ *  малює контур і шле його полігоном у zone_polygon_coords; бекенд ріже по ньому
+ *  (перевірено локальною генерацією: коло/шестикутник/серце). Магніт — лише квадрат. */
+const GUIDED_SHAPES = [
+  { id: "rounded", key: "shapeSquare", path: "M3 3h18v18H3z" },
+  { id: "circle", key: "shapeCircle", path: "M12 2.5a9.5 9.5 0 1 0 0 19a9.5 9.5 0 1 0 0-19z" },
+  { id: "hexagon", key: "shapeHexagon", path: "M12 2l8.66 5v10L12 22l-8.66-5V7z" },
+  { id: "heart", key: "shapeHeart", path: "M12 21s-8.5-5.3-8.5-11.2A4.8 4.8 0 0 1 12 6.6a4.8 4.8 0 0 1 8.5 3.2C20.5 15.7 12 21 12 21z" },
+] as const;
+
 /** Guided-розмір: будь-яке ребро 50–200 мм (стіл P1 = 256 мм; більше — у розширеному режимі). */
 const SIZE_MIN_MM = 50;
 const SIZE_MAX_MM = 200;
@@ -198,6 +209,13 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     setSimpleFlatBuildings: st.setSimpleFlatBuildings,
     simpleFrame: st.simpleFrame,
     setSimpleFrame: st.setSimpleFrame,
+    figureShape: st.figureShape,
+    setFigureShape: st.setFigureShape,
+    // Панно частинами (24.09.2026): N×N плиток з однієї рамки + пазл-замки на стиках.
+    simplePanelMode: st.simplePanelMode,
+    setSimplePanelMode: st.setSimplePanelMode,
+    simpleSeriesConnectors: st.simpleSeriesConnectors,
+    setSimpleSeriesConnectors: st.setSimpleSeriesConnectors,
   })));
 
   // T-2.1: текстовий лінк «Поділитись» у ГОТОВО-банері — та сама /share/{taskId}
@@ -386,6 +404,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     // ставимо потрібне значення (map3d = без рельєфу, relief = з рельєфом).
     s.setSimpleRelief(id === "relief");
     if (id !== "magnet") s.setModelSizeMm(80);
+    if (id === "magnet") s.setFigureShape("rounded");
+    s.setSimplePanelMode(0);
     s.setSimpleMapLabel("");
     setLabelOn(false);
     setScenario(id);
@@ -463,25 +483,42 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   /** «8 см» / «9.5 см» — без toLocaleString (локаль браузера ≠ локаль сайту в тестах). */
   const sizeCm = (mm: number) => `${Math.round(mm) / 10} см`;
   /** «M · 8 см» для пресету, «9.5 см» для довільного розміру — рекап, sticky-бар, месенджер. */
+  const shapeDef = GUIDED_SHAPES.find((x) => x.id === s.figureShape) ?? GUIDED_SHAPES[0];
+  /** Частини (панно): 1 = одна модель, 2/3 = сітка N×N плиток. Лише для обʼємних мап. */
+  const parts: 1 | 2 | 3 = (scenario === "map3d" || scenario === "relief") && s.simplePanelMode > 0 ? (s.simplePanelMode as 2 | 3) : 1;
+  const tiles = parts * parts;
+  const setParts = (g: 1 | 2 | 3) => {
+    s.setSimplePanelMode(g === 1 ? 0 : g);
+    // Плитки панно — лише квадратні (сітка ріже прямокутну рамку).
+    if (g > 1) s.setFigureShape("rounded");
+    track("guided_look", { setting: "parts", value: g });
+    syncZoneToSize(s.modelSizeMm, g);
+  };
   const sizeLabel = (mm: number) => {
     const z = SIMPLE_SIZES.find((x) => x.mm === Math.round(mm));
-    return z ? `${z.label} · ${z.cm}` : sizeCm(mm);
+    const size = z ? `${z.label} · ${z.cm}` : sizeCm(mm);
+    // Форма в рекапі — лише коли не квадрат (квадрат = типовий, не шумимо).
+    if (parts > 1) return `${t("partsGrid", { g: parts })} · ${size}`;
+    return shapeDef.id === "rounded" || scenario === "magnet" ? size : `${t(shapeDef.key)} · ${size}`;
   };
   const isCustomSize = !SIMPLE_SIZES.some((z) => z.mm === s.modelSizeMm);
   // Текст числового поля живе окремо: інакше набір «1» → «12» → «120» клампився б
   // на кожній літері. Синхронізуємо зі стором, коли розмір змінили не з поля.
-  const [sizeText, setSizeText] = useState(String(s.modelSizeMm));
-  useEffect(() => { setSizeText(String(s.modelSizeMm)); }, [s.modelSizeMm]);
+  const [sizeText, setSizeText] = useState(String(s.modelSizeMm / 10));
+  useEffect(() => { setSizeText(String(s.modelSizeMm / 10)); }, [s.modelSizeMm]);
   const zoneSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Зона ЇДЕ ЗА РОЗМІРОМ: перецентровуємо навколо поточного центру з масштабом
    *  під нову плитку — інакше S зі старою 800-м зоною ловила червоне «завелика»,
    *  а XL марнувала деталізацію. Лише коли місце вже ОБРАНЕ (інакше ресайзили б
    *  дефолтну київську рамку, якої юзер не торкався). */
-  const syncZoneToSize = (mm: number) => {
+  const syncZoneToSize = (mm: number, g: number = parts) => {
     if (zoneSyncRef.current) { clearTimeout(zoneSyncRef.current); zoneSyncRef.current = null; }
-    const c = placePicked ? s.selectedArea?.getCenter?.() : null;
+    // 24.09.2026: рамку підганяємо ЗАВЖДИ (і дефолтну київську) — інакше після зміни
+    // розміру карта писала одну ділянку, а підказка розміру іншу. Подія з widthM
+    // не вважається «вибором місця» (слухач вище її ігнорує).
+    const c = s.selectedArea?.getCenter?.();
     if (!c) return;
-    window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(mm) } }));
+    window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(mm * g) } }));
   };
   /** Єдиний вхід зміни розміру (пресет / повзунок / поле). `live` = під час
    *  тягнення повзунка: стор оновлюємо одразу (ціна, підпис), зону — з паузою. */
@@ -545,9 +582,11 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const reliefAddon = scenario === "relief" ? MAP_RELIEF_ADDON_UAH : 0;
   // Ціна на CTA: живий quote; fallback — канонічна таблиця mapPrices (без хардкоду).
   // Проміжні розміри (повзунок) — лінійно між тарифами, як і на бекенді.
-  const ctaPriceUah = scenario === "magnet"
+  const tilePriceUah = scenario === "magnet"
     ? (quote?.price ?? MAP_MAGNET_PRICE_UAH)
     : (quote?.price ?? mapPriceForSizeUah(s.modelSizeMm) + reliefAddon);
+  // Панно N×N = N² окремих плиток (quote — за одну).
+  const ctaPriceUah = tilePriceUah * tiles;
 
   // 18.09.2026 (власник: «мало карток і реальні фото — бред»): картки = РЕНДЕРИ моделей
   // (public/showcase/card-r-*, render_product.py з реальних 3MF Львова), а не фото; крок 1 показує
@@ -565,7 +604,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     { id: "flat", img: "card-r-flat", title: t("flatTitle"), desc: t("flatDesc"), price: t("from", { price: disp(basePrice) }) },
     { id: "magnet", img: "card-r-magnet", title: t("magnetTitle"), desc: t("magnetDesc"), price: disp(MAP_MAGNET_PRICE_UAH) },
     { id: "mountain", img: "card-r-mountain", title: t("mountainsTitle"), desc: t("mountainsDesc"), price: t("priceOnRequest"), href: "/mountains" },
-    { id: "panno", img: "card-r-panno", title: t("pannoTitle"), desc: t("pannoDesc"), price: t("from", { price: disp(basePrice * 4) }), href: "/create?series=1" },
+    { id: "panno", img: "card-r-panno", title: t("pannoTitle"), desc: t("pannoDesc"), price: t("from", { price: disp(basePrice * 4) }), href: "" },
     { id: "keychain", img: "card-r-keychain", title: t("keychainTitle"), desc: t("keychainDesc"), price: t("from", { price: disp(KEYCHAIN_PRICE_UAH) }), href: "/keychains" },
     { id: "world", img: "card-r-world", title: t("worldsTitle"), desc: t("worldsDesc"), price: t("priceOnRequest"), href: "/worlds" },
   ];
@@ -677,6 +716,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{c.desc}</span>
                   </span>
                 </>);
+                if (c.id === "panno") {
+                  return <button key={c.id} type="button" onClick={() => { pick("map3d"); s.setSimplePanelMode(2); s.setSimpleSeriesConnectors(true); }} className={cardBtnCls} data-testid="scenario-card-panno">{inner}</button>;
+                }
                 return c.href
                   ? <Link key={c.id} href={c.href} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</Link>
                   : <button key={c.id} type="button" onClick={() => pick(c.id as ScenarioId)} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</button>;
@@ -859,10 +901,6 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               />
             )}
             <Section n={1} title={t("step2Title")}>
-            {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}
-            {!successView && !generatingView && (
-              <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("howItWorks")}</p>
-            )}
             {/* ПОШУК ПРЯМО В ПАНЕЛІ (v2): раніше поле жило лише на карті, а панель
                 давала довгу інструкцію «йдіть шукайте там» — погляд стрибав. Тепер
                 друкуєш адресу тут; та сама подія monadruk:map-goto → автозона. */}
@@ -911,79 +949,163 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               </Section>
             ) : (
               <Section n={2} title={t("sizeTitle")} hint={t("sizeHint")}>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={t("sizeTitle")}>
-                  {SIMPLE_SIZES.map((z) => (
-                    <button
-                      key={z.key}
-                      type="button"
-                      role="radio"
-                      aria-checked={s.modelSizeMm === z.mm}
-                      onClick={() => applySize(z.mm, z.label)}
-                      className={`flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[16px] border px-1.5 py-2 transition ${
-                        s.modelSizeMm === z.mm
-                          ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
-                          : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
-                      }`}
-                    >
-                      <span className="text-[14px] font-bold text-[var(--text-primary)]">{z.label} · {z.cm}</span>
-                      <span className="text-[12.5px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
-                      {/* T-3.3 (F-31): розмір, який можна уявити — побутове порівняння + ділянка. */}
-                      <span className="text-center text-[10.5px] leading-tight text-[var(--text-secondary)]">
-                        {t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ≈{zoneForSizeM(z.mm)} м
-                      </span>
-                    </button>
-                  ))}
+                {/* 24.09.2026 (власник: «щоб одразу кастомний розмір, форма, зʼєднання /
+                    панно частинами — і все зрозуміло»): три компактні рядки замість
+                    високих карток + окремого повзунка. */}
+                <div data-testid="guided-shape">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("shapeLabel")}</p>
+                  <div className="mt-1.5 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label={t("shapeLabel")}>
+                    {GUIDED_SHAPES.map((sh) => {
+                      const active = s.figureShape === sh.id;
+                      const disabled = parts > 1 && sh.id !== "rounded";
+                      return (
+                        <button
+                          key={sh.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          disabled={disabled}
+                          data-testid={`shape-${sh.id}`}
+                          onClick={() => { s.setFigureShape(sh.id); track("guided_look", { setting: "shape", value: sh.id }); }}
+                          className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[14px] border px-1 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                            active
+                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)] text-[var(--accent-strong)]"
+                              : "border-[var(--surface-border)] bg-white/80 text-[var(--text-secondary)] hover:border-[rgba(11,92,87,0.3)]"
+                          }`}
+                        >
+                          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d={sh.path} fill="currentColor" fillOpacity={active ? 0.25 : 0.12} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
+                          <span className="text-[11px] font-semibold leading-tight text-[var(--text-primary)]">{t(sh.key)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]">{parts > 1 ? t("shapeTilesNote") : t("shapeHint")}</p>
                 </div>
-                <div
-                  className={`rounded-[16px] border px-3 py-2.5 transition ${
-                    isCustomSize ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.08)]" : "border-dashed border-[var(--surface-border)] bg-white/60"
-                  }`}
-                  data-testid="custom-size"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12.5px] font-semibold text-[var(--text-primary)]">{t("customSize")}</span>
+
+                <div data-testid="guided-size">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{parts > 1 ? t("tileSizeLabel") : t("sizeLabel")}</p>
                     <span className="text-[13px] font-bold text-[var(--accent-strong)]" data-testid="custom-size-price">{disp(ctaPriceUah)}</span>
                   </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="range"
-                      min={SIZE_MIN_MM}
-                      max={SIZE_MAX_MM}
-                      step={5}
-                      value={Math.min(SIZE_MAX_MM, Math.max(SIZE_MIN_MM, s.modelSizeMm))}
-                      onChange={(e) => applySize(Number(e.target.value), "slider", true)}
-                      onPointerUp={() => syncZoneToSize(s.modelSizeMm)}
-                      onKeyUp={() => syncZoneToSize(s.modelSizeMm)}
-                      aria-label={t("customSize")}
-                      className="h-2 flex-1 cursor-pointer accent-[var(--accent-strong)]"
-                      data-testid="size-slider"
-                    />
-                    <label className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--surface-border)] bg-white/90 px-2.5 py-1.5 focus-within:border-[rgba(11,92,87,0.45)]">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label={t("sizeLabel")}>
+                    {SIMPLE_SIZES.map((z) => {
+                      const active = s.modelSizeMm === z.mm;
+                      return (
+                        <button
+                          key={z.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          aria-label={`${z.label} · ${z.cm} · ${disp(z.price + reliefAddon)}`}
+                          onClick={() => applySize(z.mm, z.label)}
+                          className={`inline-flex min-h-10 flex-col items-center justify-center rounded-[14px] border px-2.5 py-1 leading-tight transition ${
+                            active
+                              ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
+                              : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                          }`}
+                        >
+                          <span className="text-[12.5px] font-bold text-[var(--text-primary)]">{z.cm}</span>
+                          <span className="text-[10.5px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
+                        </button>
+                      );
+                    })}
+                    {/* Свій розмір — ОДРАЗУ поруч з пресетами, у сантиметрах (крок 0,5). */}
+                    <label
+                      className={`inline-flex min-h-10 items-center gap-1 rounded-[14px] border px-2.5 py-1 transition focus-within:border-[rgba(11,92,87,0.5)] ${
+                        isCustomSize ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]" : "border-dashed border-[var(--surface-border)] bg-white/80"
+                      }`}
+                      data-testid="custom-size"
+                    >
+                      <span className="text-[11.5px] font-semibold text-[var(--text-secondary)]">{t("customSizeShort")}</span>
                       <input
                         type="number"
-                        inputMode="numeric"
-                        min={SIZE_MIN_MM}
-                        max={SIZE_MAX_MM}
-                        step={5}
+                        inputMode="decimal"
+                        min={SIZE_MIN_MM / 10}
+                        max={SIZE_MAX_MM / 10}
+                        step={0.5}
                         value={sizeText}
                         onChange={(e) => {
                           setSizeText(e.target.value);
-                          const v = Number(e.target.value);
-                          if (Number.isFinite(v) && v >= SIZE_MIN_MM && v <= SIZE_MAX_MM) applySize(v, "input", true);
+                          const v = Number(e.target.value.replace(",", "."));
+                          if (Number.isFinite(v) && v >= SIZE_MIN_MM / 10 && v <= SIZE_MAX_MM / 10) applySize(v * 10, "input", true);
                         }}
-                        onBlur={() => { const v = Number(sizeText); applySize(Number.isFinite(v) && v > 0 ? v : s.modelSizeMm, "input"); }}
+                        onBlur={() => { const v = Number(sizeText.replace(",", ".")); applySize(Number.isFinite(v) && v > 0 ? v * 10 : s.modelSizeMm, "input"); }}
                         onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                         aria-label={t("customSizeMm")}
-                        className="w-12 bg-transparent text-right text-[13px] font-semibold text-[var(--text-primary)] focus:outline-none"
+                        className="w-11 bg-transparent text-right text-[13px] font-bold text-[var(--text-primary)] focus:outline-none"
                         data-testid="size-input"
                       />
-                      <span className="text-[12px] text-[var(--text-secondary)]">{t("mm")}</span>
+                      <span className="text-[12px] text-[var(--text-secondary)]">{t("cm")}</span>
                     </label>
                   </div>
-                  <p className="mt-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]">
-                    {t("customSizeHint", { cm: sizeCm(s.modelSizeMm), zone: zoneForSizeM(s.modelSizeMm), min: SIZE_MIN_MM / 10, max: SIZE_MAX_MM / 10 })}
+                  <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="size-summary">
+                    {(() => {
+                      const z = SIMPLE_SIZES.find((x) => x.mm === s.modelSizeMm);
+                      const cmp = z ? `${t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ` : "";
+                      return `${cmp}${t("areaApprox", { zone: zoneForSizeM(s.modelSizeMm * parts) })} · ${t("sizeRange", { min: SIZE_MIN_MM / 10, max: SIZE_MAX_MM / 10 })}`;
+                    })()}
                   </p>
                 </div>
+
+                {(scenario === "map3d" || scenario === "relief") && (
+                  <div data-testid="guided-parts">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("partsLabel")}</p>
+                    <div className="mt-1.5 grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t("partsLabel")}>
+                      {([1, 2, 3] as const).map((g) => {
+                        const active = parts === g;
+                        return (
+                          <button
+                            key={g}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            data-testid={`parts-${g}`}
+                            onClick={() => setParts(g)}
+                            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[14px] border px-1 py-1.5 transition ${
+                              active
+                                ? "border-[rgba(11,92,87,0.5)] bg-[rgba(15,118,110,0.12)]"
+                                : "border-[var(--surface-border)] bg-white/80 hover:border-[rgba(11,92,87,0.3)]"
+                            }`}
+                          >
+                            <span className="grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${g}, 7px)` }} aria-hidden="true">
+                              {Array.from({ length: g * g }, (_, i) => <span key={i} className={`h-[7px] w-[7px] rounded-[1.5px] ${active ? "bg-[var(--accent-strong)]" : "bg-[var(--text-secondary)] opacity-50"}`} />)}
+                            </span>
+                            <span className="text-[11.5px] font-semibold leading-tight text-[var(--text-primary)]">{g === 1 ? t("partsOne") : t("partsGrid", { g })}</span>
+                            <span className="text-[10.5px] leading-tight text-[var(--text-secondary)]">{g === 1 ? t("partsOneSub") : t("partsTiles", { n: g * g })}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {parts === 1 && (
+                      <div className="mt-1.5">
+                        {/* Зʼєднувачі (юзер: «немає щоб включити зʼєднувачі») — тепер поруч
+                            із «Частинами», де їх шукають: пази по краях одиночної плитки,
+                            щоб пізніше доставити сусідню. Той самий store-прапор, що в повній панелі. */}
+                        <ToggleChip
+                          on={s.simpleConnector}
+                          label={t("connectors")}
+                          hint={t("connectorsHint")}
+                          onToggle={() => s.setSimpleConnector(!s.simpleConnector)}
+                          testId="single-connectors"
+                        />
+                      </div>
+                    )}
+                    {parts > 1 && (
+                      <div className="mt-1.5 flex flex-col gap-1.5">
+                        <ToggleChip
+                          on={s.simpleSeriesConnectors}
+                          label={t("partsConnect")}
+                          hint={t("partsConnectHint")}
+                          onToggle={() => { s.setSimpleSeriesConnectors(!s.simpleSeriesConnectors); track("guided_look", { setting: "parts_connectors", value: !s.simpleSeriesConnectors }); }}
+                          testId="parts-connectors"
+                        />
+                        <p className="text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="parts-total">
+                          {t("partsTotal", { cm: Math.round(s.modelSizeMm * parts) / 10, n: tiles, tile: disp(tilePriceUah), total: disp(ctaPriceUah) })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Section>
             )}
             {/* ── 3. ВИГЛЯД — лише ті налаштування, що РЕАЛЬНО міняють модель у цьому
@@ -1034,6 +1156,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 напис — емоційне ядро продукту, тепер на видноті. Обидва
                 контроли пишуть у ті САМІ поля стору, що й повний конструктор. */}
             <Section n={4} title={t("personalizeTitle")} hint={t("personalizeHint")}>
+              {parts > 1 ? (
+                <p className="text-[12.5px] leading-snug text-[var(--text-secondary)]" data-testid="personalize-panno-note">{t("personalizePannoNote")}</p>
+              ) : (<>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <button
@@ -1116,27 +1241,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     </button>
                   </div>
                 ))}
-                {/* Зʼєднувачі (юзер: «немає щоб включити зʼєднувачі»): пази по
-                    краях плитки — потім можна доклеїти сусідні. Магніт малий —
-                    не показуємо. Той самий store-прапор, що в повній панелі. */}
-                {scenario !== "magnet" && (
-                  <button
-                    type="button"
-                    aria-pressed={s.simpleConnector}
-                    onClick={() => s.setSimpleConnector(!s.simpleConnector)}
-                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2.5 text-[13px] font-semibold transition ${
-                      s.simpleConnector
-                        ? "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]"
-                        : "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]"
-                    }`}
-                  >
-                    <span aria-hidden>{s.simpleConnector ? "✓" : ""}</span> {t("connectors")}
-                  </button>
-                )}
-                {scenario !== "magnet" && s.simpleConnector && (
-                  <p className="text-[12px] leading-snug text-[var(--text-secondary)]">{t("connectorsHint")}</p>
-                )}
               </div>
+                          </>)}
             </Section>
             {/* C-3: помилка з ПРИЧИНОЮ і діями. Раніше — один загальний рядок
                 «Не вдалося згенерувати», хоча бекенд віддає зрозумілий текст
