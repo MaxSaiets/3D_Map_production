@@ -15,6 +15,7 @@ import { GIFT_ARTICLES_2026 } from "@/lib/blogGifts";
 import { SEO_UA_ARTICLES_2026_A } from "@/lib/blogSeoUa2026a";
 import { SEO_UA_ARTICLES_2026_B } from "@/lib/blogSeoUa2026b";
 import { SEO_UA_ARTICLES_2026_C } from "@/lib/blogSeoUa2026c";
+import { SEO_UA_ARTICLES_2026_D } from "@/lib/blogSeoUa2026d";
 
 export type BlogSection = { h2?: string; p: string[] };
 export type BlogArticleContent = {
@@ -3368,6 +3369,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   ...SEO_UA_ARTICLES_2026_A,
   ...SEO_UA_ARTICLES_2026_B,
   ...SEO_UA_ARTICLES_2026_C,
+  ...SEO_UA_ARTICLES_2026_D,
 ];
 
 // Переклади de/pl/fr/es з окремого файлу (lib/blogI18nExtra.ts) — зливаємо в content,

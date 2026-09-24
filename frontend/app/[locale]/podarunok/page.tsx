@@ -5,6 +5,7 @@ import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES } from "@/lib/cityPages";
 import { occasionFaq, contentLocale } from "@/lib/cityLanding";
+import { BLOG_ARTICLES, blogContent, blogLocales } from "@/lib/blog";
 
 /**
  * Подарункова/під-нагоду посадкова сторінка («3D-мапа та брелок на подарунок»).
@@ -46,6 +47,11 @@ export default async function GiftPage({
   const t = await getTranslations({ locale, namespace: "gift" });
   const isUA = locale === "uk";
   const faq = occasionFaq(contentLocale(locale));
+  // Подарункові статті блогу (нові зверху), лише ті, що мають справжній переклад цією мовою.
+  const giftArticles = BLOG_ARTICLES
+    .filter((a) => /podarun|podaruvaty/.test(a.slug) && blogLocales(a).includes(locale))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 12);
 
   const path = "/podarunok";
   const ld = {
@@ -139,6 +145,26 @@ export default async function GiftPage({
           ))}
         </dl>
       </section>
+
+      {/* 24.09.2026: внутрішні посилання на подарункові статті блогу (сезонні — День
+          захисників, День вчителя, 14 лютого — і нагоди). Лише мови з реальним перекладом. */}
+      {giftArticles.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-[20px] font-semibold">{locale === "uk" ? "Ідеї подарунків" : "Gift ideas"}</h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {giftArticles.map((a) => (
+              <li key={a.slug}>
+                <Link
+                  href={`/blog/${a.slug}`}
+                  className="block rounded-[14px] border border-line-soft bg-white/60 px-4 py-3 text-[14px] font-medium leading-snug text-ink-2 transition hover:border-[var(--accent)] hover:text-ink"
+                >
+                  {blogContent(a, locale).h1}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Подарунок × місто (хвиля 2 programmatic SEO): чіпи на /podarunok/[city].
           Заголовок bilingual-inline — контент цільових сторінок uk/en з lib. */}
