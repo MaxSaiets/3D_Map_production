@@ -1970,7 +1970,12 @@
     "partsConnect": "Unir las baldosas con cierres tipo puzle",
     "partsConnectHint": "En las uniones se imprimen cierres: las baldosas encajan en un solo panel sin pegamento",
     "partsTotal": "Total ≈{cm}×{cm} cm · {n} × {tile} = {total}",
-    "personalizePannoNote": "El marcador de casa y el texto están disponibles para un modelo. Para un panel elige «Un modelo» en el paso 2 o escríbenos y lo añadimos a mano."
+    "personalizePannoNote": "El marcador de casa y el texto están disponibles para un modelo. Para un panel elige «Un modelo» en el paso 2 o escríbenos y lo añadimos a mano.",
+    "productLabel": "Qué imprimimos",
+    "prodShort_map3d": "Ciudad 3D",
+    "prodShort_relief": "Con relieve",
+    "prodShort_flat": "Plana",
+    "prodShort_magnet": "Imán"
   },
   "kcScenario": {
     "stepOf": "Paso {step} de 2",
@@ -2060,7 +2065,8 @@
     "cardCapsuleTitle": "Cápsula con ranura",
     "cardCapsuleDesc": "Llavero ovalado 55×35 con banda ancha para texto",
     "cardTagTitle": "Etiqueta vertical",
-    "cardTagDesc": "Etiqueta fina 35×55 con anilla saliente"
+    "cardTagDesc": "Etiqueta fina 35×55 con anilla saliente",
+    "kcShapeLabel": "Forma del llavero"
   },
   "maket": {
     "backHome": "Inicio",

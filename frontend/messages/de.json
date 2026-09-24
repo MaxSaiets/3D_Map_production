@@ -1970,7 +1970,12 @@
     "partsConnect": "Kacheln mit Puzzle-Verbindern verbinden",
     "partsConnectHint": "An den Nähten werden Verbinder gedruckt — die Kacheln stecken ohne Kleber zu einem Bild zusammen",
     "partsTotal": "Gesamt ≈{cm}×{cm} cm · {n} × {tile} = {total}",
-    "personalizePannoNote": "Haus-Markierung und Text gibt es für ein einzelnes Modell. Für ein Kachelbild wähle in Schritt 2 „Ein Modell“ oder schreib uns — wir ergänzen es von Hand."
+    "personalizePannoNote": "Haus-Markierung und Text gibt es für ein einzelnes Modell. Für ein Kachelbild wähle in Schritt 2 „Ein Modell“ oder schreib uns — wir ergänzen es von Hand.",
+    "productLabel": "Was wir drucken",
+    "prodShort_map3d": "3D-Stadt",
+    "prodShort_relief": "Mit Relief",
+    "prodShort_flat": "Flach",
+    "prodShort_magnet": "Magnet"
   },
   "kcScenario": {
     "stepOf": "Schritt {step} von 2",
@@ -2060,7 +2065,8 @@
     "cardCapsuleTitle": "Kapsel mit Schlitz",
     "cardCapsuleDesc": "Ovaler 55×35-Anhänger mit breitem Schriftband",
     "cardTagTitle": "Vertikaler Tag",
-    "cardTagDesc": "Schlanker 35×55-Tag mit vorstehender Öse"
+    "cardTagDesc": "Schlanker 35×55-Tag mit vorstehender Öse",
+    "kcShapeLabel": "Form des Anhängers"
   },
   "maket": {
     "backHome": "Startseite",

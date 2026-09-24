@@ -1970,7 +1970,12 @@
     "partsConnect": "Join the tiles with puzzle locks",
     "partsConnectHint": "Locks are printed on the seams — the tiles snap into one panel without glue",
     "partsTotal": "Total ≈{cm}×{cm} cm · {n} × {tile} = {total}",
-    "personalizePannoNote": "The home marker and text are available for a single model. For a panel, choose “One model” in step 2 or message us — we'll add it by hand."
+    "personalizePannoNote": "The home marker and text are available for a single model. For a panel, choose “One model” in step 2 or message us — we'll add it by hand.",
+    "productLabel": "What we print",
+    "prodShort_map3d": "3D city",
+    "prodShort_relief": "With relief",
+    "prodShort_flat": "Flat",
+    "prodShort_magnet": "Magnet"
   },
   "kcScenario": {
     "stepOf": "Step {step} of 2",
@@ -2060,7 +2065,8 @@
     "cardCapsuleTitle": "Capsule with slot",
     "cardCapsuleDesc": "Oval 55×35 keychain with a wide label band",
     "cardTagTitle": "Vertical tag",
-    "cardTagDesc": "Slim 35×55 tag with a protruding loop"
+    "cardTagDesc": "Slim 35×55 tag with a protruding loop",
+    "kcShapeLabel": "Keychain shape"
   },
   "maket": {
     "backHome": "Home",

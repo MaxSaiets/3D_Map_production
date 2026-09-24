@@ -17,32 +17,43 @@ test.describe("Guided /create (простий режим)", () => {
     });
   });
 
-  test("крок 1: 8 карток-рендерів (4 мапи + гора/панно/брелок/світ) + список «Що ще ми вміємо»", async ({ page }) => {
+  test("24.09 без кроку 1: одразу конструктор, товар — рядком угорі, «Що ще ми вміємо» внизу", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow).toBeVisible();
-    await expect(flow.getByText("Що створюємо?")).toBeVisible();
-    // 18.09.2026: 8 карток — РЕНДЕРИ моделей (card-r-*), а не фото; 4 сценарії мап + 4 переходи
-    await expect(flow.locator("img")).toHaveCount(8);
-    await expect(flow.locator("img").first()).toHaveAttribute("src", /card-r-/);
-    await expect(flow.getByTestId("scenario-card-mountain")).toHaveAttribute("href", /\/mountains/);
-    await expect(flow.getByTestId("scenario-card-keychain")).toHaveAttribute("href", /\/keychains/);
-    // Власник: «не зрозуміло, які взагалі можливості» → список має бути ВИДИМИЙ
-    // і перелічувати всі інші продукти, а не ховатись у трьох дрібних лінках.
-    await expect(flow.getByText("Що ще ми вміємо")).toBeVisible();
+    // Власник: «перші кроки взагалі не подобаються — прибери»
+    await expect(flow.getByText("Що створюємо?")).toHaveCount(0);
+    await expect(flow.getByText(/Крок \d із 2/)).toHaveCount(0);
+    await expect(flow.getByText("Де ваше місце?")).toBeVisible();
+    const sw = flow.getByTestId("product-switch");
+    await expect(sw.locator("img")).toHaveCount(4);
+    await expect(flow.getByTestId("product-map3d")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("scenario-create")).toBeEnabled();
     const more = flow.getByTestId("scenario-more");
-    await expect(more).toBeVisible();
-    await expect(more.locator("> *")).toHaveCount(3);
-    for (const label of ["Макет квартири з плану", "Готові моделі"]) {
-      await expect(more.getByText(label, { exact: false })).toBeVisible();
-    }
-    await expect(flow.getByTestId("scenario-full")).toBeVisible();
+    await expect(more.locator("a")).toHaveCount(5);
+    await expect(more.locator('a[href*="/keychains"]')).toBeVisible();
+    await expect(more.locator('a[href*="/mountains"]')).toBeVisible();
+  });
+
+  test("24.09 перемикач товару не скидає розмір і частини", async ({ page }) => {
+    await page.goto("/uk/create");
+    const flow = page.getByTestId("scenario-flow");
+    await flow.getByRole("radio", { name: /L · 11 см/ }).click();
+    await flow.getByTestId("parts-2").click();
+    await flow.getByTestId("product-relief").click();
+    await expect(flow.getByTestId("product-relief")).toHaveAttribute("aria-checked", "true");
+    await expect(flow.getByRole("radio", { name: /L · 11 см/ })).toHaveAttribute("aria-checked", "true");
+    await expect(flow.getByTestId("parts-2")).toHaveAttribute("aria-checked", "true");
+    // Магніт — фіксований розмір, без частин
+    await flow.getByTestId("product-magnet").click();
+    await expect(flow.getByText(/Магніт/).first()).toBeVisible();
+    await expect(flow.getByTestId("parts-2")).toHaveCount(0);
   });
 
   test("крок 2: чіп міста → «Місце обрано», CTA безкоштовне, ціна рядком, плитки з порівнянням", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
-    await flow.getByRole("button", { name: /Обʼємна мапа міста/ }).click();
+    await expect(flow.getByTestId("product-map3d")).toHaveAttribute("aria-checked", "true");
     await expect(flow.getByText("Де ваше місце?")).toBeVisible();
     // Примітка: «Місце обрано» може стати true і без чіпа (гео-центрування /api/geo
     // зсуває дефолтну рамку), тому disabled-стан CTA тут НЕ асертимо.
@@ -67,7 +78,7 @@ test.describe("Guided /create (простий режим)", () => {
     await page.goto("/uk/create?city=Lviv");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow).toBeVisible();
-    await expect(flow.getByText("Крок 2 із 2")).toBeVisible();
+    await expect(flow.getByText("Де ваше місце?")).toBeVisible();
     await expect(flow.getByText("Місце обрано")).toBeVisible({ timeout: 10_000 });
     // guided НЕ записано в localStorage як вимкнений
     const guidedFlag = await page.evaluate(() => localStorage.getItem("3dmap_guided_v1"));
@@ -105,7 +116,7 @@ test.describe("Guided /create на телефоні", () => {
   test("sticky-бар з ціною і CTA видно на кроці 2, без горизонтального overflow (F-04)", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
-    await flow.getByRole("button", { name: /Обʼємна мапа міста/ }).click();
+    await expect(flow.getByTestId("product-map3d")).toHaveAttribute("aria-checked", "true");
     await flow.getByRole("button", { name: "Київ", exact: true }).click();
     const bar = page.getByTestId("guided-sticky-bar");
     await expect(bar).toBeVisible();
@@ -156,7 +167,7 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
   test("A-2: ?product=relief відкриває одразу крок 2 з рельєфною мапою", async ({ page }) => {
     await page.goto("/uk/create?product=relief");
     const flow = page.getByTestId("scenario-flow");
-    await expect(flow.getByText("Крок 2 із 2")).toBeVisible();
+    await expect(flow.getByTestId("product-relief")).toHaveAttribute("aria-checked", "true");
     await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("575 ₴");
   });
 
@@ -264,16 +275,12 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await expect(flow.getByTestId("parts-total")).toContainText("Разом ≈16×16 см · 4 × 490 ₴ = 1960 ₴");
     await expect(flow.getByTestId("parts-connectors")).toBeVisible();
     await expect(flow.getByTestId("personalize-panno-note")).toBeVisible();
-    // Картка «Панно на стіну» на кроці 1 веде в цей самий guided з 2×2
-    await page.goto("/uk/create");
-    await page.getByTestId("scenario-card-panno").click();
-    await expect(page.getByTestId("scenario-flow").getByTestId("parts-2")).toHaveAttribute("aria-checked", "true");
   });
 
   test("A-6: єдиний вихід «Розширений режим»; ?mode=pro відкриває його одразу", async ({ page }) => {
     await page.goto("/uk/create");
     const flow = page.getByTestId("scenario-flow");
-    await expect(flow.getByTestId("scenario-full")).toContainText("Розширений режим");
+    await expect(flow.getByRole("button", { name: "Розширений режим (усі налаштування)" })).toBeVisible();
     await expect(flow.getByText("Повний конструктор")).toHaveCount(0);
     await page.goto("/uk/create?mode=pro");
     await expect(page.getByTestId("scenario-flow")).toHaveCount(0);
@@ -411,13 +418,14 @@ test.describe("Guided /keychains — зона за замовчуванням (E
     await page.goto("/uk/keychains");
     const flow = page.getByTestId("kc-scenario-flow");
     await expect(flow).toBeVisible();
-    await flow.getByTestId("kc-scenario-heart-46").click();
+    // 24.09: кроку 1 немає — перша форма обрана одразу
+    await expect(flow.getByTestId("kc-scenario-heart-46")).toHaveAttribute("aria-checked", "true");
     const cta = page.getByTestId("kc-scenario-create");
     await expect(cta).toBeEnabled({ timeout: 20_000 });
     await expect(flow.getByTestId("kc-place-default")).toContainText("Центр Києва");
     // Зміна шаблону не має стирати рамку (скид setSelectedArea(null) прибрано)
-    await flow.getByRole("button", { name: "Назад" }).click();
     await flow.getByTestId("kc-scenario-classic-wide").click();
+    await expect(flow.getByTestId("kc-scenario-classic-wide")).toHaveAttribute("aria-checked", "true");
     await expect(cta).toBeEnabled({ timeout: 20_000 });
   });
 });

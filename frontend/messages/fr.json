@@ -1970,7 +1970,12 @@
     "partsConnect": "Assembler les tuiles avec des attaches puzzle",
     "partsConnectHint": "Des attaches sont imprimées aux jonctions — les tuiles s'emboîtent en un seul tableau, sans colle",
     "partsTotal": "Total ≈{cm}×{cm} cm · {n} × {tile} = {total}",
-    "personalizePannoNote": "Le repère de la maison et le texte sont disponibles pour un modèle unique. Pour un tableau, choisis « Un modèle » à l'étape 2 ou écris-nous — nous l'ajouterons à la main."
+    "personalizePannoNote": "Le repère de la maison et le texte sont disponibles pour un modèle unique. Pour un tableau, choisis « Un modèle » à l'étape 2 ou écris-nous — nous l'ajouterons à la main.",
+    "productLabel": "Ce qu'on imprime",
+    "prodShort_map3d": "Ville 3D",
+    "prodShort_relief": "Avec relief",
+    "prodShort_flat": "Plate",
+    "prodShort_magnet": "Aimant"
   },
   "kcScenario": {
     "stepOf": "Étape {step} sur 2",
@@ -2060,7 +2065,8 @@
     "cardCapsuleTitle": "Capsule à fente",
     "cardCapsuleDesc": "Porte-clés ovale 55×35 avec large bande de texte",
     "cardTagTitle": "Tag vertical",
-    "cardTagDesc": "Tag fin 35×55 avec anneau saillant"
+    "cardTagDesc": "Tag fin 35×55 avec anneau saillant",
+    "kcShapeLabel": "Forme du porte-clés"
   },
   "maket": {
     "backHome": "Accueil",

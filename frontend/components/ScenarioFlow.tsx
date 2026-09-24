@@ -416,6 +416,49 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     if (source === "card") s.setTemplateId(null);
   };
 
+  // 24.09.2026 (власник: «перші кроки взагалі не подобаються — прибери»): кроку 1
+  // з картками більше НЕМАЄ. Без deep-link конструктор одразу відкривається на
+  // обʼємній мапі, а товар перемикається рядком «Що друкуємо» вгорі панелі.
+  // Сценарій виводимо зі стору — чернетка/відновлена задача зберігають свій вибір.
+  const deriveScenario = (): ScenarioId => {
+    const st = useGenerationStore.getState();
+    if (st.simpleFormat === "magnet") return "magnet";
+    if (st.simpleFormat === "flat") return "flat";
+    return st.simpleRelief ? "relief" : "map3d";
+  };
+  const initScenario = () => {
+    import("@/lib/analytics").then((m) => m.track("guided_step", { product: "map", step: 2, source: "auto" })).catch(() => {});
+    s.setShowHexGrid(false);
+    try { localStorage.setItem("3dmap_hex_grid", "0"); } catch { /* ignore */ }
+    s.setPreviewMode(true);
+    const st = useGenerationStore.getState();
+    if (st.simpleFormat === "panno") s.setSimpleFormat("relief3d");
+    setScenario(deriveScenario());
+    // Рамка = розмір зі стору на момент спрацювання (чернетка могла лишити іншу ділянку).
+    if (!st.taskRestored && st.simpleFormat !== "magnet") syncZoneToSize(st.modelSizeMm || 80, st.simplePanelMode || 1);
+  };
+  // Відновлена з localStorage задача приходить асинхронно — підтягуємо її товар.
+  useEffect(() => {
+    if (s.taskRestored) setScenario(deriveScenario());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.taskRestored]);
+  // Перемикач товару: НЕ скидає розмір, напис, форму і частини (на відміну від
+  // старого переходу через картки) — людина лише міняє, що друкуємо.
+  const switchProduct = (id: ScenarioId) => {
+    if (id === scenario) return;
+    import("@/lib/analytics").then((m) => m.track("guided_pick", { product: "map", scenario: id, source: "switch" })).catch(() => {});
+    const st = useGenerationStore.getState();
+    const panel = st.simplePanelMode;
+    s.setSimpleFormat(id === "magnet" ? "magnet" : id === "flat" ? "flat" : "relief3d");
+    if (id === "flat") s.setSimpleFlatAms(true);
+    s.setSimpleRelief(id === "relief");
+    if (id === "magnet") s.setFigureShape("rounded");
+    else if (panel > 0) s.setSimplePanelMode(panel);
+    setScenario(id);
+    s.setTemplateId(null);
+    if (id !== "magnet") syncZoneToSize(st.modelSizeMm || 80, panel || 1);
+  };
+
   // T-3.1 (F-07) + A-2: deep-links. `?product=map3d|relief|flat|magnet` (головна,
   // сторінки нагод) відкриває одразу крок 2 з обраним товаром; `?template=<id>` /
   // `?city=<key>` (SEO-сторінки /maps, галерея шаблонів) — ще й ставить рамку на
@@ -435,7 +478,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
       const lonParam = p.has("lon") ? Number(p.get("lon")) : NaN;
       const hasLatLon = Number.isFinite(latParam) && Number.isFinite(lonParam);
       const prodId = prod && (SCENARIO_IDS as string[]).includes(prod) ? (prod as ScenarioId) : null;
-      if (!prodId && !tplId && !cityKey && !hasLatLon) return;
+      if (!prodId && !tplId && !cityKey && !hasLatLon) { initScenario(); return; }
       let center: [number, number] | undefined;
       let label = "";
       const tpl = tplId ? MAP_TEMPLATES.find((x) => x.id === tplId) : undefined;
@@ -678,80 +721,49 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successView]);
   const dirty = successView && snapshotKey !== null && snapshotKey !== paramsKey;
-  const displayStep = generatingView || successView || scenario !== null ? 2 : 1;
-
-  const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
+  const PRODUCTS: ScenarioId[] = ["map3d", "relief", "flat", "magnet"];
   // "bronze"/"sm" — сирий слот примітива (Button.tsx): повністю бесспокий вигляд,
   // жоден із 4 варіантів його не описує без спотворення, тож весь клас іде через className.
   const moreLinkCls = `rounded-full border border-[var(--surface-border)] bg-white/70 px-2.5 py-1 text-[11.5px] font-semibold text-[var(--text-secondary)] transition hover:border-[rgba(11,92,87,0.4)] hover:text-[var(--text-primary)]`;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur" data-testid="scenario-flow">
-      {/* Шапка: степ-індикатор + назад до сценаріїв */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
-        </span>
-        {scenario !== null && !generatingView && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => { setScenario(null); setStarted(false); }}
-          >
-            <ArrowLeft size={12} /> {t("back")}
-          </Button>
-        )}
+      {/* Шапка: «Що друкуємо» — 4 товари одним рядком (замість кроку 1 з картками).
+          Під час генерації перемикач вимкнено (параметри вже пішли на бекенд). */}
+      <div className="shrink-0 border-b border-[var(--surface-border)] px-3 pb-2.5 pt-2.5" data-testid="product-switch">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+          {successView ? t("readyBadge") : t("productLabel")}
+        </p>
+        <div className="mt-1.5 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label={t("productLabel")}>
+          {PRODUCTS.map((id) => {
+            const c = cards.find((x) => x.id === id)!;
+            const on = scenario === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                disabled={generatingView}
+                onClick={() => switchProduct(id)}
+                data-testid={`product-${id}`}
+                className={`flex flex-col items-center gap-1 rounded-[14px] border px-1 pb-1.5 pt-1 text-center transition disabled:opacity-60 ${on
+                  ? "border-[rgba(11,92,87,0.55)] bg-[rgba(15,118,110,0.1)] shadow-[0_0_0_1px_rgba(11,92,87,0.25)]"
+                  : "border-[var(--surface-border)] bg-white/75 hover:border-[rgba(11,92,87,0.35)]"}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/showcase/${c.img}-400.webp`} alt="" className="aspect-[4/3] w-full rounded-[10px] object-cover" />
+                <span className="text-[11.5px] font-semibold leading-tight text-[var(--text-primary)]">{t(`prodShort_${id}`)}</span>
+                <span className="text-[10.5px] font-semibold leading-none text-[var(--accent-strong)]">{c.price}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {scenario === null ? (
-          /* ── КРОК 1: ЩО СТВОРЮЄМО? ── */
-          <div>
-            <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step1Title")}</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2">
-              {cards.map((c, i) => {
-                const inner = (<>
-                  {/* N-3 (перф): картка 640×480 показується ~150–300 px → 400w за 1×, 640 за 2×
-                      (489→189 КБ на 12 файлів). Перші дві картки — над згином і є LCP-елементом
-                      на /create → eager, решта lazy. eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/showcase/${c.img}-400.webp`}
-                    srcSet={`/showcase/${c.img}-400.webp 1x, /showcase/${c.img}.webp 2x`}
-                    alt={c.title}
-                    loading={i < 2 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                  />
-                  <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
-                    <span className="text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{c.title}</span>
-                    <span className="text-[12px] font-semibold text-[var(--accent-strong)]">{c.price}</span>
-                    <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{c.desc}</span>
-                  </span>
-                </>);
-                if (c.id === "panno") {
-                  return <button key={c.id} type="button" onClick={() => { pick("map3d"); s.setSimplePanelMode(2); s.setSimpleSeriesConnectors(true); }} className={cardBtnCls} data-testid="scenario-card-panno">{inner}</button>;
-                }
-                return c.href
-                  ? <Link key={c.id} href={c.href} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</Link>
-                  : <button key={c.id} type="button" onClick={() => pick(c.id as ScenarioId)} className={cardBtnCls} data-testid={`scenario-card-${c.id}`}>{inner}</button>;
-              })}
-            </div>
-            {/* A-2: крок 1 = вибір ТОВАРУ. Решта можливостей сайту — один компактний
-                рядок лінків (повний блок з описами живе на головній, T-D.6), щоб
-                перший екран конструктора не був мапою сайту з 15 цілей. */}
-            <div className="mt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
-              <div className="mt-2 flex flex-wrap gap-1.5" data-testid="scenario-more">
-                <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
-                <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
-                {/* ПАСТКА: variant="bronze" давав білий текст на білому тлі через className-override →
-                    пігулка виглядала ПОРОЖНЬОЮ (скрін власника 18.09). Тепер явні кольори. */}
-                <button type="button" onClick={() => exitGuided("step1")} data-testid="scenario-full"
-                  className={`${moreLinkCls} !bg-[var(--bronze,#8E6B3D)] !text-white !border-transparent`}>
-                  {t("fullTitle")} · {t("fullDescLong")}
-                </button>
-              </div>
-            </div>
-          </div>
+          <div className="flex h-40 items-center justify-center text-[var(--text-secondary)]"><Loader2 size={20} className="animate-spin" /></div>
         ) : (
           /* ── КРОК 2: ДЕ ВАШЕ МІСЦЕ? + розмір і CTA на тому ж екрані ──
               (карта лишається видимою поруч/вище; рамка зони — інтерактивна) */
@@ -1352,12 +1364,23 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
             >
               {t("advancedSettings")}
             </Button>
+            {/* Інші продукти сайту — один компактний рядок унизу (раніше жили в кроці 1). */}
+            <div className="mt-1" data-testid="scenario-more">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{t("moreTitle")}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Link href="/keychains" className={moreLinkCls}>{t("keychainTitle")}</Link>
+                <Link href="/mountains" className={moreLinkCls}>{t("mountainsTitle")}</Link>
+                <Link href="/worlds" className={moreLinkCls}>{t("worldsTitle")}</Link>
+                <Link href="/maket" className={moreLinkCls}>{t("maketTitle")}</Link>
+                <Link href="/showcase" className={moreLinkCls}>{t("showcaseTitle")}</Link>
+              </div>
+            </div>
           </div>
         )}
       </div>
       {/* F-04: на мобільному ціна + головна дія стану завжди внизу екрана (портал). */}
       <GuidedStickyBar
-        visible={displayStep === 2}
+        visible={scenario !== null}
         label={scenario === "magnet" ? t("magnetTitle") : sizeLabel(s.modelSizeMm)}
         price={disp(ctaPriceUah)}
         busy={generatingView}

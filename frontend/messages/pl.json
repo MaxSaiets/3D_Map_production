@@ -1970,7 +1970,12 @@
     "partsConnect": "Połącz płytki zamkami-puzzlami",
     "partsConnectHint": "Na łączeniach drukujemy zamki — płytki składają się w jeden panel bez kleju",
     "partsTotal": "Razem ≈{cm}×{cm} cm · {n} × {tile} = {total}",
-    "personalizePannoNote": "Znacznik domu i napis są dostępne dla jednego modelu. Dla panelu wybierz „Jeden model” w kroku 2 albo napisz do nas — dodamy ręcznie."
+    "personalizePannoNote": "Znacznik domu i napis są dostępne dla jednego modelu. Dla panelu wybierz „Jeden model” w kroku 2 albo napisz do nas — dodamy ręcznie.",
+    "productLabel": "Co drukujemy",
+    "prodShort_map3d": "3D miasto",
+    "prodShort_relief": "Z reliefem",
+    "prodShort_flat": "Płaska",
+    "prodShort_magnet": "Magnes"
   },
   "kcScenario": {
     "stepOf": "Krok {step} z 2",
@@ -2060,7 +2065,8 @@
     "cardCapsuleTitle": "Kapsuła ze szczeliną",
     "cardCapsuleDesc": "Owalny brelok 55×35 z szerokim pasem na napis",
     "cardTagTitle": "Pionowy tag",
-    "cardTagDesc": "Smukły tag 35×55 z wystającym oczkiem"
+    "cardTagDesc": "Smukły tag 35×55 z wystającym oczkiem",
+    "kcShapeLabel": "Kształt breloka"
   },
   "maket": {
     "backHome": "Strona główna",

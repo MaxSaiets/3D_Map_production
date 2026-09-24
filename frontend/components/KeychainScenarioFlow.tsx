@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Check, Download, Home, MapPin, PenLine, Share2, ShoppingBag, Sliders, X, ShieldCheck } from "lucide-react";
+import { Check, Download, Home, Loader2, MapPin, PenLine, Share2, ShoppingBag, X, ShieldCheck } from "lucide-react";
 import { MapSearchBox } from "@/components/MapSearchBox";
 import { useShallow } from "zustand/react/shallow";
 import { useGenerationStore } from "@/store/generation-store";
@@ -250,13 +250,13 @@ export function KeychainScenarioFlow({
   }, []);
   // Вибір картки = застосувати шаблон тим САМИМ кодом, що повна панель
   // (page.applyTemplate), значення — з KEYCHAIN_TEMPLATES.
-  const pick = (id: string) => {
+  const pick = (id: string, source: "switch" | "auto" = "switch") => {
     const tpl = KEYCHAIN_TEMPLATES.find((k) => k.id === id);
     if (!tpl) return;
-    // Guided-воронка: яку картку-шаблон обирають.
+    // Guided-воронка: яку форму обирають (auto = стартова, без дії людини).
     import("@/lib/analytics").then((m) => {
-      m.track("guided_pick", { product: "keychain", scenario: id });
-      m.track("guided_step", { product: "keychain", step: 2 });
+      if (source === "auto") m.track("guided_step", { product: "keychain", step: 2, source });
+      else m.track("guided_pick", { product: "keychain", scenario: id, source });
     }).catch(() => {});
     onApplyTemplate(tpl.design);
     const def = CARD_DEFS.find((c) => c.tplId === id);
@@ -266,6 +266,14 @@ export function KeychainScenarioFlow({
     if (!autoLabelRef.current && !labelManualRef.current) onLabelChange("");
     setTplId(id);
   };
+
+  // 24.09.2026 (власник: «перші кроки взагалі не подобаються — прибери»): кроку 1
+  // з картками НЕМАЄ — конструктор одразу відкривається з першою формою, а форма
+  // перемикається рядком мініатюр угорі панелі.
+  useEffect(() => {
+    if (tplId === null) pick(CARD_DEFS[0].tplId, "auto");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Deep-link ?lat=&lon= (кабінет: «Створити знову» зі збереженої моделі) —
   // переносить рамку карти на точні координати. Той самий event, що й пошук/
@@ -380,66 +388,46 @@ export function KeychainScenarioFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successView]);
   const dirty = successView && snapshotKey !== null && snapshotKey !== paramsKey;
-  const displayStep = generatingView || successView || tplId !== null ? 2 : 1;
-
-  const cardBtnCls = "group flex flex-col overflow-hidden rounded-[18px] border border-[var(--surface-border)] bg-white/80 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[rgba(11,92,87,0.45)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)]";
   const chipOnCls = "border-[rgba(11,92,87,0.4)] bg-[rgba(15,118,110,0.1)] text-[var(--text-primary)]";
   const chipOffCls = "border-[var(--surface-border)] bg-white/80 text-[var(--text-primary)] hover:border-[rgba(11,92,87,0.35)]";
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[30px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur" data-testid="kc-scenario-flow">
-      {/* Шапка: степ-індикатор + назад до карток */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--surface-border)] px-4 py-3">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          {successView ? t("readyBadge") : t("stepOf", { step: displayStep })}
-        </span>
-        {tplId !== null && !generatingView && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => { setTplId(null); setStarted(false); }}
-          >
-            <ArrowLeft size={12} /> {t("back")}
-          </Button>
-        )}
+      {/* Шапка: «Форма брелока» — 8 мініатюр одним прокручуваним рядком (замість
+          кроку 1 з великими картками). Напис і місце при зміні форми лишаються. */}
+      <div className="shrink-0 border-b border-[var(--surface-border)] pb-2.5 pt-2.5" data-testid="kc-shape-switch">
+        <p className="px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+          {successView ? t("readyBadge") : <>{t("kcShapeLabel")}{tplId ? <span className="normal-case tracking-normal text-[var(--text-primary)]"> · {t(CARD_DEFS.find((c) => c.tplId === tplId)?.titleKey ?? "cardHeartTitle")}</span> : null}</>}
+        </p>
+        <div className="mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:thin]" role="radiogroup" aria-label={t("kcShapeLabel")}>
+          {CARD_DEFS.map((c) => {
+            const on = tplId === c.tplId;
+            return (
+              <button
+                key={c.tplId}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                aria-label={t(c.titleKey)}
+                title={t(c.titleKey)}
+                disabled={generatingView}
+                onClick={() => { if (!on) pick(c.tplId); }}
+                data-testid={`kc-scenario-${c.tplId}`}
+                className={`w-[68px] shrink-0 overflow-hidden rounded-[12px] border transition disabled:opacity-60 ${on
+                  ? "border-[rgba(11,92,87,0.6)] shadow-[0_0_0_2px_rgba(11,92,87,0.25)]"
+                  : "border-[var(--surface-border)] hover:border-[rgba(11,92,87,0.35)]"}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/showcase/${c.img}-400.webp`} alt="" className="aspect-square w-full object-cover" />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {tplId === null && !generatingView && !successView ? (
-          /* ── КРОК 1: ЯКИЙ БРЕЛОК? ── */
-          <div>
-            <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step1Title")}</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2">
-              {CARD_DEFS.map((c, i) => (
-                <button key={c.tplId} type="button" onClick={() => pick(c.tplId)} className={cardBtnCls} data-testid={`kc-scenario-${c.tplId}`}>
-                  {/* N-3 (перф): 400w за 1×, 640 за 2×; перші дві картки над згином → eager.
-                      eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/showcase/${c.img}-400.webp`}
-                    srcSet={`/showcase/${c.img}-400.webp 1x, /showcase/${c.img}.webp 2x`}
-                    alt={t(c.titleKey)}
-                    loading={i < 2 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                  />
-                  <span className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
-                    <span className="text-[13px] font-semibold leading-tight text-[var(--text-primary)]">{t(c.titleKey)}</span>
-                    <span className="text-[12px] font-semibold text-[var(--accent-strong)]">{t("from", { price: disp(priceUah) })}</span>
-                    <span className="text-[11px] leading-snug text-[var(--text-secondary)]">{t(c.descKey)}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-            {/* A-6: розширений режим — один текстовий лінк під картками, не пʼята картка. */}
-            <Button
-              variant="bronze"
-              size="sm"
-              onClick={() => exitGuided("step1")}
-              data-testid="kc-scenario-full"
-              className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] underline-offset-2 hover:text-[var(--text-primary)] hover:underline"
-            >
-              <Sliders size={12} /> {t("cardFullTitle")} — {t("cardFullDesc")}
-            </Button>
-          </div>
+          <div className="flex h-40 items-center justify-center text-[var(--text-secondary)]"><Loader2 size={20} className="animate-spin" /></div>
         ) : (
           /* ── КРОК 2: ДЕ ВАШЕ МІСЦЕ? + напис і CTA на тому ж екрані ──
               (карта і SVG-макет лишаються видимими поруч — усе живе) */
@@ -827,7 +815,7 @@ export function KeychainScenarioFlow({
       </div>
       {/* F-04: sticky ціна + дія стану на мобільному (портал). */}
       <GuidedStickyBar
-        visible={displayStep === 2}
+        visible={tplId !== null || generatingView || successView}
         testId="kc-guided-sticky-bar"
         label={tOrder("prodKeychain")}
         price={disp(priceUah)}
