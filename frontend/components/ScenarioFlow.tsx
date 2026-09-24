@@ -409,6 +409,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     s.setSimpleMapLabel("");
     setLabelOn(false);
     setScenario(id);
+    // Рамка = обраний розмір одразу (чернетка минулого візиту могла лишити іншу ділянку).
+    if (id !== "magnet") syncZoneToSize(80, 1);
     // Nightly cache warming: ручний вибір іншої картки (не той самий deep-link
     // ?template=) — це вже не «шаблонний» перегляд, знімаємо тег.
     if (source === "card") s.setTemplateId(null);
@@ -516,9 +518,18 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
     // 24.09.2026: рамку підганяємо ЗАВЖДИ (і дефолтну київську) — інакше після зміни
     // розміру карта писала одну ділянку, а підказка розміру іншу. Подія з widthM
     // не вважається «вибором місця» (слухач вище її ігнорує).
-    const c = s.selectedArea?.getCenter?.();
-    if (!c) return;
-    window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(mm * g) } }));
+    // ПІСЛЯ перебудови рамки: зміна розміру/частин міняє mapWidthMm → overlay
+    // MapSelector переініціюється і бере розмір зі СТАРОЇ зони (чернетка минулого
+    // візиту = 480 м) — синхронна подія губилась (прод 24.09: панно 2×2 лишалось 480 м).
+    zoneSyncRef.current = setTimeout(() => {
+      zoneSyncRef.current = null;
+      const st = useGenerationStore.getState();
+      const c = st.selectedArea?.getCenter?.();
+      if (!c) return;
+      // Розмір — на момент спрацювання (deep-link ?size= міг змінити його після вибору).
+      const sizeNow = st.modelSizeMm || mm;
+      window.dispatchEvent(new CustomEvent("monadruk:map-goto", { detail: { lat: c.lat, lon: c.lng, widthM: zoneForSizeM(sizeNow * g) } }));
+    }, 300);
   };
   /** Єдиний вхід зміни розміру (пресет / повзунок / поле). `live` = під час
    *  тягнення повзунка: стор оновлюємо одразу (ціна, підпис), зону — з паузою. */
