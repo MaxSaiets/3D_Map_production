@@ -7,6 +7,10 @@
 // сторінки, що можуть ранжуватись самі і лінкують у конструктор/каталог.
 // ──────────────────────────────────────────────────────────────────────────
 import type { AppLocale } from "@/i18n/routing";
+import { BLOG_I18N_EXTRA } from "@/lib/blogI18nExtra";
+import { BLOG_I18N_EXTRA_2 } from "@/lib/blogI18nExtra2";
+import { BLOG_I18N_EXTRA_3 } from "@/lib/blogI18nExtra3";
+import { BLOG_I18N_EXTRA_4 } from "@/lib/blogI18nExtra4";
 import { GIFT_ARTICLES_2026 } from "@/lib/blogGifts";
 import { SEO_UA_ARTICLES_2026_A } from "@/lib/blogSeoUa2026a";
 import { SEO_UA_ARTICLES_2026_B } from "@/lib/blogSeoUa2026b";
@@ -3365,6 +3369,13 @@ export const BLOG_ARTICLES: BlogArticle[] = [
   ...SEO_UA_ARTICLES_2026_B,
   ...SEO_UA_ARTICLES_2026_C,
 ];
+
+// Переклади de/pl/fr/es з окремого файлу (lib/blogI18nExtra.ts) — зливаємо в content,
+// не перетираючи вже наявні переклади в самих статтях.
+for (const a of BLOG_ARTICLES) {
+  const extra = { ...BLOG_I18N_EXTRA[a.slug], ...BLOG_I18N_EXTRA_2[a.slug], ...BLOG_I18N_EXTRA_3[a.slug], ...BLOG_I18N_EXTRA_4[a.slug] };
+  a.content = { ...extra, ...a.content };
+}
 
 export const BLOG_BY_SLUG: Record<string, BlogArticle> = Object.fromEntries(
   BLOG_ARTICLES.map((a) => [a.slug, a]),

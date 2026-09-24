@@ -82,7 +82,7 @@ function copy(kind: GalleryKind, l: L): Copy {
     facts: [
       [u.lbl[0], u.kind[k]],
       [u.lbl[1], price],
-      [u.lbl[2], `3MF, ${FILE_UAH} ₴${l === "uk" ? "" : ` (≈${mapPriceEur(FILE_UAH)} €)`}`],
+      [u.lbl[2], `3MF, ${FILE_UAH} ₴${l === "uk" ? "" : " (≈3 €)"}`], // ≈€ за курсом pricing.json fx (48 ₴/€), як у діалозі купівлі файлу
       [u.lbl[3], u.material],
       [u.lbl[4], u.lead],
     ],
