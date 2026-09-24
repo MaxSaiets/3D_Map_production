@@ -3,7 +3,7 @@ import { BUSINESS } from "@/lib/legal";
 import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
 import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES, blogLocales } from "@/lib/blog";
-import { OCCASION_PAGES, DISTRICT_PAGES } from "@/lib/cityLanding";
+import { OCCASION_PAGES, DISTRICT_PAGES, districtLocales } from "@/lib/cityLanding";
 import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 
 const BASE = "https://monadruk.com";
@@ -62,6 +62,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
     changeFrequency: "monthly" as const,
     priority: 0.65,
     lastmod: WAVE2_LASTMOD,
+    only: districtLocales(d), // лише справжні переклади (решта noindex)
   })),
   // Хвиля 2 (2026-07-13): місто × продукт + лендінги під нагоду
   ...CITY_PAGES.map((c) => ({

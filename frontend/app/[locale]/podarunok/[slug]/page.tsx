@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { BASE, seoTitle, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGES, CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
@@ -77,11 +77,11 @@ export async function generateMetadata({
   for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
   languages["x-default"] = localeUrl(defaultLocale, path);
   return {
-    title: r.c.title,
+    title: seoTitle(r.c.title),
     description: r.c.description,
     alternates: { canonical: localeUrl(locale, path), languages },
     openGraph: {
-      title: r.c.title,
+      title: seoTitle(r.c.title),
       description: r.c.description,
       url: localeUrl(locale, path),
       siteName: "Monadruk",

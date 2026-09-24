@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
+import { BASE, seoTitle, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
-import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq, landingCopy } from "@/lib/cityLanding";
+import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq, landingCopy, districtLocales } from "@/lib/cityLanding";
 
 /**
  * Programmatic SEO рівень 3: район міста (/maps/[city]/[district], 12 × 6 локалей).
@@ -44,13 +44,17 @@ export async function generateMetadata({
     : defaultLocale) as AppLocale;
   const c = landingCopy(r.district.content, contentLocale(locale));
   const path = `/maps/${r.city.slug}/${r.district.slug}`;
+  const translated = districtLocales(r.district);
+  const isTranslated = translated.includes(locale);
   const languages: Record<string, string> = {};
-  for (const l of locales) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
+  for (const l of locales) if (translated.includes(l)) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
   languages["x-default"] = localeUrl(defaultLocale, path);
   return {
-    title: c.title,
+    title: seoTitle(c.title),
     description: c.description,
-    alternates: { canonical: localeUrl(locale, path), languages },
+    // Неперекладена локаль = en-текст → не індексуємо, канонічна — en.
+    alternates: { canonical: localeUrl(isTranslated ? locale : "en", path), languages },
+    robots: isTranslated ? undefined : { index: false, follow: true },
     openGraph: {
       title: c.title,
       description: c.description,

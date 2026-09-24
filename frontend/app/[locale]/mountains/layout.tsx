@@ -12,6 +12,7 @@ export default async function MountainsLayout({ children, params }: { children: 
   const locale = ((routing.locales as readonly string[]).includes(params.locale) ? params.locale : defaultLocale) as AppLocale;
   const t = await getTranslations({ locale, namespace: "mountainsMeta" });
   const nav = await getTranslations({ locale, namespace: "nav" });
+  const tm = await getTranslations({ locale, namespace: "mountains" });
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
@@ -25,6 +26,12 @@ export default async function MountainsLayout({ children, params }: { children: 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
+      {/* H1 у серверному HTML: сама студія (MountainStudio) — ssr:false. */}
+      <header className="mx-auto max-w-[1180px] px-4 pt-8 text-center sm:pt-12">
+        <span className="inline-block rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-secondary)]">{tm("badge")}</span>
+        <h1 className="mt-4 text-3xl font-semibold text-[var(--text-primary)] sm:text-4xl">{tm("title")}</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-[var(--text-secondary)]">{tm("subtitle")}</p>
+      </header>
       {children}
       <section className="mx-auto max-w-[820px] px-5 py-10">
         <h2 className="text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{t("proseH2")}</h2>

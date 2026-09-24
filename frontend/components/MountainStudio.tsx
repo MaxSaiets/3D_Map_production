@@ -143,12 +143,9 @@ export default function MountainStudio() {
   const agentExamples = useMemo(() => [t("agentEx1"), t("agentEx2"), t("agentEx3")], [t]);
 
   return (
-    <div id="main-content" tabIndex={-1} className="mx-auto max-w-[1180px] px-4 py-8 sm:py-12">
-      <header className="mb-6 text-center">
-        <span className="inline-block rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-secondary)]">{t("badge")}</span>
-        <h1 className="mt-4 text-3xl font-semibold text-[var(--text-primary)] sm:text-4xl">{t("title")}</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-[var(--text-secondary)]">{t("subtitle")}</p>
-      </header>
+    <div id="main-content" tabIndex={-1} className="mx-auto max-w-[1180px] px-4 pb-8 pt-6 sm:pb-12">
+      {/* Заголовок (badge + H1 + підзаголовок) рендериться на сервері в mountains/layout.tsx —
+          ця студія ssr:false, і H1 звідси Google у HTML не бачив (аудит 24.09.2026). */}
 
       {/* Вкладки режимів */}
       <div role="tablist" aria-label={t("tabsAria")} className="mx-auto mb-6 flex w-fit flex-wrap justify-center gap-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface-panel)] p-1">

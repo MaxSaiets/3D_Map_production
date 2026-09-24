@@ -65,7 +65,7 @@ const uk: Catalog = {
       title: "3D-мапи міст",
       items: [
         { name: "3D-мапа міста — S (≈5,5 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~5,5 см.", uah: PR.s },
-        { name: "3D-мапа міста — M (≈6 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~8 см.", uah: PR.m },
+        { name: "3D-мапа міста — M (≈8 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~8 см.", uah: PR.m },
         { name: "3D-мапа міста — L (≈11 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~11 см.", uah: PR.l },
         { name: "3D-мапа міста — XL (≈15 см)", desc: "Друкована 3D-модель ділянки міста, ребро ~15 см.", uah: PR.xl },
         { name: "Рельєф місцевості (опція)", desc: "Додаткові висоти ландшафту на будь-якій 3D-мапі.", uah: PR.relief, kind: "addon" },
@@ -123,7 +123,7 @@ const en: Catalog = {
       title: "3D city maps",
       items: [
         { name: "3D city map — S (≈5.5 cm)", desc: "Printed 3D model of a city area, ~5.5 cm edge.", uah: PR.s },
-        { name: "3D city map — M (≈6 cm)", desc: "Printed 3D model of a city area, ~8 cm edge.", uah: PR.m },
+        { name: "3D city map — M (≈8 cm)", desc: "Printed 3D model of a city area, ~8 cm edge.", uah: PR.m },
         { name: "3D city map — L (≈11 cm)", desc: "Printed 3D model of a city area, ~11 cm edge.", uah: PR.l },
         { name: "3D city map — XL (≈15 cm)", desc: "Printed 3D model of a city area, ~15 cm edge.", uah: PR.xl },
         { name: "Terrain relief (option)", desc: "Extra landscape elevation on any 3D map.", uah: PR.relief, kind: "addon" },
@@ -181,7 +181,7 @@ const de: Catalog = {
       title: "3D-Stadtkarten",
       items: [
         { name: "3D-Stadtkarte — S (≈5,5 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~5,5 cm.", uah: PR.s },
-        { name: "3D-Stadtkarte — M (≈6 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~8 cm.", uah: PR.m },
+        { name: "3D-Stadtkarte — M (≈8 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~8 cm.", uah: PR.m },
         { name: "3D-Stadtkarte — L (≈11 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~11 cm.", uah: PR.l },
         { name: "3D-Stadtkarte — XL (≈15 cm)", desc: "Gedrucktes 3D-Modell eines Stadtgebiets, Kante ~15 cm.", uah: PR.xl },
         { name: "Geländerelief (Option)", desc: "Zusätzliche Geländehöhen auf jeder 3D-Karte.", uah: PR.relief, kind: "addon" },
@@ -239,7 +239,7 @@ const es: Catalog = {
       title: "Mapas 3D de ciudades",
       items: [
         { name: "Mapa 3D de ciudad — S (≈5,5 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~5,5 cm.", uah: PR.s },
-        { name: "Mapa 3D de ciudad — M (≈6 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~8 cm.", uah: PR.m },
+        { name: "Mapa 3D de ciudad — M (≈8 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~8 cm.", uah: PR.m },
         { name: "Mapa 3D de ciudad — L (≈11 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~11 cm.", uah: PR.l },
         { name: "Mapa 3D de ciudad — XL (≈15 cm)", desc: "Modelo 3D impreso de una zona urbana, borde ~15 cm.", uah: PR.xl },
         { name: "Relieve del terreno (opción)", desc: "Altitudes adicionales del paisaje en cualquier mapa 3D.", uah: PR.relief, kind: "addon" },
@@ -297,7 +297,7 @@ const fr: Catalog = {
       title: "Cartes 3D de villes",
       items: [
         { name: "Carte 3D de ville — S (≈5,5 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~5,5 cm.", uah: PR.s },
-        { name: "Carte 3D de ville — M (≈6 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~8 cm.", uah: PR.m },
+        { name: "Carte 3D de ville — M (≈8 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~8 cm.", uah: PR.m },
         { name: "Carte 3D de ville — L (≈11 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~11 cm.", uah: PR.l },
         { name: "Carte 3D de ville — XL (≈15 cm)", desc: "Modèle 3D imprimé d'une zone urbaine, arête ~15 cm.", uah: PR.xl },
         { name: "Relief du terrain (option)", desc: "Altitudes supplémentaires du paysage sur toute carte 3D.", uah: PR.relief, kind: "addon" },
@@ -355,7 +355,7 @@ const pl: Catalog = {
       title: "Mapy 3D miast",
       items: [
         { name: "Mapa 3D miasta — S (≈5,5 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~5,5 cm.", uah: PR.s },
-        { name: "Mapa 3D miasta — M (≈6 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~8 cm.", uah: PR.m },
+        { name: "Mapa 3D miasta — M (≈8 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~8 cm.", uah: PR.m },
         { name: "Mapa 3D miasta — L (≈11 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~11 cm.", uah: PR.l },
         { name: "Mapa 3D miasta — XL (≈15 cm)", desc: "Drukowany model 3D fragmentu miasta, krawędź ~15 cm.", uah: PR.xl },
         { name: "Relief terenu (opcja)", desc: "Dodatkowe wysokości krajobrazu na dowolnej mapie 3D.", uah: PR.relief, kind: "addon" },

@@ -44,6 +44,12 @@ export function landingCopy(content: Partial<Record<AppLocale, CityLandingCopy>>
   return content[cl] ?? content.en!;
 }
 
+/** Локалі зі справжнім перекладом сторінки району (решта = en-фолбек → noindex,
+ *  canonical на en; аудит 24.09.2026: 48 дублів de/pl/fr/es з en-title). */
+export function districtLocales(d: { content: Partial<Record<AppLocale, CityLandingCopy>> }): AppLocale[] {
+  return (["uk", "en", "de", "pl", "fr", "es"] as AppLocale[]).filter((l) => !!d.content[l]);
+}
+
 const nfUk = new Intl.NumberFormat("uk-UA");
 const nfEn = new Intl.NumberFormat("en");
 

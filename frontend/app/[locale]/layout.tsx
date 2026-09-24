@@ -28,6 +28,7 @@ const sans = Manrope({
 });
 const mono = JetBrains_Mono({
   subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap",
+  preload: false, // лише дрібні підписи — не конкурує з LCP за канал (Lighthouse 24.09)
 });
 
 export function generateStaticParams() {

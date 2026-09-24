@@ -4,6 +4,16 @@ import { locales, localeMeta, defaultLocale, routing, type AppLocale } from "./r
 
 export const BASE = "https://monadruk.com";
 
+/**
+ * <title> для SEO-сторінок: суфікс « · Monadruk» (template з layout) додаємо лише
+ * коли заголовок короткий. Довгі (>55) Google однаково обрізає ~на 60 символах —
+ * і першим зникав би саме суфікс, а з ним частина ключових слів (аудит 24.09.2026:
+ * 250 з 1490 title були >70 символів).
+ */
+export function seoTitle(title: string): string | { absolute: string } {
+  return title.length > 55 ? { absolute: title } : title;
+}
+
 /** Absolute URL for a path in a given locale (default locale = no prefix). */
 export function localeUrl(locale: AppLocale, path = "") {
   const clean = path === "/" ? "" : path;

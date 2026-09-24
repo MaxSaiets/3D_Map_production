@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { BASE, localeUrl } from "@/i18n/metadata";
+import { BASE, seoTitle, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { BLOG_ARTICLES, BLOG_BY_SLUG, blogContent, blogIndexMeta, blogLocales } from "@/lib/blog";
@@ -43,7 +43,7 @@ export async function generateMetadata({
   for (const l of locales) if (translated.includes(l)) languages[localeMeta[l].htmlLang] = localeUrl(l, path);
   languages["x-default"] = localeUrl(defaultLocale, path);
   return {
-    title: c.title,
+    title: seoTitle(c.title),
     description: c.description,
     // Неперекладена локаль = en-текст → не індексуємо, канонічна — en-версія.
     alternates: { canonical: localeUrl(isTranslated ? locale : "en", path), languages },
