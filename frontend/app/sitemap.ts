@@ -28,6 +28,7 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   { path: "/maps", changeFrequency: "monthly", priority: 0.8 },
   { path: "/brelok", changeFrequency: "monthly", priority: 0.8 }, // індекс-хаб брелоків (keychain money-path)
   { path: "/panno", changeFrequency: "monthly", priority: 0.8 }, // лендінг «карта на стіну/панно» (найбільший кластер попиту, аудит 16.07)
+  { path: "/3d-model-mista", changeFrequency: "monthly", priority: 0.8, lastmod: new Date("2026-09-25"), only: ["uk", "en"] }, // «купити 3D-модель міста / макет міста» (25.09.2026)
   { path: "/karpaty", changeFrequency: "monthly", priority: 0.8 }, // лендінг «рельєфна/топографічна мапа Карпат» (транзакційний кластер, аудит 16.07)
   { path: "/maket", changeFrequency: "monthly", priority: 0.8 }, // «макет квартири з плану» — новий сервіс, окремий пошуковий кластер
   { path: "/corporate", changeFrequency: "monthly", priority: 0.7 }, // B2B-лендінг «корпоративні подарунки/мерч» (аудит 16.07)

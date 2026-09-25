@@ -64,6 +64,12 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <h1 className="text-[clamp(28px,4vw,46px)] leading-tight">{t("title")}</h1>
       <p className="mt-4 max-w-[640px] text-[15px] leading-relaxed text-ink-2">{t("description")}</p>
+      {/* 25.09.2026: посадкова під «купити 3D-модель / макет міста» (uk+en). */}
+      {(locale === "uk" || locale === "en") && (
+        <Link href="/3d-model-mista" className="mt-4 inline-block text-[14.5px] font-semibold text-[var(--accent-strong)] hover:underline">
+          {locale === "uk" ? "Купити 3D-модель міста: ціни, розміри, доставка →" : "Buy a 3D city model: prices, sizes, delivery →"}
+        </Link>
+      )}
 
       <section className="mt-10 max-w-[680px]">
         <h2 className="text-[20px] font-semibold">{t("h2how")}</h2>
