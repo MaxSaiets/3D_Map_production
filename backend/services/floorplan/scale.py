@@ -330,7 +330,71 @@ def run_ocr(rgb: np.ndarray) -> List[Dict[str, Any]]:
 
     for item in out:
         item["value_m"] = _parse_dimension(item["text"])
-    return out
+    return merge_split_numbers(out)
+
+
+def _box_rect(item: Dict[str, Any]) -> Optional[Tuple[float, float, float, float]]:
+    try:
+        arr = np.asarray(item.get("box"), dtype=float)
+        return float(arr[:, 0].min()), float(arr[:, 1].min()), float(arr[:, 0].max()), float(arr[:, 1].max())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def merge_split_numbers(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Склеює розмір, який OCR розірвав по пробілу-роздільнику тисяч.
+
+    25.09.2026: на зразку /maket «4 980» приходило як два написи «4» і «980», а
+    повернуті «2 530», «2 480» — як «530», «480» (цифра тисяч окремим боксом).
+    Замість 4.98 м голосували 0.98 м, половина розмірів ставала сміттям, і масштаб
+    брався з ширини дверей — квартира виходила до 2× більшою. Правило: бокс з
+    1–2 цифр, що стоїть впритул до боксу з 3 цифр на тій самій лінії (для
+    повернутого тексту — в тому самому стовпці), — це тисячі того ж числа."""
+    used: set = set()
+    merged: List[Dict[str, Any]] = []
+    for j, big in enumerate(items):
+        tb = str(big.get("text", "")).strip()
+        rb = _box_rect(big)
+        if j in used or rb is None or not (tb.isdigit() and len(tb) == 3):
+            continue
+        bx0, by0, bx1, by1 = rb
+        bw, bh = bx1 - bx0, by1 - by0
+        vertical = bh > bw * 1.3
+        best = None
+        for i, small in enumerate(items):
+            if i == j or i in used:
+                continue
+            ts = str(small.get("text", "")).strip()
+            rs = _box_rect(small)
+            if rs is None or not (ts.isdigit() and 1 <= len(ts) <= 2):
+                continue
+            sx0, sy0, sx1, sy1 = rs
+            if vertical:
+                cx_ok = abs((sx0 + sx1) / 2 - (bx0 + bx1) / 2) <= 0.6 * bw
+                gap = max(sy0 - by1, by0 - sy1)          # зазор по вертикалі
+                if cx_ok and gap <= 1.0 * bw:
+                    best = (i, gap)
+            else:
+                cy_ok = abs((sy0 + sy1) / 2 - (by0 + by1) / 2) <= 0.5 * bh
+                gap = bx0 - sx1                         # «4» ліворуч від «980»
+                if cy_ok and -0.6 * bh <= gap <= 1.0 * bh and sx0 < bx0:
+                    best = (i, gap)
+        if best is None:
+            continue
+        i = best[0]
+        small = items[i]
+        rs = _box_rect(small)
+        x0, y0 = min(rs[0], bx0), min(rs[1], by0)
+        x1, y1 = max(rs[2], bx1), max(rs[3], by1)
+        text = f"{str(small['text']).strip()} {tb}"
+        value = _parse_dimension(text)
+        if value is None:
+            continue
+        used.update({i, j})
+        merged.append({"text": text, "box": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
+                       "score": min(float(small.get("score", 0)), float(big.get("score", 0))),
+                       "value_m": value, "merged": True})
+    return [it for k, it in enumerate(items) if k not in used] + merged
 
 
 _OCR_SINGLETON: Dict[str, Any] = {}
@@ -360,7 +424,7 @@ def scale_note_from_ocr(ocr_items: Sequence[Dict[str, Any]]) -> Optional[float]:
 
 
 def _candidate_spans(plan_px: PlanVector
-                     ) -> Dict[str, List[Tuple[float, float, float]]]:
+                     ) -> Dict[str, List[Tuple[float, float, float, float, float]]]:
     """Пари стін по кожній осі: {"x": [(ліва, права, У_СВІТЛІ)], "y": [...]}.
 
     На відміну від `_candidate_distances_px` тут зберігаються САМІ КООРДИНАТИ —
@@ -382,7 +446,7 @@ def _candidate_spans(plan_px: PlanVector
     # тобто ті самі зовнішні стіни, але зсунуті й із нульовою товщиною. Пари з
     # ними давали «у світлі», що насправді дорівнює відстані між ОСЯМИ, — і
     # масштаб виходив на 5% меншим. Осі зовнішніх стін уже є у списку.
-    out: Dict[str, List[Tuple[float, float, float]]] = {"x": [], "y": []}
+    out: Dict[str, List[Tuple[float, float, float, float, float]]] = {"x": [], "y": []}
     for axis, raw in (("x", xs), ("y", ys)):
         # одна координата може прийти від кількох стін — беремо найтовщу
         merged: Dict[float, float] = {}
@@ -395,7 +459,7 @@ def _candidate_spans(plan_px: PlanVector
                 (a, ta), (b, tb) = values[i], values[j]
                 clear = (b - a) - (ta + tb) / 2.0
                 if clear > 4.0:
-                    out[axis].append((a, b, clear))
+                    out[axis].append((a, b, clear, ta, tb))
     return out
 
 
@@ -496,9 +560,16 @@ def from_ocr(ocr_items: Sequence[Dict[str, Any]], plan_px: PlanVector,
     # ── 1. Позиційне зіставлення: число ↔ те, що стоїть під ним ──────────────
     # Гіпотези зберігаємо РАЗОМ із номером числа, яке їх породило: голосувати
     # треба різними числами, а не кількістю гіпотез (див. нижче).
+    # 25.09.2026: КОНВЕНЦІЙ ВИМІРЮВАННЯ КІЛЬКА. Житлові плани забудовників пишуть
+    # розміри «у світлі» (між гранями), робочі креслення й БТІ — між ОСЯМИ стін,
+    # габарит — по зовнішніх гранях. Лише «у світлі» робило креслення з осями
+    # непридатним: числа розходились на 5–15% і не збирали консенсус. Тепер кожна
+    # конвенція голосує ОКРЕМО (змішувати не можна — кожне число підтримало б
+    # усі кластери одразу), а перемагає та, яку підтвердило більше різних чисел.
+    # За рівності — «у світлі» (так було заміряно на планах власника).
     spans = _candidate_spans(plan_px)
-    hypotheses: List[Tuple[float, int]] = []
-    positional = 0
+    conventions = ("clear", "axis", "outer")
+    by_conv: Dict[str, List[Tuple[float, int]]] = {c: [] for c in conventions}
     for idx, item in enumerate(ocr_items):
         v = item.get("value_m")
         if not v:
@@ -507,15 +578,33 @@ def from_ocr(ocr_items: Sequence[Dict[str, Any]], plan_px: PlanVector,
         if geom is None:
             continue
         axis, center = geom
-        for a, b, clear in spans[axis]:
+        for a, b, clear, ta, tb in spans[axis]:
             mid = (a + b) / 2.0
             # напис мусить стояти приблизно посередині виміряного відрізка
             if abs(center - mid) > 0.35 * (b - a):
                 continue
-            s = v / clear                      # розмір у світлі, не між осями
-            if lo <= s <= hi:
-                hypotheses.append((s, idx))
-                positional += 1
+            for conv, length in (("clear", clear), ("axis", b - a), ("outer", (b - a) + (ta + tb) / 2.0)):
+                s = v / length
+                if lo <= s <= hi:
+                    by_conv[conv].append((s, idx))
+
+    def _vote(hyps: List[Tuple[float, int]]) -> Tuple[int, int]:
+        if not hyps:
+            return 0, 0
+        lg = np.log(np.array([h for h, _ in hyps]))
+        ow = np.array([o for _, o in hyps])
+        tol = math.log(1.025)
+        best = (0, 0)
+        for c in lg:
+            inl = np.abs(lg - c) <= tol
+            cand = (int(np.unique(ow[inl]).size), int(inl.sum()))
+            if cand > best:
+                best = cand
+        return best
+
+    scores = {c: _vote(by_conv[c]) for c in conventions}
+    best_conv = max(conventions, key=lambda c: (scores[c][0], c == "clear", scores[c][1]))
+    hypotheses: List[Tuple[float, int]] = list(by_conv[best_conv])
 
     # ── 2. Запасний шлях: якщо написи не лягли (повернутий аркуш, хитрий
     #      макет) — старе зіставлення «всі з усіма» під фізичним обмеженням.

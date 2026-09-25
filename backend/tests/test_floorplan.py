@@ -619,3 +619,50 @@ def test_analyze_survives_rotated_and_photo_like_input():
         ys = [c for wl in r.plan.walls for c in (wl.y1, wl.y2)]
         assert max(xs) - min(xs) > w * 0.6, f"{name}: план обрізано по X"
         assert max(ys) - min(ys) > h * 0.6, f"{name}: план обрізано по Y"
+
+
+def test_split_thousands_are_merged():
+    """25.09.2026: OCR розриває «4 980» на «4» + «980» (і повернуте «2 530» на
+    «2» + «530») — без склеювання голосували 0.98 м замість 4.98 м."""
+    from services.floorplan.scale import merge_split_numbers, _parse_dimension
+
+    def item(text, x0, y0, x1, y1):
+        return {"text": text, "box": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
+                "score": 0.99, "value_m": _parse_dimension(text)}
+
+    items = [
+        item("4", 475, 33, 495, 49), item("980", 488, 31, 539, 52),      # горизонтальний
+        item("530", 26, 343, 51, 394), item("2", 30, 392, 48, 410),       # повернутий
+        item("3 170", 187, 30, 255, 53),                                  # цілий — не чіпати
+    ]
+    values = sorted(round(x["value_m"], 3) for x in merge_split_numbers(items) if x.get("value_m"))
+    assert values == [2.53, 3.17, 4.98]
+
+
+def test_ocr_scale_axis_to_axis_convention():
+    """Робочі креслення міряють між ОСЯМИ стін, а не «у світлі». Раніше такі
+    плани не збирали консенсусу (розкид 5–15%) і масштаб брався з дверей."""
+    from services.floorplan.scale import from_ocr
+
+    t = 30.0
+    walls = [
+        Wall(x1=0.0, y1=0.0, x2=900.0, y2=0.0, thickness_m=t),
+        Wall(x1=900.0, y1=0.0, x2=900.0, y2=600.0, thickness_m=t),
+        Wall(x1=900.0, y1=600.0, x2=0.0, y2=600.0, thickness_m=t),
+        Wall(x1=0.0, y1=600.0, x2=0.0, y2=0.0, thickness_m=t),
+        Wall(x1=300.0, y1=0.0, x2=300.0, y2=600.0, thickness_m=t),
+        Wall(x1=0.0, y1=250.0, x2=300.0, y2=250.0, thickness_m=t),
+    ]
+    plan = PlanVector(walls=walls, image_size_px=(900, 600))
+
+    def label(value, cx, cy, horizontal=True):
+        hw, hh = (30.0, 8.0) if horizontal else (8.0, 30.0)
+        return {"text": str(int(value * 1000)), "value_m": value, "score": 0.99,
+                "box": [[cx - hw, cy - hh], [cx + hw, cy - hh], [cx + hw, cy + hh], [cx - hw, cy + hh]]}
+
+    # істина 0.01 м/px, розміри між осями: 3.00, 6.00, 2.50, 3.50
+    items = [label(3.0, 150, -25), label(6.0, 600, -25),
+             label(2.5, -25, 125, False), label(3.5, -25, 425, False)]
+    candidate = from_ocr(items, plan)
+    assert candidate is not None
+    assert candidate.m_per_px == pytest.approx(0.01, rel=0.03)
