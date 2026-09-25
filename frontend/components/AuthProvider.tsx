@@ -40,10 +40,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!configured) { setLoading(false); return; }
     let cancelled = false;
     let unsub: (() => void) | undefined;
-    subscribeAuthState((u: User | null) => { if (!cancelled) { setUser(u); setLoading(false); } })
-      .then((fn) => { if (cancelled) fn(); else unsub = fn; })
-      .catch(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; unsub?.(); };
+    const start = () => {
+      if (cancelled) return;
+      subscribeAuthState((u: User | null) => { if (!cancelled) { setUser(u); setLoading(false); } })
+        .then((fn) => { if (cancelled) fn(); else unsub = fn; })
+        .catch(() => { if (!cancelled) setLoading(false); });
+    };
+    // 25.09.2026 (Lighthouse mobile головної: TBT 890 мс): Firebase SDK (~93 КБ + iframe)
+    // вантажимо, коли браузер вільний, а не в першу ж мить. Кабінет/адмінка/оплата, де
+    // стан входу потрібен одразу, — без затримки. getIdToken сам чекає authStateReady.
+    const p = typeof window !== "undefined" ? window.location.pathname : "";
+    const urgent = /\/(account|admin|order-success)(\/|$)/.test(p);
+    let idle: number | undefined;
+    let timer: number | undefined;
+    if (urgent) start();
+    else if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idle = (window as unknown as { requestIdleCallback: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback(start, { timeout: 2500 });
+    } else {
+      timer = setTimeout(start, 1500) as unknown as number;
+    }
+    return () => {
+      cancelled = true; unsub?.();
+      if (idle !== undefined) (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idle);
+      if (timer !== undefined) clearTimeout(timer);
+    };
   }, [configured]);
 
   // Успішний вхід → закриваємо модалку і продовжуємо перервану дію.

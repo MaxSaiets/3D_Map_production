@@ -206,6 +206,10 @@ input[type="range"] {
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-up { animation: fadeUp .4s ease both; }
+/* 25.09.2026: перший екран — БЕЗ opacity 0. Chrome не рахує LCP для прозорого елемента,
+   тож fade-up на hero відсував LCP головної до ~4 с (Lighthouse mobile). Лише зсув. */
+@keyframes riseIn { from { transform: translateY(8px); } to { transform: translateY(0); } }
+.rise-in { animation: riseIn .4s ease both; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
 .pulse { animation: pulse 1.8s ease-in-out infinite; }
 

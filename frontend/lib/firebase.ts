@@ -122,6 +122,9 @@ export async function signOutUser() {
 }
 export async function getIdToken(): Promise<string | null> {
   const a = await getFirebaseAuth();
+  // 25.09.2026: чекаємо відновлення збереженої сесії — інакше дія одразу після
+  // завантаження сторінки (або до відкладеної підписки в AuthProvider) йшла без токена.
+  try { await (a as unknown as { authStateReady?: () => Promise<void> } | null)?.authStateReady?.(); } catch { /* ignore */ }
   const user = a?.currentUser;
   if (!user) return null;
   try { return await user.getIdToken(); } catch { return null; }

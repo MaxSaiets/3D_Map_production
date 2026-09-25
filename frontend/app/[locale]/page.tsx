@@ -170,7 +170,7 @@ function Hero() {
   return (
     <section className="border-b border-line-soft">
       <div className="mx-auto grid max-w-[1360px] items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_1.05fr] lg:px-8 lg:py-24">
-        <div className="fade-up">
+        <div className="rise-in">
           <Eyebrow dot>{t("eyebrow")}</Eyebrow>
           <h1 className="mt-6 text-[clamp(44px,6vw,84px)] leading-[1.04]">
             {t("title1")}<br />
