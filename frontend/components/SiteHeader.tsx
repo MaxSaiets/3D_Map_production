@@ -56,6 +56,30 @@ export function LanguageSwitcher({ compact }: { compact?: boolean }) {
   );
 }
 
+/* ---------- Telegram ---------- */
+export const TELEGRAM_URL = "https://t.me/monadruk";
+
+/** Власник (25.09.2026): «завжди в header має бути кнопка телеграм, щоб написати мені».
+ *  Одна кнопка на обидва варіанти шапки; на вузьких екранах — лише іконка (44 px ціль). */
+export function TelegramButton({ testId = "header-telegram", withLabel = false }: { testId?: string; withLabel?: boolean }) {
+  const t = useTranslations("nav");
+  return (
+    <a
+      href={TELEGRAM_URL}
+      target="_blank"
+      rel="noopener"
+      aria-label={t("telegram")}
+      title={`${t("telegram")}: @monadruk`}
+      data-testid={testId}
+      onClick={() => { import("@/lib/analytics").then((m) => m.track("messenger_open", { channel: "tg", from: "header" })).catch(() => {}); }}
+      className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-full border border-[#2AABEE]/40 text-sm font-semibold text-[#1f8fcb] transition hover:border-[#2AABEE] hover:bg-[rgba(42,171,238,0.08)] ${withLabel ? "px-3 xl:px-3.5" : ""}`}
+    >
+      <Send size={16} className="text-[#2AABEE]" />
+      {withLabel && <span className="hidden xl:inline">Telegram</span>}
+    </a>
+  );
+}
+
 /* ---------- Header ---------- */
 type BuilderProps = {
   /** A-1 (2026-09-03): «builder» = один ряд ≤ 56 px для /create і /keychains:
@@ -88,17 +112,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
           {!title && <span className="flex-1" />}
           <div className="flex shrink-0 items-center gap-1.5">
             {/* 08.09: у білдері має бути видимий спосіб написати людині (Telegram). */}
-            <a
-              href="https://t.me/monadruk"
-              target="_blank"
-              rel="noopener"
-              aria-label="Telegram"
-              title="Telegram: @monadruk"
-              data-testid="builder-telegram"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-[#2AABEE] transition hover:border-[#2AABEE]"
-            >
-              <Send size={16} />
-            </a>
+            <TelegramButton testId="builder-telegram" />
             <LanguageSwitcher compact />
             <Link
               href="/account"
@@ -126,10 +140,11 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
 
   return (
     <header className="sticky top-0 z-50 border-b border-line-soft bg-[rgba(244,239,228,0.85)] backdrop-blur">
-      <div className="mx-auto flex max-w-[1360px] items-center justify-between px-5 py-4 lg:px-8">
-        <Link href="/" className="flex min-w-0 shrink items-center gap-2 truncate font-serif text-xl font-semibold tracking-tight text-ink">
-          <Box size={22} className="text-forest" />
-          monadruk
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-2 px-4 py-4 sm:px-5 lg:px-8">
+        <Link href="/" aria-label="monadruk" className="flex min-w-0 shrink items-center gap-2 truncate font-serif text-xl font-semibold tracking-tight text-ink">
+          <Box size={22} className="shrink-0 text-forest" />
+          {/* на ≤420 px текст лого не влазить поруч із Telegram + двома CTA + бургером */}
+          <span className="hidden min-[420px]:inline">monadruk</span>
         </Link>
         {/* Спрощено: лише чіткі ПУНКТИ ПРИЗНАЧЕННЯ (без home-якорів #how/#templates,
             що захаращували глобальне меню). Галерея · Ціни · Брелоки. */}
@@ -144,6 +159,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
           <Link href="/maket" className="hover:text-ink">{t("maket")}</Link>
         </nav>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+          <TelegramButton withLabel />
           <div className="hidden sm:block"><LanguageSwitcher /></div>
           <Link
             href="/account"
@@ -218,6 +234,10 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
               {t("createMap")} <ArrowRight size={15} />
             </Link>
           </div>
+          <a href={TELEGRAM_URL} target="_blank" rel="noopener" onClick={() => setOpen(false)}
+            className="mt-2 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-[#2AABEE]/50 text-sm font-bold text-[#1f8fcb]">
+            <Send size={16} className="text-[#2AABEE]" /> {t("telegram")}
+          </a>
           <div className="mt-3 border-t border-line-soft/60 pt-3"><LanguageSwitcher /></div>
         </nav>
       )}

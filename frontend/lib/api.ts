@@ -286,6 +286,7 @@ export interface MountainSpec {
 }
 export interface AgentAnswer<T> { spec: T; understood: string[]; warnings: string[]; questions: string[]; confidence: number; source: "llm" | "rules" | "user" }
 export interface WorldAgentSpec { shape: string; shapeUk: string; size_mm: number; max_height_mm?: number; roughness?: number; erosion?: number; seed?: number }
+export interface MountainSearchHit { name: string; lat: number; lon: number; source: "preset" | "geocode"; preset_id?: string; area_km?: number; elev?: number; type?: string; display?: string }
 export interface MountainPreview { png: string; elev_min: number; elev_max: number; relief_m: number; scale: number; relief_mm_natural: number; zexag_for_height: number | null; sources: string[] }
 export interface MountainResultSpec {
   mode: "mountain"; place: string; scale: number; zexag: number; height_mm: number; size_mm: number; sources: string[];
@@ -330,6 +331,9 @@ export const api = {
   },
   async mountainsFigures(locale = "uk"): Promise<{ figures: MountainFigure[] }> {
     return (await axios.get(`${API_BASE_URL}/api/mountains/figures`, { params: { locale } })).data;
+  },
+  async mountainsSearch(q: string, locale = "uk"): Promise<{ results: MountainSearchHit[] }> {
+    return (await axios.get(`${API_BASE_URL}/api/mountains/search`, { params: { q, locale } })).data;
   },
   async mountainsAgent(text: string, locale = "uk", base?: MountainSpec | null): Promise<AgentAnswer<MountainSpec>> {
     return (await axios.post(`${API_BASE_URL}/api/mountains/agent`, { text, locale, base: base ?? undefined })).data;

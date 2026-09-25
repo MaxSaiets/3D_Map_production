@@ -142,6 +142,69 @@ def geocode(name: str) -> Optional[dict]:
             "type": x.get("type"), "display": str(x.get("display_name", ""))[:120]}
 
 
+_search_cache: dict[str, tuple[float, list]] = {}
+_PEAK_TYPES = ("peak", "volcano", "ridge", "mountain_range", "saddle", "hill", "cliff", "rock", "glacier", "valley")
+
+
+def search_places(query: str, locale: str = "uk", limit: int = 6) -> list[dict]:
+    """Пошук місця для рядка «Знайти гору» (25.09.2026): спершу пресети (миттєво, без мережі),
+    далі Nominatim — вершини/вулкани/хребти першими, потім решта (місто, озеро — теж валідна
+    ділянка рельєфу). Той самий ліміт 1 запит/с, що й у geocode(), + кеш на годину."""
+    q = " ".join(str(query or "").split())[:80]
+    ql = q.lower()
+    if len(ql) < 2:
+        return []
+    out: list[dict] = []
+    for p in P.PRESETS:
+        names = [n.lower() for n in p["name"].values()] + p["aliases"]
+        if any(ql in n or (len(n) >= 3 and n in ql) for n in names):
+            out.append({"name": p["name"].get(locale) or p["name"]["en"], "lat": p["lat"], "lon": p["lon"], "source": "preset",
+                        "preset_id": p["id"], "area_km": p["area_km"], "elev": p["elev"],
+                        "display": p["country"].get(locale) or p["country"]["en"]})
+    if len(ql) < 3 or len(out) >= limit:
+        return out[:limit]
+    hit = _search_cache.get(ql)
+    if hit and time.time() - hit[0] < 3600:
+        rows = hit[1]
+    else:
+        dt = time.time() - _nominatim_last[0]
+        if dt < 1.1:
+            time.sleep(1.1 - dt)
+        try:
+            r = requests.get("https://nominatim.openstreetmap.org/search",
+                             params={"q": q, "format": "jsonv2", "limit": 10, "accept-language": f"{locale},uk,en"},
+                             headers={"User-Agent": "monadruk-mountains/1.0 (hello@monadruk.com)"}, timeout=10)
+            _nominatim_last[0] = time.time()
+            rows = r.json() if r.status_code == 200 else []
+        except Exception as exc:  # noqa: BLE001
+            print(f"[AGENT] nominatim search failed: {exc}", flush=True)
+            rows = []
+        if len(_search_cache) > 500:
+            _search_cache.clear()
+        _search_cache[ql] = (time.time(), rows)
+    natural = [x for x in rows if x.get("category") == "natural" and x.get("type") in _PEAK_TYPES]
+    # решта — лише географія (місто, область, нацпарк); готелі, вулиці й церкви на часткові
+    # запити («Ай-Пет» → «AJ Hotel») тільки засмічували список
+    rest = [x for x in rows if x not in natural and x.get("category") in ("natural", "place", "boundary", "leisure", "waterway", "landuse", "mountain_pass")]
+    seen = [(o["lat"], o["lon"]) for o in out]
+    for x in natural + rest:
+        try:
+            lat, lon = float(x["lat"]), float(x["lon"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        # ~2 км: та сама вершина з пресета й з OSM або село з однойменною горою поруч — лише раз
+        if not (-85 <= lat <= 85) or any(abs(lat - a) < 0.02 and abs(lon - b) < 0.03 for a, b in seen):
+            continue
+        seen.append((lat, lon))
+        is_peak = x in natural and x.get("type") in ("peak", "volcano", "hill")
+        out.append({"name": str(x.get("name") or x.get("display_name", "")).split(",")[0][:80], "lat": lat, "lon": lon, "source": "geocode",
+                    "type": x.get("type"), "area_km": 4.0 if is_peak else 8.0,
+                    "display": ", ".join(str(x.get("display_name", "")).split(", ")[1:4])[:120]})
+        if len(out) >= limit:
+            break
+    return out
+
+
 # ── парсер правил ────────────────────────────────────────────────────────────
 _NUM = r"(\d+(?:[.,]\d+)?)"
 _CM = re.compile(_NUM + r"\s*(см|cm|сантиметр)", re.I)

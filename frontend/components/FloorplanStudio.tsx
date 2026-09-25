@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Check, Download, Loader2, MousePointer2, Move3d, Pencil, Redo2,
-  Ruler, ShoppingBag, Trash2, Upload, Undo2, DoorOpen, AlertTriangle,
+  Ruler, ShoppingBag, Trash2, Upload, Undo2, DoorOpen, AlertTriangle, Send, Sparkles, FileImage,
 } from "lucide-react";
 import {
   distanceToWall, fileToDataUrl, floorplanApi, medianThickness, MODEL_SIZES_MM,
@@ -51,6 +51,10 @@ const RULER_COLOR = "#c9902f";
 const DOOR_COLOR = "#c96a2f";
 const WINDOW_COLOR = "#2f7fc9";
 const HIT_RADIUS_PX = 12;
+const TG_URL = "https://t.me/monadruk";
+/** Синтетичний план (ml/floorplan/synth.py, seed 11, без підписів кімнат) — щоб людина без
+ *  власного креслення побачила весь шлях план → перевірка → 3D за один клік. */
+const SAMPLE_PLAN_URL = "/maket/sample-plan.png";
 
 export default function FloorplanStudio() {
   const t = useTranslations("maket");
@@ -85,6 +89,8 @@ export default function FloorplanStudio() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<TaskStatus | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [editScale, setEditScale] = useState(false);
 
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -156,7 +162,10 @@ export default function FloorplanStudio() {
       // «reference» і «pdf» приходять із точного джерела — їх можна не чіпати.
       setScaleConfirmed(result.scale.source === "reference" || result.scale.source === "pdf");
       setStage("edit");
-      setTool(result.scale.source === "reference" ? "select" : "ruler");
+      // Раніше тут вмикалась лінійка: людина бачила хрестик замість курсору й не розуміла,
+      // що робити. Тепер інструмент «Обрати», а масштаб — у картці праворуч (площа з договору).
+      setTool("select");
+      setEditScale(false);
       track("maket_analyzed", {
         detector: result.detector,
         walls: result.plan.walls.length,
@@ -168,6 +177,33 @@ export default function FloorplanStudio() {
     } finally {
       setBusy(false);
     }
+  }, []);
+
+  const trySample = useCallback(async () => {
+    if (busy) return;
+    try {
+      const blob = await (await fetch(SAMPLE_PLAN_URL)).blob();
+      track("maket_sample", {});
+      await handleFile(new File([blob], "sample-plan.png", { type: blob.type || "image/png" }));
+    } catch (exception) {
+      setError(exception instanceof Error ? exception.message : String(exception));
+    }
+  }, [busy, handleFile]);
+
+  // Ctrl+V зі скріншотом плану — найшвидший шлях для тих, хто знайшов план в оголошенні.
+  useEffect(() => {
+    if (stage !== "upload") return;
+    const onPaste = (event: ClipboardEvent) => {
+      const file = Array.from(event.clipboardData?.files || []).find((f) => f.type.startsWith("image/") || f.type === "application/pdf");
+      if (file && !busy) { event.preventDefault(); void handleFile(file); }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [stage, busy, handleFile]);
+
+  const startOver = useCallback(() => {
+    setStage("upload"); setAnalysis(null); setPlan(null); setHistory([]); setFuture([]);
+    setTaskId(null); setStatus(null); setRulerLine(null); setSelected(null); setError(null);
   }, []);
 
   // ── Полотно ────────────────────────────────────────────────────────────────
@@ -521,6 +557,7 @@ export default function FloorplanStudio() {
     setMPerPx(Math.sqrt(area / interior));
     setScaleSource("area");
     setScaleConfirmed(true);
+    setEditScale(false);
     setAreaInput("");
     track("maket_scale_set", { source: "area" });
   }, [areaInput, analysis, t]);
@@ -534,6 +571,7 @@ export default function FloorplanStudio() {
     setMPerPx(meters / pixels);
     setScaleSource("reference");
     setScaleConfirmed(true);
+    setEditScale(false);
     setRulerLine(null);
     setTool("select");
     track("maket_scale_set", { source: "reference" });
@@ -632,15 +670,20 @@ export default function FloorplanStudio() {
 
   const download = useCallback(async (format: "3mf" | "stl") => {
     if (!taskId) return;
-    const blob = await api.downloadModel(taskId, format);
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `maket.${format}`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    track("maket_download", { format });
-  }, [taskId]);
+    try {
+      const blob = await api.downloadModel(taskId, format);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `maket.${format}`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      track("maket_download", { format });
+    } catch {
+      // раніше помилка (404/мережа) ковталась — кнопка «нічого не робила»
+      setError(t("downloadFailed"));
+    }
+  }, [taskId, t]);
 
   // ═════════════════════════════════════════════════════════════════════════
   const scaleLabel = t(`scaleSource.${scaleSource}` as never, {}) as string;
@@ -654,13 +697,43 @@ export default function FloorplanStudio() {
         </div>
       )}
 
+      {/* Три кроки згори: людина завжди бачить, де вона і що далі */}
+      <ol className="mb-5 flex items-center justify-center gap-2 text-[13px]" data-testid="maket-steps">
+        {([["upload", t("stepUpload")], ["edit", t("stepCheck")], ["result", t("stepModel")]] as const).map(([id, label], index) => {
+          const order: Record<Stage, number> = { upload: 0, edit: 1, result: 2 };
+          const done = order[stage] > index;
+          const active = stage === id;
+          return (
+            <li key={id} className="flex items-center gap-2">
+              {index > 0 && <span className={`h-px w-6 sm:w-10 ${done || active ? "bg-[var(--forest,#2f6b46)]" : "bg-[var(--line-soft,#e3e0d5)]"}`} />}
+              <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--forest,#2f6b46)] text-white" : done ? "bg-[rgba(46,74,58,0.15)] text-[var(--forest,#2f6b46)]" : "bg-[var(--line-soft,#e3e0d5)] text-[var(--text-secondary,#5a655a)]"}`}>
+                {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+              </span>
+              <span className={active ? "font-semibold text-[var(--text-primary,#1c2320)]" : "hidden text-[var(--text-secondary,#5a655a)] sm:inline"}>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
+
       {stage === "upload" && (
-        <section className="rounded-[28px] border border-[var(--line-soft,#e3e0d5)] bg-white/70 p-8 text-center">
-          <h2 className="text-[22px] font-semibold text-[var(--text-primary,#1c2320)]">{t("uploadTitle")}</h2>
+        <section
+          onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault(); setDragOver(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file && !busy) void handleFile(file);
+          }}
+          className={`rounded-[28px] border-2 border-dashed p-6 text-center transition sm:p-10 ${dragOver ? "border-[var(--forest,#2f6b46)] bg-[rgba(46,74,58,0.06)]" : "border-[var(--line-soft,#e3e0d5)] bg-white/70"}`}
+          data-testid="maket-dropzone"
+        >
+          <FileImage className="mx-auto h-10 w-10 text-[var(--forest,#2f6b46)]" />
+          <h2 className="mt-3 text-[22px] font-semibold text-[var(--text-primary,#1c2320)]">{t("uploadTitle")}</h2>
           <p className="mx-auto mt-2 max-w-[560px] text-[15px] leading-relaxed text-[var(--text-secondary,#5a655a)]">
             {t("uploadHint")}
           </p>
-          <label className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--forest,#2f6b46)] px-7 py-3 text-[15px] font-medium text-white transition hover:opacity-90">
+          <p className="mt-5 text-[13px] text-[var(--text-secondary,#5a655a)]">{t("dropHere")}</p>
+          <label className="mt-2 inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-[var(--forest,#2f6b46)] px-7 py-3 text-[15px] font-medium text-white transition hover:opacity-90">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {busy ? t("analyzing") : t("chooseFile")}
             <input
@@ -675,11 +748,24 @@ export default function FloorplanStudio() {
               }}
             />
           </label>
+          <p className="mt-2 text-[12px] text-[var(--text-secondary,#5a655a)]">{t("formats")}</p>
+
+          <div className="mx-auto mt-6 max-w-[520px] rounded-2xl border border-[var(--line-soft,#e3e0d5)] bg-white/80 p-4">
+            <p className="text-[13px] text-[var(--text-secondary,#5a655a)]">{t("sampleNote")}</p>
+            <button type="button" onClick={() => void trySample()} disabled={busy} data-testid="maket-sample"
+              className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--forest,#2f6b46)] px-5 py-2 text-[14px] font-medium text-[var(--forest,#2f6b46)] transition hover:bg-[rgba(46,74,58,0.06)] disabled:opacity-50">
+              <Sparkles className="h-4 w-4" /> {t("trySample")}
+            </button>
+          </div>
+
           <ul className="mx-auto mt-6 max-w-[520px] space-y-1 text-left text-[13px] text-[var(--text-secondary,#5a655a)]">
             <li>• {t("tipStraight")}</li>
             <li>• {t("tipWhole")}</li>
             <li>• {t("tipDimension")}</li>
           </ul>
+          <a href={TG_URL} target="_blank" rel="noopener" className="mt-4 inline-flex min-h-10 items-center gap-1.5 text-[13px] font-medium text-[var(--text-secondary,#5a655a)] hover:text-[var(--text-primary,#1c2320)]">
+            <Send className="h-3.5 w-3.5 text-[#2AABEE]" /> {t("askUs")}
+          </a>
           {caps && !caps.neural_detector && (
             <p className="mt-4 text-[12px] text-[var(--text-secondary,#5a655a)]">{t("cvOnly")}</p>
           )}
@@ -732,6 +818,10 @@ export default function FloorplanStudio() {
                 className="rounded-full border border-[var(--line-soft,#e3e0d5)] bg-white/70 px-3 py-2 text-[12px] disabled:opacity-40">
                 {t("resetAuto")}
               </button>
+              <button type="button" onClick={startOver}
+                className="ml-auto rounded-full border border-[var(--line-soft,#e3e0d5)] bg-white/70 px-3 py-2 text-[12px]">
+                {t("uploadOther")}
+              </button>
             </div>
 
             <div ref={wrapRef} className="overflow-hidden rounded-[20px] border border-[var(--line-soft,#e3e0d5)] bg-white">
@@ -773,11 +863,14 @@ export default function FloorplanStudio() {
           </div>
 
           <aside className="space-y-5">
-            <div className="rounded-[20px] border border-[var(--line-soft,#e3e0d5)] bg-white/70 p-4">
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1c2320)]">{t("scaleTitle")}</h3>
-              <p className="mt-1 text-[12px] text-[var(--text-secondary,#5a655a)]">{scaleLabel}</p>
+            {/* Масштаб — єдине, що людина МУСИТЬ перевірити (помилку видно лише після друку).
+                Тому картка підсвічена, поки не підтверджено, а найпростіший спосіб (площа з
+                договору) стоїть першим; лінійка — запасний. */}
+            <div data-testid="maket-scale"
+              className={`rounded-[20px] border p-4 ${!scaleConfirmed || editScale ? "border-[#e4d2a8] bg-[#fdf8ec] ring-2 ring-[rgba(201,144,47,0.18)]" : "border-[var(--line-soft,#e3e0d5)] bg-white/70"}`}>
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary,#1c2320)]">{!scaleConfirmed || editScale ? t("scaleNeedTitle") : t("scaleTitle")}</h3>
               {metrics && (
-                <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-primary,#1c2320)]">
+                <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-primary,#1c2320)]">
                   {t("sizeSentence", {
                     w: metrics.width.toFixed(1),
                     h: metrics.height.toFixed(1),
@@ -785,17 +878,15 @@ export default function FloorplanStudio() {
                   })}
                 </p>
               )}
+              <p className="mt-1 text-[12px] text-[var(--text-secondary,#5a655a)]">{scaleLabel}</p>
               {areaProblem && (
                 <p className="mt-2 text-[13px] font-medium text-[#8a2b2b]">{areaProblem}</p>
               )}
-              {!scaleConfirmed ? (
+              {!scaleConfirmed || editScale ? (
                 <div className="mt-3 space-y-2">
-                  <button type="button" onClick={() => setTool("ruler")}
-                    className="w-full rounded-full border border-[var(--forest,#2f6b46)] px-4 py-2 text-[13px] font-medium text-[var(--forest,#2f6b46)]">
-                    {t("setScaleWithRuler")}
-                  </button>
                   {/* Площа з договору — найзручніший спосіб для українця: розміри
                       на скані можуть не читатись, а «61,4 м²» знає кожен. */}
+                  <p className="text-[12.5px] text-[var(--text-primary,#1c2320)]">{t("scaleEasiest")}</p>
                   <div className="flex items-center gap-2">
                     <input
                       inputMode="decimal"
@@ -804,24 +895,37 @@ export default function FloorplanStudio() {
                       onKeyDown={(event) => { if (event.key === "Enter") applyArea(); }}
                       placeholder={t("areaPlaceholder")}
                       aria-label={t("areaLabel")}
-                      className="w-full rounded-lg border border-[var(--line-soft,#e3e0d5)] px-3 py-2 text-[13px]"
+                      data-testid="maket-area"
+                      className="min-h-11 w-full rounded-xl border border-[var(--line-soft,#e3e0d5)] bg-white px-3 py-2 text-[14px]"
                     />
+                    <span className="text-[13px] text-[var(--text-secondary,#5a655a)]">м²</span>
                     <button type="button" onClick={applyArea} disabled={!areaInput.trim()}
-                      className="shrink-0 rounded-full border border-[var(--line-soft,#e3e0d5)] px-3 py-2 text-[13px] disabled:opacity-40">
+                      className="min-h-11 shrink-0 rounded-full bg-[var(--forest,#2f6b46)] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-40">
                       {t("apply")}
                     </button>
                   </div>
                   {areaError && (
                     <p className="text-[12px] font-medium text-[#8a2b2b]">{areaError}</p>
                   )}
-                  <button type="button" onClick={() => { setScaleConfirmed(true); track("maket_scale_accepted", { source: scaleSource }); }}
-                    className="w-full rounded-full bg-[var(--forest,#2f6b46)] px-4 py-2 text-[13px] font-medium text-white">
-                    {t("confirmScale")}
+                  <p className="text-[12.5px] text-[var(--text-secondary,#5a655a)]">
+                    {t("scaleOr")}{" "}
+                    <button type="button" onClick={() => { setTool("ruler"); setSelected(null); }}
+                      className="inline-flex items-center gap-1 font-medium text-[var(--forest,#2f6b46)] underline underline-offset-2">
+                      <Ruler className="h-3.5 w-3.5" /> {t("scaleRulerAlt")}
+                    </button>
+                  </p>
+                  <button type="button" onClick={() => { setScaleConfirmed(true); setEditScale(false); track("maket_scale_accepted", { source: scaleSource }); }}
+                    disabled={Boolean(areaProblem)} data-testid="maket-scale-ok"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-[var(--forest,#2f6b46)] bg-white px-4 py-2 text-[13px] font-medium text-[var(--forest,#2f6b46)] disabled:opacity-40">
+                    <Check className="h-4 w-4" /> {t("scaleLooksRight")}
                   </button>
                 </div>
               ) : (
-                <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--forest,#2f6b46)]">
+                <p className="mt-3 flex items-center gap-1.5 text-[13px] font-medium text-[var(--forest,#2f6b46)]">
                   <Check className="h-4 w-4" /> {t("scaleConfirmed")}
+                  <button type="button" onClick={() => setEditScale(true)} className="ml-auto text-[12px] font-normal text-[var(--text-secondary,#5a655a)] underline underline-offset-2">
+                    {t("changeScale")}
+                  </button>
                 </p>
               )}
             </div>
@@ -880,10 +984,14 @@ export default function FloorplanStudio() {
               </label>
             </div>
 
+            <p className="text-center text-[14px] font-semibold text-[var(--text-primary,#1c2320)]" data-testid="maket-price">
+              {t("priceFrom", { price: floorplanPriceUah(sizeMm) })}
+            </p>
             <button
               type="button"
               onClick={generate}
               disabled={!canGenerate}
+              data-testid="maket-generate"
               className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--forest,#2f6b46)] px-6 py-3.5 text-[15px] font-medium text-white transition hover:opacity-90 disabled:opacity-40"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Move3d className="h-4 w-4" />}

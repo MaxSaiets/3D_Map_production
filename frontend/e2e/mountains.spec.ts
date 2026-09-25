@@ -40,44 +40,61 @@ test.describe("Гори (/mountains)", () => {
     await mockApi(page);
   });
 
-  test("пресет → превʼю → генерація → результат із файлами", async ({ page }) => {
+  test("Говерла обрана одразу → вигляд → генерація → результат із файлами", async ({ page }) => {
     await page.goto("/uk/mountains");
     await expect(page.getByTestId("beta-banner")).toContainText("Тестовий режим");
-    await expect(page.getByTestId("mnt-generate")).toBeDisabled();
-    await page.getByTestId("mnt-preset-hoverla").click();
+    // 25.09: без порожнього стану — перша вершина вже обрана, превʼю й підсумок видно одразу
     await expect(page.getByTestId("mnt-place")).toContainText("Говерла");
     await expect(page.getByTestId("mnt-preview")).toBeVisible();
+    await expect(page.getByTestId("mnt-summary")).toContainText("Говерла · 20×20 см · 1:25 000");
+    await page.getByTestId("mnt-preset-matterhorn").click();
+    await expect(page.getByTestId("mnt-place")).toContainText("Матергорн");
     await page.getByTestId("mnt-fig-add-hiker_wave").click();
-    await expect(page.getByTestId("mnt-fig-list")).toContainText("Альпініст махає рукою");
-    await page.getByTestId("mnt-frame-none").click();
+    await expect(page.getByTestId("mnt-fig-add-hiker_wave")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("mnt-style-bare").click();
+    await page.getByTestId("mnt-advanced").click();
     await expect(page.getByTestId("mnt-frame-none")).toHaveAttribute("aria-checked", "true");
-    await page.getByTestId("mnt-generate").click();
+    await expect(page.getByTestId("mnt-fig-list")).toContainText("Альпініст махає рукою");
+    await page.getByTestId("mnt-generate").first().click();
     await expect(page.getByTestId("mnt-built")).toContainText("Говерла · 1:43 215 · 51 мм");
     await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Друк-файл 3MF/ })).toHaveAttribute("href", /api\/download\/mnt-test-1\?format=3mf/);
     await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Гайд розпису/ })).toBeVisible();
     await expect(page.getByTestId("mnt-order")).toBeVisible();
   });
 
+  test("пошук гори за назвою обирає місце й відкриває мапу", async ({ page }) => {
+    await page.route("**/api/mountains/search**", (r) => r.fulfill({ json: { results: [
+      { name: "Ай-Петрі", lat: 44.45, lon: 34.06, source: "geocode", type: "peak", area_km: 4, display: "Крим, Україна" }] } }));
+    await page.goto("/uk/mountains");
+    await expect(page.getByTestId("mnt-place")).toContainText("Говерла");
+    await page.getByTestId("mnt-search").fill("Ай-Петрі");
+    await page.getByTestId("mnt-search-results").getByText("Ай-Петрі").click();
+    await expect(page.getByTestId("mnt-place")).toContainText("Ай-Петрі");
+    await expect(page.getByTestId("mountain-map")).toBeVisible();
+  });
+
   test("агент: показує «як зрозумів» і заповнює форму лише після «Застосувати»", async ({ page }) => {
     await page.goto("/uk/mountains");
+    await expect(page.getByTestId("mnt-place")).toContainText("Говерла");
+    await page.getByTestId("mnt-agent-toggle").click();
     await page.getByTestId("mnt-agent-input").fill("Говерла 15 см без ободка, скельні боки, скелелаз");
     await page.getByTestId("mnt-agent-run").click();
     const ans = page.getByTestId("mnt-agent-answer");
     await expect(ans).toContainText("Як я зрозумів");
     await expect(ans).toContainText("Без ободка");
     // до «Застосувати» форма НЕ змінена
-    await expect(page.getByTestId("mnt-frame-rounded")).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByTestId("mnt-generate")).toBeDisabled();
+    await expect(page.getByTestId("mnt-style-classic")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("mnt-size-200")).toHaveAttribute("aria-checked", "true");
     await page.getByTestId("mnt-agent-apply").click();
+    await expect(page.getByTestId("mnt-size-150")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("mnt-fig-add-climber_rope")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("mnt-advanced").click();
     await expect(page.getByTestId("mnt-frame-none")).toHaveAttribute("aria-checked", "true");
     await expect(page.getByTestId("mnt-sides-rock")).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByTestId("mnt-size-150")).toHaveAttribute("aria-checked", "true");
     await expect(page.getByTestId("mnt-fig-list")).toContainText("Скелелаз на канаті");
-    await expect(page.getByTestId("mnt-place")).toContainText("Говерла");
-    await expect(page.getByTestId("mnt-generate")).toBeEnabled();
   });
 
-  test("вкладка «Обрати на мапі»: клік ставить центр і показує превʼю", async ({ page }) => {
+  test("«Уточнити на мапі»: клік ставить центр і показує превʼю", async ({ page }) => {
     await page.goto("/uk/mountains");
     await page.getByTestId("mnt-tab-map").click();
     const map = page.getByTestId("mountain-map");

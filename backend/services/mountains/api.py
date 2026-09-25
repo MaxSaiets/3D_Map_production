@@ -4,6 +4,7 @@
 Ендпоїнти:
   GET  /api/mountains/presets?locale=uk     — відомі вершини (з фото-превʼю у /mountains/presets/*.jpg на фронті)
   GET  /api/mountains/figures               — бібліотека фігурок (з ліцензіями)
+  GET  /api/mountains/search?q=&locale=      — рядок «Знайти гору»: пресети + Nominatim
   POST /api/mountains/agent                 — {text, locale, base?} → {spec, understood[], warnings[], questions[], confidence}
   POST /api/mountains/preview               — {lat, lon, area_km, size_mm, height_mm?} → hillshade PNG (data-URL) + цифри
   POST /api/mountains/generate              — {spec} → {task_id}; статус — /api/status/{task_id} (як у решти режимів)
@@ -69,6 +70,17 @@ async def figures(locale: str = "uk"):
                     "min_height_mm": f["min_height_mm"], "max_height_mm": f["max_height_mm"], "license": f.get("license"), "source": f.get("source"),
                     "thumb": f"/mountains/figures/{f['id']}.jpg"})
     return {"figures": out}
+
+
+@router.get("/mountains/search")
+async def search(q: str = "", locale: str = "uk"):
+    """Рядок «Знайти гору»: пресети + Nominatim (див. agent.search_places)."""
+    from .agent import search_places
+    import anyio
+    try:
+        return {"results": await anyio.to_thread.run_sync(lambda: search_places(q[:80], locale[:5]))}
+    except Exception as exc:  # noqa: BLE001
+        traceback.print_exc(); raise HTTPException(502, f"Пошук тимчасово недоступний: {exc}")
 
 
 @router.post("/mountains/agent")
