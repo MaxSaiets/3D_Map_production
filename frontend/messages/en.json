@@ -629,7 +629,7 @@
     "errDownload": "Couldn't download the file ({msg}). Try again in a minute or message us in the chat — we'll send the file manually."
   },
   "mapsMeta": {
-    "title": "3D city maps of Ukraine — pick your city",
+    "title": "3D models of Ukrainian cities — buy a model of your city",
     "description": "Ready 3D city maps of Ukraine for printing: Kyiv, Lviv, Odesa, Kharkiv, Dnipro and 18 more cities. Pick a city and create a tactile 3D district model or a map keychain.",
     "keywords": "3d maps of ukrainian cities, 3d city map ukraine, city map for 3d printing, ukrainian city map keychain",
     "h2how": "How a 3D city map works",
@@ -641,9 +641,9 @@
     "ctaKeychain": "Map keychain"
   },
   "cityPages": {
-    "title": "3D map of {city} — a printable 3D model in 2 minutes",
+    "title": "3D model of {city} — buy a printed city model",
     "description": "3D map of {city}: pick any district in the builder and get a 3D model with real streets and buildings in 2 minutes. Free preview, print-ready 3MF file ≈€3, printed maps ship within Ukraine.",
-    "h1": "3D map of {city}",
+    "h1": "3D model of {city} — a model of your neighbourhood",
     "p1": "A 3D map of {city} is a tactile three-dimensional model of a district: streets, buildings with real heights, parks and rivers from OpenStreetMap data. Pick any district of {city} in the builder — the model is ready in minutes as a 3MF or STL for Bambu Studio or PrusaSlicer.",
     "p2": "No 3D printer? We print the map or a {city} map keychain in eco-friendly Eco PLA and ship across Ukraine. A perfect gift for anyone who loves their city.",
     "ctaMap": "Create a 3D map of {city}",

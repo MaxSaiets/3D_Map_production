@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Instagram, Youtube, Send, Facebook } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { BUSINESS } from "@/lib/legal";
 
@@ -9,8 +9,20 @@ import { BUSINESS } from "@/lib/legal";
    Shared global footer: legal links + ФОП requisites + contacts.
    Extracted from the landing page so every content page (legal, maps, share)
    gets a consistent footer + a way home. */
+// 25.09.2026: підписи двох SEO-посадкових (купити 3D-модель міста, 3D-моделі гір) —
+// інлайн, щоб не чіпати messages/*.json (там паралельні правки іншої сесії).
+const EXTRA: Record<string, { model: string; gory: string }> = {
+  uk: { model: "Купити 3D-модель міста", gory: "3D-моделі гір" },
+  en: { model: "Buy a 3D city model", gory: "3D mountain models" },
+  de: { model: "3D-Stadtmodell kaufen", gory: "3D-Bergmodelle" },
+  pl: { model: "Kup model 3D miasta", gory: "Modele 3D gór" },
+  fr: { model: "Acheter une maquette 3D de ville", gory: "Maquettes 3D de montagnes" },
+  es: { model: "Comprar maqueta 3D de ciudad", gory: "Maquetas 3D de montañas" },
+};
+
 export function SiteFooter() {
   const t = useTranslations("home.footer");
+  const x = EXTRA[useLocale()] ?? EXTRA.en;
   const tNav = useTranslations("nav");
   return (
     <footer className="border-t border-line-soft py-12">
@@ -25,6 +37,7 @@ export function SiteFooter() {
             <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("keychains")}</Link>
             <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("prices")}</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
+            <Link href="/3d-model-mista" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{x.model}</Link>
             <Link href="/brelok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("brelok")}</Link>
             <Link href="/podarunok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("gift")}</Link>
             <Link href="/panno" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("panno")}</Link>
@@ -34,6 +47,7 @@ export function SiteFooter() {
             <Link href="/blog" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("blog")}</Link>
             <Link href="/showcase" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("gallery")}</Link>
             <Link href="/mountains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("mountains")}</Link>
+            <Link href="/gory" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{x.gory}</Link>
             <Link href="/worlds" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("worlds3d")}</Link>
             <Link href="/account" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("account")}</Link>
             <Link href="/delivery" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("delivery")}</Link>
