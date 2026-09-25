@@ -1652,7 +1652,7 @@
     "title": "Tryb testowy.",
     "worlds": "Rzeźba terenu powstaje proceduralnie z Twojego opisu. Kształt można wybrać ręcznie. W sprawie druku lub zamówienia napisz do nas — wycenimy osobno.",
     "maket": "Rozpoznawanie planu wciąż się uczy: przed zamówieniem sprawdź ściany i skalę. Cena makiety liczona osobno.",
-    "mountains": "Prawdziwy teren ze swissALTI3D / Copernicus; figurki w skali pamiątkowej. Druk lub zamówienie — napisz do nas."
+    "mountains": "Prawdziwa rzeźba terenu ze swissALTI3D / Copernicus; figurki ozdobne, nie w skali. Cena druku indywidualna, możemy pomalować — napisz do nas."
   },
   "worlds": {
     "badge": "Generowanie AI",
@@ -2232,7 +2232,7 @@
     "downloadGlb": "GLB to view",
     "editAgain": "Zmień ustawienia",
     "orderTitle": "Zamów wydruk tej góry",
-    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "orderSub": "Cena indywidualna: zależy od rozmiaru, figurek i malowania. Opis i link do 3D zostaną skopiowane — wklej je w czacie.",
     "shareLink": "Share link",
     "shareCopied": "Link copied",
     "msgCopied": "Description copied — paste it into the chat.",
@@ -2268,7 +2268,18 @@
     "etaHint": "Zwykle 20–90 sekund. Model można obracać i zamówić druk.",
     "previewLoading": "Wczytuję teren…",
     "askUs": "Pytania lub druk? Napisz do nas na Telegramie",
-    "worldsLink": "Wymyślona góra? „Światy z opisu” →"
+    "worldsLink": "Wymyślona góra? „Światy z opisu” →",
+    "priceTitle": "Cena indywidualna",
+    "priceIndividual": "Zależy od rozmiaru, figurek i malowania. Napisz do nas — wycenimy w kilka minut.",
+    "paintTitle": "Możemy pomalować",
+    "paintSub": "ręcznie akrylami: las, skały, śnieg — jak prawdziwa góra.",
+    "wantPaint": "Chcę z malowaniem",
+    "msgPaint": "Chcę ręcznie malowaną.",
+    "downloadFreeNote": "Plik do druku po zalogowaniu: 3 góry za darmo na konto.",
+    "downloadLogin": "Zaloguj się, aby pobrać — 3 pliki gór za darmo.",
+    "downloadLeft": "Gotowe! Pozostało darmowych plików gór: {n}.",
+    "downloadLimit": "Darmowe pliki gór wykorzystane. Napisz do nas — wyślemy plik lub wydrukujemy:",
+    "downloadVerify": "Potwierdź e-mail (sprawdź skrzynkę), aby pobierać pliki."
   },
   "agent": {
     "title": "Agent: opisz słowami",

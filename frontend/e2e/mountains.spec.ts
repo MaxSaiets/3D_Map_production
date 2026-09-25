@@ -47,6 +47,8 @@ test.describe("Гори (/mountains)", () => {
     await expect(page.getByTestId("mnt-place")).toContainText("Говерла");
     await expect(page.getByTestId("mnt-preview")).toBeVisible();
     await expect(page.getByTestId("mnt-summary")).toContainText("Говерла · 20×20 см · 1:25 000");
+    await expect(page.getByTestId("mnt-price-info")).toContainText("Ціна індивідуальна");
+    await expect(page.getByTestId("mnt-price-info")).toContainText("Можемо розмалювати");
     await page.getByTestId("mnt-preset-matterhorn").click();
     await expect(page.getByTestId("mnt-place")).toContainText("Матергорн");
     await page.getByTestId("mnt-fig-add-hiker_wave").click();
@@ -57,7 +59,11 @@ test.describe("Гори (/mountains)", () => {
     await expect(page.getByTestId("mnt-fig-list")).toContainText("Альпініст махає рукою");
     await page.getByTestId("mnt-generate").first().click();
     await expect(page.getByTestId("mnt-built")).toContainText("Говерла · 1:43 215 · 51 мм");
-    await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Друк-файл 3MF/ })).toHaveAttribute("href", /api\/download\/mnt-test-1\?format=3mf/);
+    // 25.09: друк-файл — кнопка через вхід (3 гори безкоштовно), а не пряме посилання на /api/download
+    await expect(page.getByTestId("mnt-dl-print")).toBeVisible();
+    await expect(page.getByTestId("mnt-result").locator('a[href*="format=3mf"]')).toHaveCount(0);
+    await expect(page.getByTestId("mnt-dl-note")).toContainText("3 гори безкоштовно");
+    await expect(page.getByTestId("mnt-want-paint")).toBeVisible();
     await expect(page.getByTestId("mnt-result").getByRole("link", { name: /Гайд розпису/ })).toBeVisible();
     await expect(page.getByTestId("mnt-order")).toBeVisible();
   });

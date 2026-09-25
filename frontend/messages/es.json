@@ -1652,7 +1652,7 @@
     "title": "Modo de prueba.",
     "worlds": "El relieve se genera de forma procedural a partir de tu descripción. La forma se puede elegir manualmente. Para imprimir o pedir, escríbenos: lo presupuestamos aparte.",
     "maket": "El reconocimiento del plano aún está aprendiendo: revisa las paredes y la escala antes de pedir. La maqueta se presupuesta aparte.",
-    "mountains": "Relieve real de swissALTI3D / Copernicus; figuras a escala de recuerdo. Para imprimir o pedir, escríbenos."
+    "mountains": "Relieve real de swissALTI3D / Copernicus; figuras decorativas, no a escala. Precio de impresión individual y podemos pintarla — escríbenos."
   },
   "worlds": {
     "badge": "Generación IA",
@@ -2232,7 +2232,7 @@
     "downloadGlb": "GLB to view",
     "editAgain": "Cambiar ajustes",
     "orderTitle": "Pedir la impresión",
-    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "orderSub": "Precio individual: depende del tamaño, las figuras y la pintura. La descripción y el enlace 3D se copian — pégalos en el chat.",
     "shareLink": "Share link",
     "shareCopied": "Link copied",
     "msgCopied": "Description copied — paste it into the chat.",
@@ -2268,7 +2268,18 @@
     "etaHint": "Normalmente 20–90 segundos. Puedes girar el modelo y pedir la impresión.",
     "previewLoading": "Cargando el relieve…",
     "askUs": "¿Dudas o quieres imprimirla? Escríbenos por Telegram",
-    "worldsLink": "¿Una montaña imaginaria? «Mundos desde una descripción» →"
+    "worldsLink": "¿Una montaña imaginaria? «Mundos desde una descripción» →",
+    "priceTitle": "Precio individual",
+    "priceIndividual": "Depende del tamaño, las figuras y la pintura. Escríbenos — te damos precio en minutos.",
+    "paintTitle": "Podemos pintarla",
+    "paintSub": "a mano con acrílico: bosque, roca, nieve — como la montaña real.",
+    "wantPaint": "La quiero pintada",
+    "msgPaint": "La quiero pintada a mano.",
+    "downloadFreeNote": "Archivo de impresión tras iniciar sesión: 3 montañas gratis por cuenta.",
+    "downloadLogin": "Inicia sesión para descargar — 3 archivos de montaña gratis.",
+    "downloadLeft": "¡Listo! Archivos de montaña gratis restantes: {n}.",
+    "downloadLimit": "Has usado tus archivos gratis. Escríbenos — te enviamos el archivo o lo imprimimos:",
+    "downloadVerify": "Confirma tu email (revisa la bandeja) para descargar archivos."
   },
   "agent": {
     "title": "Agente: descríbelo con palabras",

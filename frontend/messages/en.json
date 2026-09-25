@@ -1652,7 +1652,7 @@
     "title": "Test mode.",
     "worlds": "The terrain is generated procedurally from your description. You can pick the shape manually. For printing or an order, message us — we quote it separately.",
     "maket": "Plan recognition is still learning: always check the walls and the scale before ordering. The model is quoted separately.",
-    "mountains": "Real terrain from swissALTI3D / Copernicus; figures are souvenir-scale. For printing or ordering, message us — we quote separately."
+    "mountains": "Real terrain from swissALTI3D / Copernicus; figures are decorative, not to scale. Print price is individual and we can paint it — message us."
   },
   "worlds": {
     "badge": "AI generation",
@@ -2232,7 +2232,7 @@
     "downloadGlb": "GLB to view",
     "editAgain": "Change settings",
     "orderTitle": "Order a print of this mountain",
-    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "orderSub": "Individual price: depends on size, figures and painting. The description and 3D link are copied — just paste them into the chat.",
     "shareLink": "Share link",
     "shareCopied": "Link copied",
     "msgCopied": "Description copied — paste it into the chat.",
@@ -2268,7 +2268,18 @@
     "etaHint": "Usually 20–90 seconds. You can rotate the model and order a print.",
     "previewLoading": "Loading terrain…",
     "askUs": "Questions or want a print? Message us on Telegram",
-    "worldsLink": "Want an imaginary mountain? “Worlds from a description” →"
+    "worldsLink": "Want an imaginary mountain? “Worlds from a description” →",
+    "priceTitle": "Individual price",
+    "priceIndividual": "Depends on size, figures and painting. Message us — we’ll quote in a few minutes.",
+    "paintTitle": "We can paint it",
+    "paintSub": "by hand in acrylic: forest, rock, snow — like the real mountain.",
+    "wantPaint": "I want it painted",
+    "msgPaint": "I’d like it hand-painted.",
+    "downloadFreeNote": "Print file after signing in: 3 mountains free per account.",
+    "downloadLogin": "Sign in to download — 3 mountain files free.",
+    "downloadLeft": "Done! Free mountain files left: {n}.",
+    "downloadLimit": "You’ve used your free mountain files. Message us — we’ll send the file or print it:",
+    "downloadVerify": "Confirm your email (check your inbox) to download files."
   },
   "agent": {
     "title": "Agent: describe it in words",

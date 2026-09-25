@@ -6,13 +6,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Send, Instagram, Share2, Download, Image as ImageIcon, Plus, X, Loader2, MapPin, Search, Sparkles,
-  ChevronDown, Map as MapIcon, SlidersHorizontal, Check, Globe2,
+  ChevronDown, Map as MapIcon, SlidersHorizontal, Check, Globe2, Paintbrush, LogIn,
 } from "lucide-react";
 import {
   api, type MountainSpec, type MountainPreset, type MountainFigure, type MountainPreview, type MountainResultSpec,
   type MountainFigureSpec, type MountainSearchHit,
 } from "@/lib/api";
 import { AgentBox } from "@/components/AgentBox";
+import { useAuth } from "@/components/AuthProvider";
 
 const Model3DViewer = dynamic(() => import("@/components/Model3DViewer"), { ssr: false });
 const MountainMapPicker = dynamic(() => import("@/components/MountainMapPicker"), { ssr: false, loading: () => <div className="h-[300px] animate-pulse rounded-2xl bg-[rgba(15,23,42,0.05)]" /> });
@@ -78,7 +79,11 @@ export default function MountainStudio() {
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ glb: string; print: string | null; spec: MountainResultSpec | null } | null>(null);
+  const [result, setResult] = useState<{ glb: string; spec: MountainResultSpec | null } | null>(null);
+  const { user, getIdToken, openLogin } = useAuth();
+  const [dlBusy, setDlBusy] = useState<"print" | "tiles" | null>(null);
+  const [dlMsg, setDlMsg] = useState<{ tone: "ok" | "warn"; text: string } | null>(null);
+  const [wantPaint, setWantPaint] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -208,7 +213,9 @@ export default function MountainStudio() {
           stop(); setBusy(false);
           // /files/*.3mf на проді закритий SafeStatic (друк-файли не віддаються за іменем, task #70) —
           // друк-файл беремо через /api/download/<task>?format=3mf (стрімить локальний файл задачі).
-          setResult({ glb: abs(s.download_url_glb) || "", print: `${API_BASE}/api/download/${taskId}?format=3mf`, spec: (s.world_spec as MountainResultSpec) || null });
+          // Друк-файл (3MF/плитки) — лише після входу: POST /api/mountains/download (3 гори безкоштовно)
+          setResult({ glb: abs(s.download_url_glb) || "", spec: (s.world_spec as MountainResultSpec) || null });
+          setDlMsg(null);
           setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
         } else if (s.status === "failed" || s.status === "error") { stop(); setBusy(false); setError(s.message || t("genFailed")); }
       } catch {
@@ -223,10 +230,36 @@ export default function MountainStudio() {
   const shareUrl = () => (taskId && typeof window !== "undefined" ? `${window.location.origin}/share/${taskId}` : "");
   const openChat = async (channel: "tg" | "ig") => {
     import("@/lib/analytics").then((m) => m.track("messenger_order", { channel, product: "mountain" })).catch(() => {});
-    const text = t("msgPrefill", { place: spec.place?.name || "", size: spec.size_mm, link: shareUrl() });
+    const text = t("msgPrefill", { place: spec.place?.name || "", size: spec.size_mm, link: shareUrl() }) + (wantPaint ? ` ${t("msgPaint")}` : "");
     try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
     window.open(channel === "tg" ? TG_URL : "https://ig.me/m/monadruk", "_blank", "noopener");
   };
+  /** Друк-файл гори: вхід обовʼязковий, 3 різні гори безкоштовно на акаунт (власник, 25.09).
+   *  Після входу завантаження продовжується саме (openLogin(after)), без повторного кліку. */
+  const downloadMountain = async (kind: "print" | "tiles") => {
+    if (!taskId || dlBusy) return;
+    const token = await getIdToken();
+    if (!token) { setDlMsg({ tone: "warn", text: t("downloadLogin") }); openLogin(() => { void downloadMountain(kind); }); return; }
+    setDlBusy(kind); setDlMsg(null);
+    try {
+      const r = await fetch(`${API_BASE}/api/mountains/download/${encodeURIComponent(taskId)}?kind=${kind}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 401) { openLogin(() => { void downloadMountain(kind); }); return; }
+      if (r.status === 402) { setDlMsg({ tone: "warn", text: t("downloadLimit") }); import("@/lib/analytics").then((m) => m.track("quota_block", { at: "mountain" })).catch(() => {}); return; }
+      if (r.status === 403) { setDlMsg({ tone: "warn", text: t("downloadVerify") }); return; }
+      if (!r.ok) { setDlMsg({ tone: "warn", text: t("genFailed") }); return; }
+      const blob = await r.blob();
+      const left = r.headers.get("X-Quota-Remaining");
+      const name = (r.headers.get("Content-Disposition") || "").match(/filename="?([^";]+)"?/)?.[1] || `mountain.${kind === "tiles" ? "zip" : "3mf"}`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      if (left != null && Number(left) < 1000) setDlMsg({ tone: "ok", text: t("downloadLeft", { n: Number(left) }) });
+      import("@/lib/analytics").then((m) => m.track("download_model", { product: "mountain", kind })).catch(() => {});
+    } catch {
+      setDlMsg({ tone: "warn", text: t("genFailed") });
+    } finally { setDlBusy(null); }
+  };
+
   const doShare = async () => {
     const url = shareUrl(); if (!url) return;
     try { if (typeof navigator.share === "function") await navigator.share({ url, title: "Monadruk" }); else await navigator.clipboard.writeText(url); setShared(true); } catch { /* скасовано */ }
@@ -571,6 +604,17 @@ export default function MountainStudio() {
               {summary && <p className="mt-3 px-1 text-center text-[13px] font-semibold text-[var(--text-primary)]" data-testid="mnt-summary">{summary}</p>}
               <div className="mt-3 hidden lg:block">{generateBtn()}</div>
               <p className="mt-1.5 text-center text-[11.5px] text-[var(--text-secondary)]">{spec.place ? t("etaHint") : t("needPlace")}</p>
+              {/* Ціни на гори немає в прайсі — вона індивідуальна; і ручний розпис — окрема послуга (власник, 25.09) */}
+              <div className="mt-3 grid gap-2 sm:grid-cols-2" data-testid="mnt-price-info">
+                <div className="rounded-2xl border border-[var(--surface-border)] bg-white/70 px-3 py-2.5">
+                  <p className="text-[13px] font-semibold text-[var(--text-primary)]">{t("priceTitle")}</p>
+                  <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--text-secondary)]">{t("priceIndividual")}</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--surface-border)] bg-white/70 px-3 py-2.5">
+                  <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-primary)]"><Paintbrush size={13} className="text-[var(--accent-strong)]" /> {t("paintTitle")}</p>
+                  <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--text-secondary)] first-letter:uppercase">{t("paintSub")}</p>
+                </div>
+              </div>
               {error && <p role="alert" data-testid="mnt-error" className="mt-2 rounded-xl bg-[#fdf3f3] px-3 py-2 text-center text-[13px] text-[#8a2b2b]">{error}</p>}
               <a href={TG_URL} target="_blank" rel="noopener" onClick={() => { import("@/lib/analytics").then((m) => m.track("messenger_open", { channel: "tg", from: "mountains" })).catch(() => {}); }}
                 className="mx-auto mt-2 inline-flex min-h-10 items-center gap-1.5 text-[12.5px] font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
@@ -595,6 +639,10 @@ export default function MountainStudio() {
               <div className="mt-3 rounded-2xl border border-[rgba(15,118,110,0.3)] bg-[rgba(15,118,110,0.05)] p-3" data-testid="mnt-order">
                 <p className="text-[14px] font-semibold text-[var(--text-primary)]">{t("orderTitle")}</p>
                 <p className="mt-1 text-[12px] leading-snug text-[var(--text-secondary)]">{t("orderSub")}</p>
+                <label className="mt-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-white px-3 py-2 text-[12.5px] text-[var(--text-primary)]">
+                  <input type="checkbox" checked={wantPaint} onChange={(e) => setWantPaint(e.target.checked)} className="accent-[var(--accent-strong)]" data-testid="mnt-want-paint" />
+                  <Paintbrush size={14} className="shrink-0 text-[var(--accent-strong)]" /> <span><b>{t("wantPaint")}</b> <span className="text-[var(--text-secondary)]">— {t("paintSub")}</span></span>
+                </label>
                 <div className="mt-2.5 grid grid-cols-2 gap-2">
                   <button type="button" onClick={() => openChat("tg")} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-[#2AABEE] px-3 text-[13px] font-semibold text-white transition hover:brightness-105"><Send size={14} /> Telegram</button>
                   <button type="button" onClick={() => openChat("ig")} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-3 text-[13px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-strong)]"><Instagram size={14} className="text-[#E1306C]" /> Instagram</button>
@@ -603,8 +651,20 @@ export default function MountainStudio() {
               </div>
 
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {result.print && <a href={result.print} download className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--accent-strong)] px-4 text-[13px] font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.06)]"><Download size={14} /> {t("downloadPrint")}</a>}
-                {result.spec?.tiles_zip && <a href={abs(result.spec.tiles_zip)!} download className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--accent-strong)] px-4 text-[13px] font-semibold text-[var(--accent-strong)]"><Download size={14} /> {t("downloadTiles")}</a>}
+                <button type="button" onClick={() => void downloadMountain("print")} disabled={dlBusy != null} data-testid="mnt-dl-print"
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--accent-strong)] px-4 text-[13px] font-semibold text-[var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.06)] disabled:opacity-60">
+                  {dlBusy === "print" ? <Loader2 size={14} className="animate-spin" /> : user ? <Download size={14} /> : <LogIn size={14} />} {t("downloadPrint")}
+                </button>
+                {result.spec?.tiles_zip && (
+                  <button type="button" onClick={() => void downloadMountain("tiles")} disabled={dlBusy != null} data-testid="mnt-dl-tiles"
+                    className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--accent-strong)] px-4 text-[13px] font-semibold text-[var(--accent-strong)] disabled:opacity-60">
+                    {dlBusy === "tiles" ? <Loader2 size={14} className="animate-spin" /> : user ? <Download size={14} /> : <LogIn size={14} />} {t("downloadTiles")}
+                  </button>
+                )}
+                <p className="text-[11.5px] leading-snug text-[var(--text-secondary)] sm:col-span-2" data-testid="mnt-dl-note">
+                  {dlMsg ? <span className={dlMsg.tone === "warn" ? "font-semibold text-[#8a5a00]" : "text-[var(--accent-strong)]"}>{dlMsg.text}</span> : t("downloadFreeNote")}
+                  {dlMsg?.tone === "warn" && <> <a href={TG_URL} target="_blank" rel="noopener" className="font-semibold text-[#1f8fcb] underline">Telegram</a></>}
+                </p>
                 {result.spec?.preview_png && <a href={abs(result.spec.preview_png)!} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-4 text-[13px] font-semibold text-[var(--text-primary)]"><ImageIcon size={14} /> {t("photoTop")}</a>}
                 {result.spec?.paint_jpg && <a href={abs(result.spec.paint_jpg)!} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-4 text-[13px] font-semibold text-[var(--text-primary)]"><ImageIcon size={14} /> {t("paintGuide")}</a>}
                 <a href={result.glb} download className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--surface-border)] bg-white px-4 text-[13px] font-semibold text-[var(--text-primary)]"><Download size={14} /> {t("downloadGlb")}</a>

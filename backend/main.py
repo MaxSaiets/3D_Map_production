@@ -503,6 +503,10 @@ class SafeStatic(StaticFiles):
         ext = os.path.splitext(path)[1].lower()
         if ext and ext not in self._ALLOWED:
             return _PlainText("Not found", status_code=404)
+        # 25.09.2026: плитки гір (ZIP із 3MF) — друк-файл, лише через вхід і квоту
+        # (POST /api/mountains/download). Імʼя виводиться з GLB-превʼю, тож закриваємо за префіксом.
+        if ext == ".zip" and os.path.basename(path).startswith("mountain_"):
+            return _PlainText("Not found", status_code=404)
         return await super().get_response(path, scope)
 
 
@@ -3599,6 +3603,18 @@ async def download_model(
     """
     Р—Р°РІР°РЅС‚Р°Р¶СѓС” Р·РіРµРЅРµСЂРѕРІР°РЅРёР№ С„Р°Р№Р» Р· Firebase С‡РµСЂРµР· РїСЂРѕРєСЃС–
     """
+    # 25.09.2026: друк-файл ГОРИ віддається лише після входу (3 безкоштовні на акаунт) —
+    # POST /api/mountains/download/{task_id}. Тут лишаємо тільки GLB-превʼю гори.
+    _fmt_l = (format or "").lower().strip(".")
+    _t_mnt = tasks.get(task_id)
+    if _t_mnt is not None:
+        _req_mnt = getattr(_t_mnt, "request", None)   # у мап це pydantic-модель, у гір — dict
+        _is_mnt = isinstance(_req_mnt, dict) and _req_mnt.get("mode") == "mountain"
+    else:
+        _df = _find_file_on_disk_by_task_id(task_id, format)
+        _is_mnt = _df is not None and _df.name.startswith("mountain_")
+    if _is_mnt and _fmt_l != "glb":
+        raise HTTPException(status_code=403, detail="Друк-файл гори — після входу на сторінці /mountains")
     if task_id not in tasks:
         disk_file = _find_file_on_disk_by_task_id(task_id, format)
         if disk_file is not None:

@@ -1652,7 +1652,7 @@
     "title": "Testmodus.",
     "worlds": "Das Relief wird prozedural aus Ihrer Beschreibung erzeugt. Die Form lässt sich manuell wählen. Für Druck oder Bestellung schreiben Sie uns — den Preis rechnen wir separat.",
     "maket": "Die Planerkennung lernt noch: Prüfen Sie Wände und Maßstab vor der Bestellung. Der Preis wird separat berechnet.",
-    "mountains": "Echtes Gelände aus swissALTI3D / Copernicus; Figuren im Souvenirmaßstab. Für Druck oder Bestellung schreib uns."
+    "mountains": "Echtes Gelände aus swissALTI3D / Copernicus; Figuren dekorativ, nicht maßstäblich. Druckpreis individuell, Bemalung möglich — schreiben Sie uns."
   },
   "worlds": {
     "badge": "KI-Generierung",
@@ -2232,7 +2232,7 @@
     "downloadGlb": "GLB to view",
     "editAgain": "Einstellungen ändern",
     "orderTitle": "Druck dieses Berges bestellen",
-    "orderSub": "Price depends on size and figures — message us; the description and 3D link are already copied.",
+    "orderSub": "Individueller Preis: hängt von Größe, Figuren und Bemalung ab. Beschreibung und 3D-Link werden kopiert — einfach in den Chat einfügen.",
     "shareLink": "Share link",
     "shareCopied": "Link copied",
     "msgCopied": "Description copied — paste it into the chat.",
@@ -2268,7 +2268,18 @@
     "etaHint": "Meist 20–90 Sekunden. Modell drehen und Druck bestellen.",
     "previewLoading": "Gelände wird geladen…",
     "askUs": "Fragen oder Druck gewünscht? Schreiben Sie uns auf Telegram",
-    "worldsLink": "Ein erfundener Berg? „Welten aus Beschreibung“ →"
+    "worldsLink": "Ein erfundener Berg? „Welten aus Beschreibung“ →",
+    "priceTitle": "Individueller Preis",
+    "priceIndividual": "Hängt von Größe, Figuren und Bemalung ab. Schreiben Sie uns — Angebot in wenigen Minuten.",
+    "paintTitle": "Wir bemalen ihn",
+    "paintSub": "von Hand mit Acryl: Wald, Fels, Schnee — wie der echte Berg.",
+    "wantPaint": "Mit Bemalung",
+    "msgPaint": "Ich möchte ihn handbemalt.",
+    "downloadFreeNote": "Druckdatei nach Anmeldung: 3 Berge pro Konto kostenlos.",
+    "downloadLogin": "Melden Sie sich an — 3 Berg-Dateien kostenlos.",
+    "downloadLeft": "Fertig! Verbleibende kostenlose Berg-Dateien: {n}.",
+    "downloadLimit": "Kostenlose Berg-Dateien aufgebraucht. Schreiben Sie uns — wir senden die Datei oder drucken:",
+    "downloadVerify": "Bestätigen Sie Ihre E-Mail (Posteingang prüfen), um Dateien zu laden."
   },
   "agent": {
     "title": "Agent: in Worten beschreiben",

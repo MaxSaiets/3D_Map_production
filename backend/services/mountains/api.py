@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/api", tags=["mountains"])
@@ -81,6 +81,65 @@ async def search(q: str = "", locale: str = "uk"):
         return {"results": await anyio.to_thread.run_sync(lambda: search_places(q[:80], locale[:5]))}
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc(); raise HTTPException(502, f"Пошук тимчасово недоступний: {exc}")
+
+
+def _mountain_user(authorization: Optional[str]) -> dict:
+    from services.auth_service import verify_token
+    u = verify_token(authorization or "")
+    if not u:
+        raise HTTPException(401, "Увійдіть, щоб завантажити файл")
+    return u
+
+
+def _mountain_file(task_id: str, kind: str) -> Optional[Path]:
+    """Друк-файл гори: з задачі в памʼяті або з диска за префіксом mountain_<task8>."""
+    key = "tiles_zip" if kind == "tiles" else "3mf"
+    t = _ctx.get("tasks", {}).get(task_id)
+    if t is not None:
+        if (getattr(t, "request", {}) or {}).get("mode") != "mountain":
+            return None
+        cand = (getattr(t, "output_files", {}) or {}).get(key)
+        if cand and Path(cand).exists():
+            return Path(cand)
+    short = task_id.replace("-", "")[:8]
+    if len(short) < 8 or not short.isalnum():
+        return None
+    p = _ctx["output_dir"] / (f"mountain_{short}_tiles.zip" if kind == "tiles" else f"mountain_{short}_print.3mf")
+    return p if p.exists() else None
+
+
+@router.get("/mountains/quota")
+async def mountain_quota(authorization: Optional[str] = Header(default=None)):
+    from services.user_store import get_mountain_quota
+    u = _mountain_user(authorization)
+    return get_mountain_quota(u["uid"], u.get("email") or "", u["is_admin"])
+
+
+@router.post("/mountains/download/{task_id}")
+async def mountain_download(task_id: str, kind: str = "print", authorization: Optional[str] = Header(default=None)):
+    """Друк-файл гори (3MF або ZIP плиток) — лише після входу, 3 різні гори безкоштовно
+    (MOUNTAIN_FREE_DOWNLOADS). Порядок: знайти файл → лише тоді списати квоту, щоб клік по
+    втраченому файлу не спалював безкоштовне завантаження."""
+    from fastapi.responses import FileResponse
+    from services.user_store import register_mountain_download, add_model
+    u = _mountain_user(authorization)
+    if not u["is_admin"] and not u.get("email_verified", False):
+        raise HTTPException(403, "Підтвердьте email, щоб завантажувати моделі (перевірте пошту).")
+    kind = "tiles" if kind == "tiles" else "print"
+    path = _mountain_file(task_id, kind)
+    if path is None:
+        raise HTTPException(404, "Файл гори не знайдено — згенеруйте модель ще раз")
+    res = register_mountain_download(u["uid"], u.get("email") or "", u["is_admin"], task_id)
+    if not res["ok"]:
+        raise HTTPException(402, "Безкоштовні файли гір вичерпано — напишіть нам, надішлемо файл або надрукуємо")
+    t = _ctx.get("tasks", {}).get(task_id)
+    add_model(u["uid"], u.get("email") or "", {
+        "task_id": task_id, "title": str((getattr(t, "request", {}) or {}).get("place") or "Гора") if t else "Гора",
+        "city": "", "product_type": "mountain", "download_url": "", "preview": "", "params": None,
+    })
+    print(f"[MNT] download {task_id} {kind} by {u.get('email')} remaining={res['quota']['remaining']}", flush=True)
+    return FileResponse(str(path), media_type="application/zip" if kind == "tiles" else "model/3mf", filename=path.name,
+                        headers={"X-Quota-Remaining": str(res["quota"]["remaining"])})
 
 
 @router.post("/mountains/agent")

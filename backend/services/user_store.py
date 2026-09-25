@@ -363,3 +363,45 @@ def list_all_users() -> List[Dict[str, Any]]:
         })
     out.sort(key=lambda x: x.get("created_at") or 0, reverse=True)
     return out
+
+
+# ── Режим «Гори» (25.09.2026): окрема квота друк-файлів ─────────────────────
+# Власник: «файли гір — 3 безкоштовних і щоб треба було увійти». Лічильник окремий
+# від мап (FREE_DOWNLOADS=0 на проді, мапа продається за 149 ₴): гори поки не мають
+# ціни файлу, тож людина отримує 3 різні гори на акаунт, далі — пишемо нам.
+MOUNTAIN_FREE_DOWNLOADS = int(os.getenv("MOUNTAIN_FREE_DOWNLOADS", "3"))
+
+
+def _mountain_quota(used: int, is_admin: bool) -> Dict[str, Any]:
+    return {
+        "downloads": used, "limit": MOUNTAIN_FREE_DOWNLOADS,
+        "remaining": (10**9 if is_admin else max(0, MOUNTAIN_FREE_DOWNLOADS - used)),
+        "is_admin": is_admin, "can_download": is_admin or used < MOUNTAIN_FREE_DOWNLOADS,
+    }
+
+
+def get_mountain_quota(uid: str, email: str, is_admin: bool) -> Dict[str, Any]:
+    with _lock:
+        data = _load()
+        u = _get(data, uid, email)
+        return _mountain_quota(int(u.get("mountain_downloads", 0)), is_admin)
+
+
+def register_mountain_download(uid: str, email: str, is_admin: bool, task_id: str) -> Dict[str, Any]:
+    """Списати одне безкоштовне завантаження гори. Повторне завантаження ТІЄЇ Ж задачі
+    (друк-файл, потім плитки, або файл загубився) квоту не зʼїдає."""
+    with _lock:
+        data = _load()
+        u = _get(data, uid, email)
+        used = int(u.get("mountain_downloads", 0))
+        done = u.get("mountain_downloaded", [])
+        already = bool(task_id) and task_id in done
+        if not is_admin and used >= MOUNTAIN_FREE_DOWNLOADS and not already:
+            return {"ok": False, "reason": "limit", "quota": _mountain_quota(used, False)}
+        if not already:
+            u["mountain_downloads"] = used + 1
+            if task_id:
+                done.append(task_id)
+                u["mountain_downloaded"] = done[-500:]
+            _save(data)
+        return {"ok": True, "quota": _mountain_quota(int(u.get("mountain_downloads", 0)), is_admin)}

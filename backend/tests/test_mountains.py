@@ -88,3 +88,32 @@ def test_search_places_presets_first_and_dedup(monkeypatch):
     assert [r["name"] for r in res].count("Говерла") == 1
     assert any(r["name"] == "Ворохта" and r["area_km"] == 8.0 for r in res)
     assert A.search_places("г", "uk") == []
+
+
+def test_mountain_download_quota_login_and_dedup(monkeypatch, tmp_path):
+    """Файли гір: без входу 401; 3 різні гори безкоштовно; повтор тієї ж — не списує; 4-та — 402."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from services import user_store as US
+    from services.mountains import api as MA
+    import services.auth_service as AUTH
+
+    monkeypatch.setattr(US, "USERS_FILE", tmp_path / "users.json")
+    monkeypatch.setattr(US, "MOUNTAIN_FREE_DOWNLOADS", 3)
+    monkeypatch.setattr(AUTH, "verify_token", lambda tok: {"uid": "u1", "email": "a@b.c", "email_verified": True, "is_admin": False} if tok == "Bearer ok" else None)
+    ids = [f"{i:08x}-0000-0000-0000-000000000000" for i in range(1, 6)]
+    for tid in ids:
+        (tmp_path / f"mountain_{tid[:8]}_print.3mf").write_bytes(b"3mf")
+    MA.bind({}, object, tmp_path, None)
+    app = FastAPI(); app.include_router(MA.router)
+    c = TestClient(app)
+
+    assert c.post(f"/api/mountains/download/{ids[0]}").status_code == 401
+    h = {"Authorization": "Bearer ok"}
+    for tid in ids[:3]:
+        r = c.post(f"/api/mountains/download/{tid}", headers=h)
+        assert r.status_code == 200 and r.content == b"3mf"
+    assert c.post(f"/api/mountains/download/{ids[0]}", headers=h).status_code == 200   # повтор — без списання
+    assert c.post(f"/api/mountains/download/{ids[3]}", headers=h).status_code == 402
+    assert c.get("/api/mountains/quota", headers=h).json()["remaining"] == 0
+    assert c.post("/api/mountains/download/ffffffff-0000", headers=h).status_code == 404
