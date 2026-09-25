@@ -113,6 +113,36 @@ export default async function GiftPage({
         </Link>
       </div>
 
+      {/* 25.09.2026: «Кому подарувати» — ті самі формулювання, що в пошуку й у рекламній
+          групі «Подарунки» (Планувальник: 1–10 тис./міс кожне). Відповідність запит →
+          оголошення → сторінка піднімає Quality Score і знижує ціну кліку. Лише uk. */}
+      {isUA && (
+        <section className="mt-12">
+          <h2 className="text-[20px] font-semibold">Кому подарувати 3D-мапу чи брелок з картою</h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {[
+              ["Подарунок хлопцю", "shcho-podaruvaty-khloptsevi-na-den-narodzhennya", "Мапа району, де він виріс, або місця вашого знайомства."],
+              ["Подарунок дівчині", "podarunok-divchyni", "Мапа-серце місця першого побачення з датою."],
+              ["Подарунок чоловіку", "podarunok-choloviku", "Для того, у кого вже все є: його місто в 3D."],
+              ["Подарунок на річницю весілля", "podarunok-cholovikovi-na-richnytsyu-vesillya", "Місце весілля чи першої спільної квартири."],
+              ["Подарунок батькам", "podarunok-batkam-na-richnytsyu-vesillya", "Рідний двір чи вулиця, де ви росли."],
+              ["Подарунок тату", "shcho-podaruvaty-tatovi-na-den-narodzhennya", "Його рідне місто чи село обʼємною мапою."],
+              ["Подарунок військовому", "podarunok-viyskovomu-3d-mapa-ridnoho-mista", "Брелок з мапою дому — легкий, завжди з собою."],
+              ["Подарунок вчителю", "podarunok-vchytelyu-na-den-vchytelya", "Мапа району школи з написом класу."],
+              ["Подарунок на новосілля", "podarunok-na-novosillya-druzyam", "3D-мапа нового району на поличку."],
+              ["Подарунок колезі", "podarunok-kolezi-na-zvilnennya-abo-pereyizd", "Мапа офісу чи міста, куди колега переїжджає."],
+            ].map(([title, slug, desc]) => (
+              <li key={slug}>
+                <Link href={`/blog/${slug}`} className="block rounded-[14px] border border-line-soft bg-white/60 px-4 py-3 transition hover:border-[var(--accent)]">
+                  <span className="block text-[14.5px] font-semibold text-ink">{title}</span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-2">{desc}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-12">
         <h2 className="text-[20px] font-semibold">{t("occasionsTitle")}</h2>
         <ul className="mt-5 grid gap-4 sm:grid-cols-2">
