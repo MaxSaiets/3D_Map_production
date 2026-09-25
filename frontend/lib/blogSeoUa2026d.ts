@@ -197,4 +197,121 @@ export const SEO_UA_ARTICLES_2026_D: BlogArticle[] = [
       },
     },
   },
+  // 25.09.2026 — під запити з Планувальника ключових слів Google (Україна):
+  // «подарунок чоловіку» і «подарунок дівчині» — по 1–10 тис. запитів на місяць.
+  {
+    slug: "podarunok-choloviku",
+    date: "2026-09-25",
+    content: {
+      uk: {
+        title: "Подарунок чоловіку: оригінальна ідея — 3D-мапа важливого для нього місця",
+        description:
+          "Що подарувати чоловікові, у якого все є: 3D-мапу рідного міста, району дитинства чи місця вашого знайомства або брелок з картою й гравіюванням. Від 170 ₴, друк 2–4 дні, Нова Пошта.",
+        h1: "Подарунок чоловіку, у якого вже все є",
+        intro:
+          "Годинник, парфуми, гаджет — усе це він або вже має, або вибере сам краще. Подарунок, який важко повторити, — це річ про нього самого: мапа міста, де він виріс, району, де ви познайомились, чи дороги, якою він щодня їздить. Обʼємна 3D-мапа з справжніми вулицями й будинками стоїть на столі роками й завжди має історію.",
+        sections: [
+          {
+            h2: "Чому мапа місця, а не ще одна річ",
+            p: [
+              "Чоловікам часто складно дарувати, бо все потрібне вони купують самі. Мапа — не предмет «для чогось», а памʼять про конкретне місце. Її не купиш у магазині: вона існує лише для однієї адреси.",
+              "Вона підходить на день народження, річницю, 23 лютого чи просто без приводу — і не має розміру чи смаку, в які можна не вгадати.",
+            ],
+          },
+          {
+            h2: "Що обрати",
+            p: [
+              "Настільна 3D-мапа (від 350 ₴): район чи центр міста з обʼємними будинками, форма — квадрат, коло, шестикутник або серце, розмір від 5,5 до 20 см.",
+              "Брелок з картою (від 170 ₴): його район на ключах, на звороті — імʼя, дата або «HOME».",
+              "Панно з плиток 2×2 чи 3×3 — для кабінету чи вітальні, якщо хочеться ціле місто на стіні.",
+              "3D-модель гори — для того, хто ходить у походи: Говерла, Петрос чи будь-яка вершина світу.",
+            ],
+          },
+          {
+            h2: "Як зробити за 5 хвилин",
+            p: [
+              "У конструкторі введіть адресу — рамка сама стане на місце. Оберіть розмір і форму, додайте напис, подивіться безкоштовне 3D-превʼю.",
+              "Далі — замовте друк: 2–4 дні й доставка Новою Поштою по Україні.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити 3D-мапу для нього",
+        ctaHref: "/create",
+        outro: "Превʼю безкоштовне — можна спершу подивитись, як виглядатиме мапа саме його місця.",
+      },
+      en: {
+        title: "A gift for a husband: a 3D map of a place that matters to him",
+        description:
+          "What to give a man who has everything: a 3D map of his home town, childhood neighbourhood or the place you met, or an engraved map keychain. From 170 ₴, printed in 2–4 days.",
+        h1: "A gift for a man who already has everything",
+        intro:
+          "A watch, perfume, a gadget — he either has them or will choose better himself. A gift that can't be repeated is one about him: a map of the town he grew up in, the neighbourhood where you met or the road he drives every day. A 3D map with real streets and buildings stays on the desk for years and always has a story.",
+        sections: [
+          { h2: "Why a map of a place instead of another thing", p: ["Men are hard to buy for because they buy what they need themselves. A map isn't an object “for something” — it's a memory of a specific place, and it exists for one address only.", "It works for a birthday, an anniversary or no reason at all — no size or taste to get wrong."] },
+          { h2: "What to choose", p: ["A desktop 3D map (from 350 ₴): a neighbourhood or city centre with raised buildings; square, circle, hexagon or heart; 5.5 to 20 cm.", "A map keychain (from 170 ₴): his neighbourhood on his keys, with a name, date or “HOME” on the back.", "A 2×2 or 3×3 tile panel for a study or living room.", "A 3D mountain model for a hiker: Hoverla, Petros or any summit in the world."] },
+          { h2: "How to make it in 5 minutes", p: ["Type the address in the builder — the frame snaps into place. Choose size and shape, add text and check the free 3D preview.", "Then order the print: 2–4 days plus Nova Poshta delivery within Ukraine."] },
+        ],
+        ctaLabel: "Create a 3D map for him",
+        ctaHref: "/create",
+        outro: "The preview is free — see what the map of his place looks like first.",
+      },
+    },
+  },
+  {
+    slug: "podarunok-divchyni",
+    date: "2026-09-25",
+    content: {
+      uk: {
+        title: "Подарунок дівчині: мапа-серце місця, де ви познайомились",
+        description:
+          "Оригінальний подарунок дівчині: 3D-мапа у формі серця з місцем першого побачення, парні брелоки-серця чи магніт з картою вашої вулиці. Від 170 ₴, друк 2–4 дні по Україні.",
+        h1: "Подарунок дівчині, який розповідає вашу історію",
+        intro:
+          "Квіти зівʼянуть, солодощі зʼїдять, а прикраси легко не вгадати. Подарунок, що точно буде особистим, — це місце, звʼязане з вами двома: кавʼярня першого побачення, парк, де гуляли, вулиця, де ви живете разом. Ми друкуємо його обʼємною 3D-мапою — навіть у формі серця.",
+        sections: [
+          {
+            h2: "Мапа у формі серця",
+            p: [
+              "У конструкторі можна обрати форму моделі: квадрат, коло, шестикутник або серце. Рамка на карті одразу показує, які вулиці потраплять у серце.",
+              "На мапі справжні вулиці, будинки й парки, а напис — дата, імена чи «Тут усе почалось» — друкується разом з моделлю.",
+            ],
+          },
+          {
+            h2: "Інші ідеї",
+            p: [
+              "Парні брелоки-серця, що складаються в одне ціле, — половинка в кожного (від 170 ₴).",
+              "Магніт з мапою вашої вулиці (210 ₴) — маленька річ, яку бачиш щодня.",
+              "Мапа її рідного міста — якщо вона живе далеко від дому.",
+            ],
+          },
+          {
+            h2: "Як замовити",
+            p: [
+              "Знайдіть місце в конструкторі, оберіть форму й розмір, додайте напис і подивіться безкоштовне 3D-превʼю.",
+              "Друк і доставка Новою Поштою займають 2–4 дні — на свято краще замовити за тиждень.",
+            ],
+          },
+        ],
+        ctaLabel: "Створити мапу-серце",
+        ctaHref: "/create",
+        outro: "Превʼю безкоштовне: можна показати його ще до того, як подарунок приїде.",
+      },
+      en: {
+        title: "A gift for a girlfriend: a heart-shaped map of where you met",
+        description:
+          "An original gift for a girlfriend: a heart-shaped 3D map of your first date spot, matching heart keychains or a magnet with your street. From 170 ₴, printed in 2–4 days in Ukraine.",
+        h1: "A gift for your girlfriend that tells your story",
+        intro:
+          "Flowers fade, sweets get eaten and jewellery is easy to get wrong. A gift that is sure to be personal is a place tied to the two of you: the café of your first date, the park you walked in, the street you live on together. We print it as a 3D map — even in the shape of a heart.",
+        sections: [
+          { h2: "A heart-shaped map", p: ["In the builder you choose the model's shape: square, circle, hexagon or heart. The frame on the map shows which streets end up inside the heart.", "The streets, buildings and parks are real, and the text — a date, names or “Where it all began” — is printed with the model."] },
+          { h2: "More ideas", p: ["Matching heart keychains that join into one — a half for each of you (from 170 ₴).", "A magnet with the map of your street (210 ₴) — a small thing you see every day.", "A map of her home town if she lives far from home."] },
+          { h2: "How to order", p: ["Find the place in the builder, choose shape and size, add text and check the free 3D preview.", "Printing and Nova Poshta delivery take 2–4 days — for a holiday, order a week ahead."] },
+        ],
+        ctaLabel: "Create a heart-shaped map",
+        ctaHref: "/create",
+        outro: "The preview is free — you can show it even before the gift arrives.",
+      },
+    },
+  },
 ];
