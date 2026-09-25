@@ -34,7 +34,7 @@ function FlyTo({ lat, lon, areaKm }: { lat: number; lon: number; areaKm: number 
     const b = L.latLngBounds(squareBounds(lat, lon, areaKm) as L.LatLngBoundsLiteral);
     map.fitBounds(b.pad(0.6), { animate: true, maxZoom: 14 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lat, lon]);
+  }, [lat, lon, areaKm]);
   return null;
 }
 

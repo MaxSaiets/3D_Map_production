@@ -62,7 +62,7 @@ test.describe("Гори (/mountains)", () => {
     await expect(page.getByTestId("mnt-order")).toBeVisible();
   });
 
-  test("пошук гори за назвою обирає місце й відкриває мапу", async ({ page }) => {
+  test("пошук гори за назвою обирає місце, мапа завжди видима", async ({ page }) => {
     await page.route("**/api/mountains/search**", (r) => r.fulfill({ json: { results: [
       { name: "Ай-Петрі", lat: 44.45, lon: 34.06, source: "geocode", type: "peak", area_km: 4, display: "Крим, Україна" }] } }));
     await page.goto("/uk/mountains");
@@ -96,7 +96,6 @@ test.describe("Гори (/mountains)", () => {
 
   test("«Уточнити на мапі»: клік ставить центр і показує превʼю", async ({ page }) => {
     await page.goto("/uk/mountains");
-    await page.getByTestId("mnt-tab-map").click();
     const map = page.getByTestId("mountain-map");
     await expect(map).toBeVisible();
     const canvas = map.locator(".leaflet-container");

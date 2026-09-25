@@ -69,3 +69,22 @@ def test_tile_cuts():
     assert tile_cuts(200, 256) == []
     c = tile_cuts(400, 256); assert len(c) == 2 and c[1] - c[0] <= 256 * 0.95 + 0.2
     assert len(tile_cuts(600, 256)) >= 2
+
+
+def test_search_places_presets_first_and_dedup(monkeypatch):
+    """«Знайти гору»: пресет першим, та сама вершина з OSM не дублюється, мережа не падає пошук."""
+    from services.mountains import agent as A
+
+    class R:
+        status_code = 200
+        def json(self):
+            return [{"lat": "48.1601", "lon": "24.5004", "name": "Говерла", "category": "natural", "type": "peak", "display_name": "Говерла, Україна"},
+                    {"lat": "48.3", "lon": "24.1", "name": "Ворохта", "category": "place", "type": "village", "display_name": "Ворохта, Надвірнянський район, Україна"}]
+    monkeypatch.setattr(A.requests, "get", lambda *a, **k: R())
+    monkeypatch.setattr(A, "_nominatim_last", [0.0])
+    A._search_cache.clear()
+    res = A.search_places("говерла", "uk")
+    assert res[0]["source"] == "preset" and res[0]["preset_id"] == "hoverla"
+    assert [r["name"] for r in res].count("Говерла") == 1
+    assert any(r["name"] == "Ворохта" and r["area_km"] == 8.0 for r in res)
+    assert A.search_places("г", "uk") == []

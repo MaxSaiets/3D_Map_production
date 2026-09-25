@@ -64,7 +64,6 @@ export default function MountainStudio() {
   const [pickingFig, setPickingFig] = useState<number | null>(null);
   const [customCm, setCustomCm] = useState("");
   const [showAllPeaks, setShowAllPeaks] = useState(false);
-  const [showMap, setShowMap] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -100,7 +99,7 @@ export default function MountainStudio() {
     try { want = new URLSearchParams(window.location.search).get("peak"); } catch { /* ignore */ }
     const byUrl = want ? presets.find((p) => p.id === want) : undefined;
     const draft = byUrl ? null : readDraft();
-    if (draft?.place) { setSpec(draft); if (draft.place.source !== "preset") setShowMap(true); return; }
+    if (draft?.place) { setSpec(draft); return; }
     const p = byUrl || presets.find((x) => x.id === "hoverla") || presets[0];
     setSpec((s) => ({ ...s, place: { name: p.name, lat: p.lat, lon: p.lon, source: "preset", preset_id: p.id, area_km: p.area_km, elev: p.elev }, area_km: p.area_km }));
   }, [presets]);
@@ -154,8 +153,6 @@ export default function MountainStudio() {
   const pickHit = (h: MountainSearchHit) => {
     resetResult(); setSearchOpen(false); setQ("");
     setSpec((s) => ({ ...s, place: { name: h.name, lat: h.lat, lon: h.lon, source: h.source, preset_id: h.preset_id, area_km: h.area_km, elev: h.elev }, area_km: h.area_km ?? 4 }));
-    // знайдене не з каталогу — показуємо мапу, щоб людина бачила, яку саме ділянку взято
-    if (h.source !== "preset") setShowMap(true);
     import("@/lib/analytics").then((m) => m.track("mountain_search_pick", { source: h.source, name: h.name })).catch(() => {});
   };
   const pickOnMap = useCallback((lat: number, lon: number) => {
@@ -292,7 +289,7 @@ export default function MountainStudio() {
                   placeholder={t("agentPlaceholder")}
                   examples={agentExamples}
                   ask={(text) => api.mountainsAgent(text, locale, spec)}
-                  onApply={(s) => { resetResult(); setSpec({ ...DEFAULT_SPEC, ...s }); if (s.place && s.place.source !== "preset") setShowMap(true); }}
+                  onApply={(s) => { resetResult(); setSpec({ ...DEFAULT_SPEC, ...s }); }}
                 />
               </div>
             )}
@@ -361,17 +358,13 @@ export default function MountainStudio() {
                   {showAllPeaks ? t("showLess") : t("showAll", { n: presets.length })}
                 </button>
               )}
-              <button type="button" onClick={() => setShowMap((v) => !v)} data-testid="mnt-tab-map" aria-expanded={showMap}
-                className="inline-flex min-h-10 items-center gap-1.5 text-[12.5px] font-semibold text-[var(--accent-strong)] underline-offset-2 hover:underline">
-                <MapIcon size={14} /> {showMap ? t("hideMap") : spec.place ? t("refineOnMap") : t("pickOnMap")}
-              </button>
             </div>
-            {showMap && (
-              <div className="mt-2">
-                <p className="mb-2 text-[12px] text-[var(--text-secondary)]">{t("mapHint")}</p>
-                <MountainMapPicker lat={spec.place?.lat ?? null} lon={spec.place?.lon ?? null} areaKm={areaKm} onPick={pickOnMap} height={300} />
-              </div>
-            )}
+            {/* Мапа завжди відкрита (власник, 25.09): видно, яку саме ділянку буде надруковано,
+                і будь-яку точку можна обрати кліком без додаткових кнопок. */}
+            <div className="mt-3">
+              <p className="mb-2 inline-flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]"><MapIcon size={13} className="shrink-0 text-[var(--accent-strong)]" /> {t("mapHint")}</p>
+              <MountainMapPicker lat={spec.place?.lat ?? null} lon={spec.place?.lon ?? null} areaKm={areaKm} onPick={pickOnMap} height={320} />
+            </div>
             {spec.place && (
               <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-[12.5px] text-[var(--text-primary)]" data-testid="mnt-place">
                 <MapPin size={13} className="text-[var(--accent-strong)]" /> <b>{spec.place.name}</b>
