@@ -1,4 +1,5 @@
 import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
+import { PEAKS, PEAK_LOCALES } from "@/lib/mountainPages";
 
 /**
  * Image sitemap для Google Картинок (Next 14.2 MetadataRoute.Sitemap не вміє
@@ -17,6 +18,10 @@ export function GET() {
     `<url><loc>${BASE}/showcase</loc>${GALLERY_ITEMS.map((g) => img(g.src)).join("")}</url>`,
     ...GALLERY_LOCALES.flatMap((l) =>
       GALLERY_ITEMS.map((g) => `<url><loc>${esc(`${BASE}${l === "uk" ? "" : `/${l}`}/foto/${g.slug}`)}</loc>${img(g.src)}</url>`),
+    ),
+    // Сторінки вершин /gory/[slug] — фото вершини (25.09.2026).
+    ...PEAK_LOCALES.flatMap((l) =>
+      PEAKS.map((p) => `<url><loc>${esc(`${BASE}${l === "uk" ? "" : `/${l}`}/gory/${p.slug}`)}</loc>${img(p.photo)}</url>`),
     ),
   ];
   const xml =

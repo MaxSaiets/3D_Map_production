@@ -54,6 +54,18 @@ export default function MountainStudio() {
     api.mountainsFigures(locale).then((r) => setFigures(r.figures)).catch(() => {});
   }, [locale]);
 
+  // Deep-link ?peak=<presetId> (сторінки /gory/[slug]): вершина обрана одразу.
+  const peakAppliedRef = useRef(false);
+  useEffect(() => {
+    if (peakAppliedRef.current || !presets.length) return;
+    peakAppliedRef.current = true;
+    try {
+      const id = new URLSearchParams(window.location.search).get("peak");
+      const p = id ? presets.find((x) => x.id === id) : undefined;
+      if (p) setSpec((s) => ({ ...s, place: { name: p.name, lat: p.lat, lon: p.lon, source: "preset", preset_id: p.id, area_km: p.area_km, elev: p.elev }, area_km: p.area_km }));
+    } catch { /* ignore */ }
+  }, [presets]);
+
   const areaKm = spec.area_km ?? spec.place?.area_km ?? 4;
 
   // миттєве превʼю: hillshade + знімок, коли міняється місце/ділянка/розмір (з дебаунсом)

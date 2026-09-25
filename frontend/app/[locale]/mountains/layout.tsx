@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { pageMetadata, BASE, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
+import { Link } from "@/i18n/navigation";
+import { PEAKS, type PeakLocale } from "@/lib/mountainPages";
+import { PEAK_UI } from "@/lib/mountainPagesUi";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   return pageMetadata({ locale: params.locale, path: "/mountains", ns: "mountainsMeta" });
@@ -37,6 +40,19 @@ export default async function MountainsLayout({ children, params }: { children: 
         <h2 className="text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{t("proseH2")}</h2>
         <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{t("proseP1")}</p>
         <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{t("proseP2")}</p>
+        {/* Сторінки вершин (/gory/[slug]) — перелінковка для пошуку. */}
+        <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">
+          <Link href="/gory" className="hover:underline">{PEAK_UI[locale as PeakLocale].crumb}</Link>
+        </h2>
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {PEAKS.map((p) => (
+            <li key={p.slug}>
+              <Link href={`/gory/${p.slug}`} className="inline-block rounded-full border border-[var(--surface-border)] bg-white/70 px-3.5 py-1.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
+                {p.t[locale as PeakLocale].name}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );

@@ -8,9 +8,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ModelModal, { type ModalModel } from "@/components/ModelModal";
 import { GALLERY_ITEMS, type GalleryLocale } from "@/lib/gallery";
+import { PEAKS, type PeakLocale } from "@/lib/mountainPages";
+import { PEAK_UI } from "@/lib/mountainPagesUi";
 
 // src → опис фото (той самий, що на /foto/[slug]) — унікальні alt для Google Картинок.
 const ALT_BY_SRC = Object.fromEntries(GALLERY_ITEMS.map((g) => [g.src, g.alt]));
+// 25.09.2026: кожна картка галереї веде на СВОЮ сторінку фото (/foto/[slug]) з унікальною назвою —
+// раніше клік відкривав випадкову з 6 загальних 3D-моделей, яка не відповідала фото.
+const ITEM_BY_SRC = Object.fromEntries(GALLERY_ITEMS.map((g) => [g.src, g]));
 
 const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), {
   ssr: false,
@@ -19,8 +24,6 @@ const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), 
   ),
 });
 
-const WEB_KEY = ["/models/keychain-fea.glb", "/models/keychain-home.glb", "/models/keychain-water.glb", "/models/keychain-bridge.glb"];
-const WEB_MAP = ["/models/map-dense.glb", "/models/map-district.glb"];
 
 export default function ShowcasePage() {
   const t = useTranslations("showcase");
@@ -50,11 +53,7 @@ export default function ShowcasePage() {
   ];
   const items = ITEMS.filter((it) => filter === "all" || it.kind === filter);
   const viewModels = VIEW_MODELS.filter((m) => filter === "all" || m.kind === filter);
-  let keyN = 0, mapN = 0;
-  const openItem = (it: Item) => {
-    if (it.kind === "key") setModal({ url: WEB_KEY[(keyN++) % WEB_KEY.length], label: t("keyItem"), kind: "key", price: t("keyPrice") });
-    else setModal({ url: WEB_MAP[(mapN++) % WEB_MAP.length], label: t("mapItem"), kind: "map", price: t("mapPrice") });
-  };
+
 
   return (
     <div id="main-content" tabIndex={-1} className="mx-auto min-h-[100dvh] max-w-[1280px] px-5 py-8 lg:px-8">
@@ -135,7 +134,7 @@ export default function ShowcasePage() {
         </div>
         <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-            <div key={n} className="overflow-hidden rounded-[20px] border border-line bg-paper">
+            <Link key={n} href={`/foto/${ITEM_BY_SRC[`/showcase/real-${n}.webp`]?.slug ?? ""}`} className="block overflow-hidden rounded-[20px] border border-line bg-paper">
               <div className="relative aspect-square overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -145,7 +144,8 @@ export default function ShowcasePage() {
                   className="h-full w-full object-cover transition duration-500 hover:scale-[1.06]"
                 />
               </div>
-            </div>
+              <span className="block px-3 py-2.5 text-[12.5px] font-medium leading-snug text-ink">{ITEM_BY_SRC[`/showcase/real-${n}.webp`]?.title[altL]}</span>
+            </Link>
           ))}
         </div>
       </div>
@@ -153,23 +153,38 @@ export default function ShowcasePage() {
       {/* Gallery */}
       <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((it) => (
-          <button key={it.src} onClick={() => openItem(it)} className="group overflow-hidden rounded-[20px] border border-line bg-paper text-left" title={t("rotate3d")}>
+          <Link key={it.src} href={`/foto/${ITEM_BY_SRC[it.src]?.slug ?? ""}`} className="group block overflow-hidden rounded-[20px] border border-line bg-paper text-left">
             <div className="relative aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={it.src} alt={ALT_BY_SRC[it.src]?.[altL] ?? `${it.kind === "key" ? t("keyItem") : t("mapItem")} — ${t("printedSampleAlt")} ${it.n}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]" />
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition group-hover:bg-ink/25">
-                <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-ink opacity-0 transition group-hover:opacity-100">{t("rotate3d")} ↻</span>
-              </span>
             </div>
             <div className="flex items-center justify-between gap-2 px-3 py-3">
               <div>
-                <div className="text-[13px] font-semibold text-ink">{it.kind === "key" ? t("keyItem") : t("mapItem")}</div>
+                <div className="text-[13px] font-semibold leading-snug text-ink">{ITEM_BY_SRC[it.src]?.title[altL] ?? (it.kind === "key" ? t("keyItem") : t("mapItem"))}</div>
                 <div className="text-[11px] text-ink-3">{it.kind === "key" ? t("keychainSize") : t("district")}</div>
               </div>
               <span className="shrink-0 rounded-full bg-forest px-3 py-1.5 text-[11px] font-bold text-white">{it.kind === "key" ? t("keyPrice") : t("mapPrice")}</span>
             </div>
-          </button>
+          </Link>
         ))}
+      </div>
+
+      {/* Гори (/gory) — окремий режим з реальним рельєфом; сторінка на кожну вершину. */}
+      <div className="mt-14">
+        <h2 className="font-serif text-[clamp(22px,3vw,34px)] text-ink">
+          <Link href="/gory" className="hover:underline">{PEAK_UI[altL as PeakLocale].indexH1}</Link>
+        </h2>
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {PEAKS.slice(0, 12).map((p) => (
+            <Link key={p.slug} href={`/gory/${p.slug}`} className="group block overflow-hidden rounded-[18px] border border-line bg-paper">
+              <div className="aspect-[4/3] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.photo} alt={p.t[altL as PeakLocale].name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+              </div>
+              <span className="block px-3 py-2 text-[12.5px] font-semibold text-ink">{p.t[altL as PeakLocale].name}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="mt-14 rounded-[24px] bg-forest px-6 py-10 text-center text-[#F4EFE4]">

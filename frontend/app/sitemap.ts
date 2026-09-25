@@ -5,6 +5,8 @@ import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES, blogLocales } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES, districtLocales } from "@/lib/cityLanding";
 import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
+import { PEAKS, PEAK_LOCALES } from "@/lib/mountainPages";
+const PEAKS_LASTMOD = new Date("2026-09-25");
 
 const BASE = "https://monadruk.com";
 // Дата контенту хвилі city×product/occasion сторінок (2026-07-13) — окремо від
@@ -132,6 +134,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: GALLERY_LASTMOD,
         changeFrequency: "monthly",
         priority: l === defaultLocale ? 0.55 : 0.45,
+        alternates: { languages },
+      });
+    }
+  }
+  // /gory і /gory/[slug] (25.09.2026): усі 6 мов — справжні тексти.
+  for (const path of ["/gory", ...PEAKS.map((p) => `/gory/${p.slug}`)]) {
+    const languages: Record<string, string> = { "x-default": url(defaultLocale, path) };
+    for (const l of PEAK_LOCALES) languages[localeMeta[l].htmlLang] = url(l, path);
+    for (const l of PEAK_LOCALES) {
+      entries.push({
+        url: url(l, path),
+        lastModified: PEAKS_LASTMOD,
+        changeFrequency: "monthly",
+        priority: path === "/gory" ? (l === defaultLocale ? 0.7 : 0.6) : l === defaultLocale ? 0.6 : 0.5,
         alternates: { languages },
       });
     }
