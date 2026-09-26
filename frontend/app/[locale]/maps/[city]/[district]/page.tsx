@@ -6,6 +6,8 @@ import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i
 import { Link } from "@/i18n/navigation";
 import { CITY_PAGE_BY_SLUG } from "@/lib/cityPages";
 import { MAP_TEMPLATES } from "@/lib/templates";
+import { CITY_RAIONS, RAION_LOCALES } from "@/lib/cityRaions";
+import RaionView from "./RaionView";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq, landingCopy, districtLocales } from "@/lib/cityLanding";
 
@@ -17,7 +19,11 @@ import { DISTRICT_PAGES, DISTRICT_BY_CITY_SLUG, contentLocale, cityFaq, landingC
  * конструктора: /create?template={templateId}.
  */
 export function generateStaticParams() {
-  return DISTRICT_PAGES.map((d) => ({ city: d.citySlug, district: d.slug }));
+  return [
+    ...DISTRICT_PAGES.map((d) => ({ city: d.citySlug, district: d.slug })),
+    // 26.09.2026: адміністративні райони великих міст (lib/cityRaions.ts).
+    ...CITY_RAIONS.map((r) => ({ city: r.citySlug, district: r.slug })),
+  ];
 }
 
 export const dynamicParams = false;
@@ -37,6 +43,30 @@ export async function generateMetadata({
 }: {
   params: { locale: string; city: string; district: string };
 }): Promise<Metadata> {
+  const raion = CITY_RAIONS.find((x) => x.citySlug === params.city && x.slug === params.district);
+  if (raion && CITY_PAGE_BY_SLUG[params.city]) {
+    const loc = ((routing.locales as readonly string[]).includes(params.locale) ? params.locale : defaultLocale) as AppLocale;
+    const city = CITY_PAGE_BY_SLUG[params.city];
+    const isUA = loc === "uk";
+    const path = `/maps/${city.slug}/${raion.slug}`;
+    const ok = (RAION_LOCALES as readonly string[]).includes(loc);
+    const title = isUA
+      ? `3D-модель: ${raion.uk}, ${city.names.uk} — купити макет від 350 ₴`
+      : `3D model of ${raion.en}, ${city.names.en} — buy a district map`;
+    const description = isUA
+      ? `Купити 3D-мапу чи макет: ${raion.uk} (${city.names.uk}). Обʼємна модель вашої вулиці з будинками й парками, превʼю онлайн безкоштовно, друк від 350 ₴, доставка Новою Поштою.`
+      : `Buy a 3D map of ${raion.en} (${city.names.en}): your street with real building heights, parks and water. Free online preview, printed and shipped.`;
+    const langs: Record<string, string> = { "x-default": localeUrl(defaultLocale, path) };
+    for (const l of RAION_LOCALES) langs[localeMeta[l].htmlLang] = localeUrl(l, path);
+    return {
+      title: seoTitle(title),
+      description,
+      alternates: { canonical: localeUrl(ok ? loc : "en", path), languages: langs },
+      robots: ok ? undefined : { index: false, follow: true },
+      openGraph: { title, description, url: localeUrl(loc, path), siteName: "Monadruk", type: "website", locale: localeMeta[loc].ogLocale, images: [`${BASE}/opengraph-image`] },
+      twitter: { card: "summary_large_image", title, description, images: [`${BASE}/opengraph-image`] },
+    };
+  }
   const r = resolve(params.city, params.district);
   if (!r) return {};
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
@@ -73,6 +103,12 @@ export default async function DistrictPage({
 }: {
   params: { locale: string; city: string; district: string };
 }) {
+  const raion = CITY_RAIONS.find((x) => x.citySlug === params.city && x.slug === params.district);
+  if (raion && CITY_PAGE_BY_SLUG[params.city]) {
+    const loc = ((routing.locales as readonly string[]).includes(params.locale) ? params.locale : defaultLocale) as AppLocale;
+    setRequestLocale(loc);
+    return <RaionView raion={raion} city={CITY_PAGE_BY_SLUG[params.city]} locale={loc} />;
+  }
   const r = resolve(params.city, params.district);
   if (!r) notFound();
   const { district, city, tpl } = r;

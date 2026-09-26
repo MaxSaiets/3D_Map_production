@@ -6,6 +6,9 @@ import { BLOG_ARTICLES, blogLocales } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES, districtLocales } from "@/lib/cityLanding";
 import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 import { PEAKS, PEAK_LOCALES } from "@/lib/mountainPages";
+import { UA_CITIES_2, UA_CITY2_LOCALES } from "@/lib/uaCities2";
+import { CITY_RAIONS, RAION_LOCALES } from "@/lib/cityRaions";
+const UA2_LASTMOD = new Date("2026-09-26");
 const PEAKS_LASTMOD = new Date("2026-09-25");
 
 const BASE = "https://monadruk.com";
@@ -153,5 +156,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       });
     }
   }
+  // 26.09.2026: друге коло міст України + адміністративні райони — лише uk/en.
+  const pushUkEn = (path: string, ls: readonly string[], pr: number) => {
+    const languages: Record<string, string> = { "x-default": url(defaultLocale, path) };
+    for (const l of ls) languages[localeMeta[l as keyof typeof localeMeta].htmlLang] = url(l, path);
+    for (const l of ls) {
+      entries.push({
+        url: url(l, path),
+        lastModified: UA2_LASTMOD,
+        changeFrequency: "monthly",
+        priority: l === defaultLocale ? pr : pr - 0.1,
+        alternates: { languages },
+      });
+    }
+  };
+  for (const c of UA_CITIES_2) pushUkEn(`/maps/${c.slug}`, UA_CITY2_LOCALES, 0.65);
+  for (const r of CITY_RAIONS) pushUkEn(`/maps/${r.citySlug}/${r.slug}`, RAION_LOCALES, 0.6);
   return entries;
 }

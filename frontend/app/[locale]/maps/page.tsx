@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { pageMetadata, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
+import { CITY_PAGES, WORLD_CITY_PAGES, UA_CITY2_PAGES } from "@/lib/cityPages";
 
 const MAPS_FAQ: Record<"uk" | "en", { q: string; a: string }[]> = {
   uk: [
@@ -89,6 +89,29 @@ export default async function MapsIndexPage({ params }: { params: { locale: stri
           </li>
         ))}
       </ul>
+
+      {/* 26.09.2026: друге коло міст України (сторінки uk/en). */}
+      {(locale === "uk" || locale === "en") && (
+        <>
+          <h2 className="mt-12 text-[20px] font-semibold">
+            {isUA ? "Інші міста України: купити 3D-модель чи макет" : "More Ukrainian cities"}
+          </h2>
+          <ul className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {[...UA_CITY2_PAGES]
+              .sort((a, b) => a.names[locale].localeCompare(b.names[locale], locale))
+              .map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/maps/${c.slug}`}
+                    className="block rounded-[14px] border border-line-soft bg-white/70 px-3.5 py-2.5 text-[14px] font-medium text-ink transition hover:border-[var(--accent)]"
+                  >
+                    {c.names[locale]}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </>
+      )}
 
       {/* SEO-РОЗШИРЕННЯ НА ЄС: міста Європи. Для de/pl/fr/es-аудиторії це
           єдиний контент про ЇХНІ міста — раніше всі локалі бачили лише

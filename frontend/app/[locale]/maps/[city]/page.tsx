@@ -4,7 +4,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl, priceValidUntil } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { MAP_CITY_PAGES as CITY_PAGES, MAP_CITY_PAGE_BY_SLUG as CITY_PAGE_BY_SLUG, isWorldCity } from "@/lib/cityPages";
+import { MAP_CITY_PAGES as CITY_PAGES, MAP_CITY_PAGE_BY_SLUG as CITY_PAGE_BY_SLUG, isWorldCity, isUaCity2 } from "@/lib/cityPages";
+import { UA_CITY2_LOCALES } from "@/lib/uaCities2";
+import UaCity2View from "./UaCity2View";
+import { RAIONS_BY_CITY } from "@/lib/cityRaions";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
 import { WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
 import { cityProse, cityDerivedFacts } from "@/lib/cityProse";
@@ -44,6 +47,20 @@ export async function generateMetadata({
 
   const title = t("title", { city: name });
   const description = t("description", { city: name });
+  // 26.09.2026: друге коло міст — справжній текст лише uk/en; решта мов noindex → canonical en.
+  if (isUaCity2(city.slug)) {
+    const ok = (UA_CITY2_LOCALES as readonly string[]).includes(locale);
+    const langs: Record<string, string> = { "x-default": localeUrl(defaultLocale, path) };
+    for (const l of UA_CITY2_LOCALES) langs[localeMeta[l].htmlLang] = localeUrl(l, path);
+    return {
+      title,
+      description,
+      alternates: { canonical: localeUrl(ok ? locale : "en", path), languages: langs },
+      robots: ok ? undefined : { index: false, follow: true },
+      openGraph: { title, description, url: localeUrl(locale, path), siteName: "Monadruk", type: "website", locale: localeMeta[locale].ogLocale, images: [`${BASE}/opengraph-image`] },
+      twitter: { card: "summary_large_image", title, description, images: [`${BASE}/opengraph-image`] },
+    };
+  }
   return {
     title,
     description,
@@ -73,6 +90,7 @@ export default async function CityPage({
     ? params.locale
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
+  if (isUaCity2(city.slug)) return <UaCity2View city={city} locale={locale} />;
   const t = await getTranslations({ locale, namespace: "cityPages" });
   const name = city.names[locale];
 
@@ -253,6 +271,27 @@ export default async function CityPage({
                 </li>
               );
             })}
+          </ul>
+        </section>
+      )}
+
+      {/* 26.09.2026: адміністративні райони (lib/cityRaions.ts) — лише uk/en мають сторінки. */}
+      {(RAIONS_BY_CITY[city.slug]?.length ?? 0) > 0 && (locale === "uk" || locale === "en") && (
+        <section className="mt-12">
+          <h2 className="text-[20px] font-semibold">
+            {locale === "uk" ? `3D-модель району: ${name}` : `3D map by district: ${name}`}
+          </h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {RAIONS_BY_CITY[city.slug].map((r) => (
+              <li key={r.slug}>
+                <Link
+                  href={`/maps/${city.slug}/${r.slug}`}
+                  className="block rounded-[14px] border border-line-soft bg-white/70 px-4 py-2.5 text-[14.5px] font-medium text-ink transition hover:border-[var(--accent)]"
+                >
+                  {locale === "uk" ? r.uk : r.en}
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
       )}

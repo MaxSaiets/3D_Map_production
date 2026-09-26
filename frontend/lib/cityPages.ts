@@ -1,5 +1,6 @@
 import { CITIES } from "@/lib/templates";
 import { WORLD_CITIES, WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
+import { UA_CITIES_2, UA_CITY2_BY_SLUG } from "@/lib/uaCities2";
 import type { AppLocale } from "@/i18n/routing";
 
 /**
@@ -85,8 +86,21 @@ export const WORLD_CITY_PAGES: CityPage[] = WORLD_CITIES.map((c) => ({
   names: c.names,
 }));
 
-/** Усі міста, що мають сторінку /maps/[slug] (UA + Європа). */
-export const MAP_CITY_PAGES: CityPage[] = [...CITY_PAGES, ...WORLD_CITY_PAGES];
+/** 26.09.2026: друге коло міст України (lib/uaCities2.ts) — сторінки лише uk/en. */
+export const UA_CITY2_PAGES: CityPage[] = UA_CITIES_2.map((c) => ({
+  slug: c.slug,
+  key: `UA2_${c.slug}`,
+  center: c.center,
+  names: { uk: c.names.uk, en: c.names.en, de: c.names.en, pl: c.names.en, fr: c.names.en, es: c.names.en },
+}));
+
+/** true — місто з другого кола (без шаблонів конструктора, /brelok і /podarunok). */
+export function isUaCity2(slug: string): boolean {
+  return Boolean(UA_CITY2_BY_SLUG[slug]);
+}
+
+/** Усі міста, що мають сторінку /maps/[slug] (UA + друге коло UA + Європа). */
+export const MAP_CITY_PAGES: CityPage[] = [...CITY_PAGES, ...UA_CITY2_PAGES, ...WORLD_CITY_PAGES];
 
 export const MAP_CITY_PAGE_BY_SLUG: Record<string, CityPage> = Object.fromEntries(
   MAP_CITY_PAGES.map((c) => [c.slug, c]),
