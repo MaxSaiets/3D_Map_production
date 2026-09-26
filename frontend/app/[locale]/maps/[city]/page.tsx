@@ -8,6 +8,8 @@ import { MAP_CITY_PAGES as CITY_PAGES, MAP_CITY_PAGE_BY_SLUG as CITY_PAGE_BY_SLU
 import { UA_CITY2_LOCALES } from "@/lib/uaCities2";
 import UaCity2View from "./UaCity2View";
 import { RAIONS_BY_CITY } from "@/lib/cityRaions";
+import { STREET_PAGES_BY_CITY } from "@/lib/streetPages";
+import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
 import { WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
 import { cityProse, cityDerivedFacts } from "@/lib/cityProse";
@@ -57,8 +59,8 @@ export async function generateMetadata({
       description,
       alternates: { canonical: localeUrl(ok ? locale : "en", path), languages: langs },
       robots: ok ? undefined : { index: false, follow: true },
-      openGraph: { title, description, url: localeUrl(locale, path), siteName: "Monadruk", type: "website", locale: localeMeta[locale].ogLocale, images: [`${BASE}/opengraph-image`] },
-      twitter: { card: "summary_large_image", title, description, images: [`${BASE}/opengraph-image`] },
+      openGraph: { title, description, url: localeUrl(locale, path), siteName: "Monadruk", type: "website", locale: localeMeta[locale].ogLocale, images: [mapRenderUrl(city.slug, BASE) ?? `${BASE}/opengraph-image`] },
+      twitter: { card: "summary_large_image", title, description, images: [mapRenderUrl(city.slug, BASE) ?? `${BASE}/opengraph-image`] },
     };
   }
   return {
@@ -73,9 +75,9 @@ export async function generateMetadata({
       type: "website",
       locale: localeMeta[locale].ogLocale,
       // Робочий рут-OG (colocated [locale]-OG дають 307→404 через next-intl as-needed).
-      images: [`${BASE}/opengraph-image`],
+      images: [mapRenderUrl(city.slug, BASE) ?? `${BASE}/opengraph-image`],
     },
-    twitter: { card: "summary_large_image", title, description, images: [`${BASE}/opengraph-image`] },
+    twitter: { card: "summary_large_image", title, description, images: [mapRenderUrl(city.slug, BASE) ?? `${BASE}/opengraph-image`] },
   };
 }
 
@@ -109,7 +111,7 @@ export default async function CityPage({
         "@type": "Product",
         name: t("title", { city: name }),
         description: t("description", { city: name }),
-        image: `${BASE}/real/map-1.webp`,
+        image: mapRenderUrl(city.slug, BASE) ?? `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-MAP-${city.slug}`,
         offers: {
@@ -248,6 +250,8 @@ export default async function CityPage({
         </Link>
       </div>
 
+      <MapRenderFigure id={city.slug} name={name} isUA={locale === "uk"} />
+
       {/* Райони міста (rank 3): унікальний контент + глибокі лінки на готову сцену
           конструктора (/create?template=). Блерби uk-only → решта локалей лише назва. */}
       {districts.length > 0 && (
@@ -289,6 +293,27 @@ export default async function CityPage({
                   className="block rounded-[14px] border border-line-soft bg-white/70 px-4 py-2.5 text-[14.5px] font-medium text-ink transition hover:border-[var(--accent)]"
                 >
                   {locale === "uk" ? r.uk : r.en}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 27.09.2026: відомі вулиці міста (сторінки uk/en). */}
+      {(STREET_PAGES_BY_CITY[city.slug]?.length ?? 0) > 0 && (locale === "uk" || locale === "en") && (
+        <section className="mt-12">
+          <h2 className="text-[20px] font-semibold">
+            {locale === "uk" ? `3D-модель вулиці: ${name}` : `3D map of a street in ${name}`}
+          </h2>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {STREET_PAGES_BY_CITY[city.slug].slice(0, 40).map((st) => (
+              <li key={st.slug}>
+                <Link
+                  href={`/maps/${city.slug}/${st.slug}`}
+                  className="inline-block rounded-full border border-line-soft bg-white/70 px-3.5 py-1.5 text-[13px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink"
+                >
+                  {locale === "uk" ? st.uk : st.en || st.uk}
                 </Link>
               </li>
             ))}

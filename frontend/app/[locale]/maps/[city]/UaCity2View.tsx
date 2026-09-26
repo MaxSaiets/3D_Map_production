@@ -8,6 +8,7 @@ import { mapPriceRange } from "@/lib/mapPrices";
 import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 import { cityFaq, contentLocale } from "@/lib/cityLanding";
 import { bearingFrom } from "@/lib/cityRaions";
+import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
 
 /**
  * 26.09.2026: сторінка міста ДРУГОГО КОЛА (lib/uaCities2.ts). Текст uk/en
@@ -126,7 +127,7 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
         "@type": "Product",
         name: t.h1,
         description: t.p1,
-        image: `${BASE}/real/map-1.webp`,
+        image: mapRenderUrl(city.slug, BASE) ?? `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-MAP-${city.slug}`,
         offers: {
@@ -180,6 +181,8 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
           {t.ctaK}
         </Link>
       </div>
+
+      <MapRenderFigure id={city.slug} name={name} isUA={isUA} />
 
       <section className="mt-9 rounded-[18px] border border-line-soft bg-white/60 px-5 py-5">
         <h2 className="text-[16px] font-semibold text-ink">{t.facts}</h2>

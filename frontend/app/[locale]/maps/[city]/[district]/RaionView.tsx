@@ -3,10 +3,12 @@ import type { AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import type { CityPage } from "@/lib/cityPages";
 import { RAIONS_BY_CITY, bearingFrom, type CityRaion } from "@/lib/cityRaions";
+import { STREET_PAGES_BY_CITY } from "@/lib/streetPages";
 import { DISTRICT_BY_CITY_SLUG } from "@/lib/cityLanding";
 import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { cityFaq, contentLocale } from "@/lib/cityLanding";
+import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
 
 /** Назва району в родовому для uk-речень: «Оболонський район» → «Оболонського району». */
 function ukGen(n: string): string {
@@ -40,6 +42,12 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
     tpl: MAP_TEMPLATES.find((t) => t.id === dp.templateId),
   })).filter((x) => x.tpl);
   const lm = raion.landmarks ?? [];
+  // Відомі вулиці, для яких цей район — найближчий центр (та сама логіка, що у StreetView).
+  const streets = (STREET_PAGES_BY_CITY[city.slug] ?? []).filter((s) => {
+    const all = RAIONS_BY_CITY[city.slug] ?? [];
+    const best = all.map((r) => ({ r, km: bearingFrom(s.center, r.center).km })).sort((a, b) => a.km - b.km)[0];
+    return best?.r.slug === raion.slug;
+  });
   const createHref = `/create?lat=${raion.center[0]}&lon=${raion.center[1]}`;
   const central = fromCentre.km < 2.5;
 
@@ -96,7 +104,7 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
         "@type": "Product",
         name: t.h1,
         description: t.intro[0],
-        image: `${BASE}/real/map-1.webp`,
+        image: mapRenderUrl(`${city.slug}--${raion.slug}`, BASE) ?? `${BASE}/real/map-1.webp`,
         brand: { "@type": "Brand", name: "Monadruk" },
         sku: `MND-RAION-${city.slug}-${raion.slug}`,
         offers: {
@@ -153,6 +161,8 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
         </Link>
       </div>
 
+      <MapRenderFigure id={`${city.slug}--${raion.slug}`} name={`${rName}, ${cityName}`} isUA={isUA} />
+
       <section className="mt-10">
         <h2 className="text-[20px] font-semibold">{t.buyH2}</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{t.buy}</p>
@@ -166,6 +176,21 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
               <li key={r.slug}>
                 <Link href={`/maps/${city.slug}/${r.slug}`} className="inline-block rounded-full border border-line-soft bg-white/70 px-4 py-2 text-[13.5px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink">
                   {isUA ? r.uk : r.en} · {nf.format(b.km)} {t.km}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {streets.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-[18px] font-semibold text-ink">{isUA ? "3D-модель вулиці в цьому районі" : "Street 3D maps in this district"}</h2>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {streets.map((s) => (
+              <li key={s.slug}>
+                <Link href={`/maps/${city.slug}/${s.slug}`} className="inline-block rounded-full border border-line-soft bg-white/70 px-4 py-2 text-[13.5px] font-medium text-ink-2 transition hover:border-[var(--accent)] hover:text-ink">
+                  {isUA ? s.uk : s.en || s.uk}
                 </Link>
               </li>
             ))}

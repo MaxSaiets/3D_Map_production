@@ -8,6 +8,8 @@ import { GALLERY_ITEMS, GALLERY_LOCALES } from "@/lib/gallery";
 import { PEAKS, PEAK_LOCALES } from "@/lib/mountainPages";
 import { UA_CITIES_2, UA_CITY2_LOCALES } from "@/lib/uaCities2";
 import { CITY_RAIONS, RAION_LOCALES } from "@/lib/cityRaions";
+import { STREET_PAGES } from "@/lib/streetPages";
+import { STREET_LOCALES } from "@/lib/cityStreets";
 const UA2_LASTMOD = new Date("2026-09-26");
 const PEAKS_LASTMOD = new Date("2026-09-25");
 
@@ -172,5 +174,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   };
   for (const c of UA_CITIES_2) pushUkEn(`/maps/${c.slug}`, UA_CITY2_LOCALES, 0.65);
   for (const r of CITY_RAIONS) pushUkEn(`/maps/${r.citySlug}/${r.slug}`, RAION_LOCALES, 0.6);
+  for (const st of STREET_PAGES) pushUkEn(`/maps/${st.citySlug}/${st.slug}`, STREET_LOCALES, 0.55);
   return entries;
 }
