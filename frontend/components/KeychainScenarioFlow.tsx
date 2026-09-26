@@ -399,7 +399,7 @@ export function KeychainScenarioFlow({
         <p className="px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
           {successView ? t("readyBadge") : <>{t("kcShapeLabel")}{tplId ? <span className="normal-case tracking-normal text-[var(--text-primary)]"> · {t(CARD_DEFS.find((c) => c.tplId === tplId)?.titleKey ?? "cardHeartTitle")}</span> : null}</>}
         </p>
-        <div className="mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:thin]" role="radiogroup" aria-label={t("kcShapeLabel")}>
+        <div className="mt-1.5 flex w-full gap-1.5 overflow-x-auto px-3 pb-1 [contain:inline-size] [scrollbar-width:thin]" role="radiogroup" aria-label={t("kcShapeLabel")}>
           {CARD_DEFS.map((c) => {
             const on = tplId === c.tplId;
             return (
