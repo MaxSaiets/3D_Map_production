@@ -364,7 +364,7 @@ export default function KeychainsPage() {
             інакше на низькому ноуті grid ділив ~600px навпіл (~300px/панель) і
             overflow-hidden РІЗАВ налаштування/превʼю (скарга «все закріплено, нічого
             не видно»). Тепер кожна панель = своя висота, сторінка СКРОЛИТЬСЯ. */}
-        <div className="mt-3 grid min-h-0 flex-1 gap-3 pb-[var(--sticky-h,0px)] lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
+        <div className="mt-3 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-3 pb-[var(--sticky-h,0px)] lg:grid-cols-[340px_minmax(0,1.08fr)_minmax(380px,0.92fr)] lg:grid-rows-[auto_auto] lg:pb-10">
           <div id="kc-map" className={`${mapPanelClasses} order-2 min-h-[460px] scroll-mt-3 flex-col overflow-hidden rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-panel)] shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur lg:order-2 lg:col-start-2 lg:row-start-1 lg:h-[var(--kc-panel-h)] lg:min-h-[440px]`}>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--surface-border)] px-4 py-2.5 sm:px-5 sm:py-3">
               <div>
