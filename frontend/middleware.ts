@@ -15,6 +15,15 @@ export default function middleware(req: NextRequest) {
   if (/\/(opengraph-image|twitter-image)$/.test(req.nextUrl.pathname)) {
     return new Response(null, { status: 410 });
   }
+  // 26.09.2026: /uk/... → постійний 308 на адресу без префікса (uk — мова за
+  // замовчуванням). next-intl робить тимчасовий 307, і GSC тримав /uk/showcase,
+  // /uk/keychains, /uk/prices як «Помилка переадресації». 308 передає вагу посилань.
+  const p = req.nextUrl.pathname;
+  if (p === "/uk" || p.startsWith("/uk/")) {
+    const url = req.nextUrl.clone();
+    url.pathname = p.slice(3) || "/";
+    return Response.redirect(url, 308);
+  }
   return intl(req);
 }
 
