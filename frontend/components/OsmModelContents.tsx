@@ -14,6 +14,15 @@ function h(s: string): number {
   return Math.abs(x);
 }
 
+// Не показуємо: радянську/імперську топоніміку, російськомовні назви, банки й установи.
+const BAD_POI = /лен[іi]н|тургенєв|ворошилов|артему$|^артем|ватутін|пушкін|радянськ|визволител|кіров|щорс|чапаєв|дзержинськ|жуков|комсомол|жовтнев|[ыэъё]|\bbank\b|банк|горздрав|приймальна/i;
+function cleanList(xs?: string[]): string[] {
+  return (xs ?? []).filter((n) => !BAD_POI.test(n) && n.length > 3);
+}
+function cleanStats(st: OsmStats): OsmStats {
+  return { ...st, parks: cleanList(st.parks), water: cleanList(st.water), pois: (st.pois ?? []).filter(([n]) => !BAD_POI.test(n) && n.length > 3) };
+}
+
 const KIND_UK: Record<string, string> = { church: "храм", museum: "музей", theatre: "театр", university: "університет", castle: "замок", monument: "памʼятник" };
 
 function lines(st: OsmStats, name: string, isUA: boolean, id: string): string[] {
@@ -59,8 +68,9 @@ function lines(st: OsmStats, name: string, isUA: boolean, id: string): string[] 
 
 /** Питання FAQ саме про цю ділянку (додаються до загального FAQ і в JSON-LD). */
 export function osmFaq(id: string, name: string, isUA: boolean): FaqItem[] {
-  const st = PAGE_OSM_STATS[id];
-  if (!st) return [];
+  const raw = PAGE_OSM_STATS[id];
+  if (!raw) return [];
+  const st = cleanStats(raw);
   const nf = new Intl.NumberFormat(isUA ? "uk-UA" : "en-US");
   const f: FaqItem[] = [];
   if (isUA) {
@@ -83,8 +93,9 @@ export function rotateFaq(all: FaqItem[], id: string, keep = 2): FaqItem[] {
 }
 
 export default function OsmModelContents({ id, name, isUA }: { id: string; name: string; isUA: boolean }) {
-  const st = PAGE_OSM_STATS[id];
-  if (!st || !st.b) return null;
+  const raw = PAGE_OSM_STATS[id];
+  if (!raw || !raw.b) return null;
+  const st = cleanStats(raw);
   return (
     <section className="mt-10">
       <h2 className="text-[20px] font-semibold">{isUA ? `Що буде на вашій 3D-моделі: ${name}` : `What your 3D model of ${name} will show`}</h2>

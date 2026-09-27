@@ -22,15 +22,15 @@ const L = (uk: string, en: string) => ({ uk, en });
 
 export const CITY_RAIONS: CityRaion[] = [
   // Київ
-  { citySlug: "kyiv", slug: "holosiivskyi-rayon", uk: "Голосіївський район", en: "Holosiivskyi District", center: [50.3276, 30.5512],
+  { citySlug: "kyiv", slug: "holosiivskyi-rayon", uk: "Голосіївський район", en: "Holosiivskyi District", center: [50.3384, 30.5553],
     landmarks: [L("Голосіївський парк", "Holosiivskyi Park"), L("ВДНГ", "VDNH Expocenter"), L("музей просто неба «Пирогів»", "Pyrohiv open-air museum")] },
   { citySlug: "kyiv", slug: "darnytskyi-rayon", uk: "Дарницький район", en: "Darnytskyi District", center: [50.4040, 30.6330],
     landmarks: [L("Позняки", "Pozniaky"), L("Осокорки", "Osokorky"), L("Харківський масив", "Kharkivskyi masyv")] },
-  { citySlug: "kyiv", slug: "desnianskyi-rayon", uk: "Деснянський район", en: "Desnianskyi District", center: [50.5191, 30.6744],
+  { citySlug: "kyiv", slug: "desnianskyi-rayon", uk: "Деснянський район", en: "Desnianskyi District", center: [50.5389, 30.6370],
     landmarks: [L("Троєщина", "Troieshchyna"), L("Лісовий масив", "Lisovyi masyv")] },
   { citySlug: "kyiv", slug: "dniprovskyi-rayon", uk: "Дніпровський район", en: "Dniprovskyi District", center: [50.4564, 30.6444],
     landmarks: [L("Русанівка", "Rusanivka"), L("Гідропарк", "Hidropark"), L("Лівобережна", "Livoberezhna")] },
-  { citySlug: "kyiv", slug: "obolonskyi-rayon", uk: "Оболонський район", en: "Obolonskyi District", center: [50.5318, 30.4210],
+  { citySlug: "kyiv", slug: "obolonskyi-rayon", uk: "Оболонський район", en: "Obolonskyi District", center: [50.5174, 30.4305],
     landmarks: [L("Оболонська набережна", "Obolon embankment"), L("парк «Наталка»", "Natalka Park")] },
   { citySlug: "kyiv", slug: "pecherskyi-rayon", uk: "Печерський район", en: "Pecherskyi District", center: [50.4288, 30.5531],
     landmarks: [L("Києво-Печерська лавра", "Kyiv Pechersk Lavra"), L("Маріїнський палац", "Mariinskyi Palace"), L("монумент «Батьківщина-Мати»", "Motherland Monument")] },
@@ -66,7 +66,7 @@ export const CITY_RAIONS: CityRaion[] = [
     landmarks: [L("житловий масив Таїрова", "Tairova"), L("Великий Фонтан", "Velykyi Fontan")] },
   { citySlug: "odesa", slug: "malynovskyi-rayon", uk: "Малиновський район", en: "Malynovskyi District", center: [46.4550, 30.6800],
     landmarks: [L("Черемушки", "Cheriomushky")] },
-  { citySlug: "odesa", slug: "khadzhybeiskyi-rayon", uk: "Хаджибейський район", en: "Khadzhybeiskyi District", center: [46.5300, 30.7100],
+  { citySlug: "odesa", slug: "khadzhybeiskyi-rayon", uk: "Хаджибейський район", en: "Khadzhybeiskyi District", center: [46.5048, 30.7244],
     landmarks: [L("Лузанівка", "Luzanivka")] },
 
   // Дніпро
@@ -74,7 +74,7 @@ export const CITY_RAIONS: CityRaion[] = [
     landmarks: [L("проспект Яворницького", "Yavornytskoho Avenue")] },
   { citySlug: "dnipro", slug: "sobornyi-rayon", uk: "Соборний район", en: "Sobornyi District", center: [48.4500, 35.0667] },
   { citySlug: "dnipro", slug: "shevchenkivskyi-rayon", uk: "Шевченківський район", en: "Shevchenkivskyi District", center: [48.4091, 35.0129] },
-  { citySlug: "dnipro", slug: "chechelivskyi-rayon", uk: "Чечелівський район", en: "Chechelivskyi District", center: [48.4211, 34.9669] },
+  { citySlug: "dnipro", slug: "chechelivskyi-rayon", uk: "Чечелівський район", en: "Chechelivskyi District", center: [48.4445, 34.9669] },
   { citySlug: "dnipro", slug: "novokodatskyi-rayon", uk: "Новокодацький район", en: "Novokodatskyi District", center: [48.4750, 34.9450] },
   { citySlug: "dnipro", slug: "amur-nyzhnodniprovskyi-rayon", uk: "Амур-Нижньодніпровський район", en: "Amur-Nyzhnodniprovskyi District", center: [48.5211, 34.9783] },
   { citySlug: "dnipro", slug: "industrialnyi-rayon", uk: "Індустріальний район", en: "Industrialnyi District", center: [48.5167, 35.0833] },
@@ -91,11 +91,11 @@ export const CITY_RAIONS: CityRaion[] = [
     landmarks: [L("Стрийський парк", "Stryiskyi Park")] },
   { citySlug: "lviv", slug: "zaliznychnyi-rayon", uk: "Залізничний район", en: "Zaliznychnyi District", center: [49.8314, 23.9578],
     landmarks: [L("головний залізничний вокзал", "Lviv main railway station")] },
-  { citySlug: "lviv", slug: "shevchenkivskyi-rayon", uk: "Шевченківський район", en: "Shevchenkivskyi District", center: [49.8700, 23.9842],
+  { citySlug: "lviv", slug: "shevchenkivskyi-rayon", uk: "Шевченківський район", en: "Shevchenkivskyi District", center: [49.8610, 24.0300],
     landmarks: [L("Замарстинів", "Zamarstyniv")] },
 
   // Запоріжжя
-  { citySlug: "zaporizhzhia", slug: "khortytskyi-rayon", uk: "Хортицький район", en: "Khortytskyi District", center: [47.8164, 35.0547],
+  { citySlug: "zaporizhzhia", slug: "khortytskyi-rayon", uk: "Хортицький район", en: "Khortytskyi District", center: [47.8218, 35.0439],
     landmarks: [L("острів Хортиця", "Khortytsia Island")] },
   { citySlug: "zaporizhzhia", slug: "oleksandrivskyi-rayon", uk: "Олександрівський район", en: "Oleksandrivskyi District", center: [47.8250, 35.1667] },
   { citySlug: "zaporizhzhia", slug: "voznesenivskyi-rayon", uk: "Вознесенівський район", en: "Voznesenivskyi District", center: [47.8167, 35.1833] },
@@ -117,7 +117,7 @@ export const CITY_RAIONS: CityRaion[] = [
   { citySlug: "mykolaiv", slug: "tsentralnyi-rayon", uk: "Центральний район", en: "Tsentralnyi District", center: [47.0011, 31.9520] },
   { citySlug: "mykolaiv", slug: "zavodskyi-rayon", uk: "Заводський район", en: "Zavodskyi District", center: [46.9418, 31.9498] },
   { citySlug: "mykolaiv", slug: "inhulskyi-rayon", uk: "Інгульський район", en: "Inhulskyi District", center: [46.9477, 32.0662] },
-  { citySlug: "mykolaiv", slug: "korabelnyi-rayon", uk: "Корабельний район", en: "Korabelnyi District", center: [46.8733, 32.0210] },
+  { citySlug: "mykolaiv", slug: "korabelnyi-rayon", uk: "Корабельний район", en: "Korabelnyi District", center: [46.8517, 32.0228] },
 ];
 
 export const RAIONS_BY_CITY: Record<string, CityRaion[]> = CITY_RAIONS.reduce(
