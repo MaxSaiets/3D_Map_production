@@ -9,6 +9,14 @@ import { getCatalog, formatCatalogPrice } from "@/lib/catalog";
 import { cityFaq, contentLocale } from "@/lib/cityLanding";
 import { bearingFrom } from "@/lib/cityRaions";
 import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
+import AiPageText from "@/components/AiPageText";
+import OsmModelContents, { osmFaq, rotateFaq } from "@/components/OsmModelContents";
+
+function vh(s: string): number {
+  let x = 2166136261;
+  for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); }
+  return Math.abs(x);
+}
 
 /**
  * 26.09.2026: сторінка міста ДРУГОГО КОЛА (lib/uaCities2.ts). Текст uk/en
@@ -22,9 +30,10 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
   const name = isUA ? d.names.uk : d.names.en;
   const nf = new Intl.NumberFormat(isUA ? "uk-UA" : "en-US");
   const path = `/maps/${city.slug}`;
-  const faq = cityFaq(contentLocale(locale), name, "podarunok");
+  const faq = [...osmFaq(city.slug, name, isUA), ...rotateFaq(cityFaq(contentLocale(locale), name, "podarunok"), city.slug)];
   const range = mapPriceRange(locale);
   const density = d.area_km2 ? Math.round(d.population / d.area_km2) : null;
+  const vv = vh(city.slug);
 
   // Найближчі міста України (обидва кола) з відстанню — унікальний блок для кожної сторінки.
   const ua = MAP_CITY_PAGES.filter((c) => !isWorldCity(c.slug) && c.slug !== city.slug);
@@ -52,8 +61,15 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
   const t = isUA
     ? {
         h1: `3D-модель міста ${name} — купити макет чи 3D-мапу`,
-        p1: `Хочете купити 3D-модель міста ${name} або замовити макет свого району? Ми друкуємо обʼємні мапи з реальних даних OpenStreetMap: вулиці, будинки з висотами, парки й водойми. Обираєте ділянку в конструкторі, дивитеся превʼю безкоштовно — і замовляєте друк з доставкою Новою Поштою.`,
-        p2: `Мапа від ${range.low} ₴, брелок з картою — від 170 ₴. Виготовлення 2–4 робочі дні. Можна також купити лише файл 3MF для самостійного друку.`,
+        p1: [
+          `Хочете купити 3D-модель міста ${name} або замовити макет свого району? Ми друкуємо обʼємні мапи з реальних даних OpenStreetMap: вулиці, будинки з висотами, парки й водойми. Обираєте ділянку в конструкторі, дивитеся превʼю безкоштовно — і замовляєте друк з доставкою Новою Поштою.`,
+          `Макет міста ${name} — це не сувенір «з полиці», а модель саме вашого місця: двору, вулиці, району. Ділянку обираєте самі, превʼю бачите одразу й безкоштовно, а готову 3D-мапу надсилаємо Новою Поштою.`,
+          `3D-мапа міста ${name} друкується з відкритих картографічних даних: будинки отримують свою реальну висоту, дороги — ширину, парки й вода — окремий колір. Замовити можна будь-яку ділянку міста — від центру до околиці.`,
+        ][vv % 3],
+        p2: [
+          `Мапа від ${range.low} ₴, брелок з картою — від 170 ₴. Виготовлення 2–4 робочі дні. Можна також купити лише файл 3MF для самостійного друку.`,
+          `Ціни: 3D-мапа — ${range.low}–${range.high} ₴ залежно від розміру, брелок — від 170 ₴, файл 3MF для власного принтера — 149 ₴. Друк займає 2–4 робочі дні.`,
+        ][vv % 2],
         facts: `Коротко про місто ${name}`,
         fPop: "Населення", fArea: "Площа", fDens: "Щільність", fObl: "Область", fRiver: "Водойма", fLm: "Візитівка",
         fFounded: d.firstMention ? "Перша згадка" : "Засноване",
@@ -72,7 +88,11 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
       }
     : {
         h1: `3D model of ${name} — buy a printed city map`,
-        p1: `Want to buy a 3D model of ${name} or order a map of your own neighbourhood? We print tactile maps from real OpenStreetMap data: streets, buildings with real heights, parks and water. Pick the area in the builder, preview it for free and order the print.`,
+        p1: [
+          `Want to buy a 3D model of ${name} or order a map of your own neighbourhood? We print tactile maps from real OpenStreetMap data: streets, buildings with real heights, parks and water. Pick the area in the builder, preview it for free and order the print.`,
+          `A model of ${name} is not an off-the-shelf souvenir — it is your own place: your yard, street or district. You choose the area, see a free preview straight away and we ship the printed 3D map.`,
+          `The 3D map of ${name} is printed from open map data: buildings get their real height, roads their width, parks and water a colour of their own. Any part of the city can be ordered, from the centre to the outskirts.`,
+        ][vv % 3],
         p2: `Maps from ≈€8, map keychains from ≈€4. Production takes 2–4 working days. You can also buy just the 3MF file to print yourself.`,
         facts: `${name} at a glance`,
         fPop: "Population", fArea: "Area", fDens: "Density", fObl: "Region", fRiver: "Water", fLm: "Landmark",
@@ -172,6 +192,7 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
       {prose.map((p, i) => (
         <p key={i} className="mt-3 text-[15px] leading-relaxed text-ink-2">{p}</p>
       ))}
+      <AiPageText id={city.slug} isUA={isUA} />
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href={createHref} className="inline-flex min-h-[48px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90">
@@ -195,6 +216,8 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
           ))}
         </dl>
       </section>
+
+      <OsmModelContents id={city.slug} name={name} isUA={isUA} />
 
       <section className="mt-12">
         <h2 className="text-[20px] font-semibold">{t.buyH2}</h2>

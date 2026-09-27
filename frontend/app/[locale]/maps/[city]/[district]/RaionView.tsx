@@ -9,6 +9,8 @@ import { MAP_TEMPLATES } from "@/lib/templates";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { cityFaq, contentLocale } from "@/lib/cityLanding";
 import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
+import AiPageText from "@/components/AiPageText";
+import OsmModelContents, { osmFaq, rotateFaq } from "@/components/OsmModelContents";
 
 /** Назва району в родовому для uk-речень: «Оболонський район» → «Оболонського району». */
 function ukGen(n: string): string {
@@ -31,7 +33,8 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
   const path = `/maps/${city.slug}/${raion.slug}`;
   const nf = new Intl.NumberFormat(isUA ? "uk-UA" : "en-US", { maximumFractionDigits: 1 });
   const range = mapPriceRange(locale);
-  const faq = cityFaq(contentLocale(locale), cityName, "podarunok");
+  const rid = `${city.slug}--${raion.slug}`;
+  const faq = [...osmFaq(rid, `${isUA ? raion.uk : raion.en}, ${isUA ? city.names.uk : city.names.en}`, isUA), ...rotateFaq(cityFaq(contentLocale(locale), cityName, "podarunok"), rid)];
   const fromCentre = bearingFrom(city.center, raion.center);
   const siblings = (RAIONS_BY_CITY[city.slug] ?? [])
     .filter((r) => r.slug !== raion.slug)
@@ -50,12 +53,19 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
   });
   const createHref = `/create?lat=${raion.center[0]}&lon=${raion.center[1]}`;
   const central = fromCentre.km < 2.5;
+  let vv = 2166136261;
+  for (const ch of raion.slug + city.slug) { vv ^= ch.charCodeAt(0); vv = Math.imul(vv, 16777619); }
+  vv = Math.abs(vv);
 
   const t = isUA
     ? {
         h1: `3D-модель: ${rName} (${cityName}) — купити макет району`,
         intro: [
-          `Купити 3D-мапу ${ukGen(raion.uk)} чи замовити макет своєї вулиці — просто: конструктор відкривається одразу на центрі району, ви пересуваєте рамку на свій квартал і бачите модель за кілька хвилин. Будинки з реальними висотами, дороги, парки й водойми — за даними OpenStreetMap.`,
+          [
+            `Купити 3D-мапу ${ukGen(raion.uk)} чи замовити макет своєї вулиці — просто: конструктор відкривається одразу на центрі району, ви пересуваєте рамку на свій квартал і бачите модель за кілька хвилин. Будинки з реальними висотами, дороги, парки й водойми — за даними OpenStreetMap.`,
+            `Макет ${ukGen(raion.uk)} (${cityName}) — подарунок для тих, хто тут живе чи виріс. Рамку в конструкторі ставите на свій будинок, школу чи двір, а превʼю моделі зʼявляється за кілька хвилин і нічого не коштує.`,
+            `3D-модель ${ukGen(raion.uk)} збирається з відкритих даних карт: кожна будівля має свою висоту, дороги — ширину, зелень і вода друкуються окремим кольором. Замовити можна весь центр району чи один квартал.`,
+          ][vv % 3],
           central
             ? `${raion.uk} охоплює саму серцевину міста ${cityName}, тож на моделі буде найщільніша забудова й головні вулиці.`
             : `Центр району лежить приблизно за ${nf.format(fromCentre.km)} км ${fromCentre.uk} від центру міста ${cityName} — на мапі добре видно, як район переходить у сусідні квартали.`,
@@ -67,7 +77,10 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
         cta: "Створити 3D-мапу району",
         ctaK: "Брелок з мапою району",
         buyH2: "Скільки коштує і як купити",
-        buy: `3D-мапа району — від ${range.low} ₴ до ${range.high} ₴ залежно від розміру, брелок з картою — від 170 ₴, файл 3MF для самодруку — 149 ₴. Друк 2–4 робочі дні, доставка Новою Поштою по Україні.`,
+        buy: [
+          `3D-мапа району — від ${range.low} ₴ до ${range.high} ₴ залежно від розміру, брелок з картою — від 170 ₴, файл 3MF для самодруку — 149 ₴. Друк 2–4 робочі дні, доставка Новою Поштою по Україні.`,
+          `Мапа 5,5 см коштує ${range.low} ₴, найбільша (15 см) — ${range.high} ₴. Брелок з мапою району — від 170 ₴, а файл 3MF для власного принтера — 149 ₴. Відправляємо Новою Поштою через 2–4 робочі дні.`,
+        ][vv % 2],
         sib: `Інші райони міста ${cityName}`,
         nb: "Готові сцени кварталів",
         cityLink: `3D-модель міста ${cityName}`,
@@ -150,6 +163,7 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
       {t.intro.map((p, i) => (
         <p key={i} className={`${i === 0 ? "mt-5" : "mt-3"} text-[15px] leading-relaxed text-ink-2`}>{p}</p>
       ))}
+      <AiPageText id={rid} isUA={isUA} />
       <p className="mt-3 text-[14px] font-semibold text-[var(--accent-strong)]">{t.tip}</p>
 
       <div className="mt-8 flex flex-wrap gap-3">
@@ -162,6 +176,8 @@ export default function RaionView({ raion, city, locale }: { raion: CityRaion; c
       </div>
 
       <MapRenderFigure id={`${city.slug}--${raion.slug}`} name={`${rName}, ${cityName}`} isUA={isUA} />
+
+      <OsmModelContents id={rid} name={rName} isUA={isUA} />
 
       <section className="mt-10">
         <h2 className="text-[20px] font-semibold">{t.buyH2}</h2>

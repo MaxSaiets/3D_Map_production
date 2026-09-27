@@ -139,14 +139,24 @@ def main():
             continue
         if a.limit and done + fail >= a.limit:
             break
-        try:
-            src, sec = generate(a.api, rid, lat, lon)
-            render(src, rid)
-            done += 1
-            log(f"OK   {rid} (генерація {sec} с)")
-        except Exception as e:  # одна точка не зупиняє ніч
-            fail += 1
-            log(f"FAIL {rid}: {e}")
+        for attempt in range(3):
+            try:
+                src, sec = generate(a.api, rid, lat, lon)
+                render(src, rid)
+                done += 1
+                log(f"OK   {rid} (генерація {sec} с)")
+                break
+            except Exception as e:  # одна точка не зупиняє ніч
+                msg = str(e)
+                # 27.09: Overpass/ліміт бекенду → це не вада точки, а перевантаження: чекаємо й повторюємо ту саму
+                busy = "недоступне" in msg or "429" in msg or "timeout" in msg.lower()
+                if busy and attempt < 2:
+                    log(f"WAIT {rid}: {msg[:90]} → пауза 10 хв")
+                    time.sleep(600)
+                    continue
+                fail += 1
+                log(f"FAIL {rid}: {msg[:200]}")
+                break
         write_manifest()
         time.sleep(a.pause)
     n = write_manifest()

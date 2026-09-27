@@ -7,6 +7,8 @@ import { STREET_PAGES_BY_CITY, type CityStreet } from "@/lib/streetPages";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { cityFaq, contentLocale } from "@/lib/cityLanding";
 import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
+import AiPageText from "@/components/AiPageText";
+import OsmModelContents, { osmFaq, rotateFaq } from "@/components/OsmModelContents";
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -27,7 +29,7 @@ export default function StreetView({ street, city, locale }: { street: CityStree
   const path = `/maps/${city.slug}/${street.slug}`;
   const nf = new Intl.NumberFormat(isUA ? "uk-UA" : "en-US", { maximumFractionDigits: 1 });
   const range = mapPriceRange(locale);
-  const faq = cityFaq(contentLocale(locale), cityName, "podarunok");
+  const faq = [...osmFaq(`${city.slug}--${street.slug}`, sName, isUA), ...rotateFaq(cityFaq(contentLocale(locale), cityName, "podarunok"), street.slug)];
   const fromCentre = bearingFrom(city.center, street.center);
   const raion = (RAIONS_BY_CITY[city.slug] ?? [])
     .map((r) => ({ r, km: bearingFrom(street.center, r.center).km }))
@@ -99,7 +101,10 @@ export default function StreetView({ street, city, locale }: { street: CityStree
         facts: "Факти про вулицю",
         fCity: "Місто", fRaion: "Район", fLen: "Довжина", fNamed: "Названа на честь", fSince: "Відома з", fCentre: "Від центру",
         buyH2: "Скільки коштує 3D-мапа вулиці",
-        buy: `Мапа — від ${range.low} ₴ до ${range.high} ₴ залежно від розміру, брелок з мапою — від 170 ₴, файл 3MF для самодруку — 149 ₴. Друк 2–4 робочі дні.`,
+        buy: [
+          `Мапа — від ${range.low} ₴ до ${range.high} ₴ залежно від розміру, брелок з мапою — від 170 ₴, файл 3MF для самодруку — 149 ₴. Друк 2–4 робочі дні.`,
+          `Найменша мапа (5,5 см) — ${range.low} ₴, найбільша (15 см) — ${range.high} ₴; брелок з цією вулицею — від 170 ₴. Друкуємо 2–4 робочі дні й відправляємо Новою Поштою.`,
+        ][v % 2],
         near: "Відомі вулиці поруч", m: "м",
         src: "Джерело фактів: Вікіпедія",
         raionLink: raion ? `3D-модель району: ${raion.uk}` : "",
@@ -201,6 +206,8 @@ export default function StreetView({ street, city, locale }: { street: CityStree
         <p key={i} className={`${i === 0 ? "mt-5" : "mt-3"} text-[15px] leading-relaxed text-ink-2`}>{p}</p>
       ))}
 
+      <AiPageText id={renderId} isUA={isUA} />
+
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href={createHref} className="inline-flex min-h-[48px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90">
           {t.cta}
@@ -226,6 +233,8 @@ export default function StreetView({ street, city, locale }: { street: CityStree
           {t.src}
         </a>
       </section>
+
+      <OsmModelContents id={renderId} name={sName} isUA={isUA} />
 
       <section className="mt-10">
         <h2 className="text-[20px] font-semibold">{t.buyH2}</h2>

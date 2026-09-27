@@ -10,6 +10,8 @@ import UaCity2View from "./UaCity2View";
 import { RAIONS_BY_CITY } from "@/lib/cityRaions";
 import { STREET_PAGES_BY_CITY } from "@/lib/streetPages";
 import MapRenderFigure, { mapRenderUrl } from "@/components/MapRenderFigure";
+import AiPageText from "@/components/AiPageText";
+import OsmModelContents, { osmFaq, rotateFaq } from "@/components/OsmModelContents";
 import { cityFacts, CITY_FACTS } from "@/lib/cityFacts";
 import { WORLD_CITY_BY_SLUG } from "@/lib/worldCities";
 import { cityProse, cityDerivedFacts } from "@/lib/cityProse";
@@ -102,7 +104,8 @@ export default async function CityPage({
   const isWorld = isWorldCity(city.slug);
   const nf = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale);
   const pn = (o: { uk: string; latin: string }) => (locale === "uk" ? o.uk : o.latin);
-  const faq = cityFaq(contentLocale(locale), name, "podarunok");
+  // 27.09: + питання саме про ділянку (OSM) для uk/en.
+  const faq = [...(locale === "uk" || locale === "en" ? osmFaq(city.slug, name, locale === "uk") : []), ...cityFaq(contentLocale(locale), name, "podarunok")];
 
   const ld = {
     "@context": "https://schema.org",
@@ -250,7 +253,9 @@ export default async function CityPage({
         </Link>
       </div>
 
+      {(locale === "uk" || locale === "en") && <AiPageText id={city.slug} isUA={locale === "uk"} />}
       <MapRenderFigure id={city.slug} name={name} isUA={locale === "uk"} />
+      {(locale === "uk" || locale === "en") && <OsmModelContents id={city.slug} name={name} isUA={locale === "uk"} />}
 
       {/* Райони міста (rank 3): унікальний контент + глибокі лінки на готову сцену
           конструктора (/create?template=). Блерби uk-only → решта локалей лише назва. */}
