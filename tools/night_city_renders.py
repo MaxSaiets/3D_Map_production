@@ -74,6 +74,18 @@ def map_req(lat, lon, size=80):
             "preview_include_water": True, "preview_include_parks": True}
 
 
+CUTS = Path(r"D:\3dmap_tmp\osm\cuts")
+CURRENT_PBF = Path(r"D:\3dmap_tmp\osm\current.osm.pbf")
+
+
+def use_cut(rid):
+    """Режим --pbf-cuts: бекенд (OSM_SOURCE=pbf, OSM_PBF_PATH=current.osm.pbf) читає вирізку міста."""
+    src = CUTS / (rid.split("--")[0] + ".osm.pbf")
+    if not src.exists():
+        raise RuntimeError(f"немає вирізки {src.name}")
+    shutil.copyfile(src, CURRENT_PBF)
+
+
 def generate(api, rid, lat, lon):
     r = requests.post(f"{api}/api/generate", json=map_req(lat, lon), timeout=60)
     r.raise_for_status()
@@ -125,6 +137,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="")
     ap.add_argument("--pause", type=int, default=20)
+    ap.add_argument("--pbf-cuts", action="store_true", help="перед кожною точкою підкладати вирізку міста бекенду")
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
@@ -141,6 +154,8 @@ def main():
             break
         for attempt in range(3):
             try:
+                if a.pbf_cuts:
+                    use_cut(rid)
                 src, sec = generate(a.api, rid, lat, lon)
                 render(src, rid)
                 done += 1
@@ -151,7 +166,7 @@ def main():
                 # 27.09: Overpass/ліміт бекенду → це не вада точки, а перевантаження: чекаємо й повторюємо ту саму
                 busy = "недоступне" in msg or "429" in msg or "timeout" in msg.lower()
                 if busy and attempt < 2:
-                    log(f"WAIT {rid}: {msg[:90]} → пауза 10 хв")
+                    log(f"WAIT {rid}: {msg[:90]} - пауза 10 хв")
                     time.sleep(600)
                     continue
                 fail += 1

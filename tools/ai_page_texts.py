@@ -268,11 +268,11 @@ def validate(res, f):
             if not number_ok(x, vals):
                 errs.append(f"{lang}: число {x:g} відсутнє у фактах")
         if "?" in txt: errs.append(f"{lang}: риторичне питання")
-        m = BAD_POI.search(txt)
+        m = next((x for x in BAD_POI.finditer(txt) if x.group(0).lower() not in ("bank", "банк")), None)
         if m: errs.append(f"{lang}: радянська/російська назва «{m.group(0)}»")
         if re.search(r"\d\s*-\s*\d", txt): errs.append(f"{lang}: діапазон через дефіс (пиши «від 2 до 4»)")
-        prod = sum(low.count(w) for w in (["гривень", "грн", "новою поштою", "3mf", "робочих дн", "pla", "брелок"] if lang == "uk"
-                                            else ["uah", "hryvnia", "nova poshta", "3mf", "working day", "pla", "keychain"]))
+        prod = sum(len(re.findall(r"" + re.escape(w), low)) for w in (["гривень", "грн", "новою поштою", "3mf", "робочих дн", "pla ", "брелок"] if lang == "uk"
+                                            else ["uah", "hryvnia", "nova poshta", "3mf", "working day", "pla ", "keychain"]))
         if prod > 2: errs.append(f"{lang}: забагато про ціни/доставку ({prod}), залиш одне речення, решта про місце")
         if lang == "uk" and "рік_першої_згадки" in f and re.search(r"засн", low):
             errs.append("uk: рік це ПЕРША ЗГАДКА, а не заснування")
