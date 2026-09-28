@@ -507,6 +507,23 @@ def fetch_city_data(
             cached_data = _load_from_cache(target_north, target_south, target_east, target_west, padding)
             if cached_data is not None:
                 buildings_cached, water_cached, roads_cached = cached_data
+                # Кеш зберігається в CRS, у якому його записали (напр. UTM 35), а модель
+                # біля межі зон (Львів, захід від 24°) рахується в UTM 34 → будинки
+                # опинялись за сотні км від зони і модель виходила без будинків.
+                # (Старий блок перепроєкції нижче стоїть ПІСЛЯ return і не виконувався.)
+                if target_crs:
+                    try:
+                        if buildings_cached is not None and not buildings_cached.empty and buildings_cached.crs is not None \
+                                and str(buildings_cached.crs) != str(target_crs):
+                            buildings_cached = buildings_cached.to_crs(target_crs)
+                        if water_cached is not None and not water_cached.empty and water_cached.crs is not None \
+                                and str(water_cached.crs) != str(target_crs):
+                            water_cached = water_cached.to_crs(target_crs)
+                        if roads_cached is not None and hasattr(roads_cached, "graph") \
+                                and str(roads_cached.graph.get("crs")) != str(target_crs):
+                            roads_cached = ox.project_graph(roads_cached, to_crs=target_crs)
+                    except Exception as _rpe:
+                        print(f"[CACHE] reproject to target CRS failed: {_rpe}")
                 # Перевіряємо, чи дані не порожні
                 if (buildings_cached is not None or water_cached is not None or roads_cached is not None):
                     # Підрахунок доріг

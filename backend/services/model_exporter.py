@@ -172,6 +172,50 @@ def repair_base_export_mesh(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh
     return original
 
 
+def _restore_standing_bodies(result: trimesh.Trimesh, source: trimesh.Trimesh) -> trimesh.Trimesh:
+    """Повертає будинки, які dominant-component відкинув як «boolean-сміття».
+
+    Будинки зливаються у Base простим concatenate (окремі тіла, дно опущене майже
+    до підлоги). У районах з малими простими будинками (Охтирка, захід Львова)
+    вони разом дають <1.5% граней → dominant(0.985) лишав ЛИШЕ рельєф і модель
+    виходила без будинків. Сміття після пазів — тонкі пластинки біля поверхні;
+    будинок — замкнене тіло висотою в помітну частку бази. Такі й повертаємо.
+    """
+    try:
+        if result is None or source is None or len(result.faces) >= len(source.faces):
+            return result
+        labels = trimesh.graph.connected_component_labels(source.face_adjacency, node_count=len(source.faces))
+        z_ext = float(source.bounds[1][2] - source.bounds[0][2])
+        if z_ext <= 0:
+            return result
+        from scipy.spatial import cKDTree
+        tree = cKDTree(np.asarray(result.vertices))
+        keep = []
+        for lab in np.unique(labels):
+            fm = labels == lab
+            if fm.sum() < 12 or fm.sum() > 0.5 * len(source.faces):
+                continue
+            part = source.submesh([fm], append=True)
+            if part is None or not part.is_watertight or not part.is_volume:
+                continue
+            if float(part.extents[2]) < 0.3 * z_ext:
+                continue
+            # уже є в результаті (dominant не спрацював) → не дублюємо
+            d, _ = tree.query(np.asarray(part.vertices)[:4])
+            if float(np.max(d)) < 1e-6:
+                continue
+            keep.append(part)
+        if not keep:
+            return result
+        print(f"[3MF EXPORT] restored {len(keep)} standing bodies (buildings) dropped by dominant-component repair")
+        out = trimesh.util.concatenate([result, *keep])
+        if result.metadata:
+            out.metadata.update(result.metadata)
+        return out
+    except Exception:  # noqa: BLE001
+        return result
+
+
 def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optional[trimesh.Trimesh]:
     if mesh is None or mesh.faces is None or len(mesh.faces) == 0:
         return mesh
@@ -206,6 +250,7 @@ def repair_base_export_mesh_aggressive(mesh: Optional[trimesh.Trimesh]) -> Optio
     except Exception:
         pass
     _result = candidate if _base_export_candidate_score(candidate) >= _base_export_candidate_score(original) else original
+    _result = _restore_standing_bodies(_result, mesh)
     # Store in memo (keyed on the ORIGINAL input geometry) for the 2nd identical call.
     if _fp is not None:
         try:

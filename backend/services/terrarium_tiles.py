@@ -116,13 +116,27 @@ class TerrariumTileProvider:
         except Exception:
             return None
 
-    def get_tile(self, key: TileKey) -> Optional[np.ndarray]:
+    def get_tile(self, key: TileKey, _depth: int = 0) -> Optional[np.ndarray]:
         if key in self._mem:
             return self._mem[key]
         png = self._fetch_tile_png(key)
         if png is None:
             return None
         elev = _decode_terrarium_png(png)
+        # NODATA (-32768): частина z15-тайлів в AWS порожня (напр. пд-зх Львова) →
+        # рельєф 0 м і шар будинків пропускався. Заповнюємо такі пікселі з тайла
+        # меншого зуму (батьківський квадрант, збільшений ×2), до 3 рівнів угору.
+        bad = elev <= -32000.0
+        if bad.any() and _depth < 3 and key.z > 0:
+            parent = self.get_tile(TileKey(z=key.z - 1, x=key.x // 2, y=key.y // 2), _depth + 1)
+            if parent is not None:
+                h, w = elev.shape
+                ox, oy = (key.x % 2) * (w // 2), (key.y % 2) * (h // 2)
+                quad = parent[oy:oy + h // 2, ox:ox + w // 2]
+                up = np.repeat(np.repeat(quad, 2, axis=0), 2, axis=1)[:h, :w]
+                if up.shape == elev.shape:
+                    elev = elev.copy()
+                    elev[bad] = up[bad]
         self._mem[key] = elev
         return elev
 
