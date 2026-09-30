@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { RealPhotosStrip } from "@/components/RealPhotosStrip";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
 import { useTranslations, useLocale } from "next-intl";
@@ -447,6 +448,7 @@ export function KeychainScenarioFlow({
                 <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="kc-guided-promise">
                   <ShieldCheck size={13} className="mt-[1px] shrink-0 text-[var(--accent-strong)]" /> {t("previewPromise")}
                 </p>
+                <RealPhotosStrip kind="keychain" title={t("realPhotosTitle")} compact testId="success-real-photos" />
                 <Button
                   variant="bronze"
                   size="md"
@@ -577,6 +579,9 @@ export function KeychainScenarioFlow({
                 onCancel={() => window.dispatchEvent(new Event("monadruk:guided-cancel"))}
                 stages={{ data: t("stageData"), detail: t("stageDetail"), file: t("stageFile") }}
               />
+            )}
+            {generatingView && (
+              <RealPhotosStrip kind="keychain" title={t("realPhotosTitle")} testId="wait-real-photos" />
             )}
             <h2 className="font-title text-lg font-semibold text-[var(--text-primary)]">{t("step2Title")}</h2>
             {/* Орієнтир «як це працює» — власник: «не зрозуміло, як усе створювати». */}

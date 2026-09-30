@@ -4,6 +4,7 @@ import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, locales, localeMeta, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { KEYCHAIN_PRICE_UAH, MAP_MAGNET_PRICE_UAH, mapPriceEur } from "@/lib/mapPrices";
+import { CorporateLeadForm } from "@/components/CorporateLeadForm";
 
 /**
  * Лендінг /corporate — B2B: корпоративні подарунки та мерч з мапою.
@@ -253,6 +254,48 @@ const COPY: Record<AppLocale, CorpCopy> = {
   },
 };
 
+/** 30.09.2026: новорічний сезон корпоративних подарунків. Дати — ті самі, що в
+ *  сезонному банері сайту (друк 2–4 дні + доставка); для великих накладів —
+ *  чесно просимо писати раніше, без обіцянок, яких не виконаємо. */
+const SEASON: Record<AppLocale, { h2: string; p: string; points: string[]; photos: string }> = {
+  uk: {
+    h2: "Новорічні корпоративні подарунки",
+    p: "Брелок з районом офісу чи мапа міста, де працює команда, запамʼятовується краще за чергову чашку з логотипом. Кожен виріб можна зробити персональним: інший район, імʼя чи дата для кожної людини.",
+    points: ["До Миколая: заявка до 27 листопада", "До Нового року: заявка до 19 грудня", "Наклад понад 50 штук: напишіть якомога раніше, погодимо термін до оплати"],
+    photos: "Справжні вироби, які ми надрукували",
+  },
+  en: {
+    h2: "New Year corporate gifts",
+    p: "A keychain with the office district or a map of the city where the team works is remembered longer than another branded mug. Each piece can be personal: a different district, name or date for every person.",
+    points: ["For St Nicholas Day: request by 27 November", "For New Year: request by 19 December", "Runs over 50 pieces: write as early as possible, we agree the date before payment"],
+    photos: "Real pieces we have printed",
+  },
+  de: {
+    h2: "Firmengeschenke zum Jahreswechsel",
+    p: "Ein Anhänger mit dem Büro-Viertel oder eine Karte der Stadt, in der das Team arbeitet, bleibt länger im Gedächtnis als die nächste Logo-Tasse. Jedes Stück kann persönlich sein: anderes Viertel, Name oder Datum pro Person.",
+    points: ["Zum Nikolaus: Anfrage bis 27. November", "Zum Neujahr: Anfrage bis 19. Dezember", "Über 50 Stück: bitte früh schreiben, den Termin klären wir vor der Zahlung"],
+    photos: "Echte Stücke, die wir gedruckt haben",
+  },
+  fr: {
+    h2: "Cadeaux d'entreprise de fin d'année",
+    p: "Un porte-clés avec le quartier du bureau ou une carte de la ville de l'équipe marque plus qu'une énième tasse au logo. Chaque pièce peut être personnelle : quartier, prénom ou date différents pour chacun.",
+    points: ["Pour la Saint-Nicolas : demande avant le 27 novembre", "Pour le Nouvel An : demande avant le 19 décembre", "Plus de 50 pièces : écrivez tôt, nous fixons la date avant paiement"],
+    photos: "De vraies pièces que nous avons imprimées",
+  },
+  es: {
+    h2: "Regalos corporativos de Año Nuevo",
+    p: "Un llavero con el barrio de la oficina o un mapa de la ciudad del equipo se recuerda más que otra taza con logo. Cada pieza puede ser personal: otro barrio, nombre o fecha para cada persona.",
+    points: ["Para San Nicolás: pedido antes del 27 de noviembre", "Para Año Nuevo: pedido antes del 19 de diciembre", "Más de 50 piezas: escribe cuanto antes, acordamos la fecha antes del pago"],
+    photos: "Piezas reales que hemos impreso",
+  },
+  pl: {
+    h2: "Noworoczne prezenty firmowe",
+    p: "Brelok z dzielnicą biura albo mapa miasta, w którym pracuje zespół, zostaje w pamięci dłużej niż kolejny kubek z logo. Każdy wyrób może być osobisty: inna dzielnica, imię lub data dla każdej osoby.",
+    points: ["Na Mikołajki: zapytanie do 27 listopada", "Na Nowy Rok: zapytanie do 19 grudnia", "Ponad 50 sztuk: napisz jak najwcześniej, termin ustalimy przed płatnością"],
+    photos: "Prawdziwe wyroby, które wydrukowaliśmy",
+  },
+};
+
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
     ? params.locale
@@ -281,6 +324,7 @@ export default async function CorporatePage({ params }: { params: { locale: stri
     : defaultLocale) as AppLocale;
   setRequestLocale(locale);
   const c = COPY[locale];
+  const se = SEASON[locale];
 
   const ld = {
     "@context": "https://schema.org",
@@ -314,12 +358,33 @@ export default async function CorporatePage({ params }: { params: { locale: stri
       <p className="mt-4 max-w-[680px] text-[15px] leading-relaxed text-ink-2">{c.intro}</p>
 
       <section className="mt-8 flex flex-wrap gap-3">
-        <Link href="/contacts" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+        <a href="#b2b-form" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
           {c.cta}
-        </Link>
+        </a>
         <Link href="/keychains" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] border border-line-soft bg-white/80 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-[var(--accent)]">
           {c.ctaTry}
         </Link>
+      </section>
+
+      <section className="mt-12 rounded-[20px] border border-[rgba(142,107,61,0.35)] bg-[rgba(255,247,230,0.7)] px-5 py-5 sm:px-6" data-testid="corp-season">
+        <h2 className="text-[20px] font-semibold">{se.h2}</h2>
+        <p className="mt-2 max-w-[680px] text-[14.5px] leading-relaxed text-ink-2">{se.p}</p>
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {se.points.map((pt) => (
+            <li key={pt} className="flex gap-2 text-[14.5px] font-semibold text-ink"><span className="text-[var(--bronze,#8E6B3D)]">•</span>{pt}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">{se.photos}</p>
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {[5, 6, 1, 7, 2, 9].map((i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={i} src={`/showcase/real-${i}.webp`} alt="" loading="lazy" decoding="async"
+              className="aspect-square w-full rounded-[12px] border border-line-soft object-cover" />
+          ))}
+        </div>
       </section>
 
       <section className="mt-12">
@@ -359,6 +424,10 @@ export default async function CorporatePage({ params }: { params: { locale: stri
         </ol>
       </section>
 
+      <section className="mt-12">
+        <CorporateLeadForm />
+      </section>
+
       <section className="mt-12 max-w-[680px]">
         <h2 className="text-[20px] font-semibold">{c.h2faq}</h2>
         <dl className="mt-4 flex flex-col gap-4">
@@ -372,9 +441,9 @@ export default async function CorporatePage({ params }: { params: { locale: stri
       </section>
 
       <section className="mt-10">
-        <Link href="/contacts" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+        <a href="#b2b-form" className="inline-flex min-h-[44px] items-center justify-center rounded-[22px] bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
           {c.cta}
-        </Link>
+        </a>
       </section>
     </main>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { RealPhotosStrip } from "@/components/RealPhotosStrip";
 import { getVariant } from "@/lib/ab";
 import { GuidedStickyBar } from "@/components/GuidedStickyBar";
 import { useDownloadQuota } from "@/lib/useDownloadQuota";
@@ -790,6 +791,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="guided-promise">
                   <ShieldCheck size={13} className="mt-[1px] shrink-0 text-[var(--accent-strong)]" /> {t("previewPromise")}
                 </p>
+                <RealPhotosStrip kind="map" title={t("realPhotosTitle")} compact testId="success-real-photos" />
                 <Button
                   variant="bronze"
                   size="md"
@@ -922,6 +924,9 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 onCancel={() => window.dispatchEvent(new Event("monadruk:guided-cancel"))}
                 stages={{ data: t("stageData"), terrain: t("stageTerrain"), detail: t("stageDetail"), file: t("stageFile") }}
               />
+            )}
+            {generatingView && (
+              <RealPhotosStrip kind="map" title={t("realPhotosTitle")} testId="wait-real-photos" />
             )}
             <Section n={1} title={t("step2Title")}>
             {/* ПОШУК ПРЯМО В ПАНЕЛІ (v2): раніше поле жило лише на карті, а панель

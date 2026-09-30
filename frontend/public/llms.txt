@@ -1,0 +1,40 @@
+# Monadruk
+
+> Monadruk (monadruk.com) is a Ukrainian studio that 3D-prints personalised maps: a volumetric 3D model of any place on Earth (a city district, street, home, mountain or running route) with real building heights, roads, parks and water. Customers build the model themselves in an online builder, see a free 3D preview, and order a printed piece delivered by Nova Poshta within Ukraine. Outside Ukraine a print-ready 3MF/STL file can be bought instead.
+
+## What you can buy (prices in UAH, Ukraine)
+
+- 3D city map, square/circle/hexagon/heart: S 5.5 cm 350 ₴, M 8 cm 490 ₴, L 11 cm 630 ₴, XL 15 cm 770 ₴. Terrain relief option: +85 ₴.
+- Keychain with a map of your place (55×30 mm, text on front and back, GPX route option): from 170 ₴.
+- Fridge magnet with a map: 210 ₴.
+- Wall panel of 4 or 9 interlocking tiles (2×2 or 3×3).
+- 3D model of a mountain (Carpathians, Alps and any peak) and an apartment model from a floor plan (from 830 ₴).
+- Print-ready file (3MF/STL) of your own model: 149 ₴, sent by email, available worldwide.
+- Corporate orders from 10 pieces: office-district keychains, city maps with company text, event merch. Each employee can get a keychain with their own district.
+
+## Key facts
+
+- Free 3D preview in the browser before paying; the printed piece matches the preview.
+- Printed from PLA; production and dispatch 2–4 working days; delivery by Nova Poshta across Ukraine only.
+- 60-day guarantee: free reprint in case of a defect.
+- Payment online via LiqPay; the seller is a registered Ukrainian sole proprietor (FOP), invoices for companies.
+- Map data: OpenStreetMap; elevation: open terrain datasets.
+- Gift deadlines: order by 27 November for St Nicholas Day (6 December) and by 19 December for New Year.
+
+## Main pages
+
+- [3D map builder](https://monadruk.com/create): choose a place, shape and size, get a free 3D preview, order.
+- [Keychain builder](https://monadruk.com/keychains)
+- [3D maps of Ukrainian cities, districts and streets](https://monadruk.com/maps): 360+ pages with a render of the real model and facts about each place.
+- [Mountain models](https://monadruk.com/mountains)
+- [Apartment model from a floor plan](https://monadruk.com/maket)
+- [Corporate gifts](https://monadruk.com/corporate)
+- [Prices](https://monadruk.com/prices)
+- [Photos of real printed pieces](https://monadruk.com/foto)
+- [Delivery and payment](https://monadruk.com/delivery)
+- [Contacts](https://monadruk.com/contacts)
+
+## English pages
+
+- [3D map builder (English)](https://monadruk.com/en/create)
+- [3D city maps (English)](https://monadruk.com/en/maps)
