@@ -1710,6 +1710,18 @@ async def create_order_endpoint(
         raise HTTPException(status_code=500, detail="Не вдалося оформити замовлення")
 
 
+def _account_link(authorization: Optional[str]) -> Dict[str, Any]:
+    """uid залогіненого користувача для запису замовлення (мʼяко: без токена — {})."""
+    try:
+        from services.auth_service import verify_token
+        user = verify_token(authorization or "")
+        if user and user.get("uid"):
+            return {"uid": user.get("uid")}
+    except Exception:  # noqa: BLE001
+        pass
+    return {}
+
+
 class FileCheckoutRequest(BaseModel):
     """Купівля друк-файлу конкретної моделі. Ніякої доставки: файл не возять."""
 
@@ -1721,6 +1733,7 @@ class FileCheckoutRequest(BaseModel):
 @app.post("/api/file/checkout")
 async def file_checkout(
     req: FileCheckoutRequest,
+    authorization: Optional[str] = Header(default=None),
     _rl: None = Depends(rate_limit("file_checkout", [(10, 3600.0)])),
 ):
     """Чек на друк-файл (рішення власника 09.09.2026: 149 ₴).
@@ -1766,6 +1779,8 @@ async def file_checkout(
         "comment": "Друк-файл (3MF), без доставки",
         "est_price": f"{price} ₴",
         "summary": {"product": "file", "priceUah": price, "locale": req.locale},
+        # Залогінений покупець → замовлення видно в кабінеті (там і доплатити).
+        **_account_link(authorization),
     })
     order_number = str(order.get("order_number") or "")
 

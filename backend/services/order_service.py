@@ -181,10 +181,17 @@ def list_orders_for_uid(uid: str, limit: int = 20) -> List[Dict[str, Any]]:
                 continue
             if r.get("uid") != uid:
                 continue
-            out.append({k: r.get(k) for k in (
+            item = {k: r.get(k) for k in (
                 "order_number", "created_at", "status", "product_type",
                 "est_price", "delivery_method", "delivery_country", "delivery_city", "summary",
-            )})
+                "task_id",
+            )}
+            # Не оплатив одразу (закрив вкладку LiqPay) → кабінет дає доплатити тим
+            # самим чеком. Лише для pending_payment: оплачене ще раз не продаємо.
+            if r.get("status") == "pending_payment" and r.get("payment_url"):
+                item["pay_url"] = r.get("payment_url")
+                item["pay_amount"] = r.get("payment_amount")
+            out.append(item)
     except Exception as e:  # noqa: BLE001
         print(f"[ORDER] list_orders_for_uid failed: {e}")
     out.reverse()

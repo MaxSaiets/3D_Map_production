@@ -10,6 +10,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 import { OrderDialog } from "@/components/OrderDialog";
+import { BuyFileDialog } from "@/components/BuyFileDialog";
 import { ShoppingBag } from "lucide-react";
 
 // three.js (Model3DViewer) — динамічний імпорт, без SSR: важкий client-only
@@ -44,6 +45,8 @@ interface AccOrder {
   order_number?: string | number; created_at?: string; status?: string; product_type?: string;
   est_price?: string; delivery_country?: string; delivery_city?: string;
   summary?: { city?: string; district?: string; label?: string; size?: string };
+  /** Чек LiqPay для замовлення, яке ще не оплачено (закрили вкладку оплати). */
+  pay_url?: string; pay_amount?: number | string; task_id?: string;
 }
 
 const ORDER_STATUS_KEYS: Record<string, string> = {
@@ -90,6 +93,8 @@ export default function AccountPage() {
   const [fmtMenu, setFmtMenu] = useState<string | null>(null);
   // Замовлення друку з раніше згенерованої моделі (генеруй зараз — замов потім).
   const [orderModel, setOrderModel] = useState<AccModel | null>(null);
+  // Модель, файл якої людина хоче купити (безкоштовні завантаження вичерпано).
+  const [buyModel, setBuyModel] = useState<AccModel | null>(null);
   // Небезпечна зона: видалення акаунта й усіх даних (DELETE /api/account).
   const [deleting, setDeleting] = useState(false);
   const [deleteState, setDeleteState] = useState<"ok" | "error" | null>(null);
@@ -155,7 +160,8 @@ export default function AccountPage() {
       // повторне завантаження не «губило» lat/lon/розмір для «Створити знову».
       params: (m.params as Record<string, unknown> | undefined) || undefined,
       getIdToken, openLogin: signIn,
-      onLimit: () => setNotice(t("limitNotice")),
+      // Раніше тут був лише текст «файл можна купити» без кнопки — глухий кут.
+      onLimit: () => { setNotice(t("limitNotice")); setBuyModel(m); },
     });
     if (res.status === "ok") {
       if (format === "stl") {
@@ -317,12 +323,12 @@ export default function AccountPage() {
                   <div key={`${o.order_number}-${i}`} className="rounded-[16px] border border-line bg-paper p-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="font-serif text-[17px] text-ink">#{o.order_number}</div>
-                      <span className="rounded-full bg-[rgba(15,118,110,0.10)] px-2.5 py-1 text-[11px] font-semibold text-forest">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${o.status === "pending_payment" ? "bg-amber-50 text-amber-800" : "bg-[rgba(15,118,110,0.10)] text-forest"}`}>
                         {ORDER_STATUS_KEYS[o.status || "new"] ? t(ORDER_STATUS_KEYS[o.status || "new"]) : o.status}
                       </span>
                     </div>
                     <div className="mt-1 text-[12px] text-ink-3">
-                      {o.product_type === "keychain" ? t("keychain") : t("map3d")}
+                      {o.product_type === "keychain" ? t("keychain") : o.product_type === "file" ? t("printFile") : t("map3d")}
                       {o.summary?.size ? ` · ${o.summary.size}` : ""}
                       {o.created_at ? ` · ${new Date(o.created_at).toLocaleDateString(dateLoc)}` : ""}
                     </div>
@@ -332,6 +338,14 @@ export default function AccountPage() {
                       </div>
                     )}
                     <div className="mt-2 text-[13px] font-semibold text-ink">{o.est_price || ""}</div>
+                    {o.pay_url && (
+                      <a href={o.pay_url} rel="noopener"
+                        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white"
+                        style={{ background: "var(--bronze,#8E6B3D)" }}>
+                        {t("payNow")}{o.pay_amount ? ` · ${o.pay_amount} ₴` : ""}
+                      </a>
+                    )}
+                    {o.pay_url && <div className="mt-1.5 text-center text-[11.5px] text-ink-3">{t("payNowHint")}</div>}
                   </div>
                 ))}
               </div>
@@ -490,6 +504,15 @@ export default function AccountPage() {
           </div>
         </>
       )}
+
+      {/* Купівля друк-файлу, коли безкоштовні завантаження вичерпано */}
+      <BuyFileDialog
+        taskId={buyModel?.task_id ?? null}
+        open={!!buyModel}
+        onClose={() => setBuyModel(null)}
+        defaultEmail={user?.email || ""}
+        onAlreadyPaid={() => { const m = buyModel; setBuyModel(null); if (m) download(m); }}
+      />
 
       {/* Замовлення друку з картки збереженої моделі */}
       <OrderDialog

@@ -706,7 +706,7 @@ export default function Home() {
           {/* GUIDED на мобільному: панель ПЕРШОЮ (order-none = порядок DOM).
               Раніше order-2 ховав картки «Що створюємо?» під велику карту —
               перший екран телефона був картою без жодної інструкції. */}
-          <aside id="panel-settings" className={guided ? "min-h-0 lg:block" : "hidden min-h-0 lg:block"}>
+          <aside id="panel-settings" className={guided ? "min-h-0 lg:sticky lg:top-4 lg:block lg:h-[calc(100dvh-5.5rem)] lg:self-start" : "hidden min-h-0 lg:block"}>
             {guided ? (
               <>
                 <ScenarioFlow onExitGuided={() => setGuided(false)} />
@@ -801,9 +801,19 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={() => switchStage("render")}
+                onClick={() => {
+                  if (canShowRender) { switchStage("render"); return; }
+                  // Моделі ще нема — замість «мертвої» кнопки показуємо, що натиснути.
+                  const cta = document.querySelector<HTMLElement>('[data-testid="scenario-create"]');
+                  if (cta) {
+                    cta.scrollIntoView({ behavior: "smooth", block: "center" });
+                    cta.focus({ preventScroll: true });
+                    cta.animate?.([{ transform: "scale(1)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 450, iterations: 2 });
+                  }
+                }}
                 aria-pressed={stageView === "render"}
-                disabled={!canShowRender}
+                aria-disabled={!canShowRender}
+                disabled={!canShowRender && !guided}
                 data-testid="stage-render"
                 title={canShowRender ? undefined : tc("stageRenderLocked")}
                 className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -811,7 +821,9 @@ export default function Home() {
                     ? "bg-[var(--accent-strong)] text-white shadow"
                     : canShowRender
                       ? "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                      : "cursor-not-allowed text-[var(--text-secondary)] opacity-45"
+                      : guided
+                        ? "text-[var(--text-secondary)] opacity-60 hover:opacity-90"
+                        : "cursor-not-allowed text-[var(--text-secondary)] opacity-45"
                 }`}
               >
                 🧊 {tc("stageRender")}{isGenerating ? ` · ${progress}%` : ""}

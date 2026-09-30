@@ -1316,7 +1316,11 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 A-3/A-4: кнопка активна завжди; після успіху зʼявляється лише як
                 «Оновити превʼю», коли параметри змінились. */}
             {!s.isGenerating && (!successView || dirty) && (
-              <>
+              // ДЕСКТОП: головна кнопка ПРИЛИПАЄ до низу панелі. Заміряно на 1366×850:
+              // кнопка стояла на 1334 px — нижче екрана; людина бачила налаштування,
+              // але не бачила, що далі натиснути. На мобільному цю роль грає
+              // GuidedStickyBar (fixed), тож тут лише lg:.
+              <div className="lg:sticky lg:bottom-0 lg:z-10 lg:-mx-4 lg:-mb-4 lg:border-t lg:border-[var(--surface-border)] lg:bg-[rgba(251,248,240,0.97)] lg:px-4 lg:pb-4 lg:pt-3 lg:backdrop-blur" data-testid="scenario-cta-dock">
                 <Button
                   variant={successView ? "primary" : "bronze"}
                   size="lg"
@@ -1352,7 +1356,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                     {t("uaOnly")}
                   </p>
                 )}
-              </>
+              </div>
             )}
             {/* A-6: єдиний вихід у розширений режим (стан зони/формату/розміру
                 зберігається — юзер продовжує там же). */}

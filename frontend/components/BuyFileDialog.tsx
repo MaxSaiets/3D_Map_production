@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createPortal } from "react-dom";
 import { X, FileDown, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 /**
  * ⭐09.09.2026, рішення власника: друк-файл коштує 149 ₴.
@@ -44,6 +45,7 @@ export function BuyFileDialog({
 }) {
   const t = useTranslations("scenario");
   const locale = useLocale();
+  const { getIdToken } = useAuth();
   const [access, setAccess] = useState<Access | null>(null);
   const [email, setEmail] = useState(defaultEmail);
   const [busy, setBusy] = useState(false);
@@ -83,10 +85,12 @@ export function BuyFileDialog({
     setBusy(true);
     setError(null);
     try {
+      // Залогінений → покупка привʼязується до кабінету (там її видно й можна доплатити).
+      const token = await getIdToken().catch(() => null);
       const res = await fetch(`${API}/api/file/checkout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task_id: taskId, email, locale: "uk" }),
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ task_id: taskId, email, locale }),
       });
       if (res.status === 422) { setError(t("buyFileBadEmail")); return; }
       if (!res.ok) { setError(t("buyFileError")); return; }
