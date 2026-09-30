@@ -1320,7 +1320,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
               // кнопка стояла на 1334 px — нижче екрана; людина бачила налаштування,
               // але не бачила, що далі натиснути. На мобільному цю роль грає
               // GuidedStickyBar (fixed), тож тут лише lg:.
-              <div className="lg:sticky lg:bottom-0 lg:z-10 lg:-mx-4 lg:-mb-4 lg:border-t lg:border-[var(--surface-border)] lg:bg-[rgba(251,248,240,0.97)] lg:px-4 lg:pb-4 lg:pt-3 lg:backdrop-blur" data-testid="scenario-cta-dock">
+              <div className="lg:sticky lg:-bottom-4 lg:z-10 lg:-mx-4 lg:-mb-4 lg:border-t lg:border-[var(--surface-border)] lg:bg-[rgba(251,248,240,0.97)] lg:px-4 lg:pb-4 lg:pt-3 lg:backdrop-blur" data-testid="scenario-cta-dock">
                 <Button
                   variant={successView ? "primary" : "bronze"}
                   size="lg"
