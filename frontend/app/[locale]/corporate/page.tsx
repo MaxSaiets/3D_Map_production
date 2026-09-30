@@ -296,6 +296,24 @@ const SEASON: Record<AppLocale, { h2: string; p: string; points: string[]; photo
   },
 };
 
+/** 30.09.2026: знижки на наклад ПІДТВЕРДЖЕНІ власником. Відсоток від роздробу;
+ *  ціни за штуку рахуються з тих самих констант, що й роздріб (без дрейфу). */
+const TIERS: { min: number; max: number | null; pct: number }[] = [
+  { min: 10, max: 29, pct: 10 },
+  { min: 30, max: 99, pct: 15 },
+  { min: 100, max: null, pct: 20 },
+];
+const RESELLER_PCT = 25;
+const off = (uah: number, pct: number) => Math.round((uah * (100 - pct)) / 100);
+const TIER_COPY: Record<AppLocale, { h2: string; qty: string; disc: string; kc: string; map: string; reseller: string; note: string; pcs: string; plus: string }> = {
+  uk: { h2: "Знижки на наклад", qty: "Кількість", disc: "Знижка", kc: "Брелок", map: "Мапа 8 см", reseller: "Реселерам (для перепродажу)", note: "Знижка діє на весь наклад і на різні вироби в одному замовленні. Ціни за штуку, доставка Новою Поштою окремо.", pcs: "шт", plus: "+" },
+  en: { h2: "Volume discounts", qty: "Quantity", disc: "Discount", kc: "Keychain", map: "8 cm map", reseller: "Resellers", note: "The discount applies to the whole run and to mixed items in one order. Prices per piece, Nova Poshta delivery extra.", pcs: "pcs", plus: "+" },
+  de: { h2: "Mengenrabatt", qty: "Menge", disc: "Rabatt", kc: "Anhänger", map: "Karte 8 cm", reseller: "Wiederverkäufer", note: "Der Rabatt gilt für die ganze Bestellung, auch bei gemischten Artikeln. Preise pro Stück, Versand extra.", pcs: "Stk.", plus: "+" },
+  fr: { h2: "Remises sur quantité", qty: "Quantité", disc: "Remise", kc: "Porte-clés", map: "Carte 8 cm", reseller: "Revendeurs", note: "La remise s'applique à toute la commande, articles mixtes compris. Prix à la pièce, livraison en sus.", pcs: "pcs", plus: "+" },
+  es: { h2: "Descuentos por volumen", qty: "Cantidad", disc: "Descuento", kc: "Llavero", map: "Mapa 8 cm", reseller: "Revendedores", note: "El descuento se aplica a todo el pedido, también con artículos mixtos. Precios por unidad, envío aparte.", pcs: "uds.", plus: "+" },
+  pl: { h2: "Rabaty ilościowe", qty: "Ilość", disc: "Rabat", kc: "Brelok", map: "Mapa 8 cm", reseller: "Dla resellerów", note: "Rabat obejmuje całe zamówienie, także różne wyroby. Ceny za sztukę, dostawa osobno.", pcs: "szt.", plus: "+" },
+};
+
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const locale = ((routing.locales as readonly string[]).includes(params.locale)
     ? params.locale
@@ -325,6 +343,9 @@ export default async function CorporatePage({ params }: { params: { locale: stri
   setRequestLocale(locale);
   const c = COPY[locale];
   const se = SEASON[locale];
+  const tc = TIER_COPY[locale];
+  const isUA = locale === "uk";
+  const money = (uah: number) => (isUA ? `${uah} ₴` : `≈€${eur(uah)}`);
 
   const ld = {
     "@context": "https://schema.org",
@@ -398,6 +419,34 @@ export default async function CorporatePage({ params }: { params: { locale: stri
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="mt-12" data-testid="corp-tiers">
+        <h2 className="text-[20px] font-semibold">{tc.h2}</h2>
+        <div className="mt-4 overflow-x-auto rounded-[18px] border border-line-soft bg-white/70">
+          <table className="w-full min-w-[420px] text-left text-[14.5px]">
+            <thead className="text-[12.5px] uppercase tracking-wide text-ink-3">
+              <tr><th className="px-4 py-3">{tc.qty}</th><th className="px-4 py-3">{tc.disc}</th><th className="px-4 py-3">{tc.kc}</th><th className="px-4 py-3">{tc.map}</th></tr>
+            </thead>
+            <tbody>
+              {TIERS.map((t) => (
+                <tr key={t.min} className="border-t border-line-soft">
+                  <td className="px-4 py-3 font-semibold text-ink">{t.max ? `${t.min}–${t.max}` : `${t.min}${tc.plus}`} {tc.pcs}</td>
+                  <td className="px-4 py-3 font-semibold text-[var(--accent-strong)]">−{t.pct}%</td>
+                  <td className="px-4 py-3 text-ink-2">{money(off(KEYCHAIN_PRICE_UAH, t.pct))}</td>
+                  <td className="px-4 py-3 text-ink-2">{money(off(490, t.pct))}</td>
+                </tr>
+              ))}
+              <tr className="border-t border-line-soft">
+                <td className="px-4 py-3 font-semibold text-ink">{tc.reseller}</td>
+                <td className="px-4 py-3 font-semibold text-[var(--accent-strong)]">−{RESELLER_PCT}%</td>
+                <td className="px-4 py-3 text-ink-2">{money(off(KEYCHAIN_PRICE_UAH, RESELLER_PCT))}</td>
+                <td className="px-4 py-3 text-ink-2">{money(off(490, RESELLER_PCT))}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-3">{tc.note}</p>
       </section>
 
       <section className="mt-12">
