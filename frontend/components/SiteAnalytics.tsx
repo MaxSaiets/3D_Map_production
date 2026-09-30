@@ -186,7 +186,9 @@ export default function SiteAnalytics() {
         // ЗВЕРХУ, на desktop маленька картка ліворуч унизу (праворуч живуть CTA/ціна/чат).
         // top-[72px] на мобільному: банер стоїть ПІД шапкою, тож логотип/меню
         // лишаються клікабельними до вибору (раніше банер їх накривав).
-        <div className="fixed inset-x-2 top-[72px] z-[50] rounded-2xl border border-line bg-paper/95 p-3 shadow-lift backdrop-blur sm:inset-x-auto sm:bottom-3 sm:left-4 sm:top-auto sm:max-w-[360px]">
+        // Конструктори (/create, /keychains): зліва внизу тепер прилипла головна кнопка
+        // «Показати 3D» — картку згоди ставимо праворуч, лівіше від кнопки чату.
+        <div className={`fixed inset-x-2 top-[72px] z-[50] rounded-2xl border border-line bg-paper/95 p-3 shadow-lift backdrop-blur sm:inset-x-auto sm:bottom-3 sm:top-auto sm:max-w-[360px] ${/\/(create|keychains)(\/|$)/.test(pathname || "") ? "sm:right-24" : "sm:left-4"}`}>
           <p className="text-[12px] leading-snug text-ink-2">
             {t("text")}{" "}
             <Link href="/privacy" className="font-semibold text-forest underline">{t("more")}</Link>
