@@ -178,8 +178,11 @@ export const en: LegalSet = {
         ] },
       ] },
       { h: "Seller (Sole Proprietor)", blocks: [
+        { p: "Monadruk is the trading name of Maksym Saiets, a sole proprietor (FOP) registered in Ukraine in May 2026." },
         { kv: [
           { k: "Name", v: "{ownerFull}" },
+          { k: "Name (Latin)", v: "Maksym Saiets, trading as Monadruk" },
+          { k: "Registered", v: "May 2026, Ukraine" },
           { k: "Tax ID", v: "{taxId}" },
           { k: "Type of activity (KVED)", v: "{ved}" },
           { k: "IBAN", v: "{iban}" },

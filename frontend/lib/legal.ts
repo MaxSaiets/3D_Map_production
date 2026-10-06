@@ -26,7 +26,8 @@ export const BUSINESS = {
   // НЕ повертати ownerRegAddress без прямої вказівки власника.
 
   // Контакти (вимога LiqPay: email + телефон + адреса).
-  email: "saietsmax@gmail.com",
+  // Пошта на домені (Cloudflare Email Routing → пересилання на saietsmax@gmail.com).
+  email: "monadruk@monadruk.com",
   phone: "+380935459558",
   phoneDisplay: "+380 (93) 545-95-58",
   telegram: "@my_info_23423bot",
