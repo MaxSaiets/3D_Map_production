@@ -1817,7 +1817,85 @@ def export_3mf(
     except Exception as _exc:
         print(f"[3MF EXPORT] colorgroup patch skipped (non-fatal): {_exc}")
 
+    # Bambu «Об'єкт занадто малий… в метрах або дюймах?»: слайсер вважає файл дюймовим,
+    # якщо БУДЬ-ЯКИЙ <object> < 8 мм³ (Model::looks_like_imperial_units), і на «Так»
+    # роздуває саме його ×25.4 (червона вставка «свій будинок» 1–8 мм³ → велетенська
+    # плита). Bambu пропускає малий об'єкт, якщо той — частина «розрізу» разом із
+    # великим (cut_id). Тож пишемо лише Metadata/cut_information.xml: крихітні об'єкти +
+    # найбільший = один cut_id. Об'єкти лишаються ОКРЕМИМИ (як і було), геометрія та
+    # 3dmodel.model не змінюються; файли без крихітних об'єктів не чіпаємо взагалі.
+    try:
+        _mark_tiny_objects_for_slicer(filename)
+    except Exception as _exc:
+        print(f"[3MF EXPORT] tiny-object slicer hint skipped (non-fatal): {_exc}")
+
     return {"3mf": filename}
+
+
+# Bambu Studio: volume_threshold_inches = 8.0 мм³ (src/libslic3r/Model.cpp) — беремо із запасом.
+_SLICER_TINY_OBJECT_MM3 = 12.0
+_SLICER_CUT_GROUP_ID = 7340001  # будь-який ненульовий id (ObjectID::valid ⇔ id != 0)
+
+
+def _mark_tiny_objects_for_slicer(filename: str, min_volume_mm3: float = _SLICER_TINY_OBJECT_MM3) -> list:
+    """Крихітні (< min_volume_mm3) build-об'єкти 3MF + найбільший → одна cut-група в
+    Metadata/cut_information.xml (формат Bambu/Orca: <objects><object id=1-based
+    індекс build-item><cut_id .../></object>). Слайсер тоді не вважає файл дюймовим.
+    Повертає назви позначених крихітних об'єктів (порожньо = файл не змінено)."""
+    import zipfile, re, os as _os
+    import xml.etree.ElementTree as ET
+
+    with zipfile.ZipFile(filename, "r") as zin:
+        model_xml = zin.read("3D/3dmodel.model").decode("utf-8")
+        other_files = {n: zin.read(n) for n in zin.namelist() if n != "3D/3dmodel.model"}
+    if "Metadata/cut_information.xml" in other_files:
+        return []
+
+    core = "{http://schemas.microsoft.com/3dmanufacturing/core/2015/02}"
+    root = ET.fromstring(model_xml)
+    volumes: dict = {}  # object id -> (name, volume_mm3)
+    for obj in root.iter(f"{core}object"):
+        mesh = obj.find(f"{core}mesh")
+        if mesh is None:
+            continue
+        vs, ts = mesh.find(f"{core}vertices"), mesh.find(f"{core}triangles")
+        if vs is None or ts is None:
+            continue
+        V = np.array([[float(v.get("x")), float(v.get("y")), float(v.get("z"))] for v in vs], dtype=np.float64)
+        F = np.array([[int(t.get("v1")), int(t.get("v2")), int(t.get("v3"))] for t in ts], dtype=np.int64)
+        vol = 0.0
+        if len(V) and len(F):
+            a, b, c = V[F[:, 0]], V[F[:, 1]], V[F[:, 2]]
+            vol = float(np.einsum("ij,ij->i", a, np.cross(b, c)).sum() / 6.0)
+        volumes[obj.get("id")] = (obj.get("name") or "", vol)
+
+    # слайсер нумерує об'єкти моделі в порядку build-item'ів (1-based)
+    build = root.find(f"{core}build")
+    order = [it.get("objectid") for it in build.findall(f"{core}item")] if build is not None else []
+    order = [oid for oid in order if oid in volumes]
+    if len(order) < 2:
+        return []
+    host = max(order, key=lambda k: volumes[k][1])
+    tiny = [k for k in order if k != host and volumes[k][1] < min_volume_mm3]
+    if not tiny or volumes[host][1] < min_volume_mm3:
+        return []
+
+    cut_id = f'<cut_id id="{_SLICER_CUT_GROUP_ID}" check_sum="1" connectors_cnt="0"/>'
+    objs = "".join(f' <object id="{order.index(k) + 1}">\n  {cut_id}\n </object>\n'
+                   for k in [host] + tiny)
+    cut_xml = f'<?xml version="1.0" encoding="utf-8"?>\n<objects>\n{objs}</objects>\n'
+
+    tmp = filename + ".tmp"
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        zout.writestr("3D/3dmodel.model", model_xml.encode("utf-8"))
+        for n, data in other_files.items():
+            zout.writestr(n, data)
+        zout.writestr("Metadata/cut_information.xml", cut_xml.encode("utf-8"))
+    _os.replace(tmp, filename)
+    names = [volumes[k][0] for k in tiny]
+    print(f"[3MF EXPORT] tiny objects {names} (<{min_volume_mm3:g} mm3) grouped with "
+          f"'{volumes[host][0]}' for slicer - no 'inches?' rescale prompt")
+    return names
 
 
 def _patch_3mf_colors(filename: str, color_map: dict) -> None:
