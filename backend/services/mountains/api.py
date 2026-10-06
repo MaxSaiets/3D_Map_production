@@ -123,7 +123,7 @@ async def mountain_download(task_id: str, kind: str = "print", authorization: Op
     from fastapi.responses import FileResponse
     from services.user_store import register_mountain_download, add_model
     u = _mountain_user(authorization)
-    if not u["is_admin"] and not u.get("email_verified", False):
+    if not u.get("quota_unlimited", u["is_admin"]) and not u.get("email_verified", False):
         raise HTTPException(403, "Підтвердьте email, щоб завантажувати моделі (перевірте пошту).")
     kind = "tiles" if kind == "tiles" else "print"
     path = _mountain_file(task_id, kind)

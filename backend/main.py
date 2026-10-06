@@ -181,6 +181,15 @@ def rate_limit(scope: str, limits: list[tuple[int, float]]):
         ip = _client_ip(request)
         for limit, window in limits:
             if not _check_rate(ip, scope, limit, window):
+                # Безлім-грант (UNLIMITED_EMAILS) — без анти-DoS лімітів. Токен
+                # перевіряємо лише тут, коли ліміт уже вичерпано, щоб не платити за це
+                # на кожному запиті.
+                _auth = request.headers.get("authorization") or ""
+                if _auth:
+                    from services.auth_service import verify_token
+                    _u = verify_token(_auth)
+                    if _u and _u.get("quota_unlimited"):
+                        return
                 raise HTTPException(
                     status_code=429,
                     detail="Забагато запитів — зачекайте трохи й спробуйте ще раз.",
@@ -2732,7 +2741,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
     # БЕЗПЕКА: безкоштовні завантаження — лише для ПІДТВЕРДЖЕНОЇ пошти (не-адмін),
     # інакше квоту FREE_DOWNLOADS легко обнулити, реєструючи нові непідтверджені
     # акаунти. Адмін (вже гейтований email_verified у verify_token) — без обмежень.
-    if not u["is_admin"] and not u.get("email_verified", False):
+    if not u.get("quota_unlimited", u["is_admin"]) and not u.get("email_verified", False):
         raise HTTPException(
             status_code=403,
             detail="Підтвердьте email, щоб завантажувати моделі (перевірте пошту).",

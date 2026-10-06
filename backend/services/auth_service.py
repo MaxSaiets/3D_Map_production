@@ -33,9 +33,9 @@ def is_admin(email: Optional[str]) -> bool:
 
 
 def has_unlimited_grant(email: Optional[str]) -> bool:
-    """Тимчасовий безлім завантажень (НЕ адмінка) для окремих пошт.
-    UNLIMITED_EMAILS="a@b.c:2026-10-07,x@y.z" — дата = останній день гранту
-    включно (за Києвом); без дати — безстроково."""
+    """Тимчасовий безлім завантажень/генерацій (НЕ адмінка) для окремих пошт або uid.
+    UNLIMITED_EMAILS="a@b.c:2026-10-07,<firebase-uid>:2026-10-07,x@y.z" — дата =
+    останній день гранту включно (за Києвом); без дати — безстроково."""
     if not email:
         return False
     try:
@@ -102,7 +102,9 @@ def verify_token(token: str) -> Optional[Dict[str, object]]:
             "email_verified": email_verified,
             "is_admin": email_verified and is_admin(email),
             # безлім квоти завантажень без адмін-доступу (див. has_unlimited_grant)
-            "quota_unlimited": email_verified and (is_admin(email) or has_unlimited_grant(email)),
+            # uid-грант не залежить від підтвердження пошти (uid не підробити)
+            "quota_unlimited": (email_verified and (is_admin(email) or has_unlimited_grant(email)))
+                               or has_unlimited_grant(uid),
             "name": claims.get("name"),
             "phone": claims.get("phone_number"),
         }
