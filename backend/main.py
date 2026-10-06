@@ -2561,7 +2561,7 @@ async def account_quota(authorization: Optional[str] = Header(default=None)):
     from services.user_store import get_quota
     u = _require_user(authorization)
     return {"user": {"email": u.get("email"), "is_admin": u["is_admin"]},
-            "quota": get_quota(u["uid"], u.get("email") or "", u["is_admin"])}
+            "quota": get_quota(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]))}
 
 
 @app.get("/api/account/models")
@@ -2750,7 +2750,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
         # безкоштовне завантаження без файлу. Дзеркалить безпечний порядок non-batch
         # гілки нижче (resolve-then-charge). Dedup за task_id зберігається.
         resp = await download_all_zones(_bid)
-        _res = register_download(u["uid"], u.get("email") or "", u["is_admin"], _bid or "")
+        _res = register_download(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]), _bid or "")
         if not _res["ok"]:
             raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
         add_model(u["uid"], u.get("email") or "", {
@@ -2780,7 +2780,7 @@ async def account_download(req: DownloadGrantRequest, authorization: Optional[st
             str(path), media_type="model/3mf", filename=path.name,
             headers={"X-Paid-File": "1"},
         )
-    res = register_download(u["uid"], u.get("email") or "", u["is_admin"], req.task_id or "")
+    res = register_download(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]), req.task_id or "")
     if not res["ok"]:
         raise HTTPException(status_code=402, detail="Вичерпано безкоштовні завантаження")
     add_model(u["uid"], u.get("email") or "", {

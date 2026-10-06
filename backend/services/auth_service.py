@@ -32,6 +32,25 @@ def is_admin(email: Optional[str]) -> bool:
     return bool(email) and email.lower() in _admin_emails()
 
 
+def has_unlimited_grant(email: Optional[str]) -> bool:
+    """Тимчасовий безлім завантажень (НЕ адмінка) для окремих пошт.
+    UNLIMITED_EMAILS="a@b.c:2026-10-07,x@y.z" — дата = останній день гранту
+    включно (за Києвом); без дати — безстроково."""
+    if not email:
+        return False
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        today = datetime.now(ZoneInfo("Europe/Kyiv")).date().isoformat()
+    except Exception:  # noqa: BLE001
+        today = time.strftime("%Y-%m-%d", time.gmtime())
+    for item in os.getenv("UNLIMITED_EMAILS", "").split(","):
+        addr, _, until = item.strip().partition(":")
+        if addr and addr.lower() == email.lower() and (not until or today <= until.strip()):
+            return True
+    return False
+
+
 def _get_certs() -> Dict[str, object]:
     global _certs_cache, _certs_fetched_at
     if _certs_cache and (time.time() - _certs_fetched_at) < _CACHE_TTL:
@@ -82,6 +101,8 @@ def verify_token(token: str) -> Optional[Dict[str, object]]:
             "email": email,
             "email_verified": email_verified,
             "is_admin": email_verified and is_admin(email),
+            # безлім квоти завантажень без адмін-доступу (див. has_unlimited_grant)
+            "quota_unlimited": email_verified and (is_admin(email) or has_unlimited_grant(email)),
             "name": claims.get("name"),
             "phone": claims.get("phone_number"),
         }

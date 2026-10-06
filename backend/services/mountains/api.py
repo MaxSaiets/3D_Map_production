@@ -112,7 +112,7 @@ def _mountain_file(task_id: str, kind: str) -> Optional[Path]:
 async def mountain_quota(authorization: Optional[str] = Header(default=None)):
     from services.user_store import get_mountain_quota
     u = _mountain_user(authorization)
-    return get_mountain_quota(u["uid"], u.get("email") or "", u["is_admin"])
+    return get_mountain_quota(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]))
 
 
 @router.post("/mountains/download/{task_id}")
@@ -129,7 +129,7 @@ async def mountain_download(task_id: str, kind: str = "print", authorization: Op
     path = _mountain_file(task_id, kind)
     if path is None:
         raise HTTPException(404, "Файл гори не знайдено — згенеруйте модель ще раз")
-    res = register_mountain_download(u["uid"], u.get("email") or "", u["is_admin"], task_id)
+    res = register_mountain_download(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]), task_id)
     if not res["ok"]:
         raise HTTPException(402, "Безкоштовні файли гір вичерпано — напишіть нам, надішлемо файл або надрукуємо")
     t = _ctx.get("tasks", {}).get(task_id)
