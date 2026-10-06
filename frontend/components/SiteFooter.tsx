@@ -36,6 +36,7 @@ export function SiteFooter() {
             <Link href="/create" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("create")}</Link>
             <Link href="/keychains" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("keychains")}</Link>
             <Link href="/prices" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{tNav("prices")}</Link>
+            <Link href="/pro" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">Monadruk Pro</Link>
             <Link href="/maps" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("maps")}</Link>
             <Link href="/3d-model-mista" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{x.model}</Link>
             <Link href="/brelok" className="inline-flex min-h-[44px] items-center px-2.5 hover:text-ink">{t("brelok")}</Link>

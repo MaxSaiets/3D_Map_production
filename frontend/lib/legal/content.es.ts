@@ -70,6 +70,7 @@ export const es: LegalSet = {
       ] },
       { h: "10. Derechos de propiedad intelectual", blocks: [
         { p: "Los datos cartográficos son proporcionados por OpenStreetMap (© OpenStreetMap contributors, licencia ODbL); los datos de elevación proceden de fuentes abiertas. El modelo 3D generado se facilita al Comprador para su uso personal no comercial y su impresión. El uso comercial masivo o la reventa de los modelos requiere un acuerdo escrito aparte con el Vendedor." },
+        { p: "Los Compradores con una suscripción activa a Monadruk Pro reciben una licencia ampliada, incluido el uso comercial, conforme a las [pro-terms:Condiciones de suscripción Monadruk Pro], que forman parte integrante de este Contrato." },
         { p: "La ruta GPX cargada por el Comprador constituye datos propios del Comprador y se procesa exclusivamente para construir su modelo (véase la [privacy:Política de privacidad]). El Comprador garantiza que el texto de grabado que encarga no infringe derechos de terceros." },
       ] },
       { h: "11. Datos personales", blocks: [
@@ -136,6 +137,7 @@ export const es: LegalSet = {
           "Mapa 3D de barrio: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapas: desde 8 €).",
           "Imán de nevera (mapa): 210 ₴.",
           "Archivo 3MF para imprimir por tu cuenta: 149 ₴ (el precio se muestra en el configurador), acceso mediante enlace tras el pago; la vista previa 3D es gratuita.",
+          "Suscripción Monadruk Pro: 2 100 ₴ al mes (o 50 USD si pagas desde fuera de Ucrania), con renovación automática: archivos de impresión ilimitados y licencia comercial, cancelación con un clic. Detalles: [pro-terms:condiciones de suscripción].",
         ] },
       ] },
       { h: "Pago", blocks: [
@@ -212,7 +214,8 @@ export const es: LegalSet = {
           "Cuenta: dirección de email e identificador de inicio de sesión mediante Google (Firebase Authentication). No vemos ni guardamos tu contraseña.",
           "Pedido: nombre, teléfono, forma de entrega, ciudad y punto de recogida o dirección, comentario, precio estimado, capturas de pantalla del modelo desde el configurador.",
           "Modelo: coordenadas de la zona del mapa elegida, ajustes seleccionados (tamaño, estilo, inscripción, marca «mi casa»), archivos generados (GLB para la vista previa, 3MF/STL para la impresión), así como la ruta GPX si la has subido.",
-          "Datos técnicos durante la visita, solo con tu consentimiento sobre cookies (sección «Cookies y analítica»).",
+          "Contador anónimo de visitas (sin cookies): dirección de la página, origen de la visita, idioma, código de país y un hash que cambia cada día (la dirección IP no se almacena). Analítica más detallada solo con tu consentimiento sobre cookies (sección «Cookies y analítica»).",
+          "Suscripción Monadruk Pro: estado y periodo de la suscripción, historial de cobros (importe, fecha, ID de pago de LiqPay, sin datos de la tarjeta) y un registro de tu aceptación de las condiciones (hora, versión de las condiciones, idioma, código de país, hash de la dirección IP). Lo necesitamos para dar acceso y, si hace falta, demostrar qué aceptaste exactamente. Se conserva mientras la suscripción esté activa y después hasta 3 años por motivos contables.",
         ] },
       ] },
       { h: "Para qué los usamos", blocks: [
@@ -243,6 +246,7 @@ export const es: LegalSet = {
         { p: "Los archivos de modelos, los pedidos y las cuentas se guardan en un servidor bajo nuestro control en Ucrania; el acceso pasa por Cloudflare. Solo el propietario tiene acceso a los datos de los pedidos." },
       ] },
       { h: "Cookies y analítica", blocks: [
+        { p: "Sin cookies y sin tu consentimiento solo funciona un contador anónimo de visitas en nuestro propio servidor. Cuando abres una página, registramos su dirección, el origen de la visita, el idioma, el código de país (de Cloudflare) y un hash calculado a partir de tu dirección IP y los datos del navegador junto con la fecha y una clave secreta. El hash cambia cada día, no almacenamos la dirección IP y no se guarda nada en tu dispositivo. Así contamos los visitantes diarios. La base jurídica es nuestro interés legítimo en estadísticas básicas del sitio (art. 11 de la Ley de Ucrania «Sobre la protección de datos personales»; para la UE, art. 6.1.f del RGPD). Estos datos no se ceden a terceros ni se usan para publicidad." },
         { p: "Sin tu consentimiento, el sitio solo coloca cookies técnicas: inicio de sesión en la cuenta, idioma elegido y el propio registro de tu elección sobre cookies. Al pulsar «Acepto» en el banner se activan:" },
         { ul: [
           "Analítica propia en nuestro servidor: páginas vistas, clics y pasos en el configurador (qué escenario, tamaño y lugar se han elegido). La dirección IP no se guarda: solo un hash diario y el código de país.",
@@ -285,6 +289,7 @@ export const es: LegalSet = {
       ] },
       { h: "Datos y derechos de autor", blocks: [
         { p: "Datos cartográficos © OpenStreetMap contributors (ODbL). Los archivos generados puedes utilizarlos para impresión personal. La reventa del servicio o el uso comercial masivo requieren un acuerdo aparte." },
+        { p: "Los suscriptores de Monadruk Pro pueden usar los modelos con fines comerciales (incluida la venta de productos impresos) conforme a las [pro-terms:Condiciones de suscripción Monadruk Pro]." },
       ] },
       { h: "Normas de uso", blocks: [
         { ul: [

@@ -4,6 +4,7 @@ import { BUSINESS, IBAN_DISPLAY } from "@/lib/legal";
 import { localeUrl } from "@/i18n/metadata";
 import { type AppLocale } from "@/i18n/routing";
 import { type LegalDoc, type LegalBlock, LEGAL_LABELS } from "@/lib/legal/content";
+import { SUB_TERMS_VERSION } from "@/lib/legal/subscription";
 
 const linkCls = "text-forest underline-offset-2 hover:underline";
 
@@ -20,7 +21,7 @@ function formatUpdated(locale: string): string {
 
 // Підстановка токенів {data} та посилань [route:текст] у рядку → React-вузли.
 function renderText(text: string, locale: string): React.ReactNode[] {
-  const parts = text.split(/(\{[a-zA-Z]+\}|\[[a-z]+:[^\]]+\])/g).filter((p) => p !== "");
+  const parts = text.split(/(\{[a-zA-Z]+\}|\[[a-z-]+:[^\]]+\])/g).filter((p) => p !== "");
   return parts.map((part, i) => {
     // Дата-токени
     if (part.startsWith("{") && part.endsWith("}")) {
@@ -39,6 +40,7 @@ function renderText(text: string, locale: string): React.ReactNode[] {
         case "storeAddress": return <React.Fragment key={i}>{BUSINESS.storeAddress}</React.Fragment>;
         // ownerRegAddress навмисно НЕ підтримується — див. lib/legal.ts (приватність).
         case "updated": return <React.Fragment key={i}>{formatUpdated(locale)}</React.Fragment>;
+        case "subVersion": return <React.Fragment key={i}>{SUB_TERMS_VERSION}</React.Fragment>;
         default: return <React.Fragment key={i}>{part}</React.Fragment>;
       }
     }

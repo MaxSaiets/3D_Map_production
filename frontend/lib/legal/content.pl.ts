@@ -70,6 +70,7 @@ export const pl: LegalSet = {
       ] },
       { h: "10. Prawa własności intelektualnej", blocks: [
         { p: "Dane kartograficzne pochodzą z OpenStreetMap (© OpenStreetMap contributors, licencja ODbL); dane wysokościowe — ze źródeł otwartych. Wygenerowany model 3D jest udostępniany Kupującemu do osobistego, niekomercyjnego użytku i druku. Masowe komercyjne wykorzystanie lub odsprzedaż modeli wymaga odrębnego pisemnego porozumienia ze Sprzedawcą." },
+        { p: "Kupujący z aktywną subskrypcją Monadruk Pro otrzymują rozszerzoną licencję, obejmującą także użytek komercyjny, na zasadach określonych w [pro-terms:Warunkach subskrypcji Monadruk Pro], stanowiących integralną część niniejszej Umowy." },
         { p: "Przesłana przez Kupującego trasa GPX stanowi własne dane Kupującego i jest przetwarzana wyłącznie w celu zbudowania jego modelu (zob. [privacy:Polityka prywatności]). Kupujący gwarantuje, że zamówiony przez niego tekst graweru nie narusza praw osób trzecich." },
       ] },
       { h: "11. Dane osobowe", blocks: [
@@ -136,6 +137,7 @@ export const pl: LegalSet = {
           "Mapa 3D dzielnicy: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapy — od 8 €).",
           "Magnes na lodówkę (mapa) — 210 ₴.",
           "Plik 3MF do samodzielnego druku — 149 ₴ (cena widoczna w kreatorze), dostęp przez link po opłacie; podgląd 3D jest bezpłatny.",
+          "Subskrypcja Monadruk Pro — 2 100 ₴ miesięcznie (lub 50 USD przy płatności spoza Ukrainy), odnawiana automatycznie: nielimitowane pliki do druku i licencja komercyjna, anulowanie jednym kliknięciem. Szczegóły — [pro-terms:warunki subskrypcji].",
         ] },
       ] },
       { h: "Płatność", blocks: [
@@ -212,7 +214,8 @@ export const pl: LegalSet = {
           "Konto: adres email i identyfikator logowania przez Google (Firebase Authentication). Hasła nie widzimy ani nie przechowujemy.",
           "Zamówienie: imię, telefon, sposób dostawy, miasto i oddział lub adres, komentarz, orientacyjna cena, zrzuty ekranu modelu z konstruktora.",
           "Model: współrzędne wybranego fragmentu mapy, wybrane ustawienia (rozmiar, styl, napis, znacznik „mój dom”), wygenerowane pliki (GLB do podglądu, 3MF/STL do druku), a także trasa GPX, jeśli została wgrana.",
-          "Dane techniczne podczas wizyty — wyłącznie za Twoją zgodą na pliki cookie (sekcja „Cookie i analityka”).",
+          "Anonimowy licznik odwiedzin (bez plików cookie): adres strony, źródło wejścia, język, kod kraju i skrót zmieniający się codziennie (adres IP nie jest przechowywany). Bardziej szczegółowa analityka — wyłącznie za Twoją zgodą na pliki cookie (sekcja „Cookie i analityka”).",
+          "Subskrypcja Monadruk Pro: status i okres subskrypcji, historia obciążeń (kwota, data, identyfikator płatności LiqPay — bez danych karty) oraz zapis Twojej zgody na warunki (czas, wersja warunków, język, kod kraju, skrót adresu IP). Jest potrzebny, aby zapewnić dostęp i w razie potrzeby wykazać, na co dokładnie się zgodziłeś. Przechowywane przez okres trwania subskrypcji, a następnie do 3 lat na potrzeby księgowości.",
         ] },
       ] },
       { h: "Po co je wykorzystujemy", blocks: [
@@ -243,6 +246,7 @@ export const pl: LegalSet = {
         { p: "Pliki modeli, zamówienia i konta przechowywane są na serwerze pod naszą kontrolą na Ukrainie; dostęp do niego odbywa się przez Cloudflare. Dostęp do danych zamówień ma wyłącznie właściciel." },
       ] },
       { h: "Cookie i analityka", blocks: [
+        { p: "Bez plików cookie i bez Twojej zgody działa wyłącznie anonimowy licznik odwiedzin na naszym własnym serwerze. Gdy otwierasz stronę, zapisujemy jej adres, źródło wejścia, język, kod kraju (z Cloudflare) oraz skrót obliczony z Twojego adresu IP i danych przeglądarki wraz z datą i tajnym kluczem. Skrót zmienia się codziennie, samego adresu IP nie przechowujemy i nic nie jest zapisywane na Twoim urządzeniu. W ten sposób liczymy dziennych odwiedzających. Podstawą prawną jest nasz prawnie uzasadniony interes w podstawowej statystyce strony (art. 11 ustawy Ukrainy „O ochronie danych osobowych”; dla UE — art. 6 ust. 1 lit. f RODO). Dane te nie są przekazywane osobom trzecim ani wykorzystywane do reklamy." },
         { p: "Bez Twojej zgody strona ustawia wyłącznie techniczne pliki cookie: logowanie do konta, wybrany język i sam zapis Twojego wyboru dotyczącego cookie. Po kliknięciu „Zgadzam się” w banerze uruchamiane są:" },
         { ul: [
           "Własna analityka na naszym serwerze: odsłony stron, kliknięcia i kroki w konstruktorze (jaki scenariusz, rozmiar, miejsce wybrano). Adres IP nie jest przechowywany — jedynie dobowy hash i kod kraju.",
@@ -285,6 +289,7 @@ export const pl: LegalSet = {
       ] },
       { h: "Dane i prawa autorskie", blocks: [
         { p: "Dane kartograficzne © OpenStreetMap contributors (ODbL). Wygenerowane pliki możesz wykorzystywać do osobistego druku. Odsprzedaż usługi lub masowe wykorzystanie komercyjne wymaga odrębnego uzgodnienia." },
+        { p: "Subskrybenci Monadruk Pro mogą wykorzystywać modele komercyjnie (w tym sprzedawać wydrukowane wyroby) na zasadach określonych w [pro-terms:Warunkach subskrypcji Monadruk Pro]." },
       ] },
       { h: "Zasady korzystania", blocks: [
         { ul: [

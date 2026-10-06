@@ -70,6 +70,7 @@ export const en: LegalSet = {
       ] },
       { h: "10. Intellectual Property Rights", blocks: [
         { p: "Cartographic data is provided by OpenStreetMap (© OpenStreetMap contributors, ODbL license); elevation data comes from open sources. The generated 3D model is provided to the Buyer for personal, non-commercial use and printing. Large-scale commercial use or resale of the models requires a separate written arrangement with the Seller." },
+        { p: "Buyers with an active Monadruk Pro subscription receive an extended licence, including commercial use, under the [pro-terms:Monadruk Pro Subscription Terms], which form an integral part of this Agreement." },
         { p: "A GPX route uploaded by the Buyer is the Buyer's own data and is processed solely to build their model (see the [privacy:Privacy Policy]). The Buyer warrants that the engraving text they order does not infringe the rights of third parties." },
       ] },
       { h: "11. Personal Data", blocks: [
@@ -136,6 +137,7 @@ export const en: LegalSet = {
           "3D district map: S 5.5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (maps — from 8 €).",
           "Fridge magnet (map) — 210 ₴.",
           "3MF file for self-printing — 149 ₴ (the price is shown in the designer), access via a link after payment; the 3D preview is free.",
+          "Monadruk Pro subscription — UAH 2,100 per month (or USD 50 when paying from outside Ukraine), renews automatically: unlimited print files and a commercial licence, cancel in one click. Details — [pro-terms:subscription terms].",
         ] },
       ] },
       { h: "Payment", blocks: [
@@ -212,7 +214,8 @@ export const en: LegalSet = {
           "Account: your email address and sign-in identifier via Google (Firebase Authentication). We never see or store your password.",
           "Order: name, phone number, delivery method, city and branch or address, comment, estimated price, screenshots of the model from the builder.",
           "Model: the coordinates of the selected map area, the settings you chose (size, style, engraving, the \"my home\" marker), the generated files (GLB for preview, 3MF/STL for printing), and the GPX route if you uploaded one.",
-          "Technical data during your visit — only with your consent to cookies (see \"Cookies and Analytics\").",
+          "Anonymous visit counter (no cookies): page address, referrer, language, country code and a hash that changes every day (the IP address is not stored). More detailed analytics only with your consent to cookies (see \"Cookies and Analytics\").",
+          "Monadruk Pro subscription: subscription status and period, charge history (amount, date, LiqPay payment ID — no card data) and a record of your consent to the terms (time, terms version, language, country code, hashed IP address). We need it to provide access and, if necessary, to show what exactly you agreed to. Kept while the subscription is active and then up to 3 years for accounting.",
         ] },
       ] },
       { h: "Why We Use It", blocks: [
@@ -243,6 +246,7 @@ export const en: LegalSet = {
         { p: "Model files, orders and accounts are stored on a server under our control in Ukraine; access to it goes through Cloudflare. Only the owner has access to order data." },
       ] },
       { h: "Cookies and Analytics", blocks: [
+        { p: "Without cookies and without your consent, only an anonymous visit counter runs on our own server. When you open a page, we record its address, the referrer, the language, the country code (from Cloudflare) and a hash computed from your IP address and browser data together with the date and a secret key. The hash changes every day, we do not store the IP address itself, and nothing is written to your device. This is how we count daily visitors. The legal basis is our legitimate interest in basic website statistics (Art. 11 of the Law of Ukraine \"On Personal Data Protection\"; for the EU — Art. 6(1)(f) GDPR). This data is not shared with third parties and is not used for advertising." },
         { p: "Without your consent, the website sets only technical cookies: account sign-in, your chosen language, and the record of your cookie choice itself. After clicking \"Agree\" in the banner, the following are enabled:" },
         { ul: [
           "Our own analytics on our server: page views, clicks and steps in the builder (which scenario, size, and place you chose). No IP address is stored — only a daily hash and country code.",
@@ -285,6 +289,7 @@ export const en: LegalSet = {
       ] },
       { h: "Data and Copyright", blocks: [
         { p: "Cartographic data © OpenStreetMap contributors (ODbL). You may use the generated files for personal printing. Reselling the service or large-scale commercial use requires a separate arrangement." },
+        { p: "Monadruk Pro subscribers may use the models commercially (including selling printed products) under the [pro-terms:Monadruk Pro Subscription Terms]." },
       ] },
       { h: "Rules of Use", blocks: [
         { ul: [

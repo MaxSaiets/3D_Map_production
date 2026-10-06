@@ -4,9 +4,10 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3, CheckCircle2, Search, Download, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Package, Users, RefreshCw, BarChart3, CheckCircle2, Search, Download, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { setOwnerOptOut } from "@/lib/analytics";
+import { AdminProPanel } from "@/components/AdminProPanel";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -39,7 +40,7 @@ export default function AdminPage() {
   const ts = useTranslations("account"); // повторно використовуємо вже перекладені статуси
   const ta = useTranslations("adminPanel"); // нові адмін-рядки
   const { user, loading, configured, signIn, getIdToken } = useAuth();
-  const [tab, setTab] = useState<"stats" | "orders" | "users">("stats");
+  const [tab, setTab] = useState<"stats" | "orders" | "users" | "pro">("stats");
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -79,7 +80,8 @@ export default function AdminPage() {
     setBusy(true);
     try {
       const q = await fetch(`${API_BASE}/api/account/quota`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json());
-      const admin = Boolean(q?.quota?.is_admin);
+      // справжня адмін-ознака: quota.is_admin = «безлім» (є й у підписників/грантів)
+      const admin = Boolean(q?.user?.is_admin);
       setIsAdmin(admin);
       if (admin) {
         setOwnerOptOut(); // власні заходи більше не псують статистику відвідувачів
@@ -187,7 +189,10 @@ export default function AdminPage() {
             <button onClick={() => setTab("stats")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "stats" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><BarChart3 size={15} /> Статистика</button>
             <button onClick={() => setTab("orders")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "orders" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><Package size={15} /> Замовлення ({orders.length})</button>
             <button onClick={() => setTab("users")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "users" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><Users size={15} /> Користувачі ({users.length})</button>
+            <button onClick={() => setTab("pro")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${tab === "pro" ? "bg-forest text-white" : "border border-line text-ink-2"}`}><ShieldCheck size={15} /> Підписки й безлім</button>
           </div>
+
+          {tab === "pro" && <AdminProPanel getIdToken={getIdToken} />}
 
           {tab === "stats" && (
             <div className="mt-5">
@@ -196,6 +201,8 @@ export default function AdminPage() {
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {[
                       ["Унікальні відвідувачі", stats.totals?.uniqueVisitors],
+                      ["з них прийняли cookie", stats.totals?.consentedVisitors],
+                      ["з них анонімно (без cookie)", stats.totals?.anonVisitors],
                       ["Перегляди сторінок", stats.totals?.pageviews],
                       ["Усього подій", stats.totals?.events],
                     ].map(([label, val]) => (

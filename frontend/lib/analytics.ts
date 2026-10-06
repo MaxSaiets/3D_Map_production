@@ -51,7 +51,12 @@ export function setConsent(value: "granted" | "denied") {
   window.dispatchEvent(new CustomEvent("mnd:consent", { detail: value }));
 }
 
-/** Track an event (pageview by default). No-ops without consent. */
+/** Події, які шлемо на ВЛАСНИЙ сервер навіть без згоди на cookie: анонімний
+ *  лічильник відвідувань (нічого не пишемо на пристрій, IP не зберігаємо). */
+const COOKIELESS_EVENTS = new Set(["pageview", "ping"]);
+
+/** Track an event (pageview by default). Without consent only COOKIELESS_EVENTS go
+ *  to our own server (anonymous); everything else and Google — only after consent. */
 /** Кампанія-параметри з URL приземлення (utm_*, gclid, fbclid) — для атрибуції
  *  платного трафіку. Раніше НЕ захоплювались, тож платні кліки Google/Facebook
  *  зливались у голий google.com/facebook.com referrer і кампанію було не розрізнити.
@@ -76,11 +81,16 @@ export function track(event: string, props?: Record<string, unknown>) {
   // Cloudflare → у адмінці виглядає як «сміттєві» дані без гео.
   const host = location.hostname;
   if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
-  if (getConsent() !== "granted") return;
   if (isOwnerOptOut()) return; // не рахуємо власні (адмінські) заходи
+  const granted = getConsent() === "granted";
+  // БЕЗ ЗГОДИ (06.10.2026): лише анонімний лічильник відвідувань (COOKIELESS_EVENTS)
+  // на власний сервер — без cookie/localStorage, без A/B-міток і без Google.
+  // Сервер тримає лише добовий солений хеш, IP не зберігає (див. /api/track і
+  // «Політику конфіденційності»). Усе інше (кліки, воронка, GA/Ads) — лише після згоди.
+  if (!granted && !COOKIELESS_EVENTS.has(event)) return;
   // A/B: додаємо ab_<exp> у КОЖНУ подію — адмінка порівнює funnel A vs B без
   // окремого механізму (lib/ab.ts, детермінований варіант на visitorId).
-  const mergedProps = { ...(props || {}), ...abProps() };
+  const mergedProps = granted ? { ...(props || {}), ...abProps() } : { ...(props || {}), cl: "1" };
   try {
     const body = JSON.stringify({
       event,
@@ -96,6 +106,7 @@ export function track(event: string, props?: Record<string, unknown>) {
       fetch(url, { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
     }
   } catch { /* ignore */ }
+  if (!granted) return;
   const g = (window as any).gtag;
   if (typeof g === "function") g("event", event, mergedProps);
 }
@@ -108,10 +119,10 @@ export function trackPing() {
   if (typeof window === "undefined") return;
   const host = location.hostname;
   if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
-  if (getConsent() !== "granted") return;
   if (isOwnerOptOut()) return;
   try {
-    const abP = abProps();
+    // без згоди — той самий анонімний пінг, але без A/B-мітки (вона з localStorage)
+    const abP: Record<string, string> = getConsent() === "granted" ? abProps() : { cl: "1" };
     const body = JSON.stringify({
       event: "ping",
       path: location.pathname,
@@ -134,6 +145,8 @@ export type FunnelStep = (typeof FUNNEL_STEPS)[number];
  *  до кроку, а не к-сть кліків). Кроки 1-в-1 у sessionStorage. */
 export function trackFunnel(step: FunnelStep, props?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
+  // воронка пише мітку в sessionStorage → лише після згоди (без згоди track() її й так не шле)
+  if (getConsent() !== "granted") return;
   try {
     const k = `mnd_f_${step}`;
     if (sessionStorage.getItem(k)) return;

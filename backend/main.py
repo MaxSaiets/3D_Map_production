@@ -1882,6 +1882,11 @@ async def liqpay_callback(data: str = Form(default=""), signature: str = Form(de
     if info is None:
         raise HTTPException(status_code=403, detail="bad signature")
     status = str(info.get("status") or "")
+    from services import subscriptions as _subs
+    if _subs.is_subscription_order(str(info.get("order_id") or "")):
+        # підписка Pro: перше і кожне наступне щомісячне списання, скасування, повернення
+        _subs.apply_liqpay_event(info)
+        return {"ok": True}
     if status in ("success", "sandbox", "subscribed", "wait_accept"):
         try:
             from services.order_service import mark_order_paid
@@ -1900,6 +1905,9 @@ async def liqpay_status(order_id: str):
     from services.liqpay import query_status, is_paid_status, is_configured
     if not is_configured():
         return {"configured": False, "paid": False, "status": None}
+    from services import subscriptions as _subs
+    if _subs.is_subscription_order(order_id):
+        raise HTTPException(status_code=404, detail="Статус підписки — у кабінеті")
     info = query_status(order_id)
     if info is None:
         return {"configured": True, "paid": False, "status": "unknown"}
@@ -1921,6 +1929,177 @@ async def liqpay_status(order_id: str):
         pass
     return {"configured": True, "paid": paid, "status": status, "task_id": _task_id,
             "amount": info.get("amount"), "currency": info.get("currency")}
+
+
+# ── Підписка Monadruk Pro (місячний безлім, services/subscriptions.py) ──────────
+class SubscriptionCheckout(BaseModel):
+    currency: str = Field(default="UAH", max_length=3)
+    locale: str = Field(default="uk", max_length=8)
+    # Тексти позначок, які людина побачила й поставила (фіксуємо як доказ згоди).
+    accept_terms: bool = False
+    accept_autorenew: bool = False
+    accept_digital: bool = False
+    consent_texts: List[str] = Field(default_factory=list, max_length=5)
+
+
+@app.get("/api/subscription/plans")
+async def subscription_plans(cf_ipcountry: Optional[str] = Header(default=None)):
+    """Ціни підписки + рекомендована валюта (Україна → гривня, решта світу → долар)."""
+    from services import subscriptions as _subs
+    from services.liqpay import is_configured
+    cc = (cf_ipcountry or "").strip().upper()[:2]
+    # країна невідома (без Cloudflare) → null, фронт лишає валюту за мовою сторінки
+    return {"plans": _subs.PLANS, "suggested": ("UAH" if cc == "UA" else "USD") if cc else None,
+            "country": cc, "terms_version": _subs.TERMS_VERSION, "configured": is_configured()}
+
+
+@app.get("/api/subscription")
+async def subscription_get(authorization: Optional[str] = Header(default=None)):
+    """Стан підписки поточного користувача. Якщо оплата ще «pending» (людина щойно
+    повернулась з LiqPay, а callback не дійшов) — питаємо статус у LiqPay самі."""
+    import asyncio
+    from services import subscriptions as _subs
+    u = _require_user(authorization)
+    s = _subs.latest_for_uid(u["uid"])
+    if s and s.get("status") == "pending":
+        from services.liqpay import query_status
+        info = await asyncio.to_thread(query_status, s["order_id"])
+        if info and info.get("order_id") == s["order_id"]:
+            s = _subs.apply_liqpay_event(info) or s
+    return {"subscription": _subs.public_view(s)}
+
+
+@app.post("/api/subscription/checkout")
+async def subscription_checkout(
+    req: SubscriptionCheckout,
+    authorization: Optional[str] = Header(default=None),
+    x_forwarded_for: Optional[str] = Header(default=None),
+    user_agent: Optional[str] = Header(default=None),
+    cf_ipcountry: Optional[str] = Header(default=None),
+    _rl: None = Depends(rate_limit("sub_checkout", [(10, 3600.0)])),
+):
+    """Форма LiqPay для підписки. Без трьох явних згод (умови, автопродовження,
+    негайний доступ до цифрового контенту) — 400: згода має бути свідомою."""
+    from services import subscriptions as _subs
+    from services.liqpay import build_subscribe_checkout, is_configured
+    u = _require_user(authorization)
+    if not (req.accept_terms and req.accept_autorenew and req.accept_digital):
+        raise HTTPException(status_code=400, detail="Потрібно погодитись з умовами підписки")
+    if not is_configured():
+        raise HTTPException(status_code=503, detail="Оплата тимчасово недоступна")
+    cur = _subs.latest_for_uid(u["uid"])
+    if cur and _subs.public_view(cur).get("active") and cur.get("status") == "active":
+        raise HTTPException(status_code=409, detail="Підписка вже активна")
+    currency = (req.currency or "UAH").upper()
+    consent = _subs.consent_record(
+        ip=(x_forwarded_for or "").split(",")[0].strip(), user_agent=user_agent or "",
+        locale=req.locale, country=cf_ipcountry or "", texts=req.consent_texts,
+    )
+    rec = _subs.create_pending(uid=u["uid"], email=u.get("email") or "", currency=currency, consent=consent)
+    site = (os.getenv("PUBLIC_SITE_URL") or "https://monadruk.com").rstrip("/")
+    loc = req.locale if req.locale in ("uk", "en", "de", "es", "fr", "pl") else "uk"
+    form = build_subscribe_checkout(
+        amount=rec["amount"], currency=rec["currency"],
+        description=f"Monadruk Pro — підписка на 1 місяць з автопродовженням ({u.get('email') or ''})",
+        order_id=rec["order_id"],
+        result_url=f"{site}/{loc + '/' if loc != 'uk' else ''}pro?paid=1",
+        server_url=f"{site}/api/liqpay/callback",
+        language="uk" if loc == "uk" else "en",
+    )
+    if not form:
+        raise HTTPException(status_code=503, detail="Оплата тимчасово недоступна")
+    return {"payment": form, "order_id": rec["order_id"]}
+
+
+@app.post("/api/subscription/cancel")
+async def subscription_cancel(authorization: Optional[str] = Header(default=None)):
+    """Скасування в один клік: зупиняємо регулярний платіж у LiqPay; доступ лишається
+    до кінця оплаченого місяця."""
+    import asyncio
+    from services import subscriptions as _subs
+    from services.liqpay import unsubscribe
+    u = _require_user(authorization)
+    s = _subs.latest_for_uid(u["uid"])
+    if not s or s.get("status") not in ("active", "pending"):
+        raise HTTPException(status_code=404, detail="Активної підписки немає")
+    res = await asyncio.to_thread(unsubscribe, s["order_id"])
+    st = str((res or {}).get("status") or "")
+    if st not in ("unsubscribed", "success") and s.get("status") == "active":
+        print(f"[SUB] unsubscribe {s['order_id']} LiqPay answer: {res}")
+        raise HTTPException(status_code=502, detail="Не вдалося скасувати в LiqPay — спробуйте ще раз або напишіть нам")
+    s = _subs.mark_cancelled(s["order_id"]) or s
+    return {"subscription": _subs.public_view(s)}
+
+
+@app.get("/api/admin/subscriptions")
+async def admin_subscriptions(authorization: Optional[str] = Header(default=None)):
+    from services import subscriptions as _subs
+    u = _require_user(authorization)
+    if not u.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Лише для адміністратора")
+    return {"subscriptions": [
+        {**_subs.public_view(s), "email": s.get("email"), "uid": s.get("uid"),
+         "created_at": s.get("created_at"),
+         "consent_at": (s.get("consent") or {}).get("ts"),
+         "terms_version": (s.get("consent") or {}).get("terms_version"),
+         "country": (s.get("consent") or {}).get("country")}
+        for s in _subs.list_all()
+    ]}
+
+
+class GrantRequest(BaseModel):
+    who: str = Field(max_length=200)            # пошта або Firebase uid
+    days: Optional[int] = Field(default=None, ge=1, le=3650)
+    until: Optional[str] = Field(default=None, max_length=10)  # YYYY-MM-DD включно
+    forever: bool = False
+    note: str = Field(default="", max_length=300)
+
+
+def _require_admin(authorization: Optional[str]) -> Dict[str, Any]:
+    u = _require_user(authorization)
+    if not u.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Лише для адміністратора")
+    return u
+
+
+@app.get("/api/admin/grants")
+async def admin_grants_list(authorization: Optional[str] = Header(default=None)):
+    from services import grants as _gr
+    _require_admin(authorization)
+    env = [x.strip() for x in os.getenv("UNLIMITED_EMAILS", "").split(",") if x.strip()]
+    return {"grants": _gr.list_all(), "env": env}
+
+
+@app.post("/api/admin/grants")
+async def admin_grants_add(req: GrantRequest, authorization: Optional[str] = Header(default=None)):
+    """Видати безлім людині (пошта/uid) на N днів, до дати або безстроково."""
+    from datetime import date, timedelta
+    from services import grants as _gr
+    u = _require_admin(authorization)
+    until: Optional[str] = None
+    if not req.forever:
+        if req.until:
+            until = req.until
+        elif req.days:
+            # N днів включно з сьогоднішнім (за Києвом)
+            until = (date.fromisoformat(_gr._today_kyiv()) + timedelta(days=req.days - 1)).isoformat()
+        else:
+            raise HTTPException(status_code=400, detail="Вкажіть кількість днів, дату або «безстроково»")
+    try:
+        g = _gr.add(req.who, until, req.note, by=u.get("email") or "")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc) or "Некоректні дані")
+    return {"grant": g}
+
+
+@app.delete("/api/admin/grants/{grant_id}")
+async def admin_grants_revoke(grant_id: str, authorization: Optional[str] = Header(default=None)):
+    from services import grants as _gr
+    u = _require_admin(authorization)
+    g = _gr.revoke(grant_id, by=u.get("email") or "")
+    if not g:
+        raise HTTPException(status_code=404, detail="Грант не знайдено")
+    return {"grant": g}
 
 
 @app.get("/api/account/orders")
@@ -2080,6 +2259,7 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     click_points: Dict[str, list] = defaultdict(list)  # path → [[x,y],...] для теплокарти
     click_label_counter: Counter = Counter()  # (path, label) → к-сть кліків
     visitors: set = set()
+    consented_visitors: set = set()  # хто прийняв cookie (решта — анонімний лічильник)
     day_visitors: Dict[str, set] = {}
     # Стрічка ВІЗИТІВ: групуємо події за анонімним visitor-хешем → бачимо кожного
     # відвідувача (анонім) ОКРЕМО: країна, ЗВІДКИ (реферер), які сторінки, коли.
@@ -2282,6 +2462,9 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
             if vis:
                 visitors.add(vis)
                 day_visitors.setdefault(d, set()).add(vis)
+                # cl=1 → анонімний лічильник без згоди на cookie (06.10.2026)
+                if str(props.get("cl", "")) != "1":
+                    consented_visitors.add(vis)
                 _ts = r.get("ts", "")
                 vs = visitor_sessions.setdefault(vis, {
                     "id": vis[:6], "cc": "", "ref": "", "paths": [], "events": 0,
@@ -2342,6 +2525,8 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     except Exception:  # noqa: BLE001
         pass
     totals["uniqueVisitors"] = len(visitors)
+    totals["consentedVisitors"] = len(consented_visitors & visitors)
+    totals["anonVisitors"] = len(visitors - consented_visitors)
     series = sorted(by_day.values(), key=lambda x: x["day"])[-days:]
     for s in series:
         s["visitors"] = len(day_visitors.get(s["day"], set()))
@@ -2569,7 +2754,8 @@ def _require_user(authorization: Optional[str]) -> Dict[str, Any]:
 async def account_quota(authorization: Optional[str] = Header(default=None)):
     from services.user_store import get_quota
     u = _require_user(authorization)
-    return {"user": {"email": u.get("email"), "is_admin": u["is_admin"]},
+    return {"user": {"email": u.get("email"), "is_admin": u["is_admin"],
+                     "subscription_active": bool(u.get("subscription_active"))},
             "quota": get_quota(u["uid"], u.get("email") or "", u.get("quota_unlimited", u["is_admin"]))}
 
 

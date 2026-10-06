@@ -92,6 +92,65 @@ def build_checkout(
     }
 
 
+def build_subscribe_checkout(
+    *,
+    amount: float,
+    currency: str,
+    description: str,
+    order_id: str,
+    result_url: str = "",
+    server_url: str = "",
+    language: str = "uk",
+) -> Optional[Dict[str, str]]:
+    """Форма LiqPay для РЕГУЛЯРНОГО платежу (action=subscribe, щомісяця). Перше
+    списання — одразу, далі LiqPay сам списує раз на місяць і шле callback на
+    server_url. Потрібна увімкнена у мерчанта послуга «Регулярні платежі»."""
+    pub, priv = _keys()
+    if not pub or not priv or amount <= 0:
+        return None
+    import time as _t
+    params: Dict[str, Any] = {
+        "public_key": pub,
+        "version": "3",
+        "action": "subscribe",
+        "amount": f"{amount:.2f}",
+        "currency": currency if currency in _ALLOWED_CCY else "UAH",
+        "description": (description or "Monadruk Pro")[:280],
+        "order_id": str(order_id),
+        "subscribe_date_start": _t.strftime("%Y-%m-%d %H:%M:%S", _t.gmtime()),
+        "subscribe_periodicity": "month",
+        "language": "uk" if language not in ("uk", "en") else language,
+    }
+    if result_url:
+        params["result_url"] = result_url
+    if server_url:
+        params["server_url"] = server_url
+    data = base64.b64encode(json.dumps(params, ensure_ascii=False).encode("utf-8")).decode("ascii")
+    return {"provider": "liqpay", "action_url": CHECKOUT_URL, "data": data, "signature": _signature(data, priv)}
+
+
+def _api_request(params: Dict[str, Any], timeout: float = 12.0) -> Optional[Dict[str, Any]]:
+    pub, priv = _keys()
+    if not pub or not priv:
+        return None
+    params = {"public_key": pub, "version": "3", **params}
+    data = base64.b64encode(json.dumps(params, ensure_ascii=False).encode("utf-8")).decode("ascii")
+    try:
+        import urllib.parse
+        import urllib.request
+        body = urllib.parse.urlencode({"data": data, "signature": _signature(data, priv)}).encode("ascii")
+        req = urllib.request.Request(REQUEST_URL, data=body, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def unsubscribe(order_id: str) -> Optional[Dict[str, Any]]:
+    """Скасувати регулярний платіж (наступних списань не буде)."""
+    return _api_request({"action": "unsubscribe", "order_id": str(order_id)})
+
+
 def query_status(order_id: str, timeout: float = 12.0) -> Optional[Dict[str, Any]]:
     """Серверна перевірка статусу платежу через LiqPay API (action=status).
     Надійніше за асинхронний server-callback (який може не дійти/затриматись):

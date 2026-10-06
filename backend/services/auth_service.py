@@ -48,7 +48,21 @@ def has_unlimited_grant(email: Optional[str]) -> bool:
         addr, _, until = item.strip().partition(":")
         if addr and addr.lower() == email.lower() and (not until or today <= until.strip()):
             return True
-    return False
+    # гранти, видані власником в адмінці (services/grants.py)
+    try:
+        from services.grants import is_granted
+        return is_granted(email)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _has_subscription(uid: Optional[str]) -> bool:
+    """Активна платна підписка Pro (services/subscriptions.py) = той самий безлім."""
+    try:
+        from services.subscriptions import is_active
+        return is_active(uid)
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def _get_certs() -> Dict[str, object]:
@@ -104,7 +118,8 @@ def verify_token(token: str) -> Optional[Dict[str, object]]:
             # безлім квоти завантажень без адмін-доступу (див. has_unlimited_grant)
             # uid-грант не залежить від підтвердження пошти (uid не підробити)
             "quota_unlimited": (email_verified and (is_admin(email) or has_unlimited_grant(email)))
-                               or has_unlimited_grant(uid),
+                               or has_unlimited_grant(uid) or _has_subscription(uid),
+            "subscription_active": _has_subscription(uid),
             "name": claims.get("name"),
             "phone": claims.get("phone_number"),
         }

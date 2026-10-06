@@ -789,7 +789,10 @@
     "deleteConfirm": "Tu veux vraiment supprimer ton compte et toutes tes données ? Impossible de revenir en arrière.",
     "deleted": "Compte supprimé. À bientôt.",
     "deleteFailed": "Impossible de supprimer le compte. Réessaie ou écris-nous.",
-    "regenerate": "Créer à nouveau"
+    "regenerate": "Créer à nouveau",
+    "proStatus": "Pro",
+    "proCta": "Illimité avec Pro",
+    "proManage": "Gérer l'abonnement"
   },
   "tour": {
     "hintAria": "Astuce",
@@ -2307,5 +2310,49 @@
     "proseH2": "How the mountain model is made",
     "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
     "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
+  },
+  "proMeta": {
+    "title": "Monadruk Pro — fichiers d'impression 3D illimités",
+    "description": "Abonnement Monadruk Pro : fichiers 3MF/STL illimités de cartes, porte-clés et montagnes, génération sans limite et licence commerciale. 50 USD / mois, résiliation en un clic."
+  },
+  "proTermsMeta": {
+    "title": "Conditions de l'abonnement Monadruk Pro",
+    "description": "Prix, renouvellement automatique, résiliation, licence des modèles et droit de rétractation pour l'abonnement Monadruk Pro."
+  },
+  "proSub": {
+    "title": "Un mois illimité pour ceux qui impriment beaucoup",
+    "subtitle": "Télécharge autant de fichiers d'impression que tu veux, génère sans limite et vends les produits imprimés.",
+    "f1": "Fichiers 3MF/STL illimités : cartes, porte-clés, aimants, panneaux, « Montagnes »",
+    "f2": "Génération de modèles sans limite",
+    "f3": "Licence commerciale : imprime et vends les produits",
+    "f4": "Résiliation en un clic dans ton compte, sans appel ni e-mail",
+    "currency": "Devise de paiement",
+    "currencyUah": "Hryvnia (Ukraine)",
+    "currencyUsd": "Dollars US (autres pays)",
+    "perMonth": "/ mois",
+    "priceNote": "Renouvellement automatique chaque mois. Si tu t'abonnes aujourd'hui, le prochain prélèvement aura lieu le {date}.",
+    "loginFirst": "Connecte-toi pour t'abonner : l'accès illimité est lié à ton compte.",
+    "login": "Se connecter avec Google",
+    "cbTerms": "J'ai lu et j'accepte les <terms>Conditions de l'abonnement</terms>, le <offer>Contrat d'offre publique</offer> et la <privacy>Politique de confidentialité</privacy>.",
+    "cbTermsPlain": "J'ai lu et j'accepte les Conditions de l'abonnement, le Contrat d'offre publique et la Politique de confidentialité.",
+    "cbAutorenew": "J'accepte d'être prélevé(e) automatiquement de {price} chaque mois jusqu'à ma résiliation. Je peux résilier à tout moment dans mon compte.",
+    "cbDigital": "Je demande l'accès immédiat après le paiement et je comprends que, dès le début de l'accès, je perds mon droit de rétractation de 14 jours. Je peux résilier les renouvellements futurs à tout moment.",
+    "subscribe": "S'abonner — {price} / mois",
+    "payUnavailable": "Le paiement est temporairement indisponible. Réessaie plus tard ou écris-nous.",
+    "error": "Une erreur s'est produite. Réessaie.",
+    "pending": "Vérification du paiement…",
+    "activeTitle": "Ton abonnement Pro est actif",
+    "cancelledTitle": "Abonnement résilié",
+    "renewsOn": "Prochain prélèvement de {price} le {date}.",
+    "cancelledNote": "Il n'y aura plus de prélèvement. L'accès illimité reste actif jusqu'au {date}.",
+    "payments": "Paiements",
+    "goCreate": "Créer un modèle",
+    "cancel": "Résilier l'abonnement",
+    "cancelConfirm": "Résilier l'abonnement ? L'accès illimité reste actif jusqu'au {date} et il n'y aura plus de prélèvement.",
+    "cancelled": "Abonnement résilié.",
+    "cancelFailed": "Échec de la résiliation. Réessaie ou écris-nous, nous résilierons manuellement.",
+    "osmNote": "Les cartes reposent sur les données © OpenStreetMap contributors : mentionne-le dans la description quand tu vends des produits.",
+    "sellerNote": "Paiement via LiqPay (PrivatBank) ; nous ne voyons pas les données de ta carte.",
+    "termsLink": "Conditions de l'abonnement"
   }
 }

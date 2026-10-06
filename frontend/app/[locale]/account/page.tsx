@@ -80,6 +80,9 @@ export default function AccountPage() {
   const dateLoc = locale === "uk" ? "uk-UA" : locale;
   const { user, loading, configured, signIn, signOut, getIdToken } = useAuth();
   const [quota, setQuota] = useState<Quota | null>(null);
+  // Активна платна підписка Pro (з /api/account/quota → user.subscription_active).
+  const [pro, setPro] = useState(false);
+  const [realAdmin, setRealAdmin] = useState(false);
   const [models, setModels] = useState<AccModel[]>([]);
   const [busy, setBusy] = useState<string | null>(null); // task_id, що зараз качається
   const [notice, setNotice] = useState<string | null>(null);
@@ -126,7 +129,7 @@ export default function AccountPage() {
         .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
     try {
       const [q, m] = await Promise.all([fetchJson("quota"), fetchJson("models")]);
-      setQuota(q.quota); setModels(m.models || []);
+      setQuota(q.quota); setPro(!!q.user?.subscription_active); setRealAdmin(!!q.user?.is_admin); setModels(m.models || []);
       // другорядні дані — м'який збій
       const [g, o] = await Promise.all([
         listGrids(token).catch(() => [] as CityGrid[]),
@@ -298,9 +301,16 @@ export default function AccountPage() {
             <div className="rounded-[18px] border border-line bg-paper p-5">
               <div className="text-[11px] uppercase tracking-wide text-ink-3">{t("statusLabel")}</div>
               <div className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-ink">
-                {quota?.is_admin ? <><ShieldCheck size={16} className="text-forest" /> {t("admin")}</> : t("standard")}
+                {pro ? <><ShieldCheck size={16} className="text-forest" /> {t("proStatus")}</>
+                  : realAdmin ? <><ShieldCheck size={16} className="text-forest" /> {t("admin")}</>
+                  : quota?.is_admin ? <><ShieldCheck size={16} className="text-forest" /> {t("unlimited")}</> : t("standard")}
               </div>
             </div>
+          </div>
+          <div className="mt-3">
+            <Link href={`/${locale === "uk" ? "" : locale + "/"}pro`} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-forest hover:underline">
+              <ShieldCheck size={15} /> {pro ? t("proManage") : t("proCta")} →
+            </Link>
           </div>
 
           {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{notice}</div>}

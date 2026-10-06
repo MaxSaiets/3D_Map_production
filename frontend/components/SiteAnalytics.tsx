@@ -33,9 +33,10 @@ export default function SiteAnalytics() {
   // Page-view tracking (only fires once consent is granted; track() self-guards).
   // Перший pageview несе кампанія-параметри (utm/gclid/fbclid) з URL приземлення —
   // атрибуція платного трафіку (раніше зливалось у голий google/facebook referrer).
+  // Без згоди track() шле лише анонімний pageview на власний сервер (без cookie),
+  // тому ефект не чекає згоди; залежить лише від шляху (зміна згоди не дублює pageview).
   const firstPvRef = useRef(true);
   useEffect(() => {
-    if (consent !== "granted") return;
     if (firstPvRef.current) {
       firstPvRef.current = false;
       const camp = campaignParams();
@@ -43,7 +44,7 @@ export default function SiteAnalytics() {
     } else {
       track("pageview");
     }
-  }, [consent, pathname]);
+  }, [pathname]);
 
   // Meta Pixel page-view on route change (base pixel + first PageView fire on
   // script load below; this catches subsequent client-side navigations).
@@ -79,7 +80,6 @@ export default function SiteAnalytics() {
   // 30с (а не 15с) удвічі менше роздуває лог; кап 240/завантаження (~2 год).
   // track()-гарди (dev/згода/власник) — всередині trackPing().
   useEffect(() => {
-    if (consent !== "granted") return;
     let pings = 0;
     // Гейт БЕЗДІЯЛЬНОСТІ: раніше видима-але-покинута вкладка (юзер відійшов, таб
     // на передньому плані) продовжувала пінгувати ~2 год і роздувала «час на сайті».
@@ -107,7 +107,7 @@ export default function SiteAnalytics() {
       document.removeEventListener("visibilitychange", onHidden);
       window.removeEventListener("pagehide", onLeave);
     };
-  }, [consent]);
+  }, []);
 
   // Google Consent Mode v2: push the consent decision to gtag (Ads/GA4). Default
   // is denied (set in the init script) → conversions modelled cookielessly until accept.

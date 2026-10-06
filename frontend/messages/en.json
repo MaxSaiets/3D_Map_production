@@ -789,7 +789,10 @@
     "deleteConfirm": "Really delete your account and all data? This cannot be undone.",
     "deleted": "Account deleted. See you around.",
     "deleteFailed": "Couldn't delete the account. Try again or write to us.",
-    "regenerate": "Create again"
+    "regenerate": "Create again",
+    "proStatus": "Pro",
+    "proCta": "Unlimited with Pro",
+    "proManage": "Manage subscription"
   },
   "tour": {
     "hintAria": "Hint",
@@ -2307,5 +2310,49 @@
     "proseH2": "How the mountain model is made",
     "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
     "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
+  },
+  "proMeta": {
+    "title": "Monadruk Pro — unlimited 3D-printing files",
+    "description": "Monadruk Pro subscription: unlimited 3MF/STL files of maps, keychains and mountains, unlimited generation and a commercial licence. USD 50 / month, cancel in one click."
+  },
+  "proTermsMeta": {
+    "title": "Monadruk Pro Subscription Terms",
+    "description": "Price, automatic renewal, cancellation, model licence and right of withdrawal for the Monadruk Pro subscription."
+  },
+  "proSub": {
+    "title": "Unlimited for a month, for everyone who prints a lot",
+    "subtitle": "Download as many print files as you like, generate without limits and sell the printed products.",
+    "f1": "Unlimited 3MF/STL files: maps, keychains, magnets, panels, \"Mountains\"",
+    "f2": "Unlimited model generation",
+    "f3": "Commercial licence: print and sell the products",
+    "f4": "Cancel in one click in your account — no calls or emails",
+    "currency": "Payment currency",
+    "currencyUah": "Hryvnia (Ukraine)",
+    "currencyUsd": "US dollars (other countries)",
+    "perMonth": "/ month",
+    "priceNote": "Renews automatically every month. If you subscribe today, the next charge is on {date}.",
+    "loginFirst": "Sign in to subscribe — the unlimited access is tied to your account.",
+    "login": "Sign in with Google",
+    "cbTerms": "I have read and accept the <terms>Subscription Terms</terms>, the <offer>Public Offer Agreement</offer> and the <privacy>Privacy Policy</privacy>.",
+    "cbTermsPlain": "I have read and accept the Subscription Terms, the Public Offer Agreement and the Privacy Policy.",
+    "cbAutorenew": "I agree to be charged {price} automatically every month until I cancel. I can cancel at any time in my account.",
+    "cbDigital": "Please give me access immediately after payment. I understand that once access starts I lose my 14-day right of withdrawal. I can cancel future renewals at any time.",
+    "subscribe": "Subscribe — {price} / month",
+    "payUnavailable": "Payment is temporarily unavailable. Please try later or contact us.",
+    "error": "Something went wrong. Please try again.",
+    "pending": "Checking your payment…",
+    "activeTitle": "Your Pro subscription is active",
+    "cancelledTitle": "Subscription cancelled",
+    "renewsOn": "Next charge of {price} on {date}.",
+    "cancelledNote": "There will be no more charges. Unlimited access lasts until {date}.",
+    "payments": "Payments",
+    "goCreate": "Create a model",
+    "cancel": "Cancel subscription",
+    "cancelConfirm": "Cancel your subscription? Unlimited access stays until {date} and there will be no next charge.",
+    "cancelled": "Subscription cancelled.",
+    "cancelFailed": "Could not cancel. Please try again or contact us and we will cancel it manually.",
+    "osmNote": "Maps are built from © OpenStreetMap contributors data — please mention this in the description when you sell products.",
+    "sellerNote": "Payments are processed by LiqPay (PrivatBank); we never see your card details.",
+    "termsLink": "Subscription terms"
   }
 }

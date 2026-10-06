@@ -789,7 +789,10 @@
     "deleteConfirm": "Konto und alle Daten wirklich löschen? Das lässt sich nicht rückgängig machen.",
     "deleted": "Konto gelöscht. Bis bald.",
     "deleteFailed": "Konto konnte nicht gelöscht werden. Versuch's nochmal oder schreib uns.",
-    "regenerate": "Erneut erstellen"
+    "regenerate": "Erneut erstellen",
+    "proStatus": "Pro",
+    "proCta": "Unbegrenzt mit Pro",
+    "proManage": "Abonnement verwalten"
   },
   "tour": {
     "hintAria": "Hinweis",
@@ -2307,5 +2310,49 @@
     "proseH2": "How the mountain model is made",
     "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
     "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
+  },
+  "proMeta": {
+    "title": "Monadruk Pro — unbegrenzte 3D-Druckdateien",
+    "description": "Monadruk-Pro-Abonnement: unbegrenzte 3MF/STL-Dateien von Karten, Schlüsselanhängern und Bergen, Generierung ohne Limits und gewerbliche Lizenz. 50 USD / Monat, Kündigung mit einem Klick."
+  },
+  "proTermsMeta": {
+    "title": "Abonnementbedingungen Monadruk Pro",
+    "description": "Preis, automatische Verlängerung, Kündigung, Modelllizenz und Widerrufsrecht für das Monadruk-Pro-Abonnement."
+  },
+  "proSub": {
+    "title": "Einen Monat unbegrenzt — für alle, die viel drucken",
+    "subtitle": "Lade so viele Druckdateien herunter, wie du möchtest, generiere ohne Limits und verkaufe die gedruckten Produkte.",
+    "f1": "Unbegrenzte 3MF/STL-Dateien: Karten, Schlüsselanhänger, Magnete, Paneele, „Berge“",
+    "f2": "Modellgenerierung ohne Limits",
+    "f3": "Gewerbliche Lizenz: Produkte drucken und verkaufen",
+    "f4": "Kündigung mit einem Klick im Konto — ohne Anrufe oder E-Mails",
+    "currency": "Zahlungswährung",
+    "currencyUah": "Hrywnja (Ukraine)",
+    "currencyUsd": "US-Dollar (andere Länder)",
+    "perMonth": "/ Monat",
+    "priceNote": "Verlängert sich automatisch jeden Monat. Wenn du heute abschließt, erfolgt die nächste Abbuchung am {date}.",
+    "loginFirst": "Melde dich an, um das Abonnement abzuschließen — der unbegrenzte Zugang ist an dein Konto gebunden.",
+    "login": "Mit Google anmelden",
+    "cbTerms": "Ich habe die <terms>Abonnementbedingungen</terms>, den <offer>Vertrag (öffentliches Angebot)</offer> und die <privacy>Datenschutzerklärung</privacy> gelesen und akzeptiere sie.",
+    "cbTermsPlain": "Ich habe die Abonnementbedingungen, den Vertrag (öffentliches Angebot) und die Datenschutzerklärung gelesen und akzeptiere sie.",
+    "cbAutorenew": "Ich bin einverstanden, dass jeden Monat automatisch {price} abgebucht werden, bis ich kündige. Ich kann jederzeit im Konto kündigen.",
+    "cbDigital": "Ich verlange, dass der Zugang sofort nach der Zahlung beginnt, und weiß, dass ich mit Beginn des Zugangs mein 14-tägiges Widerrufsrecht verliere. Künftige Verlängerungen kann ich jederzeit kündigen.",
+    "subscribe": "Abonnieren — {price} / Monat",
+    "payUnavailable": "Die Zahlung ist vorübergehend nicht verfügbar. Bitte versuche es später oder schreib uns.",
+    "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "pending": "Wir prüfen deine Zahlung…",
+    "activeTitle": "Dein Pro-Abonnement ist aktiv",
+    "cancelledTitle": "Abonnement gekündigt",
+    "renewsOn": "Nächste Abbuchung von {price} am {date}.",
+    "cancelledNote": "Es erfolgen keine weiteren Abbuchungen. Der unbegrenzte Zugang gilt bis {date}.",
+    "payments": "Zahlungen",
+    "goCreate": "Modell erstellen",
+    "cancel": "Abonnement kündigen",
+    "cancelConfirm": "Abonnement kündigen? Der unbegrenzte Zugang bleibt bis {date}, es erfolgt keine weitere Abbuchung.",
+    "cancelled": "Abonnement gekündigt.",
+    "cancelFailed": "Kündigung fehlgeschlagen. Bitte versuche es erneut oder schreib uns — wir kündigen manuell.",
+    "osmNote": "Die Karten basieren auf Daten © OpenStreetMap contributors — gib dies bitte beim Verkauf von Produkten in der Beschreibung an.",
+    "sellerNote": "Zahlung über LiqPay (PrivatBank); deine Kartendaten sehen wir nicht.",
+    "termsLink": "Abonnementbedingungen"
   }
 }

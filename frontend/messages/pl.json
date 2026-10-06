@@ -789,7 +789,10 @@
     "deleteConfirm": "Na pewno usunąć konto i wszystkie dane? Tego nie można cofnąć.",
     "deleted": "Konto usunięte. Do zobaczenia.",
     "deleteFailed": "Nie udało się usunąć konta. Spróbuj jeszcze raz albo napisz do nas.",
-    "regenerate": "Utwórz ponownie"
+    "regenerate": "Utwórz ponownie",
+    "proStatus": "Pro",
+    "proCta": "Bez limitów z Pro",
+    "proManage": "Zarządzaj subskrypcją"
   },
   "tour": {
     "hintAria": "Wskazówka",
@@ -2307,5 +2310,49 @@
     "proseH2": "How the mountain model is made",
     "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
     "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
+  },
+  "proMeta": {
+    "title": "Monadruk Pro — nielimitowane pliki do druku 3D",
+    "description": "Subskrypcja Monadruk Pro: nielimitowane pliki 3MF/STL map, breloków i gór, generowanie bez limitów i licencja komercyjna. 50 USD / miesiąc, anulowanie jednym kliknięciem."
+  },
+  "proTermsMeta": {
+    "title": "Warunki subskrypcji Monadruk Pro",
+    "description": "Cena, automatyczne odnawianie, anulowanie, licencja na modele i prawo odstąpienia dla subskrypcji Monadruk Pro."
+  },
+  "proSub": {
+    "title": "Miesiąc bez limitów dla wszystkich, którzy dużo drukują",
+    "subtitle": "Pobieraj dowolnie wiele plików do druku, generuj bez limitów i sprzedawaj wydrukowane wyroby.",
+    "f1": "Nielimitowane pliki 3MF/STL: mapy, breloki, magnesy, panele, „Góry”",
+    "f2": "Generowanie modeli bez limitów",
+    "f3": "Licencja komercyjna: drukuj i sprzedawaj wyroby",
+    "f4": "Anulowanie jednym kliknięciem na koncie — bez telefonów i e-maili",
+    "currency": "Waluta płatności",
+    "currencyUah": "Hrywny (Ukraina)",
+    "currencyUsd": "Dolary (inne kraje)",
+    "perMonth": "/ miesiąc",
+    "priceNote": "Odnawia się automatycznie co miesiąc. Jeśli wykupisz dziś, następne obciążenie nastąpi {date}.",
+    "loginFirst": "Zaloguj się, aby wykupić subskrypcję — nielimitowany dostęp jest przypisany do konta.",
+    "login": "Zaloguj się przez Google",
+    "cbTerms": "Przeczytałem(-am) i akceptuję <terms>Warunki subskrypcji</terms>, <offer>Umowę oferty publicznej</offer> oraz <privacy>Politykę prywatności</privacy>.",
+    "cbTermsPlain": "Przeczytałem(-am) i akceptuję Warunki subskrypcji, Umowę oferty publicznej oraz Politykę prywatności.",
+    "cbAutorenew": "Zgadzam się na automatyczne obciążanie kwotą {price} co miesiąc, dopóki nie anuluję subskrypcji. Mogę ją anulować w każdej chwili na koncie.",
+    "cbDigital": "Proszę o dostęp od razu po płatności i rozumiem, że z chwilą rozpoczęcia dostępu tracę 14-dniowe prawo odstąpienia od umowy. Przyszłe odnowienia mogę anulować w każdej chwili.",
+    "subscribe": "Wykup subskrypcję — {price} / mies.",
+    "payUnavailable": "Płatność jest chwilowo niedostępna. Spróbuj później lub napisz do nas.",
+    "error": "Coś poszło nie tak. Spróbuj ponownie.",
+    "pending": "Sprawdzamy płatność…",
+    "activeTitle": "Twoja subskrypcja Pro jest aktywna",
+    "cancelledTitle": "Subskrypcja anulowana",
+    "renewsOn": "Następne obciążenie {price} — {date}.",
+    "cancelledNote": "Nie będzie więcej obciążeń. Nielimitowany dostęp trwa do {date}.",
+    "payments": "Płatności",
+    "goCreate": "Utwórz model",
+    "cancel": "Anuluj subskrypcję",
+    "cancelConfirm": "Anulować subskrypcję? Nielimitowany dostęp pozostanie do {date}, kolejnego obciążenia nie będzie.",
+    "cancelled": "Subskrypcja anulowana.",
+    "cancelFailed": "Nie udało się anulować. Spróbuj ponownie lub napisz do nas — anulujemy ręcznie.",
+    "osmNote": "Mapy powstają z danych © OpenStreetMap contributors — sprzedając wyroby, podaj to w opisie.",
+    "sellerNote": "Płatność przez LiqPay (PrivatBank); nie widzimy danych Twojej karty.",
+    "termsLink": "Warunki subskrypcji"
   }
 }

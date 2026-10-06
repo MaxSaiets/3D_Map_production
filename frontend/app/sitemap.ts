@@ -99,6 +99,8 @@ const PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["cha
   // J-1: юр-тексти переписані 2026-09-05 → lastmod з BUSINESS.updated (єдине джерело дати).
   { path: "/privacy", changeFrequency: "yearly", priority: 0.2, lastmod: LEGAL_LASTMOD },
   { path: "/terms", changeFrequency: "yearly", priority: 0.2, lastmod: LEGAL_LASTMOD },
+  { path: "/pro", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/pro-terms", changeFrequency: "yearly", priority: 0.2, lastmod: LEGAL_LASTMOD },
 ];
 
 function url(locale: string, path: string) {

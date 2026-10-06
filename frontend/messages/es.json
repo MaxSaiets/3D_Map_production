@@ -789,7 +789,10 @@
     "deleteConfirm": "¿Seguro que quieres eliminar tu cuenta y todos los datos? No se puede deshacer.",
     "deleted": "Cuenta eliminada. ¡Hasta pronto!",
     "deleteFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo o escríbenos.",
-    "regenerate": "Crear de nuevo"
+    "regenerate": "Crear de nuevo",
+    "proStatus": "Pro",
+    "proCta": "Ilimitado con Pro",
+    "proManage": "Gestionar suscripción"
   },
   "tour": {
     "hintAria": "Sugerencia",
@@ -2307,5 +2310,49 @@
     "proseH2": "How the mountain model is made",
     "proseP1": "We take real elevation data (swissALTI3D 2 m lidar for Switzerland and the global Copernicus GLO-30 model) and build a watertight solid: terrain, rocky sides, rim and bottom as one object that prints without supports. Plates larger than the printer bed are split into seamless tiles.",
     "proseP2": "Climber figures and huts are placed automatically: the climber finds the steepest wall near the summit, the hiker stands on a levelled spot, the hut sits on a gentle slope. Satellite imagery gives a photo preview and a painting guide."
+  },
+  "proMeta": {
+    "title": "Monadruk Pro: archivos de impresión 3D ilimitados",
+    "description": "Suscripción Monadruk Pro: archivos 3MF/STL ilimitados de mapas, llaveros y montañas, generación sin límites y licencia comercial. 50 USD / mes, cancelación con un clic."
+  },
+  "proTermsMeta": {
+    "title": "Condiciones de suscripción Monadruk Pro",
+    "description": "Precio, renovación automática, cancelación, licencia de los modelos y derecho de desistimiento de la suscripción Monadruk Pro."
+  },
+  "proSub": {
+    "title": "Un mes ilimitado para quien imprime mucho",
+    "subtitle": "Descarga todos los archivos de impresión que quieras, genera sin límites y vende los productos impresos.",
+    "f1": "Archivos 3MF/STL ilimitados: mapas, llaveros, imanes, paneles, «Montañas»",
+    "f2": "Generación de modelos sin límites",
+    "f3": "Licencia comercial: imprime y vende los productos",
+    "f4": "Cancelación con un clic en tu cuenta, sin llamadas ni correos",
+    "currency": "Moneda de pago",
+    "currencyUah": "Grivnas (Ucrania)",
+    "currencyUsd": "Dólares (otros países)",
+    "perMonth": "/ mes",
+    "priceNote": "Se renueva automáticamente cada mes. Si te suscribes hoy, el próximo cobro será el {date}.",
+    "loginFirst": "Inicia sesión para suscribirte: el acceso ilimitado se vincula a tu cuenta.",
+    "login": "Entrar con Google",
+    "cbTerms": "He leído y acepto las <terms>Condiciones de suscripción</terms>, el <offer>Contrato de oferta pública</offer> y la <privacy>Política de privacidad</privacy>.",
+    "cbTermsPlain": "He leído y acepto las Condiciones de suscripción, el Contrato de oferta pública y la Política de privacidad.",
+    "cbAutorenew": "Acepto que se me cobren automáticamente {price} cada mes hasta que cancele. Puedo cancelar en cualquier momento desde mi cuenta.",
+    "cbDigital": "Solicito acceso inmediato tras el pago y entiendo que, al empezar el acceso, pierdo el derecho de desistimiento de 14 días. Puedo cancelar las renovaciones futuras en cualquier momento.",
+    "subscribe": "Suscribirme — {price} / mes",
+    "payUnavailable": "El pago no está disponible temporalmente. Inténtalo más tarde o escríbenos.",
+    "error": "Algo salió mal. Inténtalo de nuevo.",
+    "pending": "Comprobando el pago…",
+    "activeTitle": "Tu suscripción Pro está activa",
+    "cancelledTitle": "Suscripción cancelada",
+    "renewsOn": "Próximo cobro de {price} el {date}.",
+    "cancelledNote": "No habrá más cobros. El acceso ilimitado dura hasta el {date}.",
+    "payments": "Pagos",
+    "goCreate": "Crear un modelo",
+    "cancel": "Cancelar suscripción",
+    "cancelConfirm": "¿Cancelar la suscripción? El acceso ilimitado se mantiene hasta el {date} y no habrá más cobros.",
+    "cancelled": "Suscripción cancelada.",
+    "cancelFailed": "No se pudo cancelar. Inténtalo de nuevo o escríbenos y la cancelaremos manualmente.",
+    "osmNote": "Los mapas se basan en datos © OpenStreetMap contributors: indícalo en la descripción cuando vendas productos.",
+    "sellerNote": "El pago se procesa con LiqPay (PrivatBank); no vemos los datos de tu tarjeta.",
+    "termsLink": "Condiciones de suscripción"
   }
 }
