@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { sendErrorReport, stackHint } from "@/lib/analytics";
 
 /**
  * ROOT error boundary (non-locale). This sits ABOVE the [locale] segment, so it
@@ -22,6 +23,9 @@ export default function RootError({
     // Diagnostics only — never surface raw error.message to users.
     // eslint-disable-next-line no-console
     console.error("Root error boundary:", error);
+    // 07.10.2026: падіння рендеру до window.onerror не доходить — шлемо звіт
+    // самі, інакше «Щось пішло не так» в адмінці невидиме (див. sendErrorReport).
+    sendErrorReport("js_error", `boundary: ${error?.name || "Error"}: ${error?.message || ""}`, stackHint(error), { boundary: "root" });
   }, [error]);
 
   const paper = "#F4EFE4";

@@ -1998,6 +1998,8 @@
     "downloadSubUnlimited": "Unlimited on your account — no extra charge · ready in about 2 min"
   },
   "kcScenario": {
+    "waitOfferTitle": "While your file is being prepared",
+    "waitOfferSub": "Don't want to deal with a printer, filament and settings? We'll print it and ship it in 2–4 business days.",
     "stepOf": "Step {step} of 2",
     "step1Title": "Which keychain?",
     "step2Title": "Where is your place?",

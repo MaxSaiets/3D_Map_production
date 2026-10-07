@@ -14,6 +14,7 @@ import { routing, locales, localeMeta, type AppLocale } from "@/i18n/routing";
 import { BUSINESS } from "@/lib/legal";
 import { mapPriceRange } from "@/lib/mapPrices";
 import { priceValidUntil } from "@/i18n/metadata";
+import { TRANSLATE_GUARD_SCRIPT } from "@/lib/translateGuard";
 
 const BASE = "https://monadruk.com";
 
@@ -209,6 +210,9 @@ export default async function LocaleLayout({
   return (
     <html lang={localeMeta[locale as AppLocale].htmlLang} className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <head>
+        {/* 07.10.2026: першим у <head> — до гідрації React. Автопереклад Chrome
+            інакше валить конструктори на «Згенерувати» (lib/translateGuard.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: TRANSLATE_GUARD_SCRIPT }} />
         {/* Раннє резолвлення DNS для зовнішніх origin-ів карти (OSM-тайли +
             cdnjs leaflet-маркери) — прискорює перший рендер карти на /create та
             /keychains. Дешеві hint-и, без відкриття зайвих зʼєднань. */}

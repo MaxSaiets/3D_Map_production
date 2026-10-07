@@ -1998,6 +1998,8 @@
     "downloadSubUnlimited": "Illimité sur votre compte — sans supplément · prêt en 2 min environ"
   },
   "kcScenario": {
+    "waitOfferTitle": "Pendant la préparation du fichier",
+    "waitOfferSub": "Pas envie de gérer imprimante, filament et réglages ? Nous imprimons et expédions en 2–4 jours ouvrés.",
     "stepOf": "Étape {step} sur 2",
     "step1Title": "Quel porte-clés ?",
     "step2Title": "Où est ton lieu ?",

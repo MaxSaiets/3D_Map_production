@@ -1998,6 +1998,8 @@
     "downloadSubUnlimited": "Ilimitado en tu cuenta — sin coste extra · listo en unos 2 min"
   },
   "kcScenario": {
+    "waitOfferTitle": "Mientras se prepara tu archivo",
+    "waitOfferSub": "¿No quieres lidiar con impresora, filamento y ajustes? Lo imprimimos y enviamos en 2–4 días laborables.",
     "stepOf": "Paso {step} de 2",
     "step1Title": "¿Qué llavero?",
     "step2Title": "¿Dónde está tu lugar?",

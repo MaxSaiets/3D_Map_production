@@ -1998,6 +1998,8 @@
     "downloadSubUnlimited": "Unbegrenzt in Ihrem Konto — ohne Aufpreis · fertig in ca. 2 Min."
   },
   "kcScenario": {
+    "waitOfferTitle": "Während die Datei vorbereitet wird",
+    "waitOfferSub": "Keine Lust auf Drucker, Filament und Einstellungen? Wir drucken und versenden in 2–4 Werktagen.",
     "stepOf": "Schritt {step} von 2",
     "step1Title": "Welcher Schlüsselanhänger?",
     "step2Title": "Wo ist dein Ort?",

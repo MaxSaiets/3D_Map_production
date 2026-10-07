@@ -228,6 +228,34 @@ export function shouldReportError(msg: string, stack = ""): boolean {
   return true;
 }
 
+/** Сторінку перекладає браузер (Google Translate у Chrome ставить клас на <html>). */
+export function isPageTranslated(): boolean {
+  if (typeof document === "undefined") return false;
+  return /\btranslated-(ltr|rtl)\b/.test(document.documentElement.className);
+}
+
+/**
+ * Технічний звіт про помилку на /api/track (без PII, без згоди — як і раніше
+ * робив обробник у SiteAnalytics). Ліміт 10 звітів на вкладку.
+ * 07.10.2026: використовується і з error boundary — падіння рендеру React до
+ * window.onerror у продакшні НЕ доходять, тож «Щось пішло не так» роками не
+ * потрапляло в адмінку (випадок Молдова/автопереклад: 587 подій, 0 js_error).
+ */
+let errorReportsSent = 0;
+export function sendErrorReport(event: "js_error" | "stale_chunk_reload", msg: string, src = "", extra?: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  if (errorReportsSent >= 10) return;
+  if (isOwnerOptOut()) return;
+  errorReportsSent++;
+  try {
+    const props: Record<string, string> = { msg: String(msg).slice(0, 200), src: String(src || "").slice(0, 120), ...(extra || {}) };
+    if (isPageTranslated()) props.translated = "1";
+    const body = JSON.stringify({ event, path: location.pathname, locale: document.documentElement.lang || "", props });
+    if (navigator.sendBeacon) navigator.sendBeacon(`${API}/api/track`, new Blob([body], { type: "application/json" }));
+    else fetch(`${API}/api/track`, { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+  } catch { /* ignore */ }
+}
+
 /** Ролі, які людина сприймає як кнопку, хоч тег і не `button`. */
 const INTERACTIVE_ROLES = new Set([
   "button", "link", "radio", "tab", "option", "menuitem", "switch", "checkbox",

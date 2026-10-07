@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, RotateCcw, Home, KeyRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { sendErrorReport, stackHint } from "@/lib/analytics";
 
 export default function Error({
   error,
@@ -18,6 +19,9 @@ export default function Error({
     // Log for diagnostics only — never surface raw error.message to users.
     // eslint-disable-next-line no-console
     console.error("App error boundary:", error);
+    // 07.10.2026: падіння рендеру до window.onerror не доходить — шлемо звіт
+    // самі, інакше «Щось пішло не так» в адмінці невидиме (див. sendErrorReport).
+    sendErrorReport("js_error", `boundary: ${error?.name || "Error"}: ${error?.message || ""}`, stackHint(error), { boundary: "locale" });
   }, [error]);
 
   return (
