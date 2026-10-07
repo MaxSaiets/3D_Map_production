@@ -2335,6 +2335,9 @@
     "description": "Cena, automatyczne odnawianie, anulowanie, licencja na modele i prawo odstąpienia dla subskrypcji Monadruk Pro."
   },
   "proSub": {
+    "soonTitle": "Subskrypcja Pro — wkrótce",
+    "soonText": "Zapisy otworzymy wkrótce. Na razie możesz bezpłatnie obejrzeć dowolny model w 3D albo kupić pojedynczy plik do druku — {filePrice}.",
+    "soonCta": "Wypróbuj za darmo",
     "title": "Nielimitowane pliki do druku 3D i prawo do sprzedaży wydruków",
     "subtitle": "Dla drukarni 3D, twórców i sprzedawców na Etsy, Allegro czy Instagramie: dowolne miasto świata jako gotowy plik 3MF/STL w kilka minut — tyle razy w miesiącu, ile potrzebujesz.",
     "f1": "Nielimitowane pliki 3MF/STL: mapy, breloki, magnesy, panele, „Góry”",

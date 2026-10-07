@@ -2335,6 +2335,9 @@
     "description": "Prețul, reînnoirea automată, anularea, licența modelelor și dreptul de retragere pentru abonamentul Monadruk Pro."
   },
   "proSub": {
+    "soonTitle": "Abonamentul Pro — în curând",
+    "soonText": "Deschidem abonările foarte curând. Până atunci poți vedea gratuit orice model în 3D sau poți cumpăra un singur fișier pentru imprimare — {filePrice}.",
+    "soonCta": "Încearcă gratuit",
     "title": "Fișiere nelimitate pentru imprimare 3D și dreptul de a vinde ce imprimi",
     "subtitle": "Pentru ateliere de imprimare 3D, makeri și vânzători pe Etsy sau Instagram: orice oraș de pe Pământ devine în câteva minute un fișier 3MF/STL gata făcut — de câte ori ai nevoie pe lună.",
     "f1": "Fișiere 3MF/STL nelimitate: hărți, brelocuri, magneți, panouri, „Munți”",

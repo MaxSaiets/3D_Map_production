@@ -2335,6 +2335,9 @@
     "description": "Prix, renouvellement automatique, résiliation, licence des modèles et droit de rétractation pour l'abonnement Monadruk Pro."
   },
   "proSub": {
+    "soonTitle": "Abonnement Pro — bientôt disponible",
+    "soonText": "Les inscriptions ouvriront très bientôt. En attendant, vous pouvez voir gratuitement n’importe quel modèle en 3D ou acheter un fichier d’impression à l’unité — {filePrice}.",
+    "soonCta": "Essayer gratuitement",
     "title": "Fichiers d’impression 3D illimités et droit de vendre vos impressions",
     "subtitle": "Pour les ateliers d’impression 3D, makers et vendeurs sur Etsy ou Instagram : n’importe quelle ville du monde en fichier 3MF/STL prêt en quelques minutes, autant de fois par mois que nécessaire.",
     "f1": "Fichiers 3MF/STL illimités : cartes, porte-clés, aimants, panneaux, « Montagnes »",

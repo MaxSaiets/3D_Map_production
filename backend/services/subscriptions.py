@@ -37,6 +37,15 @@ PLANS = {
     "UAH": float(os.getenv("SUB_PRICE_UAH", "2100")),
     "USD": float(os.getenv("SUB_PRICE_USD", "50")),
 }
+
+
+def sales_open() -> bool:
+    """07.10.2026: продаж підписки вимкнено, доки власник не підготує документи.
+    Увімкнути: SUB_SALES_OPEN=1 у backend/.env + `pm2 restart 3dmap-backend --update-env`
+    (фронт /pro бере прапорець з /api/subscription/plans — перезбирати сайт не треба)."""
+    return os.getenv("SUB_SALES_OPEN", "0").strip().lower() in ("1", "true", "yes", "on")
+
+
 _PAID = {"success", "subscribed", "sandbox"}
 _REVOKE = {"reversed"}  # повернення коштів → доступ знімається
 

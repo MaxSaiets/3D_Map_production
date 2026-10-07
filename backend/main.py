@@ -1955,6 +1955,7 @@ async def subscription_plans(cf_ipcountry: Optional[str] = Header(default=None))
     # країна невідома (без Cloudflare) → null, фронт лишає валюту за мовою сторінки
     return {"plans": _subs.PLANS, "suggested": ("UAH" if cc == "UA" else "USD") if cc else None,
             "country": cc, "terms_version": _subs.TERMS_VERSION, "configured": is_configured(),
+            "sales_open": _subs.sales_open(),
             "file": {"UAH": _fp, **{k: v for k, v in file_price_hints(_fp).items() if k == "USD"}}}
 
 
@@ -1988,6 +1989,9 @@ async def subscription_checkout(
     from services import subscriptions as _subs
     from services.liqpay import build_subscribe_checkout, is_configured
     u = _require_user(authorization)
+    # 07.10.2026: продаж закрито вимикачем (документи ще не готові) — нову оплату не створюємо
+    if not _subs.sales_open():
+        raise HTTPException(status_code=503, detail="Підписка Pro ще не продається")
     if not (req.accept_terms and req.accept_autorenew and req.accept_digital):
         raise HTTPException(status_code=400, detail="Потрібно погодитись з умовами підписки")
     if not is_configured():

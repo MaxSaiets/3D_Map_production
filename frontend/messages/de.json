@@ -2335,6 +2335,9 @@
     "description": "Preis, automatische Verlängerung, Kündigung, Modelllizenz und Widerrufsrecht für das Monadruk-Pro-Abonnement."
   },
   "proSub": {
+    "soonTitle": "Pro-Abo — bald verfügbar",
+    "soonText": "Wir öffnen die Anmeldung in Kürze. Bis dahin kannst du jedes Modell kostenlos in 3D ansehen oder eine einzelne Druckdatei kaufen — {filePrice}.",
+    "soonCta": "Kostenlos ausprobieren",
     "title": "Unbegrenzte 3D-Druckdateien und das Recht, Ihre Drucke zu verkaufen",
     "subtitle": "Für 3D-Druckereien, Maker und Verkäufer auf Etsy oder Instagram: jede Stadt der Welt als fertige 3MF/STL-Datei in Minuten — so oft im Monat, wie Sie brauchen.",
     "f1": "Unbegrenzte 3MF/STL-Dateien: Karten, Schlüsselanhänger, Magnete, Paneele, „Berge“",

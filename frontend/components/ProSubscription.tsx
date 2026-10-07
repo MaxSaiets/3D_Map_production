@@ -78,6 +78,9 @@ export function ProSubscription() {
   const checkoutRef = useRef<HTMLDivElement>(null);
   const [checkoutVisible, setCheckoutVisible] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  // 07.10.2026: продаж підписки вмикає бекенд (SUB_SALES_OPEN, /api/subscription/plans).
+  // Доки прапорця нема — замість оплати картка «скоро» (документи ще не готові).
+  const [salesOpen, setSalesOpen] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 700);
     onScroll();
@@ -96,6 +99,7 @@ export function ProSubscription() {
         setFilePrice({ UAH: uah, USD: Number(j.file.USD) > 0 ? Number(j.file.USD) : Math.round((uah / UAH_PER_USD_FALLBACK) * 10) / 10 });
       }
       if (j.suggested === "UAH" || j.suggested === "USD") setCcy(j.suggested);
+      setSalesOpen(j.sales_open === true);
     }).catch(() => {});
   }, []);
 
@@ -250,6 +254,23 @@ export function ProSubscription() {
     </div>
   );
 
+  const soonCard = (
+    <div data-testid="pro-soon">
+      <h2 className="font-serif text-2xl text-ink">{t("soonTitle")}</h2>
+      <ul className="mt-4 space-y-2">
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2 text-[14px] text-ink-2">
+            <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-forest" /><span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-5 border-t border-line pt-5 text-sm leading-relaxed text-ink-2">{t("soonText", { filePrice: filePriceLabel })}</p>
+      <Link href="/create" className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-forest px-5 py-3 text-[15px] font-bold text-white hover:opacity-90" style={{ background: "var(--forest,#2E4A3A)" }}>
+        {t("soonCta")}
+      </Link>
+    </div>
+  );
+
   const checkoutCard = (
     <div>
       <div role="radiogroup" aria-label={t("currency")} className="inline-flex rounded-full border border-line bg-white p-1">
@@ -341,7 +362,7 @@ export function ProSubscription() {
           </dl>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            {!isActive && (
+            {!isActive && salesOpen && (
               <button onClick={goCheckout} className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-forest px-6 text-[15px] font-bold text-white hover:opacity-90 lg:hidden" style={{ background: "var(--forest,#2E4A3A)" }}>
                 <Sparkles size={16} /> {t("ctaPrimary")}
               </button>
@@ -354,7 +375,7 @@ export function ProSubscription() {
         </div>
 
         <div id="checkout" ref={checkoutRef} className="scroll-mt-24 rounded-[24px] border border-line bg-paper p-6 shadow-[0_18px_40px_rgba(30,40,32,0.08)] sm:p-7 lg:sticky lg:top-24">
-          {showStatus ? statusCard : checkoutCard}
+          {showStatus ? statusCard : salesOpen ? checkoutCard : soonCard}
           {msg && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{msg}</div>}
         </div>
       </div>
@@ -471,7 +492,7 @@ export function ProSubscription() {
       </div>
 
       {/* Липка кнопка на мобільному: веде до картки оформлення. */}
-      {!isActive && !checkoutVisible && scrolled && (
+      {!isActive && salesOpen && !checkoutVisible && scrolled && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[rgba(244,239,228,0.96)] px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden" data-testid="pro-sticky">
           <button onClick={goCheckout} className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-forest text-[15px] font-bold text-white" style={{ background: "var(--forest,#2E4A3A)" }}>
             <Sparkles size={16} /> {t("ctaSticky", { price })}
