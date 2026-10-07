@@ -172,6 +172,61 @@ def _get_conn():
         return _CONN
 
 
+# ── ДОДАТКОВІ БАЗИ СУСІДНІХ КРАЇН (07.10.2026) ───────────────────────────────
+# Overpass із прод-VM відмовляє (Connection refused), а генерації по Молдові йшли
+# саме через нього → «Джерело карт тимчасово недоступне». Тепер дані сусідніх
+# країн лежать в окремих duckdb (той самий build_osm_db.py), шлях(и) в
+# OSM_DUCKDB_EXTRA через кому. Для bbox, що перетинає прямокутник додаткової
+# бази, рядки ОБʼЄДНУЄМО з основними: прямокутник Молдови захоплює й шматки
+# України (Могилів-Подільський), а PBF обох країн обрізані по кордону, тож
+# обʼєднання дає правильний результат і для прикордонних ділянок.
+_EXTRA_LOCK = threading.Lock()
+_EXTRA: Optional[list] = None  # [(conn, (minlon, maxlon, minlat, maxlat))]
+
+
+def _extra_dbs() -> list:
+    global _EXTRA
+    with _EXTRA_LOCK:
+        if _EXTRA is not None:
+            return _EXTRA
+        out = []
+        for p in [x.strip() for x in (os.getenv("OSM_DUCKDB_EXTRA", "") or "").split(",") if x.strip()]:
+            try:
+                if duckdb is None or not Path(p).exists():
+                    continue
+                c = duckdb.connect(p, read_only=True)
+                try:
+                    c.execute("SET memory_limit='400MB'")
+                    c.execute("SET threads=1")
+                except Exception:
+                    pass
+                ext = c.execute("SELECT min(minlon), max(maxlon), min(minlat), max(maxlat) FROM roads").fetchone()
+                if ext and all(v is not None for v in ext):
+                    out.append((c, tuple(float(v) for v in ext)))
+                    print(f"[OSM-DB] extra DB {p} extent={ext}")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[OSM-DB] extra DB {p} skipped: {exc}")
+        _EXTRA = out
+        return _EXTRA
+
+
+def _extra_rows(table: str, select_cols: str, north: float, south: float, east: float, west: float) -> list:
+    """Рядки з додаткових баз, чий прямокутник перетинає bbox (точний запит, без кешу)."""
+    rows: list = []
+    for conn, (x0, x1, y0, y1) in _extra_dbs():
+        if east < x0 or west > x1 or north < y0 or south > y1:
+            continue
+        try:
+            with _EXTRA_LOCK:
+                rows.extend(conn.execute(
+                    f"SELECT {select_cols} FROM {table} WHERE minlon <= ? AND maxlon >= ? AND minlat <= ? AND maxlat >= ?",
+                    [east, west, north, south],
+                ).fetchall())
+        except Exception as exc:  # noqa: BLE001
+            print(f"[OSM-DB] extra query {table} failed: {exc}")
+    return rows
+
+
 def _bbox_key(north: float, south: float, east: float, west: float) -> str:
     return f"{south:.5f},{west:.5f},{north:.5f},{east:.5f}"
 
@@ -221,6 +276,9 @@ def get_gdf(
     if table not in cols_map:
         return None
     rows = _fetch_rows_cached(conn, table, cols_map[table], north, south, east, west)
+    _xr = _extra_rows(table, cols_map[table], north, south, east, west)
+    if _xr:
+        rows = list(rows or []) + _xr
     if not rows:
         return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
     cols = cols_map[table].split(", ")
@@ -275,6 +333,9 @@ def get_roads_graph(north: float, south: float, east: float, west: float, target
     # закешований padded-регіон (див. _fetch_rows_cached). Якщо колонки колись
     # розійдуться, тримати select_cols тут і в cols_map["roads"] однаковими.
     rows = _fetch_rows_cached(conn, "roads", "id, highway, bridge, wkt", north, south, east, west)
+    _xr = _extra_rows("roads", "id, highway, bridge, wkt", north, south, east, west)
+    if _xr:
+        rows = list(rows or []) + _xr
 
     if not rows:
         return None
