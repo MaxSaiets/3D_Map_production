@@ -143,4 +143,25 @@ export const MOUNTAINS_EXTRA: Record<AppLocale, MountainsExtra> = {
       { q: "Czy potrzebne są podpory?", a: "Teren, boki, obrzeże i dno tworzą jedną zamkniętą bryłę, która drukuje się bez podpór." },
     ],
   },
+  ro: {
+    h2who: "Pentru cine este un model 3D de munte",
+    who: [
+      { h3: "Pentru cei care au ajuns pe vârf", p: "Hoverla, Pip Ivan sau Mont Blanc pe raft amintesc de o zi anume, de traseu și de oameni. Modelul arată creasta pe care ai mers și panta unde ai pus cortul." },
+      { h3: "Alpiniști și drumeți care încă visează", p: "Un model al Everestului, Kilimanjaro sau Matterhorn devine un obiectiv pe birou. Figurinele de alpinist și de cabană arată scara și adaugă o poveste." },
+      { h3: "Cluburi, ghizi și agenții de turism", p: "Relieful unei zone de drumeție ajută la explicarea traseului unui grup, iar un vârf imprimat e un cadou pentru participanți sau un premiu de concurs." },
+    ],
+    h2how: "Cum comanzi un model de munte",
+    how: [
+      "Alege un vârf din listă sau un punct pe hartă și setează dimensiunea zonei.",
+      "Setează bordura, pereții laterali, figurinele de alpinist și cabană și vezi gratuit previzualizarea 3D.",
+      "Descarcă fișierul pentru a-l imprima pe imprimanta ta sau scrie-ne: prețul imprimării și al vopsirii se calculează individual în funcție de dimensiune.",
+    ],
+    h2faq: "Întrebări despre modelele de munte",
+    faq: [
+      { q: "De unde provin altitudinile?", a: "Pentru Elveția — din lidarul swissALTI3D la 2 metri, pentru restul lumii — din modelul global Copernicus GLO-30 la 30 de metri. Relieful este real, nu desenat." },
+      { q: "Se poate imprima un model mare?", a: "Da. Dacă modelul e mai mare decât patul imprimantei, îl împărțim în plăci care se îmbină perfect într-o singură placă." },
+      { q: "Figurinele sunt la scară?", a: "Nu, figurinele sunt decorative și mai mari decât la scara reală, ca să se vadă. Alpinistul stă pe cel mai abrupt perete de lângă vârf, iar cabana pe o pantă lină." },
+      { q: "Are nevoie de suporturi?", a: "Relieful, pereții laterali, bordura și fundul formează un singur corp etanș care se imprimă fără suporturi." },
+    ],
+  },
 };

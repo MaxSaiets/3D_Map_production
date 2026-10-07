@@ -36,7 +36,7 @@ interface SubView {
   payments?: { amount: number; currency: string; ts: string }[];
 }
 
-const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL" };
+const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL", ro: "ro-RO" };
 /** Приблизний курс для ціни файлу в доларах (дзеркало pricing.json fx.uah_per_usd), якщо бекенд не відповів. */
 const UAH_PER_USD_FALLBACK = 41.5;
 

@@ -483,6 +483,10 @@ export const GALLERY_BY_SLUG: Record<string, GalleryItem> = Object.fromEntries(
 
 /** Локалі /foto-сторінок — усі 6 (de/pl/fr/es — lib/galleryI18n.ts). */
 export const GALLERY_LOCALES: readonly GalleryLocale[] = ["uk", "en", "de", "pl", "fr", "es"];
+/** 07.10.2026: мова сайту → мова текстів галереї (ro та інші без перекладу → en). */
+export function toGalleryLocale(l: string): GalleryLocale {
+  return ((GALLERY_LOCALES as readonly string[]).includes(l) ? l : "en") as GalleryLocale;
+}
 
 /** Схожі фото: спершу того ж типу, далі решта — детерміновано (SSG-стабільно). */
 export function relatedGallery(slug: string, n = 6): GalleryItem[] {

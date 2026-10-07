@@ -1,6 +1,6 @@
 import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
-import { routing } from "./i18n/routing";
+import { routing, RO_INDEXED_PATHS } from "./i18n/routing";
 
 const intl = createMiddleware(routing);
 
@@ -24,7 +24,14 @@ export default function middleware(req: NextRequest) {
     url.pathname = p.slice(3) || "/";
     return Response.redirect(url, 308);
   }
-  return intl(req);
+  const res = intl(req);
+  // 07.10.2026: /ro/* поза RO_INDEXED_PATHS показує англійський фолбек контенту
+  // (міста, блог, юр-доки) — не віддаємо його в індекс як «румунську» сторінку.
+  if (p === "/ro" || p.startsWith("/ro/")) {
+    const rest = p.slice(3).replace(/\/$/, "");
+    if (!RO_INDEXED_PATHS.includes(rest)) res.headers.set("X-Robots-Tag", "noindex, follow");
+  }
+  return res;
 }
 
 export const config = {

@@ -24,7 +24,7 @@ type PannoCopy = {
 const M = MAP_SIZE_PRICES_UAH; // з 08.09.2026: {55:350, 80:490, 110:630, 150:770}
 const eur = (uah: number) => mapPriceEur(uah);
 
-const COPY: Record<AppLocale, PannoCopy> = {
+const COPY_TRANSLATED: Record<Exclude<AppLocale, "ro">, PannoCopy> = {
   uk: {
     title: "Панно-карта міста на стіну — купити 3D-мапу з плиток",
     description: `Карта міста на стіну з 3D-друкованих плиток: обери район — зберемо панно 2×2 чи 3×3 з вулицями, кварталами й річками. Від ${M[80] * 4} ₴ за панно 2×2, доставка по Україні.`,
@@ -254,6 +254,9 @@ const COPY: Record<AppLocale, PannoCopy> = {
     photosAlt: "Foto de un panel-mapa de ciudad real impreso en 3D",
   },
 };
+// ro (07.10.2026): перекладу цього лендінгу ще нема → англійський текст; /ro-версія
+// сторінки в noindex і поза sitemap (middleware.ts, RO_INDEXED_PATHS).
+const COPY: Record<AppLocale, PannoCopy> = { ...COPY_TRANSLATED, ro: COPY_TRANSLATED.en };
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const locale = ((routing.locales as readonly string[]).includes(params.locale)

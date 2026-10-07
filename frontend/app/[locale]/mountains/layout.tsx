@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { pageMetadata, BASE, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { PEAKS, type PeakLocale } from "@/lib/mountainPages";
+import { PEAKS, toPeakLocale } from "@/lib/mountainPages";
 import { PEAK_UI } from "@/lib/mountainPagesUi";
 import { MOUNTAINS_EXTRA } from "@/lib/mountainsExtra";
 
@@ -67,13 +67,13 @@ export default async function MountainsLayout({ children, params }: { children: 
         </dl>
         {/* Сторінки вершин (/gory/[slug]) — перелінковка для пошуку. */}
         <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">
-          <Link href="/gory" className="hover:underline">{PEAK_UI[locale as PeakLocale].crumb}</Link>
+          <Link href="/gory" className="hover:underline">{PEAK_UI[toPeakLocale(locale)].crumb}</Link>
         </h2>
         <ul className="mt-3 flex flex-wrap gap-2">
           {PEAKS.map((p) => (
             <li key={p.slug}>
               <Link href={`/gory/${p.slug}`} className="inline-block rounded-full border border-[var(--surface-border)] bg-white/70 px-3.5 py-1.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]">
-                {p.t[locale as PeakLocale].name}
+                {p.t[toPeakLocale(locale)].name}
               </Link>
             </li>
           ))}

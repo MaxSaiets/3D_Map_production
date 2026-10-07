@@ -39,6 +39,11 @@ const CREATE: Record<string, SeoProse> = {
     p1: "Monadruk convierte cualquier punto de la Tierra en un modelo 3D imprimible: elige un distrito en el mapa y en minutos obtén un mapa tridimensional con alturas reales de edificios, calles, parques y ríos a partir de datos de OpenStreetMap. Para ciudades con colinas se puede activar el relieve del terreno, y unir baldosas vecinas en un panel de pared.",
     p2: "Imprimimos el modelo terminado en Eco PLA ecológico, en tamaños de 5,5 a 15 cm (desde ≈8 €), y lo enviamos dentro de Ucrania. ¿Tienes tu propia impresora 3D? Compra el archivo 3MF listo para imprimir (149 ₴ ≈ 3 €, en todo el mundo) e imprímelo en casa — la vista previa 3D es gratis.",
   },
+  ro: {
+    h2: "Constructor online de hărți 3D ale orașelor",
+    p1: "Monadruk transformă orice punct de pe Pământ într-un model 3D gata de imprimat: alegi un cartier pe hartă și în câteva minute primești o hartă tridimensională cu înălțimile reale ale clădirilor, străzi, parcuri și râuri din datele OpenStreetMap. Orașele deluroase pot fi redate cu relieful real, iar plăcile vecine se pot îmbina într-un panou de perete.",
+    p2: "Imprimăm modelul finit din Eco PLA ecologic, în dimensiuni de la 5,5 la 15 cm (de la ≈8 €), și îl livrăm în toată Ucraina. Ai propria imprimantă 3D? Cumpără fișierul 3MF gata de imprimat (149 ₴ ≈ 3 €, funcționează oriunde în lume) și imprimă acasă — previzualizarea 3D este gratuită.",
+  },
 };
 
 const KEYCHAINS: Record<string, SeoProse> = {
@@ -72,6 +77,11 @@ const KEYCHAINS: Record<string, SeoProse> = {
     p1: "El llavero mapa es una placa de 55×30 mm con un mapa en relieve del distrito elegido: calles, parques y ríos que se pueden sentir con los dedos. Añade tu propio texto en el reverso — el nombre de una ciudad, una fecha o coordenadas. Hay un modo de relieve montañoso (llavero topo) y un llavero con tu ruta GPX de Strava o Garmin.",
     p2: "Impreso en Eco PLA en 2–4 días hábiles, desde ≈4 €. Envío dentro de Ucrania. Un par de llaveros «corazón» con los distritos de dos personas encaja como un rompecabezas — un regalo popular para parejas.",
   },
+  ro: {
+    h2: "Breloc personalizat cu harta orașului",
+    p1: "Brelocul-hartă este o plăcuță de 55×30 mm cu harta în relief a cartierului ales: străzi, parcuri și râuri pe care le simți cu degetele. Adaugă un text pe spate — numele orașului, o dată sau coordonate. Există și un mod topografic cu relief montan și un breloc cu traseul tău GPX din Strava sau Garmin.",
+    p2: "Imprimat din Eco PLA în 2–4 zile lucrătoare, de la ≈4 €. Livrare în toată Ucraina și în țările UE. O pereche de brelocuri «inimă» cu cartierele a doi oameni se îmbină ca un puzzle — un cadou popular pentru cupluri.",
+  },
 };
 
 const WORLDS: Record<string, SeoProse> = {
@@ -104,6 +114,11 @@ const WORLDS: Record<string, SeoProse> = {
     h2: "Generador de IA de mundos 3D fantásticos",
     p1: "Worlds es una herramienta experimental de Monadruk: describe un paisaje con palabras («isla volcánica», «cañón profundo», «colinas suaves») y la IA genera un modelo de terreno 3D único que no existe en ningún mapa real. A diferencia del configurador de mapas de ciudades, aquí no hay vínculo con OpenStreetMap — solo imaginación.",
     p2: "Gira el modelo terminado directamente en el navegador y descarga el archivo GLB gratis. Tamaños de 8 a 18 cm. Para pedir la impresión de este mundo, escríbenos en el chat.",
+  },
+  ro: {
+    h2: "Generator AI de lumi 3D fantastice",
+    p1: "Lumi este un instrument experimental Monadruk: descrie un peisaj în cuvinte („insulă vulcanică”, „canion adânc”, „dealuri line”) și AI-ul generează un model 3D unic de relief, care nu există pe nicio hartă reală. Spre deosebire de constructorul de hărți ale orașelor, aici nu există legătură cu OpenStreetMap — doar imaginație.",
+    p2: "Rotește modelul finit direct în browser și descarcă gratuit fișierul GLB. Dimensiuni de la 8 la 18 cm. Pentru a comanda imprimarea acestei lumi, scrie-ne în chat.",
   },
 };
 
@@ -151,6 +166,12 @@ const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
     { q: "¿Cuánto tarda la fabricación?", a: "2–4 días hábiles de impresión, luego envío a Ucrania." },
     { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — el archivo 3MF listo para imprimir cuesta 149 ₴ (≈ 3 €; la vista previa 3D es gratis) y se abre directamente en Bambu Studio o PrusaSlicer. Se vende en todo el mundo." },
   ],
+  ro: [
+    { q: "Cât costă o hartă 3D?", a: "O hartă 3D costă de la ≈8 € pentru mărimea S (5,5 cm) până la ≈18 € pentru XL (15 cm), relieful +≈2 €. Un magnet de frigider ≈5 €, un breloc de la ≈4 €." },
+    { q: "Ce zonă să aleg?", a: "O zonă de 400–800 m cu conținut variat: câteva străzi, un parc sau apă — așa cartierul rămâne recognoscibil de la prima privire." },
+    { q: "Cât durează realizarea?", a: "2–4 zile lucrătoare pentru imprimare, apoi livrarea în Ucraina." },
+    { q: "Pot să o imprim singur?", a: "Da — fișierul 3MF gata de imprimat costă 149 ₴ (≈ 3 €; previzualizarea 3D este gratuită) și se deschide direct în Bambu Studio sau PrusaSlicer. Se vinde oriunde în lume." },
+  ],
 };
 
 const WORLDS_FAQ: Record<string, ProseFaqItem[]> = {
@@ -184,6 +205,11 @@ const WORLDS_FAQ: Record<string, ProseFaqItem[]> = {
     { q: "¿Puedo descargar el archivo gratis?", a: "Sí, el archivo de vista previa GLB es gratuito. La impresión de este mundo por encargo se trata por separado en el chat." },
     { q: "¿Qué tamaños hay disponibles?", a: "S (8 cm), M (12 cm) y L (18 cm)." },
   ],
+  ro: [
+    { q: "Este o hartă reală sau una inventată?", a: "Inventată — AI-ul generează relieful dintr-o descriere text, fără legătură cu un loc real." },
+    { q: "Pot descărca fișierul gratuit?", a: "Da, fișierul GLB de previzualizare este gratuit. Comanda imprimării acestei lumi se discută separat în chat." },
+    { q: "Ce dimensiuni sunt disponibile?", a: "S (8 cm), M (12 cm) și L (18 cm)." },
+  ],
 };
 
 const SHOWCASE_FAQ: Record<string, ProseFaqItem[]> = {
@@ -216,6 +242,11 @@ const SHOWCASE_FAQ: Record<string, ProseFaqItem[]> = {
     { q: "¿Son fotos reales o renders 3D?", a: "Ambos: la sección «Impreso en la vida real» muestra fotos reales de artículos terminados, y el resto son modelos 3D interactivos que puedes girar con el dedo o el ratón." },
     { q: "¿De qué material están impresas estas muestras?", a: "Todas las muestras están impresas en bioplástico Eco PLA — el mismo material que los pedidos de los clientes." },
     { q: "¿Puedo pedir exactamente el mismo tamaño o distrito?", a: "Sí — el configurador permite elegir cualquier zona y tamaño, incluidos los mostrados en la galería." },
+  ],
+  ro: [
+    { q: "Sunt fotografii reale sau randări 3D?", a: "Ambele: secțiunea „Imprimate în realitate” arată fotografii reale ale produselor finite, iar restul grilei sunt modele 3D interactive pe care le poți roti cu degetul sau mouse-ul." },
+    { q: "Din ce material sunt imprimate mostrele?", a: "Toate mostrele sunt imprimate din bioplastic Eco PLA — același material folosit pentru comenzile clienților." },
+    { q: "Pot comanda exact aceeași mărime sau același cartier?", a: "Da — constructorul îți permite să alegi orice zonă și mărime, inclusiv cele din galerie." },
   ],
 };
 

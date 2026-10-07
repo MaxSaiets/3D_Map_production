@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, localeMeta, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { PEAKS, PEAK_BY_SLUG, PEAK_LOCALES, relatedPeaks, type PeakLocale } from "@/lib/mountainPages";
+import { PEAKS, PEAK_BY_SLUG, PEAK_LOCALES, relatedPeaks, toPeakLocale, type PeakLocale } from "@/lib/mountainPages";
 import { PEAK_UI } from "@/lib/mountainPagesUi";
 
 /**
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: { locale: string; s
   const p = PEAK_BY_SLUG[params.slug];
   if (!p) return {};
   const locale = resolve(params.locale);
-  const l = locale as PeakLocale;
+  const l = toPeakLocale(locale);
   const tx = p.t[l];
   const path = `/gory/${p.slug}`;
   const full = `${tx.p[0]} ${tx.p[1]}`;
@@ -53,7 +53,7 @@ export default function PeakPage({ params }: { params: { locale: string; slug: s
   if (!p) notFound();
   const locale = resolve(params.locale);
   setRequestLocale(locale);
-  const l = locale as PeakLocale;
+  const l = toPeakLocale(locale);
   const tx = p.t[l];
   const u = PEAK_UI[l];
   const path = `/gory/${p.slug}`;

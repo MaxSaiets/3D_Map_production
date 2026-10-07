@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 
 const DIR = path.join(__dirname, "..", "messages");
-const LOCALES = ["uk", "en", "de", "pl", "fr", "es"];
+const LOCALES = ["uk", "en", "de", "pl", "fr", "es", "ro"];
 
 function flat(o: Record<string, unknown>, p = ""): string[] {
   return Object.entries(o).flatMap(([k, v]) =>

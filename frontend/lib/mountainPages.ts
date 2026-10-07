@@ -12,6 +12,11 @@
 
 export type PeakLocale = "uk" | "en" | "de" | "pl" | "fr" | "es";
 export const PEAK_LOCALES: PeakLocale[] = ["uk", "en", "de", "pl", "fr", "es"];
+/** 07.10.2026: мова сайту → мова текстів вершин (ro та інші без перекладу → en).
+ *  Замість `locale as PeakLocale`: приведення типу на ro давало undefined → 500. */
+export function toPeakLocale(l: string): PeakLocale {
+  return ((PEAK_LOCALES as string[]).includes(l) ? l : "en") as PeakLocale;
+}
 
 type PeakText = {
   name: string;

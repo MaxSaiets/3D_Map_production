@@ -426,7 +426,67 @@ const pl: Catalog = {
   ],
 };
 
-const CATALOGS: Record<string, Catalog> = { uk, en, de, es, fr, pl };
+const ro: Catalog = {
+  metaTitle: "Prețuri pentru hărți 3D ale orașelor, magneți și brelocuri",
+  metaDescription:
+    "Prețuri actuale în UAH: hartă 3D a orașului de la 350 ₴ (S/M/L/XL), magnet de frigider 210 ₴, breloc cu hartă de la 170 ₴, relief +85 ₴. Imprimare din Eco PLA, livrare prin Nova Poshta.",
+  h1: "Prețuri",
+  intro:
+    "Prețul este pentru produsul finit (imprimat 3D din bioplastic Eco PLA). Livrarea se plătește separat, după tariful curierului. Plata cu Visa / Mastercard online sau la livrare.",
+  categories: [
+    {
+      title: "Hărți 3D ale orașelor",
+      items: [
+        { name: "Hartă 3D a orașului — S (≈5,5 cm)", desc: "Model 3D imprimat al unei zone din oraș, latura ~5,5 cm.", uah: PR.s },
+        { name: "Hartă 3D a orașului — M (≈8 cm)", desc: "Model 3D imprimat al unei zone din oraș, latura ~8 cm.", uah: PR.m },
+        { name: "Hartă 3D a orașului — L (≈11 cm)", desc: "Model 3D imprimat al unei zone din oraș, latura ~11 cm.", uah: PR.l },
+        { name: "Hartă 3D a orașului — XL (≈15 cm)", desc: "Model 3D imprimat al unei zone din oraș, latura ~15 cm.", uah: PR.xl },
+        { name: "Relieful terenului (opțiune)", desc: "Altitudinea suplimentară a peisajului pe orice hartă 3D.", uah: PR.relief, kind: "addon" },
+      ],
+    },
+    {
+      title: "Magneți",
+      items: [
+        { name: "Magnet de frigider cu hartă (≈6 cm)", desc: "Magnet plat cu harta 3D a unei zone din oraș.", uah: PR.magnet },
+      ],
+    },
+    {
+      title: "Brelocuri cu hartă",
+      items: [
+        { name: "Breloc cu hartă (imprimare 3D)", desc: "Breloc cu harta 3D a unei zone din oraș sau cu un traseu (GPX), Eco PLA.", uah: PR.keychain, kind: "from" },
+      ],
+    },
+    {
+      title: "Fișiere digitale",
+      items: [
+        { name: "Fișier 3MF / STL pentru imprimare proprie", desc: "Un 3MF gata făcut, împărțit pe culori, care se deschide în Bambu Studio sau PrusaSlicer. Pentru imprimare personală; previzualizarea 3D înainte de cumpărare este gratuită.", uah: PR.file },
+        { name: "Monadruk Pro — fișiere nelimitate", desc: "Fișiere 3MF/STL nelimitate pentru orice model plus licență comercială: imprimă și vinde produsele. Anulare cu un clic.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
+      ],
+    },
+  ],
+  notesTitle: "Condiții",
+  notes: [
+    "Toate prețurile sunt în grivne ucrainene (₴), pe bucată.",
+    "Livrarea se taxează separat, după tariful curierului (Nova Poshta / Ukrposhta).",
+    "Plata cu Visa / Mastercard online (LiqPay) sau ramburs la livrare.",
+    "Produsele se realizează la comandă; termenul de execuție este de 2–4 zile lucrătoare plus livrarea.",
+  ],
+  sellerTitle: "Vânzător",
+  sellerName: "Vânzător",
+  docsIntro: "Comenzile sunt reglementate de contractul de ofertă publică. Detalii:",
+  docs: { offer: "Contract de ofertă publică", delivery: "Plată și livrare", refund: "Returnări și rambursări", contacts: "Contacte" },
+  ctaLabel: "Creează-ți harta",
+  pro: { eyebrow: "Pentru ateliere de imprimare și vânzători", title: "Imprimi mult sau imprimi pentru vânzare?", text: "Monadruk Pro îți oferă fișiere 3MF/STL nelimitate și o licență comercială pentru produsele imprimate. Merită de la aproximativ al {n}-lea fișier pe lună; anulare cu un clic.", cta: "Află despre Pro" },
+  faqTitle: "Întrebări frecvente",
+  faq: [
+    { q: "Cât durează realizarea?", a: "2–4 zile lucrătoare pentru imprimare, apoi livrarea în Ucraina." },
+    { q: "Există reduceri pentru comenzi mari?", a: "Da — pentru tiraje de 5+ produse identice (de ex. brelocuri corporative) prețul se stabilește individual, scrie-ne." },
+    { q: "Ce include prețul?", a: "Prețul acoperă produsul finit imprimat din Eco PLA. Livrarea și relieful terenului (+≈2 €) se plătesc separat." },
+    { q: "Pot plăti la livrare?", a: "Da, pe lângă plata online cu cardul prin LiqPay este disponibilă și plata ramburs." },
+  ],
+};
+
+const CATALOGS: Record<string, Catalog> = { uk, en, de, es, fr, pl, ro };
 
 export function getCatalog(locale: string): Catalog {
   return CATALOGS[locale] ?? uk;
@@ -440,6 +500,7 @@ export const PRICE_WORDS: Record<string, { from: string; free: string; perMonth:
   es: { from: "desde", free: "Gratis*", perMonth: "/ mes" },
   fr: { from: "dès", free: "Gratuit*", perMonth: "/ mois" },
   pl: { from: "od", free: "Bezpłatnie*", perMonth: "/ mies." },
+  ro: { from: "de la", free: "Gratuit*", perMonth: "/ lună" },
 };
 
 /** Єдине форматування ціни товару: «N ₴» (uk) / «N ₴ · ≈M €» (EU); «+N ₴» (addon);

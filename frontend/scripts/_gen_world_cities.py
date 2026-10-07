@@ -104,10 +104,47 @@ export interface WorldCity {
   facts: CityFacts;
 }
 
-export const WORLD_CITIES: WorldCity[] = [
+/** Сирі дані генератора — без ro (додається нижче, див. RO_NAMES). */
+type RawWorldCity = Omit<WorldCity, "names"> & { names: Omit<Record<AppLocale, string>, "ro"> };
+
+const RAW_WORLD_CITIES: RawWorldCity[] = [
 '''
 
 TAIL = '''];
+
+/** 07.10.2026: румунські екзоніми (решта — як en). */
+const RO_NAMES: Record<string, string> = {
+  warsaw: "Varșovia",
+  krakow: "Cracovia",
+  munich: "München",
+  cologne: "Köln",
+  dresden: "Dresda",
+  nuremberg: "Nürnberg",
+  vienna: "Viena",
+  zurich: "Zürich",
+  prague: "Praga",
+  budapest: "Budapesta",
+  marseille: "Marsilia",
+  nice: "Nisa",
+  brussels: "Bruxelles",
+  seville: "Sevilla",
+  malaga: "Málaga",
+  lisbon: "Lisabona",
+  rome: "Roma",
+  milan: "Milano",
+  naples: "Napoli",
+  florence: "Florența",
+  venice: "Veneția",
+  turin: "Torino",
+  london: "Londra",
+  copenhagen: "Copenhaga",
+  athens: "Atena",
+};
+
+export const WORLD_CITIES: WorldCity[] = RAW_WORLD_CITIES.map((c) => ({
+  ...c,
+  names: { ...c.names, ro: RO_NAMES[c.slug] ?? c.names.en },
+}));
 
 export const WORLD_CITY_BY_SLUG: Record<string, WorldCity> = Object.fromEntries(
   WORLD_CITIES.map((c) => [c.slug, c]),

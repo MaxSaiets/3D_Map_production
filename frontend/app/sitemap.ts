@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { BUSINESS } from "@/lib/legal";
-import { locales, localeMeta, defaultLocale } from "@/i18n/routing";
+import { locales, localeMeta, defaultLocale, RO_INDEXED_PATHS } from "@/i18n/routing";
 import { CITY_PAGES, WORLD_CITY_PAGES } from "@/lib/cityPages";
 import { BLOG_ARTICLES, blogLocales } from "@/lib/blog";
 import { OCCASION_PAGES, DISTRICT_PAGES, districtLocales } from "@/lib/cityLanding";
@@ -117,7 +117,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const entries: MetadataRoute.Sitemap = [];
   for (const { path, changeFrequency, priority, lastmod, only } of PATHS) {
-    const ls = only ? locales.filter((l) => only.includes(l)) : locales;
+    // ro — лише сторінки з повним румунським текстом (RO_INDEXED_PATHS)
+    const ls = (only ? locales.filter((l) => only.includes(l)) : locales).filter((l) => l !== "ro" || RO_INDEXED_PATHS.includes(path));
     const languages: Record<string, string> = {};
     for (const l of ls) languages[localeMeta[l].htmlLang] = url(l, path);
     languages["x-default"] = url(defaultLocale, path); // консистентно з per-page hreflang

@@ -19,25 +19,26 @@ const NAME_OVERRIDES: Record<string, Partial<Record<AppLocale, string>>> = {
   Kyiv: { pl: "Kijów", de: "Kiew" },
   Lviv: { pl: "Lwów", de: "Lemberg" },
   Odesa: { pl: "Odessa", de: "Odessa", fr: "Odessa", es: "Odesa" },
-  Kharkiv: { pl: "Charków", de: "Charkiw" },
+  Kharkiv: { pl: "Charków", de: "Charkiw", ro: "Harkiv" },
   Dnipro: { pl: "Dniepr" },
-  Vinnytsia: { pl: "Winnica", de: "Winnyzja" },
-  Khmelnytskyi: { pl: "Chmielnicki", de: "Chmelnyzkyj" },
-  Zaporizhzhia: { pl: "Zaporoże", de: "Saporischschja" },
-  Kryvyi_Rih: { pl: "Krzywy Róg", de: "Krywyj Rih" },
-  Mykolaiv: { pl: "Mikołajów", de: "Mykolajiw" },
+  Vinnytsia: { pl: "Winnica", de: "Winnyzja", ro: "Vinnîțea" },
+  Khmelnytskyi: { pl: "Chmielnicki", de: "Chmelnyzkyj", ro: "Hmelnițki" },
+  Zaporizhzhia: { pl: "Zaporoże", de: "Saporischschja", ro: "Zaporijjea" },
+  Kryvyi_Rih: { pl: "Krzywy Róg", de: "Krywyj Rih", ro: "Krivîi Rih" },
+  Mykolaiv: { pl: "Mikołajów", de: "Mykolajiw", ro: "Mîkolaiv" },
   Poltava: { pl: "Połtawa", de: "Poltawa" },
-  Cherkasy: { pl: "Czerkasy", de: "Tscherkassy" },
-  Chernihiv: { pl: "Czernihów", de: "Tschernihiw" },
+  Cherkasy: { pl: "Czerkasy", de: "Tscherkassy", ro: "Cerkasî" },
+  Chernihiv: { pl: "Czernihów", de: "Tschernihiw", ro: "Cernihiv" },
   Ternopil: { pl: "Tarnopol" },
   IvanoFrankivsk: { pl: "Iwano-Frankiwsk", de: "Iwano-Frankiwsk" },
-  Zhytomyr: { pl: "Żytomierz", de: "Schytomyr" },
+  Zhytomyr: { pl: "Żytomierz", de: "Schytomyr", ro: "Jîtomîr" },
   Rivne: { pl: "Równe", de: "Riwne" },
-  Lutsk: { pl: "Łuck", de: "Luzk" },
-  Uzhhorod: { pl: "Użhorod", de: "Uschhorod" },
-  Chernivtsi: { pl: "Czerniowce", de: "Tscherniwzi" },
-  Kherson: { pl: "Chersoń", de: "Cherson" },
-  Kropyvnytskyi: { pl: "Kropywnycki", de: "Kropywnyzkyj" },
+  Lutsk: { pl: "Łuck", de: "Luzk", ro: "Luțk" },
+  Uzhhorod: { pl: "Użhorod", de: "Uschhorod", ro: "Ujhorod" },
+  Chernivtsi: { pl: "Czerniowce", de: "Tscherniwzi", ro: "Cernăuți" },
+  Kherson: { pl: "Chersoń", de: "Cherson", ro: "Herson" },
+  Sumy: { ro: "Sumî" },
+  Kropyvnytskyi: { pl: "Kropywnycki", de: "Kropywnyzkyj", ro: "Kropîvnîțkîi" },
 };
 
 /** "Kryvyi_Rih" → "Kryvyi Rih", "IvanoFrankivsk" → "Ivano-Frankivsk" */
@@ -65,6 +66,7 @@ export const CITY_PAGES: CityPage[] = CITIES.map((c) => {
       pl: o.pl ?? latin,
       fr: o.fr ?? latin,
       es: o.es ?? latin,
+      ro: o.ro ?? latin,
     },
   };
 });
@@ -91,7 +93,7 @@ export const UA_CITY2_PAGES: CityPage[] = UA_CITIES_2.map((c) => ({
   slug: c.slug,
   key: `UA2_${c.slug}`,
   center: c.center,
-  names: { uk: c.names.uk, en: c.names.en, de: c.names.en, pl: c.names.en, fr: c.names.en, es: c.names.en },
+  names: { uk: c.names.uk, en: c.names.en, de: c.names.en, pl: c.names.en, fr: c.names.en, es: c.names.en, ro: c.names.en },
 }));
 
 /** true — місто з другого кола (без шаблонів конструктора, /brelok і /podarunok). */

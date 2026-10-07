@@ -4,7 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, localeMeta, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { GALLERY_ITEMS, GALLERY_BY_SLUG, GALLERY_LOCALES, relatedGallery, type GalleryItem, type GalleryKind, type GalleryLocale } from "@/lib/gallery";
+import { GALLERY_ITEMS, GALLERY_BY_SLUG, GALLERY_LOCALES, relatedGallery, toGalleryLocale, type GalleryItem, type GalleryKind, type GalleryLocale } from "@/lib/gallery";
 import { CITY_PAGES } from "@/lib/cityPages";
 import { KEYCHAIN_PRICE_UAH, MAP_SIZE_PRICES_UAH, mapPriceEur } from "@/lib/mapPrices";
 
@@ -105,7 +105,7 @@ export async function generateMetadata({ params }: { params: { locale: string; s
   const g = GALLERY_BY_SLUG[params.slug];
   if (!g) return {};
   const locale = resolveLocale(params.locale);
-  const l = locale as L;
+  const l = toGalleryLocale(locale);
   const path = `/foto/${g.slug}`;
   const title = pageTitle(g, l);
   const full = g.desc[l];
@@ -138,7 +138,7 @@ export default function FotoPage({ params }: { params: { locale: string; slug: s
   if (!g) notFound();
   const locale = resolveLocale(params.locale);
   setRequestLocale(locale);
-  const L = locale as GalleryLocale;
+  const L = toGalleryLocale(locale);
   const c = copy(g.kind, L);
   const path = `/foto/${g.slug}`;
   const related = relatedGallery(g.slug, 6);

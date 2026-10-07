@@ -24,7 +24,7 @@ const M = MAP_SIZE_PRICES_UAH;
 const R = MAP_RELIEF_ADDON_UAH;
 const eur = (uah: number) => mapPriceEur(uah);
 
-const COPY: Record<AppLocale, KarpatyCopy> = {
+const COPY_TRANSLATED: Record<Exclude<AppLocale, "ro">, KarpatyCopy> = {
   uk: {
     title: "Карта Карпат 3D — рельєфна модель гір з реальними висотами",
     description: `Об'ємна топографічна карта Карпат з реальними висотами: Говерла, Чорногора, Боржава — будь-який хребет чи маршрут. 3D-друк від ${M[80] + R} ₴, топо-брелок від ${KEYCHAIN_PRICE_UAH} ₴.`,
@@ -272,6 +272,9 @@ const COPY: Record<AppLocale, KarpatyCopy> = {
     photosAlt: "Foto de una impresión 3D real de Monadruk — calidad de impresión de calles y detalles",
   },
 };
+// ro (07.10.2026): перекладу цього лендінгу ще нема → англійський текст; /ro-версія
+// сторінки в noindex і поза sitemap (middleware.ts, RO_INDEXED_PATHS).
+const COPY: Record<AppLocale, KarpatyCopy> = { ...COPY_TRANSLATED, ro: COPY_TRANSLATED.en };
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const locale = ((routing.locales as readonly string[]).includes(params.locale)

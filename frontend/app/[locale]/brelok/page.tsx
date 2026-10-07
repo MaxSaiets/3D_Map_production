@@ -120,6 +120,23 @@ const HUB: Record<AppLocale, HubCopy> = {
     ctaKeychain: "Crea tu llavero",
     ctaMap: "Mapa 3D de pared",
   },
+  ro: {
+    title: "Brelocuri cu harta orașului — imprimare 3D personalizată",
+    description: "Un breloc 3D cu harta oricărui oraș — străzi, clădiri și râuri în miniatură pe o plăcuță. Cartierul tău pe chei, un cadou personal de la 3 €.",
+    h1: "Un breloc cu harta orașului tău",
+    intro: "O miniatură a cartierului tău pe chei — străzi, cvartale și râuri într-un 3D precis. Alege un oraș mai jos sau orice punct de pe Pământ în constructor. Imprimat din PLA ecologic și livrat în toată Ucraina.",
+    h2cities: "Alege un oraș",
+    h2how: "Cum funcționează",
+    pHow: "Alegi zona, stilul și textul — generăm un model 3D precis din datele OpenStreetMap, îl imprimăm pe o plăcuță de 55×30 mm și îl expediem. Formă clasică sau pătrată, cu inscripția ta.",
+    h2faq: "Întrebări frecvente",
+    faq: [
+      { q: "Pot alege orice oraș?", a: "Da. Lista arată cele mai populare orașe din Ucraina, dar în constructor poți alege orice punct de pe Pământ, nu doar din listă." },
+      { q: "Cât costă un breloc?", a: "O plăcuță-breloc costă de la 3 €. Prețul final depinde de format și inscripție; suma exactă este afișată înainte de comandă." },
+      { q: "Ce pot scrie pe el?", a: "Textul tău — numele cartierului, o dată, coordonate sau un nume. Se adaugă pe fața sau pe spatele plăcuței." },
+    ],
+    ctaKeychain: "Creează-ți brelocul",
+    ctaMap: "Hartă 3D de perete",
+  },
 };
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {

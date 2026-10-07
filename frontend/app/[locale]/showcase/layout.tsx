@@ -4,7 +4,7 @@ import { pageMetadata, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { proseFaq } from "@/lib/seoProse";
 import { Link } from "@/i18n/navigation";
-import { GALLERY_ITEMS, type GalleryLocale } from "@/lib/gallery";
+import { GALLERY_ITEMS, toGalleryLocale, type GalleryLocale } from "@/lib/gallery";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   return pageMetadata({ locale: params.locale, path: "/showcase", ns: "showcaseMeta" });
@@ -24,7 +24,7 @@ export default async function ShowcaseLayout({
   const nav = await getTranslations({ locale, namespace: "nav" });
   const faq = proseFaq("showcase", locale);
   const isUA = locale === "uk";
-  const gl = locale as GalleryLocale;
+  const gl = toGalleryLocale(locale);
 
   // CollectionPage (галерея) + BreadcrumbList для rich results.
   const ld = {

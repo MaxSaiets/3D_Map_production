@@ -18,6 +18,7 @@ const EXTRA: Record<string, { model: string; gory: string }> = {
   pl: { model: "Kup model 3D miasta", gory: "Modele 3D gór" },
   fr: { model: "Acheter une maquette 3D de ville", gory: "Maquettes 3D de montagnes" },
   es: { model: "Comprar maqueta 3D de ciudad", gory: "Maquetas 3D de montañas" },
+  ro: { model: "Cumpără o machetă 3D a orașului", gory: "Modele 3D de munți" },
 };
 
 export function SiteFooter() {

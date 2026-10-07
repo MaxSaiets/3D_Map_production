@@ -142,6 +142,7 @@ export default async function BrelokCityPage({
     pl: { breadcrumb: "Breloki", cta: "Stwórz brelok w kreatorze", ctaGift: "Prezent z tego miasta", districts: "Popularne dzielnice na brelok", price: `Cena: od ≈${eur} € za brelok · wykonanie 2–4 dni robocze`, others: "Breloki z innych miast", map: `Mapa 3D miasta — ${name}` },
     fr: { breadcrumb: "Porte-clés", cta: "Créer un porte-clés dans le configurateur", ctaGift: "Un cadeau de cette ville", districts: "Quartiers populaires pour un porte-clés", price: `Prix : dès ≈${eur} € le porte-clés · fabrication 2–4 jours ouvrés`, others: "Porte-clés d'autres villes", map: `Carte 3D de la ville — ${name}` },
     es: { breadcrumb: "Llaveros", cta: "Crear un llavero en el configurador", ctaGift: "Un regalo de esta ciudad", districts: "Distritos populares para un llavero", price: `Precio: desde ≈${eur} € por llavero · fabricación 2–4 días hábiles`, others: "Llaveros de otras ciudades", map: `Mapa 3D de la ciudad — ${name}` },
+    ro: { breadcrumb: "Brelocuri", cta: "Creează un breloc în constructor", ctaGift: "Un cadou din acest oraș", districts: "Cartiere populare pentru breloc", price: `Preț: de la ≈€${eur} pentru un breloc · realizat în 2–4 zile lucrătoare`, others: "Brelocuri din alte orașe", map: `Hartă 3D a orașului — ${name}` },
   };
   const ui = UI[locale] ?? UI.en;
 

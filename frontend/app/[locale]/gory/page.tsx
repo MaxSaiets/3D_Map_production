@@ -3,7 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { BASE, localeUrl } from "@/i18n/metadata";
 import { routing, defaultLocale, localeMeta, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
-import { PEAKS, PEAK_LOCALES, type PeakLocale } from "@/lib/mountainPages";
+import { PEAKS, PEAK_LOCALES, toPeakLocale, type PeakLocale } from "@/lib/mountainPages";
 import { PEAK_UI } from "@/lib/mountainPagesUi";
 
 /** /gory — каталог сторінок вершин режиму «Гори» (25.09.2026). */
@@ -14,7 +14,7 @@ const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const locale = resolve(params.locale);
-  const u = PEAK_UI[locale as PeakLocale];
+  const u = PEAK_UI[toPeakLocale(locale)];
   return {
     title: { absolute: `${u.indexTitle} | Monadruk` },
     description: u.indexDesc,
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 export default function GoryIndex({ params }: { params: { locale: string } }) {
   const locale = resolve(params.locale);
   setRequestLocale(locale);
-  const l = locale as PeakLocale;
+  const l = toPeakLocale(locale);
   const u = PEAK_UI[l];
   // Українські вершини першими для uk, решта — за висотою.
   const ua = new Set(["hoverla", "petros", "pip-ivan", "ai-petri"]);

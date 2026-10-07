@@ -343,13 +343,19 @@ const uk: LegalSet = {
 // Переклади (по файлу на мову: content.<locale>.ts).
 export const LEGAL: Record<string, LegalSet> = { uk, en, de, es, fr, pl };
 
+// 07.10.2026: мова без перекладу юр-текстів (ro) → англійська, а не українська
+// (молдаванину англійський зрозуміліший; джерело правди — як і раніше uk).
+function legalFallback(locale: string): LegalSet {
+  return LEGAL[locale] ?? (locale === "uk" ? LEGAL.uk : LEGAL.en ?? LEGAL.uk);
+}
+
 export function getLegalSet(locale: string): LegalSet {
-  return LEGAL[locale] ?? LEGAL.uk;
+  return legalFallback(locale);
 }
 
 // Один документ із fallback на українську (для privacy/terms, поки локаль не має).
 export function getLegalDoc(locale: string, key: keyof LegalSet): LegalDoc {
-  const set = LEGAL[locale] ?? LEGAL.uk;
+  const set = legalFallback(locale);
   return (set[key] ?? LEGAL.uk[key]) as LegalDoc;
 }
 
@@ -361,4 +367,5 @@ export const LEGAL_LABELS: Record<string, { updated: string }> = {
   es: { updated: "Actualizado" },
   fr: { updated: "Mis à jour" },
   pl: { updated: "Zaktualizowano" },
+  ro: { updated: "Actualizat" },
 };

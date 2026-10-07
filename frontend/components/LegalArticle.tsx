@@ -9,7 +9,7 @@ import { SUB_TERMS_VERSION } from "@/lib/legal/subscription";
 const linkCls = "text-forest underline-offset-2 hover:underline";
 
 // BUSINESS.updated зберігається як ISO (2026-06-15) → форматуємо під локаль.
-const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL" };
+const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL", ro: "ro-RO" };
 function formatUpdated(locale: string): string {
   try {
     return new Intl.DateTimeFormat(LOCALE_TAG[locale] ?? "uk-UA", { year: "numeric", month: "long", day: "numeric" })

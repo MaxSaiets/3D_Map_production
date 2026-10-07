@@ -23,7 +23,7 @@ type CorpCopy = {
 
 const eur = (uah: number) => mapPriceEur(uah);
 
-const COPY: Record<AppLocale, CorpCopy> = {
+const COPY_TRANSLATED: Record<Exclude<AppLocale, "ro">, CorpCopy> = {
   uk: {
     title: "Корпоративні подарунки з мапою — мерч для команди",
     description: `Корпоративні 3D-подарунки на замовлення: брелоки з районом офісу, мапи міста з вашим текстом, магніти для партнерів. Наклади від 10 шт, від ${KEYCHAIN_PRICE_UAH} ₴/шт.`,
@@ -253,6 +253,9 @@ const COPY: Record<AppLocale, CorpCopy> = {
     ctaTry: "Probar el configurador",
   },
 };
+// ro (07.10.2026): перекладу цього лендінгу ще нема → англійський текст; /ro-версія
+// сторінки в noindex і поза sitemap (middleware.ts, RO_INDEXED_PATHS).
+const COPY: Record<AppLocale, CorpCopy> = { ...COPY_TRANSLATED, ro: COPY_TRANSLATED.en };
 
 /** 30.09.2026: новорічний сезон корпоративних подарунків. Дати — ті самі, що в
  *  сезонному банері сайту (друк 2–4 дні + доставка); для великих накладів —
@@ -294,6 +297,12 @@ const SEASON: Record<AppLocale, { h2: string; p: string; points: string[]; photo
     points: ["Na Mikołajki: zapytanie do 27 listopada", "Na Nowy Rok: zapytanie do 19 grudnia", "Ponad 50 sztuk: napisz jak najwcześniej, termin ustalimy przed płatnością"],
     photos: "Prawdziwe wyroby, które wydrukowaliśmy",
   },
+  ro: {
+    h2: "Cadouri corporative de Anul Nou",
+    p: "Un breloc cu cartierul biroului sau o hartă a orașului unde lucrează echipa rămâne în memorie mai mult decât încă o cană cu logo. Fiecare piesă poate fi personală: alt cartier, alt nume sau altă dată pentru fiecare om.",
+    points: ["Pentru Sfântul Nicolae: cerere până pe 27 noiembrie", "Pentru Anul Nou: cerere până pe 19 decembrie", "Tiraje de peste 50 de bucăți: scrieți cât mai devreme, stabilim data înainte de plată"],
+    photos: "Piese reale pe care le-am imprimat",
+  },
 };
 
 /** 30.09.2026: знижки на наклад ПІДТВЕРДЖЕНІ власником. Відсоток від роздробу;
@@ -312,6 +321,7 @@ const TIER_COPY: Record<AppLocale, { h2: string; qty: string; disc: string; kc: 
   fr: { h2: "Remises sur quantité", qty: "Quantité", disc: "Remise", kc: "Porte-clés", map: "Carte 8 cm", reseller: "Revendeurs", note: "La remise s'applique à toute la commande, articles mixtes compris. Prix à la pièce, livraison en sus.", pcs: "pcs", plus: "+" },
   es: { h2: "Descuentos por volumen", qty: "Cantidad", disc: "Descuento", kc: "Llavero", map: "Mapa 8 cm", reseller: "Revendedores", note: "El descuento se aplica a todo el pedido, también con artículos mixtos. Precios por unidad, envío aparte.", pcs: "uds.", plus: "+" },
   pl: { h2: "Rabaty ilościowe", qty: "Ilość", disc: "Rabat", kc: "Brelok", map: "Mapa 8 cm", reseller: "Dla resellerów", note: "Rabat obejmuje całe zamówienie, także różne wyroby. Ceny za sztukę, dostawa osobno.", pcs: "szt.", plus: "+" },
+  ro: { h2: "Reduceri de volum", qty: "Cantitate", disc: "Reducere", kc: "Breloc", map: "Hartă 8 cm", reseller: "Revânzători", note: "Reducerea se aplică întregului tiraj și articolelor combinate într-o singură comandă. Prețuri pe bucată, livrarea Nova Poshta se plătește separat.", pcs: "buc.", plus: "+" },
 };
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {

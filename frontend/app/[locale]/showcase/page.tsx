@@ -7,8 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ModelModal, { type ModalModel } from "@/components/ModelModal";
-import { GALLERY_ITEMS, type GalleryLocale } from "@/lib/gallery";
-import { PEAKS, type PeakLocale } from "@/lib/mountainPages";
+import { GALLERY_ITEMS, toGalleryLocale } from "@/lib/gallery";
+import { PEAKS, toPeakLocale } from "@/lib/mountainPages";
 import { PEAK_UI } from "@/lib/mountainPagesUi";
 
 // src → опис фото (той самий, що на /foto/[slug]) — унікальні alt для Google Картинок.
@@ -27,7 +27,7 @@ const Model3DViewer = dynamicImport(() => import("@/components/Model3DViewer"), 
 
 export default function ShowcasePage() {
   const t = useTranslations("showcase");
-  const altL = useLocale() as GalleryLocale;
+  const altL = toGalleryLocale(useLocale());
   const [filter, setFilter] = useState<"all" | "key" | "map">("all");
   const [modal, setModal] = useState<ModalModel | null>(null);
 
@@ -172,16 +172,16 @@ export default function ShowcasePage() {
       {/* Гори (/gory) — окремий режим з реальним рельєфом; сторінка на кожну вершину. */}
       <div className="mt-14">
         <h2 className="font-serif text-[clamp(22px,3vw,34px)] text-ink">
-          <Link href="/gory" className="hover:underline">{PEAK_UI[altL as PeakLocale].indexH1}</Link>
+          <Link href="/gory" className="hover:underline">{PEAK_UI[toPeakLocale(altL)].indexH1}</Link>
         </h2>
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {PEAKS.slice(0, 12).map((p) => (
             <Link key={p.slug} href={`/gory/${p.slug}`} className="group block overflow-hidden rounded-[18px] border border-line bg-paper">
               <div className="aspect-[4/3] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.photo} alt={p.t[altL as PeakLocale].name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+                <img src={p.photo} alt={p.t[toPeakLocale(altL)].name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
               </div>
-              <span className="block px-3 py-2 text-[12.5px] font-semibold text-ink">{p.t[altL as PeakLocale].name}</span>
+              <span className="block px-3 py-2 text-[12.5px] font-semibold text-ink">{p.t[toPeakLocale(altL)].name}</span>
             </Link>
           ))}
         </div>
