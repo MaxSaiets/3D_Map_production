@@ -442,14 +442,14 @@ def extract_bbox(
         rows = conn.execute(
             f"SELECT id, levels, wkt FROM buildings WHERE {bbox_filter}",
             params,
-        ).fetchall()
+        ).fetchall() + _extra_rows("buildings", "id, levels, wkt", north, south, east, west)
         result["buildings"] = [{"id": r[0], "levels": r[1], "wkt": r[2]} for r in rows]
 
         # Roads
         rows = conn.execute(
             f"SELECT id, highway, bridge, wkt FROM roads WHERE {bbox_filter}",
             params,
-        ).fetchall()
+        ).fetchall() + _extra_rows("roads", "id, highway, bridge, wkt", north, south, east, west)
         result["roads"] = [
             {"id": r[0], "highway": r[1], "bridge": r[2], "wkt": r[3]} for r in rows
         ]
@@ -458,21 +458,21 @@ def extract_bbox(
         rows = conn.execute(
             f"SELECT id, highway, wkt FROM bridges WHERE {bbox_filter}",
             params,
-        ).fetchall()
+        ).fetchall() + _extra_rows("bridges", "id, highway, wkt", north, south, east, west)
         result["bridges"] = [{"id": r[0], "highway": r[1], "wkt": r[2]} for r in rows]
 
         # Water
         rows = conn.execute(
             f"SELECT id, type, wkt FROM water WHERE {bbox_filter}",
             params,
-        ).fetchall()
+        ).fetchall() + _extra_rows("water", "id, type, wkt", north, south, east, west)
         result["water"] = [{"id": r[0], "type": r[1], "wkt": r[2]} for r in rows]
 
         # Parks
         rows = conn.execute(
             f"SELECT id, type, wkt FROM parks WHERE {bbox_filter}",
             params,
-        ).fetchall()
+        ).fetchall() + _extra_rows("parks", "id, type, wkt", north, south, east, west)
         result["parks"] = [{"id": r[0], "type": r[1], "wkt": r[2]} for r in rows]
 
     # LRU cache
