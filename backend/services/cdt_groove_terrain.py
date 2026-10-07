@@ -423,21 +423,39 @@ def build_cdt_grooved_terrain(
             terrain_mesh.faces = terrain_mesh.faces[:, ::-1]
 
         # perimeter test (zone border edges)
-        zminx, zminy, zmaxx, zmaxy = zone.bounds
+        # 07.10.2026: ⭐край зони = СПРАВЖНІЙ контур, а не сторони bbox. Раніше ребро
+        # вважалось периметром лише на x/y = min/max bbox → для кола/шестикутника/серця
+        # стінка краю будувалась лише до slab_z (як стінка паза) і дивилась ВСЕРЕДИНУ;
+        # дно плити відривалось «листом» нульової товщини, тіло запечатувалось на slab_z
+        # (прод 6336d340: «грані неправильно повернуті знизу»). Для прямокутника
+        # результат той самий: його сторони = контур.
+        _border = zone.exterior
+        _BORDER_TOL = 1e-4
+        # швидкий префільтр: точки глибше 1 см усередині зони (контури доріг) — не край
+        try:
+            from shapely.prepared import prep as _prep
+            _inner = _prep(zone.buffer(-0.01))
+        except Exception:  # noqa: BLE001
+            _inner = None
+
+        def _on_border(x, y):
+            _p = Point(float(x), float(y))
+            if _inner is not None and _inner.contains(_p):
+                return False
+            return float(_border.distance(_p)) < _BORDER_TOL
 
         def edge_is_perim(pa, pb):
-            for axis, val in ((0, zmaxx), (0, zminx), (1, zmaxy), (1, zminy)):
-                if abs(pa[axis] - val) < 1e-4 and abs(pb[axis] - val) < 1e-4:
-                    return True
-            return False
+            if not (_on_border(pa[0], pa[1]) and _on_border(pb[0], pb[1])):
+                return False
+            # хорда між двома точками контуру через ввігнутість (серце) — НЕ край
+            return _on_border((pa[0] + pb[0]) * 0.5, (pa[1] + pb[1]) * 0.5)
 
         # corner posts = border∩inlay junctions (need a SLAB_Z split level)
         corner_posts = set()
         if has_inlays:
             for ch in _ring_chains(_densify_polygon(inlays, seg_len)):
                 for (x, y) in ch:
-                    if (abs(x - zmaxx) < 1e-4 or abs(x - zminx) < 1e-4
-                            or abs(y - zmaxy) < 1e-4 or abs(y - zminy) < 1e-4):
+                    if _on_border(x, y):
                         corner_posts.add((round(x, 4), round(y, 4)))
 
         def col_levels(x, y, z_hi, z_lo):
