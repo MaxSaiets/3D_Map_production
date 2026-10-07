@@ -5,6 +5,7 @@ import { routing, defaultLocale, type AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { PEAKS, type PeakLocale } from "@/lib/mountainPages";
 import { PEAK_UI } from "@/lib/mountainPagesUi";
+import { MOUNTAINS_EXTRA } from "@/lib/mountainsExtra";
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   return pageMetadata({ locale: params.locale, path: "/mountains", ns: "mountainsMeta" });
@@ -16,6 +17,7 @@ export default async function MountainsLayout({ children, params }: { children: 
   const t = await getTranslations({ locale, namespace: "mountainsMeta" });
   const nav = await getTranslations({ locale, namespace: "nav" });
   const tm = await getTranslations({ locale, namespace: "mountains" });
+  const ex = MOUNTAINS_EXTRA[locale];
   const ld = {
     "@context": "https://schema.org",
     "@graph": [
@@ -24,6 +26,7 @@ export default async function MountainsLayout({ children, params }: { children: 
       { "@type": "BreadcrumbList", itemListElement: [
         { "@type": "ListItem", position: 1, name: "Monadruk", item: localeUrl(locale, "/") },
         { "@type": "ListItem", position: 2, name: nav("mountains"), item: localeUrl(locale, "/mountains") } ] },
+      { "@type": "FAQPage", mainEntity: ex.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
     ],
   };
   return (
@@ -40,6 +43,28 @@ export default async function MountainsLayout({ children, params }: { children: 
         <h2 className="text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{t("proseH2")}</h2>
         <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{t("proseP1")}</p>
         <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{t("proseP2")}</p>
+        <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{ex.h2who}</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {ex.who.map((w) => (
+            <div key={w.h3} className="rounded-[16px] border border-[var(--surface-border)] bg-white/70 px-4 py-3">
+              <h3 className="text-[14.5px] font-semibold text-[var(--text-primary,#1c2320)]">{w.h3}</h3>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{w.p}</p>
+            </div>
+          ))}
+        </div>
+        <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{ex.h2how}</h2>
+        <ol className="mt-3 flex list-decimal flex-col gap-1.5 pl-5 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">
+          {ex.how.map((h) => <li key={h}>{h}</li>)}
+        </ol>
+        <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">{ex.h2faq}</h2>
+        <dl className="mt-3 flex flex-col gap-3">
+          {ex.faq.map((f) => (
+            <div key={f.q}>
+              <dt className="text-[14.5px] font-semibold text-[var(--text-primary,#1c2320)]">{f.q}</dt>
+              <dd className="mt-1 text-[14px] leading-relaxed text-[var(--text-secondary,#5a655a)]">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
         {/* Сторінки вершин (/gory/[slug]) — перелінковка для пошуку. */}
         <h2 className="mt-8 text-[18px] font-semibold text-[var(--text-primary,#1c2320)]">
           <Link href="/gory" className="hover:underline">{PEAK_UI[locale as PeakLocale].crumb}</Link>
