@@ -81,6 +81,44 @@ def _triangulate_polygon_simple(vertices_2d: np.ndarray) -> np.ndarray:
         return np.array(faces, dtype=np.int32) if faces else np.array([], dtype=np.int32).reshape(0, 3)
 
 
+def _triangulate_ring_no_steiner(ring_2d: np.ndarray) -> Optional[np.ndarray]:
+    """Тріангуляція НЕопуклого замкненого контуру лише по його вершинах (індекси 0..n-1).
+
+    None → контур опуклий (лишається віяло від центру, як було) або тріангуляція не вдалась.
+    Constrained Delaunay (triangle, 'p') не створює вироджених трикутників на колінеарних
+    точках уздовж сторін, на відміну від ear-clipping.
+    """
+    pts = np.asarray(ring_2d, dtype=np.float64)
+    n = len(pts)
+    if n >= 2 and np.sum((pts[0] - pts[-1]) ** 2) < 1e-16:
+        n -= 1  # замикаюча точка = перша; її дублікат зливається merge_vertices
+    if n < 3:
+        return None
+    poly = ShapelyPolygon(pts[:n])
+    if not poly.is_valid or poly.is_empty:
+        return None
+    hull_area = float(poly.convex_hull.area)
+    if hull_area <= 0.0 or (hull_area - float(poly.area)) <= 1e-6 * hull_area:
+        return None
+    try:
+        import triangle as _tr
+        seg = np.column_stack([np.arange(n), (np.arange(n) + 1) % n])
+        res = _tr.triangulate({"vertices": pts[:n], "segments": seg}, "pQ")
+        tris = np.asarray(res.get("triangles", []), dtype=np.int64)
+        if len(tris) and len(res["vertices"]) == n:
+            return tris
+    except Exception as exc:  # noqa: BLE001
+        print(f"[SOLIDIFIER] CDT bottom cap failed ({exc}); trying earcut")
+    try:
+        import mapbox_earcut as _ec
+        tris = np.asarray(_ec.triangulate_float64(pts[:n], np.array([n], dtype=np.uint32)),
+                          dtype=np.int64).reshape(-1, 3)
+        return tris if len(tris) else None
+    except Exception as exc:  # noqa: BLE001
+        print(f"[SOLIDIFIER] earcut bottom cap failed ({exc}); keeping centre fan")
+        return None
+
+
 def create_solid_terrain_robust(
     terrain_top: trimesh.Trimesh,
     zone_polygon: ShapelyPolygon,
@@ -196,6 +234,14 @@ def create_solid_terrain_robust(
         
         bottom_cap_faces = np.array(bottom_cap_faces, dtype=np.int32)
 
+        # 07.10.2026: віяло від центроїда коректне лише для опуклого контуру. Для серця/
+        # пазла трикутники віяла виходять за форму й перекриваються → дно не герметичне.
+        # Неопуклий контур тріангулюємо по його ж вершинах (CDT без нових точок).
+        _cap_cdt = _triangulate_ring_no_steiner(bottom_2d)
+        if _cap_cdt is not None:
+            bottom_cap_faces = (_cap_cdt + n_boundary).astype(np.int32)
+            print(f"[SOLIDIFIER] Non-convex outline: bottom cap via CDT ({len(bottom_cap_faces)} faces)")
+
         # Перевернути нормалі bottom cap (вони мають дивитись вниз)
         bottom_cap_faces = bottom_cap_faces[:, ::-1]  # Reverse winding order
 
@@ -262,7 +308,6 @@ def create_solid_terrain_robust(
                 print(f"[SOLIDIFIER] Terrain top pointed DOWN (nz={_top_nz:.1f}) → flipped UP")
         except Exception as _tnx:  # noqa: BLE001
             print(f"[SOLIDIFIER] terrain-top orientation check skipped ({_tnx})")
-
 
         face_lists = [wall_faces, bottom_cap_faces, terrain_faces_offset]
         all_faces = np.vstack(face_lists)
