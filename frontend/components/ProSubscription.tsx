@@ -21,10 +21,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   CheckCircle2, ChevronDown, Infinity as InfinityIcon, Loader2, Minus, MousePointerClick,
-  Printer, ShieldCheck, Store, Sparkles, Building2,
+  Printer, ShieldCheck, Store, Sparkles, Building2, Send, Mail,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { SUB_PRICE } from "@/lib/legal/subscription";
+import { BUSINESS } from "@/lib/legal";
 import { FILE_PRICE_UAH, breakEvenFiles } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -38,6 +39,7 @@ interface SubView {
 
 const LOCALE_TAG: Record<string, string> = { uk: "uk-UA", en: "en-US", de: "de-DE", es: "es-ES", fr: "fr-FR", pl: "pl-PL", ro: "ro-RO" };
 /** Приблизний курс для ціни файлу в доларах (дзеркало pricing.json fx.uah_per_usd), якщо бекенд не відповів. */
+const TG_URL = "https://t.me/monadruk";
 const UAH_PER_USD_FALLBACK = 41.5;
 
 function fmtPrice(ccy: Ccy, amount: number, locale: string, digits = 0) {
@@ -268,6 +270,24 @@ export function ProSubscription() {
       <Link href="/create" className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-forest px-5 py-3 text-[15px] font-bold text-white hover:opacity-90" style={{ background: "var(--forest,#2E4A3A)" }}>
         {t("soonCta")}
       </Link>
+      {/* 07.10.2026: поки продаж закритий — збираємо зацікавлених напряму */}
+      <div className="mt-5 rounded-2xl border border-line bg-white p-4" data-testid="pro-interest">
+        <p className="text-[14px] font-semibold text-ink">{t("soonContactTitle")}</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{t("soonContactText")}</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <a href={TG_URL} target="_blank" rel="noopener"
+            onClick={() => { import("@/lib/analytics").then((m) => m.track("pro_interest", { channel: "tg" })).catch(() => {}); }}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-[#1f8fcb]/40 bg-[#eef7fc] px-4 text-[14px] font-semibold text-[#1f8fcb] hover:bg-[#e1f1fa]">
+            <Send size={16} /> Telegram
+          </a>
+          <a href={`mailto:${BUSINESS.email}?subject=${encodeURIComponent("Monadruk Pro")}`}
+            onClick={() => { import("@/lib/analytics").then((m) => m.track("pro_interest", { channel: "email" })).catch(() => {}); }}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-line bg-white px-4 text-[14px] font-semibold text-ink hover:bg-paper">
+            <Mail size={16} /> {t("soonContactEmail")}
+          </a>
+        </div>
+        <p className="mt-2 text-center text-[12px] text-ink-3">{BUSINESS.email}</p>
+      </div>
     </div>
   );
 
