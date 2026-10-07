@@ -10,15 +10,21 @@ import {
   MAP_MAGNET_PRICE_UAH,
   KEYCHAIN_PRICE_UAH,
   MAP_RELIEF_ADDON_UAH,
+  FILE_PRICE_UAH,
   mapPriceEur,
 } from "@/lib/mapPrices";
+import { SUB_PRICE } from "@/lib/legal/subscription";
 
 export type CatalogItem = {
   name: string;
   desc: string;
   uah: number;
-  /** "from" → «від N ₴»; "addon" → «+N ₴»; "fixed" (default) → «N ₴». */
-  kind?: "from" | "addon" | "fixed";
+  /** "from" → «від N ₴»; "addon" → «+N ₴»; "monthly" → «N ₴ / міс»; "fixed" (default) → «N ₴». */
+  kind?: "from" | "addon" | "fixed" | "monthly";
+  /** Ціна в доларах для іноземців (підписка списується в USD, а не за курсом). */
+  usd?: number;
+  /** Сторінка з деталями (рядок стає посиланням на /prices). */
+  href?: string;
 };
 export type CatalogCategory = { title: string; items: CatalogItem[] };
 
@@ -36,6 +42,8 @@ export type Catalog = {
   docsIntro: string;
   docs: { offer: string; delivery: string; refund: string; contacts: string };
   ctaLabel: string;
+  /** Плашка Monadruk Pro на /prices (для тих, хто друкує багато або на продаж). */
+  pro: { eyebrow: string; title: string; text: string; cta: string };
   faqTitle: string;
   faq: CatalogFaqItem[];
 };
@@ -51,6 +59,11 @@ const PR = {
   xl: P[150],
   magnet: MAP_MAGNET_PRICE_UAH,
   relief: MAP_RELIEF_ADDON_UAH,
+  // 07.10.2026: файл давно платний (149 ₴, FREE_DOWNLOADS=0 на проді), а каталог —
+  // і /prices, і ~1700 сторінок міст — досі писав «Безкоштовно* (5 завантажень)».
+  file: FILE_PRICE_UAH,
+  pro: SUB_PRICE.UAH,
+  proUsd: SUB_PRICE.USD,
 };
 
 const uk: Catalog = {
@@ -86,7 +99,8 @@ const uk: Catalog = {
     {
       title: "Цифрові файли",
       items: [
-        { name: "Файл 3MF / STL для самостійного друку", desc: "Готовий файл моделі. Безкоштовно в межах ліміту акаунта (5 завантажень), далі — за домовленістю.", uah: 0, kind: "from" },
+        { name: "Файл 3MF / STL для самостійного друку", desc: "Готовий 3MF з поділом на кольори — відкривається в Bambu Studio чи PrusaSlicer. Для особистого друку; 3D-превʼю перед покупкою безкоштовне.", uah: PR.file },
+        { name: "Monadruk Pro — безлім файлів", desc: "Необмежені файли 3MF/STL усіх моделей і комерційна ліцензія: друкуйте й продавайте вироби. Скасування в один клік.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -102,6 +116,7 @@ const uk: Catalog = {
   docsIntro: "Замовлення регулюється договором публічної оферти. Деталі:",
   docs: { offer: "Договір публічної оферти", delivery: "Оплата і доставка", refund: "Повернення та обмін", contacts: "Контакти" },
   ctaLabel: "Створити свою мапу",
+  pro: { eyebrow: "Для 3D-друкарень і продавців", title: "Друкуєте багато або на продаж?", text: "Monadruk Pro — безлім файлів 3MF/STL і комерційна ліцензія на надруковані вироби. Окупається вже з {n}-го файлу на місяць; скасування в один клік.", cta: "Детальніше про Pro" },
   faqTitle: "Часті запитання",
   faq: [
     { q: "Скільки триває виготовлення?", a: "2–4 робочі дні на друк, потім доставка Новою Поштою по Україні." },
@@ -144,7 +159,8 @@ const en: Catalog = {
     {
       title: "Digital files",
       items: [
-        { name: "3MF / STL file for self-printing", desc: "Ready model file. Free within your account limit (5 downloads), then by arrangement.", uah: 0, kind: "from" },
+        { name: "3MF / STL file for self-printing", desc: "Ready colour-split 3MF that opens in Bambu Studio or PrusaSlicer. For personal printing; the 3D preview before buying is free.", uah: PR.file },
+        { name: "Monadruk Pro — unlimited files", desc: "Unlimited 3MF/STL files for every model plus a commercial licence: print and sell the items. Cancel in one click.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -160,6 +176,7 @@ const en: Catalog = {
   docsIntro: "Orders are governed by the public offer agreement. Details:",
   docs: { offer: "Public offer agreement", delivery: "Payment & delivery", refund: "Returns & refunds", contacts: "Contacts" },
   ctaLabel: "Create your map",
+  pro: { eyebrow: "For print shops and sellers", title: "Printing a lot, or printing to sell?", text: "Monadruk Pro gives you unlimited 3MF/STL files and a commercial licence for printed items. It pays off from about the {n}th file a month; cancel in one click.", cta: "Learn about Pro" },
   faqTitle: "FAQ",
   faq: [
     { q: "How long does production take?", a: "2–4 business days to print, then delivery across Ukraine." },
@@ -202,7 +219,8 @@ const de: Catalog = {
     {
       title: "Digitale Dateien",
       items: [
-        { name: "3MF-/STL-Datei zum Selbstdrucken", desc: "Fertige Modelldatei. Kostenlos im Rahmen Ihres Kontolimits (5 Downloads), danach nach Vereinbarung.", uah: 0, kind: "from" },
+        { name: "3MF-/STL-Datei zum Selbstdrucken", desc: "Fertige, farbgetrennte 3MF-Datei für Bambu Studio oder PrusaSlicer. Für den privaten Druck; die 3D-Vorschau vor dem Kauf ist kostenlos.", uah: PR.file },
+        { name: "Monadruk Pro — unbegrenzte Dateien", desc: "Unbegrenzte 3MF/STL-Dateien aller Modelle und kommerzielle Lizenz: drucken und verkaufen. Kündigung mit einem Klick.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -218,6 +236,7 @@ const de: Catalog = {
   docsIntro: "Bestellungen unterliegen dem öffentlichen Angebotsvertrag. Details:",
   docs: { offer: "Öffentlicher Angebotsvertrag", delivery: "Zahlung & Versand", refund: "Rückgabe & Umtausch", contacts: "Kontakte" },
   ctaLabel: "Eigene Karte erstellen",
+  pro: { eyebrow: "Für Druckereien und Verkäufer", title: "Drucken Sie viel oder für den Verkauf?", text: "Monadruk Pro: unbegrenzte 3MF/STL-Dateien und kommerzielle Lizenz für gedruckte Stücke. Lohnt sich ab etwa der {n}. Datei im Monat; Kündigung mit einem Klick.", cta: "Mehr über Pro" },
   faqTitle: "Häufige Fragen",
   faq: [
     { q: "Wie lange dauert die Herstellung?", a: "2–4 Werktage Druckzeit, danach Versand innerhalb der Ukraine." },
@@ -260,7 +279,8 @@ const es: Catalog = {
     {
       title: "Archivos digitales",
       items: [
-        { name: "Archivo 3MF / STL para imprimir tú mismo", desc: "Archivo de modelo listo. Gratis dentro del límite de tu cuenta (5 descargas), luego según acuerdo.", uah: 0, kind: "from" },
+        { name: "Archivo 3MF / STL para imprimir tú mismo", desc: "3MF listo y separado por colores que se abre en Bambu Studio o PrusaSlicer. Para impresión personal; la vista previa 3D antes de comprar es gratis.", uah: PR.file },
+        { name: "Monadruk Pro — archivos ilimitados", desc: "Archivos 3MF/STL ilimitados de todos los modelos y licencia comercial: imprime y vende. Cancelación en un clic.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -276,6 +296,7 @@ const es: Catalog = {
   docsIntro: "Los pedidos se rigen por el contrato de oferta pública. Detalles:",
   docs: { offer: "Contrato de oferta pública", delivery: "Pago y envío", refund: "Devoluciones y cambios", contacts: "Contactos" },
   ctaLabel: "Crea tu mapa",
+  pro: { eyebrow: "Para talleres y vendedores", title: "¿Imprimes mucho o para vender?", text: "Monadruk Pro: archivos 3MF/STL ilimitados y licencia comercial para las piezas impresas. Compensa desde unos {n} archivos al mes; cancelación en un clic.", cta: "Más sobre Pro" },
   faqTitle: "Preguntas frecuentes",
   faq: [
     { q: "¿Cuánto tarda la fabricación?", a: "2–4 días hábiles de impresión, luego envío por Ucrania." },
@@ -318,7 +339,8 @@ const fr: Catalog = {
     {
       title: "Fichiers numériques",
       items: [
-        { name: "Fichier 3MF / STL à imprimer soi-même", desc: "Fichier de modèle prêt. Gratuit dans la limite de votre compte (5 téléchargements), puis sur accord.", uah: 0, kind: "from" },
+        { name: "Fichier 3MF / STL à imprimer soi-même", desc: "3MF prêt, séparé par couleurs, qui s’ouvre dans Bambu Studio ou PrusaSlicer. Pour un usage personnel ; l’aperçu 3D avant achat est gratuit.", uah: PR.file },
+        { name: "Monadruk Pro — fichiers illimités", desc: "Fichiers 3MF/STL illimités pour tous les modèles et licence commerciale : imprimez et vendez. Résiliation en un clic.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -334,6 +356,7 @@ const fr: Catalog = {
   docsIntro: "Les commandes sont régies par le contrat d'offre publique. Détails :",
   docs: { offer: "Contrat d'offre publique", delivery: "Paiement et livraison", refund: "Retours et remboursements", contacts: "Contacts" },
   ctaLabel: "Créer votre carte",
+  pro: { eyebrow: "Pour les ateliers et vendeurs", title: "Vous imprimez beaucoup ou pour vendre ?", text: "Monadruk Pro : fichiers 3MF/STL illimités et licence commerciale pour les objets imprimés. Rentable dès environ {n} fichiers par mois ; résiliation en un clic.", cta: "En savoir plus sur Pro" },
   faqTitle: "Questions fréquentes",
   faq: [
     { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés d'impression, puis livraison en Ukraine." },
@@ -376,7 +399,8 @@ const pl: Catalog = {
     {
       title: "Pliki cyfrowe",
       items: [
-        { name: "Plik 3MF / STL do samodzielnego druku", desc: "Gotowy plik modelu. Bezpłatnie w ramach limitu konta (5 pobrań), dalej po uzgodnieniu.", uah: 0, kind: "from" },
+        { name: "Plik 3MF / STL do samodzielnego druku", desc: "Gotowy 3MF z podziałem na kolory, otwiera się w Bambu Studio lub PrusaSlicer. Do druku na własny użytek; podgląd 3D przed zakupem jest darmowy.", uah: PR.file },
+        { name: "Monadruk Pro — pliki bez limitu", desc: "Pliki 3MF/STL bez limitu dla wszystkich modeli i licencja komercyjna: drukuj i sprzedawaj. Anulowanie jednym kliknięciem.", uah: PR.pro, usd: PR.proUsd, kind: "monthly", href: "/pro" },
       ],
     },
   ],
@@ -392,6 +416,7 @@ const pl: Catalog = {
   docsIntro: "Zamówienia reguluje umowa oferty publicznej. Szczegóły:",
   docs: { offer: "Umowa oferty publicznej", delivery: "Płatność i dostawa", refund: "Zwroty i wymiana", contacts: "Kontakt" },
   ctaLabel: "Stwórz swoją mapę",
+  pro: { eyebrow: "Dla drukarni i sprzedawców", title: "Drukujesz dużo albo na sprzedaż?", text: "Monadruk Pro: pliki 3MF/STL bez limitu i licencja komercyjna na wydruki. Opłaca się już od ok. {n} plików miesięcznie; anulowanie jednym kliknięciem.", cta: "Więcej o Pro" },
   faqTitle: "Częste pytania",
   faq: [
     { q: "Ile trwa wykonanie?", a: "2–4 dni robocze druku, potem dostawa po Ukrainie." },
@@ -408,21 +433,25 @@ export function getCatalog(locale: string): Catalog {
 }
 
 // Локалізовані слова цінника (спільні для /prices і price-band на сторінках міст).
-export const PRICE_WORDS: Record<string, { from: string; free: string }> = {
-  uk: { from: "від", free: "Безкоштовно*" },
-  en: { from: "from", free: "Free*" },
-  de: { from: "ab", free: "Kostenlos*" },
-  es: { from: "desde", free: "Gratis*" },
-  fr: { from: "dès", free: "Gratuit*" },
-  pl: { from: "od", free: "Bezpłatnie*" },
+export const PRICE_WORDS: Record<string, { from: string; free: string; perMonth: string }> = {
+  uk: { from: "від", free: "Безкоштовно*", perMonth: "/ міс" },
+  en: { from: "from", free: "Free*", perMonth: "/ mo" },
+  de: { from: "ab", free: "Kostenlos*", perMonth: "/ Monat" },
+  es: { from: "desde", free: "Gratis*", perMonth: "/ mes" },
+  fr: { from: "dès", free: "Gratuit*", perMonth: "/ mois" },
+  pl: { from: "od", free: "Bezpłatnie*", perMonth: "/ mies." },
 };
 
 /** Єдине форматування ціни товару: «N ₴» (uk) / «N ₴ · ≈M €» (EU); «+N ₴» (addon);
  *  «від N ₴» (from); «Безкоштовно*» (uah=0). Спільне для /prices і сторінок міст. */
-export function formatCatalogPrice(uah: number, kind: string | undefined, locale: string): string {
+export function formatCatalogPrice(uah: number, kind: string | undefined, locale: string, usd?: number): string {
   const w = PRICE_WORDS[locale] ?? PRICE_WORDS.uk;
   if (uah === 0) return w.free;
   if (kind === "addon") return `+${uah} ₴`;
+  if (kind === "monthly") {
+    const n = new Intl.NumberFormat(locale === "uk" ? "uk-UA" : locale).format(uah);
+    return locale !== "uk" && usd ? `$${usd} ${w.perMonth}` : `${n} ₴ ${w.perMonth}`;
+  }
   const eur = locale !== "uk" ? ` · ≈${mapPriceEur(uah)} €` : "";
   const base = `${uah} ₴${eur}`;
   return kind === "from" ? `${w.from} ${base}` : base;

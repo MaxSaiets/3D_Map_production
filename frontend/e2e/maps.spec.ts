@@ -3,7 +3,8 @@ import { test, expect } from "@playwright/test";
 test.describe("Programmatic SEO: сторінки міст /maps", () => {
   test("/maps: індекс з усіма містами (23 УА + міста Європи)", async ({ page }) => {
     await page.goto("/uk/maps");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("3D-мапи міст");
+    // 26.09.2026 SEO-хвиля: h1 «3D-моделі міст України — купити макет свого міста».
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/3D-(моделі|мапи) міст/);
     // Хвиля 4 (2026-07-29) додала міста Європи — точна кількість плаває з
     // розширенням списку, тому фіксуємо нижню межу, а не exact count.
     const count = await page.locator("main ul li a").count();

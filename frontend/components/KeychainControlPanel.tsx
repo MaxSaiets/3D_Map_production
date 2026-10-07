@@ -1710,7 +1710,7 @@ export function KeychainControlPanel({
             ))}
           </div>
           {generatedManifest && generatedLayers ? (
-            <div className="mt-4 rounded-[22px] border border-[var(--surface-border)] bg-white/82 p-3">
+            <div className="mt-4 rounded-[22px] border border-[var(--surface-border)] bg-white/80 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                 {t("review.generated3mf")}
               </div>

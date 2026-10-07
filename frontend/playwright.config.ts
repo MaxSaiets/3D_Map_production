@@ -14,6 +14,9 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     viewport: { width: 1280, height: 800 },
+    // 07.10.2026: next-intl визначає мову за Accept-Language; без цього браузер тесту (en-US)
+    // отримував англійську навіть на /uk/... і ВСІ перевірки українських текстів падали.
+    locale: "uk-UA",
     trace: "retain-on-failure",
   },
   webServer: {

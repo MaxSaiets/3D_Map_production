@@ -232,7 +232,7 @@ export default function UaCity2View({ city, locale }: { city: CityPage; locale: 
           {priceItems.map((it) => (
             <li key={it.name} className="flex items-baseline justify-between gap-3 border-b border-line-soft/50 py-1">
               <span>{it.name}</span>
-              <span className="whitespace-nowrap font-semibold text-[var(--accent-strong)]">{formatCatalogPrice(it.uah, it.kind, locale)}</span>
+              <span className="whitespace-nowrap font-semibold text-[var(--accent-strong)]">{formatCatalogPrice(it.uah, it.kind, locale, it.usd)}</span>
             </li>
           ))}
         </ul>

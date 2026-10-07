@@ -179,3 +179,11 @@ def test_missing_country_data_does_not_invent_a_split():
     }
     text = wd.build_digest(agg, orders_week=0, leads_total=0)
     assert "З них з України: 0" not in text
+
+
+def test_digest_pro_line_only_when_pro_visited():
+    base = {"totals": {"uniqueVisitors": 10, "pageviews": 20}, "guided": {"choices": {}}}
+    assert "Pro:" not in wd.build_digest(base, orders_week=0, leads_total=0)
+    with_pro = {**base, "guided": {"choices": {}, "pro": {"viewPeople": 4, "checkoutPeople": 1, "cta": []}}}
+    txt = wd.build_digest(with_pro, orders_week=0, leads_total=0)
+    assert "Pro: відкрили /pro 4 · пішли на оплату 1" in txt

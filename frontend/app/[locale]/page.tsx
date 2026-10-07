@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, Boxes, Download, KeyRound, Layers3, LayoutGrid, Leaf, MapPin, Ruler, Sparkles, Star, Truck, Mountain } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Boxes, Download, KeyRound, Layers3, LayoutGrid, Leaf, MapPin, Ruler, ShieldCheck, Sparkles, Star, Truck, Mountain } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 
@@ -350,6 +350,8 @@ function MoreCapabilities() {
     { href: "/mountains", icon: <Mountain size={15} />, title: t("mountainsTitle"), desc: t("mountainsDesc") },
     { href: "/worlds", icon: <Sparkles size={15} />, title: t("worldsTitle"), desc: t("worldsDesc") },
     { href: "/showcase", icon: <Boxes size={15} />, title: t("showcaseTitle"), desc: t("showcaseDesc") },
+    // 07.10.2026: підписка для тих, хто друкує багато/на продаж — раніше лише у футері.
+    { href: "/pro", icon: <ShieldCheck size={15} />, title: t("proTitle"), desc: t("proDesc") },
   ];
   return (
     <div className="mt-8" data-testid="home-more-capabilities">

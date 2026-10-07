@@ -12,6 +12,8 @@ import { listGrids, deleteGrid, type CityGrid } from "@/lib/grids";
 import { OrderDialog } from "@/components/OrderDialog";
 import { BuyFileDialog } from "@/components/BuyFileDialog";
 import { ShoppingBag } from "lucide-react";
+import { FILE_PRICE_UAH } from "@/lib/mapPrices";
+import { SUB_PRICE } from "@/lib/legal/subscription";
 
 // three.js (Model3DViewer) — динамічний імпорт, без SSR: важкий client-only
 // рендерер, той самий патерн, що й на / та /worlds. `dynamic` тут зайнятий
@@ -294,8 +296,16 @@ export default function AccountPage() {
             </div>
             <div className="rounded-[18px] border border-line bg-paper p-5">
               <div className="text-[11px] uppercase tracking-wide text-ink-3">{t("downloadsLabel")}</div>
-              <div className="mt-1 text-[15px] font-semibold text-ink">
-                {quota ? (quota.is_admin ? t("unlimited") : `${quota.downloads} / ${quota.limit}`) : "…"}
+              <div className="mt-1 text-[15px] font-semibold text-ink" data-testid="account-downloads">
+                {/* 07.10.2026: на проді FREE_DOWNLOADS=0 → кабінет показував загадкове «0 / 0».
+                    Без безкоштовних завантажень чесно кажемо ціну файлу й альтернативу. */}
+                {!quota ? "…"
+                  : quota.is_admin ? t("unlimited")
+                  : quota.limit > 0 ? `${quota.downloads} / ${quota.limit}`
+                  : <>
+                      {t("perFile", { price: `${FILE_PRICE_UAH} ₴` })}
+                      <span className="mt-0.5 block text-[12px] font-medium text-ink-3">{t("perFileHint")}</span>
+                    </>}
               </div>
             </div>
             <div className="rounded-[18px] border border-line bg-paper p-5">
@@ -307,11 +317,31 @@ export default function AccountPage() {
               </div>
             </div>
           </div>
-          <div className="mt-3">
-            <Link href={`/${locale === "uk" ? "" : locale + "/"}pro`} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-forest hover:underline">
-              <ShieldCheck size={15} /> {pro ? t("proManage") : t("proCta")} →
-            </Link>
-          </div>
+          {/* 07.10.2026: замість дрібного посилання — картка Pro (для підписника — статус + керування). */}
+          {pro ? (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-forest/30 bg-[rgba(46,74,58,0.06)] px-5 py-4" data-testid="account-pro-active">
+              <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-ink">
+                <ShieldCheck size={17} className="text-forest" /> {t("proActiveText")}
+              </span>
+              <Link href={`/${locale === "uk" ? "" : locale + "/"}pro`} className="inline-flex min-h-[40px] items-center rounded-full border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:bg-paper">
+                {t("proManage")}
+              </Link>
+            </div>
+          ) : !realAdmin && !quota?.is_admin && (
+            <div className="mt-3 flex flex-col gap-4 rounded-[20px] p-5 text-[#F4EFE4] sm:flex-row sm:items-center sm:justify-between" style={{ background: "var(--forest,#2E4A3A)" }} data-testid="account-pro-card">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 font-serif text-[20px]"><ShieldCheck size={19} className="shrink-0" /> {t("proCardTitle")}</div>
+                <p className="mt-1 max-w-[620px] text-[13.5px] leading-relaxed opacity-90">
+                  {t("proCardText", { price: `${new Intl.NumberFormat(dateLoc).format(SUB_PRICE.UAH)} ₴` })}
+                </p>
+              </div>
+              <Link href={`/${locale === "uk" ? "" : locale + "/"}pro`}
+                onClick={() => { import("@/lib/analytics").then((m) => m.track("pro_cta", { place: "account" })).catch(() => {}); }}
+                className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#F4EFE4] px-5 text-sm font-bold text-[#1E2A22] hover:opacity-90">
+                {t("proCardCta")} →
+              </Link>
+            </div>
+          )}
 
           {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{notice}</div>}
 

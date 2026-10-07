@@ -484,7 +484,23 @@ export function KeychainScenarioFlow({
                 >
                   <Download size={17} /> {t("downloadCta")}
                 </Button>
-                <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
+                {/* 07.10.2026: прогрес друк-файлу (≈2 хв) прямо під кнопкою — див. ScenarioFlow. */}
+                {dlBusy && typeof s.printPrep === "number" ? (
+                  <div className="flex flex-col gap-1" data-testid="kc-guided-printprep" aria-live="polite">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-border)]">
+                      <div className="h-full rounded-full bg-[var(--accent-strong)] transition-[width] duration-700"
+                        style={{ width: `${Math.max(4, Math.min(100, s.printPrep))}%` }} />
+                    </div>
+                    <p className="text-center text-[11.5px] font-semibold text-[var(--accent-strong)]">
+                      {t("printPrepLine")} {s.printPrep}%
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">
+                    {/* Pro/безлім: не обіцяти «149 ₴» тому, хто вже платить підписку. */}
+                    {dlQuota?.isAdmin ? t("downloadSubUnlimited") : t("downloadSub")}
+                  </p>
+                )}
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
                 {dlQuota && !dlQuota.isAdmin && dlQuota.limit > 0 && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>

@@ -28,6 +28,24 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * ЛИШЕ ДЛЯ РОЗРОБКИ (07.10.2026): e2e і аудит станів «увійшов / Pro / адмін» без
+ * справжнього Firebase-входу. У прод-збірці NODE_ENV === "production" → гілка
+ * вирізається збирачем, і жоден localStorage на monadruk.com її не ввімкне.
+ * Токен "test-token" бекенд не прийме — відповіді API в тестах мокаються (page.route).
+ */
+const DEV_TEST_USER_KEY = "__mnd_test_user";
+function devTestUser(): User | null {
+  if (process.env.NODE_ENV === "production" || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DEV_TEST_USER_KEY);
+    if (!raw) return null;
+    const j = JSON.parse(raw) as { uid?: string; email?: string; name?: string };
+    return { uid: j.uid || "test-uid", email: j.email || "tester@example.com", displayName: j.name || "Tester",
+      phoneNumber: null, emailVerified: true } as unknown as User;
+  } catch { return null; }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const configured = isFirebaseAuthConfigured();
   const [user, setUser] = useState<User | null>(null);
@@ -37,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pendingAfterLoginRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    const testUser = devTestUser();
+    if (testUser) { setUser(testUser); setLoading(false); return; }
     if (!configured) { setLoading(false); return; }
     let cancelled = false;
     let unsub: (() => void) | undefined;
@@ -84,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     openLogin: (after?: () => void) => { pendingAfterLoginRef.current = after ?? null; setOpen(true); },
     signOut: async () => { await signOutUser(); },
     signInWithGoogle: async () => { await signInWithGoogle(); },
-    getIdToken,
+    getIdToken: devTestUser() ? async () => "test-token" : getIdToken,
   }), [user, loading, configured]);
 
   return (

@@ -194,7 +194,7 @@ export function KeychainSlicerPreview({
           {t("slicerPreview")}
         </div>
         <h3 className="mt-4 font-title text-xl font-semibold">{t("layerOrder")}</h3>
-        <p className="mt-2 text-sm leading-6 text-white/68">
+        <p className="mt-2 text-sm leading-6 text-white/70">
           {t("clipInside")}
         </p>
       </div>
@@ -208,13 +208,13 @@ export function KeychainSlicerPreview({
                 style={{ width: layer.width, background: layer.color }}
               />
             </div>
-            <div className="text-right text-[11px] font-semibold text-white/62">{layer.height}</div>
+            <div className="text-right text-[11px] font-semibold text-white/60">{layer.height}</div>
           </div>
         ))}
       </div>
       <div className="relative z-10 mt-6 rounded-[18px] border border-white/10 bg-white/[0.06] p-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">{t("printNote")}</div>
-        <div className="mt-1 text-sm font-semibold text-white/86">
+        <div className="mt-1 text-sm font-semibold text-white/85">
           {t("minStroke")}
         </div>
       </div>

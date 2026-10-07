@@ -38,7 +38,7 @@ test.describe("Майстерня брелків /keychains", () => {
     await expect(page.getByRole("button", { name: /Будиночок 44 × 48/ })).toBeVisible();
   });
 
-  test("Ф1b: мобільна навігація уніфікована (sticky БЕЗ ціни, один бар)", async ({ page }) => {
+  test("Ф1b: мобільна навігація уніфікована (sticky з живою ціною, один бар)", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/uk/keychains");
     await page.waitForTimeout(1000);
@@ -51,7 +51,9 @@ test.describe("Майстерня брелків /keychains", () => {
     // Рівно ОДИН закріплений бар (раніше конкурували два портали)
     await expect(sticky).toHaveCount(1);
     await expect(sticky.first()).toBeVisible();
-    await expect(sticky.first()).not.toContainText(/₴/);
+    // 07.10.2026: guided-редизайни (07–09.2026) свідомо повернули живу ціну на CTA
+    // («CTA без ціни» було записано як дефект) — тепер ціна в барі ОЧІКУВАНА.
+    await expect(sticky.first()).toContainText(/₴/);
     await expect(sticky.first()).toContainText(/Створити брелок/);
     // Степер «Крок 1/2/3» свідомо прибрано (власник: зайвий chrome) — навігація
     // без дублів: секційні таби панелі лишаються єдиною навігацією налаштувань.

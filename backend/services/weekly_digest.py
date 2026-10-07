@@ -116,6 +116,11 @@ def build_digest(agg: Dict[str, Any], orders_week: int, leads_total: int, days: 
     reclicks = int((guided.get("downloadReclicks") or 0))
     if reclicks:
         lines.append(f"🔁 Повторні кліки «Завантажити»: {reclicks} — інтерфейс не показує реакції")
+    # 07.10.2026: воронка підписки Pro — лише коли хтось реально дійшов до /pro.
+    _pro = guided.get("pro") or {}
+    _pro_views = int(_pro.get("viewPeople") or 0)
+    if _pro_views:
+        lines.append(f"⭐ Pro: відкрили /pro {_pro_views} · пішли на оплату {int(_pro.get('checkoutPeople') or 0)}")
     if reasons:
         lines.append("❓ Чому не замовляють: " + ", ".join(f"{_REASON_LABELS.get(k, k)} {v}" for k, v in reasons))
     if leads_total:

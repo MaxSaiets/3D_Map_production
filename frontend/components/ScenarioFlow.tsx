@@ -527,7 +527,8 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   const track = (ev: string, props: Record<string, unknown>) =>
     import("@/lib/analytics").then((m) => m.track(ev, { product: "map", ...props })).catch(() => {});
   /** «8 см» / «9.5 см» — без toLocaleString (локаль браузера ≠ локаль сайту в тестах). */
-  const sizeCm = (mm: number) => `${Math.round(mm) / 10} см`;
+  // 07.10.2026: «см» кирилицею потрапляло в англ./нім./… інтерфейс і в повідомлення месенджера.
+  const sizeCm = (mm: number) => `${Math.round(mm) / 10} ${locale === "uk" ? "см" : "cm"}`;
   /** «M · 8 см» для пресету, «9.5 см» для довільного розміру — рекап, sticky-бар, месенджер. */
   const shapeDef = GUIDED_SHAPES.find((x) => x.id === s.figureShape) ?? GUIDED_SHAPES[0];
   /** Частини (панно): 1 = одна модель, 2/3 = сітка N×N плиток. Лише для обʼємних мап. */
@@ -828,7 +829,25 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 >
                   <Download size={17} /> {t("downloadCta")}
                 </Button>
-                <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">{t("downloadSub")}</p>
+                {/* 07.10.2026: друк-файл готується ≈2 хв, а GenerationStages (з прогресом)
+                    рендериться лише під час ПЕРШОЇ генерації → людина 2,5 хв бачила тільки
+                    крутилку на кнопці. Показуємо прогрес прямо під нею. */}
+                {dlBusy && typeof s.printPrep === "number" ? (
+                  <div className="flex flex-col gap-1" data-testid="guided-printprep" aria-live="polite">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-border)]">
+                      <div className="h-full rounded-full bg-[var(--accent-strong)] transition-[width] duration-700"
+                        style={{ width: `${Math.max(4, Math.min(100, s.printPrep))}%` }} />
+                    </div>
+                    <p className="text-center text-[11.5px] font-semibold text-[var(--accent-strong)]">
+                      {t("printPrepLine")} {s.printPrep}%
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-center text-[11px] leading-snug text-[var(--text-secondary)]">
+                    {/* Pro/безлім: не обіцяти «149 ₴» тому, хто вже платить підписку. */}
+                    {dlQuota?.isAdmin ? t("downloadSubUnlimited") : t("downloadSub")}
+                  </p>
+                )}
                 {/* T-D.5: залогінений бачить залишок безкоштовних файлів прямо тут. */}
                 {dlQuota && !dlQuota.isAdmin && dlQuota.limit > 0 && (
                   <p className="text-center text-[11px] font-semibold text-[var(--accent-strong)]">{t("quotaLeft", { n: dlQuota.remaining, limit: dlQuota.limit })}</p>

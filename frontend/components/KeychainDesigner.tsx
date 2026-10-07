@@ -1153,7 +1153,9 @@ export function KeychainDesigner({
     // pt-14: верхня смуга зарезервована під хінт-пігулку і перемикач Лице/Зворот —
     // інакше вони налазили на верхню мм-лінійку макета (SVG малює її при top).
     <div className="relative h-full min-h-[280px] overflow-hidden rounded-[22px] bg-[#050a18] p-2 pt-14 sm:min-h-[340px] sm:p-3 sm:pt-14">
-      <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[11px] font-semibold text-white/75 backdrop-blur">
+      {/* 07.10.2026: max-width — підказка більше не залазить під перемикач Лице/Зворот (на 375 px
+          перекривалась на ~120 px); на вузькому екрані переноситься в 2–3 рядки. */}
+      <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[calc(100%-168px)] rounded-[14px] border border-white/10 bg-black/30 px-3 py-1.5 text-[11px] font-semibold leading-tight text-white/75 backdrop-blur">
         {previewSide === "front" ? t("designer.hintFront") : t("designer.hintBack")}
       </div>
       <div className="absolute right-3 top-3 z-20 flex overflow-hidden rounded-full border border-white/15 bg-black/35 p-1 backdrop-blur">
@@ -1161,7 +1163,7 @@ export function KeychainDesigner({
           type="button"
           onClick={() => setPreviewSide("front")}
           aria-pressed={previewSide === "front"}
-          className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+          className={`min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "front" ? "bg-white text-[#050a18]" : "text-white/75"}`}
         >
           {t("designer.front")}
         </button>
@@ -1169,7 +1171,7 @@ export function KeychainDesigner({
           type="button"
           onClick={() => setPreviewSide("back")}
           aria-pressed={previewSide === "back"}
-          className={`relative min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/72"}`}
+          className={`relative min-h-[40px] rounded-full px-3 text-xs font-semibold ${previewSide === "back" ? "bg-white text-[#050a18]" : "text-white/75"}`}
         >
           {t("designer.back")}
           {/* Крапка-індикатор: на звороті є текст — щоб користувач помітив вкладку. */}
@@ -1615,20 +1617,28 @@ export function KeychainDesigner({
         <g fill="none" stroke="rgba(255,255,255,0.66)" strokeWidth={0.28}>
           <path d={`M 0 ${-4.2} H ${value.bodyWidthMm}`} />
           <path d={`M ${value.bodyWidthMm + 4.2} 0 V ${value.bodyHeightMm}`} />
-          <path d={`M ${value.mapXMm} ${value.mapYMm - 2.8} H ${value.mapXMm + value.mapWidthMm}`} stroke="rgba(45,212,191,0.9)" />
+          {/* 07.10.2026: лінійка мапи — ПІД мапою. Зверху вона ділила місце з шириною
+              тіла й підписом вушка: на серці/жетоні три підписи лягали один на одний. */}
+          <path d={`M ${value.mapXMm} ${value.mapYMm + value.mapHeightMm + 2.8} H ${value.mapXMm + value.mapWidthMm}`} stroke="rgba(45,212,191,0.9)" />
         </g>
         <g fill="#f8fafc" fontSize={2.2} fontWeight={700}>
           <text x={value.bodyWidthMm / 2} y={-5.6} textAnchor="middle">
             {value.bodyWidthMm.toFixed(0)} mm
           </text>
-          <text x={value.bodyWidthMm + 7.2} y={value.bodyHeightMm / 2} textAnchor="middle" transform={`rotate(90 ${value.bodyWidthMm + 7.2} ${value.bodyHeightMm / 2})`}>
+          <text x={value.bodyWidthMm + 6.1} y={value.bodyHeightMm / 2} textAnchor="middle" transform={`rotate(90 ${value.bodyWidthMm + 6.1} ${value.bodyHeightMm / 2})`}>
             {value.bodyHeightMm.toFixed(0)} mm
           </text>
           {/* T-5.1 (F-16): без інженерних «map / O / hole» — мовно-нейтральні розміри у мм. */}
-          <text x={value.mapXMm + value.mapWidthMm / 2} y={value.mapYMm - 4.2} textAnchor="middle" fill="#5eead4">
+          <text x={value.mapXMm + value.mapWidthMm / 2} y={value.mapYMm + value.mapHeightMm + 5.4} textAnchor="middle" fill="#5eead4">
             ▣ {value.mapWidthMm.toFixed(0)}×{value.mapHeightMm.toFixed(0)} mm
           </text>
-          <text x={value.loopXMm} y={value.loopYMm - value.loopOuterMm - 2.2} textAnchor="middle">
+          {/* Вушко біля верхнього краю → підпис праворуч від нього, а не над ним (там ширина тіла). */}
+          <text
+            {...(value.loopYMm - value.loopOuterMm - 2.2 < 1.5
+              ? { x: value.loopXMm + value.loopOuterMm + 1.6, y: value.loopYMm + 0.8, textAnchor: "start" as const }
+              : { x: value.loopXMm, y: value.loopYMm - value.loopOuterMm - 2.2, textAnchor: "middle" as const })}
+            stroke="#050a18" strokeWidth={0.5} paintOrder="stroke"
+          >
             {value.baseShape === "token" ? `○ Ø${(value.loopInnerMm * 2).toFixed(1)} mm` : `○ Ø${value.loopOuterMm.toFixed(1)} · Ø${value.loopInnerMm.toFixed(1)} mm`}
           </text>
         </g>

@@ -72,10 +72,11 @@ export function TelegramButton({ testId = "header-telegram", withLabel = false }
       title={`${t("telegram")}: @monadruk`}
       data-testid={testId}
       onClick={() => { import("@/lib/analytics").then((m) => m.track("messenger_open", { channel: "tg", from: "header" })).catch(() => {}); }}
-      className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-full border border-[#2AABEE]/40 text-sm font-semibold text-[#1f8fcb] transition hover:border-[#2AABEE] hover:bg-[rgba(42,171,238,0.08)] ${withLabel ? "px-3 xl:px-3.5" : ""}`}
+      className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-full border border-[#2AABEE]/40 text-sm font-semibold text-[#1f8fcb] transition hover:border-[#2AABEE] hover:bg-[rgba(42,171,238,0.08)] ${withLabel ? "px-3 min-[1440px]:px-3.5" : ""}`}
     >
       <Send size={16} className="text-[#2AABEE]" />
-      {withLabel && <span className="hidden xl:inline">Telegram</span>}
+      {/* 07.10.2026: підпис лише від 1440 px — на 1280 англійська шапка обрізала лого й переносила «Floor plan». */}
+      {withLabel && <span className="hidden min-[1440px]:inline">Telegram</span>}
     </a>
   );
 }
@@ -148,11 +149,13 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
         </Link>
         {/* Спрощено: лише чіткі ПУНКТИ ПРИЗНАЧЕННЯ (без home-якорів #how/#templates,
             що захаращували глобальне меню). Галерея · Ціни · Брелоки. */}
-        <nav className="hidden items-center gap-8 text-sm text-ink-2 lg:flex">
+        <nav className="hidden items-center gap-5 whitespace-nowrap text-sm text-ink-2 xl:flex min-[1440px]:gap-8">
           {/* Головний виріб — першим у меню, а не лише кнопкою справа (власник, 11.09). */}
           <Link href="/create" className="hover:text-ink">{t("maps")}</Link>
           <Link href="/showcase" className="hover:text-ink">{t("gallery")}</Link>
           <Link href="/prices" className="hover:text-ink">{t("prices")}</Link>
+          {/* 07.10.2026: підписка була видна лише у футері. */}
+          <Link href="/pro" className="rounded-full bg-[rgba(46,74,58,0.08)] px-2.5 py-1 font-semibold text-forest hover:bg-[rgba(46,74,58,0.14)]">{t("pro")}</Link>
           <Link href="/keychains" className="hover:text-ink">{t("keychains")}</Link>
           <Link href="/mountains" className="hover:text-ink">{t("mountains")}</Link>
           <Link href="/worlds" className="hover:text-ink">{t("worlds")}</Link>
@@ -197,7 +200,7 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-ink-2 transition hover:border-forest/40 hover:text-ink xl:hidden"
           >
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -206,12 +209,13 @@ export function SiteHeader({ variant = "default", title, other }: BuilderProps =
 
       {/* Mobile dropdown nav */}
       {open && (
-        <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur lg:hidden">
+        <nav id="mobile-nav" className="border-t border-line-soft bg-[rgba(244,239,228,0.98)] px-5 py-3 backdrop-blur xl:hidden">
           <ul className="flex flex-col">
             {[
               { href: "/create", label: t("maps") },
               { href: "/showcase", label: t("gallery") },
               { href: "/prices", label: t("prices") },
+              { href: "/pro", label: `Monadruk ${t("pro")}` },
               { href: "/keychains", label: t("keychains") },
               { href: "/mountains", label: t("mountains") },
               { href: "/worlds", label: t("worlds") },

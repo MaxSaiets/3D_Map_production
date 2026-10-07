@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createPortal } from "react-dom";
-import { X, FileDown, Loader2 } from "lucide-react";
+import { X, FileDown, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { Link } from "@/i18n/navigation";
+import { SUB_PRICE } from "@/lib/legal/subscription";
 
 /**
  * ⭐09.09.2026, рішення власника: друк-файл коштує 149 ₴.
@@ -181,6 +183,23 @@ export function BuyFileDialog({
             <p className="mt-2 text-center text-[11.5px] leading-snug text-[var(--text-secondary)]">
               {t("buyFileNote")}
             </p>
+            {/* 07.10.2026: м'який апсел Pro — для тих, хто друкує на продаж (поштучний
+                файл = особисте використання) або часто. Поріг — з якого файлу Pro дешевший. */}
+            <div className="mt-4 rounded-2xl border border-[var(--surface-border)] bg-black/[0.02] px-3.5 py-3 text-[12.5px] leading-snug text-[var(--text-secondary)]" data-testid="buy-file-pro">
+              <span className="inline-flex items-start gap-1.5">
+                <ShieldCheck size={14} className="mt-0.5 shrink-0 text-[var(--accent-strong)]" />
+                <span>
+                  {t("buyFileProUpsell", { n: price > 0 ? Math.floor(SUB_PRICE.UAH / price) : 14 })}{" "}
+                  <Link
+                    href="/pro"
+                    onClick={() => { import("@/lib/analytics").then((m) => m.track("pro_cta", { place: "buy_file" })).catch(() => {}); onClose(); }}
+                    className="font-semibold text-[var(--accent-strong)] underline-offset-2 hover:underline"
+                  >
+                    {t("buyFileProLink")}
+                  </Link>
+                </span>
+              </span>
+            </div>
           </>
         )}
 

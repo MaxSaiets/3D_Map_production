@@ -1543,7 +1543,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
           </div>
 
           {cameraMode === "fly" && (
-            <div className="mt-3 rounded-[18px] bg-white/8 px-3 py-3">
+            <div className="mt-3 rounded-[18px] bg-white/10 px-3 py-3">
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="font-medium">{t("tools.flySpeed")}</span>
                 <span className="tabular-nums text-white/70">{Math.round(flySpeed)}</span>
@@ -1560,7 +1560,7 @@ export function Preview3D({ capture = false }: { capture?: boolean } = {}) {
             </div>
           )}
 
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-white/8 px-3 py-3 text-xs">
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-white/10 px-3 py-3 text-xs">
             <div>
               <div className="font-medium">{t("tools.terrainShading")}</div>
               <div className="mt-1 text-white/60">

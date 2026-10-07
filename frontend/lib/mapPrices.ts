@@ -74,6 +74,16 @@ export function floorplanPriceUah(sizeMm: number): number {
 /** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
 export const MAP_RELIEF_ADDON_UAH = 85;
 
+/** Один друк-файл (3MF/STL) без підписки. UAH. Дзеркало pricing.json file.price —
+ *  статичний fallback для /prices і /pro; живу ціну /pro бере з /api/subscription/plans. */
+export const FILE_PRICE_UAH = 149;
+
+/** З якого файлу на місяць підписка дешевша за поштучну купівлю (2100 / 149 → 15-й). */
+export function breakEvenFiles(subPrice: number, filePrice: number): number {
+  if (!(filePrice > 0)) return 1;
+  return Math.floor(subPrice / filePrice) + 1;
+}
+
 /** Позиційний курс UAH→EUR (як на лендінгу, НЕ біржовий ФХ). Округлюємо до
  *  «гарних» євро (350₴≈8€, 770₴≈18€). */
 export const EUR_PER_UAH = 0.024;

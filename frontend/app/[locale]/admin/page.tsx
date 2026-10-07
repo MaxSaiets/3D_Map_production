@@ -246,6 +246,7 @@ export default function AdminPage() {
 
                   {/* S-2/S-5 (2026-09-07): чому не замовляють + ліди для особистого контакту. */}
                   <WhyAndLeads choices={stats.guided?.choices} leads={stats.leads} />
+                  <ProFunnel pro={stats.guided?.pro} />
 
                   {stats.ab && Object.keys(stats.ab).length > 0 && <AbTests ab={stats.ab} />}
 
@@ -462,6 +463,28 @@ export default function AdminPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+const PRO_PLACES: Record<string, string> = {
+  hero: "Сторінка /pro → «Оформити»", buy_file: "Діалог купівлі файлу", account: "Кабінет",
+};
+
+/** 07.10.2026: воронка підписки Pro за період — відкрили /pro → кліки «Pro» → дійшли до оплати LiqPay.
+ *  Самі оплачені підписки — у вкладці «Підписки й безлім». */
+function ProFunnel({ pro }: { pro?: { viewPeople?: number; cta?: [string, number][]; checkoutPeople?: number } }) {
+  if (!pro) return null;
+  const cta = (pro.cta || []).map(([k, n]) => [PRO_PLACES[k] || k, Number(n) || 0] as [string, number]);
+  return (
+    <div className="mt-5 rounded-[14px] border border-line bg-paper p-4" data-testid="admin-pro-funnel">
+      <div className="mb-1 text-[13px] font-semibold text-ink-2">Підписка Pro · воронка</div>
+      <div className="mb-3 text-[11px] text-ink-3">Унікальні відвідувачі /pro (усі мови), кліки на «Pro» з різних місць сайту і ті, хто натиснув «Оформити» й пішов на оплату.</div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-[12px] border border-line bg-bg-2 p-3"><div className="text-[11px] uppercase tracking-wide text-ink-3">Відкрили /pro</div><div className="mt-0.5 font-serif text-[22px] text-ink">{pro.viewPeople ?? 0}</div></div>
+        <div className="rounded-[12px] border border-line bg-bg-2 p-3"><div className="text-[11px] uppercase tracking-wide text-ink-3">Пішли на оплату</div><div className="mt-0.5 font-serif text-[22px] text-ink">{pro.checkoutPeople ?? 0}</div></div>
+        <StatList title="Звідки клікали «Pro»" rows={cta} />
+      </div>
     </div>
   );
 }

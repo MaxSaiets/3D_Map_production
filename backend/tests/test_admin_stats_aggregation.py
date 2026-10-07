@@ -254,3 +254,25 @@ def test_download_reclick_counted():
     agg = app_main._aggregate_analytics(lines, 30)
     assert agg["guided"]["downloadReclicks"] == 2
     assert agg["guided"]["downloadWait"] == 1
+
+
+def test_pro_funnel_counts_views_ctas_and_checkouts():
+    """07.10.2026: воронка підписки — унікальні відвідувачі /pro (будь-яка локаль),
+    кліки «Pro» за місцем і унікальні, хто дійшов до оплати. /prices чи /pro-terms
+    не рахуються як перегляд /pro."""
+    lines = [
+        _line("pageview", path="/pro", visitor="a"),
+        _line("pageview", path="/en/pro", visitor="b"),
+        _line("pageview", path="/pro", visitor="a"),
+        _line("pageview", path="/pro-terms", visitor="c"),
+        _line("pageview", path="/prices", visitor="c"),
+        _line("pro_cta", props={"place": "buy_file"}, visitor="a"),
+        _line("pro_cta", props={"place": "buy_file"}, visitor="b"),
+        _line("pro_cta", props={"place": "account"}, visitor="b"),
+        _line("pro_checkout", props={"currency": "UAH"}, visitor="a"),
+        _line("pro_checkout", props={"currency": "UAH"}, visitor="a"),
+    ]
+    pro = app_main._aggregate_analytics(lines, 30)["guided"]["pro"]
+    assert pro["viewPeople"] == 2
+    assert dict(pro["cta"]) == {"buy_file": 2, "account": 1}
+    assert pro["checkoutPeople"] == 1

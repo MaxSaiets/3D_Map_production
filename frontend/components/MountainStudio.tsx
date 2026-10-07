@@ -580,7 +580,7 @@ export default function MountainStudio() {
                   {spec.figures.filter((f) => f.where === "point" && f.fx != null).map((f, i) => (
                     <span key={i} className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--accent-strong)]" style={{ left: `${(f.fx ?? 0) * 100}%`, top: `${(1 - (f.fy ?? 0)) * 100}%` }} />
                   ))}
-                  {pickingFig != null && <div className="absolute inset-x-0 top-0 bg-[var(--accent-strong)]/90 px-3 py-1.5 text-center text-[12px] font-semibold text-white">{t("pickPointHint")}</div>}
+                  {pickingFig != null && <div className="absolute inset-x-0 top-0 bg-[var(--accent-strong)] px-3 py-1.5 text-center text-[12px] font-semibold text-white">{t("pickPointHint")}</div>}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pb-2 pt-6 text-[11.5px] text-white">
                     {t("previewStats", { min: preview.elev_min, max: preview.elev_max, scale: fmt(preview.scale) })} · {preview.sources.join(" + ")}
                   </div>

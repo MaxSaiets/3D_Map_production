@@ -1947,10 +1947,15 @@ async def subscription_plans(cf_ipcountry: Optional[str] = Header(default=None))
     """Ціни підписки + рекомендована валюта (Україна → гривня, решта світу → долар)."""
     from services import subscriptions as _subs
     from services.liqpay import is_configured
+    from services.file_access import file_price_uah, file_price_hints
     cc = (cf_ipcountry or "").strip().upper()[:2]
+    # 07.10.2026: ціна одного друк-файлу поруч із ціною підписки — калькулятор на /pro
+    # («з якого файлу Pro вигідніший») має рахувати з тієї ж ціни, що й чек файлу.
+    _fp = file_price_uah()
     # країна невідома (без Cloudflare) → null, фронт лишає валюту за мовою сторінки
     return {"plans": _subs.PLANS, "suggested": ("UAH" if cc == "UA" else "USD") if cc else None,
-            "country": cc, "terms_version": _subs.TERMS_VERSION, "configured": is_configured()}
+            "country": cc, "terms_version": _subs.TERMS_VERSION, "configured": is_configured(),
+            "file": {"UAH": _fp, **{k: v for k, v in file_price_hints(_fp).items() if k == "USD"}}}
 
 
 @app.get("/api/subscription")
@@ -2307,6 +2312,10 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
     g_messenger: Counter = Counter()   # messenger_order.channel → к-сть
     g_results_ok = 0
     g_results_fail = 0
+    # 07.10.2026: воронка підписки Pro — хто відкрив /pro, звідки клікнув «Pro», хто дійшов до оплати.
+    pro_view_people: set = set()
+    pro_cta: Counter = Counter()       # pro_cta.place → к-сть (hero/buy_file/account)
+    pro_checkout_people: set = set()
     # ── A/B-спліт: фронт додає до кожної своєї події плоскі props виду
     # `ab_<experiment>: "A"|"B"` — тут групуємо унікальних відвідувачів по
     # (experiment, variant) для набору контрольних точок вирви. Рахуємо лише
@@ -2344,6 +2353,12 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
                     ev_counter[ev] += 1
             props = r.get("props") or {}
             path = r.get("path", "")
+            if ev == "pageview" and re.search(r"(^|/)pro/?$", path or "") and r.get("visitor"):
+                pro_view_people.add(r["visitor"])
+            elif ev == "pro_cta":
+                pro_cta[str(props.get("place") or "?")] += 1
+            elif ev == "pro_checkout" and r.get("visitor"):
+                pro_checkout_people.add(r["visitor"])
             if props:  # день уже відфільтровано вище
                 _vis_ab = r.get("visitor", "")
                 if _vis_ab:
@@ -2574,6 +2589,11 @@ def _aggregate_analytics(lines: List[str], days: int) -> Dict[str, Any]:
             "results": {"ok": g_results_ok, "fail": g_results_fail},
             "whyNotOrder": g_reasons.most_common(6),
             "messenger": g_messenger.most_common(4),
+        },
+        "pro": {
+            "viewPeople": len(pro_view_people),
+            "cta": pro_cta.most_common(6),
+            "checkoutPeople": len(pro_checkout_people),
         },
     }
 
