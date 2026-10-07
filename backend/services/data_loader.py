@@ -1003,6 +1003,16 @@ def fetch_city_data(
                 return G
         try:
             if gdf_rail is None:
+                # 07.10.2026: Overpass із прод-VM відмовляв у зʼєднанні, а osmnx перед
+                # запитом колій спав 60 с на /status (Кишинів: 12:08:42 → 12:09:42).
+                # Колії — бонус: якщо джерело лежить, пропускаємо одразу.
+                if overpass_health.outage_active():
+                    return G
+                _pre = overpass_health.preflight(getattr(ox.settings, "overpass_url", "https://overpass-api.de/api"))
+                if _pre is not None:
+                    overpass_health.note_failure(_pre)
+                    print(f"[RAILWAY] skipped, Overpass unreachable: {_pre}", flush=True)
+                    return G
                 try:
                     ox.settings.requests_timeout = RAILWAY_FETCH_TIMEOUT_S
                 except Exception:
