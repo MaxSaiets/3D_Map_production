@@ -5049,7 +5049,8 @@ async def generate_zones_endpoint(
             # include_pois is not in GenerationRequest anymore or hidden
             # РљР РРўРР§РќРћ: РџРµСЂРµРґР°С”РјРѕ РіР»РѕР±Р°Р»СЊРЅС– РїР°СЂР°РјРµС‚СЂРё РґР»СЏ СЃРёРЅС…СЂРѕРЅС–Р·Р°С†С–С— РІРёСЃРѕС‚
             elevation_ref_m=global_elevation_ref_m,  # Р“Р»РѕР±Р°Р»СЊРЅР° Р±Р°Р·РѕРІР° РІРёСЃРѕС‚Р° РґР»СЏ РІСЃС–С… Р·РѕРЅ
-            baseline_offset_m=global_baseline_offset_m,  # Р“Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
+            # 19.10.2026: при таймауті elevation_ref тут був None → 500 на /api/generate-zones (панно не стартувало)
+            baseline_offset_m=float(global_baseline_offset_m) if global_baseline_offset_m is not None else 0.0,  # Р“Р»РѕР±Р°Р»СЊРЅРµ Р·РјС–С‰РµРЅРЅСЏ baseline
             terrain_relief_range_m=float(global_relief_range_m),  # СЕРІЯ: спільний перепад → єдиний gain рельєфу
             preserve_global_xy=True,  # IMPORTANT: export in a shared coordinate frame for stitching
             grid_step_m=global_grid_step_m,  # GLOBAL GRID FIX
