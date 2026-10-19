@@ -3845,6 +3845,7 @@ async def cancel_task(task_id: str, authorization: Optional[str] = Header(defaul
     if not _can_cancel(tasks[task_id]):
         raise HTTPException(status_code=403, detail="Це не ваша генерація")
     tasks[task_id].cancel()
+    _pending.remove(task_id)  # скасовану не відновлюємо після рестарту
     print(f"[INFO] Cancelled task {task_id} by {(u or {}).get('email') or 'гість'}")
     return {"cancelled": True}
 
