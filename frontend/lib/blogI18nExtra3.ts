@@ -318,7 +318,7 @@ export const BLOG_I18N_EXTRA_3: Record<string, Partial<Record<BlogExtraLocale, B
           "Die Gravur kann kurz sein — nur das Datum — oder ausführlicher mit beiden Namen; wichtig ist, dass sie auch in Jahren gut lesbar bleibt.",
         ] },
         { h2: "Preise und Formate für jedes Budget", p: [
-          "Ein Karten-Anhänger ab ≈4 €; ein Paar sind einfach zwei Stück. Ein Kühlschrankmagnet ≈5 € als kleine Ergänzung. Eine 3D-Tischkarte von ≈8 € (5,5 cm) bis ≈18 € (15 cm), je nachdem, wie viel von der Stadt sie zeigen soll.",
+          "Ein Karten-Anhänger ab ≈4 €; ein Paar sind einfach zwei Stück. Ein Kühlschrankmagnet ≈5 € als kleine Ergänzung. Eine 3D-Tischkarte von ≈8 € (5,5 cm) bis ≈30 € (15 cm), je nachdem, wie viel von der Stadt sie zeigen soll.",
           "Ein Kachelbild für die Wand passt, wenn die Hochzeit groß ist und mehrere Gäste ein gemeinsames Geschenk für die neue Wohnung machen wollen.",
         ] },
         { h2: "In 5 Minuten erstellt", p: [
@@ -350,7 +350,7 @@ export const BLOG_I18N_EXTRA_3: Record<string, Partial<Record<BlogExtraLocale, B
           "Grawer może być krótki — tylko data — albo pełniejszy, z oboma imionami; ważne, żeby był czytelny także za lata.",
         ] },
         { h2: "Ceny i formaty na każdy budżet", p: [
-          "Brelok z mapą od ≈4 €; para to po prostu dwie sztuki. Magnes na lodówkę ≈5 € jako mały dodatek. Mapa 3D na biurko od ≈8 € (5,5 cm) do ≈18 € (15 cm), zależnie od tego, ile miasta ma pokazać.",
+          "Brelok z mapą od ≈4 €; para to po prostu dwie sztuki. Magnes na lodówkę ≈5 € jako mały dodatek. Mapa 3D na biurko od ≈8 € (5,5 cm) do ≈30 € (15 cm), zależnie od tego, ile miasta ma pokazać.",
           "Panel ścienny z płytek sprawdzi się, gdy wesele jest duże i kilku gości chce złożyć się na wspólny prezent do nowego mieszkania.",
         ] },
         { h2: "Jak zrobić to w 5 minut", p: [
@@ -382,7 +382,7 @@ export const BLOG_I18N_EXTRA_3: Record<string, Partial<Record<BlogExtraLocale, B
           "La gravure peut être courte — juste la date — ou plus complète avec les deux prénoms ; l'important est qu'elle reste lisible dans des années.",
         ] },
         { h2: "Prix et formats pour tous les budgets", p: [
-          "Porte-clés carte dès ≈4 € ; une paire, c'est simplement deux pièces. Aimant de frigo ≈5 € en petit complément. Carte 3D de bureau de ≈8 € (5,5 cm) à ≈18 € (15 cm), selon la part de ville à montrer.",
+          "Porte-clés carte dès ≈4 € ; une paire, c'est simplement deux pièces. Aimant de frigo ≈5 € en petit complément. Carte 3D de bureau de ≈8 € (5,5 cm) à ≈30 € (15 cm), selon la part de ville à montrer.",
           "Un tableau mural en tuiles convient pour un grand mariage où plusieurs invités veulent se regrouper pour un cadeau commun.",
         ] },
         { h2: "Le faire en 5 minutes", p: [
@@ -414,7 +414,7 @@ export const BLOG_I18N_EXTRA_3: Record<string, Partial<Record<BlogExtraLocale, B
           "El grabado puede ser corto, solo la fecha, o más completo con ambos nombres; lo importante es que siga leyéndose bien dentro de años.",
         ] },
         { h2: "Precios y formatos para cualquier presupuesto", p: [
-          "Llavero con mapa desde ≈4 €; un par son simplemente dos. Imán de nevera ≈5 € como pequeño complemento. Mapa 3D de escritorio de ≈8 € (5,5 cm) a ≈18 € (15 cm), según cuánta ciudad quieras mostrar.",
+          "Llavero con mapa desde ≈4 €; un par son simplemente dos. Imán de nevera ≈5 € como pequeño complemento. Mapa 3D de escritorio de ≈8 € (5,5 cm) a ≈30 € (15 cm), según cuánta ciudad quieras mostrar.",
           "Un panel de pared de baldosas funciona cuando la boda es grande y varios invitados quieren juntarse para un regalo común para el piso nuevo.",
         ] },
         { h2: "Cómo hacerlo en 5 minutos", p: [

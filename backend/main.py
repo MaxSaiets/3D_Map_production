@@ -1168,12 +1168,14 @@ def _load_pricing() -> Dict[str, Any]:
         if _PRICING_CACHE["data"] is None:
             # Аварійний fallback МУСИТЬ збігатися з pricing.json (інакше при збої
             # читання файлу клієнт переплатив би ~40-67%). Звірено з pricing.json
-            # 2026-06-18: S150/M240(60мм магніт 150)/L360/XL550, рельєф +60, from 150.
+            # 2026-10-19: S350/M500/L750/XL1250/20см 2000 (магніт 210), рельєф за розміром.
             _PRICING_CACHE["data"] = {
                 "currency": "UAH", "currency_symbol": "₴",
-                "map": {"sizes_mm": {"55": 150, "60": 150, "80": 240, "110": 360, "150": 550},
-                        "relief_addon": 60, "from": 150},
-                "keychain": {"base": 120, "from": 120},
+                "map": {"sizes_mm": {"55": 350, "60": 210, "80": 500, "110": 750, "150": 1250, "200": 2000},
+                        "relief_addon_mm": {"55": 100, "80": 180, "110": 320, "150": 580, "200": 1000},
+                        "relief_addon": 100, "discount": {"min_size_mm": 200, "amount": 350},
+                        "from": 350},
+                "keychain": {"base": 170, "from": 170},
             }
     return _PRICING_CACHE["data"]
 
@@ -1206,14 +1208,26 @@ async def get_quote(product: str = "map", size_mm: Optional[float] = None, relie
         else:
             price = int(fp.get("from", 590))
     else:
-        sizes = {float(k): int(v) for k, v in p.get("map", {}).get("sizes_mm", {"55": 250}).items()}
+        map_cfg = p.get("map", {}) or {}
         if size_mm:
             # 19.09.2026: проміжні розміри (guided-повзунок) — лінійно між тарифами.
-            price = _map_price_for_size(sizes, float(size_mm))
+            list_price, price = _map_list_and_price(map_cfg, float(size_mm), relief)
         else:
-            price = int(p.get("map", {}).get("from", min(sizes.values())))
-        if relief:
-            price += int(p.get("map", {}).get("relief_addon", 0))
+            sizes = {float(k): int(v) for k, v in (map_cfg.get("sizes_mm", {"55": 250}) or {}).items()}
+            price = int(map_cfg.get("from", min(sizes.values())))
+            if relief:
+                price += int(map_cfg.get("relief_addon", 0))
+            list_price = price
+        out = {
+            "currency": p.get("currency", "UAH"),
+            "price": price,
+            "formatted": f"{price} {sym}",
+            "approx": False,
+        }
+        # 19.10.2026: знижка від 20 см — UI показує list_price перекресленою.
+        if list_price > price:
+            out["list_price"] = list_price
+        return out
     return {
         "currency": p.get("currency", "UAH"),
         "price": price,
@@ -1259,6 +1273,32 @@ def _map_price_for_size(sizes: Dict[float, int], size_mm: Optional[float]) -> in
             k = (x - a) / (b - a)
             return int(round((curve[a] + k * (curve[b] - curve[a])) / 10.0) * 10)
     return int(curve[pts[-1]])
+
+
+def _map_relief_addon(map_cfg: Dict[str, Any], size_mm: Optional[float]) -> int:
+    """Надбавка за рельєф (19.10.2026): залежить від розміру — relief_addon_mm,
+    проміжні лінійно (та сама крива, що й ціна). Без таблиці — плоска relief_addon."""
+    curve = {float(k): int(v) for k, v in (map_cfg.get("relief_addon_mm", {}) or {}).items()}
+    if curve and size_mm:
+        return _map_price_for_size(curve, float(size_mm))
+    return int(map_cfg.get("relief_addon", 0) or 0)
+
+
+def _map_list_and_price(map_cfg: Dict[str, Any], size_mm: float, relief: bool) -> Tuple[int, int]:
+    """(ціна без знижки, ціна до сплати) для мапи розміру size_mm.
+    Знижка (map.discount) — лише від min_size_mm (рішення власника 19.10.2026:
+    «знижки тільки від 20 і більше»). Дзеркало: frontend lib/mapPrices.ts `mapQuoteUah`."""
+    sizes = {float(k): int(v) for k, v in (map_cfg.get("sizes_mm", {}) or {}).items()}
+    list_price = int(_map_price_for_size(sizes, float(size_mm)) or map_cfg.get("from", 150))
+    if relief:
+        list_price += _map_relief_addon(map_cfg, size_mm)
+    disc = map_cfg.get("discount", {}) or {}
+    amount = int(disc.get("amount", 0) or 0)
+    min_mm = float(disc.get("min_size_mm", 0) or 0)
+    price = list_price
+    if amount > 0 and min_mm > 0 and float(size_mm) >= min_mm - 0.5:
+        price = max(0, list_price - amount)
+    return list_price, price
 
 
 def _compute_authoritative_amount(
@@ -1330,10 +1370,10 @@ def _compute_authoritative_amount(
     # найдешевший рядок (інакше випадково взяли б ціну магніта "60"=180).
     if size_mm is None:
         base = float(map_cfg.get("from", 150) or 150)
+        if relief:
+            base += float(map_cfg.get("relief_addon", 0) or 0)
     else:
-        base = float(_map_price_for_size(sizes, size_mm) or map_cfg.get("from", 150))
-    if relief:
-        base += float(map_cfg.get("relief_addon", 0) or 0)
+        base = float(_map_list_and_price(map_cfg, size_mm, relief)[1])
 
     # ПАННО: якщо task_id — це batch, рахуємо за всі плитки.
     return round(base * max(1, int(tile_count)), 2), currency

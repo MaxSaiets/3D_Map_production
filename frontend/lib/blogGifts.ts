@@ -100,7 +100,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
           {
             h2: "Скільки коштує і коли буде готово",
             p: [
-              "Брелок — від 170 ₴, пара сердець — два брелоки. Обʼємна мапа — від 350 ₴ (5,5 см) до 770 ₴ (15 см). Друк і відправка Новою Поштою — 2–4 робочі дні.",
+              "Брелок — від 170 ₴, пара сердець — два брелоки. Обʼємна мапа — від 350 ₴ (5,5 см) до 1250 ₴ (15 см). Друк і відправка Новою Поштою — 2–4 робочі дні.",
             ],
           },
         ],
@@ -118,7 +118,7 @@ export const GIFT_ARTICLES_2026: BlogArticle[] = [
         sections: [
           { h2: "Two ideas that work best", p: ["A 3D map of the first date: a 400–800 m district with real buildings, the park and the street you walked. Put it on a shelf and every glance brings that day back.", "A two-half heart keychain: one half is her neighbourhood, the other is yours. Together they make a whole heart; apart, each carries their own."] },
           { h2: "An engraving that makes it yours", p: ["The date you met, her name or the coordinates of the place — on a flat map, a magnet or the back of the keychain. Added with one click in the builder."] },
-          { h2: "Price and timing", p: ["Keychain from 170 ₴; a heart pair is two keychains. 3D map from 350 ₴ (5.5 cm) to 770 ₴ (15 cm). Print and dispatch in 2–4 business days."] },
+          { h2: "Price and timing", p: ["Keychain from 170 ₴; a heart pair is two keychains. 3D map from 350 ₴ (5.5 cm) to 1250 ₴ (15 cm). Print and dispatch in 2–4 business days."] },
         ],
         ctaLabel: "Create a map of your place",
         ctaHref: "/podarunok/na-richnytsyu",

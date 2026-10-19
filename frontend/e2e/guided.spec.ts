@@ -168,7 +168,7 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await page.goto("/uk/create?product=relief");
     const flow = page.getByTestId("scenario-flow");
     await expect(flow.getByTestId("product-relief")).toHaveAttribute("aria-checked", "true");
-    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("575 ₴");
+    await expect(flow.getByRole("radio", { name: /M · 8 см/ })).toContainText("680 ₴");
   });
 
   test("A-4: CTA активна без жодної дії, бейдж каже «Центр Києва (за замовчуванням)»", async ({ page }) => {
@@ -232,14 +232,14 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     for (const n of [1, 2, 3, 4]) await expect(flow.getByTestId(`guided-sec-${n}`)).toBeVisible();
     await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота рельєфу");
     await expect(flow.getByTestId("guided-sec-3")).toContainText("Висота будинків");
-    // Довільний розмір: 125 мм → ціна лінійно між L(630) і XL(770) = 680 + рельєф 85 = 765
+    // Довільний розмір: 125 мм → лінійно між L(750) і XL(1250) = 940 + рельєф (320→580) 420 = 1360
     // 24.09: поле «Свій» — у САНТИМЕТРАХ, одразу поруч із пресетами.
     const input = flow.getByTestId("size-input");
     await input.fill("12.5");
     await input.press("Enter");
-    await expect(flow.getByTestId("custom-size-price")).toHaveText("765 ₴");
+    await expect(flow.getByTestId("custom-size-price")).toHaveText("1360 ₴");
     await expect(flow.getByTestId("size-summary")).toContainText("ділянка на карті ≈875 м");
-    await expect(flow.getByText(/Друк 765 ₴/)).toBeVisible();
+    await expect(flow.getByText(/Друк 1360 ₴/)).toBeVisible();
     // Пресет повертає поле до 8 см
     await flow.getByRole("radio", { name: /M · 8 см/ }).click();
     await expect(input).toHaveValue("8");
@@ -272,7 +272,7 @@ test.describe("Guided /create — хвиля «простіше» (2026-09-03)",
     await flow.getByTestId("parts-2").click();
     await expect(flow.getByTestId("shape-rounded")).toHaveAttribute("aria-checked", "true");
     await expect(flow.getByTestId("shape-circle")).toBeDisabled();
-    await expect(flow.getByTestId("parts-total")).toContainText("Разом ≈16×16 см · 4 × 490 ₴ = 1960 ₴");
+    await expect(flow.getByTestId("parts-total")).toContainText("Разом ≈16×16 см · 4 × 500 ₴ = 2000 ₴");
     await expect(flow.getByTestId("parts-connectors")).toBeVisible();
     await expect(flow.getByTestId("personalize-panno-note")).toBeVisible();
   });

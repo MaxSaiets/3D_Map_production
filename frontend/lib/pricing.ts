@@ -5,7 +5,14 @@
  */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-export type Quote = { currency: string; price: number; formatted: string; approx: boolean };
+export type Quote = {
+  currency: string;
+  price: number;
+  formatted: string;
+  approx: boolean;
+  /** Ціна без знижки (лише коли діє знижка, від 20 см) — показуємо перекресленою. */
+  list_price?: number;
+};
 
 const cache = new Map<string, Quote | null>();
 

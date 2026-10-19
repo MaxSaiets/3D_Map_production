@@ -13,6 +13,7 @@ export function GuidedStickyBar({
   visible,
   label,
   price,
+  priceOld,
   cta,
   onCta,
   disabled = false,
@@ -25,6 +26,8 @@ export function GuidedStickyBar({
   label: string;
   /** Ціна поруч із підписом, напр. «490 ₴». */
   price: string;
+  /** Стара ціна (діє знижка) — перекреслена перед `price`. */
+  priceOld?: string;
   /** Текст кнопки стану (Показати превʼю / 45 % / Замовити друк). */
   cta: string;
   onCta: () => void;
@@ -76,7 +79,10 @@ export function GuidedStickyBar({
       <div className="mx-auto flex max-w-[680px] items-center gap-3">
         <div className="min-w-0 flex-1 leading-tight">
           <div className="truncate text-[12px] font-semibold text-[var(--text-secondary)]">{label}</div>
-          <div className="text-[17px] font-extrabold text-[var(--text-primary)]">{price}</div>
+          <div className="text-[17px] font-extrabold text-[var(--text-primary)]">
+            {priceOld && <s className="mr-1.5 text-[13px] font-semibold text-[var(--text-secondary)]" data-testid="sticky-price-old">{priceOld}</s>}
+            {price}
+          </div>
         </div>
         <button
           type="button"

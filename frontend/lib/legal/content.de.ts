@@ -134,7 +134,7 @@ export const de: LegalSet = {
         { p: "Produktpreise (Lieferung wird separat nach Tarif des Zustellers berechnet):" },
         { ul: [
           "Schlüsselanhänger-Karte — ab 170 ₴ (≈ 4 €).",
-          "3D-Karte eines Stadtviertels: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (Karten — ab 8 €).",
+          "3D-Karte eines Stadtviertels: S 5,5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴ (Karten — ab 8 €).",
           "Kühlschrankmagnet (Karte) — 210 ₴.",
           "3MF-Datei zum Selbstdrucken — 149 ₴ (der Preis wird im Konfigurator angezeigt), Zugriff per Link nach der Zahlung; die 3D-Vorschau ist kostenlos.",
           "Monadruk-Pro-Abonnement — 2 100 ₴ pro Monat (oder 50 USD bei Zahlung von außerhalb der Ukraine), verlängert sich automatisch: unbegrenzte Druckdateien und gewerbliche Lizenz, Kündigung mit einem Klick. Details — [pro-terms:Abonnementbedingungen].",

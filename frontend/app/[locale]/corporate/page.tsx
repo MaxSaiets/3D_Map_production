@@ -33,7 +33,7 @@ const COPY_TRANSLATED: Record<Exclude<AppLocale, "ro">, CorpCopy> = {
     h2what: "Що можна замовити",
     items: [
       { label: "Брелоки з районом офісу", desc: "жетон 55×30 мм з вулицями навколо вашого офісу + назва компанії на звороті", price: `від ${KEYCHAIN_PRICE_UAH} ₴/шт` },
-      { label: "Мапи міста з вашим текстом", desc: "настільні 3D-мапи 8–15 см — подарунок партнерам чи топ-клієнтам", price: "від 490 ₴/шт" },
+      { label: "Мапи міста з вашим текстом", desc: "настільні 3D-мапи 8–15 см — подарунок партнерам чи топ-клієнтам", price: "від 500 ₴/шт" },
       { label: "Магніти з локацією", desc: "район офісу, місце конференції чи місто філії", price: `від ${MAP_MAGNET_PRICE_UAH} ₴/шт` },
       { label: "GPX-брелоки для спортивних команд", desc: "маршрут корпоративного забігу чи велопробігу", price: `від ${KEYCHAIN_PRICE_UAH} ₴/шт` },
     ],
@@ -444,14 +444,14 @@ export default async function CorporatePage({ params }: { params: { locale: stri
                   <td className="px-4 py-3 font-semibold text-ink">{t.max ? `${t.min}–${t.max}` : `${t.min}${tc.plus}`} {tc.pcs}</td>
                   <td className="px-4 py-3 font-semibold text-[var(--accent-strong)]">−{t.pct}%</td>
                   <td className="px-4 py-3 text-ink-2">{money(off(KEYCHAIN_PRICE_UAH, t.pct))}</td>
-                  <td className="px-4 py-3 text-ink-2">{money(off(490, t.pct))}</td>
+                  <td className="px-4 py-3 text-ink-2">{money(off(500, t.pct))}</td>
                 </tr>
               ))}
               <tr className="border-t border-line-soft">
                 <td className="px-4 py-3 font-semibold text-ink">{tc.reseller}</td>
                 <td className="px-4 py-3 font-semibold text-[var(--accent-strong)]">−{RESELLER_PCT}%</td>
                 <td className="px-4 py-3 text-ink-2">{money(off(KEYCHAIN_PRICE_UAH, RESELLER_PCT))}</td>
-                <td className="px-4 py-3 text-ink-2">{money(off(490, RESELLER_PCT))}</td>
+                <td className="px-4 py-3 text-ink-2">{money(off(500, RESELLER_PCT))}</td>
               </tr>
             </tbody>
           </table>

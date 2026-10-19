@@ -14,7 +14,7 @@ import { StickyActionBar } from "@/components/StickyActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { gatedDownload } from "@/lib/download";
 import { fetchQuote, type Quote } from "@/lib/pricing";
-import { MAP_MAGNET_PRICE_UAH, MAP_RELIEF_ADDON_UAH, mapPriceEur } from "@/lib/mapPrices";
+import { MAP_MAGNET_PRICE_UAH, mapQuoteUah, mapPriceEur } from "@/lib/mapPrices";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -427,8 +427,7 @@ export function SimpleControlPanel({
       Math.abs(z.mm - modelSizeMm) < Math.abs(best.mm - modelSizeMm) ? z : best, SIMPLE_SIZES[0]);
     // Рельєф додає надбавку (як у бекенд-quote) — інакше fallback недооцінює.
     // Ціни з єдиного джерела mapPrices.ts (не хардкод) — щоб fallback не розходився з quote.
-    const reliefAddon = (reliefMode && !magnetMode) ? MAP_RELIEF_ADDON_UAH : 0;
-    const unit = magnetMode ? MAP_MAGNET_PRICE_UAH : near.price + reliefAddon; // магніт = окремий продукт
+    const unit = magnetMode ? MAP_MAGNET_PRICE_UAH : mapQuoteUah(near.mm, reliefMode).price; // магніт = окремий продукт
     return dispPrice(unit * orderTiles);
   })();
 
@@ -1142,7 +1141,7 @@ export function SimpleControlPanel({
           <div id="simple-size-label" className={eyebrowStrong}>
             {t("step4size")}
           </div>
-          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-labelledby="simple-size-label">
+          <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-labelledby="simple-size-label">
             {SIMPLE_SIZES.map((sz) => {
               const active = Math.abs(modelSizeMm - sz.mm) < 1;
               return (
@@ -1161,7 +1160,7 @@ export function SimpleControlPanel({
                 >
                   <span className="block text-base font-bold text-[var(--text-primary)]">{sz.label}</span>
                   <span className="block text-[11px] text-[var(--text-secondary)]">{sz.cm}</span>
-                  <span className="block text-[11px] text-[var(--text-secondary)]">{dispPrice(sz.price)}</span>
+                  <span className="block text-[11px] text-[var(--text-secondary)]">{dispPrice(mapQuoteUah(sz.mm, false).price)}</span>
                 </button>
               );
             })}

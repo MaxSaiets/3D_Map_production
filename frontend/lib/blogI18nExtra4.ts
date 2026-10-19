@@ -18,7 +18,7 @@ export const BLOG_I18N_EXTRA_4: Record<string, Partial<Record<BlogExtraLocale, B
           "Ein Anhänger mit der Karte des Treffpunkts (ab ≈4 €) — auch als Paar: einer für ihn, einer für sie, mit passender Gravur oder Datum.",
           "Ein Kühlschrankmagnet (≈5 €) — eine leichte Ergänzung zum Hauptgeschenk oder eine eigene Variante.",
           "Eine 3D-Tischkarte in Größe S oder M (≈8 oder ≈12 €) — fürs Regal oder den Nachttisch, mit mehr Details rund um den Treffpunkt.",
-          "Soll auch das Gelände sichtbar sein (etwa ein Park auf einem Hügel oder eine Uferpromenade), gibt es die Relief-Option für ≈2 €.",
+          "Soll auch das Gelände sichtbar sein (etwa ein Park auf einem Hügel oder eine Uferpromenade), gibt es die Relief-Option für ≈2–24 €.",
         ] },
         { h2: "In 5 Minuten erstellt", p: [
           "Produkt wählen — Anhänger oder Karte —, den Ort eures ersten Dates (Café, Park, Straße) auf der Karte finden, die kostenlose 3D-Vorschau bestätigen (1–2 Minuten) und eine Gravur mit Datum oder Namen hinzufügen.",
@@ -53,7 +53,7 @@ export const BLOG_I18N_EXTRA_4: Record<string, Partial<Record<BlogExtraLocale, B
           "Brelok z mapą miejsca spotkania (od ≈4 €) — może być w parze: jeden dla niego, drugi dla niej, z pasującym grawerem lub datą.",
           "Magnes na lodówkę (≈5 €) — lekki dodatek do głównego prezentu albo osobna opcja.",
           "Mapa 3D na biurko w rozmiarze S lub M (≈8 lub ≈12 €) — na półkę lub szafkę nocną, z większą liczbą szczegółów wokół miejsca spotkania.",
-          "Jeśli chcesz pokazać też ukształtowanie terenu (np. park na wzgórzu czy bulwar), możesz dodać opcję rzeźby terenu za ≈2 €.",
+          "Jeśli chcesz pokazać też ukształtowanie terenu (np. park na wzgórzu czy bulwar), możesz dodać opcję rzeźby terenu za ≈2–24 €.",
         ] },
         { h2: "Jak zrobić to w 5 minut", p: [
           "Wybierz produkt — brelok lub mapę — znajdź miejsce pierwszej randki (kawiarnię, park, ulicę), zatwierdź darmowy podgląd 3D (1–2 minuty) i dodaj grawer z datą lub imionami.",
@@ -88,7 +88,7 @@ export const BLOG_I18N_EXTRA_4: Record<string, Partial<Record<BlogExtraLocale, B
           "Un porte-clés avec la carte du lieu de rencontre (dès ≈4 €) — possible en paire : un pour lui, un pour elle, avec une gravure ou une date assortie.",
           "Un aimant de frigo (≈5 €) — un petit complément au cadeau principal, ou une option à part entière.",
           "Une carte 3D de bureau en taille S ou M (≈8 ou ≈12 €) — pour une étagère ou une table de nuit, avec plus de détails autour du lieu.",
-          "Pour montrer aussi le relief (un parc sur une colline ou un quai, par exemple), l'option relief coûte ≈2 €.",
+          "Pour montrer aussi le relief (un parc sur une colline ou un quai, par exemple), l'option relief coûte ≈2–24 €.",
         ] },
         { h2: "Le faire en 5 minutes", p: [
           "Choisis un produit — porte-clés ou carte —, trouve le lieu du premier rendez-vous (café, parc, rue), valide l'aperçu 3D gratuit (1 à 2 minutes) et ajoute une gravure avec la date ou les prénoms.",
@@ -123,7 +123,7 @@ export const BLOG_I18N_EXTRA_4: Record<string, Partial<Record<BlogExtraLocale, B
           "Un llavero con el mapa del lugar del encuentro (desde ≈4 €), que puede ir en pareja: uno para cada uno, con grabado o fecha a juego.",
           "Un imán de nevera (≈5 €): un complemento ligero al regalo principal o una opción por sí sola.",
           "Un mapa 3D de escritorio en tamaño S o M (≈8 o ≈12 €): para una estantería o la mesilla, con más detalle alrededor del lugar.",
-          "Si quieres mostrar también el relieve (un parque en una colina o un paseo junto al río, por ejemplo), la opción de relieve cuesta ≈2 €.",
+          "Si quieres mostrar también el relieve (un parque en una colina o un paseo junto al río, por ejemplo), la opción de relieve cuesta ≈2–24 €.",
         ] },
         { h2: "Cómo hacerlo en 5 minutos", p: [
           "Elige un producto (llavero o mapa), busca el lugar de la primera cita (cafetería, parque, calle), confirma la vista previa 3D gratis (1–2 minutos) y añade un grabado con la fecha o los nombres.",

@@ -134,7 +134,7 @@ export const fr: LegalSet = {
         { p: "Prix des produits (la livraison est facturée séparément selon le tarif du transporteur) :" },
         { ul: [
           "Porte-clés-carte — à partir de 170 ₴ (≈ 4 €).",
-          "Carte 3D d'un quartier : S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (cartes — à partir de 8 €).",
+          "Carte 3D d'un quartier : S 5,5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴ (cartes — à partir de 8 €).",
           "Magnet de réfrigérateur (carte) — 210 ₴.",
           "Fichier 3MF pour impression autonome — 149 ₴ (le prix est affiché dans le configurateur), accès par lien après paiement ; l'aperçu 3D est gratuit.",
           "Abonnement Monadruk Pro — 2 100 ₴ par mois (ou 50 USD pour un paiement depuis l'étranger), renouvellement automatique : fichiers d'impression illimités et licence commerciale, résiliation en un clic. Détails — [pro-terms:conditions de l'abonnement].",

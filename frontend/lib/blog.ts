@@ -382,7 +382,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Формати під різний бюджет",
             p: [
-              "Брелок-мапа (від 170 ₴) — недорогий знак уваги: карта району з власним написом на звороті. Магніт на холодильник (210 ₴) — щоденне нагадування про місце. 3D-мапа на полицю (від 350 ₴ за 5,5 см до 770 ₴ за 15 см) — повноцінний інтер'єрний подарунок, з рельєфом місцевості за бажанням.",
+              "Брелок-мапа (від 170 ₴) — недорогий знак уваги: карта району з власним написом на звороті. Магніт на холодильник (210 ₴) — щоденне нагадування про місце. 3D-мапа на полицю (від 350 ₴ за 5,5 см до 1250 ₴ за 15 см) — повноцінний інтер'єрний подарунок, з рельєфом місцевості за бажанням.",
             ],
           },
           {
@@ -414,7 +414,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Formats for any budget",
             p: [
-              "Map keychain (from 170 ₴ ≈ €4) — a small token with custom text on the back. Fridge magnet (210 ₴) — a daily reminder of a place. Shelf 3D map (350–770 ₴ ≈ €8–13 depending on size) — a real interior piece, with terrain relief if you like.",
+              "Map keychain (from 170 ₴ ≈ €4) — a small token with custom text on the back. Fridge magnet (210 ₴) — a daily reminder of a place. Shelf 3D map (350–2000 ₴ ≈ €8–48 depending on size) — a real interior piece, with terrain relief if you like.",
             ],
           },
           {
@@ -964,7 +964,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Розміри та ціни",
             p: [
-              "S 5,5 см — 350 ₴, M 8 см — 490 ₴, L 11 см — 630 ₴, XL 15 см — 770 ₴; рельєф +85 ₴. Також є брелок з районом Києва (від 170 ₴) і магніт на холодильник (210 ₴).",
+              "S 5,5 см — 350 ₴, M 8 см — 500 ₴, L 11 см — 750 ₴, XL 15 см — 1250 ₴; рельєф +100–1000 ₴. Також є брелок з районом Києва (від 170 ₴) і магніт на холодильник (210 ₴).",
             ],
           },
           {
@@ -995,7 +995,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Sizes and prices",
             p: [
-              "S 5.5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴; relief +85 ₴. There's also a Kyiv district keychain (from 170 ₴) and a fridge magnet (210 ₴).",
+              "S 5.5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴; relief +100–1000 ₴. There's also a Kyiv district keychain (from 170 ₴) and a fridge magnet (210 ₴).",
             ],
           },
           {
@@ -1026,7 +1026,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Größen und Preise",
             p: [
-              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; Relief +≈2 €. Es gibt auch einen Anhänger mit einem Kiewer Viertel (ab ≈4 €) und einen Kühlschrankmagneten (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈30 €; Relief +≈2–24 €. Es gibt auch einen Anhänger mit einem Kiewer Viertel (ab ≈4 €) und einen Kühlschrankmagneten (≈4 €).",
             ],
           },
           {
@@ -1057,7 +1057,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Rozmiary i ceny",
             p: [
-              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; rzeźba +≈2 €. Jest też brelok z dzielnicą Kijowa (od ≈4 €) i magnes na lodówkę (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈30 €; rzeźba +≈2–24 €. Jest też brelok z dzielnicą Kijowa (od ≈4 €) i magnes na lodówkę (≈4 €).",
             ],
           },
           {
@@ -1088,7 +1088,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Tailles et prix",
             p: [
-              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 € ; relief +≈2 €. Il existe aussi un porte-clés avec un quartier de Kyiv (dès ≈4 €) et un magnet de frigo (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈30 € ; relief +≈2–24 €. Il existe aussi un porte-clés avec un quartier de Kyiv (dès ≈4 €) et un magnet de frigo (≈4 €).",
             ],
           },
           {
@@ -1119,7 +1119,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Tamaños y precios",
             p: [
-              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈18 €; relieve +≈2 €. También hay llavero con un barrio de Kyiv (desde ≈4 €) e imán de nevera (≈4 €).",
+              "S 5,5 cm — ≈8 €, M 8 cm — ≈8 €, L 11 cm — ≈11 €, XL 15 cm — ≈30 €; relieve +≈2–24 €. También hay llavero con un barrio de Kyiv (desde ≈4 €) e imán de nevera (≈4 €).",
             ],
           },
           {
@@ -1543,7 +1543,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "S, M, L чи XL: як обрати розмір 3D-мапи міста",
         description:
-          "Порівняння розмірів 3D-мапи: S 5,5 см (350 ₴), M 8 см (490 ₴), L 11 см (630 ₴), XL 15 см (770 ₴). Який розмір під яку ділянку, полицю і бюджет.",
+          "Порівняння розмірів 3D-мапи: S 5,5 см (350 ₴), M 8 см (500 ₴), L 11 см (750 ₴), XL 15 см (1250 ₴). Який розмір під яку ділянку, полицю і бюджет.",
         h1: "Як обрати розмір 3D-мапи: чесне порівняння",
         intro:
           "Розмір — головне рішення при замовленні мапи: він визначає і ціну, і те, наскільки детально читатиметься район. Коротка версія: M (8 см) — найуніверсальніший; далі — нюанси, які варто знати до замовлення.",
@@ -1552,8 +1552,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             h2: "Чотири розміри на прикладах",
             p: [
               "S (5,5 см, 350 ₴) — компактний сувенір: добре для щільного центру з виразними кварталами, стоїть на робочому столі чи поличці з дрібницями. Дрібні провулки на S уже зливаються, тож обирайте невелику ділянку 300–500 м.",
-              "M (8 см, 490 ₴) — золота середина: ділянка 400–800 м читається повністю, модель помітна на полиці, але не претендує на пів кімнати. Найчастіший вибір для подарунка.",
-              "L (11 см, 630 ₴) і XL (15 см, 770 ₴) — інтер'єрні речі: видно і двори, і окремі будинки, можна брати ширшу ділянку до кілометра-півтора. XL особливо виграє з рельєфом — перепади висот на великій площі виглядають драматично.",
+              "M (8 см, 500 ₴) — золота середина: ділянка 400–800 м читається повністю, модель помітна на полиці, але не претендує на пів кімнати. Найчастіший вибір для подарунка.",
+              "L (11 см, 750 ₴) і XL (15 см, 1250 ₴) — інтер'єрні речі: видно і двори, і окремі будинки, можна брати ширшу ділянку до кілометра-півтора. XL особливо виграє з рельєфом — перепади висот на великій площі виглядають драматично.",
             ],
           },
           {
@@ -1565,7 +1565,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Рельєф і серії",
             p: [
-              "Рельєф місцевості (+85 ₴) додає мапі справжні перепади висот — обов'язково для Києва, Львова чи Карпат, необов'язково для рівнинних міст. А якщо хочеться охопити велику територію без втрати деталей — замовте серію з кількох панелей, що з'єднуються пазами в одне полотно.",
+              "Рельєф місцевості (+100–1000 ₴) додає мапі справжні перепади висот — обов'язково для Києва, Львова чи Карпат, необов'язково для рівнинних міст. А якщо хочеться охопити велику територію без втрати деталей — замовте серію з кількох панелей, що з'єднуються пазами в одне полотно.",
             ],
           },
         ],
@@ -1607,7 +1607,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "S, M, L oder XL: die richtige Größe der 3D-Stadtkarte wählen",
         description:
-          "Größenvergleich der 3D-Karte: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Welche Größe zu welchem Bereich, Regal und Budget passt.",
+          "Größenvergleich der 3D-Karte: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈30 €). Welche Größe zu welchem Bereich, Regal und Budget passt.",
         h1: "Wie man die Größe der 3D-Karte wählt: ein ehrlicher Vergleich",
         intro:
           "Die Größe ist die wichtigste Entscheidung beim Bestellen: Sie bestimmt den Preis und wie detailliert das Viertel lesbar bleibt. Kurzfassung: M (8 cm) ist am universellsten; darunter die Nuancen, die man vor der Bestellung kennen sollte.",
@@ -1617,7 +1617,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             p: [
               "S (5,5 cm, ≈8 €) — ein kompaktes Souvenir: gut für ein dichtes Zentrum mit markanten Quartieren, passt auf den Schreibtisch. Kleine Gassen verschmelzen bei S bereits, also wähle einen kleinen Bereich von 300–500 m.",
               "M (8 cm, ≈8 €) — die goldene Mitte: ein Bereich von 400–800 m ist vollständig lesbar, das Modell fällt im Regal auf, ohne das halbe Zimmer zu beanspruchen. Die häufigste Wahl als Geschenk.",
-              "L (11 cm, ≈11 €) und XL (15 cm, ≈18 €) — Interieurstücke: Höfe und einzelne Gebäude sind sichtbar, man kann einen breiteren Bereich bis 1–1,5 km nehmen. XL gewinnt besonders mit Relief — Höhenunterschiede auf großer Fläche wirken dramatisch.",
+              "L (11 cm, ≈11 €) und XL (15 cm, ≈30 €) — Interieurstücke: Höfe und einzelne Gebäude sind sichtbar, man kann einen breiteren Bereich bis 1–1,5 km nehmen. XL gewinnt besonders mit Relief — Höhenunterschiede auf großer Fläche wirken dramatisch.",
             ],
           },
           {
@@ -1629,7 +1629,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relief und Serien",
             p: [
-              "Das Geländerelief (+≈2 €) gibt der Karte echte Höhenunterschiede — Pflicht für Kyiv, Lwiw oder die Karpaten, optional für flache Städte. Und wenn du ein großes Gebiet ohne Detailverlust abdecken willst — bestelle eine Serie aus mehreren Kacheln, die sich zu einem Panel verbinden.",
+              "Das Geländerelief (+≈2–24 €) gibt der Karte echte Höhenunterschiede — Pflicht für Kyiv, Lwiw oder die Karpaten, optional für flache Städte. Und wenn du ein großes Gebiet ohne Detailverlust abdecken willst — bestelle eine Serie aus mehreren Kacheln, die sich zu einem Panel verbinden.",
             ],
           },
         ],
@@ -1639,7 +1639,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "S, M, L czy XL: jak wybrać rozmiar mapy miasta 3D",
         description:
-          "Porównanie rozmiarów mapy 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Jaki rozmiar do jakiego obszaru, półki i budżetu.",
+          "Porównanie rozmiarów mapy 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈30 €). Jaki rozmiar do jakiego obszaru, półki i budżetu.",
         h1: "Jak wybrać rozmiar mapy 3D: uczciwe porównanie",
         intro:
           "Rozmiar to główna decyzja przy zamawianiu mapy: określa i cenę, i to, jak szczegółowo będzie czytelna dzielnica. Krótko: M (8 cm) jest najbardziej uniwersalny; poniżej niuanse, które warto znać przed zamówieniem.",
@@ -1649,7 +1649,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             p: [
               "S (5,5 cm, ≈8 €) — kompaktowa pamiątka: dobra dla gęstego centrum z wyrazistymi kwartałami, stoi na biurku. Małe uliczki przy S już się zlewają, więc wybierz niewielki obszar 300–500 m.",
               "M (8 cm, ≈8 €) — złoty środek: obszar 400–800 m czyta się w całości, model jest widoczny na półce, ale nie zajmuje pół pokoju. Najczęstszy wybór na prezent.",
-              "L (11 cm, ≈11 €) i XL (15 cm, ≈18 €) — elementy wnętrza: widać podwórka i pojedyncze budynki, można wziąć szerszy obszar do 1–1,5 km. XL szczególnie zyskuje z rzeźbą terenu — różnice wysokości na dużej powierzchni wyglądają dramatycznie.",
+              "L (11 cm, ≈11 €) i XL (15 cm, ≈30 €) — elementy wnętrza: widać podwórka i pojedyncze budynki, można wziąć szerszy obszar do 1–1,5 km. XL szczególnie zyskuje z rzeźbą terenu — różnice wysokości na dużej powierzchni wyglądają dramatycznie.",
             ],
           },
           {
@@ -1661,7 +1661,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Rzeźba terenu i serie",
             p: [
-              "Rzeźba terenu (+≈2 €) dodaje mapie prawdziwe różnice wysokości — obowiązkowa dla Kijowa, Lwowa czy Karpat, opcjonalna dla płaskich miast. A jeśli chcesz objąć duży teren bez utraty detali — zamów serię kilku kafelków łączących się w jeden panel.",
+              "Rzeźba terenu (+≈2–24 €) dodaje mapie prawdziwe różnice wysokości — obowiązkowa dla Kijowa, Lwowa czy Karpat, opcjonalna dla płaskich miast. A jeśli chcesz objąć duży teren bez utraty detali — zamów serię kilku kafelków łączących się w jeden panel.",
             ],
           },
         ],
@@ -1671,7 +1671,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "S, M, L ou XL : comment choisir la taille de votre carte de ville 3D",
         description:
-          "Comparatif des tailles de carte 3D : S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Quelle taille pour quelle zone, quelle étagère et quel budget.",
+          "Comparatif des tailles de carte 3D : S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈30 €). Quelle taille pour quelle zone, quelle étagère et quel budget.",
         h1: "Comment choisir la taille d'une carte 3D : un comparatif honnête",
         intro:
           "La taille est la décision principale : elle fixe le prix et le niveau de détail qui survit. Version courte : M (8 cm) est la plus universelle ; ci-dessous les nuances à connaître avant de commander.",
@@ -1681,7 +1681,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             p: [
               "S (5,5 cm, ≈8 €) — un souvenir compact : parfait pour un centre dense aux îlots marqués, tient sur un bureau. Les petites ruelles fusionnent déjà en S : choisissez une petite zone de 300–500 m.",
               "M (8 cm, ≈8 €) — le juste milieu : une zone de 400–800 m se lit entièrement, le modèle se remarque sur une étagère sans envahir la pièce. Le choix le plus fréquent pour un cadeau.",
-              "L (11 cm, ≈11 €) et XL (15 cm, ≈18 €) — des pièces d'intérieur : on voit les cours et les bâtiments individuels, et on peut prendre une zone plus large jusqu'à 1–1,5 km. XL brille surtout avec le relief — les dénivelés sur une grande surface sont spectaculaires.",
+              "L (11 cm, ≈11 €) et XL (15 cm, ≈30 €) — des pièces d'intérieur : on voit les cours et les bâtiments individuels, et on peut prendre une zone plus large jusqu'à 1–1,5 km. XL brille surtout avec le relief — les dénivelés sur une grande surface sont spectaculaires.",
             ],
           },
           {
@@ -1693,7 +1693,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relief et séries",
             p: [
-              "Le relief du terrain (+≈2 €) donne à la carte de vrais dénivelés — indispensable pour Kyiv, Lviv ou les Carpates, facultatif pour les villes plates. Et pour couvrir un grand territoire sans perdre le détail — commandez une série de tuiles qui s'assemblent en un panneau.",
+              "Le relief du terrain (+≈2–24 €) donne à la carte de vrais dénivelés — indispensable pour Kyiv, Lviv ou les Carpates, facultatif pour les villes plates. Et pour couvrir un grand territoire sans perdre le détail — commandez une série de tuiles qui s'assemblent en un panneau.",
             ],
           },
         ],
@@ -1703,7 +1703,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "S, M, L o XL: cómo elegir el tamaño de tu mapa de ciudad 3D",
         description:
-          "Comparativa de tamaños del mapa 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈18 €). Qué tamaño para qué zona, estantería y presupuesto.",
+          "Comparativa de tamaños del mapa 3D: S 5,5 cm (≈8 €), M 8 cm (≈8 €), L 11 cm (≈11 €), XL 15 cm (≈30 €). Qué tamaño para qué zona, estantería y presupuesto.",
         h1: "Cómo elegir el tamaño de un mapa 3D: una comparativa honesta",
         intro:
           "El tamaño es la decisión principal al pedir un mapa: determina el precio y cuánto detalle del barrio sobrevive. Versión corta: M (8 cm) es el más universal; abajo, los matices que conviene saber antes de pedir.",
@@ -1713,7 +1713,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
             p: [
               "S (5,5 cm, ≈8 €) — un recuerdo compacto: va bien para un centro denso con manzanas marcadas, cabe en el escritorio. Las callejuelas pequeñas ya se funden en S, así que elige una zona pequeña de 300–500 m.",
               "M (8 cm, ≈8 €) — el punto justo: una zona de 400–800 m se lee entera, el modelo se nota en la estantería sin ocupar media habitación. La elección más común para regalo.",
-              "L (11 cm, ≈11 €) y XL (15 cm, ≈18 €) — piezas de interior: se ven patios y edificios individuales, y puedes tomar una zona más amplia de hasta 1–1,5 km. XL luce especialmente con relieve — los desniveles en gran superficie resultan espectaculares.",
+              "L (11 cm, ≈11 €) y XL (15 cm, ≈30 €) — piezas de interior: se ven patios y edificios individuales, y puedes tomar una zona más amplia de hasta 1–1,5 km. XL luce especialmente con relieve — los desniveles en gran superficie resultan espectaculares.",
             ],
           },
           {
@@ -1725,7 +1725,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Relieve y series",
             p: [
-              "El relieve del terreno (+≈2 €) da al mapa desniveles reales — imprescindible para Kyiv, Leópolis o los Cárpatos, opcional para ciudades llanas. Y si quieres abarcar un territorio grande sin perder detalle — pide una serie de azulejos que se unen en un solo panel.",
+              "El relieve del terreno (+≈2–24 €) da al mapa desniveles reales — imprescindible para Kyiv, Leópolis o los Cárpatos, opcional para ciudades llanas. Y si quieres abarcar un territorio grande sin perder detalle — pide una serie de azulejos que se unen en un solo panel.",
             ],
           },
         ],
@@ -1741,10 +1741,10 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       uk: {
         title: "Рельєф на 3D-мапі: коли він потрібен, а коли ні",
         description:
-          "Опція «рельєф місцевості» (+85 ₴) додає мапі реальні перепади висот. Для яких міст рельєф обов'язковий, для яких зайвий, і як він друкується.",
+          "Опція «рельєф місцевості» (+100–1000 ₴) додає мапі реальні перепади висот. Для яких міст рельєф обов'язковий, для яких зайвий, і як він друкується.",
         h1: "Рельєф на 3D-мапі: вмикати чи ні",
         intro:
-          "Рельєф — опція, що додає мапі третій вимір ландшафту: пагорби, схили й долини друкуються з реальних супутникових даних висот. Це +85 ₴ до ціни — і для одних міст це найкраща частина моделі, а для інших просто непомітна. Розберімося, коли воно того варте.",
+          "Рельєф — опція, що додає мапі третій вимір ландшафту: пагорби, схили й долини друкуються з реальних супутникових даних висот. Це +100–1000 ₴ до ціни — і для одних міст це найкраща частина моделі, а для інших просто непомітна. Розберімося, коли воно того варте.",
         sections: [
           {
             h2: "Міста, де рельєф — обов'язковий",
@@ -1803,7 +1803,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       de: {
         title: "Geländerelief auf der 3D-Karte: wann es sich lohnt und wann nicht",
         description:
-          "Die Option «Geländerelief» (+≈2 €) gibt der Karte echte Höhenunterschiede. Für welche Städte Relief Pflicht ist, wo es überflüssig ist und wie es gedruckt wird.",
+          "Die Option «Geländerelief» (+≈2–24 €) gibt der Karte echte Höhenunterschiede. Für welche Städte Relief Pflicht ist, wo es überflüssig ist und wie es gedruckt wird.",
         h1: "Geländerelief auf der 3D-Karte: an oder aus",
         intro:
           "Relief fügt der Karte die dritte Dimension der Landschaft hinzu: Hügel, Hänge und Täler werden aus echten Satelliten-Höhendaten gedruckt. Für manche Städte ist es der beste Teil des Modells, für andere schlicht unsichtbar. Klären wir, wann es sich lohnt.",
@@ -1834,7 +1834,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       pl: {
         title: "Rzeźba terenu na mapie 3D: kiedy jest potrzebna, a kiedy nie",
         description:
-          "Opcja «rzeźba terenu» (+≈2 €) dodaje mapie prawdziwe różnice wysokości. Dla których miast rzeźba jest obowiązkowa, gdzie zbędna i jak się drukuje.",
+          "Opcja «rzeźba terenu» (+≈2–24 €) dodaje mapie prawdziwe różnice wysokości. Dla których miast rzeźba jest obowiązkowa, gdzie zbędna i jak się drukuje.",
         h1: "Rzeźba terenu na mapie 3D: włączać czy nie",
         intro:
           "Rzeźba dodaje mapie trzeci wymiar krajobrazu: wzgórza, zbocza i doliny drukują się z prawdziwych satelitarnych danych wysokości. Dla jednych miast to najlepsza część modelu, dla innych po prostu niewidoczna. Rozłóżmy na czynniki, kiedy warto.",
@@ -1865,7 +1865,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       fr: {
         title: "Relief du terrain sur une carte 3D : quand il faut, quand il ne sert à rien",
         description:
-          "L'option «relief du terrain» (+≈2 €) ajoute de vrais dénivelés à la carte. Pour quelles villes le relief est indispensable, où il est inutile, et comment il s'imprime.",
+          "L'option «relief du terrain» (+≈2–24 €) ajoute de vrais dénivelés à la carte. Pour quelles villes le relief est indispensable, où il est inutile, et comment il s'imprime.",
         h1: "Relief du terrain sur une carte 3D : activer ou non",
         intro:
           "Le relief ajoute la troisième dimension du paysage : collines, pentes et vallées s'impriment à partir de vraies données satellites d'altitude. Pour certaines villes c'est la meilleure partie du modèle ; pour d'autres, c'est tout simplement invisible. Voyons quand ça vaut le coup.",
@@ -1896,7 +1896,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       es: {
         title: "Relieve del terreno en un mapa 3D: cuándo hace falta y cuándo no",
         description:
-          "La opción «relieve del terreno» (+≈2 €) añade desniveles reales al mapa. Para qué ciudades el relieve es imprescindible, dónde sobra y cómo se imprime.",
+          "La opción «relieve del terreno» (+≈2–24 €) añade desniveles reales al mapa. Para qué ciudades el relieve es imprescindible, dónde sobra y cómo se imprime.",
         h1: "Relieve del terreno en un mapa 3D: activar o no",
         intro:
           "El relieve añade al mapa la tercera dimensión del paisaje: colinas, laderas y valles se imprimen a partir de datos satelitales de elevación reales. Para unas ciudades es la mejor parte del modelo; para otras, simplemente invisible. Veamos cuándo merece la pena.",
@@ -2339,7 +2339,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ціни",
             p: [
-              "Брелок з картою або GPX-треком — від 170 ₴. Магніт на холодильник — 210 ₴. 3D-мапа міста: S (5,5 см) 350 ₴, M (8 см) 490 ₴, L (11 см) 630 ₴, XL (15 см) 770 ₴. Рельєф місцевості +85 ₴. Панно з плиток — ціна за кількість плиток, рахується у конструкторі одразу.",
+              "Брелок з картою або GPX-треком — від 170 ₴. Магніт на холодильник — 210 ₴. 3D-мапа міста: S (5,5 см) 350 ₴, M (8 см) 500 ₴, L (11 см) 750 ₴, XL (15 см) 1250 ₴. Рельєф місцевості +100–1000 ₴. Панно з плиток — ціна за кількість плиток, рахується у конструкторі одразу.",
             ],
           },
           {
@@ -2379,7 +2379,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prices",
             p: [
-              "Map or GPX keychain — from ≈€4. Fridge magnet — ≈€4. 3D city map: S (5.5 cm) ≈€8, M (8 cm) ≈€8, L (11 cm) ≈€11, XL (15 cm) ≈€18. Terrain relief +≈€2. Tile panels are priced per tile, calculated live in the builder.",
+              "Map or GPX keychain — from ≈€4. Fridge magnet — ≈€4. 3D city map: S (5.5 cm) ≈€8, M (8 cm) ≈€8, L (11 cm) ≈€11, XL (15 cm) ≈€18. Terrain relief +≈€2–24. Tile panels are priced per tile, calculated live in the builder.",
             ],
           },
           {
@@ -2418,7 +2418,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Preise",
             p: [
-              "Anhänger mit Karte oder GPX — ab ≈4 €. Kühlschrankmagnet — ≈4 €. 3D-Stadtkarte: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Geländerelief +≈2 €. Kachel-Panels werden pro Kachel berechnet, live im Konfigurator.",
+              "Anhänger mit Karte oder GPX — ab ≈4 €. Kühlschrankmagnet — ≈4 €. 3D-Stadtkarte: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈30 €. Geländerelief +≈2–24 €. Kachel-Panels werden pro Kachel berechnet, live im Konfigurator.",
             ],
           },
           {
@@ -2457,7 +2457,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Ceny",
             p: [
-              "Brelok z mapą lub śladem GPX — od ≈4 €. Magnes na lodówkę — ≈4 €. Mapa miasta 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Rzeźba terenu +≈2 €. Panele z kafelków wyceniane za kafelek, liczone na bieżąco w kreatorze.",
+              "Brelok z mapą lub śladem GPX — od ≈4 €. Magnes na lodówkę — ≈4 €. Mapa miasta 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈30 €. Rzeźba terenu +≈2–24 €. Panele z kafelków wyceniane za kafelek, liczone na bieżąco w kreatorze.",
             ],
           },
           {
@@ -2496,7 +2496,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Prix",
             p: [
-              "Porte-clés avec carte ou GPX — dès ≈4 €. Magnet de frigo — ≈4 €. Carte de ville 3D : S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Relief du terrain +≈2 €. Les panneaux en tuiles sont facturés à la tuile, calculés en direct dans le configurateur.",
+              "Porte-clés avec carte ou GPX — dès ≈4 €. Magnet de frigo — ≈4 €. Carte de ville 3D : S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈30 €. Relief du terrain +≈2–24 €. Les panneaux en tuiles sont facturés à la tuile, calculés en direct dans le configurateur.",
             ],
           },
           {
@@ -2535,7 +2535,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Precios",
             p: [
-              "Llavero con mapa o GPX — desde ≈4 €. Imán de nevera — ≈4 €. Mapa de ciudad 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈18 €. Relieve del terreno +≈2 €. Los paneles de azulejos se cobran por azulejo, calculado al momento en el configurador.",
+              "Llavero con mapa o GPX — desde ≈4 €. Imán de nevera — ≈4 €. Mapa de ciudad 3D: S (5,5 cm) ≈8 €, M (8 cm) ≈8 €, L (11 cm) ≈11 €, XL (15 cm) ≈30 €. Relieve del terreno +≈2–24 €. Los paneles de azulejos se cobran por azulejo, calculado al momento en el configurador.",
             ],
           },
           {
@@ -2573,7 +2573,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Що обирають найчастіше",
             p: [
-              "Брелок з рідним районом (від 170 ₴) — найпрактичніше: легкий, міцний Eco PLA, витримує щоденне носіння. Мапа рідного міста 8–11 см (від 490 ₴) — на полицю чи в бліндаж. Брелоки-«серця» для пари — половинка з її районом, половинка з його: з'єднуються як пазл.",
+              "Брелок з рідним районом (від 170 ₴) — найпрактичніше: легкий, міцний Eco PLA, витримує щоденне носіння. Мапа рідного міста 8–11 см (від 500 ₴) — на полицю чи в бліндаж. Брелоки-«серця» для пари — половинка з її районом, половинка з його: з'єднуються як пазл.",
             ],
           },
           {
@@ -2969,7 +2969,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
           {
             h2: "Формати",
             p: [
-              "Мапа рідного району 8–15 см (від 490 ₴) — на полицю. Брелок з двором дитинства (від 170 ₴) — щоб дім був у кишені. Магніт (210 ₴) — на холодильник нової кухні. Панно з кількох плиток — коли хочеться повісити на стіну ціле місто.",
+              "Мапа рідного району 8–15 см (від 500 ₴) — на полицю. Брелок з двором дитинства (від 170 ₴) — щоб дім був у кишені. Магніт (210 ₴) — на холодильник нової кухні. Панно з кількох плиток — коли хочеться повісити на стіну ціле місто.",
               "На звороті брелока — напис: назва міста, «додому повернемось», координати дому чи ім'я.",
             ],
           },

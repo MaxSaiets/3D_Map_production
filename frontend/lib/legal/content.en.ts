@@ -134,7 +134,7 @@ export const en: LegalSet = {
         { p: "Product prices (delivery is charged separately by the carrier):" },
         { ul: [
           "Map keychain — from 170 ₴ (≈ 4 €).",
-          "3D district map: S 5.5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (maps — from 8 €).",
+          "3D district map: S 5.5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴ (maps — from 8 €).",
           "Fridge magnet (map) — 210 ₴.",
           "3MF file for self-printing — 149 ₴ (the price is shown in the designer), access via a link after payment; the 3D preview is free.",
           "Monadruk Pro subscription — UAH 2,100 per month (or USD 50 when paying from outside Ukraine), renews automatically: unlimited print files and a commercial licence, cancel in one click. Details — [pro-terms:subscription terms].",

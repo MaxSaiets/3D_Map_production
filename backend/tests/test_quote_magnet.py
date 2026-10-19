@@ -62,8 +62,23 @@ def test_map_and_keychain_pricing_unchanged(client):
     """Щит: правка магніта не мала зачепити решту прайсу."""
     pricing = main._load_pricing()
     sizes = {k: int(v) for k, v in (pricing.get("map", {}).get("sizes_mm", {}) or {}).items()}
+    disc = pricing.get("map", {}).get("discount", {}) or {}
     for size, expected in sizes.items():
+        if size == "60":
+            continue  # магніт — окремий SKU (product=magnet), крива мап його виключає
+        if float(size) >= float(disc.get("min_size_mm", 1e9)):
+            expected -= int(disc.get("amount", 0))  # знижка лише від 20 см
         assert _price(client, product="map", size_mm=float(size)) == expected
     assert _price(client, product="keychain") == int(pricing.get("keychain", {}).get("base", 170))
-    addon = int(pricing.get("map", {}).get("relief_addon", 0))
+    addon = int((pricing.get("map", {}).get("relief_addon_mm", {}) or {}).get("80", pricing.get("map", {}).get("relief_addon", 0)))
     assert _price(client, product="map", size_mm=80, relief=True) == sizes["80"] + addon
+
+
+def test_discount_only_from_20cm(client):
+    """19.10.2026: 20 см = 2000 / 3000 з рельєфом, знижка −350 лише від 20 см."""
+    r = client.get("/api/quote", params={"product": "map", "size_mm": 200}).json()
+    assert (r["list_price"], r["price"]) == (2000, 1650)
+    r = client.get("/api/quote", params={"product": "map", "size_mm": 200, "relief": True}).json()
+    assert (r["list_price"], r["price"]) == (3000, 2650)
+    r = client.get("/api/quote", params={"product": "map", "size_mm": 150}).json()
+    assert r["price"] == 1250 and "list_price" not in r

@@ -25,7 +25,7 @@ import {
   MAP_MAGNET_PRICE_UAH,
   MAP_RELIEF_ADDON_UAH,
   mapPriceEur,
-  mapPriceForSizeUah,
+  mapQuoteUah,
 } from "@/lib/mapPrices";
 import { GenerationStages } from "@/components/GenerationStages";
 import { SalesAlternatives } from "@/components/SalesAlternatives";
@@ -635,14 +635,20 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
   };
 
   const basePrice = SIMPLE_SIZES[0].price;
-  const reliefAddon = scenario === "relief" ? MAP_RELIEF_ADDON_UAH : 0;
   // Ціна на CTA: живий quote; fallback — канонічна таблиця mapPrices (без хардкоду).
   // Проміжні розміри (повзунок) — лінійно між тарифами, як і на бекенді.
+  // 19.10.2026: рельєф залежить від розміру, від 20 см діє знижка (list — перекреслена).
+  const localQuote = mapQuoteUah(s.modelSizeMm, scenario === "relief");
   const tilePriceUah = scenario === "magnet"
     ? (quote?.price ?? MAP_MAGNET_PRICE_UAH)
-    : (quote?.price ?? mapPriceForSizeUah(s.modelSizeMm) + reliefAddon);
+    : (quote?.price ?? localQuote.price);
+  const tileListUah = scenario === "magnet"
+    ? tilePriceUah
+    : (quote ? (quote.list_price ?? quote.price) : localQuote.list);
   // Панно N×N = N² окремих плиток (quote — за одну).
   const ctaPriceUah = tilePriceUah * tiles;
+  const ctaListUah = tileListUah * tiles;
+  const onSale = ctaListUah > ctaPriceUah;
 
   // 18.09.2026 (власник: «мало карток і реальні фото — бред»): картки = РЕНДЕРИ моделей
   // (public/showcase/card-r-*, render_product.py з реальних 3MF Львова), а не фото; крок 1 показує
@@ -1032,7 +1038,15 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 <div data-testid="guided-size">
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">{parts > 1 ? t("tileSizeLabel") : t("sizeLabel")}</p>
-                    <span className="text-[13px] font-bold text-[var(--accent-strong)]" data-testid="custom-size-price">{disp(ctaPriceUah)}</span>
+                    <span className="text-[13px] font-bold text-[var(--accent-strong)]" data-testid="custom-size-price">
+                      {onSale && (
+                        <>
+                          <span className="mr-1.5 rounded-full bg-[rgba(142,107,61,0.14)] px-1.5 py-[1px] text-[10.5px] font-semibold text-[var(--bronze,#8E6B3D)]" data-testid="sale-badge">{t("saleNow")}</span>
+                          <s className="mr-1 text-[11.5px] font-semibold text-[var(--text-secondary)]" data-testid="price-old">{disp(ctaListUah)}</s>
+                        </>
+                      )}
+                      {disp(ctaPriceUah)}
+                    </span>
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label={t("sizeLabel")}>
                     {SIMPLE_SIZES.map((z) => {
@@ -1043,7 +1057,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                           type="button"
                           role="radio"
                           aria-checked={active}
-                          aria-label={`${z.label} · ${z.cm} · ${disp(z.price + reliefAddon)}`}
+                          aria-label={`${z.label} · ${z.cm} · ${disp(mapQuoteUah(z.mm, scenario === "relief").price)}`}
                           onClick={() => applySize(z.mm, z.label)}
                           className={`inline-flex min-h-10 flex-col items-center justify-center rounded-[14px] border px-2.5 py-1 leading-tight transition ${
                             active
@@ -1052,7 +1066,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                           }`}
                         >
                           <span className="text-[12.5px] font-bold text-[var(--text-primary)]">{z.cm}</span>
-                          <span className="text-[10.5px] font-semibold text-[var(--accent-strong)]">{disp(z.price + reliefAddon)}</span>
+                          <span className="text-[10.5px] font-semibold text-[var(--accent-strong)]">{disp(mapQuoteUah(z.mm, scenario === "relief").price)}</span>
                         </button>
                       );
                     })}
@@ -1088,7 +1102,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                   <p className="mt-1 text-[11.5px] leading-snug text-[var(--text-secondary)]" data-testid="size-summary">
                     {(() => {
                       const z = SIMPLE_SIZES.find((x) => x.mm === s.modelSizeMm);
-                      const cmp = z ? `${t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL")} · ` : "";
+                      const cmp = z ? `${t(`sizeCmp${z.label}` as "sizeCmpS" | "sizeCmpM" | "sizeCmpL" | "sizeCmpXL" | "sizeCmpXXL")} · ` : "";
                       return `${cmp}${t("areaApprox", { zone: zoneForSizeM(s.modelSizeMm * parts) })} · ${t("sizeRange", { min: SIZE_MIN_MM / 10, max: SIZE_MAX_MM / 10 })}`;
                     })()}
                   </p>
@@ -1363,6 +1377,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
                 {!successView && (
                   <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--text-secondary)]">
                     {t("printFromLine", { price: disp(ctaPriceUah) })}
+                    {onSale && <> · {t("saleNow")}</>}
                   </p>
                 )}
                 {/* ⭐09.09.2026, заміряно на 30 днях: з 23 людей, які СТВОРИЛИ
@@ -1411,6 +1426,7 @@ export function ScenarioFlow({ onExitGuided }: { onExitGuided: () => void }) {
         visible={scenario !== null}
         label={scenario === "magnet" ? t("magnetTitle") : sizeLabel(s.modelSizeMm)}
         price={disp(ctaPriceUah)}
+        priceOld={onSale ? disp(ctaListUah) : undefined}
         busy={generatingView}
         tone={successView && !dirty ? "bronze" : "primary"}
         disabled={!generatingView && waitingForMap}

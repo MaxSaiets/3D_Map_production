@@ -134,7 +134,7 @@ export const es: LegalSet = {
         { p: "Precios de los productos (el envío se cobra aparte según la tarifa del transportista):" },
         { ul: [
           "Llavero-mapa: desde 170 ₴ (≈ 4 €).",
-          "Mapa 3D de barrio: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapas: desde 8 €).",
+          "Mapa 3D de barrio: S 5,5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴ (mapas: desde 8 €).",
           "Imán de nevera (mapa): 210 ₴.",
           "Archivo 3MF para imprimir por tu cuenta: 149 ₴ (el precio se muestra en el configurador), acceso mediante enlace tras el pago; la vista previa 3D es gratuita.",
           "Suscripción Monadruk Pro: 2 100 ₴ al mes (o 50 USD si pagas desde fuera de Ucrania), con renovación automática: archivos de impresión ilimitados y licencia comercial, cancelación con un clic. Detalles: [pro-terms:condiciones de suscripción].",

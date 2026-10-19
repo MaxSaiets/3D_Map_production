@@ -137,7 +137,7 @@ export const BLOG_I18N_EXTRA: Record<string, Partial<Record<BlogExtraLocale, Blo
           "Das Kennenlerndatum, ihr Name oder die Koordinaten des Ortes — auf einer flachen Karte, einem Magneten oder der Rückseite des Anhängers. Mit einem Klick im Konfigurator hinzugefügt.",
         ] },
         { h2: "Preis und Dauer", p: [
-          "Anhänger ab ≈4 €; ein Herz-Paar sind zwei Anhänger. 3D-Karte von ≈8 € (5,5 cm) bis ≈18 € (15 cm). Druck und Versand innerhalb der Ukraine in 2–4 Werktagen; außerhalb der Ukraine kaufst du die 3MF-Datei (≈3 €) und druckst sie vor Ort.",
+          "Anhänger ab ≈4 €; ein Herz-Paar sind zwei Anhänger. 3D-Karte von ≈8 € (5,5 cm) bis ≈30 € (15 cm). Druck und Versand innerhalb der Ukraine in 2–4 Werktagen; außerhalb der Ukraine kaufst du die 3MF-Datei (≈3 €) und druckst sie vor Ort.",
         ] },
       ],
       ctaLabel: "Karte eures Ortes erstellen",
@@ -158,7 +158,7 @@ export const BLOG_I18N_EXTRA: Record<string, Partial<Record<BlogExtraLocale, Blo
           "Data poznania, jej imię albo współrzędne miejsca — na płaskiej mapie, magnesie lub odwrocie breloka. Dodajesz jednym kliknięciem w kreatorze.",
         ] },
         { h2: "Cena i czas", p: [
-          "Brelok od ≈4 €; para serc to dwa breloki. Mapa 3D od ≈8 € (5,5 cm) do ≈18 € (15 cm). Druk i wysyłka na terenie Ukrainy w 2–4 dni robocze; poza Ukrainą kupujesz plik 3MF (≈3 €) i drukujesz na miejscu.",
+          "Brelok od ≈4 €; para serc to dwa breloki. Mapa 3D od ≈8 € (5,5 cm) do ≈30 € (15 cm). Druk i wysyłka na terenie Ukrainy w 2–4 dni robocze; poza Ukrainą kupujesz plik 3MF (≈3 €) i drukujesz na miejscu.",
         ] },
       ],
       ctaLabel: "Stwórz mapę waszego miejsca",
@@ -179,7 +179,7 @@ export const BLOG_I18N_EXTRA: Record<string, Partial<Record<BlogExtraLocale, Blo
           "La date de votre rencontre, son prénom ou les coordonnées du lieu — sur une carte plate, un aimant ou au dos du porte-clés. Ajoutée en un clic dans le configurateur.",
         ] },
         { h2: "Prix et délais", p: [
-          "Porte-clés dès ≈4 € ; une paire de cœurs, c'est deux porte-clés. Carte 3D de ≈8 € (5,5 cm) à ≈18 € (15 cm). Impression et livraison en Ukraine en 2–4 jours ouvrés ; hors d'Ukraine, tu achètes le fichier 3MF (≈3 €) et tu l'imprimes près de chez toi.",
+          "Porte-clés dès ≈4 € ; une paire de cœurs, c'est deux porte-clés. Carte 3D de ≈8 € (5,5 cm) à ≈30 € (15 cm). Impression et livraison en Ukraine en 2–4 jours ouvrés ; hors d'Ukraine, tu achètes le fichier 3MF (≈3 €) et tu l'imprimes près de chez toi.",
         ] },
       ],
       ctaLabel: "Créer la carte de votre lieu",
@@ -200,7 +200,7 @@ export const BLOG_I18N_EXTRA: Record<string, Partial<Record<BlogExtraLocale, Blo
           "La fecha en que os conocisteis, su nombre o las coordenadas del lugar, en un mapa plano, un imán o el reverso del llavero. Se añade con un clic en el configurador.",
         ] },
         { h2: "Precio y plazos", p: [
-          "Llavero desde ≈4 €; un par de corazones son dos llaveros. Mapa 3D de ≈8 € (5,5 cm) a ≈18 € (15 cm). Impresión y envío dentro de Ucrania en 2–4 días hábiles; fuera de Ucrania compras el archivo 3MF (≈3 €) y lo imprimes cerca de ti.",
+          "Llavero desde ≈4 €; un par de corazones son dos llaveros. Mapa 3D de ≈8 € (5,5 cm) a ≈30 € (15 cm). Impresión y envío dentro de Ucrania en 2–4 días hábiles; fuera de Ucrania compras el archivo 3MF (≈3 €) y lo imprimes cerca de ti.",
         ] },
       ],
       ctaLabel: "Crear el mapa de vuestro lugar",

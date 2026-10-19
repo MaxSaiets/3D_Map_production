@@ -15,21 +15,26 @@
  *  Дзеркало backend/pricing.json → map.sizes_mm. 60мм = магніт (окремий SKU,
  *  не входить у звичайну S/M/L/XL лінійку, тому тут немає). */
 export const MAP_SIZE_PRICES_UAH = {
-  55: 350,  // S  (5.5 см)   2026-09-08: +40 % (було 250/350/450/550)
-  80: 490,  // M  (8 см)
-  110: 630, // L  (11 см)
-  150: 770, // XL (15 см)
+  55: 350,   // S  (5.5 см)   2026-10-19: база+площа, 20 см = 2000 (рішення власника)
+  80: 500,   // M  (8 см)               (до того 2026-09-08: 350/490/630/770)
+  110: 750,  // L  (11 см)
+  150: 1250, // XL (15 см)
+  200: 2000, // 20 см
 } as const;
 
 export type MapSizeMm = keyof typeof MAP_SIZE_PRICES_UAH;
 
 /** Ціна для БУДЬ-ЯКОГО розміру (guided-повзунок 50–200 мм, «Профі» до 500):
- *  лінійно між сусідніми тарифами, нижче S = S, вище XL — продовжуємо нахил
- *  останнього відрізка (110→150 = 3.5 ₴/мм); округлення до 10 ₴. ДЗЕРКАЛО
+ *  лінійно між сусідніми тарифами, нижче S = S, вище 20 см — продовжуємо нахил
+ *  останнього відрізка (150→200 = 15 ₴/мм); округлення до 10 ₴. БЕЗ знижки. ДЗЕРКАЛО
  *  backend main.py `_map_price_for_size` (жива ціна йде з /api/quote; це fallback). */
 export function mapPriceForSizeUah(sizeMm: number): number {
-  const pts = (Object.keys(MAP_SIZE_PRICES_UAH).map(Number) as MapSizeMm[]).sort((a, b) => a - b);
-  const price = (mm: MapSizeMm) => MAP_SIZE_PRICES_UAH[mm];
+  return curvePriceUah(MAP_SIZE_PRICES_UAH, sizeMm);
+}
+
+function curvePriceUah(table: Record<number, number>, sizeMm: number): number {
+  const pts = Object.keys(table).map(Number).sort((a, b) => a - b);
+  const price = (mm: number) => table[mm];
   if (!Number.isFinite(sizeMm) || sizeMm <= pts[0]) return price(pts[0]);
   const last = pts[pts.length - 1];
   if (sizeMm >= last) {
@@ -71,8 +76,34 @@ export function floorplanPriceUah(sizeMm: number): number {
   return FLOORPLAN_SIZE_PRICES_UAH[nearest as FloorplanSizeMm];
 }
 
-/** Надбавка за рельєф (terrain). UAH. Дзеркало pricing.json map.relief_addon. */
-export const MAP_RELIEF_ADDON_UAH = 85;
+/** Надбавка за рельєф — «від» (найменший розмір). UAH. Дзеркало pricing.json map.relief_addon. */
+export const MAP_RELIEF_ADDON_UAH = 100;
+
+/** Надбавка за рельєф ЗА РОЗМІРОМ (19.10.2026: 20 см = 2000 → 3000 з рельєфом).
+ *  Дзеркало pricing.json map.relief_addon_mm; проміжні — лінійно. */
+export const MAP_RELIEF_ADDON_BY_MM_UAH = {
+  55: 100,
+  80: 180,
+  110: 320,
+  150: 580,
+  200: 1000,
+} as const;
+
+export function mapReliefAddonUah(sizeMm: number): number {
+  return curvePriceUah(MAP_RELIEF_ADDON_BY_MM_UAH, sizeMm);
+}
+
+/** Знижка лише від 20 см (власник 19.10.2026): стара ціна перекреслена +
+ *  плашка «Зараз діє знижка». Дзеркало pricing.json map.discount. */
+export const MAP_DISCOUNT = { minSizeMm: 200, amountUah: 350 } as const;
+
+/** Ціна мапи: list — без знижки (для перекреслення), price — до сплати.
+ *  Дзеркало backend main.py `_map_list_and_price`. */
+export function mapQuoteUah(sizeMm: number, relief: boolean): { list: number; price: number } {
+  const list = mapPriceForSizeUah(sizeMm) + (relief ? mapReliefAddonUah(sizeMm) : 0);
+  const price = sizeMm >= MAP_DISCOUNT.minSizeMm - 0.5 ? Math.max(0, list - MAP_DISCOUNT.amountUah) : list;
+  return { list, price };
+}
 
 /** Один друк-файл (3MF/STL) без підписки. UAH. Дзеркало pricing.json file.price —
  *  статичний fallback для /prices і /pro; живу ціну /pro бере з /api/subscription/plans. */

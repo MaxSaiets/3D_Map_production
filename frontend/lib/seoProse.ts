@@ -131,43 +131,43 @@ export type ProseFaqItem = { q: string; a: string };
 
 const CREATE_FAQ: Record<string, ProseFaqItem[]> = {
   uk: [
-    { q: "Скільки коштує 3D-мапа?", a: "3D-мапа — від 350 ₴ за розмір S (5,5 см) до 770 ₴ за XL (15 см), рельєф місцевості +85 ₴. Магніт на холодильник — 210 ₴, брелок — від 170 ₴." },
+    { q: "Скільки коштує 3D-мапа?", a: "3D-мапа — від 350 ₴ за розмір S (5,5 см) до 1250 ₴ за XL (15 см), рельєф місцевості +100–1000 ₴. Магніт на холодильник — 210 ₴, брелок — від 170 ₴." },
     { q: "Яку ділянку краще обрати?", a: "Ділянку 400–800 метрів зі змішаною забудовою: трохи вулиць, парк або вода — так район впізнається з першого погляду." },
     { q: "Скільки триває виготовлення?", a: "2–4 робочі дні на друк, потім доставка Новою Поштою по Україні." },
     { q: "Чи можна надрукувати самому?", a: "Так — файл 3MF для друку коштує 149 ₴ (3D-превʼю безкоштовне) і одразу відкривається в Bambu Studio чи PrusaSlicer." },
   ],
   en: [
-    { q: "How much does a 3D map cost?", a: "A 3D map is from ≈€8 for size S (5.5 cm) to ≈€18 for XL (15 cm), terrain relief +≈€2. A fridge magnet is ≈€5, a keychain from ≈€4." },
+    { q: "How much does a 3D map cost?", a: "A 3D map is from ≈€8 for size S (5.5 cm) to ≈€30 for XL (15 cm), terrain relief +≈€2–24. A fridge magnet is ≈€5, a keychain from ≈€4." },
     { q: "Which area should I pick?", a: "A 400–800 m area with mixed content: some streets, a park or water — the district stays recognizable at first glance." },
     { q: "How long does production take?", a: "2–4 business days to print, then shipping across Ukraine." },
     { q: "Can I print it myself?", a: "Yes — the print-ready 3MF file costs 149 ₴ (≈ €3; the 3D preview is free) and opens directly in Bambu Studio or PrusaSlicer. Sold worldwide." },
   ],
   de: [
-    { q: "Was kostet eine 3D-Karte?", a: "Eine 3D-Karte kostet von ≈8 € (Größe S, 5,5 cm) bis ≈18 € (XL, 15 cm), Geländerelief +≈2 €. Kühlschrankmagnet ≈5 €, Anhänger ab ≈4 €." },
+    { q: "Was kostet eine 3D-Karte?", a: "Eine 3D-Karte kostet von ≈8 € (Größe S, 5,5 cm) bis ≈30 € (XL, 15 cm), Geländerelief +≈2–24 €. Kühlschrankmagnet ≈5 €, Anhänger ab ≈4 €." },
     { q: "Welchen Bereich soll ich wählen?", a: "Einen Bereich von 400–800 m mit gemischtem Inhalt: ein paar Straßen, ein Park oder Wasser — so bleibt das Viertel auf den ersten Blick erkennbar." },
     { q: "Wie lange dauert die Herstellung?", a: "2–4 Werktage Druck, dann Versand in die Ukraine." },
     { q: "Kann ich es selbst drucken?", a: "Ja — die druckfertige 3MF-Datei kostet 149 ₴ (≈ 3 €; die 3D-Vorschau ist kostenlos) und öffnet direkt in Bambu Studio oder PrusaSlicer. Weltweit erhältlich." },
   ],
   pl: [
-    { q: "Ile kosztuje mapa 3D?", a: "Mapa 3D kosztuje od ≈8 € (rozmiar S, 5,5 cm) do ≈18 € (XL, 15 cm), rzeźba terenu +≈2 €. Magnes na lodówkę ≈5 €, brelok od ≈4 €." },
+    { q: "Ile kosztuje mapa 3D?", a: "Mapa 3D kosztuje od ≈8 € (rozmiar S, 5,5 cm) do ≈30 € (XL, 15 cm), rzeźba terenu +≈2–24 €. Magnes na lodówkę ≈5 €, brelok od ≈4 €." },
     { q: "Jaki obszar najlepiej wybrać?", a: "Obszar 400–800 m z mieszaną zabudową: trochę ulic, park lub woda — dzielnica pozostaje rozpoznawalna od pierwszego spojrzenia." },
     { q: "Ile trwa wykonanie?", a: "2–4 dni robocze na druk, potem wysyłka na Ukrainę." },
     { q: "Czy mogę wydrukować sam?", a: "Tak — gotowy plik 3MF kosztuje 149 ₴ (≈ 3 €; podgląd 3D jest bezpłatny) i otwiera się od razu w Bambu Studio lub PrusaSlicer. Dostępny na całym świecie." },
   ],
   fr: [
-    { q: "Combien coûte une carte 3D ?", a: "Une carte 3D coûte de ≈8 € (taille S, 5,5 cm) à ≈18 € (XL, 15 cm), relief du terrain +≈2 €. Magnet de frigo ≈5 €, porte-clés dès ≈4 €." },
+    { q: "Combien coûte une carte 3D ?", a: "Une carte 3D coûte de ≈8 € (taille S, 5,5 cm) à ≈30 € (XL, 15 cm), relief du terrain +≈2–24 €. Magnet de frigo ≈5 €, porte-clés dès ≈4 €." },
     { q: "Quelle zone choisir ?", a: "Une zone de 400 à 800 m au contenu varié : quelques rues, un parc ou de l'eau — le quartier reste reconnaissable au premier coup d'œil." },
     { q: "Combien de temps prend la fabrication ?", a: "1 à 3 jours ouvrés pour l'impression, puis livraison en Ukraine." },
     { q: "Puis-je l'imprimer moi-même ?", a: "Oui — le fichier 3MF prêt à imprimer coûte 149 ₴ (≈ 3 € ; l'aperçu 3D est gratuit) et s'ouvre directement dans Bambu Studio ou PrusaSlicer. Vendu partout dans le monde." },
   ],
   es: [
-    { q: "¿Cuánto cuesta un mapa 3D?", a: "Un mapa 3D cuesta desde ≈8 € (tamaño S, 5,5 cm) hasta ≈18 € (XL, 15 cm), relieve del terreno +≈2 €. Imán de nevera ≈5 €, llavero desde ≈4 €." },
+    { q: "¿Cuánto cuesta un mapa 3D?", a: "Un mapa 3D cuesta desde ≈8 € (tamaño S, 5,5 cm) hasta ≈30 € (XL, 15 cm), relieve del terreno +≈2–24 €. Imán de nevera ≈5 €, llavero desde ≈4 €." },
     { q: "¿Qué zona conviene elegir?", a: "Una zona de 400–800 m con contenido variado: algunas calles, un parque o agua — el distrito sigue siendo reconocible a primera vista." },
     { q: "¿Cuánto tarda la fabricación?", a: "2–4 días hábiles de impresión, luego envío a Ucrania." },
     { q: "¿Puedo imprimirlo yo mismo?", a: "Sí — el archivo 3MF listo para imprimir cuesta 149 ₴ (≈ 3 €; la vista previa 3D es gratis) y se abre directamente en Bambu Studio o PrusaSlicer. Se vende en todo el mundo." },
   ],
   ro: [
-    { q: "Cât costă o hartă 3D?", a: "O hartă 3D costă de la ≈8 € pentru mărimea S (5,5 cm) până la ≈18 € pentru XL (15 cm), relieful +≈2 €. Un magnet de frigider ≈5 €, un breloc de la ≈4 €." },
+    { q: "Cât costă o hartă 3D?", a: "O hartă 3D costă de la ≈8 € pentru mărimea S (5,5 cm) până la ≈30 € pentru XL (15 cm), relieful +≈2–24 €. Un magnet de frigider ≈5 €, un breloc de la ≈4 €." },
     { q: "Ce zonă să aleg?", a: "O zonă de 400–800 m cu conținut variat: câteva străzi, un parc sau apă — așa cartierul rămâne recognoscibil de la prima privire." },
     { q: "Cât durează realizarea?", a: "2–4 zile lucrătoare pentru imprimare, apoi livrarea în Ucraina." },
     { q: "Pot să o imprim singur?", a: "Da — fișierul 3MF gata de imprimat costă 149 ₴ (≈ 3 €; previzualizarea 3D este gratuită) și se deschide direct în Bambu Studio sau PrusaSlicer. Se vinde oriunde în lume." },

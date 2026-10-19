@@ -134,7 +134,7 @@ export const pl: LegalSet = {
         { p: "Ceny wyrobów (dostawa płatna osobno wg taryfy przewoźnika):" },
         { ul: [
           "Brelok-mapa — od 170 ₴ (≈ 4 €).",
-          "Mapa 3D dzielnicy: S 5,5 cm — 350 ₴, M 8 cm — 490 ₴, L 11 cm — 630 ₴, XL 15 cm — 770 ₴ (mapy — od 8 €).",
+          "Mapa 3D dzielnicy: S 5,5 cm — 350 ₴, M 8 cm — 500 ₴, L 11 cm — 750 ₴, XL 15 cm — 1250 ₴ (mapy — od 8 €).",
           "Magnes na lodówkę (mapa) — 210 ₴.",
           "Plik 3MF do samodzielnego druku — 149 ₴ (cena widoczna w kreatorze), dostęp przez link po opłacie; podgląd 3D jest bezpłatny.",
           "Subskrypcja Monadruk Pro — 2 100 ₴ miesięcznie (lub 50 USD przy płatności spoza Ukrainy), odnawiana automatycznie: nielimitowane pliki do druku i licencja komercyjna, anulowanie jednym kliknięciem. Szczegóły — [pro-terms:warunki subskrypcji].",

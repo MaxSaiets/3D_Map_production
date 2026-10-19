@@ -218,8 +218,8 @@ const RAW: Raw[] = [
     t: ["3D-мапа з рельєфом і висотками", "3D map with terrain relief and high-rises"],
     a: ["3D-друкована мапа з рельєфом місцевості, висотними будинками, зеленим схилом і дорогою", "3D-printed map with terrain relief, tall buildings, a green slope and a road"],
     d: [
-      "Мапа з увімкненим рельєфом: зелений схил піднімається сходинками, дорога огинає пагорб, а висотки стоять на вершині. Рельєф — опція за +85 ₴, найкраще працює для горбистих міст.",
-      "A map with terrain relief on: the green slope rises in steps, the road winds around the hill and the high-rises stand on top. Relief is an add-on for +85 UAH and works best for hilly cities.",
+      "Мапа з увімкненим рельєфом: зелений схил піднімається сходинками, дорога огинає пагорб, а висотки стоять на вершині. Рельєф — опція за +100–1000 ₴, найкраще працює для горбистих міст.",
+      "A map with terrain relief on: the green slope rises in steps, the road winds around the hill and the high-rises stand on top. Relief is an add-on for +100–1000 UAH and works best for hilly cities.",
     ],
   },
   {

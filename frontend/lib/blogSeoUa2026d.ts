@@ -91,7 +91,7 @@ export const SEO_UA_ARTICLES_2026_D: BlogArticle[] = [
             h2: "Чому це добрий подарунок від класу",
             p: [
               "Мапа школи — нейтральний і водночас особистий подарунок: вона не про ціну, а про спільне місце, де вчитель і діти проводять щодня кілька годин.",
-              "Її легко скинутись усім класом: настільна мапа M коштує 490 ₴, L — 630 ₴. Це менше, ніж звичний букет, а живе набагато довше.",
+              "Її легко скинутись усім класом: настільна мапа M коштує 500 ₴, L — 750 ₴. Це менше, ніж звичний букет, а живе набагато довше.",
             ],
           },
           {
@@ -123,7 +123,7 @@ export const SEO_UA_ARTICLES_2026_D: BlogArticle[] = [
         intro:
           "Teachers' Day in Ukraine falls on the first Sunday of October, and every year the parents' chat faces the same question: what to give that isn't flowers or chocolates. A good option is a 3D map of the school's neighbourhood — the streets, the school building, the park next to it. You can engrave the class name or graduation year, and it stays on the desk for years.",
         sections: [
-          { h2: "Why it works as a class gift", p: ["A school map is neutral and personal at the same time: it's not about the price but about a shared place where the teacher and the children spend several hours every day.", "It's easy to chip in as a class: a desktop map M costs 490 ₴, L costs 630 ₴ — less than a typical bouquet, and it lasts much longer."] },
+          { h2: "Why it works as a class gift", p: ["A school map is neutral and personal at the same time: it's not about the price but about a shared place where the teacher and the children spend several hours every day.", "It's easy to chip in as a class: a desktop map M costs 500 ₴, L costs 750 ₴ — less than a typical bouquet, and it lasts much longer."] },
           { h2: "Options", p: ["A desktop 3D map of the school area (from 350 ₴) engraved with “Class 5-B, 2026” or the school's name.", "School-map keychains for each subject teacher (from 170 ₴ each) — when you want to thank several people at once.", "A heart or circle shaped map — the same streets in an unusual shape for the classroom shelf."] },
           { h2: "How to make it", p: ["Type the school's address in the builder — the frame snaps to the right area. Choose a size and shape and check the free 3D preview.", "You can share the preview link in the parents' chat so everyone sees the gift before ordering.", "Printing and Nova Poshta delivery take 2–4 days, so order at least a week before the day."] },
         ],
@@ -149,7 +149,7 @@ export const SEO_UA_ARTICLES_2026_D: BlogArticle[] = [
             h2: "Мапа у формі серця",
             p: [
               "У конструкторі можна обрати форму моделі: квадрат, коло, шестикутник або серце. Рамка на карті одразу показує контур — видно, які вулиці потраплять у серце.",
-              "Розмір — від 5,5 см (як брелок-сувенір) до 20 см (настільна модель). M на 8 см коштує 490 ₴, L на 11 см — 630 ₴.",
+              "Розмір — від 5,5 см (як брелок-сувенір) до 20 см (настільна модель). M на 8 см коштує 500 ₴, L на 11 см — 750 ₴.",
             ],
           },
           {
@@ -186,7 +186,7 @@ export const SEO_UA_ARTICLES_2026_D: BlogArticle[] = [
         intro:
           "On Valentine's Day you want to give something that's about the two of you. The place of your first date, the street where you lived together, the park where you proposed — all of it can become a 3D map in the shape of a heart. The streets and buildings are real, and your date or a few words go on the back.",
         sections: [
-          { h2: "A heart-shaped map", p: ["In the builder you can pick the model's shape: square, circle, hexagon or heart. The frame on the map shows the outline right away, so you see which streets end up inside the heart.", "Sizes range from 5.5 cm (a small keepsake) to 20 cm (a desktop model). M at 8 cm costs 490 ₴, L at 11 cm costs 630 ₴."] },
+          { h2: "A heart-shaped map", p: ["In the builder you can pick the model's shape: square, circle, hexagon or heart. The frame on the map shows the outline right away, so you see which streets end up inside the heart.", "Sizes range from 5.5 cm (a small keepsake) to 20 cm (a desktop model). M at 8 cm costs 500 ₴, L at 11 cm costs 750 ₴."] },
           { h2: "More ideas for a couple", p: ["Matching heart keychains that join into one — each person carries a half (from 170 ₴).", "A map of the city where you met next to a map of where you live now — two models side by side.", "A magnet with the map of your first shared flat (210 ₴) — a small thing you see every day."] },
           { h2: "What to engrave", p: ["The date you met, the coordinates of the place, “Where it all began”, or your names. The text is added in the builder and printed with the model.", "Not sure which place to pick? Check free previews of a few options — each takes 1–2 minutes."] },
           { h2: "Timing", p: ["Printing and Nova Poshta delivery within Ukraine take 2–4 days. There are more orders before 14 February, so order 1–2 weeks ahead."] },

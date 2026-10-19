@@ -134,6 +134,7 @@ export const SIMPLE_SIZES = [
   { key: "m",  label: "M",  mm: 80,  cm: "8 см",   price: MAP_SIZE_PRICES_UAH[80] },
   { key: "l",  label: "L",  mm: 110, cm: "11 см",  price: MAP_SIZE_PRICES_UAH[110] },
   { key: "xl", label: "XL", mm: 150, cm: "15 см",  price: MAP_SIZE_PRICES_UAH[150] },
+  { key: "xxl", label: "XXL", mm: 200, cm: "20 см", price: MAP_SIZE_PRICES_UAH[200] },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; mm: MapSizeMm; cm: string; price: number }>;
 
 // СПІЛЬНА генерація СЕРІЇ зон (батч клітин сітки). Винесено сюди, щоб і
