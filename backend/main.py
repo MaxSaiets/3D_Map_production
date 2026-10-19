@@ -63,6 +63,7 @@ from services.generation_runtime_context import prepare_generation_runtime_conte
 
 from services.generation_task import GenerationTask, GenerationCancelled as _GenerationCancelled
 from services import result_cache as _rc  # perf-2026-09-03: кеш результатів + ETA
+from services import pending_tasks as _pending  # 19.10.2026: задачі переживають рестарт
 from services.firebase_service import FirebaseService
 from services.global_center import set_global_center, get_global_center, GlobalCenter
 from services.hexagonal_grid import generate_hexagonal_grid, hexagons_to_geojson, validate_hexagonal_grid, calculate_grid_center_from_geojson
@@ -214,6 +215,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # DATA_DIR — окрема папка, що НЕ монтується назовні.
 DATA_DIR = Path("data").resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+_pending.init(DATA_DIR)
 
 def _migrate_private_data_out_of_webroot() -> None:
     """Одноразова міграція: переносить приватні файли з OUTPUT_DIR (віддається на
@@ -832,8 +834,12 @@ async def startup_event():
             task.set_output(ext, str(file_path))
             if not task.output_file:
                 task.output_file = str(file_path)
-    
+
     print(f"[INFO] Р’С–РґРЅРѕРІР»РµРЅРѕ {len(tasks)} Р·Р°РґР°С‡.")
+    try:
+        _restore_pending_tasks()
+    except Exception as _rexc:  # noqa: BLE001
+        print(f"[PENDING] restore failed: {_rexc}")
 
 
 class GenerationRequest(BaseModel):
@@ -3259,14 +3265,18 @@ async def generate_model(
 
         # Запускаємо генерацію в фоні. Передаємо zone_polygon_coords якщо є —
         # для повернутих rect-ділянок backend обріже OSM по полігону, а не bbox.
+        # 19.10.2026: журнал на диску — рестарт бекенду більше не губить задачу.
+        try:
+            _pending.save(task_id, request.model_dump(mode="json"), polygon_coords)
+        except Exception as _pexc:  # noqa: BLE001
+            print(f"[PENDING] journal skipped: {_pexc}")
         background_tasks.add_task(
-            generate_model_task,
+            _generate_model_task_journaled,
             task_id,
             request,
-            None,  # zone_id
-            polygon_coords,  # zone_polygon_coords
+            polygon_coords,
         )
-        
+
         print(f"[INFO] РЎС‚РІРѕСЂРµРЅРѕ Р·Р°РґР°С‡Сѓ {task_id} РґР»СЏ РіРµРЅРµСЂР°С†С–С— РјРѕРґРµР»С– (eta≈{_eta}s, bucket={_bucket}, foreign={_foreign})")
         return GenerationResponse(task_id=task_id, status="processing", message="Задача створена", eta_s=_eta, foreign=_foreign)
     except HTTPException:
@@ -5187,6 +5197,62 @@ def _release_memory_after_task(tag: str = "") -> None:
     _after = _current_rss_mb()
     if _before >= 0 and _after >= 0:
         print(f"[MEM] after task {str(tag)[:8]}: rss {_before:.0f} -> {_after:.0f} MB (trim)")
+
+
+def _generate_model_task_journaled(task_id: str, request: "GenerationRequest", polygon_coords=None):
+    """generate_model_task для одиночного /api/generate + прибирання запису журналу,
+    коли задача дійшла до кінця (будь-яким шляхом, окрім смерті процесу)."""
+    try:
+        generate_model_task(task_id, request, None, polygon_coords)
+    finally:
+        _pending.remove(task_id)
+
+
+def _restore_pending_tasks() -> None:
+    """Після рестарту: ставимо назад у чергу задачі, які не встигли завершитись."""
+    restored = 0
+    for rec in _pending.load_all():
+        tid = str(rec.get("task_id") or "")
+        if not tid:
+            continue
+        existing = tasks.get(tid)
+        if (existing is not None and existing.status == "completed") or _find_file_on_disk_by_task_id(tid) is not None:
+            _pending.remove(tid)  # файл уже на диску — /api/status віддасть його як готовий
+            continue
+        attempts = int(rec.get("attempts") or 1)
+        if attempts >= _pending.MAX_ATTEMPTS:
+            t = GenerationTask(task_id=tid, request=None)
+            t.fail("генерацію двічі перервав перезапуск сервера — спробуйте ще раз або зменшіть ділянку")
+            tasks[tid] = t
+            _pending.remove(tid)
+            print(f"[PENDING] {tid[:8]} not restored (attempts={attempts}) -> failed")
+            continue
+        try:
+            req = GenerationRequest(**(rec.get("body") or {}))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[PENDING] {tid[:8]} bad body, dropped: {exc}")
+            _pending.remove(tid)
+            continue
+        poly = rec.get("polygon_coords")
+        t = GenerationTask(task_id=tid, request=req)
+        try:
+            t.cache_key = _rc.request_cache_key(req, poly)
+            t.eta_bucket = _rc.eta_bucket(req)
+            t.eta_s = _rc.eta_seconds(t.eta_bucket, foreign=False)
+            t.foreign = False
+        except Exception:
+            pass
+        t.update_status("queued", 0, "Сервер перезапустився — продовжуємо вашу модель…")
+        tasks[tid] = t
+        _pending.save(tid, rec.get("body") or {}, poly, attempts=attempts + 1)
+        _threading.Thread(
+            target=_generate_model_task_journaled, args=(tid, req, poly),
+            name=f"restore-{tid[:8]}", daemon=True,
+        ).start()
+        restored += 1
+        print(f"[PENDING] restored task {tid} (attempt {attempts + 1})")
+    if restored:
+        print(f"[PENDING] {restored} interrupted task(s) re-queued after restart")
 
 
 def generate_model_task(

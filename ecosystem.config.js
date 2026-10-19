@@ -11,7 +11,8 @@ module.exports = {
       interpreter: '/opt/3dmap/backend/venv/bin/python',
       script: '/opt/3dmap/backend/venv/bin/uvicorn',
       // Tasks are tracked in process memory, so status polling must hit the same process.
-      args: 'main:app --host 127.0.0.1 --port 8000 --workers 1',
+      // --timeout-graceful-shutdown: uvicorn інакше чекає фонову генерацію безкінечно.
+      args: 'main:app --host 127.0.0.1 --port 8000 --workers 1 --timeout-graceful-shutdown 5',
       env: {
         NODE_ENV: 'production',
         // Шлях до тимчасових файлів (видаляються після завантаження у Firebase)
@@ -37,7 +38,10 @@ module.exports = {
       // mid-run (graceful pm2 restart → lost task). Box has 4GB swap, so allow
       // up to 4500M: peak briefly touches swap (a little slower) instead of
       // aborting. Still far below RAM+swap (~7.8GB) so no kernel OOM.
-      max_memory_restart: '4500M',
+      max_memory_restart: '7000M',
+      // 19.10.2026: засвопований процес помирає довше за дефолтні 1.6 с → pm2 писав
+      // «could not be stopped» і НЕ піднімав бекенд (сайт лежав 15 хв).
+      kill_timeout: 20000,
     },
 
     // ─── Frontend (Next.js) ────────────────────────────────
