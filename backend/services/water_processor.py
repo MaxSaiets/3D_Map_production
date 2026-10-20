@@ -339,9 +339,27 @@ def process_water_surface(
                     # локально: 10 582 вершини вище рівня). Тепер drop віднімається від
                     # min(flat, orig): пласка водойма — один рівень до самого берега;
                     # похила ріка так само спускається за тереном (min бере orig).
+                    # 19.10.2026: вузькі провали 30-м DEM під водою (шум Terrarium у
+                    # водосховищі) тягнули min(flat, orig) вниз → ЯМКИ у воді аж до дна
+                    # (Черкаси 200 мм: 7 «дірок» 0.2–7 мм²). Сіра дилатація orig радіусом
+                    # 3 мм моделі прибирає ямки вужчі за 6 мм; спуск ріки схилом (на
+                    # сотні метрів) майже не змінюється.
+                    _level_ground = np.asarray(original_ground, dtype=float)
+                    try:
+                        if scale_factor and float(scale_factor) > 0 and len(points_array) > 3:
+                            from scipy.spatial import cKDTree
+                            _pit_r_m = 3.0 / float(scale_factor)
+                            _nbrs = cKDTree(points_array).query_ball_point(points_array, r=_pit_r_m)
+                            _dil = np.array([_level_ground[_n].max() for _n in _nbrs], dtype=float)
+                            _n_pits = int((_dil - _level_ground > 0.1 / float(scale_factor)).sum())
+                            if _n_pits:
+                                print(f"[WATER] DEM pits under water flattened: {_n_pits} verts (r={_pit_r_m:.1f}m)")
+                            _level_ground = _dil
+                    except Exception as _pit_exc:  # noqa: BLE001
+                        print(f"[WATER] DEM pit filter skipped: {_pit_exc}")
                     base_water_level = np.minimum(
                         flat_level,
-                        np.asarray(original_ground, dtype=float),
+                        _level_ground,
                     ) - _drop_m + offset_below_m
 
                     # 4. Apply Noise (only to top surface)

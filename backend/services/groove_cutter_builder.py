@@ -8,6 +8,9 @@ import trimesh
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
+# Мінімальна товщина основи під кишенями вставок (мм моделі) = 3 шари по 0.2мм.
+MIN_POCKET_FLOOR_MM = 0.6
+
 
 @dataclass
 class UnifiedGrooveCutterBuildResult:
@@ -29,6 +32,7 @@ def build_unified_groove_cutter(
     water_mesh: Optional[trimesh.Trimesh] = None,
     road_mesh: Optional[trimesh.Trimesh] = None,
     groove_depth_m: Optional[float] = None,
+    scale_factor: Optional[float] = None,
 ) -> UnifiedGrooveCutterBuildResult:
     if terrain_mesh is None:
         return UnifiedGrooveCutterBuildResult(cutter_mesh=None, cut_bottom_z=None, cut_top_z=None)
@@ -44,6 +48,14 @@ def build_unified_groove_cutter(
     terrain_max_z = bounds[1][2]
     terrain_floor_z = bounds[0][2]
     terrain_height = terrain_max_z - terrain_floor_z
+
+    # Мінімальне дно кишені — у мм МОДЕЛІ (3 шари по 0.2мм), а не 0.5м світу:
+    # при 1:10000 0.5м = 0.05мм → під водою/парками лишалась плівка, яку
+    # слайсер не друкує (скарга власника 19.10.2026, Черкаси 200мм).
+    min_floor_m = 0.5
+    if scale_factor is not None and float(scale_factor) > 0:
+        min_floor_m = max(min_floor_m, MIN_POCKET_FLOOR_MM / float(scale_factor))
+    min_floor = terrain_floor_z + min_floor_m
 
     mesh_min_z = float("inf")
     mesh_bottoms: dict[str, float] = {}
@@ -62,6 +74,15 @@ def build_unified_groove_cutter(
         mesh_min_z = min(mesh_min_z, water_bot_z)
         mesh_bottoms["water"] = water_bot_z
         print(f"[TERRAIN CUT] Water mesh bottom Z: {water_bot_z:.4f}")
+
+    # Дно вставок не нижче дна кишені: інакше кишеня впиралась у min_floor,
+    # а вставки висіли під нею (експорт потім клампив їх у тіло основи).
+    if mesh_min_z < float("inf") and mesh_min_z < min_floor + 0.1:
+        print(
+            f"[TERRAIN CUT] insert bottom raised to printable pocket floor: "
+            f"{mesh_min_z:.4f} -> {min_floor + 0.1:.4f} (floor {terrain_floor_z:.4f} + {min_floor_m:.3f}m)"
+        )
+        mesh_min_z = min_floor + 0.1
 
     if mesh_min_z < float("inf"):
         for label, mesh_obj in [("road", road_mesh), ("parks", parks_mesh), ("water", water_mesh)]:
@@ -99,7 +120,6 @@ def build_unified_groove_cutter(
     else:
         cut_bottom_z = terrain_floor_z + terrain_height * 0.3
 
-    min_floor = terrain_floor_z + 0.5
     cut_bottom_z = max(cut_bottom_z, min_floor)
     cut_top_z = terrain_max_z + 5.0
     cutter_height = cut_top_z - cut_bottom_z

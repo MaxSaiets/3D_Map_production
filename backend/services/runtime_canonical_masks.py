@@ -20,6 +20,9 @@ CANONICAL_PARTITION_MIN_FEATURE_MM = 0.6
 CANONICAL_AREA_CLUSTER_MERGE_MM = 2.0
 CANONICAL_PARK_ISOLATED_DETAIL_MIN_AREA_MM2 = 8.0
 CANONICAL_WATER_ISOLATED_DETAIL_MIN_AREA_MM2 = 4.0
+# Окремі шматки дорожньої вставки менші за це (мм² моделі) — обрубки після
+# вирізання будинків/кліпу (ширина ≤0.4 мм, довжина ≤2 мм): не друкуються.
+CANONICAL_ROAD_MIN_PART_AREA_MM2 = float(os.environ.get("ROAD_MIN_PART_AREA_MM2", "1.0"))
 CANONICAL_TERRAIN_SLIVER_MAX_AREA_MM2 = 30.0
 CANONICAL_TERRAIN_SLIVER_MAX_WIDTH_MM = 3.0
 CANONICAL_ROAD_CORNER_ROUND_MM = 0.32
@@ -2353,6 +2356,34 @@ def build_runtime_canonical_bundle(
             min_feature_m=float(partition_min_feature_m),
             close_bays=False,
         )
+
+    # 19.10.2026: road confetti. Map-faithful mode keeps every road part, incl.
+    # 0.0–1 mm² stubs left after building precedence/zone clip (Черкаси 150 мм:
+    # 74 з 105 частин <2 мм², 1.4 % площі). Drop only parts below
+    # CANONICAL_ROAD_MIN_PART_AREA_MM2 and pin the groove to surviving roads so
+    # no empty pit is left where a stub was.
+    if (
+        scale_factor is not None and float(scale_factor) > 0.0
+        and CANONICAL_ROAD_MIN_PART_AREA_MM2 > 0.0
+        and roads_geom is not None and not getattr(roads_geom, "is_empty", True)
+    ):
+        _min_part_m2 = CANONICAL_ROAD_MIN_PART_AREA_MM2 / (float(scale_factor) ** 2)
+        _road_parts = list(getattr(roads_geom, "geoms", [roads_geom]))
+        _kept = [p for p in _road_parts if float(p.area) >= _min_part_m2]
+        if 0 < len(_kept) < len(_road_parts):
+            print(
+                f"[CANONICAL] road confetti dropped: {len(_road_parts) - len(_kept)} of "
+                f"{len(_road_parts)} parts < {CANONICAL_ROAD_MIN_PART_AREA_MM2:.2f} mm2"
+            )
+            roads_geom = unary_union(_kept).buffer(0)
+            if road_groove_geom is not None and not getattr(road_groove_geom, "is_empty", True):
+                try:
+                    _pin_m = max(float(groove_clearance_m) * 1.5, 1e-4)
+                    road_groove_geom = road_groove_geom.intersection(
+                        roads_geom.buffer(_pin_m, join_style=2)
+                    ).buffer(0)
+                except Exception as _rgx:  # noqa: BLE001
+                    print(f"[CANONICAL] road groove re-pin skipped: {_rgx}")
 
     # Last-mile precedence after all hole-fill/sanitize passes: those passes can
     # legally close pinholes, but they must not refill the building fit voids

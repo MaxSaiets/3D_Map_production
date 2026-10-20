@@ -156,6 +156,7 @@ class ManifoldBooleanBackend:
             water_mesh=request.water_mesh,
             road_mesh=request.road_mesh,
             groove_depth_m=request.groove_depth_m,
+            scale_factor=request.scale_factor,
         )
         print(f"[TIMING][GROOVE] build_unified_cutter: {time.perf_counter() - _t_cutter_start:.2f}s")
         cutter_mesh = cutter_result.cutter_mesh
