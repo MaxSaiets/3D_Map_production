@@ -394,6 +394,25 @@ def create_terrain_mesh(
     z_median = np.nanmedian(Z)
     Z = np.clip(Z, z_median - 3000, z_median + 5000)
 
+    # 20.10.2026: DEM NODATA до компресії/підсилення. Terrarium дає поодинокі
+    # провали (Черкаси: −442 м при реальних 80–118 м) → діапазон «560 м» →
+    # місто вважалось горами: підсилення рівнинного рельєфу НЕ вмикалось, а
+    # компресія могла стискати справжній перепад. Despike нижче йде вже ПІСЛЯ.
+    try:
+        if Z.ndim == 2 and Z.size > 16:
+            _lo, _hi = (float(v) for v in np.percentile(Z, [0.5, 99.5]))
+            _span = max(_hi - _lo, 10.0)
+            _bad = (Z < _lo - _span) | (Z > _hi + _span)
+            _nb = int(_bad.sum())
+            if 0 < _nb <= int(0.02 * Z.size):
+                from scipy.ndimage import distance_transform_edt as _edt
+                _idx = _edt(_bad, return_distances=False, return_indices=True)
+                Z = Z[tuple(_idx)]
+                print(f"[TERRAIN] DEM nodata filled: {_nb} cells outside "
+                      f"[{_lo - _span:.0f}..{_hi + _span:.0f}]m before relief gain")
+    except Exception as _nd_exc:  # noqa: BLE001
+        print(f"[TERRAIN] DEM nodata fill skipped: {_nd_exc}")
+
     # КОМПРЕСІЯ РЕЛЬЄФУ (гори): дуже високий перепад (Карпати/Альпи — сотні
     # метрів) робить mesh надто крутим → boolean-груви ламаються (catastrophic
     # z-shift), і модель надто гостра для друку. Стискаємо рельєф до друкованого
